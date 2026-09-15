@@ -1,9 +1,9 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "price": null,
-  "common_price": null,
-  "ratio": null,
+  "updated_at": "2026-09-15 16:33 KST",
+  "zone": "STOP20",
+  "price": 2715.0,
+  "common_price": 7070.0,
+  "ratio": 0.384016973125884,
   "quality_flags": [],
   "last_event_ids": []
 }
