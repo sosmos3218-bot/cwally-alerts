@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -47,6 +47,11 @@ on:
         default: event
         type: choice
         options: [event, weekly]
+      0220wl_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
       force_square:
         type: boolean
         default: true
@@ -73,11 +78,10 @@ jobs:
         id: pick
         run: |
           JOB="${{ github.event.inputs.job }}"
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
-            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
-            else JOB=morning
-            fi
+          if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+          elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
+          else JOB=morning
+          fi
           fi
           [ -z "$JOB" ] && JOB=all
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
@@ -91,6 +95,7 @@ jobs:
           S2=event
           C8=event
           LG=event
+          WL=event
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
@@ -98,6 +103,7 @@ jobs:
             S2="${{ github.event.inputs.silicon2_mode }}"
             C8="${{ github.event.inputs.cover0198_mode }}"
             LG="${{ github.event.inputs.lg_mode }}"
+            WL="${{ github.event.inputs.0220wl_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -105,6 +111,7 @@ jobs:
           echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
           echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
           echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
+          echo "0220wl_mode=$WL" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + clarity + hce + lg
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg'
         env:
@@ -127,12 +134,12 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
           fi
-      - name: Run square + silicon2 + cover0198 + lg (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
-          FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square != 'false' && '1' || '0' }}
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
@@ -143,6 +150,9 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "cover0198" ]; then
             python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "0220wl" ]; then
+            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.0220wl_mode }}"
           fi
           if [ "$JOB" = "afternoon" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
