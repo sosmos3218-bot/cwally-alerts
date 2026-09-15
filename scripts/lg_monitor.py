@@ -148,7 +148,8 @@ def main() -> int:
         f"손절 {stop_line:,.0f} | 하회연속 {below_hits}/{need}",
         "매수 11.0~11.3 / 10.5~11.0 / 10.0~10.5만 | 익절 13.0 / 14.5만",
         "조건: 10.0만 하회 지속 또는 자회사 실적 쇼크 → 신규분 정리, 재평가",
-    ]n    if drop_pct is not None:
+    ]
+    if drop_pct is not None:
         lines.append(f"직전대비 {drop_pct:+.1f}%")
     if live:
         lines.append("")
