@@ -8,6 +8,7 @@ on:
   schedule:
     - cron: "0 0 * * 1-5"
     - cron: "20 6 * * 1-5"
+    - cron: "0 19 15 9 *"
   workflow_dispatch:
     inputs:
       job:
@@ -54,6 +55,7 @@ jobs:
           JOB="${{ github.event.inputs.job }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=square
+            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             else JOB=morning
             fi
           fi
@@ -71,7 +73,7 @@ jobs:
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity (morning)
+      - name: Run steel + alux + clarity
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}

@@ -2,6 +2,8 @@
   "name": "clarity",
   "bill": "H.R. 3633 Digital Asset Market Clarity Act",
   "vote_et": "2026-09-15T14:15:00-04:00",
+  "schedule_kst": "2026-09-16 04:00",
+  "schedule_utc_cron": "0 19 15 9 *",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "title_prefix": "[CLARITY]",
