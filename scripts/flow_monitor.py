@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -17,6 +16,8 @@ NAVER = (
 )
 TOP = ("개인", "외국인", "기관합계", "기타법인")
 DETAIL = ("연기금 등", "금융투자", "투신(사모)", "은행", "기타금융")
+# supply-monitor H4 proxy without 252d history: both net buy and each >= 3,000억
+H4_MIN = 300_000_000_000
 
 
 def fmt_krw(won: float) -> str:
@@ -103,9 +104,12 @@ def main() -> int:
         print("zero flow; market maybe open")
         return 0
     close, chg = fetch_index(day)
+    fgn, inst = flow["외국인"], flow["기관합계"]
+    h4 = fgn >= H4_MIN and inst >= H4_MIN
     lines = [f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | KOSPI"]
     if close is not None:
         lines.append(f"지수 {close:,.2f} ({chg:+.2f}%)")
+    lines.append("H4 동반강매수: " + ("ON 외국인+기관 각 3천억+" if h4 else "off"))
     lines.append("")
     for name in TOP:
         if name in flow:
@@ -125,9 +129,10 @@ def main() -> int:
     if prev.get("day") == day:
         print("already sent today; silent")
         return 0
-    ntfy(server, topic, f"[FLOW] KOSPI 수급 {day[4:6]}/{day[6:8]}", msg, 3)
+    title = f"[FLOW] {'H4 ' if h4 else ''}KOSPI 수급 {day[4:6]}/{day[6:8]}"
+    ntfy(server, topic, title, msg, 4 if h4 else 3)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps({"day": day, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
