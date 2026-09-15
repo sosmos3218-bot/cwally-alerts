@@ -1,6 +1,6 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "price": null,
+  "updated_at": "2026-09-15 12:00 KST",
+  "zone": "BETWEEN",
+  "price": 135100.0,
   "last_event_ids": []
 }
