@@ -9,14 +9,14 @@
 | 보유/매매 | `cwally-port` | https://ntfy.sh/cwally-port |
 | 수급 | `cwally-flow` | https://ntfy.sh/cwally-flow |
 
-제목 prefix: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]`
+제목 prefix: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]`
 
 ## 스케줄
 
 | 슬롯 | KST | 잡 |
 |---|---|---|
-| port morning | 평일 09:00 | steel + alux |
-| port afternoon | 평일 15:20 | square |
+| port morning | 평일 09:00 | steel + alux + clarity + hce |
+| port afternoon | 평일 15:20 | square + silicon2 |
 | flow | 평일 15:40 | KOSPI 수급 |
 
 옮긴 레포 워크플로 중지: `steel-portfolio-ntfy`, `square-sell-alert`, `alux-q3-ntfy`, `grok-workspace` KOSPI flow.
