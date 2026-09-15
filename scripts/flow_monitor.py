@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -14,10 +15,12 @@ NAVER = (
     "https://finance.naver.com/sise/investorDealTrendDay.naver"
     "?bizdate={day}&isuCd=KOSPI&isuCd2=KSP"
 )
+DEPOSIT_URL = "https://finance.naver.com/sise/sise_deposit.naver"
 TOP = ("개인", "외국인", "기관합계", "기타법인")
 DETAIL = ("연기금 등", "금융투자", "투신(사모)", "은행", "기타금융")
-# supply-monitor H4 proxy without 252d history: both net buy and each >= 3,000억
 H4_MIN = 300_000_000_000
+H5_WINDOW = 20
+H5_PCT = 3.0
 
 
 def fmt_krw(won: float) -> str:
@@ -64,6 +67,54 @@ def fetch_flow(day: str) -> dict:
     raise RuntimeError(f"Naver에 {target} 수급 없음")
 
 
+def fetch_deposit_series():
+    """Returns [(date_str, deposit_eok), ...] newest last, or []."""
+    import requests
+
+    rows = {}
+    try:
+        for page in (1, 2, 3):
+            r = requests.get(DEPOSIT_URL, params={"page": page}, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"}, timeout=20)
+            r.encoding = "euc-kr"
+            if r.status_code != 200:
+                continue
+            for block in re.findall(r"<tr[^>]*>(.*?)</tr>", r.text, flags=re.S):
+                txt = re.sub(r"<[^>]+>", " ", block)
+                txt = re.sub(r"\s+", " ", txt).strip()
+                m = re.match(r"^(\d{2}\.\d{2}\.\d{2})\s+(.+)$", txt)
+                if not m:
+                    continue
+                nums = m.group(2).replace(",", "").split()
+                if not nums:
+                    continue
+                try:
+                    rows[m.group(1)] = float(nums[0])
+                except ValueError:
+                    continue
+    except Exception as exc:
+        print(f"deposit fetch skip: {exc}")
+        return []
+    items = sorted(rows.items())
+    return items
+
+
+def h5_line(series) -> tuple[str, bool]:
+    if len(series) < H5_WINDOW + 1:
+        return "H5-S2 예탁금: 데이터 없음", False
+    vals = [v for _, v in series]
+    last_date, last = series[-1]
+    window = vals[-(H5_WINDOW + 1):-1]
+    if not window:
+        return "H5-S2 예탁금: 데이터 없음", False
+    ma = sum(window) / len(window)
+    if ma <= 0:
+        return "H5-S2 예탁금: 데이터 없음", False
+    dev = (last / ma - 1.0) * 100.0
+    fired = dev > H5_PCT
+    status = f"ON +{dev:.1f}% vs 20일평균" if fired else f"off {dev:+.1f}%"
+    return f"H5-S2 예탁금: {status} ({last_date} {last/10000:.1f}조)", fired
+
+
 def fetch_index(day: str):
     import FinanceDataReader as fdr
 
@@ -106,10 +157,12 @@ def main() -> int:
     close, chg = fetch_index(day)
     fgn, inst = flow["외국인"], flow["기관합계"]
     h4 = fgn >= H4_MIN and inst >= H4_MIN
+    h5_text, h5 = h5_line(fetch_deposit_series())
     lines = [f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | KOSPI"]
     if close is not None:
         lines.append(f"지수 {close:,.2f} ({chg:+.2f}%)")
     lines.append("H4 동반강매수: " + ("ON 외국인+기관 각 3천억+" if h4 else "off"))
+    lines.append(h5_text)
     lines.append("")
     for name in TOP:
         if name in flow:
@@ -129,10 +182,11 @@ def main() -> int:
     if prev.get("day") == day:
         print("already sent today; silent")
         return 0
-    title = f"[FLOW] {'H4 ' if h4 else ''}KOSPI 수급 {day[4:6]}/{day[6:8]}"
-    ntfy(server, topic, title, msg, 4 if h4 else 3)
+    tag = ("H4 " if h4 else "") + ("H5 " if h5 else "")
+    title = f"[FLOW] {tag}KOSPI 수급 {day[4:6]}/{day[6:8]}"
+    ntfy(server, topic, title, msg, 4 if (h4 or h5) else 3)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "h5": h5, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
