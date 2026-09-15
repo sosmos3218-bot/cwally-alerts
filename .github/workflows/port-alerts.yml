@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -38,6 +38,11 @@ on:
         type: choice
         options: [event, weekly]
       cover0198_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      lg_mode:
         description: event | weekly
         default: event
         type: choice
@@ -85,20 +90,23 @@ jobs:
           if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
           S2=event
           C8=event
+          LG=event
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
             HM="${{ github.event.inputs.hce_mode }}"
             S2="${{ github.event.inputs.silicon2_mode }}"
             C8="${{ github.event.inputs.cover0198_mode }}"
+            LG="${{ github.event.inputs.lg_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
           echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
           echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
           echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce'
+          echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce + lg
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
@@ -116,8 +124,11 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
             python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
           fi
-      - name: Run square + silicon2 + cover0198 (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == 'all'
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+          fi
+      - name: Run square + silicon2 + cover0198 + lg (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
@@ -132,6 +143,9 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "cover0198" ]; then
             python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
           fi
       - name: Persist state
         run: |
