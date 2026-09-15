@@ -11,11 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | all
+        description: steel | alux | square | clarity | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square]
+        options: [all, steel, alux, square, clarity]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -71,8 +71,8 @@ jobs:
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux (morning)
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux'
+      - name: Run steel + alux + clarity (morning)
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
@@ -83,6 +83,9 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
             python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "clarity" ]; then
+            python scripts/clarity_monitor.py
           fi
       - name: Run square (afternoon)
         if: steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'all'
