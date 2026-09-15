@@ -1,0 +1,12 @@
+{
+  "ntfy_server": "https://ntfy.sh",
+  "topics": {
+    "port": "cwally-port",
+    "flow": "cwally-flow",
+    "ops": "cwally-ops"
+  },
+  "slots": {
+    "port_morning_utc": "00:00",
+    "port_afternoon_utc": "06:20"
+  }
+}
