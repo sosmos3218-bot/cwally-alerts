@@ -1,0 +1,102 @@
+name: cwally-port-alerts
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"
+    - cron: "20 6 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: steel | alux | square | all
+        required: true
+        default: all
+        type: choice
+        options: [all, steel, alux, square]
+      steel_mode:
+        description: weekly | quarterly | event
+        default: weekly
+        type: choice
+        options: [weekly, quarterly, event]
+      alux_mode:
+        description: weekly | event
+        default: weekly
+        type: choice
+        options: [weekly, event]
+      force_square:
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Decide jobs
+        id: pick
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=square
+            else JOB=morning
+            fi
+          fi
+          [ -z "$JOB" ] && JOB=all
+          echo "job=$JOB" >> "$GITHUB_OUTPUT"
+          DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
+          if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
+          elif [ "$DOW" = "1" ]; then SM=weekly
+          else SM=event
+          fi
+          AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SM="${{ github.event.inputs.steel_mode }}"
+            AM="${{ github.event.inputs.alux_mode }}"
+          fi
+          echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
+          echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux (morning)
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
+          NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
+            python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
+            python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
+          fi
+      - name: Run square (afternoon)
+        if: steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
+          NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
+          FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square != 'false' && '1' || '0' }}
+        run: node scripts/square_sell_alert.mjs
+      - name: Persist state
+        run: |
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state || true
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update alert state"
+          git pull --rebase origin main || true
+          git push origin HEAD:main
