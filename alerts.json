@@ -7,6 +7,7 @@
   },
   "slots": {
     "port_morning_utc": "00:00",
-    "port_afternoon_utc": "06:20"
+    "port_afternoon_utc": "06:20",
+    "flow_utc": "06:40"
   }
 }
