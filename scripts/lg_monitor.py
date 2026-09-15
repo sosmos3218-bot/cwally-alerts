@@ -121,7 +121,6 @@ def main() -> int:
 
     live = active_events(cfg, today)
     live_ids = [e["id"] for e in live]
-    new_live = [e for ev in live if ev["id"] not in (prev.get("last_event_ids") or [])]
     new_live = [e for e in live if e["id"] not in (prev.get("last_event_ids") or [])]
 
     shock = False
@@ -149,8 +148,7 @@ def main() -> int:
         f"손절 {stop_line:,.0f} | 하회연속 {below_hits}/{need}",
         "매수 11.0~11.3 / 10.5~11.0 / 10.0~10.5만 | 익절 13.0 / 14.5만",
         "조건: 10.0만 하회 지속 또는 자회사 실적 쇼크 → 신규분 정리, 재평가",
-    ]
-    if drop_pct is not None:
+    ]n    if drop_pct is not None:
         lines.append(f"직전대비 {drop_pct:+.1f}%")
     if live:
         lines.append("")
