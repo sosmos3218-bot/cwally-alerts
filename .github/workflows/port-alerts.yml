@@ -16,7 +16,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl]
+        options: [all, steel, alux, square, clarity, hce | silicon2, cover0198, lg, 0220wl]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -47,7 +47,7 @@ on:
         default: event
         type: choice
         options: [event, weekly]
-      0220wl_mode:
+      wl_mode:
         description: event | weekly
         default: event
         type: choice
@@ -104,7 +104,7 @@ jobs:
             S2="${{ github.event.inputs.silicon2_mode }}"
             C8="${{ github.event.inputs.cover0198_mode }}"
             LG="${{ github.event.inputs.lg_mode }}"
-            WL="${{ github.event.inputs.0220wl_mode }}"
+            WL="${{ github.event.inputs.wl_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -112,7 +112,7 @@ jobs:
           echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
           echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
           echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
-          echo "0220wl_mode=$WL" >> "$GITHUB_OUTPUT"
+          echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + clarity + hce + lg
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg'
         env:
@@ -153,7 +153,7 @@ jobs:
             python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "0220wl" ]; then
-            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.0220wl_mode }}"
+            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.wl_mode }}"
           fi
           if [ "$JOB" = "afternoon" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
