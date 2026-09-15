@@ -21,6 +21,7 @@ DETAIL = ("연기금 등", "금융투자", "투신(사모)", "은행", "기타�
 H4_MIN = 300_000_000_000
 H5_WINDOW = 20
 H5_PCT = 3.0
+H5S3_WINDOW = 5
 
 
 def fmt_krw(won: float) -> str:
@@ -68,7 +69,7 @@ def fetch_flow(day: str) -> dict:
 
 
 def fetch_deposit_series():
-    """Returns [(date_str, deposit_eok), ...] newest last, or []."""
+    """[(date_str, deposit_eok, credit_eok), ...] newest last."""
     import requests
 
     rows = {}
@@ -85,25 +86,24 @@ def fetch_deposit_series():
                 if not m:
                     continue
                 nums = m.group(2).replace(",", "").split()
-                if not nums:
+                if len(nums) < 3:
                     continue
                 try:
-                    rows[m.group(1)] = float(nums[0])
+                    rows[m.group(1)] = (float(nums[0]), float(nums[2]))
                 except ValueError:
                     continue
     except Exception as exc:
         print(f"deposit fetch skip: {exc}")
         return []
-    items = sorted(rows.items())
-    return items
+    return [(d, v[0], v[1]) for d, v in sorted(rows.items())]
 
 
 def h5_line(series) -> tuple[str, bool]:
     if len(series) < H5_WINDOW + 1:
         return "H5-S2 예탁금: 데이터 없음", False
-    vals = [v for _, v in series]
-    last_date, last = series[-1]
-    window = vals[-(H5_WINDOW + 1):-1]
+    deps = [v[1] for v in series]
+    last_date, last, _ = series[-1]
+    window = deps[-(H5_WINDOW + 1):-1]
     if not window:
         return "H5-S2 예탁금: 데이터 없음", False
     ma = sum(window) / len(window)
@@ -113,6 +113,24 @@ def h5_line(series) -> tuple[str, bool]:
     fired = dev > H5_PCT
     status = f"ON +{dev:.1f}% vs 20일평균" if fired else f"off {dev:+.1f}%"
     return f"H5-S2 예탁금: {status} ({last_date} {last/10000:.1f}조)", fired
+
+
+def h5s3_line(series) -> tuple[str, bool]:
+    if len(series) < H5S3_WINDOW + 1:
+        return "H5-S3 천장: 데이터 없음", False
+    last_date, last_dep, last_cred = series[-1]
+    prev_dep = series[-(H5S3_WINDOW + 1)][1]
+    prev_cred = series[-(H5S3_WINDOW + 1)][2]
+    if prev_dep <= 0 or prev_cred <= 0:
+        return "H5-S3 천장: 데이터 없음", False
+    dep_chg = (last_dep / prev_dep - 1.0) * 100.0
+    cred_chg = (last_cred / prev_cred - 1.0) * 100.0
+    fired = dep_chg > H5_PCT and cred_chg > H5_PCT
+    if fired:
+        status = f"ON 예탁5일 {dep_chg:+.1f}% 신용5일 {cred_chg:+.1f}%"
+    else:
+        status = f"off 예탁5일 {dep_chg:+.1f}% 신용5일 {cred_chg:+.1f}%"
+    return f"H5-S3 천장: {status} ({last_date})", fired
 
 
 def fetch_index(day: str):
@@ -157,12 +175,15 @@ def main() -> int:
     close, chg = fetch_index(day)
     fgn, inst = flow["외국인"], flow["기관합계"]
     h4 = fgn >= H4_MIN and inst >= H4_MIN
-    h5_text, h5 = h5_line(fetch_deposit_series())
+    series = fetch_deposit_series()
+    h5_text, h5 = h5_line(series)
+    s3_text, s3 = h5s3_line(series)
     lines = [f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | KOSPI"]
     if close is not None:
         lines.append(f"지수 {close:,.2f} ({chg:+.2f}%)")
     lines.append("H4 동반강매수: " + ("ON 외국인+기관 각 3천억+" if h4 else "off"))
     lines.append(h5_text)
+    lines.append(s3_text)
     lines.append("")
     for name in TOP:
         if name in flow:
@@ -182,11 +203,14 @@ def main() -> int:
     if prev.get("day") == day:
         print("already sent today; silent")
         return 0
-    tag = ("H4 " if h4 else "") + ("H5 " if h5 else "")
+    tag = ("H4 " if h4 else "") + ("H5 " if h5 else "") + ("S3 " if s3 else "")
     title = f"[FLOW] {tag}KOSPI 수급 {day[4:6]}/{day[6:8]}"
-    ntfy(server, topic, title, msg, 4 if (h4 or h5) else 3)
+    ntfy(server, topic, title, msg, 4 if (h4 or h5 or s3) else 3)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "h5": h5, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    STATE_PATH.write_text(
+        json.dumps({"day": day, "h4": h4, "h5": h5, "s3": s3, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return 0
 
 
