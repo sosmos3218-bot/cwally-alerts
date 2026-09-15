@@ -1,0 +1,6 @@
+{
+  "name": "KOSPI flow",
+  "ntfy_topic": "cwally-flow",
+  "ntfy_server": "https://ntfy.sh",
+  "slot_kst": "15:40"
+}
