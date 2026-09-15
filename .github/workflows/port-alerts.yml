@@ -16,7 +16,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce | silicon2, cover0198, lg, 0220wl]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
