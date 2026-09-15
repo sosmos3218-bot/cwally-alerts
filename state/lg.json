@@ -1,7 +1,7 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "price": null,
+  "updated_at": "2026-09-15 15:17 KST",
+  "zone": "BETWEEN",
+  "price": 114900.0,
   "below_hits": 0,
   "stop_sent": false,
   "shock_sent": false,
