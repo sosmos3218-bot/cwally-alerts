@@ -78,10 +78,11 @@ jobs:
         id: pick
         run: |
           JOB="${{ github.event.inputs.job }}"
-          if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
-          elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
-          else JOB=morning
-          fi
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
+            else JOB=morning
+            fi
           fi
           [ -z "$JOB" ] && JOB=all
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
@@ -139,7 +140,7 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
-          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && '1' || '0' }}
+          FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square != 'false' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
