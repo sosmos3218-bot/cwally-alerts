@@ -101,13 +101,13 @@ def main() -> int:
             pass
 
     price = ret20 = avg5 = avg20 = None
-    common = bench20 = cav5 = cav20 = None
+    common = bench20 = None
     try:
         price, ret20, avg5, avg20 = yahoo_chart(cfg["ticker"])
     except Exception as exc:
         print(f"price fetch failed: {exc}", file=sys.stderr)
     try:
-        common, bench20, cav5, cav20 = yahoo_chart(cfg["bench_ticker"])
+        common, bench20, _, _ = yahoo_chart(cfg["bench_ticker"])
     except Exception as exc:
         print(f"bench fetch failed: {exc}", file=sys.stderr)
 
@@ -151,11 +151,14 @@ def main() -> int:
     px = f"{price:,.0f}" if price is not None else "N/A"
     cx = f"{common:,.0f}" if common is not None else "N/A"
     cost = cfg["cost"]
+    shares = cfg.get("shares_phase1", 0)
     pnl = f"{(price / cost - 1) * 100:+.1f}%" if price else "n/a"
     ratio_s = f"{ratio:.3f}" if ratio is not None else "n/a"
+    bands = cfg["bands"]
     lines = [
         f"{stamp} | {mode} | {cfg['display']} {cfg['code']}",
-        f"가 {px}원 | 원가 {cost:,} | {pnl} | {z}",
+        f"가 {px}원 | 원가 {cost:,} | {shares}주 | {pnl} | {z}",
+        cfg.get("basis_note", ""),
         f"보통 {cx}원 | 비율 {ratio_s} | 품질 {','.join(flags) if flags else '없음'}",
         cfg["actions"].get(action_key, ""),
     ]
@@ -170,7 +173,7 @@ def main() -> int:
     lines += [
         "",
         "품질: GAP 비율<0.32 / LAG 상대-8%p / VOL 거래량35%",
-        "폐기: 품질 2개 + 2,030원 | 손절 후 30일 재매수 금지",
+        f"폐기: 품질 2개 + {bands['stop20']:,}원 | 손절 후 30일 재매수 금지",
         "시간: 2026-10 배당전환 / 2026-12 상대 / 2027-06 12개월 / 2028-06 교체",
     ]
     if live:
