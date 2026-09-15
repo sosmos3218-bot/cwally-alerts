@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | all
+        description: steel | alux | square | clarity | hce | silicon2 | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce]
+        options: [all, steel, alux, square, clarity, hce, silicon2]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -32,6 +32,11 @@ on:
         default: daily
         type: choice
         options: [daily, event]
+      silicon2_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
       force_square:
         type: boolean
         default: true
@@ -59,7 +64,7 @@ jobs:
         run: |
           JOB="${{ github.event.inputs.job }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=square
+            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             else JOB=morning
             fi
@@ -73,14 +78,17 @@ jobs:
           fi
           AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
           if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
+          S2=event
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
             HM="${{ github.event.inputs.hce_mode }}"
+            S2="${{ github.event.inputs.silicon2_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
           echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
+          echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + clarity + hce
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce'
         env:
@@ -100,13 +108,20 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
             python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
           fi
-      - name: Run square (afternoon)
-        if: steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
           FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square != 'false' && '1' || '0' }}
-        run: node scripts/square_sell_alert.mjs
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
+            node scripts/square_sell_alert.mjs
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "silicon2" ]; then
+            python scripts/silicon2_monitor.py "${{ steps.pick.outputs.silicon2_mode }}"
+          fi
       - name: Persist state
         run: |
           git config user.name "cwally-alerts-bot"
