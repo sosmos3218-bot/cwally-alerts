@@ -58,7 +58,7 @@ jobs:
         id: pick
         run: |
           JOB="${{ github.event.inputs.job }}"
-          if [ "${{ github.event.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=square
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             else JOB=morning
