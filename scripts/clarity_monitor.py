@@ -31,6 +31,7 @@ FAIL_RE = re.compile(
     re.I,
 )
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
+KO = {"pass": "가결", "fail": "부결", "pending": "미확정"}
 
 
 def fetch(url: str) -> str:
@@ -54,6 +55,21 @@ def classify(text: str) -> tuple[str, str]:
     if PASS_RE.search(blob) and FAIL_RE.search(blob):
         return "pending", blob[:280]
     return "pending", (hits[0][:280] if hits else "")
+
+
+def playbook(cfg: dict, result: str) -> list[str]:
+    coin = cfg.get("coin", {})
+    rule = (coin.get("rules") or {}).get(result) or {}
+    cap = coin.get("target_pct_of_assets", 5)
+    return [
+        f"COIN 전략 | 총자산 {cap}% 한도",
+        f"1차 지금: 목표의 {rule.get('now_pct_of_target')}% | {rule.get('now_note')}",
+        f"2차 ${rule.get('t2_price')}: 목표의 {rule.get('t2_pct_of_target')}% | {rule.get('t2_note')}",
+        f"3차 ${rule.get('t3_price')}: 목표의 {rule.get('t3_pct_of_target')}% | {rule.get('t3_note')}",
+        f"익절: {rule.get('take_profit')}",
+        f"재평가: {rule.get('stop_review')}",
+        f"금지: {rule.get('forbid')}",
+    ]
 
 
 def ntfy(server: str, topic: str, title: str, message: str, priority: int) -> None:
@@ -113,18 +129,15 @@ def main() -> int:
         if snip and not snippet:
             snippet, source = snip, url
 
-    action = {
-        "pass": "가결. 지금 25%만 실행. 2차 지정가 180. 추격 금지.",
-        "fail": "부결. 지금 트랜치 15%. 2차는 종가 165 아래일 때만 175. 3차 150.",
-        "pending": "미확정. 지정가 유지. 추격 매수 금지.",
-    }[result]
-    ko = {"pass": "가결", "fail": "부결", "pending": "미확정"}[result]
+    ko = KO[result]
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | CLARITY | H.R.3633 cloture",
         f"결과: {ko}",
-        action,
+        "",
+        *playbook(cfg, result),
     ]
     if source:
+        lines.append("")
         lines.append(f"출처: {source}")
     if snippet:
         lines.append(snippet.strip())
@@ -140,7 +153,8 @@ def main() -> int:
         send = True
         state["pending_notified"] = True
     if send:
-        title = f"[CLARITY] cloture {ko}"
+        t2 = ((cfg.get("coin") or {}).get("rules") or {}).get(result, {}).get("t2_price")
+        title = f"[CLARITY] {ko} | COIN 2차 ${t2}"
         ntfy(server, topic, title, msg, 5 if result in {"pass", "fail"} else 3)
     else:
         print("no ntfy; state unchanged for notify")

@@ -7,5 +7,50 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "title_prefix": "[CLARITY]",
-  "expire_date": "2026-09-20"
+  "expire_date": "2026-09-20",
+  "coin": {
+    "ticker": "COIN",
+    "target_pct_of_assets": 5,
+    "rules": {
+      "pass": {
+        "now_pct_of_target": 25,
+        "now_note": "현재가에서 목표의 25%만. 추가 10%p 지금 넣지 않음",
+        "t2_price": 180,
+        "t2_pct_of_target": 30,
+        "t2_note": "지정가 180, 금액 목표의 30%",
+        "t3_price": 155,
+        "t3_pct_of_target": 40,
+        "t3_note": "지정가 155 유지",
+        "take_profit": "평균단가 +35%에서 1/3 매도(원금 회수). 230에서 잔여 1/3 축소",
+        "stop_review": "139 이탈 + 구독매출 가이던스 하회 시 보유 40~60% 축소",
+        "forbid": "추격매수, 신용/미수, 목표 5% 초과 금지"
+      },
+      "fail": {
+        "now_pct_of_target": 15,
+        "now_note": "현재가 트랜치를 목표의 15%로 축소. 나머지 현금",
+        "t2_price": 175,
+        "t2_pct_of_target": 30,
+        "t2_note": "지정가 175. 부결 다음날 종가가 165 아래일 때만 체결",
+        "t3_price": 150,
+        "t3_pct_of_target": 40,
+        "t3_note": "지정가 150",
+        "take_profit": "평균단가 +35%에서 1/3 매도(원금 회수). 230에서 잔여 1/3 축소",
+        "stop_review": "139 이탈 + 구독매출 가이던스 하회 시 보유 40~60% 축소",
+        "forbid": "부결 당일 시장가 추격 금지. 신용/미수, 목표 5% 초과 금지"
+      },
+      "pending": {
+        "now_pct_of_target": 25,
+        "now_note": "결과 나올 때까지 신규 주문 보류 가능. 이미 넣은 25%는 유지",
+        "t2_price": 175,
+        "t2_pct_of_target": 30,
+        "t2_note": "지정가 175 유지, 체결 대기",
+        "t3_price": 155,
+        "t3_pct_of_target": 40,
+        "t3_note": "지정가 155 유지",
+        "take_profit": "평균단가 +35% / 230 규칙 유지",
+        "stop_review": "139 재평가 라인 유지",
+        "forbid": "미확정 상태에서 추격매수 금지"
+      }
+    }
+  }
 }
