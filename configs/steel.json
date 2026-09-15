@@ -1,0 +1,49 @@
+{
+  "portfolio": {
+    "name": "steel-60-25-15",
+    "horizon_months": 24,
+    "max_horizon_months": 36,
+    "max_equity_weight_pct": 30,
+    "as_of": "2026-09-15",
+    "ntfy_topic": "cwally-port",
+    "ntfy_server": "https://ntfy.sh"
+  },
+  "weights": {
+    "POSCO": {"ticker": "005490.KS", "name": "POSCO홀딩스", "weight_pct": 60},
+    "HYUNDAI": {"ticker": "004020.KS", "name": "현대제철", "weight_pct": 25},
+    "POONGSAN": {"ticker": "103140.KS", "name": "풍산", "weight_pct": 15}
+  },
+  "bands": {
+    "POSCO": {
+      "now": 330000,
+      "buy1": [320000, 335000],
+      "buy2": [300000, 315000],
+      "buy3": [280000, 295000],
+      "review": 260000,
+      "target1": 400000,
+      "target2": 460000,
+      "stretch": 500000
+    },
+    "HYUNDAI": {
+      "now": 33000,
+      "buy1": [32000, 34000],
+      "buy2": [29500, 31500],
+      "buy3": [27000, 29000],
+      "review": 25000,
+      "target1": 40000,
+      "target2": 43000,
+      "stretch": 50000
+    },
+    "POONGSAN": {
+      "now": 78000,
+      "buy1": [75000, 80000],
+      "buy2": [68000, 73000],
+      "buy3": [60000, 66000],
+      "review": 56000,
+      "target1": 95000,
+      "target2": 105000,
+      "stretch": 120000
+    }
+  },
+  "tranche": {"first_pct": 40, "second_pct": 35, "third_pct": 25}
+}
