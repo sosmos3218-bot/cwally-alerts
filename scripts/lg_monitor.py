@@ -121,6 +121,7 @@ def main() -> int:
 
     live = active_events(cfg, today)
     live_ids = [e["id"] for e in live]
+    new_live = [e for ev in live if ev["id"] not in (prev.get("last_event_ids") or [])]
     new_live = [e for e in live if e["id"] not in (prev.get("last_event_ids") or [])]
 
     shock = False
@@ -174,7 +175,7 @@ def main() -> int:
             print("no lg event; silent")
     else:
         send = True
-        title = f"{cfg['title_prefix']} 주간 체크" if now.weekday() == 0 else f"{cfg['title_prefix']} {z}"
+        title = f"{cfg['title_prefix']} 체크"
 
     STATE_PATH.write_text(
         json.dumps(
@@ -197,7 +198,12 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = 5 if persist_stop or shock else (4 if zone_changed or new_live else 3)
+        if persist_stop:
+            pri = 5
+        elif shock or zone_changed or new_live:
+            pri = 4
+        else:
+            pri = 3
         ntfy_publish(server, topic, title, msg, pri, "warning,chart_with_downwards_trend")
     return 0
 
