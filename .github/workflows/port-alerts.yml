@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | all
+        description: steel | alux | square | clarity | hce | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity]
+        options: [all, steel, alux, square, clarity, hce]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -27,6 +27,11 @@ on:
         default: weekly
         type: choice
         options: [weekly, event]
+      hce_mode:
+        description: daily | event
+        default: daily
+        type: choice
+        options: [daily, event]
       force_square:
         type: boolean
         default: true
@@ -53,7 +58,7 @@ jobs:
         id: pick
         run: |
           JOB="${{ github.event.inputs.job }}"
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "${{ github.event.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=square
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             else JOB=morning
@@ -67,14 +72,17 @@ jobs:
           else SM=event
           fi
           AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
+          if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
+            HM="${{ github.event.inputs.hce_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity'
+          echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
@@ -88,6 +96,9 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "clarity" ]; then
             python scripts/clarity_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
+            python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
           fi
       - name: Run square (afternoon)
         if: steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'all'
