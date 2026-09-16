@@ -1,0 +1,96 @@
+{
+  "name": "iren",
+  "title_prefix": "[IREN]",
+  "ticker": "IREN",
+  "display": "IREN",
+  "as_of": "2026-09-16",
+  "horizon": "event-2026q4-2027",
+  "schedule_kst": "09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "cik": "0001878848",
+  "ref_price": 41.6,
+  "levels": {
+    "review": 30,
+    "jpm": 65,
+    "consensus": 80
+  },
+  "checkpoints": {
+    "arr_contracted_bn": 4.0,
+    "arr_operating_bn": 1.0,
+    "ms_tcv_bn": 9.7,
+    "nvda_tcv_bn": 3.4,
+    "horizon1": "accepted",
+    "horizon24_target": "2026-Q4",
+    "grace_end": "2027-Q2-early",
+    "btc_exit": "2026-12",
+    "sweetwater_phase1": "2027-Q4"
+  },
+  "keywords": [
+    "Horizon",
+    "Microsoft",
+    "accepted",
+    "acceptance",
+    "delivered",
+    "Childress",
+    "NVIDIA",
+    "NVDA",
+    "ARR",
+    "interconnection",
+    "ERCOT",
+    "Sweetwater",
+    "GPU financing",
+    "Blue Owl",
+    "Bitcoin",
+    "mining",
+    "wind-down",
+    "8-K",
+    "grace",
+    "delay",
+    "commissioning"
+  ],
+  "events": [
+    {
+      "id": "h24",
+      "label": "Horizon 2-4 인도/인수",
+      "start": "2026-10-01",
+      "end": "2026-12-31",
+      "check": "Childress 50MW x3 인수 공시. 미인수면 $40억 ARR 중 $30억 갭 유지. 유예는 27년 2초까지."
+    },
+    {
+      "id": "midterm",
+      "label": "중간선거·텍사스 계통",
+      "start": "2026-11-01",
+      "end": "2026-11-10",
+      "check": "ERCOT interconnection audit / Sweetwater Batch Zero 조건. 심사 밀리면 27년 0.5GW 파이프라인 이연."
+    },
+    {
+      "id": "btc",
+      "label": "채굴 종료",
+      "start": "2026-12-01",
+      "end": "2026-12-31",
+      "check": "BTC 채굴 전면 종료 이행. FY26 매출 대부분이 채굴. AI가 현금흐름 못 메우면 한 분기 공백."
+    },
+    {
+      "id": "grace",
+      "label": "Horizon 유예기간",
+      "start": "2027-01-01",
+      "end": "2027-04-15",
+      "check": "2-4 미인수면 MS $97억 실행 리스크. 9% Mackenzie 대출 여유 없음."
+    },
+    {
+      "id": "sweetwater",
+      "label": "Sweetwater 1단계 300MW",
+      "start": "2027-10-01",
+      "end": "2027-12-31",
+      "check": "조건부 ERCOT Batch Zero 1단계. 미달이 아니면 2GW 스토리는 종이."
+    }
+  ],
+  "watch": [
+    "Horizon 2 인수 8-K",
+    "Horizon 3-4 유예기간 준수",
+    "Sweetwater / ERCOT 문구 변화",
+    "2027 용량 $/W · 선급 비율",
+    "채굴 종료 후 첫 분기 FCF"
+  ]
+}
