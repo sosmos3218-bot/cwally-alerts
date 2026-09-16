@@ -177,6 +177,7 @@ def load_state() -> dict:
         "briefing_sent": False,
         "fed_sent_date": None,
         "boj_sent_date": None,
+        "boj_press_sent_date": None,
         "weekly_sent_week": None,
         "last_event_key": None,
         "last_quotes": {},
@@ -228,9 +229,24 @@ def emit_boj(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], sta
         "이게 뭐 알림: 일본은행 결정. 레벨이 안 깨져도 결과는 반드시 보냅니다.",
         f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
         f"지금 할 일: {act}",
-        "나중에: 다음 일한 10/30, 12/18도 같이 무조건 보냅니다.",
+        "나중에: 다음 일한 10/30, 12/18도 공표문+회견 두 장입니다.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
         "하지 말 것: 공표문 없이 추격. 엔 강세=원 강세로 같이 베팅.",
+    ]
+    send(cfg, title, lines, 5)
+
+
+def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], stance: str) -> None:
+    act = action_line(keys)
+    title = f"[YENCARRY] 일한 회견 후 | {act}"
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 기자회견 후",
+        "이게 뭐 알림: 우에다 기자회견(15:30) 뒤 레벨을 한 번 더 봅니다. 공표문 알림과 별도입니다.",
+        f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 할 일: {act}",
+        "나중에: 같은 날 회견 알림은 한 번만 갑니다. 다음 일한 10/30, 12/18도 공표문+회견 두 장입니다.",
+        "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
+        "하지 말 것: 회견 톤만 듣고 추격. 엔 강세=원 강세로 같이 베팅.",
     ]
     send(cfg, title, lines, 5)
 
@@ -299,7 +315,17 @@ def main() -> int:
             save_state(state, now, q)
             return 0
 
-    if is_boj and cfg.get("boj_force", True):
+    if mode == "boj_press" or (is_boj and cfg.get("boj_press_force", True) and now.hour >= 16):
+        if state.get("boj_press_sent_date") == today:
+            print("boj press already sent")
+        else:
+            stance = boj_stance(now)
+            emit_boj_press(cfg, now, usdjpy, usdkrw, j30, keys, stance)
+            state["boj_press_sent_date"] = today
+            save_state(state, now, q)
+            return 0
+
+    if is_boj and cfg.get("boj_force", True) and mode != "boj_press":
         if now.hour < boj_after and mode != "fed":
             print("boj morning; wait for statement")
         elif state.get("boj_sent_date") == today:
