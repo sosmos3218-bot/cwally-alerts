@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -147,8 +147,8 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
             python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
           fi
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -172,6 +172,9 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
             python scripts/ustsy_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sgyn" ]; then
+            python scripts/sgyn_monitor.py event
           fi
       - name: Persist state
         run: |
