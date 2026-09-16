@@ -1,0 +1,17 @@
+{
+  "name": "YENCARRY",
+  "title_prefix": "[YENCARRY]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "20:50",
+  "once": true,
+  "as_of": "2026-09-16",
+  "levels": {
+    "usdjpy": 155.1,
+    "usdkrw": 1368.6,
+    "ust_10y": 5.0,
+    "jgb_10y": 3.0,
+    "jgb_30y": 4.15,
+    "kospi": 6717.97
+  }
+}
