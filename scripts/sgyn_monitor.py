@@ -67,7 +67,10 @@ def main() -> int:
     regions = cfg["regions"]
     th = cfg["thresholds"]
     order = " → ".join(regions[k]["label"] for k in cfg["break_order"])
-    title = f"[SGYN] {동탄부터 확인 | 추격 금지}" if kind != "기준" else "[SGYN] 12개월 유지 채크 | 추격 금지"
+    if kind == "기준":
+        title = "[SGYN] 12개월 유지 체크 | 추격 금지"
+    else:
+        title = "[SGYN] 동탄부터 확인 | 추격 금지"
 
     lines = [
         f"{stamp} | SGYN | 경기남부 4권역",
