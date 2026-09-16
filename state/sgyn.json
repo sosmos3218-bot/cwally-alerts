@@ -1,8 +1,24 @@
 {
-  "updated_at": null,
-  "last_sent_date": null,
-  "week_date": null,
-  "file_seq": null,
+  "updated_at": "2026-09-16 14:40 KST",
+  "last_sent_date": "2026-09-16",
+  "week_date": "2026-09-07",
+  "file_seq": 4933,
   "hits": [],
-  "series": {}
+  "series": {
+    "suji": {
+      "sale_week": 0.28857545475309276,
+      "jeonse_week": 0.13321461620658948,
+      "jeonse_13w": 1.8919335077319799
+    },
+    "yeongtong": {
+      "sale_week": 0.4714384829559437,
+      "jeonse_week": 0.2762734376138054,
+      "jeonse_13w": 3.0675370946476654
+    },
+    "dongtan": {
+      "sale_week": 0.21697037367482963,
+      "jeonse_week": 0.20581049588026534,
+      "jeonse_13w": 5.194892219645042
+    }
+  }
 }
