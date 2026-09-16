@@ -53,7 +53,7 @@ def jgb30() -> float | None:
         header = [c.strip() for c in rows[0].split(",")]
         idx = None
         for i, name in enumerate(header):
-            if "30" in name and ("年" in name or "Y" in name.upper() or name.endswith("30")):
+            if "30" in name and ("\u5e74" in name or "Y" in name.upper() or name.endswith("30")):
                 idx = i
         if idx is None and len(header) >= 12:
             idx = -2 if "40" in header[-1] else -1
@@ -78,58 +78,84 @@ def fed_stance(day: datetime) -> str:
         html = fetch(url)
     except Exception as exc:
         print(f"fed fetch fail: {exc}", file=sys.stderr)
-        return "문장 없음"
+        return "\ubb38\uc7a5 \uc5c6\uc74c"
     text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"\s+", " ", text).lower()
+    if "raise the target range" in text or "decided to raise" in text:
+        return "\uae08\ub9ac \uc778\uc0c1"
+    if "lower the target range" in text or "decided to lower" in text:
+        return "\uae08\ub9ac \uc778\ud558"
+    if "maintain the target range" in text or "decided to maintain" in text:
+        return "\uae08\ub9ac \ub3d9\uacb0"
+    return "\ubb38\uc7a5 \ud655\uc778 \uc2e4\ud328"
+
+
+def boj_stance(day: datetime) -> str:
+    ymd = day.strftime("%y%m%d")
+    pages = [
+        "https://www.boj.or.jp/mopo/mpmdeci/mpr_2026/index.htm",
+        "https://www.boj.or.jp/en/mopo/mpmdeci/mpr_2026/index.htm",
+        f"https://www.boj.or.jp/mopo/mpmdeci/mpr_2026/k{ymd}a.pdf",
+    ]
+    blob = ""
+    for url in pages:
+        try:
+            blob += " " + fetch(url)
+        except Exception as exc:
+            print(f"boj fetch fail {url}: {exc}", file=sys.stderr)
+    if not blob.strip():
+        return "\uacf8\ud45c\ubb38 \uc544\uc9c1 \uc5c6\uc74c"
+    text = re.sub(r"<[^>]+>", " ", blob)
     text = re.sub(r"\s+", " ", text)
-    low = text.lower()
-    if "raise the target range" in low or "decided to raise" in low:
-        return "금리 인상"
-    if "lower the target range" in low or "decided to lower" in low:
-        return "금리 인하"
-    if "maintain the target range" in low or "decided to maintain" in low:
-        return "금리 동결"
-    return "문장 확인 실패"
+    day_ko = f"{day.month}\u6708{day.day}\u65e5"
+    if day_ko not in text and ymd not in text and day.strftime("%Y%m%d") not in text:
+        return "\uacf8\ud45c\ubb38 \uc544\uc9c1 \uc5c6\uc74c"
+    if "\u91d1\u878d\u5e02\u5834\u8abf\u7bc0\u65b9\u91dd\u306e\u5909\u66f4" in text or "raise" in text.lower() and "policy rate" in text.lower():
+        return "\uae08\ub9ac \ubcc0\uacbd(\uc778\uc0c1 \uac00\ub2a5)"
+    if "\u5f53\u9762\u306e\u91d1\u878d\u653f\u7b56\u904b\u55b6" in text or "maintain" in text.lower():
+        return "\uae08\ub9ac \ub3d9\uacb0 \uac00\ub2a5"
+    return "\uacf8\ud45c\ubb38 \ud655\uc778. \uc778\uc0c1\u00b7\ub3d9\uacb0\uc740 \ubcf8\ubb38 \ud655\uc778"
 
 
 def fmt(v: float | None, nd: int = 1) -> str:
-    return f"{v:,.{nd}f}" if v is not None else "없음"
+    return f"{v:,.{nd}f}" if v is not None else "\uc5c6\uc74c"
 
 
 def breaks(cfg: dict, usdjpy: float | None, usdkrw: float | None, j30: float | None) -> list[str]:
     lv = cfg["levels"]
     out: list[str] = []
     if usdjpy is not None and usdjpy <= lv["usdjpy_low"]:
-        out.append(f"달러/엔 {fmt(usdjpy)} → 152 부셨")
+        out.append(f"\ub2ec\ub7ec/\uc5d4 {fmt(usdjpy)} \u2192 152 \uc774\ud0c8")
     if usdjpy is not None and usdjpy >= lv["usdjpy_high"]:
-        out.append(f"달러/엔 {fmt(usdjpy)} → 160 돋파")
+        out.append(f"\ub2ec\ub7ec/\uc5d4 {fmt(usdjpy)} \u2192 160 \ub3cc\ud30c")
     if usdkrw is not None and usdkrw <= lv["usdkrw_low"]:
-        out.append(f"원달러 {fmt(usdkrw, 0)}원 → 1,340 부셨")
+        out.append(f"\uc6d0\ub2ec\ub7ec {fmt(usdkrw, 0)}\uc6d0 \u2192 1,340 \uc774\ud0c8")
     if usdkrw is not None and usdkrw >= lv["usdkrw_high"]:
-        out.append(f"원달러 {fmt(usdkrw, 0)}원 → 1,400 돋파")
+        out.append(f"\uc6d0\ub2ec\ub7ec {fmt(usdkrw, 0)}\uc6d0 \u2192 1,400 \ub3cc\ud30c")
     if j30 is not None and j30 >= lv["jgb30_danger"]:
-        out.append(f"일본 30년 {fmt(j30, 2)}% → 4.5 돋파")
+        out.append(f"\uc77c\ubcf8 30\ub144 {fmt(j30, 2)}% \u2192 4.5 \ub3cc\ud30c")
     elif j30 is not None and j30 >= lv["jgb30_warn"]:
-        out.append(f"일본 30년 {fmt(j30, 2)}% → 4.3 돋파")
+        out.append(f"\uc77c\ubcf8 30\ub144 {fmt(j30, 2)}% \u2192 4.3 \ub3cc\ud30c")
     return out
 
 
 def action_line(keys: list[str]) -> str:
     if not keys:
-        return "레벨 안 깨졌으니 기존 북 유지. 추격·레버리지 금지."
+        return "\ub808\ubca8 \uc548 \uae68\uc84c\uc73c\ub2c8 \uae30\uc874 \ubd81 \uc720\uc9c0. \ucd94\uaca9\u00b7\ub808\ubc84\ub9ac\uc9c0 \uae08\uc9c0."
     bits = []
     blob = " ".join(keys)
-    if "160 돋파" in blob:
-        bits.append("엔 롱 접기")
-    if "152 부셨" in blob:
-        bits.append("엔은 확인만, 원 약세(리스크오프) 대비")
-    if "1,340 부셨" in blob:
-        bits.append("달러 보유 줄이기")
-    if "1,400 돋파" in blob:
-        bits.append("달러 일부 사기")
-    if "4.5 돋파" in blob:
-        bits.append("미국 초장기 추가 축소")
-    elif "4.3 돋파" in blob:
-        bits.append("미국 초장기 비중 줄이기")
+    if "160 \ub3cc\ud30c" in blob:
+        bits.append("\uc5d4 \ub871 \uc811\uae30")
+    if "152 \uc774\ud0c8" in blob:
+        bits.append("\uc5d4\uc740 \ud655\uc778\ub9cc, \uc6d0 \uc57d\uc138(\ub9ac\uc2a4\ud06c\uc624\ud504) \ub300\ube44")
+    if "1,340 \uc774\ud0c8" in blob:
+        bits.append("\ub2ec\ub7ec \ubcf4\uc720 \uc904\uc774\uae30")
+    if "1,400 \ub3cc\ud30c" in blob:
+        bits.append("\ub2ec\ub7ec \uc77c\ubd80 \uc0ac\uae30")
+    if "4.5 \ub3cc\ud30c" in blob:
+        bits.append("\ubbf8\uad6d \ucd08\uc7a5\uae30 \ucd94\uac00 \ucd95\uc18c")
+    elif "4.3 \ub3cc\ud30c" in blob:
+        bits.append("\ubbf8\uad6d \ucd08\uc7a5\uae30 \ube44\uc911 \uc904\uc774\uae30")
     return ". ".join(bits) + "."
 
 
@@ -151,6 +177,7 @@ def load_state() -> dict:
     state = {
         "briefing_sent": False,
         "fed_sent_date": None,
+        "boj_sent_date": None,
         "weekly_sent_week": None,
         "last_event_key": None,
         "last_quotes": {},
@@ -171,64 +198,72 @@ def save_state(state: dict, now: datetime, quotes_d: dict) -> None:
 
 
 def status_line(usdjpy: float | None, usdkrw: float | None, j30: float | None, keys: list[str]) -> str:
-    base = f"달러/엔 {fmt(usdjpy)} | 원달러 {fmt(usdkrw, 0)}원 | 일본 30년 {fmt(j30, 2)}%"
+    base = f"\ub2ec\ub7ec/\uc5d4 {fmt(usdjpy)} | \uc6d0\ub2ec\ub7ec {fmt(usdkrw, 0)}\uc6d0 | \uc77c\ubcf8 30\ub144 {fmt(j30, 2)}%"
     if keys:
-        return base + " | 깨진 것: " + ", ".join(keys)
-    return base + " | 깨진 레벨 없음"
+        return base + " | \uae68\uc9c4 \uac83: " + ", ".join(keys)
+    return base + " | \uae68\uc9c4 \ub808\ubca8 \uc5c6\uc74c"
 
 
-def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> str:
-    stance = fed_stance(now if now.hour >= 3 else now - timedelta(days=1))
-    if now.hour < 3:
-        stance = fed_stance(now - timedelta(days=1))
-    # statement dated FOMC calendar day (US), which is previous KST date after midnight
+def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> None:
     us_day = (now - timedelta(hours=13)).date()
     stance = fed_stance(datetime(us_day.year, us_day.month, us_day.day, tzinfo=timezone.utc))
     act = action_line(keys)
     title = f"[YENCARRY] {act}"
     lines = [
-        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 연준 후속",
-        "이게 뭐 알림: 연준 발표 뒤, 정해둔 레벨이 깨졌는지 보고 북을 바꿀지 결정하는 알림입니다.",
-        f"지금 상태: 연준 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
-        f"지금 할 일: {act}",
-        "나중에: 다음 이벤트는 일은 9/18, 연준 10/28. 주간 점검은 월요일 09:00.",
-        "익절/줄일 때: 엔 롱은 160 재돌파면 접기. 원달러 1,340 아래면 달러 보유 축소.",
-        "하지 말 것: 연준 한 방으로 원·코스피·미국채가 같이 무너진다고 몰뻕.",
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | \uc5f0\uc900 \ud6c4\uc18d",
+        "\uc774\uac8c \ubb50 \uc54c\ub9bc: \uc5f0\uc900 \ubc1c\ud45c \ub4a4, \uc815\ud574\ub454 \ub808\ubca8\uc774 \uae68\uc84c\ub294\uc9c0 \ubcf4\uace0 \ubd81\uc744 \ubc14\uafc0\uc9c0 \uacb0\uc815\ud558\ub294 \uc54c\ub9bc\uc785\ub2c8\ub2e4.",
+        f"\uc9c0\uae08 \uc0c1\ud0dc: \uc5f0\uc900 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"\uc9c0\uae08 \ud560 \uc77c: {act}",
+        "\ub098\uc911\uc5d0: \uc77c\uc740 9/18\uc740 \ub808\ubca8\uacfc \uc0c1\uad00\uc5c6\uc774 \ubc18\ub4dc\uc2dc \ubcf4\ub0c5\ub2c8\ub2e4. \uc8fc\uac04 \uc810\uac80\uc740 \uc6d4\uc694\uc77c 09:00.",
+        "\uc775\uc808/\uc904\uc77c \ub54c: \uc5d4 \ub871\uc740 160 \uc7ac\ub3cc\ud30c\uba74 \uc811\uae30. \uc6d0\ub2ec\ub7ec 1,340 \uc544\ub798\uba74 \ub2ec\ub7ec \ubcf4\uc720 \ucd95\uc18c.",
+        "\ud558\uc9c0 \ub9d0 \uac83: \uc5f0\uc900 \ud55c \ubc29\uc73c\ub85c \uc6d0\u00b7\ucf54\uc2a4\ud53c\u00b7\ubbf8\uad6d\ucc44\uac00 \uac19\uc774 \ubb34\ub108\uc9c4\ub2e4\uace0 \ubab0\ubed5.",
     ]
     send(cfg, title, lines, 5 if keys else 4)
-    return title
 
 
-def emit_event(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], why: str) -> str:
+def emit_boj(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], stance: str) -> None:
+    act = action_line(keys)
+    title = f"[YENCARRY] \uc77c\uc740 {stance} | {act}"
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | \uc77c\uc740 \uacb0\uacfc",
+        "\uc774\uac8c \ubb50 \uc54c\ub9bc: \uc77c\ubcf8\uc740\ud589 \uacb0\uc815. \ub808\ubca8\uc774 \uc548 \uae68\uc838\ub3c4 \uacb0\uacfc\ub294 \ubc18\ub4dc\uc2dc \ubcf4\ub0c5\ub2c8\ub2e4.",
+        f"\uc9c0\uae08 \uc0c1\ud0dc: \uc77c\uc740 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"\uc9c0\uae08 \ud560 \uc77c: {act}",
+        "\ub098\uc911\uc5d0: \ub2e4\uc74c \uc77c\uc740 10/30, 12/18\ub3c4 \uac19\uc774 \ubb34\uc870\uac74 \ubcf4\ub0c5\ub2c8\ub2e4.",
+        "\uc775\uc808/\uc904\uc77c \ub54c: 160 \uc7ac\ub3cc\ud30c\uba74 \uc5d4 \ub871 \uc811\uae30. 1,340 \uc544\ub798\uba74 \ub2ec\ub7ec \uc904\uc774\uae30.",
+        "\ud558\uc9c0 \ub9d0 \uac83: \uacf8\ud45c\ubb38 \uc5c6\uc774 \ucd94\uaca9. \uc5d4 \uac15\uc138=\uc6d0 \uac15\uc138\ub85c \uac19\uc774 \ubca0\ud305.",
+    ]
+    send(cfg, title, lines, 5)
+
+
+def emit_event(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], why: str) -> None:
     act = action_line(keys)
     title = f"[YENCARRY] {act}"
     lines = [
-        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 이벤트 {why}",
-        "이게 뭐 알림: 정해둔 레벨이 깨졌거나 중앙은행 일정이라 북을 바꿈니다.",
-        f"지금 상태: {status_line(usdjpy, usdkrw, j30, keys)}",
-        f"지금 할 일: {act}",
-        "나중에: 같은 레벨에 붙잡히면 다시 안 보냅니다. 주간 점검은 월요일 09:00.",
-        "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
-        "하지 말 것: 깨진 레벨 없이 추격. 엔 강세=원 강세로 같이 베팅.",
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | \uc774\ubca4\ud2b8 {why}",
+        "\uc774\uac8c \ubb50 \uc54c\ub9bc: \uc815\ud574\ub454 \ub808\ubca8\uc774 \uae68\uc84c\uc2b5\ub2c8\ub2e4.",
+        f"\uc9c0\uae08 \uc0c1\ud0dc: {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"\uc9c0\uae08 \ud560 \uc77c: {act}",
+        "\ub098\uc911\uc5d0: \uac19\uc740 \ub808\ubca8\uc5d0 \ubd99\uc7a1\ud788\uba74 \ub2e4\uc2dc \uc548 \ubcf4\ub0c5\ub2c8\ub2e4. \uc8fc\uac04 \uc810\uac80\uc740 \uc6d4\uc694\uc77c 09:00.",
+        "\uc775\uc808/\uc904\uc77c \ub54c: 160 \uc7ac\ub3cc\ud30c\uba74 \uc5d4 \ub871 \uc811\uae30. 1,340 \uc544\ub798\uba74 \ub2ec\ub7ec \uc904\uc774\uae30.",
+        "\ud558\uc9c0 \ub9d0 \uac83: \uae68\uc9c4 \ub808\ubca8 \uc5c6\uc774 \ucd94\uaca9. \uc5d4 \uac15\uc138=\uc6d0 \uac15\uc138\ub85c \uac19\uc774 \ubca0\ud305.",
     ]
     send(cfg, title, lines, 5)
-    return title
 
 
-def emit_weekly(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> str:
+def emit_weekly(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> None:
     act = action_line(keys)
-    title = f"[YENCARRY] 주간 점검 | {act}"
+    title = f"[YENCARRY] \uc8fc\uac04 \uc810\uac80 | {act}"
     lines = [
-        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 주간",
-        "이게 뭐 알림: 엔캐리 레벨을 한 주에 한 번 보는 점검입니다.",
-        f"지금 상태: {status_line(usdjpy, usdkrw, j30, keys)}",
-        f"지금 할 일: {act}",
-        "나중에: 152/160, 1,340/1,400, 일본 30년 4.3 깨지면 그때 다시 보냅니다.",
-        "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
-        "하지 말 것: 매주 점검 대신 매일 추격. 월간으로 달리지 말 것.",
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | \uc8fc\uac04",
+        "\uc774\uac8c \ubb50 \uc54c\ub9bc: \uc5d4\uce90\ub9ac \ub808\ubca8\uc744 \ud55c \uc8fc\uc5d0 \ud55c \ubc88 \ubcf4\ub294 \uc810\uac80\uc785\ub2c8\ub2e4.",
+        f"\uc9c0\uae08 \uc0c1\ud0dc: {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"\uc9c0\uae08 \ud560 \uc77c: {act}",
+        "\ub098\uc911\uc5d0: 152/160, 1,340/1,400, \uc77c\ubcf8 30\ub144 4.3 \uae68\uc9c0\uba74 \uadf8\ub54c \ub2e4\uc2dc \ubcf4\ub0c5\ub2c8\ub2e4.",
+        "\uc775\uc808/\uc904\uc77c \ub54c: 160 \uc7ac\ub3cc\ud30c\uba74 \uc5d4 \ub871 \uc811\uae30. 1,340 \uc544\ub798\uba74 \ub2ec\ub7ec \uc904\uc774\uae30.",
+        "\ud558\uc9c0 \ub9d0 \uac83: \ub9e4\uc8fc \uc810\uac80 \ub300\uc2e0 \ub9e4\uc77c \ucd94\uaca9.",
     ]
     send(cfg, title, lines, 3 if not keys else 4)
-    return title
 
 
 def main() -> int:
@@ -248,35 +283,43 @@ def main() -> int:
     us_cal = (now - timedelta(hours=13)).strftime("%Y-%m-%d")
     is_fed_window = us_cal in fomc or today in fomc
     is_boj = today in boj
+    boj_after = 12
+    raw_after = str(cfg.get("boj_send_after_kst") or "12:00")
+    try:
+        boj_after = int(raw_after.split(":")[0])
+    except ValueError:
+        boj_after = 12
 
     if mode == "fed" or (mode == "auto" and is_fed_window and now.hour >= 3):
         if state.get("fed_sent_date") == us_cal:
             print("fed already sent")
+        else:
+            emit_fed(cfg, now, usdjpy, usdkrw, j30, keys)
+            state["fed_sent_date"] = us_cal
+            state["last_event_key"] = event_key(keys, "fed-" + us_cal)
             save_state(state, now, q)
             return 0
-        emit_fed(cfg, now, usdjpy, usdkrw, j30, keys)
-        state["fed_sent_date"] = us_cal
-        state["last_event_key"] = event_key(keys, "fed-" + us_cal)
-        save_state(state, now, q)
-        return 0
+
+    if is_boj and cfg.get("boj_force", True):
+        if now.hour < boj_after and mode != "fed":
+            print("boj morning; wait for statement")
+        elif state.get("boj_sent_date") == today:
+            print("boj already sent")
+        else:
+            stance = boj_stance(now)
+            emit_boj(cfg, now, usdjpy, usdkrw, j30, keys, stance)
+            state["boj_sent_date"] = today
+            save_state(state, now, q)
+            return 0
 
     if keys:
         ek = event_key(keys)
-        if state.get("last_event_key") == ek and mode != "fed":
+        if state.get("last_event_key") == ek:
             print("same event; silent")
             save_state(state, now, q)
             return 0
-        why = "레벨 탈출"
-        if is_boj:
-            why = "일은 회의일"
-        emit_event(cfg, now, usdjpy, usdkrw, j30, keys, why)
+        emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "\ub808\ubca8 \ud0c8\ucd9c")
         state["last_event_key"] = ek
-        save_state(state, now, q)
-        return 0
-
-    if is_boj and state.get("last_event_key") != "boj-" + today:
-        emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "일은 회의일")
-        state["last_event_key"] = "boj-" + today
         save_state(state, now, q)
         return 0
 
