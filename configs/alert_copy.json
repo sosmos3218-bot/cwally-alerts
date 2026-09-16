@@ -1,0 +1,20 @@
+{
+  "topic_holdings": "cwally-port",
+  "topic_flow": "cwally-flow",
+  "topic_ops": "cwally-ops",
+  "forbidden_topics": ["clarity-52505089"],
+  "title_format": "[NAME] 한 줄 행동",
+  "body_order": [
+    "이게 뭔 알림",
+    "지금 결과/상태",
+    "지금 할 일",
+    "나중에",
+    "익절/줄일 때",
+    "하지 말 것"
+  ],
+  "rules": [
+    "쉬운 한국어. 약어는 괄호로 풀어 쓴다.",
+    "숫자와 행동을 같이 적는다. 예: 지금은 목표의 25%만 산다.",
+    "추격매수/신용/미수처럼 금지 항목은 따로 적는다."
+  ]
+}

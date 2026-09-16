@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import urllib.request
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+
+KST = timezone(timedelta(hours=9))
 STATE_PATH = ROOT / "state" / "clarity.json"
 CFG_PATH = ROOT / "configs" / "clarity.json"
 
@@ -35,6 +37,8 @@ KO = {"pass": "가결", "fail": "부결", "pending": "아직 결과 없음"}
 
 
 def fetch(url: str) -> str:
+    import urllib.request
+
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=25) as resp:
         raw = resp.read()
@@ -76,31 +80,11 @@ def playbook(cfg: dict, result: str) -> list[str]:
     ]
 
 
-def ntfy(server: str, topic: str, title: str, message: str, priority: int) -> None:
-    payload = json.dumps(
-        {
-            "topic": topic,
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": ["classical_building", "chart_with_upwards_trend"],
-        }
-    ).encode()
-    req = urllib.request.Request(
-        server.rstrip("/"),
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
-
-
 def main() -> int:
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
-    topic = os.environ.get("NTFY_TOPIC") or cfg.get("ntfy_topic") or "cwally-port"
-    server = os.environ.get("NTFY_SERVER") or cfg.get("ntfy_server") or "https://ntfy.sh"
+    topic = resolve_topic("port", cfg.get("ntfy_topic"))
+    server = resolve_server(cfg.get("ntfy_server"))
     state = {
         "result": "pending",
         "pending_notified": False,
@@ -145,6 +129,7 @@ def main() -> int:
         lines.append(f"출처: {source}")
     msg = "\n".join(lines)
     print(msg)
+    print(f"topic={topic}")
 
     send = False
     if result in {"pass", "fail"} and not state.get("final_notified"):
@@ -157,7 +142,14 @@ def main() -> int:
     if send:
         rule = ((cfg.get("coin") or {}).get("rules") or {}).get(result) or {}
         title = f"[CLARITY] {rule.get('title') or ko}"
-        ntfy(server, topic, title, msg, 5 if result in {"pass", "fail"} else 3)
+        publish(
+            topic,
+            title,
+            msg,
+            5 if result in {"pass", "fail"} else 3,
+            ["classical_building", "chart_with_upwards_trend"],
+            server,
+        )
     else:
         print("no ntfy; state unchanged for notify")
 

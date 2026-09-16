@@ -3,7 +3,7 @@ const HYNIX = "000660.KS";
 const SHARES_SQ = 131923998;
 const SHARES_HX = 146128233;
 const OTHER_NAV = 4.84e12;
-const topic = process.env.NTFY_TOPIC || "cwally-port";
+const topic = "cwally-port";
 const server = (process.env.NTFY_SERVER || "https://ntfy.sh").replace(/\/$/, "");
 const force = process.env.FORCE_ALERT === "1";
 
