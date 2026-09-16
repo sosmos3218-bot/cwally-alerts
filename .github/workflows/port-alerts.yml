@@ -12,11 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -48,6 +48,11 @@ on:
         type: choice
         options: [event, weekly]
       wl_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      iren_mode:
         description: event | weekly
         default: event
         type: choice
@@ -97,6 +102,8 @@ jobs:
           C8=event
           LG=event
           WL=event
+          IR=event
+          if [ "$DOW" = "1" ]; then IR=weekly; fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
@@ -105,6 +112,7 @@ jobs:
             C8="${{ github.event.inputs.cover0198_mode }}"
             LG="${{ github.event.inputs.lg_mode }}"
             WL="${{ github.event.inputs.wl_mode }}"
+            IR="${{ github.event.inputs.iren_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -113,8 +121,9 @@ jobs:
           echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
           echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
           echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg'
+          echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce + lg + iren
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
@@ -135,12 +144,15 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
           fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
+            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
+          fi
       - name: Run square + silicon2 + cover0198 + 0220wl + lg (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
           NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
-          FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square != 'false' && '1' || '0' }}
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
