@@ -1,8 +1,8 @@
 {
   "result": "pending",
-  "pending_notified": true,
+  "pending_notified": false,
   "final_notified": false,
-  "updated_at": "2026-09-16T06:48:43.677860+09:00",
+  "updated_at": null,
   "source": null,
   "snippet": null
 }

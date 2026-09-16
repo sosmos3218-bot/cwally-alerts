@@ -31,7 +31,7 @@ FAIL_RE = re.compile(
     re.I,
 )
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
-KO = {"pass": "가결", "fail": "부결", "pending": "미확정"}
+KO = {"pass": "가결", "fail": "부결", "pending": "아직 결과 없음"}
 
 
 def fetch(url: str) -> str:
@@ -61,14 +61,18 @@ def playbook(cfg: dict, result: str) -> list[str]:
     coin = cfg.get("coin", {})
     rule = (coin.get("rules") or {}).get(result) or {}
     cap = coin.get("target_pct_of_assets", 5)
+    explain = cfg.get("explain") or "COIN 매매 가이드 알림입니다."
     return [
-        f"COIN 전략 | 총자산 {cap}% 한도",
-        f"1차 지금: 목표의 {rule.get('now_pct_of_target')}% | {rule.get('now_note')}",
-        f"2차 ${rule.get('t2_price')}: 목표의 {rule.get('t2_pct_of_target')}% | {rule.get('t2_note')}",
-        f"3차 ${rule.get('t3_price')}: 목표의 {rule.get('t3_pct_of_target')}% | {rule.get('t3_note')}",
-        f"익절: {rule.get('take_profit')}",
-        f"재평가: {rule.get('stop_review')}",
-        f"금지: {rule.get('forbid')}",
+        f"이게 뭔 알림: {explain}",
+        f"지금 결과: {rule.get('result_plain') or KO.get(result, result)}",
+        "",
+        f"지금 할 일: {rule.get('do_now')}",
+        f"나중에: {rule.get('later')}",
+        f"익절: {rule.get('sell')}",
+        f"줄일 때: {rule.get('cut')}",
+        f"하지 말 것: {rule.get('dont')}",
+        "",
+        f"종목 COIN | 총자산 한도 {cap}% | 1차 {rule.get('now_pct_of_target')}% / 2차 ${rule.get('t2_price')}({rule.get('t2_pct_of_target')}%) / 3차 ${rule.get('t3_price')}({rule.get('t3_pct_of_target')}%)",
     ]
 
 
@@ -131,7 +135,7 @@ def main() -> int:
 
     ko = KO[result]
     lines = [
-        f"{now.strftime('%Y-%m-%d %H:%M KST')} | CLARITY | H.R.3633 cloture",
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | CLARITY | COIN",
         f"결과: {ko}",
         "",
         *playbook(cfg, result),
@@ -139,8 +143,6 @@ def main() -> int:
     if source:
         lines.append("")
         lines.append(f"출처: {source}")
-    if snippet:
-        lines.append(snippet.strip())
     msg = "\n".join(lines)
     print(msg)
 
@@ -153,8 +155,8 @@ def main() -> int:
         send = True
         state["pending_notified"] = True
     if send:
-        t2 = ((cfg.get("coin") or {}).get("rules") or {}).get(result, {}).get("t2_price")
-        title = f"[CLARITY] {ko} | COIN 2차 ${t2}"
+        rule = ((cfg.get("coin") or {}).get("rules") or {}).get(result) or {}
+        title = f"[CLARITY] {rule.get('title') or ko}"
         ntfy(server, topic, title, msg, 5 if result in {"pass", "fail"} else 3)
     else:
         print("no ntfy; state unchanged for notify")
