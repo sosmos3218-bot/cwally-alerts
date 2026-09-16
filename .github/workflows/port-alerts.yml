@@ -9,14 +9,15 @@ on:
     - cron: "0 0 * * 1-5"
     - cron: "20 6 * * 1-5"
     - cron: "0 19 15 9 *"
+    - cron: "45 18 16 9 *"
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -57,6 +58,11 @@ on:
         default: event
         type: choice
         options: [event, weekly]
+      yencarry_mode:
+        description: auto | fed | weekly | event
+        default: auto
+        type: choice
+        options: [auto, fed, weekly, event]
       force_square:
         type: boolean
         default: true
@@ -83,9 +89,11 @@ jobs:
         id: pick
         run: |
           JOB="${{ github.event.inputs.job }}"
+          YC=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
+            elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
             else JOB=morning
             fi
           fi
@@ -113,6 +121,7 @@ jobs:
             LG="${{ github.event.inputs.lg_mode }}"
             WL="${{ github.event.inputs.wl_mode }}"
             IR="${{ github.event.inputs.iren_mode }}"
+            YC="${{ github.event.inputs.yencarry_mode }}"
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -122,8 +131,9 @@ jobs:
           echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
           echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg + iren
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren'
+          echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -147,7 +157,10 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
             python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
           fi
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn (afternoon)
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
+            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+          fi
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
@@ -176,6 +189,9 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sgyn" ]; then
             pip install -q openpyxl
             python scripts/sgyn_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/yencarry_monitor.py event
           fi
       - name: Persist state
         run: |
