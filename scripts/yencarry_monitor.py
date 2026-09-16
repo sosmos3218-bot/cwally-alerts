@@ -116,6 +116,66 @@ def boj_stance(day: datetime) -> str:
     return "공표문 확인. 인상·동결은 본문 확인"
 
 
+def ueda_summary(day: datetime) -> list[str]:
+    ymd = day.strftime("%Y-%m-%d")
+    feeds = [
+        "https://news.google.com/rss/search?q=%E6%A4%8D%E7%94%B0+%E7%B7%8F%E8%A3%81+%E8%A8%98%E8%80%85%E4%BC%9A%E8%A6%8B&hl=ja&gl=JP&ceid=JP:ja",
+        "https://news.google.com/rss/search?q=Ueda+BOJ+press+conference&hl=en-US&gl=US&ceid=US:en",
+        f"https://www.reuters.com/world/asia-pacific/boj-governor-uedas-comments-news-conference-{ymd}/",
+        f"https://www.reuters.com/business/finance/boj-governor-uedas-comments-news-conference-{ymd}/",
+        f"https://www.reuters.com/world/japan/boj-governor-uedas-comments-news-conference-{ymd}/",
+        "https://www.boj.or.jp/about/press/kaiken_2026/index.htm",
+    ]
+    blob = ""
+    for url in feeds:
+        try:
+            blob += "\n" + fetch(url, timeout=12)
+        except Exception as exc:
+            print(f"ueda fetch fail {url}: {exc}", file=sys.stderr)
+    if not blob.strip():
+        return ["속보 없음. 공식 요지는 보통 다음날."]
+    day_marks = (
+        ymd,
+        f"{day.month}月{day.day}日",
+        f"{day.month}/{day.day}",
+        day.strftime("%b %d"),
+        day.strftime("%B %d"),
+    )
+    todayish = any(m.lower() in blob.lower() for m in day_marks)
+    low = re.sub(r"<[^>]+>", " ", blob)
+    low = re.sub(r"\s+", " ", low)
+    if not todayish:
+        return ["오늘자 회견 속보 아직 없음. 공식 요지는 보통 다음날."]
+    hits: list[str] = []
+    rules = [
+        (r"利上げ|raise (the )?(policy )?rate|further hike|additional hike", "추가 인상 여지 언급"),
+        (r"現状維持|keep(ing)? rates|held (steady|rates)|unchanged", "금리 동결·현상유지 톤"),
+        (r"behind the curve|後れを取|遅れをと", "늦으면 안 된다(매파) 언급"),
+        (r"円安|weak(er)? yen|yen weak", "엔약세→수입물가 전가 주시"),
+        (r"長期金利|long-term (interest )?rates|JGB", "장기금리 급등 시 대응 언급"),
+        (r"賃金|wage", "임금·물가 선순환 확인"),
+        (r"中東|Middle East|oil|原油", "중동·유가 리스크 언급"),
+        (r"data(-| )dependent|毎回の会合|each meeting", "데이터 보고 매 회의 결정"),
+    ]
+    for pat, line in rules:
+        if re.search(pat, low, flags=re.I) and line not in hits:
+            hits.append(line)
+        if len(hits) >= 3:
+            break
+    if not hits:
+        titles = re.findall(r"<title>([^<]{12,160})</title>", blob, flags=re.I)
+        for title in titles:
+            title = re.sub(r"&amp;", "&", title).strip()
+            if "Google" in title or title == "Reuters":
+                continue
+            hits.append(title[:70])
+            if len(hits) >= 2:
+                break
+    if not hits:
+        return ["회견 중·속보 부족. 공식 요지는 보통 다음날."]
+    return hits[:3]
+
+
 def fmt(v: float | None, nd: int = 1) -> str:
     return f"{v:,.{nd}f}" if v is not None else "없음"
 
@@ -241,10 +301,11 @@ def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str
     title = f"[YENCARRY] 일한 회견 후 | {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 기자회견 후",
-        "이게 뭐 알림: 우에다 기자회견(15:30) 뒤 레벨을 한 번 더 봅니다. 공표문 알림과 별도입니다.",
+        "이게 뭐 알림: 우에다 기자회견(15:30) 뒤 레벨과 발언 요약을 봅니다. 공표문 알림과 별도입니다.",
         f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        "우에다 요약: " + " / ".join(ueda_summary(now)),
         f"지금 할 일: {act}",
-        "나중에: 같은 날 회견 알림은 한 번만 갑니다. 다음 일한 10/30, 12/18도 공표문+회견 두 장입니다.",
+        "나중에: 같은 날 회견 알림은 한 번만. 공식 전문은 보통 다음날. 다음 일한 10/30·12/18도 두 장.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
         "하지 말 것: 회견 톤만 듣고 추격. 엔 강세=원 강세로 같이 베팅.",
     ]
