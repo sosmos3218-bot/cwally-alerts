@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,6 +12,7 @@ from pathlib import Path
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "state" / "flow_seen.json"
+CFG_PATH = ROOT / "configs" / "flow.json"
 NAVER = (
     "https://finance.naver.com/sise/investorDealTrendDay.naver"
     "?bizdate={day}&isuCd=KOSPI&isuCd2=KSP"
@@ -69,7 +71,6 @@ def fetch_flow(day: str) -> dict:
 
 
 def fetch_deposit_series():
-    """[(date_str, deposit_eok, credit_eok), ...] newest last."""
     import requests
 
     rows = {}
@@ -98,39 +99,32 @@ def fetch_deposit_series():
     return [(d, v[0], v[1]) for d, v in sorted(rows.items())]
 
 
-def h5_line(series) -> tuple[str, bool]:
+def h5_stats(series):
     if len(series) < H5_WINDOW + 1:
-        return "H5-S2 예탁금: 데이터 없음", False
+        return None, False
     deps = [v[1] for v in series]
     last_date, last, _ = series[-1]
     window = deps[-(H5_WINDOW + 1):-1]
     if not window:
-        return "H5-S2 예탁금: 데이터 없음", False
+        return None, False
     ma = sum(window) / len(window)
     if ma <= 0:
-        return "H5-S2 예탁금: 데이터 없음", False
+        return None, False
     dev = (last / ma - 1.0) * 100.0
-    fired = dev > H5_PCT
-    status = f"ON +{dev:.1f}% vs 20일평균" if fired else f"off {dev:+.1f}%"
-    return f"H5-S2 예탁금: {status} ({last_date} {last/10000:.1f}조)", fired
+    return (last_date, last, dev), dev > H5_PCT
 
 
-def h5s3_line(series) -> tuple[str, bool]:
+def s3_stats(series):
     if len(series) < H5S3_WINDOW + 1:
-        return "H5-S3 천장: 데이터 없음", False
+        return None, False
     last_date, last_dep, last_cred = series[-1]
     prev_dep = series[-(H5S3_WINDOW + 1)][1]
     prev_cred = series[-(H5S3_WINDOW + 1)][2]
     if prev_dep <= 0 or prev_cred <= 0:
-        return "H5-S3 천장: 데이터 없음", False
+        return None, False
     dep_chg = (last_dep / prev_dep - 1.0) * 100.0
     cred_chg = (last_cred / prev_cred - 1.0) * 100.0
-    fired = dep_chg > H5_PCT and cred_chg > H5_PCT
-    if fired:
-        status = f"ON 예탁5일 {dep_chg:+.1f}% 신용5일 {cred_chg:+.1f}%"
-    else:
-        status = f"off 예탁5일 {dep_chg:+.1f}% 신용5일 {cred_chg:+.1f}%"
-    return f"H5-S3 천장: {status} ({last_date})", fired
+    return (last_date, dep_chg, cred_chg), dep_chg > H5_PCT and cred_chg > H5_PCT
 
 
 def fetch_index(day: str):
@@ -166,8 +160,14 @@ def main() -> int:
         print("weekend skip")
         return 0
     day = now.strftime("%Y%m%d")
-    topic = os.environ.get("NTFY_TOPIC") or "cwally-flow"
-    server = os.environ.get("NTFY_SERVER") or "https://ntfy.sh"
+    cfg = {}
+    if CFG_PATH.exists():
+        try:
+            cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            cfg = {}
+    topic = "cwally-port"
+    server = cfg.get("ntfy_server") or "https://ntfy.sh"
     flow = fetch_flow(day)
     if flow["외국인"] == 0 and flow["기관합계"] == 0:
         print("zero flow; market maybe open")
@@ -176,24 +176,64 @@ def main() -> int:
     fgn, inst = flow["외국인"], flow["기관합계"]
     h4 = fgn >= H4_MIN and inst >= H4_MIN
     series = fetch_deposit_series()
-    h5_text, h5 = h5_line(series)
-    s3_text, s3 = h5s3_line(series)
-    lines = [f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | KOSPI"]
-    if close is not None:
-        lines.append(f"지수 {close:,.2f} ({chg:+.2f}%)")
-    lines.append("H4 동반강매수: " + ("ON 외국인+기관 각 3천억+" if h4 else "off"))
-    lines.append(h5_text)
-    lines.append(s3_text)
-    lines.append("")
+    h5_info, h5 = h5_stats(series)
+    s3_info, s3 = s3_stats(series)
+
+    explain = cfg.get("explain") or "오늘 코스피에서 누가 사고 팔았는지 요약입니다. 특정 종목 주문 신호가 아닙니다."
+    idx_txt = f"코스피 {close:,.2f} ({chg:+.2f}%)" if close is not None else "지수 없음"
+    flags = []
+    if h4:
+        flags.append("외국인+기관이 각 3천억 이상 사다(훨호)")
+    else:
+        flags.append("외국인+기관 동시 강매수는 아님")
+    if h5_info:
+        last_date, last, dev = h5_info
+        flags.append(
+            f"예탁금 {last/10000:.1f}조, 20일 평균 대비 {dev:+.1f}%" + (" → 자금 유입 강함" if h5 else "")
+        )
+    else:
+        flags.append("예탁금 데이터 없음")
+    if s3_info:
+        last_date, dep_chg, cred_chg = s3_info
+        flags.append(
+            f"5일 예탁금 {dep_chg:+.1f}% / 신용 {cred_chg:+.1f}%" + (" → 과열 조짐" if s3 else "")
+        )
+    else:
+        flags.append("예탁금·신용 5일 데이터 없음")
+
+    if s3:
+        do_now = "장이 과열 조짐입니다. 새로 추격해 사지 말고, 이미 있는 포지션은 익절 라인만 지키세요."
+        title = "[FLOW] 과열 조짐 | 추격 금지"
+    elif h4:
+        do_now = "외국인·기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 말세요."
+        title = "[FLOW] 외국인+기관 강매수"
+    elif h5:
+        do_now = "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 말세요."
+        title = "[FLOW] 예탁금 호흡 | 종목 주문 아님"
+    else:
+        do_now = "특별한 강매수·과열 신호는 없습니다. 기존 계획대로 두세요."
+        title = "[FLOW] 오늘 수급 평온 | 계획 유지"
+
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | {idx_txt}",
+        f"이게 뭐 알림: {explain}",
+        "지금 상태: " + " / ".join(flags),
+        f"지금 할 일: {do_now}",
+        "나중에: 내일도 같은 시간에 한 번 더 보냅니다. 종목별 매수는 [STEEL] [HCE] 같은 보유 알림을 따르세요.",
+        "익절/줄일 때: 이 알림으로 팔지 않습니다. 과열 조짐(예탁금+신용 5일 +3%)이면 새 매수만 쉽게 보세요.",
+        "하지 말 것: 수급 숫자만 보고 추격매수. 이 알림을 단타 주문으로 쓰지 말 것.",
+        "",
+        "오늘 숫자:",
+    ]
     for name in TOP:
         if name in flow:
-            lines.append(f"{name} {fmt_krw(flow[name])}")
-    lines.append("")
+            lines.append(f"- {name} {fmt_krw(flow[name])}")
     for name in DETAIL:
         if name in flow:
-            lines.append(f"{name} {fmt_krw(flow[name])}")
+            lines.append(f"- {name} {fmt_krw(flow[name])}")
     msg = "\n".join(lines)
     print(msg)
+    print(f"topic={topic}")
     prev = {}
     if STATE_PATH.exists():
         try:
@@ -203,8 +243,6 @@ def main() -> int:
     if prev.get("day") == day:
         print("already sent today; silent")
         return 0
-    tag = ("H4 " if h4 else "") + ("H5 " if h5 else "") + ("S3 " if s3 else "")
-    title = f"[FLOW] {tag}KOSPI 수급 {day[4:6]}/{day[6:8]}"
     ntfy(server, topic, title, msg, 4 if (h4 or h5 or s3) else 3)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(

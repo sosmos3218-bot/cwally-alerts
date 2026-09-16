@@ -19,7 +19,7 @@ async function chart(symbol) {
   const last60 = closes.slice(-60);
   return { last, ret20: ret(20), dd60: last / Math.max(...last60) - 1 };
 }
-const pct = (x) => (x == null ? "n/a" : `${(x * 100).toFixed(1)}%`);
+const pct = (x) => (x == null ? "없음" : `${(x * 100).toFixed(1)}%`);
 
 async function ntfy(title, message, priority) {
   const res = await fetch(server, {
@@ -46,15 +46,33 @@ if (hx.ret20 != null && hx.ret20 < 0 && spread20 != null) {
   else if (spread20 <= -0.04) rel = "WATCH";
 }
 const status = cycle === "SELL" || rel === "SELL" ? "SELL" : cycle === "WATCH" || rel === "WATCH" ? "WATCH" : "HOLD";
+
+const statusKo = { SELL: "팔 검토", WATCH: "주의 관찰", HOLD: "그대로 보유" }[status];
+const cycleKo = { SELL: "하이닉스 강한 조정", WATCH: "하이닉스 조정 조짐", quiet: "하이닉스 평온" }[cycle];
+const relKo = { SELL: "스쾌어가 하이닉스보다 흰히 약함", WATCH: "스쾌어가 조금 처짐", quiet: "상대약세 평온" }[rel];
+const doNow = {
+  SELL: "SK스쾌어를 줄일 검토하세요. 하이닉스 조정이나 스쾌어 소외가 한번에 나탄 상태입니다.",
+  WATCH: "지금 팔지는 말고, 내일 재검토만 하세요. 추가 매수는 말세요.",
+  HOLD: "그대로 들고 계세요. 오늘은 팔 신호가 아닙니다.",
+}[status];
+const title = {
+  SELL: "[SQUARE] 스쾌어 줄일 검토",
+  WATCH: "[SQUARE] 주의 | 추가매수 보류",
+  HOLD: "[SQUARE] 보유 유지",
+}[status];
+
 const msg = [
-  `[${status}] 할인 ${(discount * 100).toFixed(1)}%`,
-  `스쿈어 ${Math.round(sq.last).toLocaleString()} / 하이닉스 ${Math.round(hx.last).toLocaleString()}`,
-  `조건1 사이클 ${cycle} 하이닉스 20일 ${pct(hx.ret20)} 60일고점 ${pct(hx.dd60)}`,
-  `조건2 상대 ${rel} 20일스프레드 ${spread20 == null ? "n/a" : (spread20 * 100).toFixed(1) + "p"}`,
+  `이게 뭐 알림: SK스쾌어가 하이닉스보다 너무 약해지면 팔라는 점검입니다.`,
+  `지금 상태: ${statusKo}. 스쾌어 ${Math.round(sq.last).toLocaleString()}원, 하이닉스 ${Math.round(hx.last).toLocaleString()}원, 잠재 NAV 대비 할인 ${(discount * 100).toFixed(1)}%.`,
+  `지금 할 일: ${doNow}`,
+  `나중에: 하이닉스 20일 ${pct(hx.ret20)}, 60일 고점 대비 ${pct(hx.dd60)}. 스쾌어-하이닉스 20일 차이 ${spread20 == null ? "없음" : (spread20 * 100).toFixed(1) + "%p"}.`,
+  `익절/줄일 때: 조건1 하이닉스 사이클(${cycleKo}), 조건2 상대약세(${relKo}). 둘 다 SELL이면 우선 줄입니다.`,
+  `하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.`,
 ].join("\n");
 console.log(msg, "topic", topic);
 if (status !== "HOLD" || force) {
-  await ntfy(`[SQUARE] ${force && status === "HOLD" ? "TEST " + status : status}`, msg, status === "SELL" ? 5 : 4);
+  const shown = force && status === "HOLD" ? "[SQUARE] 테스트 | 보유 유지" : title;
+  await ntfy(shown, msg, status === "SELL" ? 5 : 4);
 } else {
   console.log("NO_ALERT");
 }
