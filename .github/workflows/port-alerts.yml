@@ -10,6 +10,9 @@ on:
     - cron: "20 6 * * 1-5"
     - cron: "0 19 15 9 *"
     - cron: "45 18 16 9 *"
+    - cron: "15 7 18 9 *"
+    - cron: "15 7 30 10 *"
+    - cron: "15 7 18 12 *"
   workflow_dispatch:
     inputs:
       job:
@@ -59,10 +62,10 @@ on:
         type: choice
         options: [event, weekly]
       yencarry_mode:
-        description: auto | fed | weekly | event
+        description: auto | fed | weekly | event | boj_press
         default: auto
         type: choice
-        options: [auto, fed, weekly, event]
+        options: [auto, fed, weekly, event, boj_press]
       force_square:
         type: boolean
         default: true
@@ -94,6 +97,7 @@ jobs:
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
+            elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
             else JOB=morning
             fi
           fi
