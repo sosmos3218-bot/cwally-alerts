@@ -5,24 +5,14 @@ import json
 import os
 import urllib.request
 
-ALLOWED = {"cwally-port", "cwally-flow", "cwally-ops"}
-KIND_DEFAULT = {"port": "cwally-port", "flow": "cwally-flow", "ops": "cwally-ops"}
+ALLOWED = {"cwally-port", "cwally-ops"}
+KIND_DEFAULT = {"port": "cwally-port", "flow": "cwally-port", "ops": "cwally-ops"}
 
 
 def resolve_topic(kind: str = "port", configured: str | None = None) -> str:
-    default = KIND_DEFAULT.get(kind, "cwally-port")
-    wanted = default
-    for cand in (configured, os.environ.get("NTFY_TOPIC"), default):
-        if cand in ALLOWED:
-            wanted = cand
-            break
-    if kind == "port":
-        return "cwally-port"
-    if kind == "flow":
-        return "cwally-flow"
     if kind == "ops":
         return "cwally-ops"
-    return wanted if wanted in ALLOWED else default
+    return "cwally-port"
 
 
 def resolve_server(configured: str | None = None) -> str:
