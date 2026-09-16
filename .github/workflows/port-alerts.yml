@@ -125,8 +125,8 @@ jobs:
       - name: Run steel + alux + clarity + hce + lg + iren
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren'
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
-          NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
@@ -150,8 +150,8 @@ jobs:
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'all'
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || 'cwally-port' }}
-          NTFY_SERVER: ${{ secrets.NTFY_SERVER || 'https://ntfy.sh' }}
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
           FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
