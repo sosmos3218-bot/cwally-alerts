@@ -6,6 +6,7 @@
   "schedule_kst": "09:00",
   "fed_schedule_kst": "03:45",
   "boj_send_after_kst": "12:00",
+  "boj_press_kst": "16:15",
   "period": "weekly",
   "once": false,
   "as_of": "2026-09-16",
@@ -19,5 +20,6 @@
   },
   "fomc_dates": ["2026-09-16", "2026-10-28", "2026-12-09"],
   "boj_dates": ["2026-09-18", "2026-10-30", "2026-12-18"],
-  "boj_force": true
+  "boj_force": true,
+  "boj_press_force": true
 }
