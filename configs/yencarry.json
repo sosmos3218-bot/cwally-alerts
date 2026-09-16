@@ -3,15 +3,19 @@
   "title_prefix": "[YENCARRY]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "20:50",
-  "once": true,
+  "schedule_kst": "09:00",
+  "fed_schedule_kst": "03:45",
+  "period": "weekly",
+  "once": false,
   "as_of": "2026-09-16",
   "levels": {
-    "usdjpy": 155.1,
-    "usdkrw": 1368.6,
-    "ust_10y": 5.0,
-    "jgb_10y": 3.0,
-    "jgb_30y": 4.15,
-    "kospi": 6717.97
-  }
+    "usdjpy_low": 152,
+    "usdjpy_high": 160,
+    "usdkrw_low": 1340,
+    "usdkrw_high": 1400,
+    "jgb30_warn": 4.3,
+    "jgb30_danger": 4.5
+  },
+  "fomc_dates": ["2026-09-16", "2026-10-28", "2026-12-09"],
+  "boj_dates": ["2026-09-18", "2026-10-30", "2026-12-18"]
 }

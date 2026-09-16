@@ -6,7 +6,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` only for Kikii/server.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).
-- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]`.
+- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]`.
 - Cron slots are NOT fixed. Pick a KST time that matches the request, then convert to UTC (`KST = UTC+9`) in the workflow cron. Do not add a new cron unless the user asks for a new schedule.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`.
 - New alert = `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json` only.
