@@ -278,17 +278,6 @@ def main() -> int:
             hits.append(key)
             reasons[key] = why
 
-    yt_permit = permit.get("yeongtong") or {}
-    if yt_permit.get("mom_pct") is not None and yt_permit["mom_pct"] <= th["permit_break_pct"]:
-        reasons.setdefault("yeongtong", []).append(
-            "토허 " + yt_permit.get("month", "") + " " + cnt(yt_permit.get("count")) + " " + pct(yt_permit.get("mom_pct"))
-        )
-        if "yeongtong" not in hits:
-            hits.append("yeongtong")
-    if iros.get("mom_pct") is not None and iros["mom_pct"] <= th["first_break_pct"]:
-        for key in cfg["title_regions"]:
-            reasons.setdefault(key, []).append("전국 매매등기 " + pct(iros.get("mom_pct")))
-
     if hits:
         title = "[SGYN] " + "·".join(labels[k] for k in cfg["title_regions"] if k in hits)
         do_now = "제목 권역만 조정으로 보세요. 나머지는 유지."
@@ -298,6 +287,7 @@ def main() -> int:
         do_now = "추격하지 말고 다음 목요일까지 봅니다."
         pri = 3
 
+    yt_permit = permit.get("yeongtong") or {}
     permit_txt = "영통 " + (yt_permit.get("month") or "없음") + " " + cnt(yt_permit.get("count")) + " (" + pct(yt_permit.get("mom_pct")) + ")"
     if not yt_permit.get("count"):
         permit_txt = "영통 수집실패. 수지·동탄은 지자체 주간 표 없음"
@@ -306,7 +296,7 @@ def main() -> int:
 
     iros_txt = "전국 매매등기 " + (iros.get("month") or "없음") + " " + cnt(iros.get("total")) + " (" + pct(iros.get("mom_pct")) + ")"
     if iros.get("total") is None:
-        iros_txt = "등기정보광장 수집실패. 권역별 생애초초는 월간"
+        iros_txt = "등기정보광장 수집실패. 권역별 생애최초는 월간"
 
     lines = [
         f"{stamp} | SGYN | 기준 {week_date or '없음'} | 부동산원+토허+등기",
@@ -330,7 +320,7 @@ def main() -> int:
         + " | 수지 "
         + pct((series_out.get("suji") or {}).get("jeonse_13w")),
         "토허: " + permit_txt,
-        "등기: " + iros_txt + ". 권역별 생애초초는 월간 공표.",
+        "등기: " + iros_txt + ". 권역별 생애최초는 월간 공표.",
         "지금 할 일: " + do_now,
     ]
     for k in hits:
