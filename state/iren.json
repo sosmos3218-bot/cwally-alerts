@@ -1,6 +1,33 @@
 {
-  "updated_at": null,
-  "price": null,
+  "updated_at": "2026-09-16 10:22 KST",
+  "price": 41.58,
+  "tag": "WATCH",
   "last_event_ids": [],
-  "seen_ids": []
+  "seen_ids": [
+    "https://finance.yahoo.com/technology/ai/articles/nvidia-makes-bold-move-expand-182542229.html?.tsrc=rss",
+    "https://beincrypto.com/iren-stock-falls-ai-execution-doubts/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/09/11/terawulf-rallies-7-as-miner-selloff-reverses-applied-digital-gains-4-iren-sits-out-the-rally/?.tsrc=rss",
+    "https://www.thestreet.com/crypto/markets/legendary-short-seller-who-bet-against-enron-sends-new-warning?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-mara-jpmorgan-ai-data-center-bitcoin-miners/cZtmTp8RBRn?.tsrc=rss",
+    "https://investorshub.advfn.com/market-news/article/36201/iren-shares-fall-2-7-as-technology-stocks-decline?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-falls-5-despite-ceos-155558469.html?.tsrc=rss",
+    "https://blockspace.media/insight/jpmorgan-upgrades-iren-65-target/?.tsrc=rss",
+    "https://finance.yahoo.com/m/95844b05-4bba-3e67-a670-d5348d770ee0/why-iren-stock-just-got-a.html?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/ai-leaders-slow-down-iren-190519922.html?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-stock-slips-but-a-top-wall-street-bank-is-bullish/cZtmjA6RBTB?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-draws-two-notch-upgrade-122036256.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/09/15/terawulf-falls-5-as-ai-infrastructure-names-extend-a-month-long-slide-iren-drops-4-applied-digital-declines-3/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/bitcoin-mining-shakeout-as-corz-keel-iren-cifr-exit-coin-shares/cZtnLkIRBcj?.tsrc=rss",
+    "https://www.thestreet.com/investing/stocks/jpmorgan-double-upgrades-iren-stock?.tsrc=rss",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126028014/0001140361-26-028014-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126028871/0001140361-26-028871-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000397/0000070858-26-000397-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126031053/0001140361-26-031053-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126031055/0001140361-26-031055-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000088698226000449/0000886982-26-000449-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126032638/0001140361-26-032638-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126033473/0001140361-26-033473-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000187884826000051/0001878848-26-000051-index.htm",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000187884826000052/0001878848-26-000052-index.htm"
+  ]
 }
