@@ -17,6 +17,17 @@
     "jeonse_sheet": "전세변동률",
     "cols": {"suji": 76, "yeongtong": 81, "dongtan": 96}
   },
+  "permit": {
+    "yeongtong": {
+      "url": "https://www.suwon.go.kr/sw-www/deptHome/dep_city/city03/city03_16/city03_16-02.jsp",
+      "row": "영통구"
+    }
+  },
+  "iros": {
+    "graph_url": "https://data.iros.go.kr/cr/dv/selectRgsCrDvGraph1.do",
+    "page_url": "https://data.iros.go.kr/cr/dv/selectCrDvDataInfograpDetl.do?ris_menu_seq=0000000016&rdata_seq=4",
+    "rdata_seq": "4"
+  },
   "title_regions": ["dongtan", "yeongtong", "suji"],
   "labels": {"dongtan": "동탄", "yeongtong": "영통", "suji": "수지"},
   "thresholds": {
