@@ -24,7 +24,9 @@ def post(url: str, data: dict, timeout: int = 30):
 
 
 def ntfy_publish(server: str, topic: str, title: str, message: str, priority: int) -> None:
-    payload = json.dumps({"topic": topic, "title": title, "message": message, "priority": priority, "tags": ["house", "chart_with_upwards_trend"]}).encode()
+    payload = json.dumps(
+        {"topic": topic, "title": title, "message": message, "priority": priority, "tags": ["house", "chart_with_upwards_trend"]}
+    ).encode()
     req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         print(resp.read().decode())
@@ -57,10 +59,7 @@ def col_series(path: Path, sheet: str, col: int, last_n: int = 16) -> list[tuple
         dt, val = row[0], row[col] if col < len(row) else None
         if dt is None or val is None:
             continue
-        if hasattr(dt, "strftime"):
-            key = dt.strftime("%Y-%m-%d")
-        else:
-            key = str(dt)[:10]
+        key = dt.strftime("%Y-%m-%d") if hasattr(dt, "strftime") else str(dt)[:10]
         try:
             rows.append((key, float(val)))
         except (TypeError, ValueError):
@@ -116,11 +115,11 @@ def main() -> int:
         series_out[key] = {"sale_week": sale[key], "jeonse_week": jeonse[key], "jeonse_13w": j13}
         why = []
         if sale[key] is not None and sale[key] <= th["sale_week_break"]:
-            why.append(f"매매주간 {pct(sale[key])}")
+            why.append("매매주간 " + pct(sale[key]))
         if jeonse[key] is not None and jeonse[key] <= th["jeonse_week_break"]:
-            why.append(f"전세주간 {pct(jeonse[key])}")
+            why.append("전세주간 " + pct(jeonse[key]))
         if j13 is not None and j13 <= th["jeonse_13w_break"]:
-            why.append(f"전세 13주 {pct(j13)}")
+            why.append("전세 13주 " + pct(j13))
         if why:
             hits.append(key)
             reasons[key] = why
@@ -137,38 +136,24 @@ def main() -> int:
     lines = [
         f"{stamp} | SGYN | 기준 {week_date or '없음'} | 부동산원 시계열",
         "이게 뭐 알림: 동탄·영통(광교)·수지 주간 매매·전세가 유지 선을 깨는지 보는 목요일 알림.",
-        f"지금 상태: 동탄 매매 {pct(sale.get('dongtan'))} / 전세 {pct(jeonse.get('dongtan'))} | 영통 매매 {pct(sale.get('yeongtong'))} / 전세 {pct(jeonse.get('yeongtong'))} | 수지 매매 {pct(sale.get('suji'))} / 전세 {pct(jeonse.get('suji'))}",
-        f"전세 13주 합: 동탄 {pct((series_out.get('dongtan') or {}).get('jeonse_13w'))} | 영통 {pct((series_out.get('yeongtong') or {}).get('jeonse_13w'))} | 수지 {pct((series_out.get('suji') or {}).get('jeonse_13w'))}",
-        f"토허·등기: 주간 공표 없음. 월간 건수가 {th['permit_break_pct']}% / {th['first_break_pct']}% 깨질 때만 수동 표기.",
-        f"지금 할 일: {do_now}",
+        "지금 상태: 동탄 매매 " + pct(sale.get("dongtan")) + " / 전세 " + pct(jeonse.get("dongtan")) + " | 영통 매매 " + pct(sale.get("yeongtong")) + " / 전세 " + pct(jeonse.get("yeongtong")) + " | 수지 매매 " + pct(sale.get("suji")) + " / 전세 " + pct(jeonse.get("suji")),
+        "전세 13주 합: 동탄 " + pct((series_out.get("dongtan") or {}).get("jeonse_13w")) + " | 영통 " + pct((series_out.get("yeongtong") or {}).get("jeonse_13w")) + " | 수지 " + pct((series_out.get("suji") or {}).get("jeonse_13w")),
+        "토허·등기: 주간 공표 없음. 월간 건수가 " + str(th["permit_break_pct"]) + "% / " + str(th["first_break_pct"]) + "% 깨질 때만 수동.",
+        "지금 할 일: " + do_now,
     ]
-    if hits:
-        for k in hits:
-            lines.append(f"- {labels[k]}: {", ".join(reasons[k])}")
+    for k in hits:
+        lines.append("- " + labels[k] + ": " + ", ".join(reasons[k]))
     lines += [
         "나중에: 다음 목 15:20. 깨질 순서는 동탄→웰빙/영통→광교본체→수지.",
-        "익절/줄일 때: 제목에 뜻이 나온 권역만. 영통은 광교 본체+웰빙타운 공통 지표.",
-        f"하지 말 것: 네 권역 묶기. 유지 주에 추격. 임계 {th['sale_week_break']}% / 전세주 {th['jeonse_week_break']}% / 전세13주 {th['jeonse_13w_break']}%.",
+        "익절/줄일 때: 제목에 나온 권역만. 영통은 광교 본체+웰빙타운 공통 지표.",
+        "하지 말 것: 네 권역 묶기. 유지 주에 추격.",
     ]
-
-    STATE_PATH.write_text(
-        json.dumps(
-            {
-                "updated_at": stamp,
-                "last_sent_date": today,
-                "week_date": week_date,
-                "file_seq": file_seq,
-                "hits": [labels[k] for k in hits],
-                "series": series_out,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
     msg = "\n".join(lines)
     print(msg)
+    STATE_PATH.write_text(
+        json.dumps({"updated_at": stamp, "last_sent_date": today, "week_date": week_date, "file_seq": file_seq, "hits": [labels[k] for k in hits], "series": series_out}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, pri)
     return 0
 
