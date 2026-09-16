@@ -23,7 +23,7 @@ jobs:
       - run: pip install requests beautifulsoup4 finance-datareader
       - name: Run flow
         env:
-          NTFY_TOPIC: cwally-flow
+          NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/flow_monitor.py
       - name: Persist state
