@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 import urllib.parse
 import urllib.request
@@ -14,6 +13,36 @@ ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "silicon2.json"
 STATE_PATH = ROOT / "state" / "silicon2.json"
 EVENT_ZONES = {"BUY1", "BUY2", "TRIM1", "TRIM2", "STOP"}
+ZONE_KO = {
+    "BUY1": "1차 매수 (42,000~45,000원)",
+    "BUY2": "2차 매수 (38,000~40,000원)",
+    "TRIM1": "1차 익절 (52,000원)",
+    "TRIM2": "2차 익절 (56,000원)",
+    "STOP": "손절 (종가 36,000원 이탈)",
+    "CHASE": "48,000원 위. 추격 금지",
+    "BETWEEN": "매수·익절 사이. 현금 유지",
+    "DATA_FAIL": "시세 조회 실패",
+}
+DO_NOW = {
+    "BUY1": "1차만 사세요. 48,000원 위에서 따라잡지 말세요.",
+    "BUY2": "2차를 더 사세요. 이 구간 아래에서만 가산.",
+    "TRIM1": "보유의 절반을 팔아 익절하세요.",
+    "TRIM2": "남은 수량을 익절하세요. 59,000원 추격 재진입 금지.",
+    "STOP": "손절하고 이 테제는 끝냅니다. 다시 사지 말세요.",
+    "CHASE": "새로 사지 말세요.",
+    "BETWEEN": "현금을 유지하세요.",
+    "DATA_FAIL": "시세를 다시 확인하세요.",
+}
+TITLE_BY_ZONE = {
+    "STOP": "손절 36,000 이탈",
+    "BUY2": "2차 추가",
+    "BUY1": "1차만 매수",
+    "TRIM1": "52,000 절반 익절",
+    "TRIM2": "56,000 잔량 익절",
+    "CHASE": "48,000 위 추격 금지",
+    "BETWEEN": "현금 유지",
+    "DATA_FAIL": "시세 확인",
+}
 
 
 def yahoo_price(ticker: str):
@@ -61,20 +90,9 @@ def active_events(cfg, today):
 
 def ntfy_publish(server, topic, title, message, priority, tags):
     payload = json.dumps(
-        {
-            "topic": topic,
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": tags.split(","),
-        }
+        {"topic": topic, "title": title, "message": message, "priority": priority, "tags": tags.split(",")}
     ).encode()
-    req = urllib.request.Request(
-        server.rstrip("/"),
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
+    req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         print(resp.read().decode())
 
@@ -82,8 +100,8 @@ def ntfy_publish(server, topic, title, message, priority, tags):
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "event").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    topic = os.environ.get("NTFY_TOPIC") or cfg.get("ntfy_topic") or "cwally-port"
-    server = os.environ.get("NTFY_SERVER") or cfg.get("ntfy_server") or "https://ntfy.sh"
+    topic = "cwally-port"
+    server = "https://ntfy.sh"
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -107,44 +125,40 @@ def main() -> int:
         z in EVENT_ZONES or prev.get("zone") in EVENT_ZONES
     )
 
-    px = f"{price:,.0f}" if price is not None else "N/A"
-    lines = [
-        f"{stamp} | {mode} | {cfg['display']} {cfg['code']}",
-        f"가 {px}원 | {z} | 비중상한 {cfg['max_equity_weight_pct']}%",
-        cfg["actions"].get(z, ""),
-        "",
-        "매수 42,000~45,000 / 38,000~40,000 | 익절 52,000 / 56,000",
-        "손절 종가 36,000 | OPM 15% 미만 시 테제 종료",
-    ]
-    if live:
-        lines.append("")
-        lines.append("[3Q 체크]")
-        for e in live:
-            lines.append(f"- {e['label']} {e['start']}~{e['end']}")
-            lines.append(f"  {e['check']}")
-
     send = False
-    title = f"{cfg['title_prefix']} {z} {px}"
+    title = f"[SILICON2] {TITLE_BY_ZONE.get(z, z)}"
     if mode == "event":
         if zone_changed or new_live:
             send = True
-            title = f"{cfg['title_prefix']} 구간/일정"
+            title = f"[SILICON2] 구간/일정 | {TITLE_BY_ZONE.get(z, z)}"
         else:
             print("no silicon2 event; silent")
     else:
         send = True
-        title = f"{cfg['title_prefix']} 주간 체크" if now.weekday() == 0 else f"{cfg['title_prefix']} {z}"
+        title = f"[SILICON2] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}" if now.weekday() == 0 else f"[SILICON2] {TITLE_BY_ZONE.get(z, z)}"
+
+    px = f"{price:,.0f}원" if price is not None else "시세 없음"
+    cap = cfg["max_equity_weight_pct"]
+    lines = [
+        f"{stamp} | SILICON2 | {cfg['display']} {cfg['code']}",
+        f"이게 뭐 알림: 실리콘투 스윙(약 12주) 매매 가이드입니다. 주식 한도는 총자산 {cap}%입니다.",
+        f"지금 상태: {px} | {ZONE_KO.get(z, z)}",
+        f"지금 할 일: {DO_NOW.get(z, '')}",
+        "나중에: 2차는 38,000~40,000원에서만. 11월 3분기 체크를 보고 연장 여부를 결정하세요.",
+        "익절: 52,000원에서 절반, 56,000원에서 남은 양.",
+        "줄일 때: 종가 36,000원 이탈, 또는 분기 영업이익률 15% 미만, 또는 유럽매출·총이익률·재고일수 중 2개 악화.",
+        f"하지 말 것: 48,000원 위 추격매수, 59,000원 추격 재진입, 신용/미수, 총자산 {cap}% 초과.",
+    ]
+    if live:
+        lines.append("")
+        lines.append("3분기 체크:")
+        for e in live:
+            lines.append(f"- {e['label']} {e['start']}~{e['end']}: {e['check']}")
 
     STATE_PATH.write_text(
-        json.dumps(
-            {"updated_at": stamp, "zone": z, "price": price, "last_event_ids": live_ids},
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
+        json.dumps({"updated_at": stamp, "zone": z, "price": price, "last_event_ids": live_ids}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-
     msg = "\n".join(lines)
     print(msg)
     if send:
