@@ -1,7 +1,8 @@
 {
-  "updated_at": "2026-09-16 14:25 KST",
-  "last_mode": "event",
-  "last_sent_date": "2026-09-16",
-  "baseline_sent": true,
-  "kind": "기준"
+  "updated_at": null,
+  "last_sent_date": null,
+  "week_date": null,
+  "file_seq": null,
+  "hits": [],
+  "series": {}
 }

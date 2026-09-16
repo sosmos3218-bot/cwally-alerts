@@ -6,54 +6,24 @@
   "schedule_kst": "15:20",
   "as_of": "2026-09-16",
   "horizon_months": 12,
-  "break_order": ["dongtan", "wellbeing", "gwanggyo", "suji"],
-  "regions": {
-    "dongtan": {
-      "label": "동탄",
-      "first_break": "토허",
-      "share30_hold": 45,
-      "share30_break": 33,
-      "note": "토허→30대→전세→가격. 고용은 반도체."
-    },
-    "wellbeing": {
-      "label": "광교 웰빙타운",
-      "first_break": "토허",
-      "share30_hold": 28,
-      "share30_break": 16,
-      "note": "토허→전세→생애최초→가격. 광교 본체와 분리."
-    },
-    "gwanggyo": {
-      "label": "광교 본체",
-      "first_break": "30대",
-      "share30_hold": 40,
-      "share30_break": 28,
-      "note": "30대→생애최초→토허→전세→가격."
-    },
-    "suji": {
-      "label": "수지",
-      "first_break": "전세",
-      "share30_hold": 32,
-      "share30_break": 24,
-      "note": "전세→생애최초→토허·30대→가격."
-    }
+  "reb": {
+    "list_url": "https://www.reb.or.kr/r-one/portal/bbs/rpt/searchBulletin.do",
+    "detail_url": "https://www.reb.or.kr/r-one/portal/bbs/rpt/selectBulletin.do",
+    "file_url": "https://www.reb.or.kr/r-one/portal/bbs/rpt/downloadAttachFile.do",
+    "bbs_cd": "RPT",
+    "list_sub_cd": "RPT01",
+    "title_key": "주간아파트가격동향조사 시계열",
+    "sale_sheet": "매매변동률",
+    "jeonse_sheet": "전세변동률",
+    "cols": {"suji": 76, "yeongtong": 81, "dongtan": 96}
   },
+  "title_regions": ["dongtan", "yeongtong", "suji"],
+  "labels": {"dongtan": "동탄", "yeongtong": "영통", "suji": "수지"},
   "thresholds": {
-    "permit_warn_pct": -30,
+    "sale_week_break": -0.2,
+    "jeonse_week_break": -0.15,
+    "jeonse_13w_break": -3.0,
     "permit_break_pct": -50,
-    "permit_months": 2,
-    "first_warn_pct": -25,
-    "first_break_pct": -40,
-    "first_share_break_pp": -12,
-    "jeonse_warn_3m_pct": -1.5,
-    "jeonse_break_3m_pct": -3.0,
-    "ict30_warn_yoy_pct": -2.0,
-    "ict30_break_yoy_pct": -4.0
-  },
-  "checks": [
-    "토허 신청 건수(직전 3개월 평균 대비)",
-    "생애최초 등기 비중·건수",
-    "30대 매수 비중",
-    "전세가 3개월",
-    "수도권 정보통신업 30대 고용보험 YoY"
-  ]
+    "first_break_pct": -40
+  }
 }

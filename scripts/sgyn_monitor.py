@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import os
 import sys
+import tempfile
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -11,90 +13,153 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "sgyn.json"
 STATE_PATH = ROOT / "state" / "sgyn.json"
+UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
 
-def ntfy_publish(server: str, topic: str, title: str, message: str, priority: int, tags: str) -> None:
-    payload = json.dumps(
-        {
-            "topic": topic,
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": tags.split(","),
-        }
-    ).encode()
-    import urllib.request
+def post(url: str, data: dict, timeout: int = 30):
+    body = "&".join(f"{k}={v}" for k, v in data.items()).encode()
+    req = urllib.request.Request(url, data=body, headers={**UA, "Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode())
 
-    req = urllib.request.Request(
-        server.rstrip("/"),
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
+
+def ntfy_publish(server: str, topic: str, title: str, message: str, priority: int) -> None:
+    payload = json.dumps({"topic": topic, "title": title, "message": message, "priority": priority, "tags": ["house", "chart_with_upwards_trend"]}).encode()
+    req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         print(resp.read().decode())
+
+
+def latest_xlsx(cfg: dict) -> tuple[int, int, Path]:
+    reb = cfg["reb"]
+    listing = post(reb["list_url"], {"page": 1, "rows": 20, "listSubCd": reb["list_sub_cd"]})
+    item = next(x for x in listing["data"] if reb["title_key"] in (x.get("bbsTit") or ""))
+    seq = int(item["seq"])
+    detail = post(reb["detail_url"], {"bbsCd": reb["bbs_cd"], "seq": seq})["data"]
+    xfile = next(f for f in detail["files"] if str(f.get("fileExt", "")).lower() == "xlsx")
+    file_seq = int(xfile["fileSeq"])
+    dest = Path(tempfile.gettempdir()) / f"sgyn_{file_seq}.xlsx"
+    if not dest.exists() or dest.stat().st_size < 1_000_000:
+        body = f"bbsCd={reb['bbs_cd']}&seq={seq}&fileSeq={file_seq}".encode()
+        req = urllib.request.Request(reb["file_url"], data=body, headers={**UA, "Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            dest.write_bytes(resp.read())
+    return seq, file_seq, dest
+
+
+def col_series(path: Path, sheet: str, col: int, last_n: int = 16) -> list[tuple[str, float]]:
+    from openpyxl import load_workbook
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb[sheet]
+    rows: list[tuple[str, float]] = []
+    for row in ws.iter_rows(min_row=6, values_only=True):
+        dt, val = row[0], row[col] if col < len(row) else None
+        if dt is None or val is None:
+            continue
+        if hasattr(dt, "strftime"):
+            key = dt.strftime("%Y-%m-%d")
+        else:
+            key = str(dt)[:10]
+        try:
+            rows.append((key, float(val)))
+        except (TypeError, ValueError):
+            continue
+    wb.close()
+    return rows[-last_n:]
+
+
+def pct(v: float | None) -> str:
+    return "없음" if v is None else f"{v:+.2f}%"
 
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "event").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    topic = "cwally-port"
-    server = "https://ntfy.sh"
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     force = os.environ.get("FORCE_ALERT") == "1"
-
-    prev = {"updated_at": None, "last_mode": None, "last_sent_date": None, "baseline_sent": False}
-    if STATE_PATH.exists():
-        try:
-            prev.update(json.loads(STATE_PATH.read_text(encoding="utf-8")))
-        except json.JSONDecodeError:
-            pass
-
     thursday = now.weekday() == 3
-    first = not prev.get("baseline_sent")
-    send = False
-    kind = "silent"
-    if force or first:
-        send = True
-        kind = "기준"
-    elif mode == "weekly" or (mode == "event" and thursday):
-        if prev.get("last_sent_date") != today:
-            send = True
-            kind = "주간"
+    prev = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {}
 
-    regions = cfg["regions"]
+    if not force and not thursday and mode != "weekly":
+        print("sgyn silent; thursday only")
+        return 0
+    if not force and prev.get("last_sent_date") == today:
+        print("sgyn already sent today")
+        return 0
+
     th = cfg["thresholds"]
-    order = " → ".join(regions[k]["label"] for k in cfg["break_order"])
-    if kind == "기준":
-        title = "[SGYN] 12개월 유지 체크 | 추격 금지"
+    labels = cfg["labels"]
+    cols = cfg["reb"]["cols"]
+    try:
+        _seq, file_seq, xlsx = latest_xlsx(cfg)
+    except Exception as exc:
+        print("reb download fail", exc, file=sys.stderr)
+        ntfy_publish("https://ntfy.sh", "cwally-port", "[SGYN] 수집 실패", f"{stamp}\n이게 뭐 알림: 경기남부 주간 체크.\n지금 상태: 부동산원 시계열 다운로드 실패.\n지금 할 일: R-ONE을 직접 보세요.\n하지 말 것: 추격.", 4)
+        return 0
+
+    sale, jeonse = {}, {}
+    hits: list[str] = []
+    reasons: dict[str, list[str]] = {}
+    series_out = {}
+    week_date = None
+    for key, col in cols.items():
+        srows = col_series(xlsx, cfg["reb"]["sale_sheet"], col)
+        jrows = col_series(xlsx, cfg["reb"]["jeonse_sheet"], col)
+        sale[key] = srows[-1][1] if srows else None
+        jeonse[key] = jrows[-1][1] if jrows else None
+        if srows:
+            week_date = srows[-1][0]
+        j13 = sum(v for _, v in jrows[-13:]) if jrows else None
+        series_out[key] = {"sale_week": sale[key], "jeonse_week": jeonse[key], "jeonse_13w": j13}
+        why = []
+        if sale[key] is not None and sale[key] <= th["sale_week_break"]:
+            why.append(f"매매주간 {pct(sale[key])}")
+        if jeonse[key] is not None and jeonse[key] <= th["jeonse_week_break"]:
+            why.append(f"전세주간 {pct(jeonse[key])}")
+        if j13 is not None and j13 <= th["jeonse_13w_break"]:
+            why.append(f"전세 13주 {pct(j13)}")
+        if why:
+            hits.append(key)
+            reasons[key] = why
+
+    if hits:
+        title = "[SGYN] " + "·".join(labels[k] for k in cfg["title_regions"] if k in hits)
+        do_now = "제목 권역만 조정으로 보세요. 나머지는 유지."
+        pri = 4
     else:
-        title = "[SGYN] 동탄부터 확인 | 추격 금지"
+        title = "[SGYN] 유지"
+        do_now = "추격하지 말고 다음 목요일까지 봅니다."
+        pri = 3
 
     lines = [
-        f"{stamp} | SGYN | 경기남부 4권역",
-        "이게 뭐 알림: 동탄·광교웰빙·광교본체·수지 집값 유지가 깨지는지 보는 주 1회 체크리스트입니다.",
-        f"지금 상태: 깨질 순서 {order}. 기본값은 동탄 조정, 나머지 3곳은 거래 감소+가격 방어.",
-        "지금 할 일: 아래 5개를 권역별로 보고, 2개월 연속 깨질 선이 나온 권역만 조정으로 보세요.",
-        f"- 토허 신청 {th['permit_break_pct']}% / 2개월",
-        f"- 생애최초 건수 {th['first_break_pct']}% 또는 비중 {th['first_share_break_pp']}%p",
-        f"- 30대 비중 깨질: 동탄 {regions['dongtan']['share30_break']}% / 웰빙 {regions['wellbeing']['share30_break']}% / 본체 {regions['gwanggyo']['share30_break']}% / 수지 {regions['suji']['share30_break']}%",
-        f"- 전세 3개월 {th['jeonse_break_3m_pct']}%",
-        f"- 정보통신 30대 고용 YoY {th['ict30_break_yoy_pct']}% (2분기). 동탄은 반도체 성과급이 먼저.",
-        "나중에: 다음 주 목요일 15:20. 깨질 선이 없으면 추격하지 말고 유지로 봅니다.",
-        "익절/줄일 때: 동탄 토허·30대가 먼저 깨지면 동탄 국평 선. 웰빙타운은 구축·저층. 광교 본체·수지는 호가 공백이 먼저.",
-        "하지 말 것: 네 권역을 같은 시장으로 묶기. 웰빙타운을 광교 대장주와 같이 추격. 특례대출·전세가 같이 깨질 전에 서울 소형 프레임 사기.",
+        f"{stamp} | SGYN | 기준 {week_date or '없음'} | 부동산원 시계열",
+        "이게 뭐 알림: 동탄·영통(광교)·수지 주간 매매·전세가 유지 선을 깨는지 보는 목요일 알림.",
+        f"지금 상태: 동탄 매매 {pct(sale.get('dongtan'))} / 전세 {pct(jeonse.get('dongtan'))} | 영통 매매 {pct(sale.get('yeongtong'))} / 전세 {pct(jeonse.get('yeongtong'))} | 수지 매매 {pct(sale.get('suji'))} / 전세 {pct(jeonse.get('suji'))}",
+        f"전세 13주 합: 동탄 {pct((series_out.get('dongtan') or {}).get('jeonse_13w'))} | 영통 {pct((series_out.get('yeongtong') or {}).get('jeonse_13w'))} | 수지 {pct((series_out.get('suji') or {}).get('jeonse_13w'))}",
+        f"토허·등기: 주간 공표 없음. 월간 건수가 {th['permit_break_pct']}% / {th['first_break_pct']}% 깨질 때만 수동 표기.",
+        f"지금 할 일: {do_now}",
+    ]
+    if hits:
+        for k in hits:
+            lines.append(f"- {labels[k]}: {", ".join(reasons[k])}")
+    lines += [
+        "나중에: 다음 목 15:20. 깨질 순서는 동탄→웰빙/영통→광교본체→수지.",
+        "익절/줄일 때: 제목에 뜻이 나온 권역만. 영통은 광교 본체+웰빙타운 공통 지표.",
+        f"하지 말 것: 네 권역 묶기. 유지 주에 추격. 임계 {th['sale_week_break']}% / 전세주 {th['jeonse_week_break']}% / 전세13주 {th['jeonse_13w_break']}%.",
     ]
 
     STATE_PATH.write_text(
         json.dumps(
             {
                 "updated_at": stamp,
-                "last_mode": mode,
-                "last_sent_date": today if send else prev.get("last_sent_date"),
-                "baseline_sent": True if send else bool(prev.get("baseline_sent")),
-                "kind": kind if send else "silent",
+                "last_sent_date": today,
+                "week_date": week_date,
+                "file_seq": file_seq,
+                "hits": [labels[k] for k in hits],
+                "series": series_out,
             },
             ensure_ascii=False,
             indent=2,
@@ -104,10 +169,7 @@ def main() -> int:
     )
     msg = "\n".join(lines)
     print(msg)
-    if not send:
-        print("sgyn silent")
-        return 0
-    ntfy_publish(server, topic, title, msg, 4 if kind == "기준" else 3, "house,warning")
+    ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, pri)
     return 0
 
 
