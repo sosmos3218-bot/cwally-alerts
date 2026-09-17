@@ -1,8 +1,8 @@
 {
-  "updated_at": null,
-  "price_zone": null,
-  "fx_zone": null,
-  "price": null,
-  "fx": null,
+  "updated_at": "2026-09-17 13:32 KST",
+  "price_zone": "BETWEEN",
+  "fx_zone": "FX_BASE",
+  "price": 14735.0,
+  "fx": 1380.48,
   "last_alert_key": null
 }
