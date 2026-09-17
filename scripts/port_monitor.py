@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from subprocess import run as run_cmd
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,13 +18,14 @@ STATE_PATH = ROOT / "state" / "port.json"
 FAIL = "조회 실패(금리 규칙 미적용)"
 
 BASE = {
-    "005930": 28,
-    "000660": 22,
-    "329180": 12,
-    "012450": 9,
-    "105560": 15,
-    "000810": 8,
-    "005380": 6,
+    "005930": 24,
+    "000660": 19,
+    "329180": 10,
+    "012450": 8,
+    "105560": 8,
+    "000810": 4,
+    "005380": 5,
+    "475350": 22,
 }
 NAMES = {
     "005930": "삼성전자",
@@ -33,6 +35,7 @@ NAMES = {
     "105560": "KB금융",
     "000810": "삼성화재",
     "005380": "현대차",
+    "475350": "버크셔ETF",
 }
 
 
@@ -96,7 +99,6 @@ def naver_yield(code: str):
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             html = resp.read().decode("euc-kr", errors="ignore")
-        # 최신 행: 날짜, 금리, 변동, 등락률
         rows = re.findall(
             r"(\d{4}\.\d{2}\.\d{2})</td>\s*<td[^>]*>\s*([0-9]+\.[0-9]+)",
             html,
@@ -117,7 +119,6 @@ def ktb_pair(cfg: dict):
     k10 = ecos_yield(cfg, ecos.get("ktb10_item") or "010210000")
     if k3 is None:
         k3 = naver_yield(naver.get("ktb3") or "IRR_GOVT03Y")
-    # 네이버 10년 일별 코드는 비어 있음. 3년 코드로 10년을 채우지 않는다.
     return k3, k10
 
 
@@ -178,51 +179,51 @@ def apply_rules(hist, fx, wti, ktb3, ktb10):
     if wti120:
         halt = True
         eq, cash = 40, 25
-        w.update({"000660": 18, "005380": 4, "012450": 9})
-        reasons.append("WTI 120. 시나리오 중지. 주식 40, 현금 25, 1~2년물만.")
+        w.update({"000660": 16, "005380": 3, "012450": 7, "475350": 16})
+        reasons.append("WTI 120. 시나리오 중지. 주식 40, 현금 25, 1~2년물만. 버크셔ETF 16.")
     elif hits >= 2:
         eq, cash = 45, 20
         reasons.append("조건 2개 동시. 주식 45, 현금 20. 종목보다 현금 먼저.")
     elif wti115:
         eq, cash = 45, 15
-        w.update({"005380": 4, "012450": 7, "000660": 19})
-        reasons.append("WTI 115. 주식 45. 현대차 4, 에어로 7, 닉스 19. 10년 금지.")
+        w.update({"005380": 3, "012450": 6, "000660": 17, "475350": 18})
+        reasons.append("WTI 115. 주식 45. 현대차 3, 에어로 6, 닉스 17, 버크셔ETF 18. 10년 금지.")
     elif wti110:
         cash = 15
-        w.update({"005380": 4, "000660": 19})
-        reasons.append("WTI 110. 현금 15. 현대차 4, 닉스 19. 10년 신규 금지.")
+        w.update({"005380": 3, "000660": 17})
+        reasons.append("WTI 110. 현금 15. 현대차 3, 닉스 17. 10년 신규 금지.")
     elif wti90:
         ten = 15
         reasons.append("WTI 90. 채권 안에서 10년만 +5. 화학주는 안 넣음.")
 
     if not halt:
         if fx_430:
-            w.update({"105560": 10, "000810": 5, "005930": 28, "000660": 27, "005380": 8})
-            reasons.append("원달러 1430. KB 10, 화재 5, 반도체 55, 현대차 8. 10년 금지.")
+            w.update({"105560": 6, "000810": 3, "005930": 24, "000660": 24, "005380": 7, "475350": 16})
+            reasons.append("원달러 1430. KB 6, 화재 3, 반도체 48, 현대차 7, 버크셔ETF 16. 10년 금지.")
         elif fx_410:
             cash = max(cash, 15)
             eq = min(eq, 50)
-            w.update({"005930": 24, "105560": 12})
-            reasons.append("원달러 1410. 현금 15, 주식 50. 전자 24, KB 12.")
+            w.update({"005930": 21, "105560": 6, "475350": 18})
+            reasons.append("원달러 1410. 현금 15, 주식 50. 전자 21, KB 6, 버크셔ETF 18.")
         elif fx_strong:
-            w.update({"005380": 3, "329180": 9, "000660": 18})
-            reasons.append("원달러 1340. 현대차 3, HD중 9, 닉스 18.")
+            w.update({"005380": 3, "329180": 8, "000660": 16, "475350": 24})
+            reasons.append("원달러 1340. 현대차 3, HD중 8, 닉스 16, 버크셔ETF 24.")
 
         if k3_430:
-            w.update({"005930": min(w["005930"], 25), "000660": min(w["000660"], 19), "005380": min(w["005380"], 4)})
-            reasons.append("국고 3년 4.30. 전자 25, 닉스 19, 현대차 4. 3년 매수 유지, 10년 금지.")
+            w.update({"005930": min(w["005930"], 22), "000660": min(w["000660"], 17), "005380": min(w["005380"], 3)})
+            reasons.append("국고 3년 4.30. 전자 22, 닉스 17, 현대차 3. 3년 매수 유지, 10년 금지.")
         elif k3_420:
             reasons.append("국고 3년 4.20. 3년물만 분할 매수. 주식 유지.")
         elif k3_low:
-            w.update({"105560": min(w["105560"], 12), "000810": min(w["000810"], 5)})
-            reasons.append("국고 3년 3.85. 한은 인상 기대가 접혔다. KB 12, 화재 5.")
+            w.update({"105560": min(w["105560"], 6), "000810": min(w["000810"], 3)})
+            reasons.append("국고 3년 3.85. 한은 인상 기대가 접혔다. KB 6, 화재 3.")
 
         if k10_high:
             ten = max(ten, 15)
             reasons.append("국고 10년 4.75. 채권 안에서 10년 15. 주식은 그대로.")
         elif k10_low:
-            w["000810"] = min(w["000810"], 6)
-            reasons.append("국고 10년 4.40. 10년 신규 금지. 화재 6.")
+            w["000810"] = min(w["000810"], 3)
+            reasons.append("국고 10년 4.40. 10년 신규 금지. 화재 3.")
 
     if not reasons:
         reasons.append("밴드 안이니 오늘은 종목을 교체하지 말고 그대로 두세요.")
@@ -252,18 +253,18 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool]:
         if "samsung_prelim" in ids:
             cons = cfg.get("samsung_op_consensus_trn", 114)
             live_lines.append(
-                f"잠정 영업이익 기준 {cons}조. 플러마이너스는 ±5% 유지, +10%는 전자 32·닉스 24, -10%는 전자 22·닉스 18·주식 50."
+                f"잠정 영업이익 기준 {cons}조. 플러마이너스는 ±5% 유지, +10%는 전자 28·닉스 21, -10%는 전자 20·닉스 16·주식 50."
             )
         if "samsung_confirm" in ids:
-            live_lines.append("확정에서 HBM이 밀리면 전자 22·닉스 16. 가이던스가 내리고 재고가 늘면 반도체 35·KB 18·화재 10.")
+            live_lines.append("확정에서 HBM이 밀리면 전자 20·닉스 14. 가이던스가 내리고 재고가 늘면 반도체 32·KB 10·화재 6.")
         if "bok_oct" in ids:
-            live_lines.append("금통위 동결+기존 문장이면 유지. 매파면 KB 18·화재 10·현대차 4. +25bp면 반도체 45·HD중 10, 당일 채권 금지.")
+            live_lines.append("금통위 동결+기존 문장이면 유지. 매파면 KB 10·화재 6·현대차 3. +25bp면 반도체 40·HD중 8, 당일 채권 금지.")
         if "bok_nov" in ids:
-            live_lines.append("11월에 3.25%가 확인되면 화재 6, 채권 안에서 10년 15. 종목은 그대로.")
+            live_lines.append("11월에 3.25%가 확인되면 화재 3, 채권 안에서 10년 15. 종목은 그대로.")
         if "fomc_oct" in ids:
             live_lines.append("10월 연준 회의는 점 그림이 없습니다. +25bp여도 12월 규칙을 앞당게 적용하지 말고, 현금만 15로 둘리세요.")
         if "fomc_dec" in ids:
-            live_lines.append("12월 연준: 동결+점 그림 내림이면 10년 18. +25bp면 닉스 18·현대차 4·현금 15. +50bp면 주식 35·현금 30으로 중지.")
+            live_lines.append("12월 연준: 동결+점 그림 내림이면 10년 18. +25bp면 닉스 16·현대차 3·현금 15. +50bp면 주식 35·현금 30으로 중지.")
     soon_lines = []
     if soon:
         soon_lines.append("21일 안 일정: " + ", ".join(f"{e['label']} {e['start']}" for e in soon))
@@ -323,13 +324,13 @@ def main() -> int:
 
     lines = [
         f"{stamp} | PORT 장전 체크",
-        "이게 무슨 알림: 7종목 유니버스 장전 체크입니다. 기본은 주식 55, 채권 35, 현금 10입니다.",
+        "이게 무슨 알림: 8종목 유니버스 장전 체크입니다. 기본은 주식 55, 채권 35, 현금 10입니다. 버크셔ETF는 총자산 12%입니다.",
         f"지금 결과/상태: 원달러 {fmt(fx, 1)}, WTI {fmt(wti, 2)}, 국고 3년 {fmt(ktb3, 3)}, 국고 10년 {fmt(ktb10, 3)}.",
         f"지금 할 일: 주식 {eq}, 채권 35(짧은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. "
         + " ".join(reasons),
         *later,
         "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
-        "하지 말 것: 추격 매수, 신용·미수, 7개 밖 종목, 당일 매매, 테마 반등으로 교체.",
+        "하지 말 것: 추격 매수, 신용·미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
     ]
 
     msg = "\n".join(lines)
@@ -342,6 +343,10 @@ def main() -> int:
         5 if halt else (4 if is_live else 3),
         "chart_with_upwards_trend,kr",
     )
+    try:
+        run_cmd([sys.executable, str(ROOT / "scripts" / "brk10_monitor.py"), "event"], check=False)
+    except Exception as exc:
+        print(f"brk10 hook fail: {exc}", file=sys.stderr)
     return 0
 
 
