@@ -8,13 +8,18 @@
   "as_of": "2026-09-17",
   "tickers": {
     "fx": "USDKRW=X",
-    "wti": "CL=F",
-    "ktb3_yahoo": "KR3YT=RR",
-    "ktb10_yahoo": "KR10YT=RR"
+    "wti": "CL=F"
+  },
+  "ecos": {
+    "stat_code": "817Y002",
+    "ktb3_item": "010200000",
+    "ktb10_item": "010210000",
+    "key_env": "ECOS_API_KEY",
+    "sample_key": "SAMPLE"
   },
   "naver_yield": {
-    "ktb3": "IRR_GOVT_03Y",
-    "ktb10": "IRR_GOVT_10Y"
+    "ktb3": "IRR_GOVT03Y",
+    "ktb10": "IRR_GOVT03Y"
   },
   "account": {"equity": 55, "bond": 35, "cash": 10},
   "bond_split": {"front": 25, "ten": 10},
