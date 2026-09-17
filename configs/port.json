@@ -1,0 +1,39 @@
+{
+  "name": "PORT",
+  "title_prefix": "[PORT]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "08:50 요청. 새 cron 금지라 기존 장전 09:00 KST(UTC 00:00) morning job에만 붙임",
+  "as_of": "2026-09-17",
+  "tickers": {
+    "fx": "USDKRW=X",
+    "wti": "CL=F",
+    "ktb3_yahoo": "KR3YT=RR",
+    "ktb10_yahoo": "KR10YT=RR"
+  },
+  "naver_yield": {
+    "ktb3": "IRR_GOVT_03Y",
+    "ktb10": "IRR_GOVT_10Y"
+  },
+  "account": {"equity": 55, "bond": 35, "cash": 10},
+  "bond_split": {"front": 25, "ten": 10},
+  "weights": {
+    "005930": {"name": "삼성전자", "w": 28},
+    "000660": {"name": "SK하이닉스", "w": 22},
+    "329180": {"name": "HD현대중공업", "w": 12},
+    "012450": {"name": "한화에어로", "w": 9},
+    "105560": {"name": "KB금융", "w": 15},
+    "000810": {"name": "삼성화재", "w": 8},
+    "005380": {"name": "현대차", "w": 6}
+  },
+  "samsung_op_consensus_trn": 114,
+  "events": [
+    {"id": "samsung_prelim", "label": "삼성전자 잠정", "start": "2026-10-01", "end": "2026-10-10"},
+    {"id": "bok_oct", "label": "10월 금통위", "start": "2026-10-22", "end": "2026-10-23"},
+    {"id": "samsung_confirm", "label": "삼성전자 확정", "start": "2026-10-28", "end": "2026-10-29"},
+    {"id": "fomc_oct", "label": "10월 FOMC(점도표 없음)", "start": "2026-10-29", "end": "2026-10-29"},
+    {"id": "fomc_dec", "label": "12월 FOMC(점도표)", "start": "2026-12-09", "end": "2026-12-10"},
+    {"id": "bok_nov", "label": "11월 금통위", "start": "2026-11-26", "end": "2026-11-27"}
+  ]
+}
