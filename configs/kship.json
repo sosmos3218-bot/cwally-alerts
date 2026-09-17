@@ -1,0 +1,26 @@
+{
+  "name": "KSHIP",
+  "title_prefix": "[KSHIP]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "새 cron 금지. 기존 장후 15:20 KST(UTC 06:20) afternoon job에만 붙임. 스크립트가 월말 평일에만 ntfy 전송",
+  "alert_policy": "month_end_weekday",
+  "as_of": "2026-09-17",
+  "target": {"beta": 65, "event": 35},
+  "band": {"event_lo": 30, "event_hi": 40},
+  "weights": {
+    "etf": {"ticker": "0115D0.KS", "code": "0115D0", "name": "KODEX K조선TOP10", "w": 50, "lo": 45, "hi": 55},
+    "holdco": {"ticker": "009540.KS", "code": "009540", "name": "HD한국조선해양", "w": 15, "lo": 10, "hi": 20},
+    "shi": {"ticker": "010140.KS", "code": "010140", "name": "삼성중공업", "w": 35, "lo": 30, "hi": 40}
+  },
+  "tranche": {"first_pct": 60, "second_pct": 25, "third_pct": 15},
+  "buy_zones": {
+    "etf": {"t1_hi": 8000, "t2": [6700, 7200], "chase": 9500, "trim": 11000},
+    "holdco": {"t1_hi": 360000, "t2": [314000, 330000]},
+    "shi": {"t1_hi": 22000, "t2": [18400, 19500], "chase": 24000, "trim": 30000}
+  },
+  "min_rebalance_krw": 300000,
+  "flng_min_trn": 2.0,
+  "offshore_goal_pct": 70
+}
