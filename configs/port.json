@@ -18,8 +18,7 @@
     "sample_key": "SAMPLE"
   },
   "naver_yield": {
-    "ktb3": "IRR_GOVT03Y",
-    "ktb10": "IRR_GOVT03Y"
+    "ktb3": "IRR_GOVT03Y"
   },
   "account": {"equity": 55, "bond": 35, "cash": 10},
   "bond_split": {"front": 25, "ten": 10},
