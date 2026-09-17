@@ -271,12 +271,33 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool]:
     return live_lines, soon_lines, bool(live)
 
 
+def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool) -> tuple[bool, str]:
+    force = os.environ.get("FORCE_ALERT") == "1" or (len(sys.argv) > 1 and sys.argv[1].lower() == "force")
+    if force:
+        return True, "force"
+    if policy != "weekly_or_change":
+        return True, "always"
+    last_key = prev.get("last_sent_key")
+    last_date = prev.get("last_sent_date")
+    if last_date == today and last_key == key and key == "BASE" and not is_live:
+        return False, "same_day_base"
+    if halt or key == "HALT" or key == "DUAL" or key.startswith("EVENT"):
+        return True, "action"
+    if is_live:
+        return True, "event"
+    if last_key != key:
+        return True, "zone_change"
+    if now.weekday() == 0 and last_date != today:
+        return True, "monday"
+    return False, "quiet_base"
+
+
 def main() -> int:
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    prev = {"zone": None, "last_alert_key": None, "history": []}
+    prev = {"zone": None, "last_alert_key": None, "last_sent_key": None, "last_sent_date": None, "history": []}
     if STATE_PATH.exists():
         try:
             prev.update(json.loads(STATE_PATH.read_text(encoding="utf-8")))
@@ -297,12 +318,26 @@ def main() -> int:
         title = "일정 날 | 당일 금지"
         key = "EVENT:" + key
 
+    policy = cfg.get("alert_policy") or "weekly_or_change"
+    send, why = should_notify(policy, key, prev, today, now, is_live, halt)
+    if send and why == "monday" and key == "BASE":
+        title = "주간 체크 | 유지 | 오늘 손대지 말 것"
+
+    last_sent_key = prev.get("last_sent_key")
+    last_sent_date = prev.get("last_sent_date")
+    if send:
+        last_sent_key = key
+        last_sent_date = today
+
     STATE_PATH.write_text(
         json.dumps(
             {
                 "updated_at": stamp,
                 "zone": key,
                 "last_alert_key": key,
+                "last_sent_key": last_sent_key,
+                "last_sent_date": last_sent_date,
+                "last_skip_reason": None if send else why,
                 "fx": fx,
                 "wti": wti,
                 "ktb3": ktb3,
@@ -335,14 +370,16 @@ def main() -> int:
 
     msg = "\n".join(lines)
     print(msg)
-    ntfy_publish(
-        "https://ntfy.sh",
-        "cwally-port",
-        f"[PORT] {title}",
-        msg,
-        5 if halt else (4 if is_live else 3),
-        "chart_with_upwards_trend,kr",
-    )
+    print(f"notify={send} reason={why}", file=sys.stderr)
+    if send:
+        ntfy_publish(
+            "https://ntfy.sh",
+            "cwally-port",
+            f"[PORT] {title}",
+            msg,
+            5 if halt else (4 if is_live else 3),
+            "chart_with_upwards_trend,kr",
+        )
     try:
         run_cmd([sys.executable, str(ROOT / "scripts" / "brk10_monitor.py"), "event"], check=False)
     except Exception as exc:
