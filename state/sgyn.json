@@ -1,24 +1,36 @@
 {
-  "updated_at": "2026-09-16 14:40 KST",
-  "last_sent_date": "2026-09-16",
-  "week_date": "2026-09-07",
-  "file_seq": 4933,
+  "updated_at": "2026-09-17 20:47 KST",
+  "last_sent_date": "2026-09-17",
+  "week_date": "2026-09-14",
+  "file_seq": 4950,
   "hits": [],
   "series": {
     "suji": {
-      "sale_week": 0.28857545475309276,
-      "jeonse_week": 0.13321461620658948,
-      "jeonse_13w": 1.8919335077319799
+      "sale_week": 0.21190304691893758,
+      "jeonse_week": 0.1262762598439382,
+      "jeonse_13w": 1.7767721093786548
     },
     "yeongtong": {
-      "sale_week": 0.4714384829559437,
-      "jeonse_week": 0.2762734376138054,
-      "jeonse_13w": 3.0675370946476654
+      "sale_week": 0.6075648353226715,
+      "jeonse_week": 0.2520582220622902,
+      "jeonse_13w": 3.0975673819828797
     },
     "dongtan": {
-      "sale_week": 0.21697037367482963,
-      "jeonse_week": 0.20581049588026534,
-      "jeonse_13w": 5.194892219645042
+      "sale_week": 0.3092962556873857,
+      "jeonse_week": 0.3625395906075912,
+      "jeonse_13w": 4.6828634526907775
     }
+  },
+  "permit": {
+    "yeongtong": {
+      "month": "7월",
+      "count": 670,
+      "prev": 567,
+      "mom_pct": 18.165784832451497,
+      "source": "수원시 토허 통계"
+    }
+  },
+  "iros": {
+    "error": "<urlopen error timed out>"
   }
 }
