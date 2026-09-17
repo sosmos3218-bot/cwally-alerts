@@ -1,0 +1,17 @@
+{
+  "name": "ccrev",
+  "title_prefix": "[CCREV]",
+  "display": "커버드콜 10-20% 재검토",
+  "as_of": "2026-09-17",
+  "schedule_kst": "09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "index_ticker": "^KS11",
+  "earn_tickers": ["005930.KS", "000660.KS"],
+  "box_lookback_days": 60,
+  "box_range_max": 0.18,
+  "box_persist_days": 45,
+  "earn_drop_pct": -0.03,
+  "cooldown_days": 7,
+  "cc_band_pct": [10, 20]
+}
