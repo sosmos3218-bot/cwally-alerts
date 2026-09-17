@@ -1,0 +1,32 @@
+{
+  "name": "BRK10",
+  "title_prefix": "[BRK10]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 금지. 기존 장전 09:00 KST morning job의 port_monitor 후크로만 실행",
+  "as_of": "2026-09-17",
+  "code": "475350",
+  "display": "RISE 버크셔포트폴리오TOP10",
+  "ticker": "475350.KS",
+  "fx_ticker": "USDKRW=X",
+  "target_total_pct": 12,
+  "equity_weight_pct": 22,
+  "horizon_years": 5,
+  "avg_ref": 14000,
+  "bands": {
+    "buy1": [14350, 14650],
+    "buy2": [13600, 14050],
+    "buy3": [12800, 13350],
+    "review": 12400,
+    "hard": 10950,
+    "trim1": 17080,
+    "trim2": 19320,
+    "chase_ban": 15800
+  },
+  "fx_bands": {
+    "low": 1320,
+    "high": 1520
+  },
+  "tranche": {"first_pct": 30, "second_pct": 40, "third_pct": 30}
+}
