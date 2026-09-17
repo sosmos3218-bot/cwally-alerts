@@ -190,11 +190,12 @@ def main() -> int:
             cooldown_ok = delta >= cfg["cooldown_days"]
         except ValueError:
             cooldown_ok = True
-    became_ready = ready and not bool(prev.get("ready"))
-    send = ready and cooldown_ok and (became_ready or bool(prev.get("ready")) is False or became_ready)
     send = ready and cooldown_ok
 
     lo_b, hi_b = cfg["cc_band_pct"]
+    core = cfg.get("core_ticker", "091160")
+    core_from = cfg.get("core_from_pct", 55)
+    core_to = cfg.get("core_to_pct", 40)
     px = f"{last:,.0f}" if last is not None else "없음"
     rng = f"{range_pct * 100:.1f}%" if range_pct is not None else "없음"
     band = f"{hi:,.0f}~{lo:,.0f}" if hi and lo else "없음"
@@ -207,27 +208,35 @@ def main() -> int:
     earn_txt = ", ".join(earn_bits) if earn_bits else "없음"
 
     if ready:
-        title = f"[CCREV] 커버드콜 {lo_b}~{hi_b}% 재검"
+        title = f"[CCREV] {core} {core_from}→{core_to}% | CC는 인출 있을 때만"
         do_now = (
+            f"{core}을 {core_from}%에서 {core_to}%로 줄이고 추가매수는 멈추세요. "
             f"인출 필요가 생겼으면 커버드콜 {lo_b}~{hi_b}%만 검토하세요. "
-            "인출이 없으면 0%를 유지하세요."
+            "인출이 없으면 커버드콜은 0%를 유지하세요."
         )
     elif box_ready and not earn_down:
-        title = "[CCREV] 박스만 확인 | 커버드콜 보류"
-        do_now = "지수는 박스입니다. 이익 추정치가 내리기 전에는 커버드콜을 높이지 말세요."
+        title = "[CCREV] 박스만 확인 | 비중·커버드콜 보류"
+        do_now = (
+            f"지수는 박스입니다. 이익 추정치가 내리기 전에는 {core} 55%와 커버드콜 0%를 유지하세요."
+        )
         send = False
     elif earn_down and not box_ready:
         title = "[CCREV] 추정치 하향 | 박스 미확인 보류"
-        do_now = "실적 추정치는 내리는 중입니다. 박스가 수개월 확인되기 전에는 커버드콜을 높이지 말세요."
+        do_now = (
+            f"실적 추정치는 내리는 중입니다. 박스가 수개월 확인되기 전에는 {core} 55%와 커버드콜 0%를 유지하세요."
+        )
         send = False
     else:
         title = "[CCREV] 조건 미도래 | 보류"
-        do_now = "아무 것도 하지 말고 본지수·반도체 코어를 유지하세요."
+        do_now = f"아무 것도 하지 말고 {core} 55%와 커버드콜 0%를 유지하세요."
         send = False
 
     lines = [
-        f"{stamp} | CCREV | 커버드콜 재검토",
-        "이게 뭐 알림: 커버드콜 10~20% 를 다시 볼지 말지 보는 알림입니다.",
+        f"{stamp} | CCREV | {core} 축소 + 커버드콜 재검토",
+        (
+            f"이게 뭐 알림: {core}을 {core_from}%에서 {core_to}%로 줄일지, "
+            "커버드콜 10~20%를 다시 볼지 보는 알림입니다."
+        ),
         (
             f"지금 상태: 코스피 {px} | 60일 범위 {rng} ({band}) | "
             f"박스 {persist}일/{cfg['box_persist_days']}일 | "
@@ -235,8 +244,14 @@ def main() -> int:
             f"조건 {'충족' if ready else '미충족'}."
         ),
         f"지금 할 일: {do_now}",
-        "나중에: 박스가 깨지거나 실적이 다시 올라가면 커버드콜을 0%로 돌리세요.",
-        "익절/줄일 때: 커버드콜을 코어로 올리지 말 것. 20%를 넘기지 말 것.",
+        (
+            "나중에: 박스가 깨지거나 실적이 다시 올라가면 "
+            f"{core}을 55%로 되돌리고 커버드콜은 0%로 두세요."
+        ),
+        (
+            f"익절/줄일 때: {core}은 {core_to}% 아래로 내리지 말 것. "
+            "커버드콜을 코어로 올리지 말 것. 20%를 넘기지 말 것."
+        ),
         "하지 말 것: 분배율만 보고 추격. 인출 없는데 커버드콜을 높이는 것. 새 cron 추가.",
     ]
     msg = "\n".join(lines)
