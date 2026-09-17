@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -13,6 +14,7 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "port.json"
 STATE_PATH = ROOT / "state" / "port.json"
+FAIL = "조회 실패(금리 규칙 미적용)"
 
 BASE = {
     "005930": 28,
@@ -52,7 +54,40 @@ def yahoo(ticker: str):
         return None
 
 
+def ecos_yield(cfg: dict, item: str):
+    ecos = cfg.get("ecos") or {}
+    key = os.environ.get(ecos.get("key_env") or "ECOS_API_KEY") or ecos.get("sample_key") or "SAMPLE"
+    stat = ecos.get("stat_code") or "817Y002"
+    end = datetime.now(KST)
+    start = end - timedelta(days=14)
+    url = (
+        f"https://ecos.bok.or.kr/api/StatisticSearch/{urllib.parse.quote(key)}"
+        f"/json/kr/1/30/{stat}/D/{start.strftime('%Y%m%d')}/{end.strftime('%Y%m%d')}/{item}"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            payload = json.loads(resp.read().decode())
+        rows = (payload.get("StatisticSearch") or {}).get("row") or []
+        vals = []
+        for row in rows:
+            raw = row.get("DATA_VALUE")
+            if raw in (None, ""):
+                continue
+            vals.append((str(row.get("TIME") or ""), float(raw)))
+        if not vals:
+            print(f"ecos empty {item}", file=sys.stderr)
+            return None
+        vals.sort()
+        return vals[-1][1]
+    except Exception as exc:
+        print(f"ecos fail {item}: {exc}", file=sys.stderr)
+        return None
+
+
 def naver_yield(code: str):
+    if not code:
+        return None
     url = (
         "https://finance.naver.com/marketindex/interestDailyQuote.naver?marketindexCd="
         + urllib.parse.quote(code)
@@ -61,11 +96,29 @@ def naver_yield(code: str):
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             html = resp.read().decode("euc-kr", errors="ignore")
-        nums = re.findall(r"class=\"number\">([0-9]+\.[0-9]+)", html)
+        # 최신 행: 날짜, 금리, 변동, 등락률
+        rows = re.findall(
+            r"(\d{4}\.\d{2}\.\d{2})</td>\s*<td[^>]*>\s*([0-9]+\.[0-9]+)",
+            html,
+        )
+        if rows:
+            return float(rows[0][1])
+        nums = re.findall(r">([0-9]\.[0-9]{2,3})<", html)
         return float(nums[0]) if nums else None
     except Exception as exc:
         print(f"naver fail {code}: {exc}", file=sys.stderr)
         return None
+
+
+def ktb_pair(cfg: dict):
+    ecos = cfg.get("ecos") or {}
+    naver = cfg.get("naver_yield") or {}
+    k3 = ecos_yield(cfg, ecos.get("ktb3_item") or "010200000")
+    k10 = ecos_yield(cfg, ecos.get("ktb10_item") or "010210000")
+    if k3 is None:
+        k3 = naver_yield(naver.get("ktb3") or "IRR_GOVT03Y")
+    # 네이버 10년 일별 코드는 비어 있음. 3년 코드로 10년을 채우지 않는다.
+    return k3, k10
 
 
 def streak(hist, key, n, pred) -> bool:
@@ -74,7 +127,7 @@ def streak(hist, key, n, pred) -> bool:
 
 
 def fmt(v, nd=1):
-    return f"{v:,.{nd}f}" if v is not None else "조회 실패"
+    return f"{v:,.{nd}f}" if v is not None else FAIL
 
 
 def wtxt(w):
@@ -173,8 +226,8 @@ def apply_rules(hist, fx, wti, ktb3, ktb10):
 
     if not reasons:
         reasons.append("밴드 안이니 오늘은 종목을 교체하지 말고 그대로 두세요.")
-    if ktb3 is None and ktb10 is None:
-        reasons.append("국고금리는 조회 실패라 오늘 금리 규칙은 적용하지 않습니다.")
+    if ktb3 is None or ktb10 is None:
+        reasons.append(FAIL)
 
     key = "HALT" if halt else ("DUAL" if hits >= 2 else "BASE")
     title = (
@@ -231,8 +284,7 @@ def main() -> int:
 
     fx = yahoo(cfg["tickers"]["fx"])
     wti = yahoo(cfg["tickers"]["wti"])
-    ktb3 = yahoo(cfg["tickers"]["ktb3_yahoo"]) or naver_yield(cfg["naver_yield"]["ktb3"])
-    ktb10 = yahoo(cfg["tickers"]["ktb10_yahoo"]) or naver_yield(cfg["naver_yield"]["ktb10"])
+    ktb3, ktb10 = ktb_pair(cfg)
 
     hist = [h for h in (prev.get("history") or []) if h.get("date") != today]
     hist.append({"date": today, "fx": fx, "wti": wti, "ktb3": ktb3, "ktb10": ktb10})
