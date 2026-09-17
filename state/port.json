@@ -1,6 +1,18 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "last_alert_key": null,
-  "history": []
+  "updated_at": "2026-09-17 10:57 KST",
+  "zone": "EVENT:밴드 안. 유지. 오늘 종목 교체 금지",
+  "last_alert_key": "EVENT:밴드 안. 유지. 오늘 종목 교체 금지",
+  "fx": 1384.08,
+  "wti": 102.21,
+  "ktb3": null,
+  "ktb10": null,
+  "history": [
+    {
+      "date": "2026-09-17",
+      "fx": 1384.08,
+      "wti": 102.21,
+      "ktb3": null,
+      "ktb10": null
+    }
+  ]
 }
