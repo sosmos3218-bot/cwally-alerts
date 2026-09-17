@@ -4,7 +4,9 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "08:50 요청. 새 cron 금지라 기존 장전 09:00 KST(UTC 00:00) morning job에만 붙임",
+  "schedule_note": "08:50 요청. 새 cron 금지라 기존 장전 09:00 KST(UTC 00:00) morning job에만 붙임. 알림은 weekly_or_change",
+  "alert_policy": "weekly_or_change",
+  "alert_policy_note": "장전 잡은 평일 유지(히스토리/스트릭). ntfy는 월요일, 존 변경, 일정 날, HALT/DUAL만. BASE 반복은 침묵",
   "as_of": "2026-09-17",
   "tickers": {
     "fx": "USDKRW=X",
