@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import html as html_lib
 import json
 import re
 import sys
@@ -14,7 +13,10 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "shinwon.json"
 STATE_PATH = ROOT / "state" / "shinwon.json"
-UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
+UA = {
+    "User-Agent": "Mozilla/5.0 cwally-alerts",
+    "Referer": "https://stock.naver.com/domestic/stock/009270/notice",
+}
 
 EVENT_ZONES = {"STOP898", "STOP1000", "SELL1", "SELL2", "TIME"}
 ZONE_KO = {
@@ -47,7 +49,6 @@ TITLE_BY_ZONE = {
     "ENDED": "창 종료",
     "DATA_FAIL": "시세 확인",
 }
-
 DISC_RULES = [
     ("EARN", ("분기보고서", "반기보고서", "사업보고서", "잠정", "손익구조", "매출액또는손익"), "3Q 영업이익률 2% 미만이면 전량. 패션 적자도 같이 보세요."),
     ("CB", ("전환사채", "전환청구", "전환권", "사채상환", "전환가액"), "CB 잔여 전환·상환이면 오버행. 1,200 추격 금지."),
@@ -113,47 +114,16 @@ def classify_title(title: str) -> str | None:
 
 
 def parse_naver_notice(code: str) -> list[dict]:
-    url = f"https://finance.naver.com/item/news_notice.naver?code={code}"
-    raw = http_get(url)
+    url = f"https://stock.naver.com/api/domestic/detail/notice?itemCode={code}&startIdx=0&pageSize=20"
+    raw = json.loads(http_get(url))
+    rows = raw if isinstance(raw, list) else raw.get("result") or raw.get("list") or []
     items = []
-    for m in re.finditer(
-        r'<td class="title">\s*<a[^>]*>(.*?)</a>.*?(\d{4}\.\d{2}\.\d{2})',
-        raw,
-        flags=re.S,
-    ):
-        title = re.sub(r"<[^>]+>", "", m.group(1))
-        title = html_lib.unescape(re.sub(r"\s+", " ", title)).strip()
-        date = m.group(2).replace(".", "-")
+    for row in rows:
+        title = (row.get("title") or "").strip()
+        date = (row.get("datetime") or "")[:10]
+        nid = str(row.get("no") or f"{date}:{title}")
         if title:
-            items.append({"id": f"{date}:{title}", "date": date, "title": title, "src": "naver"})
-    return items[:20]
-
-
-def parse_kind(code: str) -> list[dict]:
-    q = urllib.parse.urlencode(
-        {
-            "method": "searchDisclosureSub",
-            "currentPageSize": "20",
-            "pageIndex": "1",
-            "orderMode": "1",
-            "orderStat": "D",
-            "forward": "searchdisclosure",
-            "searchCorpName": code,
-            "repIsuSrtCd": code,
-        }
-    )
-    url = "https://kind.krx.co.kr/disclosure/searchdisclosure.do?" + q
-    try:
-        raw = http_get(url)
-    except Exception as exc:
-        print(f"kind fetch failed: {exc}", file=sys.stderr)
-        return []
-    items = []
-    for m in re.finditer(r"(\d{4}-\d{2}-\d{2}).{0,120}?([^<>\n\r]{8,80})", raw):
-        date, title = m.group(1), re.sub(r"\s+", " ", m.group(2)).strip()
-        kind = classify_title(title)
-        if kind:
-            items.append({"id": f"{date}:{title}", "date": date, "title": title, "src": "kind", "kind": kind})
+            items.append({"id": nid, "date": date, "title": title, "src": "naver"})
     return items[:20]
 
 
@@ -166,8 +136,6 @@ def collect_disclosures(code: str) -> list[dict]:
                 found[it["id"]] = it
     except Exception as exc:
         print(f"naver notice failed: {exc}", file=sys.stderr)
-    for it in parse_kind(code):
-        found.setdefault(it["id"], it)
     return list(found.values())
 
 
@@ -221,6 +189,7 @@ def main() -> int:
         price = prev.get("price")
 
     discs = collect_disclosures(cfg["code"])
+    print("tracked discs: " + ", ".join(f"{d.get('kind')}:{d.get('date')}:{d.get('title')}" for d in discs[:8]) or "none")
     seen = list(prev.get("seen_ids") or [])
     cutoff = cfg.get("as_of") or today
     new_discs = [d for d in discs if d["id"] not in seen and d.get("date", "") >= cutoff]
@@ -232,12 +201,8 @@ def main() -> int:
     time_fire = z == "TIME" and not prev.get("time_stop_sent")
     force = mode in {"force", "weekly"}
 
-    send = False
-    if force or zone_changed or new_discs or time_fire:
-        send = True
-    elif mode != "event":
-        send = True
-    else:
+    send = bool(force or zone_changed or new_discs or time_fire or mode != "event")
+    if not send:
         print("no shinwon event; silent")
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
@@ -245,7 +210,6 @@ def main() -> int:
     shares = cfg["shares"]
     pnl = f"{(price / cost - 1) * 100:+.1f}%" if price else "없음"
     value = f"{int(price * shares):,}원" if price else "없음"
-
     action = DO_NOW.get(z, "")
     if any(d.get("kind") == "EARN" for d in new_discs):
         action = "실적 공시 확인. 영업이익률 2% 미만이거나 패션 적자가 안 줄었으면 11/13 전에 전량. " + action
@@ -285,7 +249,6 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
-
     title_bit = TITLE_BY_ZONE.get(z, z)
     if new_discs:
         kinds = "/".join(sorted({d.get("kind") or "DISC" for d in new_discs}))
@@ -296,13 +259,10 @@ def main() -> int:
         title = f"[SHINWON] 구간 변화 | {title_bit}"
     else:
         title = f"[SHINWON] {title_bit}"
-
     msg = "\n".join(lines)
     print(msg)
     if send:
-        hot = z in {"STOP898", "STOP1000", "TIME"} or any(
-            d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs
-        )
+        hot = z in {"STOP898", "STOP1000", "TIME"} or any(d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs)
         pri = 5 if hot else (4 if z in {"SELL1", "SELL2"} or zone_changed else 3)
         publish(title, msg, pri, "warning,chart_with_downwards_trend")
     return 0
