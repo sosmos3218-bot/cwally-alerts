@@ -3,7 +3,9 @@
   "price": null,
   "seen_ids": [],
   "laser_order_seen": false,
+  "laser_repeat_seen": false,
   "window_ping": [],
-  "deadline5_sent": false,
+  "deadline7_sent": false,
+  "buy3_zone": null,
   "last_action": null
 }

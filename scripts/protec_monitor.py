@@ -16,13 +16,15 @@ STATE_PATH = ROOT / "state" / "protec.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
 DISC_RULES = [
-    ("EARN", ("분기보고서", "반기보고서", "사업보고서", "잠정", "손익구조", "매출액또는손익"), [1, 2, 3, 4]),
-    ("ORDER", ("단일판매", "공급계약", "수주계약"), [5]),
-    ("LASER", ("레이저본더", "레이저 본더", "LCB", "LAB", "레이저리플로우", "레이저 리플로우"), [5]),
-    ("LEGAL", ("유죄", "상장적격성", "실질심사", "회계위반", "회계분식", "배임"), [6]),
-    ("HYBRID", ("하이브리드본딩", "하이브리드 본딩", "hybridbonding", "HBM5"), [7]),
-    ("FAIR", ("평가이익", "평가손실", "금융수익", "투자자산"), [2]),
-    ("PMT", ("피엠티",), [3]),
+    ("EARN", ("분기보고서", "반기보고서", "사업보고서", "잠정", "손익구조", "매출액또는손익"), ["C1", "C2", "C3", "C4", "C5"]),
+    ("FAIR", ("평가이익", "평가손실", "금융수익", "투자자산"), ["C2", "C8"]),
+    ("PMT", ("피엠티",), ["C5", "C6"]),
+    ("SUPPORT", ("추가취득", "주식취득", "대여금", "지급보증", "자금보충", "유상증자"), ["C6", "C8"]),
+    ("ORDER", ("단일판매", "공급계약", "수주계약"), ["C7"]),
+    ("LASER", ("레이저본더", "레이저 본더", "LCB", "LAB", "레이저리플로우", "첨단패키징"), ["C7"]),
+    ("LEGAL", ("유죄", "상장적격성", "실질심사", "회계위반", "회계분식", "배임"), ["S1"]),
+    ("HYBRID", ("하이브리드본딩", "하이브리드 본딩", "hybridbonding", "HBM5"), ["S2"]),
+    ("GOV", ("감사의견", "의견거절", "한정", "부적정", "거래정지", "특수관계", "특별관계", "제재"), ["S3"]),
 ]
 
 
@@ -59,12 +61,10 @@ def compact(text: str) -> str:
     return re.sub(r"\s+", "", text or "")
 
 
-def classify(title: str) -> tuple[str | None, list[int]]:
-    t = compact(title).lower()
-    t = t.replace("hybridbonding", "hybridbonding")
-    t = t.replace("hybrid-bonding", "hybridbonding")
+def classify(title: str) -> tuple[str | None, list[str]]:
+    t = compact(title).lower().replace("hybrid-bonding", "hybridbonding")
     kinds = []
-    conds: list[int] = []
+    conds: list[str] = []
     for kind, keys, cs in DISC_RULES:
         if any(compact(k).lower() in t for k in keys):
             kinds.append(kind)
@@ -107,6 +107,14 @@ def in_window(today: str, start: str, end: str) -> bool:
     return start <= today <= end
 
 
+def buy3_zone(price, today: str, print_day: str, buy3: int) -> str:
+    if price is None or price > buy3:
+        return "ABOVE"
+    if today < print_day:
+        return "OPP"
+    return "TRAP"
+
+
 def publish(title: str, message: str, priority: int, tags: str) -> None:
     payload = json.dumps(
         {
@@ -140,8 +148,10 @@ def main() -> int:
             "price": None,
             "seen_ids": [],
             "laser_order_seen": False,
+            "laser_repeat_seen": False,
             "window_ping": [],
-            "deadline5_sent": False,
+            "deadline7_sent": False,
+            "buy3_zone": None,
             "last_action": None,
         },
     )
@@ -161,81 +171,114 @@ def main() -> int:
     seen_ids = (seen + [d["id"] for d in discs])[-120:]
 
     laser_seen = bool(prev.get("laser_order_seen"))
+    laser_repeat = bool(prev.get("laser_repeat_seen"))
+    laser_hits = 0
     for d in discs:
         kinds = d.get("kind") or ""
         title_c = compact(d.get("title") or "")
         if "LASER" in kinds and any(k in title_c for k in ("수주", "공급", "단일판매", "계약")):
+            laser_hits += 1
             laser_seen = True
+            if laser_hits >= 2 or "재" in title_c or "추가" in title_c:
+                laser_repeat = True
 
     q3 = cfg["windows"]["q3"]
     fy = cfg["windows"]["fy"]
+    op27 = cfg["windows"]["op27"]
     q3_on = in_window(today, q3["start"], q3["end"])
     fy_on = in_window(today, fy["start"], fy["end"])
-    laser_deadline = cfg["windows"]["laser_deadline"]
-    miss5 = today > laser_deadline and not laser_seen
-    first_miss5 = miss5 and not prev.get("deadline5_sent")
+    op27_on = in_window(today, op27["start"], op27["end"])
+    first_dl = cfg["windows"]["laser_first"]
+    repeat_dl = cfg["windows"]["laser_repeat"]
+    miss7 = (today > first_dl and not laser_seen) or (today > repeat_dl and not laser_repeat)
+    first_miss7 = miss7 and not prev.get("deadline7_sent")
 
-    ping_keys = []
-    if q3_on:
-        ping_keys.append("q3")
-    if fy_on:
-        ping_keys.append("fy")
+    ping_keys = [k for k, on in (("q3", q3_on), ("fy", fy_on), ("op27", op27_on)) if on]
     already = set(prev.get("window_ping") or [])
     new_window = [k for k in ping_keys if k not in already]
-    monday = now.weekday() == 0 and (q3_on or fy_on or today <= laser_deadline)
+    monday = now.weekday() == 0 and (ping_keys or today <= repeat_dl)
 
-    cand_conds = sorted({c for d in new_discs for c in (d.get("conds") or [])})
-    solo = [c for c in cand_conds if c in (6, 7)]
-    combo = [c for c in cand_conds if c in (1, 2, 3, 4, 5)]
-    if first_miss5:
-        combo = sorted(set(combo + [5]))
+    print_day = cfg["earnings_3q"]
+    buy3 = int(cfg["buy3"])
+    z3 = buy3_zone(price, today, print_day, buy3)
+    z3_prev = prev.get("buy3_zone")
+    z3_changed = z3_prev != z3 and z3 in {"OPP", "TRAP"}
+
+    cand = sorted({c for d in new_discs for c in (d.get("conds") or [])})
+    if first_miss7:
+        cand = sorted(set(cand + ["C7"]))
+    if z3 == "TRAP" and (q3_on or today >= print_day):
+        cand = sorted(set(cand + ["C1"]))
+
+    solo = [c for c in cand if c.startswith("S")]
+    combo = [c for c in cand if c.startswith("C")]
 
     if solo:
         action = "FULL"
-        action_ko = "6번 또는 7번 후보. 전량 정리"
+        action_ko = f"{','.join(solo)} 단독 후보. 전량 정리"
     elif len(combo) >= 2:
         action = "FULL"
-        action_ko = "1~5번 중 2개 이상 후보. 전량 정리"
+        action_ko = f"{','.join(combo)} 2개 이상 후보. 전량 정리"
     elif len(combo) == 1:
         action = "HALF"
-        action_ko = f"{combo[0]}번 후보. 비중 절반"
-    elif new_discs or new_window or first_miss5:
+        action_ko = f"{combo[0]} 후보. 비중 절반"
+    elif z3 == "OPP" and z3_changed:
+        action = "BUY3"
+        action_ko = "47,000원 이하 + 3Q 이전. 3차 매수 기회"
+    elif z3 == "TRAP" and z3_changed:
+        action = "NOBUY"
+        action_ko = "47,000원 이하 + 3Q 이후. 매수 금지. C1 확인"
+    elif new_discs or new_window or first_miss7:
         action = "CHECK"
         action_ko = "공시/확인창. 원문 보고 조건 체크"
     else:
         action = "WATCH"
-        action_ko = "신규 훼손 없음. 관망"
+        action_ko = "신규 후손 없음. 관망"
 
     force = mode in {"force", "weekly"}
-    send = bool(force or new_discs or new_window or first_miss5 or monday)
+    send = bool(force or new_discs or new_window or first_miss7 or monday or z3_changed)
     if not send:
         print("no protec event; silent")
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
+    if z3 == "OPP":
+        buy3_line = "47,000원: 3Q(11/13) 이전 도달. 기회. 3차 매수. 손절 아님."
+    elif z3 == "TRAP":
+        buy3_line = "47,000원: 3Q 발표 이후 도달. 실적 쇼크로 보면 C1 후보. 이 가격에 사지 말 것."
+    else:
+        buy3_line = "47,000원: 11/13 이전 도달=㳂8 매수 기회, 11/13 이후 쇼크 도달=C1 후보·매수 금지."
+
+    # fix accidental hex in string above if any - rewrite clean
+    if z3 == "ABOVE":
+        buy3_line = (
+            "47,000원 규칙: 11/13 이전 도달이면 3차 매수 기회. "
+            "11/13 이후 실적 쇼크로 도달하면 C1 후보이며 매수 금지."
+        )
+
     lines = [
         f"{stamp} | PROTEC | {cfg['display']}(053610)",
-        "이게 뭐 알림: 프로텍 투자논거 훼손 감시입니다. 가격 손절선이 아닙니다.",
-        f"지금 상태: {px} | {action_ko} | 레이저수주 {'확인' if laser_seen else '미확인'} | 3Q창 {'ON' if q3_on else 'off'} | 연간창 {'ON' if fy_on else 'off'}",
-        f"지금 할 일: {action_ko}. 6·7번은 단독 전량. 1~5번은 1개면 절반, 2개 이상이면 전량.",
-        "나중에: 3Q 연결 OP 130억 이상이고 본업 OP 125억 이상이면 58,000원부터 분할매수. 훼손이면 62,000원부터 축소. 65,000원 추격 금지.",
-        "익절/줄일 때: 유지 확인 후 목표 78,000원. 피엠티 연간 영업적자 100억 초과 또는 정상화 EPS 6,000원 미달이면 2~4분기 홀드 폐기.",
-        "하지 말 것: 가격만 보고 손절. 연결 OP만 보고 본업 무시. 피엠티 흑자로 3Q 유지를 단정. 신용/미수.",
+        "이게 무엇 알림: 프로텝 투자논거 후손 감시. 가격 손절선이 아님.",
+        f"지금 상태: {px} | {action_ko} | 47k {z3} | 레이저수주 {'1+' if laser_seen else '0'}/{반복 if laser_repeat else '미반복'}",
+        f"지금 할 일: {action_ko}. S1·S2·S3는 단독 전량. C1~C8은 1개=절반, 2개+=전량.",
+        f"나중에: {buy3_line} 유지 확인 시 58,000→54,000→47,000. 후손 시 62,000부터 축소.",
+        "익절/줄일 때: 유지 후 목표 78,000. 2027 정상화 OP 650억 미만이면 홀드 폐기.",
+        "하지 말 것: 47,000원을 시점과 상관없이 동일 취급. 3Q 이후 47,000 추격. 연결 OP만 보고 본업 무시. 신용/미수.",
     ]
     if new_discs:
         lines.append("")
         lines.append("새 공시:")
         for d in new_discs[:8]:
-            cs = ",".join(str(x) for x in (d.get("conds") or [])) or "-"
-            lines.append(f"- [{d.get('kind')}|{d['code']}|C{cs}] {d.get('date')} {d['title']}")
-    if first_miss5:
+            cs = ",".join(d.get("conds") or []) or "-"
+            lines.append(f"- [{d.get('kind')}|{d['code']}|{cs}] {d.get('date')} {d['title']}")
+    if first_miss7:
         lines.append("")
-        lines.append("5번: 2027-03-31까지 LCB/레이저 본더 수주 공시 미확인. 1~5번 중 1개로 칩니다.")
+        lines.append("C7: 레이저 본더 신규 수주(3/31) 또는 반복/첨단패키징(6/30) 미확인.")
     if q3_on:
         lines.append("")
-        lines.append("3Q 창(11/10~11/30): 1번 OPM 22% 미만, 2번 상반기 비경상 140억이 평가이익인지. 본업 OP=연결OP-피엠티OP.")
-    if fy_on:
+        lines.append("3Q 창: C1 본사 OPM 22% 미만(3Q 한 번 또는 2개 분기 연속), C2 비경상 140억=평가이익. 본업 OP=연결OP-피엠티OP.")
+    if fy_on or op27_on:
         lines.append("")
-        lines.append("연간 창(1/20~3/5): 3번 피엠티 연간 영업적자 100억 초과, 4번 2026 정상화 EPS 6,000원 미달.")
+        lines.append("연간창: C3 EPS 6,000 미달, C4 2027 OP 650억 미만, C5 피엠티 연간적자 100억 또는 2개 분기 연속 적자.")
 
     STATE_PATH.write_text(
         json.dumps(
@@ -244,8 +287,10 @@ def main() -> int:
                 "price": price,
                 "seen_ids": seen_ids,
                 "laser_order_seen": laser_seen,
+                "laser_repeat_seen": laser_repeat,
                 "window_ping": list(already | set(ping_keys)),
-                "deadline5_sent": bool(prev.get("deadline5_sent") or miss5),
+                "deadline7_sent": bool(prev.get("deadline7_sent") or miss7),
+                "buy3_zone": z3,
                 "last_action": action,
             },
             ensure_ascii=False,
@@ -256,11 +301,15 @@ def main() -> int:
     )
 
     if action == "FULL":
-        title = "[PROTEC] 논거 훼손 | 전량"
+        title = "[PROTEC] 논거 후손 | 전량"
     elif action == "HALF":
-        title = "[PROTEC] 논거 훼손 | 절반"
-    elif first_miss5:
-        title = "[PROTEC] 5번 레이저수주 미확인"
+        title = "[PROTEC] 논거 후손 | 절반"
+    elif action == "BUY3":
+        title = "[PROTEC] 47,000 이전 | 3차 기회"
+    elif action == "NOBUY":
+        title = "[PROTEC] 47,000 이후 | 매수금지 C1"
+    elif first_miss7:
+        title = "[PROTEC] C7 레이저수주 미확인"
     elif new_discs:
         title = f"[PROTEC] 공시 {(new_discs[0].get('kind') or 'CHECK')}"
     elif new_window:
@@ -273,7 +322,7 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = 5 if action == "FULL" or solo else (4 if action == "HALF" or new_discs or first_miss5 else 3)
+        pri = 5 if action == "FULL" or solo else (4 if action in {"HALF", "NOBUY", "BUY3"} or new_discs or first_miss7 else 3)
         publish(title, msg, pri, "warning,triangular_flag_on_post")
     return 0
 
