@@ -16,11 +16,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | port | ccrev | kship | shinwon | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | port | ccrev | kship | shinwon | avgochain | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, port, ccrev, kship, shinwon]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, port, ccrev, kship, shinwon, avgochain]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -175,8 +175,8 @@ jobs:
             [ "$JOB" = "shinwon" ] && MODE=force
             python scripts/shinwon_monitor.py "$MODE"
           fi
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + avgochain (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'avgochain' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -217,6 +217,9 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ]; then
             python scripts/shinwon_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "avgochain" ]; then
+            python scripts/avgochain_monitor.py auto
           fi
       - name: Persist state
         run: |
