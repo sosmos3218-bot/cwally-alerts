@@ -6,7 +6,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` only for Kikii/server.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).
-- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[0051A0]`.
+- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[0051A0]` `[KRWFX]`.
 - Cron slots are NOT fixed. Pick a KST time that matches the request, then convert to UTC (`KST = UTC+9`) in the workflow cron. Do not add a new weekday/repeating cron unless the user asks for a new recurring schedule.
 - Date-specific one-shot events (earnings, FOMC, BOJ) may add a `m h D M *` cron like the existing Sep/Oct/Dec jobs. GitHub cron has no year, so the script MUST year-guard (`oneshot_kst` / event dates) and stay silent in later years.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot extras go in `oneshot_kst`.
