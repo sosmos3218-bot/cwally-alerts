@@ -24,7 +24,7 @@ DISC_RULES = [
     ("LASER", ("레이저본더", "레이저 본더", "LCB", "LAB", "레이저리플로우", "첨단패키징"), ["C7"]),
     ("LEGAL", ("유죄", "상장적격성", "실질심사", "회계위반", "회계분식", "배임"), ["S1"]),
     ("HYBRID", ("하이브리드본딩", "하이브리드 본딩", "hybridbonding", "HBM5"), ["S2"]),
-    ("GOV", ("감사의견", "의견거절", "한정", "부적정", "거래정지", "특수관계", "특별관계", "제재"), ["S3"]),
+    ("GOV", ("감사의견", "의견거절", "부적정", "거래정지", "특수관계", "특별관계"), ["S3"]),
 ]
 
 
@@ -207,7 +207,7 @@ def main() -> int:
     cand = sorted({c for d in new_discs for c in (d.get("conds") or [])})
     if first_miss7:
         cand = sorted(set(cand + ["C7"]))
-    if z3 == "TRAP" and (q3_on or today >= print_day):
+    if z3 == "TRAP" and today >= print_day:
         cand = sorted(set(cand + ["C1"]))
 
     solo = [c for c in cand if c.startswith("S")]
@@ -224,16 +224,13 @@ def main() -> int:
         action_ko = f"{combo[0]} 후보. 비중 절반"
     elif z3 == "OPP" and z3_changed:
         action = "BUY3"
-        action_ko = "47,000원 이하 + 3Q 이전. 3차 매수 기회"
-    elif z3 == "TRAP" and z3_changed:
-        action = "NOBUY"
-        action_ko = "47,000원 이하 + 3Q 이후. 매수 금지. C1 확인"
-    elif new_discs or new_window or first_miss7:
+        action_ko = "47,000원 + 3Q 이전. 3차 매수 기회"
+    elif new_discs or new_window or first_miss7 or z3_changed:
         action = "CHECK"
         action_ko = "공시/확인창. 원문 보고 조건 체크"
     else:
         action = "WATCH"
-        action_ko = "신규 후손 없음. 관망"
+        action_ko = "신규 훼손 없음. 관망"
 
     force = mode in {"force", "weekly"}
     send = bool(force or new_discs or new_window or first_miss7 or monday or z3_changed)
@@ -242,27 +239,31 @@ def main() -> int:
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     if z3 == "OPP":
-        buy3_line = "47,000원: 3Q(11/13) 이전 도달. 기회. 3차 매수. 손절 아님."
-    elif z3 == "TRAP":
-        buy3_line = "47,000원: 3Q 발표 이후 도달. 실적 쇼크로 보면 C1 후보. 이 가격에 사지 말 것."
-    else:
-        buy3_line = "47,000원: 11/13 이전 도달=㳂8 매수 기회, 11/13 이후 쇼크 도달=C1 후보·매수 금지."
-
-    # fix accidental hex in string above if any - rewrite clean
-    if z3 == "ABOVE":
         buy3_line = (
-            "47,000원 규칙: 11/13 이전 도달이면 3차 매수 기회. "
-            "11/13 이후 실적 쇼크로 도달하면 C1 후보이며 매수 금지."
+            "47,000원=기회. 3Q 실적(11/13) 전에 왔으므로 3차 매수. "
+            "손절이 아닙니다."
         )
+    elif z3 == "TRAP":
+        buy3_line = (
+            "47,000원=훼손 후보. 3Q 발표 이후 실적 쇼크로 온 가격입니다. "
+            "C1로 칩니다. 이 가격에 사지 마세요."
+        )
+    else:
+        buy3_line = (
+            "47,000원 규칙: 11/13 이전 도달=3차 매수 기회. "
+            "11/13 이후 실적 쇼크로 도달=C1 충족 후보, 매수 금지."
+        )
+    laser_bit = "반복" if laser_repeat else "미반복"
+    laser_first_bit = "확인" if laser_seen else "없음"
 
     lines = [
         f"{stamp} | PROTEC | {cfg['display']}(053610)",
-        "이게 무엇 알림: 프로텝 투자논거 후손 감시. 가격 손절선이 아님.",
-        f"지금 상태: {px} | {action_ko} | 47k {z3} | 레이저수주 {'1+' if laser_seen else '0'}/{반복 if laser_repeat else '미반복'}",
-        f"지금 할 일: {action_ko}. S1·S2·S3는 단독 전량. C1~C8은 1개=절반, 2개+=전량.",
-        f"나중에: {buy3_line} 유지 확인 시 58,000→54,000→47,000. 후손 시 62,000부터 축소.",
-        "익절/줄일 때: 유지 후 목표 78,000. 2027 정상화 OP 650억 미만이면 홀드 폐기.",
-        "하지 말 것: 47,000원을 시점과 상관없이 동일 취급. 3Q 이후 47,000 추격. 연결 OP만 보고 본업 무시. 신용/미수.",
+        "이게 뭐 알림: 프로텍 투자논거 훼손 감시입니다. 가격 손절선이 아닙니다.",
+        f"지금 상태: {px} | {action_ko} | 47k존 {z3} | 레이저수주 {laser_first_bit}/{laser_bit}",
+        f"지금 할 일: {action_ko}. S1·S2·S3는 단독 전량. C1~C8은 1개면 절반, 2개 이상이면 전량.",
+        f"나중에: {buy3_line} 유지 확인 시 58,000→54,000→47,000. 훼손 시 62,000부터 축소.",
+        "익절/줄일 때: 유지 후 목표 78,000. 2027 정상화 연결 OP 650억 미만이면 홀드 폐기.",
+        "하지 말 것: 47,000원을 발표 전후 구분 없이 같은 신호로 취급. 3Q 이후 47,000 추격. 연결 OP만 보고 본업 무시. 신용/미수.",
     ]
     if new_discs:
         lines.append("")
@@ -272,13 +273,19 @@ def main() -> int:
             lines.append(f"- [{d.get('kind')}|{d['code']}|{cs}] {d.get('date')} {d['title']}")
     if first_miss7:
         lines.append("")
-        lines.append("C7: 레이저 본더 신규 수주(3/31) 또는 반복/첨단패키징(6/30) 미확인.")
+        lines.append("C7: 레이저 본더 신규 수주(3/31) 또는 반복·첨단패키징(6/30) 미확인.")
     if q3_on:
         lines.append("")
-        lines.append("3Q 창: C1 본사 OPM 22% 미만(3Q 한 번 또는 2개 분기 연속), C2 비경상 140억=평가이익. 본업 OP=연결OP-피엠티OP.")
+        lines.append(
+            "3Q 창: C1 본사 OPM 22% 미만(3Q 한 번 또는 2개 분기 연속). "
+            "C2 비경상 140억이 평가이익인지. 본업 OP=연결OP-피엠티OP."
+        )
     if fy_on or op27_on:
         lines.append("")
-        lines.append("연간창: C3 EPS 6,000 미달, C4 2027 OP 650억 미만, C5 피엠티 연간적자 100억 또는 2개 분기 연속 적자.")
+        lines.append(
+            "연간창: C3 EPS 6,000 미달, C4 2027 OP 650억 미만, "
+            "C5 피엠티 연간적자 100억 또는 2개 분기 연속 적자."
+        )
 
     STATE_PATH.write_text(
         json.dumps(
@@ -301,13 +308,13 @@ def main() -> int:
     )
 
     if action == "FULL":
-        title = "[PROTEC] 논거 후손 | 전량"
+        title = "[PROTEC] 논거 훼손 | 전량"
     elif action == "HALF":
-        title = "[PROTEC] 논거 후손 | 절반"
+        title = "[PROTEC] 논거 훼손 | 절반"
     elif action == "BUY3":
-        title = "[PROTEC] 47,000 이전 | 3차 기회"
-    elif action == "NOBUY":
-        title = "[PROTEC] 47,000 이후 | 매수금지 C1"
+        title = "[PROTEC] 47,000 발표전 | 3차 기회"
+    elif z3 == "TRAP":
+        title = "[PROTEC] 47,000 발표후 | 매수금지 C1"
     elif first_miss7:
         title = "[PROTEC] C7 레이저수주 미확인"
     elif new_discs:
@@ -322,7 +329,9 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = 5 if action == "FULL" or solo else (4 if action in {"HALF", "NOBUY", "BUY3"} or new_discs or first_miss7 else 3)
+        pri = 5 if action == "FULL" or solo else (
+            4 if action in {"HALF", "BUY3"} or z3 == "TRAP" or new_discs or first_miss7 else 3
+        )
         publish(title, msg, pri, "warning,triangular_flag_on_post")
     return 0
 
