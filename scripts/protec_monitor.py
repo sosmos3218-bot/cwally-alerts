@@ -17,12 +17,12 @@ UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
 DISC_RULES = [
     ("EARN", ("분기보고서", "반기보고서", "사업보고서", "잠정", "손익구조", "매출액또는손익"), [1, 2, 3, 4]),
-    ("ORDER", ("단일판매", "공급계약", "수주", "매출"), [5]),
-    ("LASER", ("레이저", "LCB", "LAB", "본더", "본딩", "리플로우"), [5]),
-    ("LEGAL", ("유죄", "상장적격성", "실질심사", "회계위반", "회계분식", "배임", "조사", "검찰"), [6]),
-    ("HYBRID", ("하이브리드", "hybridbonding", "HBM5", "하이브리드본딩"), [7]),
-    ("FAIR", ("평가이익", "평가손실", "금융수익", "투자자산", "영업외"), [2]),
-    ("PMT", ("피엠티", "종속", "자회사"), [3]),
+    ("ORDER", ("단일판매", "공급계약", "수주계약"), [5]),
+    ("LASER", ("레이저본더", "레이저 본더", "LCB", "LAB", "레이저리플로우", "레이저 리플로우"), [5]),
+    ("LEGAL", ("유죄", "상장적격성", "실질심사", "회계위반", "회계분식", "배임"), [6]),
+    ("HYBRID", ("하이브리드본딩", "하이브리드 본딩", "hybridbonding", "HBM5"), [7]),
+    ("FAIR", ("평가이익", "평가손실", "금융수익", "투자자산"), [2]),
+    ("PMT", ("피엠티",), [3]),
 ]
 
 
@@ -61,7 +61,8 @@ def compact(text: str) -> str:
 
 def classify(title: str) -> tuple[str | None, list[int]]:
     t = compact(title).lower()
-    t = t.replace("hybrid bonding", "hybridbonding")
+    t = t.replace("hybridbonding", "hybridbonding")
+    t = t.replace("hybrid-bonding", "hybridbonding")
     kinds = []
     conds: list[int] = []
     for kind, keys, cs in DISC_RULES:
@@ -161,12 +162,9 @@ def main() -> int:
 
     laser_seen = bool(prev.get("laser_order_seen"))
     for d in discs:
-        kinds = (d.get("kind") or "")
-        if "LASER" in kinds and "ORDER" in kinds:
-            laser_seen = True
-        if d.get("code") == cfg["code"] and "LASER" in kinds and any(
-            k in compact(d["title"]) for k in ("수주", "공급", "단일판매", "계약")
-        ):
+        kinds = d.get("kind") or ""
+        title_c = compact(d.get("title") or "")
+        if "LASER" in kinds and any(k in title_c for k in ("수주", "공급", "단일판매", "계약")):
             laser_seen = True
 
     q3 = cfg["windows"]["q3"]
@@ -194,21 +192,19 @@ def main() -> int:
 
     if solo:
         action = "FULL"
-        action_ko = "6번또는 7번 후보. 전량 정리"
+        action_ko = "6번 또는 7번 후보. 전량 정리"
     elif len(combo) >= 2:
         action = "FULL"
-        action_ko = "1~5번 중 2개 이상 후보 후보. 전량 정리"
+        action_ko = "1~5번 중 2개 이상 후보. 전량 정리"
     elif len(combo) == 1:
         action = "HALF"
-        action_ko = f"{combo[0]}번 후보 후보. 비중 절반"
+        action_ko = f"{combo[0]}번 후보. 비중 절반"
     elif new_discs or new_window or first_miss5:
         action = "CHECK"
-        action_ko = "후보 후보 후보 후보 후보 후보 후보 후보".replace("후보 후보 후보 후보 후보 후보 후보 후보", "후보 후보")
-        action_ko = "후보 후보"
-        action_ko = "공시/창 열림. 원문 확인 후 조건 체크"
+        action_ko = "공시/확인창. 원문 보고 조건 체크"
     else:
         action = "WATCH"
-        action_ko = "후보 없음. 관망 유지"
+        action_ko = "신규 훼손 없음. 관망"
 
     force = mode in {"force", "weekly"}
     send = bool(force or new_discs or new_window or first_miss5 or monday)
@@ -217,13 +213,13 @@ def main() -> int:
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     lines = [
-        f"{stamp} | PROTEC | {프로텝}(053610)".replace("{프로텝}", cfg["display"]),
-        "이게 무엇 알림: 프로텝 투자논거 후손 감시. 가격 손절선이 아님.",
-        f"지금 상태: {px} | 동작 {action_ko} | 레이저수주확인 {('있음' if laser_seen else '없음')} | 3Q창 {'ON' if q3_on else 'off'} | 연간창 {'ON' if fy_on else 'off'}",
-        f"지금 할 일: {action_ko}. 6·7번은 후보 증거 없이 전량. 1~5번은 1개=절반, 2개+=전량.",
-        "나중에: 3Q 연결 OP≥130억·본업 OP≥125억이면 58,000부터 분할매수. 후손이면 62,000부터 축소. 65,000 추격 금지.",
-        "익절/줄일 때: 유지 확인 후 목표 78,000. 피엠티 연간 영업적자 100억 초과나 정상화 EPS 6,000 미달이면 2~4분기 홀드 폐기.",
-        "하지 말 것: 가격만 보고 손절. 연결 OP만 보고 본업 무시. 피엠티 흑자로 3Q 유지 판정. 신용/미수.",
+        f"{stamp} | PROTEC | {cfg['display']}(053610)",
+        "이게 뭐 알림: 프로텍 투자논거 훼손 감시입니다. 가격 손절선이 아닙니다.",
+        f"지금 상태: {px} | {action_ko} | 레이저수주 {'확인' if laser_seen else '미확인'} | 3Q창 {'ON' if q3_on else 'off'} | 연간창 {'ON' if fy_on else 'off'}",
+        f"지금 할 일: {action_ko}. 6·7번은 단독 전량. 1~5번은 1개면 절반, 2개 이상이면 전량.",
+        "나중에: 3Q 연결 OP 130억 이상이고 본업 OP 125억 이상이면 58,000원부터 분할매수. 훼손이면 62,000원부터 축소. 65,000원 추격 금지.",
+        "익절/줄일 때: 유지 확인 후 목표 78,000원. 피엠티 연간 영업적자 100억 초과 또는 정상화 EPS 6,000원 미달이면 2~4분기 홀드 폐기.",
+        "하지 말 것: 가격만 보고 손절. 연결 OP만 보고 본업 무시. 피엠티 흑자로 3Q 유지를 단정. 신용/미수.",
     ]
     if new_discs:
         lines.append("")
@@ -233,13 +229,13 @@ def main() -> int:
             lines.append(f"- [{d.get('kind')}|{d['code']}|C{cs}] {d.get('date')} {d['title']}")
     if first_miss5:
         lines.append("")
-        lines.append("5번: 2027-03-31까지 LCB/레이저 본더 수주 공시 미확인. 1~5번 중 1개로 점수.")
+        lines.append("5번: 2027-03-31까지 LCB/레이저 본더 수주 공시 미확인. 1~5번 중 1개로 칩니다.")
     if q3_on:
         lines.append("")
-        lines.append("3Q 창(11/10~11/30): 1번 OPM 22% 미만, 2번 상반기 비경상 140억=평가이익 여부. 본업 OP=연결OP-피엠티OP.")
+        lines.append("3Q 창(11/10~11/30): 1번 OPM 22% 미만, 2번 상반기 비경상 140억이 평가이익인지. 본업 OP=연결OP-피엠티OP.")
     if fy_on:
         lines.append("")
-        lines.append("연간 창(1/20~3/5): 3번 피엠티 연간 영업적자 100억 초과, 4번 2026 정상화 EPS 6,000 미달.")
+        lines.append("연간 창(1/20~3/5): 3번 피엠티 연간 영업적자 100억 초과, 4번 2026 정상화 EPS 6,000원 미달.")
 
     STATE_PATH.write_text(
         json.dumps(
@@ -260,9 +256,9 @@ def main() -> int:
     )
 
     if action == "FULL":
-        title = "[PROTEC] 논거 후손 | 전량"
+        title = "[PROTEC] 논거 훼손 | 전량"
     elif action == "HALF":
-        title = "[PROTEC] 논거 후손 | 절반"
+        title = "[PROTEC] 논거 훼손 | 절반"
     elif first_miss5:
         title = "[PROTEC] 5번 레이저수주 미확인"
     elif new_discs:
