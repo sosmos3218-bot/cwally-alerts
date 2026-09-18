@@ -1,0 +1,21 @@
+{
+  "name": "KRWFX",
+  "title_prefix": "[KRWFX]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "period": "weekly",
+  "weekday_kst": 0,
+  "as_of": "2026-09-18",
+  "tickers": {
+    "usdkrw": "USDKRW=X",
+    "usdjpy": "USDJPY=X"
+  },
+  "windows": {
+    "1w": 5,
+    "2w": 10,
+    "1m": 21,
+    "3m": 63
+  },
+  "gap_warn_pct": 0.8
+}
