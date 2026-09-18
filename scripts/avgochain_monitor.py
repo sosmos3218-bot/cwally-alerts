@@ -126,6 +126,17 @@ def ntfy_publish(server, topic, title, message, priority, tags):
         print(resp.read().decode())
 
 
+def pick_priority(z, live, cfg):
+    hot_ids = set(cfg.get("priority5_event_ids") or ["avgo_fy26q4"])
+    if any(e.get("id") in hot_ids for e in live):
+        return 5
+    if z == "STOP":
+        return 5
+    if z in {"BUY3", "TRIM2"} or live:
+        return 4
+    return 3
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
@@ -170,7 +181,9 @@ def main() -> int:
         title = f"[0051A0] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
     elif zone_changed or new_live or fx_changed:
         send = True
-        if new_live:
+        if any(e.get("id") == "avgo_fy26q4" for e in live):
+            title = f"[0051A0] 12/10 실적창 | {TITLE_BY_ZONE.get(z, z)}"
+        elif new_live:
             title = f"[0051A0] AVGO 실적창 | {TITLE_BY_ZONE.get(z, z)}"
         elif fx_changed:
             title = f"[0051A0] 환율 | {TITLE_BY_ZONE.get(z, z)}"
@@ -217,7 +230,7 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = 5 if z in {"STOP", "BUY3", "TRIM2"} or new_live else (4 if zone_changed or fx_changed else 3)
+        pri = pick_priority(z, live, cfg)
         ntfy_publish(server, topic, title, msg, pri, "chart_with_upwards_trend,us")
     return 0
 

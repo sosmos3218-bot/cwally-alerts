@@ -16,6 +16,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "alert_policy": "weekly_or_change",
+  "priority5_event_ids": ["avgo_fy26q4"],
   "split": {"buy1_pct": 30, "buy2_pct": 40, "buy3_pct": 30},
   "bands": {
     "buy1": [21500, 23200],
@@ -38,6 +39,7 @@
       "label": "AVGO FY26 4Q 실적(예: 2026-12-10 미국 장 마감)",
       "start": "2026-12-09",
       "end": "2026-12-12",
+      "priority": 5,
       "check": "AI 매출 FY26 $58B 유지, FY27 $115B·FY28 $230B 체감 여부. 하향이면 3차 취소·초과분 축소."
     },
     {
@@ -45,6 +47,7 @@
       "label": "AVGO FY27 1Q 실적(예: 2027-03-04 청크)",
       "start": "2027-03-02",
       "end": "2027-03-06",
+      "priority": 4,
       "check": "ASIC/XPU 고객 램프·가이던스. 실적 하회+가이던스 동반 하향 시 테제 재검토."
     },
     {
@@ -52,6 +55,7 @@
       "label": "AVGO FY27 2Q 실적(예: 2027-06-03 청크)",
       "start": "2027-06-01",
       "end": "2027-06-05",
+      "priority": 4,
       "check": "FY27 AI $115B 경로. 비중이 6%를 넘으면 초과분만 줄인다."
     },
     {
@@ -59,6 +63,7 @@
       "label": "AVGO FY27 3Q 실적(예: 2027-09-02 청크)",
       "start": "2027-08-31",
       "end": "2027-09-04",
+      "priority": 4,
       "check": "24개월 실행창 중간 검토. 테제 유지 시 36개월까지 잔량 유지."
     },
     {
@@ -66,6 +71,7 @@
       "label": "AVGO FY27 4Q 실적(예: 2027-12-09 청크)",
       "start": "2027-12-07",
       "end": "2027-12-11",
+      "priority": 4,
       "check": "FY28 $230B 가이던스 재확인. 미재확인이면 잔량 축소 후 36개월 만기 준비."
     }
   ]
