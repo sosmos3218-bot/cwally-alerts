@@ -115,6 +115,40 @@ def buy3_zone(price, today: str, print_day: str, buy3: int) -> str:
     return "TRAP"
 
 
+def q_key(q: str) -> tuple[int, int]:
+    m = re.match(r"(\d{4})Q([1-4])", str(q).upper().replace(" ", ""))
+    if not m:
+        return (0, 0)
+    return (int(m.group(1)), int(m.group(2)))
+
+
+def eval_c1(prints, cut: float = 0.22) -> str | None:
+    rows = []
+    for p in prints or []:
+        q = str(p.get("q") or "")
+        rev = p.get("hq_rev")
+        op = p.get("hq_op")
+        if not q or rev in (None, 0) or op is None:
+            continue
+        rows.append({"q": q, "rev": float(rev), "op": float(op), "opm": float(op) / float(rev)})
+    if not rows:
+        return None
+    for r in rows:
+        if r["q"].upper().replace(" ", "") == "2026Q3" and r["opm"] < cut:
+            return f"2026Q3 본사 OPM {r['opm']*100:.1f}% ({r['op']:.0f}/{r['rev']:.0f}억) < 22%"
+    ordered = sorted(rows, key=lambda r: q_key(r["q"]))
+    for a, b in zip(ordered, ordered[1:]):
+        ya, qa = q_key(a["q"])
+        yb, qb = q_key(b["q"])
+        consecutive = (ya == yb and qb == qa + 1) or (yb == ya + 1 and qa == 4 and qb == 1)
+        if consecutive and a["opm"] < cut and b["opm"] < cut:
+            return (
+                f"{a['q']} {a['opm']*100:.1f}% + {b['q']} {b['opm']*100:.1f}% "
+                f"2개 분기 연속 22% 미만"
+            )
+    return None
+
+
 def publish(title: str, message: str, priority: int, tags: str) -> None:
     payload = json.dumps(
         {
@@ -153,6 +187,9 @@ def main() -> int:
             "deadline7_sent": False,
             "buy3_zone": None,
             "last_action": None,
+            "c1_confirmed": False,
+            "c1_reason": None,
+            "prints": [],
         },
     )
 
@@ -205,9 +242,17 @@ def main() -> int:
     z3_prev = prev.get("buy3_zone")
     z3_changed = z3_prev != z3 and z3 in {"OPP", "TRAP"}
 
+    prints = list(prev.get("prints") or [])
+    cut = float((cfg.get("c1") or {}).get("opm_cut") or 0.22)
+    c1_reason = eval_c1(prints, cut)
+    c1_now = bool(c1_reason)
+    c1_changed = c1_now and not bool(prev.get("c1_confirmed"))
+
     cand = sorted({c for d in new_discs for c in (d.get("conds") or [])})
     if first_miss7:
         cand = sorted(set(cand + ["C7"]))
+    if c1_now:
+        cand = sorted(set(cand + ["C1"]))
 
     solo = [c for c in cand if c.startswith("S")]
     combo = [c for c in cand if c.startswith("C")]
@@ -217,7 +262,10 @@ def main() -> int:
         action_ko = f"{','.join(solo)} 단독 후보. 전량 정리"
     elif len(combo) >= 2:
         action = "FULL"
-        action_ko = f"{','.join(combo)} 2개 이상 후보. 전량 정리"
+        action_ko = f"{','.join(combo)} 2개 이상. 전량 정리"
+    elif "C1" in combo and c1_now:
+        action = "HALF"
+        action_ko = f"C1 확정. {c1_reason}. 비중 절반"
     elif len(combo) == 1:
         action = "HALF"
         action_ko = f"{combo[0]} 후보. 비중 절반"
@@ -226,10 +274,10 @@ def main() -> int:
         action_ko = "47,000원 + 3Q 이전. 3차 매수 기회"
     elif z3 == "TRAP" and (z3_changed or earn_new):
         action = "NOBUY"
-        action_ko = "47,000원 + 3Q 이후. 매수 금지. C1 아님. 본사 OPM 원문 대기"
+        action_ko = "47,000원 + 3Q 이후. 매수 금지. C1 아님. 본사 매출/영업익 숫자 대기"
     elif earn_new:
         action = "CHECK"
-        action_ko = "실적 공시. 본사 OPM 22%를 원문에서 확인한 뒤에만 C1"
+        action_ko = "실적 공시. 본사 매출·영업이익(억)을 넣어야 C1을 계산함"
     elif new_discs or new_window or first_miss7 or z3_changed:
         action = "CHECK"
         action_ko = "공시/확인창. 원문 보고 조건 체크"
@@ -238,38 +286,37 @@ def main() -> int:
         action_ko = "신규 훼손 없음. 관망"
 
     force = mode in {"force", "weekly"}
-    send = bool(force or new_discs or new_window or first_miss7 or monday or z3_changed)
+    send = bool(force or new_discs or new_window or first_miss7 or monday or z3_changed or c1_changed)
     if not send:
         print("no protec event; silent")
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     if z3 == "OPP":
-        buy3_line = (
-            "47,000원=기회. 3Q(11/13) 전에 왔으므로 3차 매수. "
-            "손절이 아닙니다."
-        )
+        buy3_line = "47,000원=기회. 3Q(11/13) 전. 3차 매수. 손절 아님."
     elif z3 == "TRAP":
-        buy3_line = (
-            "47,000원=매수금지 경고. 발표 후 가격이지 C1이 아닙니다. "
-            "본사 OPM 22% 미만이 원문으로 확인되기 전에는 절반 정리하지 마세요."
-        )
+        buy3_line = "47,000원=매수금지 경고. C1 아님. 본사 매출/영업익 숫자가 오기 전엔 절반 금지."
     else:
-        buy3_line = (
-            "47,000원 규칙: 11/13 이전=3차 매수. "
-            "11/13 이후=매수금지 경고. C1 절반은 본사 OPM 원문 확인 뒤에만."
-        )
+        buy3_line = "47,000원: 11/13 전=3차 매수. 11/13 후=매수금지. C1은 숫자 확정 뒤에만."
     laser_bit = "반복" if laser_repeat else "미반복"
     laser_first_bit = "확인" if laser_seen else "없음"
+    c1_state = c1_reason if c1_now else "미확정. 'C1 확정' 문장만으로는 안 켬"
 
     lines = [
         f"{stamp} | PROTEC | {cfg['display']}(053610)",
         "이게 뭐 알림: 프로텍 투자논거 훼손 감시입니다. 가격 손절선이 아닙니다.",
-        f"지금 상태: {px} | {action_ko} | 47k존 {z3} | 레이저수주 {laser_first_bit}/{laser_bit}",
-        f"지금 할 일: {action_ko}. S1·S2·S3는 단독 전량. C1~C8은 원문 확정 1개면 절반, 2개면 전량.",
-        f"나중에: {buy3_line} 유지 확인 시 58,000→54,000→47,000. 훼손 확정 시 62,000부터 축소.",
+        f"지금 상태: {px} | {action_ko} | 47k존 {z3} | C1 {c1_state} | 레이저 {laser_first_bit}/{laser_bit}",
+        f"지금 할 일: {action_ko}. C1은 본사 매출·영업이익(억)으로만 계산. 문장 'C1 확정'은 무시.",
+        f"나중에: {buy3_line} 유지 시 58,000→54,000→47,000. 훼손 확정 시 62,000부터 축소.",
         "익절/줄일 때: 유지 후 목표 78,000. 2027 정상화 연결 OP 650억 미만이면 홀드 폐기.",
-        "하지 말 것: 발표 후 47,000을 C1로 단정하고 즉시 절반. 가격만 보고 손절. 연결 OP만 보고 본업 무시. 신용/미수.",
+        "하지 말 것: C1 확정이라고만 말하고 절반. 발표 후 47,000을 C1로 단정. 연결 OP만 보고 본업 무시. 신용/미수.",
     ]
+    if prints:
+        lines.append("")
+        lines.append("입력된 본사 실적:")
+        for p in prints[-6:]:
+            rev, op = p.get("hq_rev"), p.get("hq_op")
+            if rev and op is not None:
+                lines.append(f"- {p.get('q')} {op}/{rev}억 = {float(op)/float(rev)*100:.1f}%")
     if new_discs:
         lines.append("")
         lines.append("새 공시:")
@@ -277,22 +324,10 @@ def main() -> int:
             cs = ",".join(d.get("conds") or []) or "확인"
             lines.append(f"- [{d.get('kind')}|{d['code']}|{cs}] {d.get('date')} {d['title']}")
         if earn_new:
-            lines.append("→ 실적 공시는 C1이 아닙니다. 본사 OPM=본업OP/본업매출을 계산하세요.")
+            lines.append("→ 보낼 형식: 2026Q3 본사 매출 520 영업익 95")
     if first_miss7:
         lines.append("")
         lines.append("C7: 레이저 본더 신규 수주(3/31) 또는 반복·첨단패키징(6/30) 미확인.")
-    if q3_on:
-        lines.append("")
-        lines.append(
-            "3Q 창: C1은 본사 OPM 22% 미만이 숫자로 나온 뒤에만. "
-            "C2 비경상 140억이 평가이익인지. 본업 OP=연결OP-피엠티OP."
-        )
-    if fy_on or op27_on:
-        lines.append("")
-        lines.append(
-            "연간창: C3 EPS 6,000 미달, C4 2027 OP 650억 미만, "
-            "C5 피엠티 연간적자 100억 또는 2개 분기 연속 적자."
-        )
 
     STATE_PATH.write_text(
         json.dumps(
@@ -306,6 +341,9 @@ def main() -> int:
                 "deadline7_sent": bool(prev.get("deadline7_sent") or miss7),
                 "buy3_zone": z3,
                 "last_action": action,
+                "c1_confirmed": c1_now,
+                "c1_reason": c1_reason,
+                "prints": prints,
             },
             ensure_ascii=False,
             indent=2,
@@ -316,16 +354,18 @@ def main() -> int:
 
     if action == "FULL":
         title = "[PROTEC] 논거 훼손 | 전량"
+    elif action == "HALF" and c1_now:
+        title = "[PROTEC] C1 숫자확정 | 절반"
     elif action == "HALF":
         title = "[PROTEC] 논거 훼손 | 절반"
     elif action == "BUY3":
         title = "[PROTEC] 47,000 발표전 | 3차 기회"
     elif action == "NOBUY":
-        title = "[PROTEC] 47,000 발표후 | 매수금지 · C1 대기"
+        title = "[PROTEC] 47,000 발표후 | 매수금지 · 숫자대기"
     elif first_miss7:
         title = "[PROTEC] C7 레이저수주 미확인"
     elif earn_new:
-        title = "[PROTEC] 실적 공시 | OPM 원문 확인"
+        title = "[PROTEC] 실적 공시 | 본사 숫자 필요"
     elif new_discs:
         title = f"[PROTEC] 공시 {(new_discs[0].get('kind') or 'CHECK')}"
     elif new_window:
@@ -339,7 +379,7 @@ def main() -> int:
     print(msg)
     if send:
         pri = 5 if action == "FULL" or solo else (
-            4 if action in {"HALF", "BUY3", "NOBUY"} or new_discs or first_miss7 else 3
+            4 if action in {"HALF", "BUY3", "NOBUY"} or c1_changed or new_discs or first_miss7 else 3
         )
         publish(title, msg, pri, "warning,triangular_flag_on_post")
     return 0
