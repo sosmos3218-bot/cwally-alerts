@@ -1,8 +1,9 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "price": null,
-  "fx": null,
-  "fx_regime": null,
-  "last_event_ids": []
+  "updated_at": "2026-09-18 20:21 KST",
+  "zone": "BETWEEN",
+  "price": 23685.0,
+  "fx": 1387.36,
+  "fx_regime": "FX_BASE",
+  "last_event_ids": [],
+  "last_mode": "event"
 }
