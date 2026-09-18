@@ -1,0 +1,31 @@
+{
+  "name": "shinwon",
+  "title_prefix": "[SHINWON]",
+  "ticker": "009270.KS",
+  "code": "009270",
+  "display": "신원",
+  "as_of": "2026-09-18",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 금지. 기존 09:00 KST morning(UTC 00:00), 15:20 KST afternoon(UTC 06:20) job에만 붙임.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "cost": 1451,
+  "shares": 190,
+  "first_sell_shares": 95,
+  "window_end": "2026-11-13",
+  "bands": {
+    "stop_hard": 898,
+    "stop_close": 1000,
+    "sell1_lo": 1200,
+    "sell1_hi": 1230,
+    "sell2_lo": 1270,
+    "sell2_hi": 1320
+  },
+  "opm_floor_pct": 2.0,
+  "checks": [
+    "3Q 영업이익률 2% 지키. 1%대면 11/13 기다리지 말고 전량",
+    "패션 적자 축소 여부. 안 줄면 구조 동일",
+    "CB 만기(9/15) 잔여 전환·상환 공시. 오버행이면 1,200 도달 어려움",
+    "자사주 추가 소각 공시 시 1차(95주) 매도 후 2차는 다음날까지 보류"
+  ]
+}
