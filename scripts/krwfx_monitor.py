@@ -86,10 +86,9 @@ def decide(w1_krw: float, w1_jpy: float, gap: float, warn: float) -> tuple[str, 
         title = "1주 동조 | 기존 환율 북 유지"
         do_now = "달러 공통요인 위입니다. 원/엔을 독립 시그널로 쓰지 말고 기존 북 유지."
         later = "1주 갭이 0.8%p를 넘으면 그때 원화 고유요인으로 재분해하세요."
-    cut = "중기(3개월) 강세가 꺾이면 달러 보유를 다시 늘리고, 1주만 흔들리면 비중을 자주 갈지 마세요."
     if w1_krw < -2 and w1_jpy > -1:
-        cut = "단기 원화만 급하게 밀린 상태입니다. 3개월 강세가 남아 있으면 달러 추격매수는 절반만."
-    return title, do_now, cut if False else later
+        later = "단기 원화만 급하게 밀린 상태입니다. 3개월 강세가 남아 있으면 달러 추격매수는 절반만."
+    return title, do_now, later
 
 
 def main() -> int:
@@ -120,8 +119,6 @@ def main() -> int:
             "krw_vs_usd": krw_vs_usd,
             "jpy_vs_usd": jpy_vs_usd,
             "krw_vs_jpy": krw_vs_jpy,
-            "usdkrw_last": usdkrw[-1],
-            "usdjpy_last": usdjpy[-1],
         }
 
     w1 = rows["1w"]
@@ -133,16 +130,11 @@ def main() -> int:
         warn,
     )
 
-    snapshot = {
+    jpykrw = usdkrw[-1] / usdjpy[-1] if usdjpy[-1] else None
+    state["last_snapshot"] = {
         "usdkrw": usdkrw[-1],
         "usdjpy": usdjpy[-1],
-        "jpykrw": usdkrw[-1] / usdjpy[-1] if usdjpy[-1] else None,
-        "rows": rows,
-    }
-    state["last_snapshot"] = {
-        "usdkrw": snapshot["usdkrw"],
-        "usdjpy": snapshot["usdjpy"],
-        "jpykrw": snapshot["jpykrw"],
+        "jpykrw": jpykrw,
         "w1_krw_vs_usd": w1["krw_vs_usd"],
         "w1_jpy_vs_usd": w1["jpy_vs_usd"],
         "w1_krw_vs_jpy": w1["krw_vs_jpy"],
@@ -164,16 +156,13 @@ def main() -> int:
         save_state(state)
         return 0
 
-    table = [
-        "구간 | 원화 대 달러 | 엔화 대 달러 | 원화 대 엔화",
-    ]
+    table = ["구간 | 원화 대 달러 | 엔화 대 달러 | 원화 대 엔화"]
     for key in ("1w", "2w", "1m", "3m"):
         r = rows[key]
         table.append(
             f"{WINDOW_KO[key]} | {signed(r['krw_vs_usd'])} | {signed(r['jpy_vs_usd'])} | {signed(r['krw_vs_jpy'])}"
         )
 
-    jpykrw = snapshot["jpykrw"]
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | KRWFX | 주간 교차분해",
         "이게 뭐 알림: 100엔/원을 독립 시장으로 보지 않고 (원/달러)÷(엔/달러)로 분해한 주간 점검입니다.",
