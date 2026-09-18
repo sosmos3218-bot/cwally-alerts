@@ -1,0 +1,27 @@
+{
+  "name": "protec",
+  "title_prefix": "[PROTEC]",
+  "ticker": "053610.KQ",
+  "code": "053610",
+  "pmt_code": "147760",
+  "display": "프로텝",
+  "as_of": "2026-09-18",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 금지. 기존 장전 09:00 KST(UTC 00:00)·장후 15:20 KST(UTC 06:20) morning/afternoon job에만 붙임",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "alert_policy": "event_or_window_monday",
+  "ref_close": 65000,
+  "buy_after_hold": 58000,
+  "cut_on_break": 62000,
+  "windows": {
+    "q3": {"start": "2026-11-10", "end": "2026-11-30", "conds": [1, 2]},
+    "fy": {"start": "2027-01-20", "end": "2027-03-05", "conds": [3, 4]},
+    "laser_deadline": "2027-03-31"
+  },
+  "rules": {
+    "half": "1~5번 중 1개만 충족 → 비중 절반",
+    "full_combo": "1~5번 중 2개 이상 → 전량",
+    "full_solo": "6번 또는 7번 단독 → 전량"
+  }
+}
