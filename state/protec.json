@@ -7,5 +7,8 @@
   "window_ping": [],
   "deadline7_sent": false,
   "buy3_zone": null,
-  "last_action": null
+  "last_action": null,
+  "c1_confirmed": false,
+  "c1_reason": null,
+  "prints": []
 }
