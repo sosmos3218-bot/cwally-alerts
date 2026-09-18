@@ -1,7 +1,13 @@
 {
-  "updated_at": "2026-09-18 11:11 KST",
+  "updated_at": "2026-09-18 11:13 KST",
   "zone": "WATCH",
   "price": 1128.0,
-  "seen_ids": [],
+  "seen_ids": [
+    "62560717",
+    "10927251",
+    "1598502",
+    "1522403",
+    "1504239"
+  ],
   "time_stop_sent": false
 }
