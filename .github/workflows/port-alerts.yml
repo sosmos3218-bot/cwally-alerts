@@ -13,6 +13,7 @@ on:
     - cron: "15 7 18 9 *"
     - cron: "15 7 30 10 *"
     - cron: "15 7 18 12 *"
+    - cron: "15 22 10 12 *"
   workflow_dispatch:
     inputs:
       job:
@@ -66,6 +67,11 @@ on:
         default: auto
         type: choice
         options: [auto, fed, weekly, event, boj_press]
+      avgochain_mode:
+        description: auto | print
+        default: auto
+        type: choice
+        options: [auto, print]
       force_square:
         type: boolean
         default: true
@@ -93,11 +99,13 @@ jobs:
         run: |
           JOB="${{ github.event.inputs.job }}"
           YC=auto
+          AV=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
+            elif [ "${{ github.event.schedule }}" = "15 22 10 12 *" ]; then JOB=avgochain; AV=print
             else JOB=morning
             fi
           fi
@@ -126,6 +134,8 @@ jobs:
             WL="${{ github.event.inputs.wl_mode }}"
             IR="${{ github.event.inputs.iren_mode }}"
             YC="${{ github.event.inputs.yencarry_mode }}"
+            AV="${{ github.event.inputs.avgochain_mode }}"
+            [ -z "$AV" ] && AV=auto
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -136,6 +146,7 @@ jobs:
           echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
+          echo "avgochain_mode=$AV" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + clarity + hce + lg + iren + yencarry + port + ccrev + shinwon
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon'
         env:
@@ -219,7 +230,7 @@ jobs:
             python scripts/shinwon_monitor.py event
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "avgochain" ]; then
-            python scripts/avgochain_monitor.py auto
+            python scripts/avgochain_monitor.py "${{ steps.pick.outputs.avgochain_mode }}"
           fi
       - name: Persist state
         run: |
