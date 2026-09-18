@@ -21,7 +21,7 @@ ZONE_KO = {
     "STOP898": "52주 저점 898원 탈출. 전량",
     "STOP1000": "종가 1,000원 이하. 전량",
     "SELL1": "1,200~1,230원. 95주 1차 매도",
-    "SELL2": "1,270~1,320원. 잔량 매도",
+    "SELL2": "1,270원 이상. 잔량 매도",
     "TIME": "11/13 시간손절. 1,200 미도달 전량",
     "WATCH": "규칙 구간 밖. 물타기 금지",
     "ENDED": "8주 창 종료",
@@ -41,7 +41,7 @@ TITLE_BY_ZONE = {
     "STOP898": "898 탈출 전량",
     "STOP1000": "1,000 종가 전량",
     "SELL1": "1,200대 95주 매도",
-    "SELL2": "1,280대 잔량 매도",
+    "SELL2": "1,270이상 잔량 매도",
     "TIME": "11/13 전량",
     "WATCH": "관찰 유지",
     "ENDED": "창 종료",
@@ -50,7 +50,7 @@ TITLE_BY_ZONE = {
 
 DISC_RULES = [
     ("EARN", ("분기보고서", "반기보고서", "사업보고서", "잠정", "손익구조", "매출액또는손익"), "3Q 영업이익률 2% 미만이면 전량. 패션 적자도 같이 보세요."),
-    ("CB", ("전환사채", "전환청구", "전환권", "사채상환", "전환가액", "전환·포섬"), "CB 잔여 전환·상환이면 오버행. 1,200 추격 금지."),
+    ("CB", ("전환사채", "전환청구", "전환권", "사채상환", "전환가액"), "CB 잔여 전환·상환이면 오버행. 1,200 추격 금지."),
     ("TS", ("자기주식", "주식소각", "자사주"), "자사주 소각이면 1차 95주만 매도. 2차는 소각 다음날까지 보류."),
 ]
 
@@ -97,9 +97,8 @@ def zone(price, cfg, today: str) -> str:
         return "STOP1000"
     if today >= end and price < bands["sell1_lo"]:
         return "TIME"
-    if bands["sell2_lo"] <= price <= bands["sell2_hi"] or price > bands["sell2_hi"]:
-        if price >= bands["sell2_lo"]:
-            return "SELL2"
+    if price >= bands["sell2_lo"]:
+        return "SELL2"
     if bands["sell1_lo"] <= price <= bands["sell1_hi"]:
         return "SELL1"
     return "WATCH"
@@ -139,8 +138,6 @@ def parse_kind(code: str) -> list[dict]:
             "orderMode": "1",
             "orderStat": "D",
             "forward": "searchdisclosure",
-            "searchMode": "",
-            "searchCodeType": "",
             "searchCorpName": code,
             "repIsuSrtCd": code,
         }
@@ -152,11 +149,8 @@ def parse_kind(code: str) -> list[dict]:
         print(f"kind fetch failed: {exc}", file=sys.stderr)
         return []
     items = []
-    for m in re.finditer(r"(\d{4}-\d{2}-\d{2}).{0,80}?([^
-<>]{8,80})", raw):
+    for m in re.finditer(r"(\d{4}-\d{2}-\d{2}).{0,120}?([^<>\n\r]{8,80})", raw):
         date, title = m.group(1), re.sub(r"\s+", " ", m.group(2)).strip()
-        if any(k in title for k, *_ in [(r[1],) for r in []]):
-            pass
         kind = classify_title(title)
         if kind:
             items.append({"id": f"{date}:{title}", "date": date, "title": title, "src": "kind", "kind": kind})
@@ -228,8 +222,9 @@ def main() -> int:
 
     discs = collect_disclosures(cfg["code"])
     seen = list(prev.get("seen_ids") or [])
-    new_discs = [d for d in discs if d["id"] not in seen]
-    seen_ids = (seen + [d["id"] for d in new_discs])[-80:]
+    cutoff = cfg.get("as_of") or today
+    new_discs = [d for d in discs if d["id"] not in seen and d.get("date", "") >= cutoff]
+    seen_ids = (seen + [d["id"] for d in discs])[-80:]
 
     zone_changed = bool(prev.get("zone")) and prev.get("zone") != z and (
         z in EVENT_ZONES or prev.get("zone") in EVENT_ZONES
@@ -265,7 +260,7 @@ def main() -> int:
         f"지금 상태: {px} | 평단 대비 {pnl} | 평가 {value} | {ZONE_KO.get(z, z)}",
         f"지금 할 일: {action}",
         "나중에: 3Q 영업이익률·패션 적자·CB 잔여·자사주 소각만 보세요.",
-        "익절/줄일 때: 1,200~1,230원 95주, 1,270~1,320원 잔량. 본전 1,451은 목표 아님.",
+        "익절/줄일 때: 1,200~1,230원 95주, 1,270원 이상 잔량. 본전 1,451은 목표 아님.",
         "하지 말 것: 물타기, 1,000원 종가 무시, 대북 테마 추격.",
     ]
     if new_discs:
@@ -305,7 +300,9 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        hot = z in {"STOP898", "STOP1000", "TIME"} or any(d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs)
+        hot = z in {"STOP898", "STOP1000", "TIME"} or any(
+            d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs
+        )
         pri = 5 if hot else (4 if z in {"SELL1", "SELL2"} or zone_changed else 3)
         publish(title, msg, pri, "warning,chart_with_downwards_trend")
     return 0
