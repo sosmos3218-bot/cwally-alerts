@@ -16,11 +16,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | port | ccrev | kship | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | port | ccrev | kship | shinwon | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, port, ccrev, kship]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, port, ccrev, kship, shinwon]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -136,8 +136,8 @@ jobs:
           echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + port + ccrev
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'ccrev'
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + port + ccrev + shinwon
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -170,7 +170,12 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
           fi
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship (afternoon)
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "shinwon" ]; then
+            MODE=event
+            [ "$JOB" = "shinwon" ] && MODE=force
+            python scripts/shinwon_monitor.py "$MODE"
+          fi
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
@@ -209,6 +214,9 @@ jobs:
             else
               python scripts/kship_monitor.py auto
             fi
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/shinwon_monitor.py event
           fi
       - name: Persist state
         run: |
