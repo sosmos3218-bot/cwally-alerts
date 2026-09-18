@@ -1,5 +1,12 @@
 {
-  "weekly_sent_week": null,
-  "last_snapshot": {},
-  "updated_at": null
+  "weekly_sent_week": "2026-W38",
+  "last_snapshot": {
+    "usdkrw": 1382.27001953125,
+    "usdjpy": 157.11000061035156,
+    "jpykrw": 8.798103329904613,
+    "w1_krw_vs_usd": -2.5293527132635774,
+    "w1_jpy_vs_usd": -1.7011729993247737,
+    "w1_krw_vs_jpy": -0.8281797139388036
+  },
+  "updated_at": "2026-09-18T15:34:51.233016+09:00"
 }
