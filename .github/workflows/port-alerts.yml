@@ -17,11 +17,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | port | ccrev | kship | shinwon | avgochain | protec | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | ccrev | kship | shinwon | avgochain | protec | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, port, ccrev, kship, shinwon, avgochain, protec]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, ccrev, kship, shinwon, avgochain, protec]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -67,6 +67,11 @@ on:
         default: auto
         type: choice
         options: [auto, fed, weekly, event, boj_press]
+      krwfx_mode:
+        description: auto | weekly | force
+        default: auto
+        type: choice
+        options: [auto, weekly, force]
       avgochain_mode:
         description: auto | print
         default: auto
@@ -99,6 +104,7 @@ jobs:
         run: |
           JOB="${{ github.event.inputs.job }}"
           YC=auto
+          KX=auto
           AV=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
@@ -134,8 +140,10 @@ jobs:
             WL="${{ github.event.inputs.wl_mode }}"
             IR="${{ github.event.inputs.iren_mode }}"
             YC="${{ github.event.inputs.yencarry_mode }}"
+            KX="${{ github.event.inputs.krwfx_mode }}"
             AV="${{ github.event.inputs.avgochain_mode }}"
             [ -z "$AV" ] && AV=auto
+            [ -z "$KX" ] && KX=auto
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -146,9 +154,10 @@ jobs:
           echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
+          echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
           echo "avgochain_mode=$AV" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + port + ccrev + shinwon + protec
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec'
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + ccrev + shinwon + protec
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -174,6 +183,11 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
             python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
+            MODE="${{ steps.pick.outputs.krwfx_mode }}"
+            [ "$JOB" = "krwfx" ] && [ "$MODE" = "auto" ] && MODE=weekly
+            python scripts/krwfx_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
             python scripts/port_monitor.py
