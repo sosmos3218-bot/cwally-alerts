@@ -126,7 +126,9 @@ def ntfy_publish(server, topic, title, message, priority, tags):
         print(resp.read().decode())
 
 
-def pick_priority(z, live, cfg):
+def pick_priority(z, live, cfg, mode):
+    if mode == "print":
+        return 5
     hot_ids = set(cfg.get("priority5_event_ids") or ["avgo_fy26q4"])
     if any(e.get("id") in hot_ids for e in live):
         return 5
@@ -135,6 +137,11 @@ def pick_priority(z, live, cfg):
     if z in {"BUY3", "TRIM2"} or live:
         return 4
     return 3
+
+
+def oneshot_date(cfg):
+    raw = (cfg.get("oneshot_kst") or "2026-12-11 07:15").strip()
+    return raw.split()[0]
 
 
 def main() -> int:
@@ -154,6 +161,10 @@ def main() -> int:
 
     if mode == "auto":
         mode = "weekly" if now.weekday() == 0 else "event"
+
+    if mode == "print" and today != oneshot_date(cfg):
+        print(f"avgochain print skipped; today {today} != {oneshot_date(cfg)}")
+        return 0
 
     price = yahoo_px(cfg["ticker"])
     fx = yahoo_px(cfg.get("fx_ticker") or "USDKRW=X")
@@ -176,7 +187,10 @@ def main() -> int:
 
     send = False
     title = f"[0051A0] {TITLE_BY_ZONE.get(z, z)}"
-    if mode == "weekly":
+    if mode == "print":
+        send = True
+        title = f"[0051A0] 12/10 장후 발표 | 가이던스 확인"
+    elif mode == "weekly":
         send = True
         title = f"[0051A0] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
     elif zone_changed or new_live or fx_changed:
@@ -195,12 +209,21 @@ def main() -> int:
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     cap_t = cfg["max_total_weight_pct"]
     cap_e = cfg["max_equity_weight_pct"]
+    if mode == "print":
+        do_now = (
+            "번호를 확인하세요. FY26 AI $58B·FY27 $115B가 유지되면 3차 계획 유지. "
+            "하향이면 3차 취소하고 초과분을 줄이세요. 오늘 장 전 추격 매수 금지."
+        )
+        later = "한국 장 09:00 전에는 새 주문 없이 숫자만. 15:20 구간 알림을 다시 보세요."
+    else:
+        do_now = DO_NOW.get(z, "")
+        later = "2차 19,000~20,800, 3차 16,500~18,200. 3차는 AVGO 가이던스가 살아 있을 때만. 12월 실적창을 보고 취소 여부를 정하세요."
     lines = [
         f"{stamp} | 0051A0 | {cfg['display']}",
         "이게 뭐 알림: 브로드컴 밸류체인 액티브 36개월 테제 매매 가이드입니다. 총자산 한도 3%, 주식 슬리브 6%.",
         f"지금 상태: {px} | {ZONE_KO.get(z, z)} | {fx_line(regime, fx)}",
-        f"지금 할 일: {DO_NOW.get(z, '')}",
-        "나중에: 2차 19,000~20,800, 3차 16,500~18,200. 3차는 AVGO 가이던스가 살아 있을 때만. 12월 실적창을 보고 취소 여부를 정하세요.",
+        f"지금 할 일: {do_now}",
+        f"나중에: {later}",
         "익절: 28,000에서 절반, 31,000에서 남은 양 80%. 20%는 36개월 러너.",
         "줄일 때: 종가 15,800 이탈, 또는 AVGO AI 가이던스 하향, 또는 하이퍼스켈러 캡엑스 동반 하향.",
         f"하지 말 것: 25,000 위 추격, 신용/미수, 총자산 {cap_t}%·주식 {cap_e}% 초과, 환율만 보고 추가매수.",
@@ -220,6 +243,7 @@ def main() -> int:
                 "fx": fx,
                 "fx_regime": regime,
                 "last_event_ids": live_ids,
+                "last_mode": mode,
             },
             ensure_ascii=False,
             indent=2,
@@ -230,7 +254,7 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = pick_priority(z, live, cfg)
+        pri = pick_priority(z, live, cfg, mode)
         ntfy_publish(server, topic, title, msg, pri, "chart_with_upwards_trend,us")
     return 0
 
