@@ -256,10 +256,10 @@ def main() -> int:
             "\n".join(
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | PORTLIGHT",
-                    "이게 무 알림: 김횤진 4신호등 주간 체점.",
+                    "이게 뭐 알림: 김효진 4신호등 주간 채점.",
                     f"지금 결과: 조회 실패. 항목={','.join(fetch_fail) or '없음'}.",
                     "지금 할 일: 오늘 포지션 변경 금지. 다음 주 일요일 재시도.",
-                    "나중에: 시세·ECOS 확인 후 force 재실행.",
+                    "나중에: 시세, ECOS 확인 후 force 재실행.",
                     "익절/줄일 때: 적용 없음.",
                     "하지 말 것: 조회 실패를 홍으로 간주하지 말 것.",
                 ]
@@ -276,11 +276,11 @@ def main() -> int:
     body = "\n".join(
         [
             f"{now.strftime('%Y-%m-%d %H:%M KST')} | PORTLIGHT 주간",
-            "이게 무 알림: 김횤진 4신호등 주간 체점. 투자권유 아님.",
+            "이게 뭐 알림: 김효진 4신호등 주간 채점. 투자권유 아님.",
             (
                 f"지금 결과: 금리 {rate}, 반도체 {chip}, 종합 {pos}. "
-                f"한은 {fmt(bok, 2, '%')}, 국고3년 {fmt(k3)}%, 국고10년 {fmt(k10)}%(에5일 {fmt(k10_bp, 1, 'bp')}), "
-                f"미10년 {fmt(us10)}%(에5일 {fmt(us10_bp, 1, 'bp')}). "
+                f"한은 {fmt(bok, 2, '%')}, 국고3년 {fmt(k3)}%, 국고10년 {fmt(k10)}%(5일 {fmt(k10_bp, 1, 'bp')}), "
+                f"미10년 {fmt(us10)}%(5일 {fmt(us10_bp, 1, 'bp')}). "
                 f"코스피 {fmt(kospi[-1] if kospi else None, 2)} 일 {fmt_pct(kospi_1d)} / 5일 {fmt_pct(kospi_5d)}. "
                 f"삼전 {fmt(sam[-1] if sam else None, 0)} 일 {fmt_pct(sam_1d)} / 5일 {fmt_pct(sam_5d)}. "
                 f"닉스 {fmt(hyn[-1] if hyn else None, 0)} 일 {fmt_pct(hyn_1d)} / 5일 {fmt_pct(hyn_5d)}."
@@ -288,7 +288,7 @@ def main() -> int:
             f"지금 할 일: 다음 주 포지션 {pos}. 신규는 레버리지 없이.",
             "나중에: 국고10년 4.50% 또는 5일 +10bp면 금리 홍. 추가인상 옵션은 설정 hike_option.",
             "익절/줄일 때: 칩 평균 1일 -3.5% 또는 5일 -7% 또는 코스피 1일 -2.5%면 반도체 홍.",
-            "하지 말 것: 신용으로 반도체 추격매수. 금리 민감 고밸륨 신규 확대.",
+            "하지 말 것: 신용으로 반도체 추격매수. 금리 민감 고밸류 신규 확대.",
         ]
     )
     pri = 4 if pos == "보수" else 3
