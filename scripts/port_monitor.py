@@ -112,6 +112,126 @@ def naver_yield(code: str):
         return None
 
 
+def http_get(url: str) -> str | None:
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            raw = resp.read()
+    except Exception as exc:
+        print(f"http fail {url}: {exc}", file=sys.stderr)
+        return None
+    for enc in ("euc-kr", "utf-8", "cp949"):
+        try:
+            return raw.decode(enc)
+        except Exception:
+            continue
+    return raw.decode("utf-8", errors="ignore")
+
+
+def to_trn(num: str, unit: str) -> float | None:
+    try:
+        val = float(num.replace(",", ""))
+    except ValueError:
+        return None
+    if unit.startswith("조"):
+        return val
+    if unit.startswith("억"):
+        return val / 10000.0
+    return None
+
+
+def parse_op_trn(text: str) -> float | None:
+    pats = [
+        r"영업이익[^\d]{0,16}([\d,\.]+)\s*(조원|조|억원|억)",
+        r"영업이익[:\s]*([\d,\.]+)\s*(조원|조|억원|억)",
+    ]
+    for pat in pats:
+        m = re.search(pat, text)
+        if not m:
+            continue
+        val = to_trn(m.group(1), m.group(2))
+        if val is not None and 1 <= val <= 400:
+            return val
+    return None
+
+
+def latest_notice_op(code: str) -> tuple[float | None, str | None]:
+    html = http_get(f"https://finance.naver.com/item/news_notice.naver?code={code}")
+    if not html:
+        return None, None
+    items = re.findall(
+        r'href="([^"]+)"[^>]*>([^<]*(잠정실적|매출액또는손익|영업실적|실적발표)[^<]*)',
+        html,
+        flags=re.I,
+    )
+    title = items[0][1].strip() if items else None
+    blob = title or ""
+    if items:
+        href = items[0][0]
+        if href.startswith("/"):
+            href = "https://finance.naver.com" + href
+        body = http_get(href)
+        if body:
+            blob = title + " " + re.sub(r"<[^>]+>", " ", body)
+    op = parse_op_trn(blob or html)
+    return op, title
+
+
+def dca_verdict(cfg: dict, need_samsung: bool, need_hynix: bool) -> tuple[str, str, list[str]]:
+    cons_s = float(cfg.get("samsung_op_consensus_trn") or 114)
+    cons_h = float(cfg.get("hynix_op_consensus_trn") or 78.8)
+    miss = float(cfg.get("op_miss_cancel_pct") or -15)
+    lines: list[str] = []
+    sop = hop = None
+    st = ht = None
+    if need_samsung:
+        sop, st = latest_notice_op("005930")
+    if need_hynix:
+        hop, ht = latest_notice_op("000660")
+
+    def gap(op, cons):
+        if op is None:
+            return None
+        return (op / cons - 1.0) * 100.0
+
+    sg = gap(sop, cons_s) if need_samsung else None
+    hg = gap(hop, cons_h) if need_hynix else None
+    if need_samsung:
+        if sop is None:
+            lines.append(f"삼성 영업이익 미확인. 콘센 {cons_s:.1f}조. 공시제 {st or '없음'}.")
+        else:
+            lines.append(f"삼성 영업이익 {sop:.1f}조 / 콘센 {cons_s:.1f}조 ({sg:+.1f}%).")
+    if need_hynix:
+        if hop is None:
+            lines.append(f"닉스 영업이익 미확인. 콘센 {cons_h:.1f}조. 공시제 {ht or '없음'}.")
+        else:
+            lines.append(f"닉스 영업이익 {hop:.1f}조 / 콘센 {cons_h:.1f}조 ({hg:+.1f}%).")
+
+    waiting = (need_samsung and sop is None) or (need_hynix and hop is None)
+    cancel = (sg is not None and sg <= miss) or (hg is not None and hg <= miss)
+    if waiting and not cancel:
+        title = "2·3차 보류 | 잠정 미확인"
+        key = "EVENT:DCA_WAIT"
+        lines.append("지금 할 일: 2차·3차는 사지 말고, 1차만 유지하세요.")
+    elif cancel:
+        who = []
+        if sg is not None and sg <= miss:
+            who.append("삼성")
+        if hg is not None and hg <= miss:
+            who.append("닉스")
+        title = "2·3차 취소 | " + "·".join(who) + " 영업이익 -15% 하회"
+        key = "EVENT:DCA_CANCEL"
+        lines.append("지금 할 일: 2차·3차 주문 취소. 기존 1차는 두고, 신규 추가 금지.")
+    else:
+        title = "2·3차 유지 | 콘센 -15% 이내"
+        key = "EVENT:DCA_KEEP"
+        lines.append("지금 할 일: 2차·3차 가격대는 유지. 위로 추격해서 채우지 말세요.")
+    lines.append("나중에: 삼성 2차 23.5만~24.5만, 3차 21만~22.5만. 닉스 2차 160만~170만, 3차 145만~155만.")
+    lines.append("익절/줄일 때: 1차 매수가 -20% 조각만 절반 감액. 신용·미수 금지.")
+    lines.append("하지 말 것: 잠정 전 전량 추가, 공시 미확인 상태에서 2·3차 체결.")
+    return title, key, lines
+
+
 def ktb_pair(cfg: dict):
     ecos = cfg.get("ecos") or {}
     naver = cfg.get("naver_yield") or {}
@@ -239,7 +359,7 @@ def apply_rules(hist, fx, wti, ktb3, ktb10):
     return w, eq, cash, front, ten, reasons, key, title, halt
 
 
-def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool]:
+def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str | None, str | None]:
     live = [e for e in cfg.get("events", []) if e["start"] <= today <= e["end"]]
     soon = [
         e
@@ -247,9 +367,16 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool]:
         if today < e["start"] <= (datetime.strptime(today, "%Y-%m-%d") + timedelta(days=21)).strftime("%Y-%m-%d")
     ]
     live_lines: list[str] = []
+    vtitle = None
+    vkey = None
     if live:
         live_lines.append("오늘은 일정 날입니다. 당일 주문은 금지하고, 결과 확인 다음날부터 조정하세요.")
         ids = {e["id"] for e in live}
+        need_s = "samsung_prelim" in ids or "samsung_confirm" in ids
+        need_h = "hynix_earn" in ids
+        if need_s or need_h:
+            vtitle, vkey, dca_lines = dca_verdict(cfg, need_s, need_h)
+            live_lines.extend(dca_lines)
         if "samsung_prelim" in ids:
             cons = cfg.get("samsung_op_consensus_trn", 114)
             live_lines.append(
@@ -268,7 +395,7 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool]:
     soon_lines = []
     if soon:
         soon_lines.append("21일 안 일정: " + ", ".join(f"{e['label']} {e['start']}" for e in soon))
-    return live_lines, soon_lines, bool(live)
+    return live_lines, soon_lines, bool(live), vtitle, vkey
 
 
 def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool) -> tuple[bool, str]:
@@ -313,10 +440,10 @@ def main() -> int:
     hist = hist[-8:]
 
     w, eq, cash, front, ten, reasons, key, title, halt = apply_rules(hist, fx, wti, ktb3, ktb10)
-    live_lines, soon_lines, is_live = event_blocks(today, cfg)
+    live_lines, soon_lines, is_live, vtitle, vkey = event_blocks(today, cfg)
     if is_live:
-        title = "일정 날 | 당일 금지"
-        key = "EVENT:" + key
+        title = vtitle or "일정 날 | 당일 금지"
+        key = vkey or ("EVENT:" + key)
 
     policy = cfg.get("alert_policy") or "weekly_or_change"
     send, why = should_notify(policy, key, prev, today, now, is_live, halt)
@@ -352,7 +479,7 @@ def main() -> int:
     )
 
     later = [
-        "나중에: 빈자리는 현금으로 둘립니다. 새 종목은 넣지 말세요. 10월 22일 금통위, 10월 삼성 잠정·확정, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
+        "나중에: 빈자리는 현금으로 둘립니다. 새 종목은 넣지 말세요. 10월 22일 금통위, 10월 삼성 잠정·확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
     ]
     later.extend(soon_lines)
     later.extend(live_lines)
@@ -361,7 +488,7 @@ def main() -> int:
         f"{stamp} | PORT 장전 체크",
         "이게 무슨 알림: 8종목 유니버스 장전 체크입니다. 기본은 주식 55, 채권 35, 현금 10입니다. 버크셔ETF는 총자산 12%입니다.",
         f"지금 결과/상태: 원달러 {fmt(fx, 1)}, WTI {fmt(wti, 2)}, 국고 3년 {fmt(ktb3, 3)}, 국고 10년 {fmt(ktb10, 3)}.",
-        f"지금 할 일: 주식 {eq}, 채권 35(짧은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. "
+        f"지금 할 일: 주식 {eq}, 채권 35(짮은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. "
         + " ".join(reasons),
         *later,
         "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
@@ -377,7 +504,7 @@ def main() -> int:
             "cwally-port",
             f"[PORT] {title}",
             msg,
-            5 if halt else (4 if is_live else 3),
+            5 if halt or (vkey == "EVENT:DCA_CANCEL") else (4 if is_live else 3),
             "chart_with_upwards_trend,kr",
         )
     try:
