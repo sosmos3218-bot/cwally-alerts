@@ -1,0 +1,50 @@
+{
+  "name": "PLTR",
+  "title_prefix": "[PLTR]",
+  "ticker": "PLTR",
+  "display": "팔란티어 Q3 2026",
+  "as_of": "2026-09-20",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20 KST 실행기에만 붙임. 2026-10-20~11-15만 조회, 이후·다른 해는 침묵.",
+  "oneshot_year": 2026,
+  "window_start": "2026-10-20",
+  "window_end": "2026-11-15",
+  "expected_dates_kst": ["2026-11-03", "2026-11-10"],
+  "expected_note": "미국 장후 발표 추정일 2026-11-02 또는 2026-11-09. 회사 미확정. KST는 다음날 아침.",
+  "alert_policy": "oneshot_on_date_or_results",
+  "cik": "0001321655",
+  "sources": [
+    "https://investors.palantir.com/news-events/press-releases",
+    "https://investors.palantir.com/",
+    "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001321655&type=8-K&dateb=&owner=include&count=10",
+    "https://data.sec.gov/submissions/CIK0001321655.json"
+  ],
+  "q2_baseline": {
+    "period": "Q2 2026",
+    "rev_bn": 1.935,
+    "rev_yoy": 93,
+    "rev_qoq": 19,
+    "us_comm_bn": 0.764,
+    "us_comm_yoy": 149,
+    "us_comm_qoq": 28,
+    "us_gov_bn": 0.809,
+    "us_gov_yoy": 90,
+    "tcv_bn": 3.373,
+    "tcv_yoy": 49,
+    "us_comm_tcv_bn": 2.132,
+    "us_comm_tcv_yoy": 153,
+    "deals_1m": 220,
+    "q3_guide_rev_lo": 2.160,
+    "q3_guide_rev_hi": 2.164,
+    "fy_guide_rev_lo": 8.150,
+    "fy_guide_rev_hi": 8.158
+  },
+  "thresholds": {
+    "us_comm_yoy_watch": 80,
+    "us_comm_yoy_met": 50,
+    "rev_yoy_watch": 60,
+    "rev_yoy_met": 40
+  }
+}
