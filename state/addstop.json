@@ -1,0 +1,35 @@
+{
+  "updated_at": null,
+  "tickers": {
+    "NVDA": {
+      "phase": "idle",
+      "date_notified": false,
+      "results_notified": false,
+      "miss_notified": false,
+      "source": null,
+      "parsed": null,
+      "fetch_fails": 0,
+      "fetch_fails_sent": null
+    },
+    "TSLA": {
+      "phase": "idle",
+      "date_notified": false,
+      "results_notified": false,
+      "miss_notified": false,
+      "source": null,
+      "parsed": null,
+      "fetch_fails": 0,
+      "fetch_fails_sent": null
+    },
+    "PLTR": {
+      "phase": "idle",
+      "date_notified": false,
+      "results_notified": false,
+      "miss_notified": false,
+      "source": null,
+      "parsed": null,
+      "fetch_fails": 0,
+      "fetch_fails_sent": null
+    }
+  }
+}

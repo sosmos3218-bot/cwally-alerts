@@ -1,0 +1,81 @@
+{
+  "name": "ADDSTOP",
+  "title_prefix": "[ADDSTOP]",
+  "display": "NVDA/TSLA/PLTR 추가매수 중단",
+  "as_of": "2026-09-20",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20 KST 실행기에만 붙임. 종목별 창 밖·다른 해는 침묵.",
+  "oneshot_year": 2026,
+  "alert_policy": "oneshot_on_date_or_results",
+  "tickers": {
+    "NVDA": {
+      "display": "엔비디아 FY2027 3분기",
+      "cik": "0001045810",
+      "window_start": "2026-11-10",
+      "window_end": "2026-11-25",
+      "expected_dates_kst": ["2026-11-18"],
+      "expected_note": "2분기 콜에서 2026-11-17 실적 언급. 미국 장후면 KST 11-18 아침. 회사 일정 변동 가능.",
+      "sources": [
+        "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027",
+        "https://nvidianews.nvidia.com/",
+        "https://investor.nvidia.com/financial-info/financial-reports/default.aspx",
+        "https://data.sec.gov/submissions/CIK0001045810.json"
+      ],
+      "result_re": "financial results for third quarter fiscal 2027|third quarter fiscal 2027 revenue of",
+      "date_re": "will report financial results for third quarter fiscal 2027|announces date of third quarter fiscal 2027",
+      "false_re": "second quarter fiscal 2027|first quarter fiscal 2027",
+      "triggers": {
+        "rev_floor_bn": 105.8,
+        "gm_floor_pct": 73.5,
+        "q3_guide_mid_bn": 108.0
+      }
+    },
+    "TSLA": {
+      "display": "테슬라 2026 3분기",
+      "cik": "0001318605",
+      "window_start": "2026-10-20",
+      "window_end": "2026-11-08",
+      "expected_dates_kst": ["2026-10-29"],
+      "expected_note": "3분기 실적 시장 추정 2026-10-28 장후. 회사 미확정. KST는 다음날.",
+      "sources": [
+        "https://ir.tesla.com/",
+        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001318605&type=10-Q&owner=include&count=10",
+        "https://data.sec.gov/submissions/CIK0001318605.json"
+      ],
+      "result_re": "q3 2026 update|third quarter 2026 results|quarter ended september 30, 2026",
+      "date_re": "tesla q3 2026 earnings|third quarter 2026 earnings call",
+      "false_re": "second quarter 2026|quarter ended june 30, 2026",
+      "triggers": {
+        "auto_gm_floor_pct": 15.0,
+        "energy_gm_floor_pct": 15.0,
+        "q3_2025_energy_bn": 3.415,
+        "q2_2026_auto_gm_pct": 16.4,
+        "q2_2026_energy_gm_pct": 20.4
+      }
+    },
+    "PLTR": {
+      "display": "팔란티어 2026 3분기 추가매수",
+      "cik": "0001321655",
+      "window_start": "2026-10-20",
+      "window_end": "2026-11-15",
+      "expected_dates_kst": ["2026-11-03", "2026-11-10"],
+      "expected_note": "기존 [PLTR] 김승호 점검과 별개. 미국 장후 추정일 11/2 또는 11/9. KST 다음날.",
+      "sources": [
+        "https://investors.palantir.com/news-events/press-releases",
+        "https://investors.palantir.com/",
+        "https://data.sec.gov/submissions/CIK0001321655.json"
+      ],
+      "result_re": "palantir reports q3 2026|reports third quarter 2026|third quarter ended september 30, 2026",
+      "date_re": "announces date of (third|3rd) quarter 2026 earnings|third quarter 2026 earnings release and webcast",
+      "false_re": "second quarter 2026|q2 2026",
+      "triggers": {
+        "q3_rev_floor_bn": 2.16,
+        "fy_rev_floor_bn": 8.15,
+        "us_comm_fy_floor_bn": 3.424,
+        "adj_oi_floor_bn": 1.292
+      }
+    }
+  }
+}
