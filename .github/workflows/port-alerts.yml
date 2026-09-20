@@ -208,6 +208,7 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "2ub" ]; then
             python scripts/2ub_monitor.py auto
           fi
+          python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + avgochain + protec (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'avgochain' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'all'
         env:
@@ -257,6 +258,9 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
             python scripts/protec_monitor.py event
           fi
+          python scripts/ntfy_archive.py
+      - name: Archive ntfy
+        run: python scripts/ntfy_archive.py
       - name: Persist state
         run: |
           git config user.name "cwally-alerts-bot"
