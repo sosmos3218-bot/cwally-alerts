@@ -1,0 +1,8 @@
+{
+  "name": "ARCHIVE",
+  "title_prefix": "[ARCHIVE]",
+  "ntfy_server": "https://ntfy.sh",
+  "topics": ["cwally-port", "cwally-flow", "cwally-ops"],
+  "max_items": 400,
+  "github_raw": "https://raw.githubusercontent.com/sosmos3218-bot/cwally-alerts/main/state/archive.json"
+}
