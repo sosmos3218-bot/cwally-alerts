@@ -7,7 +7,7 @@
   "schedule_note": "08:50 요청. 새 cron 금지라 기존 장전 09:00 KST(UTC 00:00) morning job에만 붙임. 알림은 weekly_or_change",
   "alert_policy": "weekly_or_change",
   "alert_policy_note": "장전 잡은 평일 유지(히스토리/스트릭). ntfy는 월요일, 존 변경, 일정 날, HALT/DUAL만. BASE 반복은 침묵",
-  "as_of": "2026-09-17",
+  "as_of": "2026-09-20",
   "tickers": {
     "fx": "USDKRW=X",
     "wti": "CL=F"
@@ -36,8 +36,16 @@
     "475350": {"name": "RISE버크셔TOP10", "w": 22, "prev": 0, "delta": 22, "total_pct": 12}
   },
   "samsung_op_consensus_trn": 114,
+  "hynix_op_consensus_trn": 78.8,
+  "op_miss_cancel_pct": -15,
+  "dca": {
+    "note": "반도체 바구니 삼성 60 / 닉스 40. 1차는 현재가, 2·3차는 아래 구간. 3분기 영업이익이 컨센 대비 -15%면 2·3차 취소",
+    "samsung": {"t1": [255000, 265000], "t2": [235000, 245000], "t3": [210000, 225000]},
+    "hynix": {"t1": [1800000, 1900000], "t2": [1600000, 1700000], "t3": [1450000, 1550000]}
+  },
   "events": [
     {"id": "samsung_prelim", "label": "삼성전자 잠정", "start": "2026-10-01", "end": "2026-10-10"},
+    {"id": "hynix_earn", "label": "SK하이닉스 3Q", "start": "2026-10-20", "end": "2026-10-31"},
     {"id": "bok_oct", "label": "10월 금통위", "start": "2026-10-22", "end": "2026-10-23"},
     {"id": "samsung_confirm", "label": "삼성전자 확정", "start": "2026-10-28", "end": "2026-10-29"},
     {"id": "fomc_oct", "label": "10월 FOMC(점도표 없음)", "start": "2026-10-29", "end": "2026-10-29"},
