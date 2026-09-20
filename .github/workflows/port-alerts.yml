@@ -228,7 +228,7 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.event_name == 'workflow_dispatch' && '1' || '0' }}
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
