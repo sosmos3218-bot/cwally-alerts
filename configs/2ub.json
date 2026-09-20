@@ -1,0 +1,36 @@
+{
+  "name": "2UB",
+  "title_prefix": "[2UB]",
+  "pref_code": "005387",
+  "common_code": "005380",
+  "pref_ticker": "005387.KS",
+  "common_ticker": "005380.KS",
+  "display": "현대차2우B",
+  "as_of": "2026-09-20",
+  "schedule_kst": "09:00",
+  "schedule_note": "금 18:00 Grok 주간체크를 기존 월요 장전 09:00 KST morning job에 붙임. 새 cron 없음.",
+  "alert_policy": "weekly_or_change",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "annual_div_pref": 10100,
+  "min_div": 10000,
+  "bands": {
+    "add_hard": 164500,
+    "add_lo": 165000,
+    "add_hi": 175000,
+    "buy1_lo": 175000,
+    "buy1_hi": 190000,
+    "halt_price": 210000,
+    "exit_lo": 260000,
+    "exit_hi": 280000
+  },
+  "gap": {
+    "buy_lo": 48,
+    "buy_hi": 55,
+    "halt": 40,
+    "trim1": 35,
+    "trim1_prefer": 30,
+    "trim2": 25,
+    "exit": 20
+  }
+}
