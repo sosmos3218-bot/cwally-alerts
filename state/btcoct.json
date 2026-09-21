@@ -1,0 +1,9 @@
+{
+  "snapshot_sent": false,
+  "fail_notified": false,
+  "last_kind": null,
+  "confirmed_sent": false,
+  "invalidated_sent": false,
+  "weekly_above_sent": false,
+  "updated_at": null
+}
