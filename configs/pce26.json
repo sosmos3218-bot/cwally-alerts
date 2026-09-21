@@ -27,7 +27,7 @@
     "bea": "https://www.bea.gov/news/2026/personal-income-and-outlays-august-2026",
     "bea_schedule": "https://www.bea.gov/news/schedule",
     "fred_core": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPILFE",
-    "fred_head": "https://fred.stloufed.org/graph/fredgraph.csv?id=PCEPI",
+    "fred_head": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPI",
     "fred_trim": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCETRIM12M159SFRBDAL"
   },
   "explain": "9월 30일 BEA 8월 PCE와 연례 개정 후 근원PCE, 절사평균, 자산운용/소프트웨어/법률 항목을 개정 전 7월 수치와 비교하고 10월 27-28일 FOMC 함의만 적습니다."
