@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import http.client
 import json
 import re
 import sys
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from html import unescape
 from pathlib import Path
@@ -24,7 +26,6 @@ LABEL = {
     "rare_earth": "희토류",
     "chip_controls": "칩수출통제",
 }
-GRADE_KO = {"합의": "합의", "시사": "시사", "미언급": "미언급"}
 SUMMIT_RE = re.compile(
     r"xi|jinping|state visit|summit|china|chinese president|习近平|中美|特朗普",
     re.I,
@@ -69,11 +70,15 @@ HINT = {
 
 
 def fetch(url: str) -> str:
-    import urllib.request
-
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        return resp.read().decode("utf-8", errors="ignore")
+    try:
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            raw = resp.read()
+    except http.client.IncompleteRead as exc:
+        raw = exc.partial or b""
+        if not raw:
+            raise
+    return raw.decode("utf-8", errors="ignore")
 
 
 def strip_html(html: str) -> str:
@@ -201,13 +206,13 @@ def kr_lines(cfg: dict, grades: dict[str, str], texts: str) -> list[str]:
         if g == "미언급":
             continue
         if key == "rare_earth":
-            out.append(f"희토류 {g}: 자석·전기차·전자 중간재 공급 일정 확인.")
+            out.append(f"희토류 {g}: 자석, 전기차, 전자 중간재 공급 일정 확인.")
         elif key == "chip_controls":
-            out.append(f"칩수출통제 {g}: 삼성·하이닉스·장비 수출입 문장만 공식문 기준으로 보세요.")
+            out.append(f"칩수출통제 {g}: 삼성, 하이닉스, 장비 수출입 문장만 공식문 기준으로 보세요.")
         elif key == "trade_truce":
             out.append(f"무역휴전 {g}: 11월 10일 전 관세 재점화 여부만 후속.")
     if HINT["chip_controls"].search(texts) and grades.get("ai_dialogue") != "미언급":
-        out.append(f"AI대화 {grades['ai_dialogue']}: 칩·연산 문장이 있어 공급망에 간접 연결.")
+        out.append(f"AI대화 {grades['ai_dialogue']}: 칩, 연산 문장이 있어 공급망에 간접 연결.")
     if not out:
         out.append("한국 공급망에 직접 닿는 공식 문장 없음.")
     return out
@@ -224,9 +229,7 @@ def action_title(grades: dict[str, str], kr: list[str], kind: str) -> str:
             bits.append(f"{LABEL[key]} {grades[key]}")
     if not bits:
         return "[USCN24] 공급망 항목 미언급 | 대기"
-    if any(grades.get(k) == "합의" for k in ("rare_earth", "chip_controls", "trade_truce")):
-        return "[USCN24] " + " | ".join(bits[:2])
-    return "[USCN24] " + " | ".join(bits[:2]) + " | 추격 금지"
+    return "[USCN24] " + " | ".join(bits[:2]) + ("" if any(grades.get(k) == "합의" for k in ("rare_earth", "chip_controls", "trade_truce")) else " | 추격 금지")
 
 
 def emit(cfg: dict, title: str, lines: list[str], priority: int) -> None:
@@ -267,7 +270,7 @@ def main() -> int:
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | USCN24 | 미중 정상회담",
                     f"이게 뭐 알림: {cfg['explain']}",
-                    "지금 상태: 백악관·신화사 목록 조회 실패. 미언급으로 처리하지 않음.",
+                    "지금 상태: 백악관, 신화사 목록 조회 실패. 미언급으로 처리하지 않음.",
                     "지금 할 일: 다음 기존 슬롯까지 기다림. 지금은 추측으로 포지션 바꾸지 마세요.",
                     "나중에: 공식문이 생기면 표로 한 번만 보냅니다.",
                     "익절/줄일 때: 이번 실패 알림으로는 매매하지 마세요.",
@@ -285,7 +288,6 @@ def main() -> int:
     state["grades"] = grades
     key = "|".join(f"{k}:{grades[k]}" for k in LABEL) + "|" + str(bool(docs))
 
-    kind = "final" if docs else "empty"
     last_day = now.date() == expire.date()
     send = False
     if docs and (mode in {"force", "dry"} or not state.get("final_notified")):
@@ -298,6 +300,7 @@ def main() -> int:
     if mode == "dry":
         print(table_line(grades))
         print(kr)
+        print(f"wh_ok={wh_ok} xh_ok={xh_ok} docs={len(docs)} send_would={send}")
         print("dry-run; no ntfy")
         save_state(state, now)
         return 0
@@ -311,13 +314,8 @@ def main() -> int:
         save_state(state, now)
         return 0
 
-    srcs = []
-    if docs:
-        for d in docs[:4]:
-            srcs.append(d["url"])
-    else:
-        srcs = ["백악관/신화사 목록은 열렸으나 24~27일 정상회담 공식문 없음"]
-    title = action_title(grades, kr, kind if docs else "empty")
+    srcs = [d["url"] for d in docs[:4]] if docs else ["백악관/신화사 목록은 열렸으나 24~27일 정상회담 공식문 없음"]
+    title = action_title(grades, kr, "final" if docs else "empty")
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | USCN24 | 미중 정상회담",
         f"이게 뭐 알림: {cfg['explain']}",
@@ -325,7 +323,7 @@ def main() -> int:
         "한국 공급망: " + " ".join(kr),
         "지금 할 일: " + (kr[0] if docs else "공식문 나올 때까지 대기."),
         "나중에: 같은 판정은 다시 안 보냅니다. 만료 2026-09-27.",
-        "익절/줄일 때: 희토류·칩이 합의여도 추격 금지. 문장에 없는 완화는 없다고 봅니다.",
+        "익절/줄일 때: 희토류, 칩이 합의여도 추격 금지. 문장에 없는 완화는 없다고 봅니다.",
         "하지 말 것: 로이터/SCMP를 공식 합의로 대체. 조회 실패를 미언급으로 처리.",
         "출처: " + " | ".join(srcs),
         f"조회: 백악관 {'OK' if wh_ok else '실패'} / 신화사 {'OK' if xh_ok else '실패'}",
