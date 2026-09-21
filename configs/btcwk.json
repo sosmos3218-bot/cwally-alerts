@@ -1,0 +1,20 @@
+{
+  "name": "btcwk",
+  "title_prefix": "[BTCWK]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "event_year": 2026,
+  "schedule_kst": "2026-09-28 09:00",
+  "oneshot_kst": ["2026-09-28 09:00"],
+  "window_start_kst": "2026-09-28 00:00",
+  "expire_date": "2026-09-28",
+  "level_83k": 83000,
+  "june_low": 58500,
+  "sma200_approx": 65000,
+  "schedule_note": "새 cron 없음. 2026-09-28 월요일 기존 09:00 KST morning에 붙임. UTC 주간 캔들 마감(월 00:00 UTC) 직후. 연도 가드 2026만.",
+  "sources": {
+    "weekly": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1w&limit=60",
+    "spot": "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+  },
+  "explain": "9월 27일 주(UTC 주간 캔들) 종가가 8.3만과 50주 평균선 대비 어디인지 보고 A~G 시나리오만 판정합니다. 투자 권유 아닙니다."
+}
