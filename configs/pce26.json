@@ -1,0 +1,33 @@
+{
+  "name": "pce26",
+  "title_prefix": "[PCE26]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "oneshot_kst": ["2026-10-01 09:00", "2026-10-01 15:20"],
+  "preferred_oneshot_kst": "2026-09-30 22:00",
+  "window_start_kst": "2026-09-30 21:30",
+  "expire_date": "2026-10-02",
+  "event_year": 2026,
+  "release_at_edt": "2026-09-30 08:30",
+  "release_at_kst": "2026-09-30 21:30",
+  "fomc_next": "2026-10-27/28",
+  "schedule_note": "발표는 2026-09-30 21:30 KST. 기존 9/30 09:00·15:20은 발표 전이라 사용 불가. 새 cron 없음. 기존 10/1 09:00 morning, 10/1 15:20 afternoon에 붙이려면 워크플로 1줄 승인 필요. 연도 가드 2026만.",
+  "pre_revision": {
+    "july_headline_yoy": 3.7,
+    "july_core_yoy": 3.3,
+    "july_core_mom": 0.2,
+    "july_trim_yoy": 2.28,
+    "may_core_yoy": 3.4,
+    "sep16_sep_core_2026": 3.4,
+    "as_of": "2026-08-26 BEA July print + FRED trimmed Jul 2.28 + Sep 16 SEP"
+  },
+  "sources": {
+    "bea": "https://www.bea.gov/news/2026/personal-income-and-outlays-august-2026",
+    "bea_schedule": "https://www.bea.gov/news/schedule",
+    "fred_core": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPILFE",
+    "fred_head": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPI",
+    "fred_trim": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCETRIM12M159SFRBDAL"
+  },
+  "explain": "9월 30일 BEA 8월 PCE와 연례 개정 후 근원PCE, 절사평균, 자산운용·소프트웨어·법률 항목을 개정 전 7월 수치와 비교하고 10월 27-28일 FOMC 함의만 적습니다."
+}
