@@ -227,6 +227,9 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
             python scripts/sec_monitor.py auto
           fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
+            python scripts/btc21_monitor.py
+          fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + avgochain + protec + druck + pltr + addstop (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'avgochain' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'all'
@@ -285,6 +288,9 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
             python scripts/addstop_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/btc21_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Archive ntfy
