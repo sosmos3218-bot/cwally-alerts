@@ -108,7 +108,7 @@ jobs:
           YC=auto
           KX=auto
           AV=auto
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "${{ github.event.name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
@@ -229,6 +229,7 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/btc21_monitor.py
+            python scripts/btcoct_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + avgochain + protec + druck + pltr + addstop (afternoon)
