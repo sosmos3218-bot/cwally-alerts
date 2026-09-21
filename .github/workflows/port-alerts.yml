@@ -15,15 +15,14 @@ on:
     - cron: "15 7 28 10 *"
     - cron: "15 7 30 10 *"
     - cron: "15 7 18 12 *"
-    - cron: "15 22 10 12 *"
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | avgochain | protec | 2ub | druck | pltr | addstop | sec | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, avgochain, protec, 2ub, druck, pltr, addstop, sec]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -74,11 +73,6 @@ on:
         default: auto
         type: choice
         options: [auto, weekly, force]
-      avgochain_mode:
-        description: auto | print
-        default: auto
-        type: choice
-        options: [auto, print]
       force_square:
         type: boolean
         default: true
@@ -107,15 +101,13 @@ jobs:
           JOB="${{ github.event.inputs.job }}"
           YC=auto
           KX=auto
-          AV=auto
-          if [ "${{ github.event.name }}" = "schedule" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
             elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
-            elif [ "${{ github.event.schedule }}" = "15 22 10 12 *" ]; then JOB=avgochain; AV=print
             else JOB=morning
             fi
           fi
@@ -145,8 +137,6 @@ jobs:
             IR="${{ github.event.inputs.iren_mode }}"
             YC="${{ github.event.inputs.yencarry_mode }}"
             KX="${{ github.event.inputs.krwfx_mode }}"
-            AV="${{ github.event.inputs.avgochain_mode }}"
-            [ -z "$AV" ] && AV=auto
             [ -z "$KX" ] && KX=auto
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
@@ -159,7 +149,6 @@ jobs:
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
-          echo "avgochain_mode=$AV" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + druck + pltr + addstop + sec
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'druck' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:
@@ -232,8 +221,8 @@ jobs:
             python scripts/btcoct_monitor.py
           fi
           python scripts/ntfy_archive.py
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + avgochain + protec + druck + pltr + addstop (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'avgochain' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -274,9 +263,6 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ]; then
             python scripts/shinwon_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "avgochain" ]; then
-            python scripts/avgochain_monitor.py "${{ steps.pick.outputs.avgochain_mode }}"
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
             python scripts/protec_monitor.py event
