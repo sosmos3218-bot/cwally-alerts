@@ -66,7 +66,7 @@ def save_state(state: dict) -> None:
 
 def parse_num(raw: str) -> float | None:
     txt = raw.strip().replace(",", "").replace("$", "")
-    if not txt or txt in {"-", "—"}:
+    if not txt or txt in {"-", "\u2014"}:
         return None
     neg = txt.startswith("(") and txt.endswith(")")
     txt = txt.strip("()")
@@ -78,11 +78,6 @@ def parse_num(raw: str) -> float | None:
 
 
 def etf_from_farside(html: str, target: str) -> dict | None:
-    want = datetime.strptime(target, "%Y-%m-%d")
-    pat = re.compile(
-        r"(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(20\d{2}).{0,400}?(-?\(?[\d.,]+\)?|\u2014|-)",
-        re.I | re.S,
-    )
     rows = []
     for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", html, flags=re.I | re.S):
         cells = [re.sub(r"<[^>]+>", " ", c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, flags=re.I | re.S)]
@@ -99,7 +94,6 @@ def etf_from_farside(html: str, target: str) -> dict | None:
     for iso, total, cells in rows:
         if iso == target and total is not None:
             return {"date": iso, "total_m": total, "source": "https://farside.co.uk/btc/", "raw": cells[-1]}
-    _ = want, pat
     return None
 
 
@@ -199,7 +193,7 @@ def senate_status(cfg: dict) -> tuple[str, str, list[str]]:
         )
     )
     if scheduled and not day_out:
-        return "SCHEDULED", f"공식 페이지에 9월 22일 Clarity/제3633 일정이 보입니다. 출처: {sources_ok[0]}", errors
+        return "SCHEDULED", f"공식 페이지에 9월 22일 Clarity/H.R.3633 일정이 보입니다. 출처: {sources_ok[0]}", errors
     if day_out:
         return "NOT_SCHEDULED", "상원 잠정 일정에 9월 21~22일이 day out으로 나옵니다. 내일 2:15 ET 표결 소문과 맞지 않습니다.", errors
     return "NOT_SCHEDULED", "9월 22일 Clarity 재표결을 확정하는 공식 일정은 없습니다.", errors
@@ -230,13 +224,13 @@ def copy_for(kind: str, cfg: dict, price, etf, senate_label, senate_note) -> tup
     etf_txt = "9월 21일 집계 없음"
     if etf:
         sign = "+" if etf["total_m"] > 0 else ""
-        etf_txt = f"9월 21일 순{sign}{etf['total_m']:.1f}억달러 ({etf['source']})"
+        etf_txt = f"9월 21일 순{sign}{etf['total_m']:.1f}백만달러 ({etf['source']})"
     explain = cfg["explain"]
     if kind == "FETCH_FAIL":
         return (
             "[CLARITY] 조회 실패 | 판정 보류",
             [
-                f"이게 무 알림: {explain}",
+                f"이게 뭐 알림: {explain}",
                 "지금 결과: 가격 또는 상원 조회가 실패했습니다. 실패를 정상으로 처리하지 않습니다.",
                 "지금 할 일: 직접 시세와 상원 일정을 확인하세요. 추격 금지.",
                 "나중에: 오후 15:20 KST 슬롯에서 한 번 더 봅니다.",
@@ -249,9 +243,9 @@ def copy_for(kind: str, cfg: dict, price, etf, senate_label, senate_note) -> tup
         return (
             "[CLARITY] ETF 숫자 없음 | 판정 보류",
             [
-                f"이게 무 알림: {explain}",
+                f"이게 뭐 알림: {explain}",
                 f"지금 결과: BTC {px}. 9월 21일 현물 ETF 순유입이 아직 없습니다. 상원: {senate_label}.",
-                "지금 할 일: 판정을 밀지 말고 추격하지 마세요.",
+                "지금 할 일: 판정을 미루고 추격하지 마세요.",
                 "나중에: 15:20 KST에 한 번 더 봅니다. 숫자 없으면 그때도 유보입니다.",
                 "익절/줄일 때: 이 알림으로 팔지 마세요.",
                 "하지 말 것: 없는 ETF 숫자를 맞춰 넣기. 소문을 공식 일정으로 취급.",
@@ -264,26 +258,26 @@ def copy_for(kind: str, cfg: dict, price, etf, senate_label, senate_note) -> tup
         "HOLD_WEAK": "[CLARITY] 가격만 유지 | ETF 약함",
         "HOLD_OFFICIAL": "[CLARITY] 공식 일정 있음 | 추격 금지",
         "FADE": "[CLARITY] 헤드라인 반락 | 추격 금지",
-        "FADE_WEAK": "[CLARITY] 가격 약해 | 소문 아님",
+        "FADE_WEAK": "[CLARITY] 가격 약함 | 소문 아님",
         "FADE_OFFICIAL": "[CLARITY] 공식 있는데 반락 | 관찰",
     }
     now_do = {
         "HOLD": "8만2천달러 위에 있고 9월 21일 ETF도 순유입입니다. 소문 추격은 하지 마세요.",
-        "HOLD_WEAK": "가격은 겨넘지만 9월 21일 ETF는 순유입이 아닙니다. 새 매수는 보류하세요.",
+        "HOLD_WEAK": "가격은 버티지만 9월 21일 ETF는 순유입이 아닙니다. 새 매수는 보류하세요.",
         "HOLD_OFFICIAL": "공식 일정이 있습니다. 결과 전에 추격하지 마세요.",
         "FADE": "가격이 8만2천달러 아래로 돌아갔고 ETF도 받쳐주지 않았습니다. 헤드라인 반락으로 봅니다.",
-        "FADE_WEAK": "가격은 약해지만 ETF는 순유입입니다. 반락이라고 단정하지 말고 추격만 금지하세요.",
-        "FADE_OFFICIAL": "공식 일정은 있는데 가격은 8만2천달러을 지키지 못했습니다. 결과를 보고 다시 판정하세요.",
+        "FADE_WEAK": "가격은 약하지만 ETF는 순유입입니다. 반락이라고 단정하지 말고 추격만 금지하세요.",
+        "FADE_OFFICIAL": "공식 일정은 있는데 가격은 8만2천달러를 지키지 못했습니다. 결과를 보고 다시 판정하세요.",
     }
     return (
         titles[kind],
         [
-            f"이게 무 알림: {explain}",
+            f"이게 뭐 알림: {explain}",
             f"지금 결과: {kind} | BTC {px} | ETF {etf_txt} | 상원 {senate_label}.",
             f"지금 할 일: {now_do[kind]}",
-            "나중에: 이 작업은 오늘자 일회성입니다. 내일 부터는 다시 안 보냅니다.",
-            "익절/줄일 때: 8만2천달러를 기준으로 밥니다. 이 알림으로 팔지 마세요.",
-            "하지 말 것: 소문 추격, 신용/미수, 없는 재표결을 기정에 넣기.",
+            "나중에: 이 작업은 오늘자 일회성입니다. 내일부터는 다시 안 보냅니다.",
+            "익절/줄일 때: 8만2천달러를 기준으로 봅니다. 이 알림으로 팔지 마세요.",
+            "하지 말 것: 소문 추격, 신용/미수, 없는 재표결을 기정사실로 넣기.",
             f"상원 메모: {senate_note}",
         ],
         5 if kind.startswith("FADE") or kind.endswith("OFFICIAL") else 4,
