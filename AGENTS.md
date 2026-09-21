@@ -9,6 +9,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]`.
 - Default attach: reuse weekday `09:00` KST (UTC 00:00) or `15:20` KST (UTC 06:20). Do not add a new weekday/repeating cron unless the user asks for a new recurring schedule. No hourly cron.
 - After-close / dated prints (KR earnings, FOMC, BOJ) MAY add a `m h D M *` oneshot cron without extra chat approval. Convert KST→UTC (`KST = UTC+9`). GitHub cron has no year, so the script MUST year-guard and stay silent in later years.
+- Extra chat approval is required only for a new repeating/hourly cron, a topic change, a new repo, a live ntfy test send, or an AGENTS.md edit; attaching a year-guarded one-shot to the existing 09:00/15:20 slots, plus typo/syntax/silence fixes, does not need a second ask.
 - Every new `m h D M *` cron MUST be mapped in `Decide jobs` to a single job id. Never let an unmatched schedule fall through to `morning`.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot extras go in `oneshot_kst`.
 - New alert = `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json` only. Workflow edits are allowed only to register that oneshot cron and its job map.
@@ -20,7 +21,7 @@ This repo is the only place for GitHub Actions + ntfy.
 Write every alert so a tired reader knows what to do in 5 seconds. Korean, short sentences, no unexplained jargon.
 
 Required body order:
-1. 이게 뭔 알림
+1. 이게 뭐 알림
 2. 지금 결과/상태
 3. 지금 할 일
 4. 나중에
