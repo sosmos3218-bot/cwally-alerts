@@ -1,0 +1,33 @@
+{
+  "name": "SEC",
+  "title_prefix": "[SEC]",
+  "ticker": "005930.KS",
+  "code": "005930",
+  "display": "삼성전자",
+  "as_of": "2026-09-21",
+  "schedule_kst": "09:00",
+  "schedule_note": "08:20 KST 월요일 요청. 새 cron 금지라 기존 장전 09:00 KST(UTC 00:00) morning job에만 붙임. 월요일 weekly, 평일은 구간/경고 변화만",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "alert_policy": "weekly_or_change",
+  "ref_price": 260000,
+  "foreign_share_band": "46",
+  "bands": {
+    "reduce_lt": 200000,
+    "buy1_lo": 200000,
+    "buy1_hi": 240000,
+    "buy2_lo": 240000,
+    "buy2_hi": 280000,
+    "hold_lo": 290000,
+    "hold_hi": 320000,
+    "sell1_lo": 330000,
+    "sell1_hi": 380000,
+    "break38": 380000,
+    "nonew_lo": 410000,
+    "nonew_hi": 450000,
+    "sell2_lo": 460000,
+    "sell2_hi": 500000,
+    "exit_ge": 500000,
+    "chase_ban": 290000
+  }
+}
