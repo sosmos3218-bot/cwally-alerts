@@ -1,8 +1,8 @@
 {
-  "updated_at": null,
-  "zone": null,
-  "price": null,
-  "action": null,
-  "last_alert_date": null,
+  "updated_at": "2026-09-21 10:20 KST",
+  "zone": "BUY2",
+  "price": 269500.0,
+  "action": "진입",
+  "last_alert_date": "2026-09-21",
   "warn": []
 }
