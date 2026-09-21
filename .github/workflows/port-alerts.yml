@@ -22,4 +22,274 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, steel, alux | square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec]
+      steel_mode:
+        description: weekly | quarterly | event
+        default: weekly
+        type: choice
+        options: [weekly, quarterly, event]
+      alux_mode:
+        description: weekly | event
+        default: weekly
+        type: choice
+        options: [weekly, event]
+      hce_mode:
+        description: daily | event
+        default: daily
+        type: choice
+        options: [daily, event]
+      silicon2_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      cover0198_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      lg_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      wl_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      iren_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      yencarry_mode:
+        description: auto | fed | weekly | event | boj_press
+        default: auto
+        type: choice
+        options: [auto, fed, weekly, event, boj_press]
+      krwfx_mode:
+        description: auto | weekly | force
+        default: auto
+        type: choice
+        options: [auto, weekly, force]
+      force_square:
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Decide jobs
+        id: pick
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          YC=auto
+          KX=auto
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+            elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
+            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
+            elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
+            elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
+            elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
+            else JOB=morning
+            fi
+          fi
+          [ -z "$JOB" ] && JOB=all
+          echo "job=$JOB" >> "$GITHUB_OUTPUT"
+          DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
+          if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
+          elif [ "$DOW" = "1" ]; then SM=weekly
+          else SM=event
+          fi
+          AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
+          if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
+          S2=event
+          C8=event
+          LG=event
+          WL=event
+          IR=event
+          if [ "$DOW" = "1" ]; then IR=weekly; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SM="${{ github.event.inputs.steel_mode }}"
+            AM="${{ github.event.inputs.alux_mode }}"
+            HM="${{ github.event.inputs.hce_mode }}"
+            S2="${{ github.event.inputs.silicon2_mode }}"
+            C8="${{ github.event.inputs.cover0198_mode }}"
+            LG="${{ github.event.inputs.lg_mode }}"
+            WL="${{ github.event.inputs.wl_mode }}"
+            IR="${{ github.event.inputs.iren_mode }}"
+            YC="${{ github.event.inputs.yencarry_mode }}"
+            KX="${{ github.event.inputs.krwfx_mode }}"
+            [ -z "$KX" ] && KX=auto
+          fi
+          echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
+          echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
+          echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
+          echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
+          echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
+          echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
+          echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
+          echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
+          echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
+          echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + druck + pltr + addstop + sec
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'druck' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
+            python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
+            python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "clarity" ]; then
+            python scripts/clarity_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
+            python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
+            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
+            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
+            MODE="${{ steps.pick.outputs.krwfx_mode }}"
+            [ "$JOB" = "krwfx" ] && [ "$MODE" = "auto" ] && MODE=weekly
+            python scripts/krwfx_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
+            python scripts/port_monitor.py
+          fi
+          if [ "$JOB" = "portlight" ]; then
+            python scripts/portlight_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
+            python scripts/ccrev_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "shinwon" ]; then
+            MODE=event
+            [ "$JOB" = "shinwon" ] && MODE=force
+            python scripts/shinwon_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
+            MODE=event
+            [ "$JOB" = "protec" ] && MODE=force
+            python scripts/protec_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "2ub" ]; then
+            python scripts/2ub_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "druck" ]; then
+            python scripts/druck_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
+            python scripts/pltr_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
+            python scripts/addstop_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
+            python scripts/sec_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
+            python scripts/pce26_monitor.py auto
+            python scripts/btc21_monitor.py
+            python scripts/btcoct_monitor.py
+          fi
+          python scripts/ntfy_archive.py
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
+            node scripts/square_sell_alert.mjs
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "silicon2" ]; then
+            python scripts/silicon2_monitor.py "${{ steps.pick.outputs.silicon2_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "cover0198" ]; then
+            python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "0220wl" ]; then
+            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.wl_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
+            python scripts/ustsy_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sgyn" ]; then
+            pip install -q openpyxl
+            python scripts/sgyn_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/yencarry_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "kship" ]; then
+            if [ "$JOB" = "kship" ]; then
+              python scripts/kship_monitor.py force
+            else
+              python scripts/kship_monitor.py auto
+            fi
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/shinwon_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
+            python scripts/protec_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/druck_monitor.py
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
+            python scripts/pltr_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
+            python scripts/addstop_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/pce26_monitor.py auto
+            python scripts/btc21_monitor.py
+          fi
+          python scripts/ntfy_archive.py
+      - name: Archive ntfy
+        run: python scripts/ntfy_archive.py
+      - name: Persist state
+        run: |
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state || true
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update alert state"
+          git pull --rebase origin main || true
+          git push origin HEAD:main
