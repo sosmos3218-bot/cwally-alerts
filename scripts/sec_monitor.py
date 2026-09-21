@@ -41,7 +41,7 @@ ACTION = {
 }
 DO_NOW = {
     "REDUCE": "신규 금지. 비중을 줄이세요.",
-    "BUY1": "1차 30~40%만. LTA파기·가이던스 하향이면 쉼기.",
+    "BUY1": "1차 30~40%만. LTA파기나 가이던스 하향이면 쉬세요.",
     "BUY2": "2차 20~30%만. 올인 금지.",
     "WATCH": "추격 금지. 구간 선만 보세요.",
     "HOLD": "보유. 29만 위 비중 증가 금지.",
@@ -54,13 +54,13 @@ DO_NOW = {
 }
 WATCH_LINE = {
     "REDUCE": "20만",
-    "BUY1": "20만·24만",
-    "BUY2": "24만·28만",
+    "BUY1": "20만/24만",
+    "BUY2": "24만/28만",
     "WATCH": "29만",
-    "HOLD": "29만·32만",
-    "SELL1": "33만·38만",
+    "HOLD": "29만/32만",
+    "SELL1": "33만/38만",
     "HOLD38": "38만",
-    "NONEW": "38만·41만",
+    "NONEW": "38만/41만",
     "SELL2": "46만",
     "EXIT": "50만",
     "DATA_FAIL": "시세",
@@ -206,7 +206,7 @@ def main() -> int:
     warn_txt = ", ".join(warn) if warn else "경고 없음."
     man = None if price is None else round(price / 10000, 2)
     man_txt = f"{man}만" if man is not None else "시세없음"
-    line1 = f"{act} — {man_txt}, {zname}."
+    line1 = f"{act} - {man_txt}, {zname}."
     line2 = f"오늘 장중 {WATCH_LINE[z]} 선을 먼저 보고 {DO_NOW[z]}"
 
     zone_changed = bool(prev.get("zone")) and prev.get("zone") != z
@@ -239,14 +239,16 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    display = cfg.get("display", "삼성전자")
+    code = cfg.get("code", "005930")
     lines = [
-        f"{stamp} | SEC | {삼성전자} {cfg['code']}",
+        f"{stamp} | SEC | {display} {code}",
         "이게 뭐 알림: 삼성전자 주간 구간 감시입니다. 투자 권유 아닙니다.",
         f"지금 상태: {line1}",
         f"지금 할 일: {line2}",
-        "나중에: 29만 위에서 비중을 늘리지 말세요. LTA·2027 OP·환원 숫자는 확인되는 때만 하방으로 밥니다.",
+        "나중에: 29만 위에서 비중을 늘리지 마세요. LTA, 2027 OP, 환원 숫자는 확인될 때만 하방으로 봅니다.",
         "익절/줄일 때: 33~38만 1차 20~30%, 46~50만 2차, 50만 위 정리. 38만 재이탈시 감액.",
-        "하지 말 것: 20만 미만 신규, 29만 위 추격·비중증가, 올인, 신용/미수.",
+        "하지 말 것: 20만 미만 신규, 29만 위 추격/비중증가, 올인, 신용/미수.",
         f"경고: {warn_txt}",
     ]
     msg = "\n".join(lines)
