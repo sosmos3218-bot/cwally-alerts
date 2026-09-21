@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, re, sys, urllib.parse, urllib.request
-from datetime import datetime, timedelta, timezone
+import json, re, urllib.request
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 KST = timezone(timedelta(hours=9))
@@ -181,8 +181,8 @@ def main():
             ntfy(server, "[SMH] 공식 보유 미반영 | 추정 보류", "\n".join([
                 f"{stamp} | SMH | SK하이닉스 ADR",
                 f"이게 뭐 알림: {cfg['explain']}",
-                f"지금 결과: 공개 기준일 {asof or '없음'}. 9/21·22 공식값이 창 종료까지 없습니다.",
-                "지금 할 일: 영상 5%·34.3억 달러를 확정값으로 쓰지 마세요.",
+                f"지금 결과: 공개 기준일 {asof or '없음'}. 9/21-22 공식값이 창 종료까지 없습니다.",
+                "지금 할 일: 영상 5% / 34.3억 달러를 확정값으로 쓰지 마세요.",
                 "나중에: VanEck 보유 갱신 후 수동 확인.",
                 "익절/줄일 때: 이 알림으로 매매하지 않습니다.",
                 "하지 말 것: 미공개를 편입 완료로 단정.",
@@ -213,7 +213,7 @@ def main():
         gap = f"비중 오차 {w-claim_w:+.2f}%p. 영상 5%와 가깝습니다."
         title = f"[SMH] 공식비중 {w:.2f}% | 추정 근접"
     elif w < 1:
-        gap = f"비중 {w:.2f}%. 영상 5%보다 훐씬 작습니다."
+        gap = f"비중 {w:.2f}%. 영상 5%에 못 미칩니다."
         title = f"[SMH] 공식비중 {w:.2f}% | 5% 미달"
     else:
         gap = f"비중 오차 {w-claim_w:+.2f}%p."
