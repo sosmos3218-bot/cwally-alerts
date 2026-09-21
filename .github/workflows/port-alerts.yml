@@ -215,12 +215,14 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
             python scripts/sec_monitor.py auto
+            python scripts/secdvd_monitor.py
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
             python scripts/btc21_monitor.py
             python scripts/btcoct_monitor.py
             python scripts/smh_monitor.py
+            python scripts/secdvd_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop (afternoon)
@@ -281,6 +283,7 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
             python scripts/btc21_monitor.py
+            python scripts/secdvd_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Archive ntfy
