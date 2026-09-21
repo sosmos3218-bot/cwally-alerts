@@ -147,6 +147,9 @@ def oneshot_date(cfg):
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    if cfg.get("enabled") is False:
+        print("avgochain disabled; no ntfy")
+        return 0
     topic = "cwally-port"
     server = "https://ntfy.sh"
     now = datetime.now(KST)
@@ -220,7 +223,7 @@ def main() -> int:
         later = "2차 19,000~20,800, 3차 16,500~18,200. 3차는 AVGO 가이던스가 살아 있을 때만. 12월 실적창을 보고 취소 여부를 정하세요."
     lines = [
         f"{stamp} | 0051A0 | {cfg['display']}",
-        "이게 뭐 알림: 브로드컴 밸류체인 액티브 36개월 테제 매매 가이드입니다. 총자산 한도 3%, 주식 슬리브 6%.",
+        "이게 무 알림: 브로드컴 밸류체인 액티브 36개월 테제 매매 가이드입니다. 총자산 한도 3%, 주식 슬리브 6%.",
         f"지금 상태: {px} | {ZONE_KO.get(z, z)} | {fx_line(regime, fx)}",
         f"지금 할 일: {do_now}",
         f"나중에: {later}",

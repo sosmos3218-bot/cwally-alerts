@@ -1,5 +1,8 @@
 {
   "name": "avgochain",
+  "enabled": false,
+  "disabled_at": "2026-09-21 21:56 KST",
+  "disabled_reason": "user request: remove 0051A0 ntfy",
   "title_prefix": "[0051A0]",
   "ticker": "0051A0.KS",
   "fx_ticker": "USDKRW=X",
@@ -15,10 +18,10 @@
   "oneshot_kst": "2026-12-11 07:15",
   "oneshot_cron_utc": "15 22 10 12 *",
   "oneshot_note": "AVGO FY26 4Q 장후 발표. 12/10 16:00 ET ≈ 12/11 06:00 KST, 콜 17:00 ET ≈ 07:00 KST. 07:15만 단발. 평일 반복 cron 아님. 스크립트가 2026-12-11만 발송.",
-  "schedule_note": "기본은 기존 오후 15:20 KST. 실적 단발만 2026-12-11 07:15 KST(UTC 12/10 22:15).",
+  "schedule_note": "비활성. 기존 오후 15:20 KST와 2026-12-11 07:15 단발은 워크플로에 남아 있으나 ntfy 미발송.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "alert_policy": "weekly_or_change",
+  "alert_policy": "disabled",
   "priority5_event_ids": ["avgo_fy26q4"],
   "split": {"buy1_pct": 30, "buy2_pct": 40, "buy3_pct": 30},
   "bands": {

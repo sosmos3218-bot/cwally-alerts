@@ -1,9 +1,11 @@
 {
-  "updated_at": "2026-09-21 21:54 KST",
+  "updated_at": "2026-09-21 21:56 KST",
   "zone": "BETWEEN",
   "price": 24150.0,
   "fx": 1372.14,
   "fx_regime": "FX_BASE",
   "last_event_ids": [],
-  "last_mode": "weekly"
+  "last_mode": "disabled",
+  "enabled": false,
+  "disabled_at": "2026-09-21 21:56 KST"
 }
