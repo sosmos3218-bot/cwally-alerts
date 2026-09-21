@@ -20,7 +20,7 @@ This repo is the only place for GitHub Actions + ntfy.
 Write every alert so a tired reader knows what to do in 5 seconds. Korean, short sentences, no unexplained jargon.
 
 Required body order:
-1. 이게 무 알림
+1. 이게 뭔 알림
 2. 지금 결과/상태
 3. 지금 할 일
 4. 나중에
