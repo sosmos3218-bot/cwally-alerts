@@ -1,0 +1,28 @@
+{
+  "name": "secdvd",
+  "title_prefix": "[SEC]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "oneshot_kst": ["2026-09-23 09:00", "2026-09-28 09:00", "2026-09-29 15:20"],
+  "year_guard": 2026,
+  "expire_date": "2026-09-30",
+  "schedule_note": "새 cron 없음. 평일 09:00(UTC 00:00)·15:20(UTC 06:20) 기존 슬롯만 사용. 2026년만.",
+  "calendar": {
+    "last_session_before_holiday": "2026-09-23",
+    "holiday_closed": ["2026-09-24", "2026-09-25"],
+    "last_buy": "2026-09-28",
+    "ex_div": "2026-09-29",
+    "record": "2026-09-30"
+  },
+  "baseline_2026_09_21": {
+    "sec_close": 274000,
+    "hynix_close": 1868000,
+    "sec_foreign_okw": 10715,
+    "sec_inst_okw": 11320,
+    "hynix_foreign_okw": -8121,
+    "hynix_inst_okw": 1694,
+    "note": "잠정. 외인 15:30 거래소표, 기관 MK/이차."
+  },
+  "explain": "삼성 3분기 현금배당 자격 마감(28일) · 배당락(29일) 수급으로 이벤트/추세를 갈라는 일정 알림. 주당 금액 미확정. 투자 권유 아님."
+}
