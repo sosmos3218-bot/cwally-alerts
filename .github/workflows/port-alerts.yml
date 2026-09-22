@@ -223,6 +223,7 @@ jobs:
             python scripts/btcoct_monitor.py
             python scripts/smh_monitor.py
             python scripts/secdvd_monitor.py
+            python scripts/gval_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop (afternoon)
