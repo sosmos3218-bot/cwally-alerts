@@ -1,6 +1,76 @@
 {
-  "updated_at": "2026-09-21 21:54 KST",
+  "updated_at": "2026-09-22 20:40 KST",
   "items": [
+    {
+      "id": "ghB3FCJ1D3ft",
+      "topic": "cwally-port",
+      "title": "[CLARITY] 공식 일정 있음 | 추격 금지",
+      "message": "2026-09-22 20:40 KST | CLARITY | BTC ETF+Senate\n이게 뭐 알림: 9월 21일 BTC 8만5천달러 돌파가 미국 장 마감 뒤에도 유지되는지, 현물 ETF 순유입과 상원 공식 일정으로 판정합니다. 투자 권유 아닙니다.\n지금 결과: HOLD_OFFICIAL | BTC 86,051달러 | ETF 9월 21일 순+999.0백만달러 (https://farside.co.uk/btc/) | 상원 SCHEDULED.\n지금 할 일: 공식 일정이 있습니다. 결과 전에 추격하지 마세요.\n나중에: 이 작업은 오늘자 일회성입니다. 내일부터는 다시 안 보냅니다.\n익절/줄일 때: 8만2천달러를 기준으로 봅니다. 이 알림으로 팔지 마세요.\n하지 말 것: 소문 추격, 신용/미수, 없는 재표결을 기정사실로 넣기.\n상원 메모: 공식 페이지에 9월 22일 Clarity/H.R.3633 일정이 보입니다. 출처: https://www.senate.gov/legislative/2026_schedule.htm\n가격 메모: coinbase spot 86051\n조회 메모: binance 실패: HTTP Error 451:  / 상원 조회 실패 https://www.congress.gov/bill/119th-congress/house-bill/3633/all-actions: HTTP Error 403: Forbidden",
+      "priority": 5,
+      "tags": [
+        "classical_building",
+        "chart_with_upwards_trend"
+      ],
+      "time": 1790077236
+    },
+    {
+      "id": "AUwWOGjhDu0w",
+      "topic": "cwally-port",
+      "title": "[DRUCK] 교차보도만 | 매수 보류",
+      "message": "2026-09-22 20:40 KST | DRUCK | 드러켄밀러 방한 사실등급\n이게 뭐 알림: 9월 22일 전후 두산·삼성·하이닉스·네이버·쿠팡 회동 보도의 사실 등급을 갱신합니다.\n지금 상태: 등급 일부 사실 | 공식확인 없음 | 현장사진 없음 | 해외교차 없음 | 조회 정상.\n지금 할 일: 공식 확인은 없습니다. 교차보도만으로 비중을 늘리지 마세요.\n나중에: 22~23일 창이 끝나면 이 알림은 재실행하지 않습니다. 공시나 기업 확인이 나오면 그때만 다시 보세요.\n익절/줄일 때: 이 뉴스로 익절·손절 기준을 바꾸지 마세요. 기존 반도체 규칙만 따르세요.\n하지 말 것: 단독 전언 추격매수. 신용·미수. 확인 안 된 회동을 확정으로 단정.\n원문: https://www.hankyung.com/article/202609205724i",
+      "priority": 3,
+      "tags": [
+        "newspaper"
+      ],
+      "time": 1790077233
+    },
+    {
+      "id": "he2LC0xFuezt",
+      "topic": "cwally-port",
+      "title": "[SQUARE] 주의 | 추가매수 보류",
+      "message": "이게 뭐 알림: SK스쾌어가 하이닉스보다 너무 약해지면 팔라는 점검입니다.\n지금 상태: 주의 관찰. 스쾌어 1,133,000원, 하이닉스 1,840,000원, 잠재 NAV 대비 할인 45.4%.\n지금 할 일: 지금 팔지는 말고, 내일 재검토만 하세요. 추가 매수는 말세요.\n나중에: 하이닉스 20일 9.7%, 60일 고점 대비 -30.6%. 스쾌어-하이닉스 20일 차이 -2.8%p.\n익절/줄일 때: 조건1 하이닉스 사이클(하이닉스 조정 조짐), 조건2 상대약세(상대약세 평온). 둘 다 SELL이면 우선 줄입니다.\n하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.",
+      "priority": 4,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1790077224
+    },
+    {
+      "id": "blpIa9USGXoS",
+      "topic": "cwally-port",
+      "title": "[SILICON2] 구간/일정 | 2차 추가",
+      "message": "2026-09-22 20:40 KST | SILICON2 | 실리콘투 257720\n이게 뭐 알림: 실리콘투 스윙(약 12주) 매매 가이드입니다. 주식 한도는 총자산 5%입니다.\n지금 상태: 39,800원 | 2차 매수 (38,000~40,000원)\n지금 할 일: 2차를 더 사세요. 이 구간 아래에서만 가산.\n나중에: 2차는 38,000~40,000원에서만. 11월 3분기 체크를 보고 연장 여부를 결정하세요.\n익절: 52,000원에서 절반, 56,000원에서 남은 양.\n줄일 때: 종가 36,000원 이탈, 또는 분기 영업이익률 15% 미만, 또는 유럽매출·총이익률·재고일수 중 2개 악화.\n하지 말 것: 48,000원 위 추격매수, 59,000원 추격 재진입, 신용/미수, 총자산 5% 초과.",
+      "priority": 5,
+      "tags": [
+        "lipstick",
+        "chart_with_upwards_trend"
+      ],
+      "time": 1790077224
+    },
+    {
+      "id": "U4Bu7ENwWcVD",
+      "topic": "cwally-port",
+      "title": "[BRK10] 1차 밴드. 목표의 30%만",
+      "message": "2026-09-22 11:51 KST | BRK10 | RISE 버크셔포트폴리오TOP10 475350\n이게 무슨 알림: 버크셔 상위10 ETF(475350) 분할매수·축소·환율 가이드입니다. 총자산 12%가 한도입니다.\n지금 상태: 가격 14,350원, 원달러 1,361.2. 가격 1차 밴드 14,350~14,650. 목표의 30%만. 환율 환율 정상대.\n지금 할 일: 1차만 사세요. 목표 중 30%. 따라잡지 말세요.\n나중에: 2·5·8·11월 13F 리밸런싱 다음 영업일에 구성·괴리율을 보세요. 비중이 16%를 넘으면 초과분을 팔고, 8%미만이면 2·3차 밴드에서만 보충.\n익절/줄일 때: +22%에서 25%, +38%에서 또 25%. 12,400에서 20% 축소 검토. 전량 손절은 없습니다.\n하지 말 것: 15,800 위 추격, 신용·미수, 환헤지로 갈아타기, 총자산 12% 초과.",
+      "priority": 4,
+      "tags": [
+        "us",
+        "chart_with_upwards_trend"
+      ],
+      "time": 1790045508
+    },
+    {
+      "id": "5NMdEJiYwVHH",
+      "topic": "cwally-port",
+      "title": "[IREN] 새 공시/일정 | 관찰 유지",
+      "message": "2026-09-22 11:51 KST | IREN | IREN\n이게 뭐 알림: IREN(에이아런 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.\n지금 상태: $47.23 | 관찰 구간. 계약 ARR $40억 / 가동 $10억 / 갱 $30억.\n지금 할 일: 새 공시·일정만 보고, 오늘 새로 사지 말세요.\n나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 말세요.\n익절: $65 근처에서 일부, $80 근처에서 추가 정리를 검토하세요.\n줄일 때: $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.\n하지 말 것: 공시 없이 추격매수, 신용/미수. 이 알림만으로 한번에 다 사지 말 것.\n\n21일 안 일정:\n- Horizon 2-4 인도/인수 2026-10-01\n\n새 키워드 공시/뉴스:\n- [yahoo] 1 Year Into the Microsoft Deal, IREN Is Delivering and a Rally May Follow Soon\n  https://www.barchart.com/story/news/4695415/1-year-into-the-microsoft-deal-iren-is-delivering-and-a-rally-may-follow-soon?.tsrc=rss",
+      "priority": 5,
+      "tags": [
+        "warning",
+        "zap"
+      ],
+      "time": 1790045505
+    },
     {
       "id": "fyOQ489NbiBB",
       "topic": "cwally-port",
