@@ -221,6 +221,7 @@ jobs:
             python scripts/pce26_monitor.py auto
             python scripts/btc21_monitor.py
             python scripts/btcoct_monitor.py
+            python scripts/btc90_monitor.py
             python scripts/smh_monitor.py
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
