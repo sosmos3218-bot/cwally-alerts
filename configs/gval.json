@@ -1,0 +1,21 @@
+{
+  "name": "gval",
+  "title_prefix": "[GVAL]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "매주 월요일만 발송. 새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning에 붙임. 화~금 morning은 스크립트가 침묵.",
+  "alert_policy": "weekly_monday",
+  "weekday_kst": 0,
+  "sources": {
+    "openai_pricing": "https://developers.openai.com/api/docs/pricing.md",
+    "xai_pricing": "https://docs.x.ai/developers/pricing.md"
+  },
+  "baseline": {
+    "asof": "2026-09-22",
+    "astra": {"in": 10.0, "out": 50.0, "cache": 1.0},
+    "sol": {"in": 4.0, "out": 20.0, "cache": 0.4, "promo_until": "2026-11-21"},
+    "grok47": {"in": 2.0, "out": 6.0, "cache": 0.5}
+  },
+  "explain": "공식 가격 페이지로 API 단가를 읽고, 일상/난제/구독 기본 세팅만 고릅니다. 벤치 1위가 아니라 작업당 비용 기준입니다."
+}
