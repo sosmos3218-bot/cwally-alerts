@@ -225,6 +225,7 @@ jobs:
             python scripts/smh_monitor.py
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
+            python scripts/s455850_monitor.py
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop (afternoon)
@@ -232,7 +233,7 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
