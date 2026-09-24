@@ -1,0 +1,33 @@
+{
+  "name": "sndk",
+  "title_prefix": "[PORT]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning만 사용. 2026-10-28, 2026-11-05, 2026-11-06 세 날만 발송. year-guard 2026.",
+  "year_guard": 2026,
+  "window_start": "2026-10-28",
+  "window_end": "2026-11-06",
+  "send_dates": {
+    "kr_pre": "2026-10-28",
+    "sndk_pre": "2026-11-05",
+    "sndk_post": "2026-11-06"
+  },
+  "print_kst": "2026-11-06 06:30",
+  "print_note": "SNDK Q1 FY27은 2026-11-05 미국 장후. KST 11/06 06:30 전후.",
+  "anchors": {
+    "rev_lo": 10.3,
+    "rev_hi": 10.8,
+    "gm_lo": 83.0,
+    "gm_hi": 85.0,
+    "dc_rev_q4": 2.977,
+    "dc_bit_q4": 38.0,
+    "nbm_fy27_bits": 0.5,
+    "sec_hbm4_qoq": 3.0,
+    "sec_hbm4_mix": 60.0,
+    "sec_wafer_now": 18,
+    "sec_wafer_next": 25
+  },
+  "ir_url": "https://investor.sandisk.com/",
+  "explain": "SNDK 11/5 실적 전후 체크리스트. 국내 빅2는 스위치 3개가 켜지기 전에는 같이 보지 않습니다."
+}
