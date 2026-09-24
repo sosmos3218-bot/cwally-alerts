@@ -1,0 +1,17 @@
+{
+  "name": "455850",
+  "title_prefix": "[455850]",
+  "display": "SOL AI시반체소부장 조건부 손절",
+  "as_of": "2026-09-24",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning에만 붙임. 전일 종가·외국인 표를 본다.",
+  "alert_policy": "level_change_or_fail",
+  "etf": {"code": "455850", "yahoo": "455850.KS", "stop": 25000, "washout": 23520},
+  "hanmi": {"code": "042700", "yahoo": "042700.KS", "stop": 222500},
+  "jusung": {"code": "036930", "yahoo": "036930.KQ", "foreign_sell_bn": 200},
+  "isu": {"code": "007660", "yahoo": "007660.KS"},
+  "kr_holidays": ["2026-09-24", "2026-09-25"],
+  "oneshot_year": 2026
+}
