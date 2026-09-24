@@ -223,6 +223,7 @@ jobs:
             python scripts/btcoct_monitor.py
             python scripts/btc90_monitor.py
             python scripts/smh_monitor.py
+            python scripts/sndk_monitor.py auto
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
             python scripts/s455850_monitor.py
