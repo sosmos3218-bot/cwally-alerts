@@ -1,0 +1,52 @@
+name: cwally-ustsy10-oneshot
+
+concurrency:
+  group: cwally-ustsy10
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "30 15 1 10 *"
+    - cron: "0 0 2 10 *"
+    - cron: "15 17 6 10 *"
+    - cron: "0 0 7 10 *"
+    - cron: "15 17 7 10 *"
+    - cron: "15 17 8 10 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ustsy10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Year guard
+        run: |
+          Y=$(date -u +%Y)
+          if [ "$Y" != "2026" ]; then
+            echo "year $Y; skip"
+            exit 0
+          fi
+      - name: Run ustsy10
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/ustsy10_monitor.py auto
+      - name: Persist state
+        run: |
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/ustsy10.json || true
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update ustsy10 state"
+          git pull --rebase origin main || true
+          git push origin HEAD:main
