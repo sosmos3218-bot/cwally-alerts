@@ -1,6 +1,9 @@
 {
   "final_notified": false,
-  "fail_notified": false,
-  "verdict": null,
-  "updated_at": null
+  "fail_notified": true,
+  "verdict": "FETCH_FAIL",
+  "updated_at": "2026-09-28T01:12:56.284844+09:00",
+  "weekly_close": null,
+  "sma50": null,
+  "spot": null
 }
