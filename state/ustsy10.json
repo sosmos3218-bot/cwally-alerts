@@ -1,0 +1,10 @@
+{
+  "announce_notified": false,
+  "result_3y_notified": false,
+  "result_10y_notified": false,
+  "result_30y_notified": false,
+  "fail_notified": false,
+  "last_phase": null,
+  "updated_at": null,
+  "parsed": {}
+}

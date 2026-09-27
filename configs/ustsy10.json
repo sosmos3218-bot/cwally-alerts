@@ -1,0 +1,43 @@
+{
+  "name": "ustsy10",
+  "title_prefix": "[USTSY]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "oneshot_kst": [
+    "2026-10-02 00:30",
+    "2026-10-07 02:15",
+    "2026-10-08 02:15",
+    "2026-10-09 02:15"
+  ],
+  "window_start_kst": "2026-10-01 09:00",
+  "expire_date": "2026-10-10",
+  "event_year": 2026,
+  "announce_expected_kst": "2026-10-02 00:00",
+  "expect": {
+    "announce_date": "2026-10-01",
+    "tenors": {
+      "3y": {"auction_date": "2026-10-06", "term_needles": ["3-Year", "3-Year Note"], "size_hint_bn": 58},
+      "10y": {"auction_date": "2026-10-07", "term_needles": ["10-Year", "9-Year 10-Month", "9-Year 11-Month"], "size_hint_bn": 39},
+      "30y": {"auction_date": "2026-10-08", "term_needles": ["30-Year", "29-Year 10-Month", "29-Year 11-Month"], "size_hint_bn": 22}
+    }
+  },
+  "avg": {
+    "10y": {"btc": 2.49, "indirect": 70.8},
+    "30y": {"btc": 2.40, "indirect": 66.9}
+  },
+  "thresholds": {
+    "tail_bp": 2.0,
+    "btc_below_avg": 0.15,
+    "indirect_below_avg_pp": 8.0
+  },
+  "sources": {
+    "auctions": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query",
+    "upcoming": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/upcoming_auctions",
+    "td_press": "https://www.treasurydirect.gov/auctions/announcements-data-results/announcement-results-press-releases/",
+    "helious_10y": "https://helious.io/auctions/10-year-note",
+    "helious_30y": "https://helious.io/auctions/30-year-bond",
+    "helious_3y": "https://helious.io/auctions/3-year-note"
+  },
+  "explain": "10월 1일 재무부 10년·30년 입찰 공고의 확정 규모·CUSIP·WI 개시와, 10/6 3년·10/7 10년·10/8 30년 결과가 9/23 5년물 약세를 복제하는지 봅니다."
+}
