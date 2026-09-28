@@ -1,0 +1,16 @@
+{
+  "updated_at": null,
+  "fired": {
+    "spx": false,
+    "kospi": false,
+    "sox": false,
+    "ust10": false
+  },
+  "last": {
+    "spx": null,
+    "kospi": null,
+    "sox": null,
+    "ust10": null
+  },
+  "last_sent": null
+}
