@@ -1,0 +1,25 @@
+{
+  "name": "muq4",
+  "title_prefix": "[SEC]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20에만 붙임. 2026-10-01~10-02만 조회, 다른 해 침묵.",
+  "oneshot_kst": ["2026-10-01 09:00", "2026-10-01 15:20", "2026-10-02 09:00"],
+  "year_guard": 2026,
+  "window_start": "2026-10-01",
+  "window_end": "2026-10-02",
+  "print_kst": "2026-10-01 05:00",
+  "event_label": "마이크론 FY26 4Q 실적",
+  "consensus_asof": "2026-09-29",
+  "cons_rev_bn": 50.45,
+  "cons_eps": 31.43,
+  "ir_news": "https://investors.micron.com/news-releases",
+  "ir_home": "https://investors.micron.com/",
+  "pr_guess": "https://investors.micron.com/news-releases/news-release-details/micron-technology-inc-reports-results-fourth-quarter-and-fiscal",
+  "tickers": {
+    "mu": "MU",
+    "sec": "005930.KS",
+    "hynix": "000660.KS"
+  }
+}
