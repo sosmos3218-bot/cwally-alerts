@@ -73,6 +73,7 @@ def parse_pr(text: str) -> dict:
     published = bool(
         re.search(r"fiscal fourth quarter|fourth quarter of fiscal 2026|Q4 FY ?2026", text, re.I)
         and re.search(r"(revenue|net sales|diluted EPS|earnings per share)", text, re.I)
+        and re.search(r"September 30, 2026|Sep(?:tember)? 30, 2026|ended August", text, re.I)
         and not re.search(r"will hold its fiscal fourth quarter earnings", text, re.I)
     )
     rev = parse_money(
@@ -208,7 +209,7 @@ def main() -> int:
     ir_ok = False
     ir_err = ""
     page_text = ""
-    for url in (cfg.get("pr_guess"), cfg["ir_news"], cfg["ir_home"]):
+    for url in (cfg.get("pr_guess"), cfg.get("ir_gnw"), cfg["ir_news"], cfg["ir_home"]):
         if not url:
             continue
         try:
