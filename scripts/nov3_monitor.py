@@ -161,7 +161,7 @@ def main() -> int:
         return 0
 
     hit_labels = [lines[k]["label"] for k in new_hits]
-    title = f"[NOV3] {" / ".join(hit_labels)} 터치 | 시나리오 변경"
+    title = "[NOV3] " + " / ".join(hit_labels) + " 터치 | 시나리오 변경"
     status_bits = [
         f"S&P {fmt('spx', last['spx'])} (선 7,490)",
         f"코스피 {fmt('kospi', last['kospi'])} (선 6,560)",
