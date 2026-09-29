@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -13,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "hce.json"
 STATE_PATH = ROOT / "state" / "hce.json"
 EVENT_ZONES = {"KILL", "REDUCE"}
+NOTICE_CUTOFF = "2026-09-01"
 ZONE_KO = {
     "KILL": "폐기선 11.4만 이하",
     "REDUCE": "축소선 11.4만~12.2만",
@@ -39,14 +41,90 @@ TITLE_BY_ZONE = {
 }
 
 
-def print_window(cfg):
-    raw = (cfg.get("print_date") or "").strip()
-    if not raw:
+def print_window(print_d):
+    if not print_d:
         return None, None, None
-    d0 = datetime.strptime(raw, "%Y-%m-%d")
+    d0 = datetime.strptime(print_d, "%Y-%m-%d")
     prenight = (d0 + timedelta(days=-1)).strftime("%Y-%m-%d")
     nxt = (d0 + timedelta(days=1)).strftime("%Y-%m-%d")
-    return prenight, raw, nxt
+    return prenight, print_d, nxt
+
+
+def http_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode())
+
+
+def http_text(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return resp.read().decode("utf-8", "ignore")
+
+
+def fetch_3q_notice():
+    hits = []
+    urls = [
+        "https://m.stock.naver.com/front-api/disclosure/list?reutersCode=267270&pageSize=30",
+        "https://m.stock.naver.com/api/json/news/newsListJson.nhn?code=267270&pageSize=30",
+    ]
+    for url in urls:
+        try:
+            payload = http_json(url)
+        except Exception as exc:
+            print(f"notice fetch fail {url}: {exc}", file=sys.stderr)
+            continue
+        rows = payload
+        for key in ("result", "data", "list", "newsList"):
+            if isinstance(payload, dict) and key in payload:
+                rows = payload[key]
+                break
+        if isinstance(rows, dict):
+            rows = rows.get("list") or rows.get("items") or []
+        if not isinstance(rows, list):
+            continue
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title") or row.get("tit") or row.get("reportNm") or "")
+            raw_dt = str(
+                row.get("datetime")
+                or row.get("date")
+                or row.get("rceptDt")
+                or row.get("regDate")
+                or ""
+            )
+            hits.append((title, raw_dt))
+    if not hits:
+        try:
+            html = http_text("https://finance.naver.com/item/news_notice.naver?code=267270")
+        except Exception as exc:
+            print(f"notice html fail: {exc}", file=sys.stderr)
+            html = ""
+        for m in re.finditer(r"(20\d{2}[.-]\d{2}[.-]\d{2}).{0,80}([^<]{4,80})", html):
+            hits.append((m.group(2), m.group(1)))
+
+    picked = None
+    for title, raw_dt in hits:
+        if not any(k in title for k in ("기업설명회", "잠정실적", "영업(잠정)", "Earnings", "IR")):
+            continue
+        if any(k in title for k in ("1분기", "2분기", "1Q", "2Q", "Q1", "Q2")):
+            continue
+        digits = re.sub(r"\D", "", raw_dt)[:8]
+        if len(digits) == 8:
+            day = f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+        else:
+            continue
+        if day < NOTICE_CUTOFF:
+            continue
+        body_dates = re.findall(r"2026[.-](1[01])[.-](\d{2})", title)
+        if body_dates:
+            mm, dd = body_dates[0]
+            day = f"2026-{mm}-{dd}"
+        kind = "ir" if "기업설명회" in title or "IR" in title else "print"
+        picked = {"title": title.strip(), "date": day, "kind": kind}
+        break
+    return picked
 
 
 def yahoo_price(ticker: str):
@@ -105,7 +183,16 @@ def main() -> int:
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    prenight_d, print_d, next_d = print_window(cfg)
+    confirmed = bool(cfg.get("print_date_confirmed"))
+    print_d = (cfg.get("print_date") or "").strip() or None
+    notice = fetch_3q_notice()
+    new_confirm = False
+    if notice and not confirmed:
+        print_d = notice["date"]
+        confirmed = True
+        new_confirm = True
+        print(f"3Q notice found: {notice}")
+    prenight_d, print_d, next_d = print_window(print_d)
     oneshot_dates = {d for d in (prenight_d, print_d, next_d) if d}
 
     if print_d and today in oneshot_dates and today[:4] != print_d[:4]:
@@ -136,10 +223,9 @@ def main() -> int:
     prenight = bool(prenight_d) and today == prenight_d
     print_day = bool(print_d) and today == print_d
     next_day = bool(next_d) and today == next_d
-    confirmed = bool(cfg.get("print_date_confirmed"))
 
     send = True
-    if mode == "event" and not (zone_changed or new_live or oneshot):
+    if mode == "event" and not (zone_changed or new_live or oneshot or new_confirm):
         print("no hce event; silent")
         send = False
 
@@ -159,14 +245,16 @@ def main() -> int:
         "익절/줄일 때: 종가 114,000원 이탈 또는 OP 1,500억 미만이면 폐기. 114,000~122,000원은 축소.",
         f"하지 말 것: 선취, 추격, 신용/미수, 총자산 {cap}% 초과. 2Q 10.2% 재현을 기대하지 말 것.",
     ]
+    if new_confirm and notice:
+        lines.append("")
+        lines.append(f"공시 확인: {notice['title']} / {notice['date']}")
+        lines.append("oneshot cron은 전날 21:00, 당일 15:40, 익일 15:40 KST로 옷겨야 합니다.")
     if prenight:
         lines.append("")
         lines.append("발표 전날 밤 확인:")
         for item in cfg.get("pre_night", []):
             lines.append(f"- {item}")
-        lines.append(
-            "하나라도 깨지면 선취하지 말고 1단계부터 보세요. " + date_note + "."
-        )
+        lines.append("하나라도 깨지면 선취하지 말고 1단계부터 보세요. " + date_note + ".")
     if live:
         lines.append("")
         lines.append("지금 진행 중인 일정:")
@@ -187,6 +275,7 @@ def main() -> int:
                 "last_event_ids": live_ids,
                 "print_date": print_d,
                 "print_date_confirmed": confirmed,
+                "notice": notice,
             },
             ensure_ascii=False,
             indent=2,
@@ -199,7 +288,9 @@ def main() -> int:
     print(msg)
     if send:
         title = f"[HCE] {TITLE_BY_ZONE.get(z, z)}"
-        if prenight:
+        if new_confirm:
+            title = f"[HCE] 발표일 확정 | {print_d}"
+        elif prenight:
             title = "[HCE] 발표 전날 | 선취 금지"
         elif print_day:
             title = f"[HCE] 당일 종가 | {TITLE_BY_ZONE.get(z, z)}"
@@ -211,7 +302,7 @@ def main() -> int:
             title = f"[HCE] 일정 창 | {TITLE_BY_ZONE.get(z, z)}"
         elif mode != "event" and now.weekday() == 0:
             title = f"[HCE] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
-        pri = 5 if z == "KILL" or prenight else (4 if z == "REDUCE" or zone_changed or oneshot else 3)
+        pri = 5 if z == "KILL" or prenight or new_confirm else (4 if z == "REDUCE" or zone_changed or oneshot else 3)
         ntfy_publish(server, topic, title, msg, pri, "tractor,chart_with_upwards_trend")
     return 0
 
