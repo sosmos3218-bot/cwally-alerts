@@ -298,6 +298,7 @@ jobs:
             python scripts/addstop_monitor.py auto
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "k091160" ]; then
+            python scripts/k091160_fund.py
             python scripts/k091160_monitor.py
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then

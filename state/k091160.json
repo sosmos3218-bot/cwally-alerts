@@ -1,11 +1,17 @@
 {
   "updated_at": null,
   "session_date": null,
+  "state": null,
+  "stage": null,
   "zone": null,
-  "last_sent_zone": null,
+  "last_sent_key": null,
   "fail_sent_date": null,
   "close": null,
+  "premium_pct": null,
+  "f5_bn": null,
+  "f10_bn": null,
+  "f5_ratio_pct": null,
+  "f10_ratio_pct": null,
   "volume": null,
-  "vol_avg20": null,
-  "vol_ok": null
+  "vol_avg20": null
 }
