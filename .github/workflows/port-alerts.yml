@@ -21,11 +21,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | kodexsemi | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, kodexsemi]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -238,13 +238,12 @@ jobs:
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
             python scripts/s455850_monitor.py
-            python scripts/k091160_monitor.py
             python scripts/spcx14_monitor.py auto
             python scripts/nov3_monitor.py
           fi
           python scripts/ntfy_archive.py
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + kodexsemi (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'kodexsemi' || steps.pick.outputs.job == 'all'
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + k091160 (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'k091160' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -298,8 +297,8 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
             python scripts/addstop_monitor.py auto
           fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "kodexsemi" ]; then
-            python scripts/kodexsemi_monitor.py event
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "k091160" ]; then
+            python scripts/k091160_monitor.py
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
