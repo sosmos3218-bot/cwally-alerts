@@ -12,7 +12,6 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "hce.json"
 STATE_PATH = ROOT / "state" / "hce.json"
-ONESHOT_DATES_2026 = {"2026-10-27", "2026-10-28", "2026-10-29"}
 EVENT_ZONES = {"KILL", "REDUCE"}
 ZONE_KO = {
     "KILL": "폐기선 11.4만 이하",
@@ -38,6 +37,16 @@ TITLE_BY_ZONE = {
     "PENDING": "미확정",
     "DATA_FAIL": "시세 확인",
 }
+
+
+def print_window(cfg):
+    raw = (cfg.get("print_date") or "").strip()
+    if not raw:
+        return None, None, None
+    d0 = datetime.strptime(raw, "%Y-%m-%d")
+    prenight = (d0 + timedelta(days=-1)).strftime("%Y-%m-%d")
+    nxt = (d0 + timedelta(days=1)).strftime("%Y-%m-%d")
+    return prenight, raw, nxt
 
 
 def yahoo_price(ticker: str):
@@ -96,8 +105,10 @@ def main() -> int:
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    prenight_d, print_d, next_d = print_window(cfg)
+    oneshot_dates = {d for d in (prenight_d, print_d, next_d) if d}
 
-    if today[:4] != "2026" and today[5:] in {"10-27", "10-28", "10-29"}:
+    if print_d and today in oneshot_dates and today[:4] != print_d[:4]:
         print("oneshot year-guard; silent")
         return 0
 
@@ -121,8 +132,11 @@ def main() -> int:
     zone_changed = prev.get("zone") and prev.get("zone") != z and (
         z in EVENT_ZONES or prev.get("zone") in EVENT_ZONES
     )
-    oneshot = today in ONESHOT_DATES_2026
-    prenight = today == "2026-10-27"
+    oneshot = today in oneshot_dates
+    prenight = bool(prenight_d) and today == prenight_d
+    print_day = bool(print_d) and today == print_d
+    next_day = bool(next_d) and today == next_d
+    confirmed = bool(cfg.get("print_date_confirmed"))
 
     send = True
     if mode == "event" and not (zone_changed or new_live or oneshot):
@@ -131,9 +145,14 @@ def main() -> int:
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     cap = cfg["max_equity_weight_pct"]
+    date_note = (
+        f"발표일 {print_d} 확정"
+        if confirmed
+        else f"발표일 {print_d or '미설정'} 미확정"
+    )
     lines = [
         f"{stamp} | HCE | {cfg['display']}",
-        f"이게 뭐 알림: HD현대건설기계({cfg['code']}) 3~6개월 스윙 카드입니다.",
+        f"이게 뭐 알림: HD현대건설기계({cfg['code']}) 3~6개월 스윙 카드입니다. {date_note}.",
         f"지금 상태: {px} | {ZONE_KO.get(z, z)}",
         f"지금 할 일: {DO_NOW.get(z, '')}",
         "나중에: 실적은 익일 종가로 확인. OP 1,500억 미만 폐기, 1,700억 축소, 1,701~1,899억 미확정, 1,900억 이상 유지 대기.",
@@ -145,7 +164,9 @@ def main() -> int:
         lines.append("발표 전날 밤 확인:")
         for item in cfg.get("pre_night", []):
             lines.append(f"- {item}")
-        lines.append("하나라도 깨지면 선취하지 말고 1단계부터 보세요. 10/28은 예상일이고 미확정입니다.")
+        lines.append(
+            "하나라도 깨지면 선취하지 말고 1단계부터 보세요. " + date_note + "."
+        )
     if live:
         lines.append("")
         lines.append("지금 진행 중인 일정:")
@@ -159,7 +180,14 @@ def main() -> int:
 
     STATE_PATH.write_text(
         json.dumps(
-            {"updated_at": stamp, "zone": z, "price": price, "last_event_ids": live_ids},
+            {
+                "updated_at": stamp,
+                "zone": z,
+                "price": price,
+                "last_event_ids": live_ids,
+                "print_date": print_d,
+                "print_date_confirmed": confirmed,
+            },
             ensure_ascii=False,
             indent=2,
         )
@@ -173,9 +201,9 @@ def main() -> int:
         title = f"[HCE] {TITLE_BY_ZONE.get(z, z)}"
         if prenight:
             title = "[HCE] 발표 전날 | 선취 금지"
-        elif oneshot and today == "2026-10-28":
+        elif print_day:
             title = f"[HCE] 당일 종가 | {TITLE_BY_ZONE.get(z, z)}"
-        elif oneshot and today == "2026-10-29":
+        elif next_day:
             title = f"[HCE] 익일 종가 | {TITLE_BY_ZONE.get(z, z)}"
         elif zone_changed:
             title = f"[HCE] 구간 변화 | {TITLE_BY_ZONE.get(z, z)}"
