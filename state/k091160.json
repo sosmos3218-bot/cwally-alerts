@@ -1,11 +1,11 @@
 {
   "updated_at": null,
   "session_date": null,
-  "state": null,
-  "last_sent_key": null,
+  "zone": null,
+  "last_sent_zone": null,
   "fail_sent_date": null,
   "close": null,
-  "premium_pct": null,
-  "f5_bn": null,
-  "f10_bn": null
+  "volume": null,
+  "vol_avg20": null,
+  "vol_ok": null
 }

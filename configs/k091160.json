@@ -1,71 +1,18 @@
 {
   "name": "091160",
   "title_prefix": "[091160]",
-  "display": "KODEX 반도체 신규편입 분할매수 규칙",
+  "display": "KODEX 반도체 변경 조건",
   "as_of": "2026-09-29",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning에만 붙임. 전일 종가와 확정된 외국인 수급으로 판정한다. 괴리율은 09:00 조회값이라 주문 직전 재확인한다.",
-  "alert_policy": "state_change_or_fail_once_per_session",
-  "valid_until": "2026-12-31",
-  "etf": {
-    "code": "091160",
-    "hold_price": 150000,
-    "hold_5d_pct": 12.0
-  },
-  "flow_codes": {
-    "samsung": "005930",
-    "hynix": "000660"
-  },
-  "stage1": {
-    "alloc_pct": 30,
-    "price_low": 132000,
-    "price_high": 141000,
-    "dd_min_pct": 20.0,
-    "dd_max_pct": 30.0,
-    "prem_low": -0.5,
-    "prem_high": 0.5,
-    "f5_min_bn": -1500
-  },
-  "stage2": {
-    "alloc_pct": 30,
-    "drop_from_fill1_pct": 8.0,
-    "price_abs": 126000,
-    "prem_low": -1.0,
-    "prem_high": 0.3,
-    "f10_min_bn": 0,
-    "dram_min_qoq": 5.0,
-    "nand_min_qoq": 0.0
-  },
-  "stage3": {
-    "alloc_pct": 40,
-    "drop_from_fill1_pct": 15.0,
-    "price_abs": 120000,
-    "prem_low": -1.5,
-    "prem_high": 0.5
-  },
-  "hold": {
-    "prem_max": 1.0,
-    "f5_max_sell_bn": -3000
-  },
-  "rebalance": {
-    "gain_from_avg_pct": 35.0
-  },
-  "fundamentals": {
-    "as_of": "2026-09-29",
-    "review_by": "2026-10-31",
-    "consensus_trend": "up",
-    "consensus_note": "3Q26 영업이익 컨센서스 삼성전자 약 111.8조, SK하이닉스 약 78.8조. 3개월 전보다 상향. 값: up | flat | down5 | down10",
-    "dram_qoq_pct": 13.0,
-    "nand_qoq_pct": 10.0,
-    "dram_nand_outlook_down": false,
-    "hbm": "tight",
-    "hbm_note": "TrendForce 2027 HBM 가격 전망 상향. 값: tight | ok | weak"
-  },
-  "position": {
-    "fills": [],
-    "avg_cost": null,
-    "note": "매수 체결 후 fills에 {\"stage\":1,\"price\":136000,\"date\":\"2026-09-30\"} 형식으로 적고 avg_cost를 갱신한다. 비어 있으면 1차만 판정한다."
-  }
+  "schedule_kst": "15:20",
+  "schedule_note": "kodexsemi를 합병. 새 cron 없음. 평일 15:20 KST afternoon에만 붙임. 09:00 morning에서 제거.",
+  "alert_policy": "zone_change_or_fail_once",
+  "year_guard": 2026,
+  "code": "091160",
+  "support": 122695,
+  "retest_hi": 125000,
+  "breakout": 140500,
+  "vol_mult": 1.3,
+  "high_52w": 188760
 }
