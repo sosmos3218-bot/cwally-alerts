@@ -127,7 +127,11 @@ def boj_stance(day: datetime) -> str:
     return "문장 확인 실패"
 
 
-def send(cfg: dict, title: str, lines: list[str], priority: int) -> None:
+def send(cfg: dict, title: str, lines: list[str], priority: int, dry: bool) -> None:
+    print("WOULD_SEND" if dry else "SEND", title)
+    print("\n".join(lines))
+    if dry:
+        return
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
     publish(topic, title, "\n".join(lines), priority, ["jp", "chart_with_upwards_trend"], server)
@@ -151,8 +155,8 @@ def fx_body(stamp: str, status: str, do_now: str) -> list[str]:
         "이게 무 알림: 489000 재검토 조건 1. 원/엔이 저점권을 벗어나거나 의미 있게 엔강한지 본다.",
         f"지금 결과/상태: {status}",
         f"지금 할 일: {do_now}",
-        "나중에: 같은 단계는 다시 안 보낸다. 더 센 단계(저점 이탈 → 의미 있는 엔강)만 추가 발송.",
-        "익절/줄일 때: 100엔이 다시 52주 저점 +2% 아래로 내려가면 신규 매수를 먼춠다.",
+        "나중에: 같은 단계는 다시 안 보낸다. 더 센 단계(880원 이탈 → 900원 엔강)만 추가 발송.",
+        "익절/줄일 때: 100엔이 다시 880원 아래로 내려가면 신규 매수를 먼춠다.",
         "하지 말 것: 알림만 보고 추격 매수. 엔 강세=원 강세로 같이 베팅. 신용·미수.",
     ]
 
@@ -171,6 +175,7 @@ def rate_body(stamp: str, status: str, do_now: str) -> list[str]:
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    dry = mode in {"dry", "check", "nosend"}
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -184,15 +189,15 @@ def main() -> int:
     if now.date() > expire:
         print("yen489 expired silent")
         return 0
-    if now.weekday() >= 5 and mode != "force":
+    if now.weekday() >= 5 and mode not in {"force", "dry", "check", "nosend"}:
         print("weekend silent")
         return 0
 
     fx_spec = cfg["fx"]
     rate_spec = cfg["rates"]
     as_of = float(cfg["as_of_jpy100"])
-    leave_pct = float(fx_spec["leave_low_pct"])
-    strength_pct = float(fx_spec["strength_pct"])
+    leave_krw = float(fx_spec.get("leave_krw") or 880)
+    strength_krw = float(fx_spec.get("strength_krw") or 900)
     kr0 = float(rate_spec["baseline_kr_policy"])
     jp0 = float(rate_spec["baseline_jp_policy"])
     shrink_bp = float(rate_spec["shrink_bp"])
@@ -247,20 +252,26 @@ def main() -> int:
 
     leave = False
     strong = False
-    if jpy100 is not None and low52 is not None:
-        leave = jpy100 >= low52 * (1 + leave_pct / 100.0)
-        strong = jpy100 >= as_of * (1 + strength_pct / 100.0)
+    if jpy100 is not None:
+        leave = jpy100 >= leave_krw
+        strong = jpy100 >= strength_krw
 
-    print(stamp, {"jpy100": jpy100, "low52": low52, "leave": leave, "strong": strong}, {"kr": kr_pol, "jp": jp_pol, "gap": gap, "bok": bok, "boj": boj, "rate_hit": rate_hit}, mode)
+    print(stamp, {"jpy100": jpy100, "low52": low52, "leave_krw": leave_krw, "strength_krw": strength_krw, "leave": leave, "strong": strong}, {"kr": kr_pol, "jp": jp_pol, "gap": gap, "gap0": gap0, "shrink_bp": shrink_bp, "bok": bok, "boj": boj, "rate_hit": rate_hit}, mode)
+
+    would = []
 
     if fx_fail:
         if state.get("fail_sent_date") != today:
-            send(cfg, "[489000] 조회실패 | 원엔 미확정", fail_body(stamp, "원/엔 시계열"), 4)
-            state["fail_sent_date"] = today
+            send(cfg, "[489000] 조회실패 | 원엔 미확정", fail_body(stamp, "원/엔 시계열"), 4, dry)
+            would.append("fx_fail")
+            if not dry:
+                state["fail_sent_date"] = today
         else:
             print("duplicate fx fail; silent")
-        state["updated_at"] = stamp
-        save_state(state)
+        if not dry:
+            state["updated_at"] = stamp
+            save_state(state)
+        print("DRY_RESULT", {"would_send": would, "fx": "fail", "rate": "skipped"} if dry else "saved")
         return 0
 
     fx_key = None
@@ -270,22 +281,26 @@ def main() -> int:
         fx_key = "leave"
     if fx_key and state.get("fx_key") != fx_key:
         if fx_key == "strong":
-            status = f"100엔 {jpy100:.2f}원 | 52주 저점 {low52:.2f}원 | 기준일 {as_of:.2f}원 대비 {(jpy100 / as_of - 1) * 100:+.2f}%"
-            do_now = "의미 있는 엔강. 489000을 환차익 도구로 재검토한다. 한 번에 전량 넣지 말고 분할."
+            status = f"100엔 {jpy100:.2f}원 | 선 900원 | 52주 저점 {low52:.2f}원 | 기준일 {as_of:.2f}원 대비 {(jpy100 / as_of - 1) * 100:+.2f}%"
+            do_now = "의미 있는 엔강(900원). 489000을 환차익 도구로 재검토한다. 한 번에 전량 넣지 말고 분할."
             title = "[489000] 엔강 확인 | 분할 재검토"
         else:
-            status = f"100엔 {jpy100:.2f}원 | 52주 저점 {low52:.2f}원 대비 {(jpy100 / low52 - 1) * 100:+.2f}% | 저점권 이탈선 +{leave_pct:.1f}%"
-            do_now = "저점권만 벗어났다. 추격 매수 금지. 의미 있는 엔강(+3%, 약 890원)까지 기다린다."
+            status = f"100엔 {jpy100:.2f}원 | 선 880원 | 52주 저점 {low52:.2f}원 | 기준일 {as_of:.2f}원 대비 {(jpy100 / as_of - 1) * 100:+.2f}%"
+            do_now = "저점권만 벗어났다(880원). 추격 매수 금지. 의미 있는 엔강(900원)까지 기다린다."
             title = "[489000] 저점권 이탈 | 추격 금지"
-        send(cfg, title, fx_body(stamp, status, do_now), 4 if fx_key == "strong" else 3)
-        state["fx_key"] = fx_key
+        send(cfg, title, fx_body(stamp, status, do_now), 4 if fx_key == "strong" else 3, dry)
+        would.append(fx_key)
+        if not dry:
+            state["fx_key"] = fx_key
     else:
         print("fx silent", fx_key, state.get("fx_key"))
 
     if rate_fail and today in (bok_dates | boj_dates):
         if state.get("fail_sent_date") != today:
-            send(cfg, "[489000] 조회실패 | 금리 미확정", fail_body(stamp, "한은 또는 일한 공표문"), 4)
-            state["fail_sent_date"] = today
+            send(cfg, "[489000] 조회실패 | 금리 미확정", fail_body(stamp, "한은 또는 일한 공표문"), 4, dry)
+            would.append("rate_fail")
+            if not dry:
+                state["fail_sent_date"] = today
         else:
             print("duplicate rate fail; silent")
     elif rate_hit:
@@ -304,12 +319,18 @@ def main() -> int:
                 + (", ".join(why) if why else "조건 충족")
             )
             do_now = "캐리 열위가 줄었다. 489000은 여전히 환노출이다. 환율 조건과 같이 보고 분할만."
-            send(cfg, "[489000] 금리차 축소 | 분할 재검토", rate_body(stamp, status, do_now), 4)
-            state["rate_key"] = rate_key
+            send(cfg, "[489000] 금리차 축소 | 분할 재검토", rate_body(stamp, status, do_now), 4, dry)
+            would.append("rate")
+            if not dry:
+                state["rate_key"] = rate_key
         else:
             print("rate same key; silent")
     else:
         print("rate silent; condition not met")
+
+    if dry:
+        print("DRY_RESULT", {"would_send": would or ["none"], "persist": False})
+        return 0
 
     state["updated_at"] = stamp
     state["last_jpy100"] = jpy100
