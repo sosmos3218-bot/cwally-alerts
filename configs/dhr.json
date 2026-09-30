@@ -1,0 +1,42 @@
+{
+  "name": "dhr",
+  "title_prefix": "[DHR]",
+  "ticker": "DHR",
+  "display": "다나허",
+  "as_of": "2026-09-30",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning만 사용. 가격 구간 돌파와 Q3 창만 발송. 2027년 이후 year-guard로 침묵.",
+  "year_guard": 2026,
+  "valid_until": "2026-12-31",
+  "cik": "0000313616",
+  "earnings_call_kst": "2026-10-21 21:00",
+  "window_start": "2026-10-21",
+  "window_end": "2026-11-07",
+  "send_dates": {
+    "q3_pre": "2026-10-21",
+    "q3_post": "2026-10-22"
+  },
+  "levels": {
+    "buy3": 200,
+    "buy2": 210,
+    "trim": 240,
+    "stretch": 260
+  },
+  "guide_fy2026": {
+    "core_lo": 3.0,
+    "core_hi": 4.0,
+    "adj_eps_lo": 8.45,
+    "adj_eps_hi": 8.60,
+    "q3_core_lo": 2.0,
+    "q3_core_hi": 3.0,
+    "q3_exresp_core": 5.0
+  },
+  "sources": [
+    "https://investors.danaher.com/",
+    "https://investors.danaher.com/2026-07-21-Danaher-Reports-Second-Quarter-2026-Results",
+    "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000313616&type=8-K&dateb=&owner=include&count=10"
+  ],
+  "explain": "DHR 분할매수·실적 재평가 조건. 전액매수 신호가 아님. 목표 비중 3~5% 이내."
+}
