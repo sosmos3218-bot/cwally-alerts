@@ -80,11 +80,11 @@ def copy_for(kind: str, stamp: str, cfg: dict, price) -> tuple[str, list[str], i
     lv = cfg["levels"]
     tr = cfg["tranche"]
     w = cfg["max_weight_pct"]
-    common = [f"{stamp} | GOOGL | {cfg['display']}", f"이게 뭐 알림: {cfg['explain']}"]
+    common = [f"{stamp} | GOOGL | {cfg['display']}", f"이게 무슨 알림: {cfg['explain']}"]
     later = (
         "나중에: 2026년 4분기~2027년 2분기만 모아가는 창. "
         "분기마다 검색(서비스) 성장 10% 이상, 클라우드 성장 25% 이상+이익률 개선, "
-        "영업현금이 설비투자 증가보다 빠른지만 직접 확인하세요. 이 알림은 가격만 뱃니다."
+        "영업현금이 설비투자 증가보다 빠른지만 직접 확인하세요. 이 알림은 가격만 봅니다."
     )
     never = "하지 말 것: 신용/미수, 전액 즉시매수, $700을 기본 전제로 추격. 조회 실패를 매수 신호로 보기. 나스닥100 ETF 속 알파벳 노출을 빼고 8%를 계산하기."
     if kind == "DATA_FAIL":
@@ -108,7 +108,7 @@ def copy_for(kind: str, stamp: str, cfg: dict, price) -> tuple[str, list[str], i
     elif kind == "BUY2":
         title = f"[GOOGL] ${lv['buy2']:.0f} 이하 | 2차 {tr['buy2_pct']}%만"
         status = f"종가 {px_txt(price)}. 2차 구간입니다."
-        now_do = f"예정 총매수액의 {tr['buy2_pct']}%만 추가하세요. 검색/클라우드가 같이 껏이면 추가를 머추세요."
+        now_do = f"예정 총매수액의 {tr['buy2_pct']}%만 추가하세요. 검색/클라우드가 같이 꺾이면 추가를 멈추세요."
         pri = 4
     elif kind == "BUY3":
         title = f"[GOOGL] ${lv['buy3']:.0f} 이하 | 3차 {tr['buy3_pct']}%만"
@@ -117,7 +117,7 @@ def copy_for(kind: str, stamp: str, cfg: dict, price) -> tuple[str, list[str], i
         pri = 5
     elif kind == "FAIR":
         title = f"[GOOGL] ${lv['fair']:.0f} 도달 | 8% 초과분만"
-        status = f"현재가 {px_txt(price)}. 기준가에 닮았습니다."
+        status = f"현재가 {px_txt(price)}. 기준가에 닿았습니다."
         now_do = f"전량 매도하지 마세요. 직접 보유가 {w}%를 넘긴 초과분만 줄이세요."
         pri = 4
     elif kind == "STRETCH":
