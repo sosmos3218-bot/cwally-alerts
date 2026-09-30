@@ -238,6 +238,7 @@ jobs:
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
             python scripts/s455850_monitor.py
+            python scripts/yen489_monitor.py
             python scripts/spcx14_monitor.py auto
             python scripts/nov3_monitor.py
             python scripts/dhr_monitor.py auto
