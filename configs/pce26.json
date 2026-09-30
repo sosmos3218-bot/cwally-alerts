@@ -13,15 +13,28 @@
   "release_at_edt": "2026-09-30 08:30",
   "release_at_kst": "2026-09-30 21:30",
   "fomc_next": "2026-10-27/28",
-  "schedule_note": "본문은 10/1 09:00, 점검은 10/1 15:20 기존 afternoon. 새 cron 없음. 연도 가드 2026만.",
+  "schedule_note": "본문은 10/1 09:00, 점검은 10/1 15:20 기존 슬롯. 9/30 22:00 새 cron은 미등록. 연도 가드 2026만.",
   "pre_revision": {
     "july_headline_yoy": 3.7,
     "july_core_yoy": 3.3,
     "july_core_mom": 0.2,
+    "july_head_mom": 0.2,
+    "july_income_mom": 0.4,
+    "july_spend_mom": 0.2,
     "july_trim_yoy": 2.28,
     "may_core_yoy": 3.4,
     "sep16_sep_core_2026": 3.4,
     "as_of": "2026-08-26 BEA July print + FRED trimmed Jul 2.28 + Sep 16 SEP"
+  },
+  "consensus": {
+    "source": "Trading Economics calendar as of 2026-09-30",
+    "head_mom": 0.4,
+    "core_mom": 0.3,
+    "head_yoy": 3.7,
+    "core_yoy": 3.3,
+    "income_mom": null,
+    "spend_mom": null,
+    "note": "BEA 공식치 아님. 소득·소비 컨센서스는 미잠금이라 비교불가."
   },
   "sources": {
     "bea": "https://www.bea.gov/news/2026/personal-income-and-outlays-august-2026",
@@ -30,5 +43,5 @@
     "fred_head": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPI",
     "fred_trim": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCETRIM12M159SFRBDAL"
   },
-  "explain": "9월 30일 BEA 8월 PCE와 연례 개정 후 근원PCE, 절사평균, 자산운용/소프트웨어/법률 항목을 개정 전 7월 수치와 비교하고 10월 27-28일 FOMC 함의만 적습니다."
+  "explain": "9월 30일 BEA 8월 PCE와 연례 개정 후 헤드라인·근원 PCE, 소득·소비, 7월 대비 개정폭을 공시 원문으로 읽고 잠정 컨센서스 대비 서프라이즈만 판정합니다."
 }
