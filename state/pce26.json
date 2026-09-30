@@ -4,9 +4,17 @@
   "empty_notified": false,
   "audit_notified": false,
   "last_key": null,
-  "updated_at": "2026-09-29T21:55:10.659316+09:00",
-  "bea_ok": null,
+  "parsed": {
+    "core_yoy": 3.0,
+    "head_yoy": 3.0,
+    "mom_core": 0.2,
+    "mom_head": 0.3,
+    "income_mom": 0.2,
+    "spend_mom": 0.9,
+    "published": false
+  },
+  "updated_at": "2026-09-30T21:36:58.149328+09:00",
+  "bea_ok": true,
   "fred_ok": null,
-  "trim_ok": null,
-  "parsed": {}
+  "trim_ok": null
 }

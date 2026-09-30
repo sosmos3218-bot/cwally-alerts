@@ -1,8 +1,19 @@
 {
-  "pce_sent": false,
+  "pce_sent": true,
   "nfp_sent": false,
   "fail_pce": false,
   "fail_nfp": false,
-  "updated_at": null,
-  "last": {}
+  "updated_at": "2026-09-30T21:37:23.590362+09:00",
+  "last": {
+    "event": "pce",
+    "xau": 4221.7998046875,
+    "silver": 61.1150016784668,
+    "dxy": 101.19400024414062,
+    "ust2": 4.547999858856201,
+    "ust10": 5.247000217437744,
+    "real10": null,
+    "real_date": null,
+    "printed": true,
+    "oct_hike_pct": null
+  }
 }
