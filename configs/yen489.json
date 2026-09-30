@@ -1,0 +1,35 @@
+{
+  "name": "489000",
+  "title_prefix": "[489000]",
+  "display": "PLUS 일본엔화초단기국채 엔강·금리차",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning에만 붙임.",
+  "alert_policy": "level_change_or_fail",
+  "period": "weekday",
+  "once": false,
+  "as_of": "2026-09-30",
+  "as_of_jpy100": 864.45,
+  "as_of_note": "하나은행 고시 100엔=864.45원(2026-09-30). 52주 저점 856.69원은 다음 금융 고시.",
+  "tickers": {
+    "usdkrw": "USDKRW=X",
+    "usdjpy": "USDJPY=X"
+  },
+  "fx": {
+    "leave_low_pct": 2.0,
+    "strength_pct": 3.0,
+    "leave_low_note": "100엔/원이 야후 1년 저점 대비 +2%면 저점권 이탈",
+    "strength_note": "100엔/원이 기준일 864.45원 대비 +3%(약 890원)면 의미 있는 엔강"
+  },
+  "rates": {
+    "baseline_kr_policy": 3.0,
+    "baseline_jp_policy": 1.25,
+    "shrink_bp": 50,
+    "shrink_note": "한일 정책금리 차가 기준 1.75%p에서 0.50%p 이상 줄면(1.25%p 이하) 알림. 한은 인하 또는 일한 인상만으로도 발화"
+  },
+  "bok_dates": ["2026-10-22", "2026-11-26"],
+  "boj_dates": ["2026-10-30", "2026-12-18"],
+  "oneshot_year": 2026,
+  "expire_date": "2026-12-31"
+}
