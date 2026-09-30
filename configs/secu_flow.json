@@ -1,0 +1,20 @@
+{
+  "name": "FLOW",
+  "title_prefix": "[FLOW]",
+  "schedule_kst": "15:40",
+  "schedule_note": "기존 flow-alerts.yml 평일 15:40 KST(UTC 06:40) 슬롯 재사용. 새 cron 없음.",
+  "ntfy_topic": "cwally-port",
+  "error_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "source": "https://m.stock.naver.com/api/stock/{code}/trend",
+  "unit_note": "원천은 순매수 주식 수. 금액은 주식 수 x 종가 추정치.",
+  "tickers": {
+    "sec_pref": {"code": "005935", "display": "삼성전자우"},
+    "hynix": {"code": "000660", "display": "SK하이닉스"}
+  },
+  "rules": {
+    "A": "삼성전자우 외인<0 AND 기관<0 AND 하이닉스 외인<0",
+    "B": "삼성전자우 외인>0 AND 기관>0 AND 하이닉스 외인>=0",
+    "C": "그 외(방향 엇갈림, 데이터 누락)"
+  }
+}
