@@ -229,6 +229,7 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
+            python scripts/xau930_monitor.py auto
             python scripts/muq4_monitor.py auto
             python scripts/btc21_monitor.py
             python scripts/btcoct_monitor.py
@@ -305,6 +306,7 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
+            python scripts/xau930_monitor.py auto
             python scripts/muq4_monitor.py auto
             python scripts/btc21_monitor.py
             python scripts/secdvd_monitor.py
