@@ -1,0 +1,32 @@
+{
+  "name": "GOOGL",
+  "title_prefix": "[GOOGL]",
+  "ticker": "GOOGL",
+  "display": "알파벳 A",
+  "as_of": "2026-09-30",
+  "ref_price": 340.92,
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning의 port_monitor 후크로만 실행. 구간 진입 때만 발송.",
+  "year_guard": [2026, 2027],
+  "valid_until": "2027-06-30",
+  "alert_policy": "zone_change",
+  "max_weight_pct": 8,
+  "tranche": {"buy1_pct": 35, "buy2_pct": 35, "buy3_pct": 30},
+  "levels": {
+    "buy1": 341,
+    "buy2": 315,
+    "buy3": 285,
+    "fair": 500,
+    "stretch": 600,
+    "cap": 700
+  },
+  "fair_eps_2029": 20,
+  "explain": "GOOGL 3년 분할매수/비중 한도 알림. 전액 즉시매수 신호가 아님. 직접 보유 한도 8%. 검색/클라우드/설비투자 회수는 이 알림이 자동 판정하지 않습니다.",
+  "cik": "0001652044",
+  "sources": [
+    "https://abc.xyz/investor/",
+    "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001652044&type=8-K&dateb=&owner=include&count=10"
+  ]
+}
