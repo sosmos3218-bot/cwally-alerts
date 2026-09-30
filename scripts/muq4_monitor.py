@@ -18,6 +18,16 @@ CFG_PATH = ROOT / "configs" / "muq4.json"
 STATE_PATH = ROOT / "state" / "muq4.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
+WEAK_RE = re.compile(
+    r"slow|weak|delay|push.?out|inventory|cut|below|shortfall|soften|decelerat|peak|digest|catch(?:ing)? up",
+    re.I,
+)
+TIGHT_RE = re.compile(
+    r"sold out|booked|tight|undersupply|shortage|pricing (?:power|up|higher|increase)|ASP (?:up|higher)|remain(?:s|ed) tight",
+    re.I,
+)
+PEAK_RE = re.compile(r"peak|pricing decelerat|demand digest|supply catch", re.I)
+
 
 def load_json(path: Path, fallback: dict) -> dict:
     if not path.exists():
@@ -52,7 +62,7 @@ def fetch(url: str) -> str:
 def strip_html(html: str) -> str:
     text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", html)
     text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
-    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"<[^>]+", " ", text)
     return re.sub(r"\s+", " ", unescape(text))
 
 
@@ -69,10 +79,24 @@ def parse_money(text: str, patterns: list[str]):
     return None
 
 
+def clip_hits(text: str, needle: str, limit: int = 2) -> list[str]:
+    sentences = re.split(r"(?<=[\.!?])\s+", text)
+    out = []
+    for s in sentences:
+        if not re.search(needle, s, re.I):
+            continue
+        clip = s.strip()[:160]
+        if clip and clip not in out:
+            out.append(clip)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def parse_pr(text: str) -> dict:
     published = bool(
         re.search(r"fiscal fourth quarter|fourth quarter of fiscal 2026|Q4 FY ?2026", text, re.I)
-        and re.search(r"(revenue|net sales|diluted EPS|earnings per share)", text, re.I)
+        and re.search(r"(revenue|net sales|diluted EPS|earnings per share|gross margin)", text, re.I)
         and re.search(r"September 30, 2026|Sep(?:tember)? 30, 2026|ended August", text, re.I)
         and not re.search(r"will hold its fiscal fourth quarter earnings", text, re.I)
     )
@@ -93,32 +117,50 @@ def parse_pr(text: str) -> dict:
             r"earnings per share of \$?([0-9]+(?:\.[0-9]+)?)",
         ],
     )
+    gm = parse_money(
+        text,
+        [
+            r"non-?GAAP gross margin (?:was|of|reached) (?:approximately )?([0-9]+(?:\.[0-9]+)?)\s*%",
+            r"gross margin (?:was|of|reached) (?:approximately )?([0-9]+(?:\.[0-9]+)?)\s*%",
+            r"gross margins? (?:of|at) (?:approximately )?([0-9]+(?:\.[0-9]+)?)\s*%",
+        ],
+    )
     guide_rev = parse_money(
         text,
         [
-            r"first quarter.{0,80}revenue.{0,40}\$?([0-9]+(?:\.[0-9]+)?)\s*billion",
+            r"first quarter of fiscal 2027.{0,120}revenue.{0,60}\$?([0-9]+(?:\.[0-9]+)?)\s*billion",
+            r"fiscal first quarter.{0,80}revenue.{0,60}\$?([0-9]+(?:\.[0-9]+)?)\s*billion",
             r"Q1 FY ?2027.{0,80}revenue.{0,40}\$?([0-9]+(?:\.[0-9]+)?)\s*billion",
+            r"FQ1-?27.{0,80}revenue.{0,40}\$?([0-9]+(?:\.[0-9]+)?)\s*billion",
         ],
     )
-    sentences = re.split(r"(?<=[\.!?])\s+", text)
-    hbm_hits = []
-    weak = False
-    for s in sentences:
-        if not re.search(r"\bHBM|high[- ]bandwidth", s, re.I):
-            continue
-        clip = s.strip()[:180]
-        if clip and clip not in hbm_hits:
-            hbm_hits.append(clip)
-        if re.search(r"slow|weak|delay|push.?out|inventory|cut|below|shortfall|soften", s, re.I):
-            weak = True
+    hbm_hits = clip_hits(text, r"\bHBM|high[- ]bandwidth")
+    price_hits = clip_hits(text, r"pric(?:e|ing)|ASP|selling prices|tight(?:ness)?")
+    sold = None
+    m_sold = re.search(
+        r"(?:HBM[^\.]{0,80}|high[- ]bandwidth[^\.]{0,80})(?:sold out|booked|sold-out)[^.\n]{0,80}(2027|2028|2029)",
+        text,
+        re.I,
+    )
+    if m_sold:
+        sold = m_sold.group(0)[:160]
+    elif hbm_hits:
+        sold = " / ".join(hbm_hits)
+    weak = bool(WEAK_RE.search(" ".join(hbm_hits + price_hits)))
+    tight = bool(TIGHT_RE.search(" ".join(hbm_hits + price_hits)) or TIGHT_RE.search(text[:4000]))
+    peak = bool(PEAK_RE.search(text[:8000]))
     return {
         "published": published,
         "rev_bn": rev,
         "eps": eps,
+        "gm_pct": gm,
         "guide_rev_bn": guide_rev,
-        "hbm": " / ".join(hbm_hits[:3]) if hbm_hits else "발표문에서 HBM 문장 확인 불가",
+        "hbm": sold or (" / ".join(hbm_hits) if hbm_hits else "발표문에서 HBM 문장 확인 불가"),
+        "pricing": " / ".join(price_hits) if price_hits else "발표문에서 가격 문장 확인 불가",
         "hbm_weak": weak,
-        "hbm_found": bool(hbm_hits),
+        "hbm_found": bool(hbm_hits or sold),
+        "tight": tight,
+        "peak": peak,
     }
 
 
@@ -150,30 +192,49 @@ def fmt_pct(v):
     return f"{sign}{v:.2f}%"
 
 
-def vs_cons(actual, cons):
+def vs_num(actual, cons, unit=""):
     if not isinstance(actual, (int, float)) or not isinstance(cons, (int, float)):
         return "확인 불가"
-    if actual >= cons:
-        return f"상회 +{actual - cons:.2f}"
-    return f"하회 {actual - cons:.2f}"
+    diff = actual - cons
+    tag = "상회" if diff >= 0 else "하회"
+    return f"{tag} {diff:+.2f}{unit}"
 
 
-def decide(pr: dict, kr: dict) -> str:
+def score_pt(pr: dict, cfg: dict) -> str:
     if not pr.get("published"):
-        return "WATCH"
-    miss = False
-    if isinstance(pr.get("rev_bn"), float) and pr["rev_bn"] < 50.45:
-        miss = True
-    if isinstance(pr.get("eps"), float) and pr["eps"] < 31.43:
-        miss = True
-    both_down = False
-    sec_chg = (kr.get("sec") or {}).get("chg")
-    hy_chg = (kr.get("hynix") or {}).get("chg")
-    if isinstance(sec_chg, float) and isinstance(hy_chg, float) and sec_chg <= -3 and hy_chg <= -3:
-        both_down = True
-    if miss or pr.get("hbm_weak") or both_down:
-        return "WATCH"
-    return "HOLD"
+        return "미발표"
+    rev = pr.get("rev_bn")
+    eps = pr.get("eps")
+    gm = pr.get("gm_pct")
+    q1 = pr.get("guide_rev_bn")
+    keep_hits = 0
+    break_hits = 0
+    if isinstance(rev, float):
+        if rev >= float(cfg["keep_rev_bn"]):
+            keep_hits += 1
+        if rev <= float(cfg["break_rev_bn"]):
+            break_hits += 1
+    if isinstance(eps, float):
+        if eps >= float(cfg["keep_eps"]):
+            keep_hits += 1
+        if eps <= float(cfg["break_eps"]):
+            break_hits += 1
+    if isinstance(gm, float) and gm >= float(cfg["keep_gm_pct"]):
+        keep_hits += 1
+    if isinstance(q1, float):
+        if q1 >= float(cfg["cons_q1_rev_bn"]):
+            keep_hits += 1
+        if q1 < float(cfg["guide_rev_bn"]):
+            break_hits += 1
+    if pr.get("peak") or pr.get("hbm_weak"):
+        break_hits += 1
+    if pr.get("tight") and not pr.get("peak"):
+        keep_hits += 1
+    if break_hits >= 2 and keep_hits <= 1:
+        return "훼손"
+    if keep_hits >= 3 and break_hits == 0:
+        return "유지"
+    return "부분유지"
 
 
 def main() -> int:
@@ -205,10 +266,20 @@ def main() -> int:
     if today == "2026-10-02":
         phase = "retry"
 
-    pr = {"published": False, "rev_bn": None, "eps": None, "guide_rev_bn": None, "hbm": "조회 전", "hbm_weak": False}
+    pr = {
+        "published": False,
+        "rev_bn": None,
+        "eps": None,
+        "gm_pct": None,
+        "guide_rev_bn": None,
+        "hbm": "조회 전",
+        "pricing": "조회 전",
+        "hbm_weak": False,
+        "tight": False,
+        "peak": False,
+    }
     ir_ok = False
     ir_err = ""
-    page_text = ""
     for url in (cfg.get("pr_guess"), cfg.get("ir_gnw"), cfg["ir_news"], cfg["ir_home"]):
         if not url:
             continue
@@ -238,13 +309,13 @@ def main() -> int:
         if not state.get("fail_notified"):
             emit(
                 cfg,
-                "[SEC] 마이크론 조회 실패 | WATCH",
+                "[SEC] 마이크론 조회 실패 | 판정 유보",
                 [
-                    f"{stamp} | PORT | 마이크론 FY26 4Q",
-                    "이게 뭐 알림: 마이크론 실적 원문과 삼성·하이닉스 반응만 표로 봅니다. 매수 신호가 아닙니다.",
+                    f"{stamp} | PORT | {마이크론 FY26 4Q}",
+                    "이게 뭔 알림: 마이크론 실적·가이던스·HBM/가격과 2,000달러 논리를 판정. 매수 신호 아님.",
                     f"지금 상태: IR·시세 조회 실패. {ir_err or q_err or '출처 없음'}. 숫자를 추정하지 않음.",
-                    "지금 할 일: 다음 기존 슬롯(09:00 또는 15:20)까지 대기. 지금은 HOLD도 아님, WATCH.",
-                    "나중에: 원문이 열리면 한 번만 표를 보냅니다. 만료 2026-10-02.",
+                    "지금 할 일: 다음 기존 슬롯(09:00 또는 15:20)까지 대기. 판정 유보.",
+                    "나중에: 원문이 열리면 한 번만 보냄. 만료 2026-10-02.",
                     "익절/줄일 때: 실패 알림으로 포지션을 바꾸지 마세요.",
                     "하지 말 것: 조회 실패를 호재로 읽기. 추격·신용·미수.",
                 ],
@@ -254,16 +325,18 @@ def main() -> int:
         save_state(state, now)
         return 0
 
-    verdict = decide(pr, quotes)
+    verdict = score_pt(pr, cfg)
     mu = quotes.get("mu") or {}
     sec = quotes.get("sec") or {}
     hy = quotes.get("hynix") or {}
     table = (
         "표 | 매출 "
-        f"{fmt_n(pr.get('rev_bn'), 'B')} / 컨센 {cfg['cons_rev_bn']}B ({vs_cons(pr.get('rev_bn'), cfg['cons_rev_bn'])}) | "
-        f"EPS {fmt_n(pr.get('eps'))} / 컨센 {cfg['cons_eps']} ({vs_cons(pr.get('eps'), cfg['cons_eps'])}) | "
-        f"HBM {pr.get('hbm')} | "
-        f"MU 종가 {fmt_n(mu.get('px'))} 장후 {fmt_n(mu.get('post'))} ({fmt_pct(mu.get('ah'))}) | "
+        f"{fmt_n(pr.get('rev_bn'), 'B')} / 가이던스 {cfg['guide_rev_bn']}B±{cfg['guide_rev_band_bn']} / 컨센 {cfg['cons_rev_bn']}B ({vs_num(pr.get('rev_bn'), cfg['cons_rev_bn'], 'B')}) | "
+        f"EPS {fmt_n(pr.get('eps'))} / 가이던스 {cfg['guide_eps']}±{cfg['guide_eps_band']} / 컨센 {cfg['cons_eps']} ({vs_num(pr.get('eps'), cfg['cons_eps'])}) | "
+        f"매출총이익률 {fmt_n(pr.get('gm_pct'), '%')} / 가이던스 {cfg['guide_gm_pct']}% | "
+        f"FY27 1Q 가이던스 {fmt_n(pr.get('guide_rev_bn'), 'B')} / 컨센 {cfg['cons_q1_rev_bn']}B ({vs_num(pr.get('guide_rev_bn'), cfg['cons_q1_rev_bn'], 'B')}) | "
+        f"HBM {pr.get('hbm')} | 가격 {pr.get('pricing')} | "
+        f"MU {fmt_n(mu.get('px'))} 장후 {fmt_n(mu.get('post'))} ({fmt_pct(mu.get('ah'))}) | "
         f"삼성 {fmt_n(sec.get('px'))} ({fmt_pct(sec.get('chg'))}) | "
         f"닉스 {fmt_n(hy.get('px'))} ({fmt_pct(hy.get('chg'))})"
     )
@@ -285,24 +358,27 @@ def main() -> int:
         return 0
 
     if pr.get("published"):
-        title = f"[SEC] 마이크론 {verdict} | 삼전닉스 반응만"
+        title = f"[SEC] 마이크론 2000달러 {verdict} | 표확인"
     else:
-        title = "[SEC] 마이크론 발표문 없음 | WATCH"
-        verdict = "WATCH"
+        title = "[SEC] 마이크론 발표문 없음 | 판정 유보"
+        verdict = "미발표"
 
-    action = "숫자와 장중 반응만 기록. 추격하지 마세요."
-    if verdict == "HOLD":
-        action = "컨센 하회·HBM 약화·국내 동반 -3%가 아니면 HOLD. 추가매수 금지."
+    if verdict == "유지":
+        action = "2,000달러 논리는 유지. 추격 매수는 금지. 숫자만 기록."
+    elif verdict == "훼손":
+        action = "2,000달러 논리는 훼손. 평균 목표가(~1,520달러)를 기준으로. 추격 금지."
+    elif verdict == "부분유지":
+        action = "꫈지지 않았지만 강화도 아님. 피크 언어와 가이던스만 재확인. 추격 금지."
     else:
-        action = "하회 또는 HBM 약화 또는 국내 동반 -3%면 WATCH. 추격 매수 금지."
+        action = "원문 없음. 다음 기존 슬롯까지 대기. 추격 금지."
 
     lines = [
-        f"{stamp} | PORT | {cfg['event_label']} | {phase}",
-        "이게 뭐 알림: 마이크론 4Q 매출·EPS·HBM 코멘트와 삼성전자·SK하이닉스 시간외/당일 반응만 봅니다.",
+        f"{stamp} | PORT | {cfg['event_label']} | {phase} | 2000PT {verdict}",
+        "이게 뭔 알림: 마이크론 4Q 매출·EPS·매출총이익률·FY27 1Q 가이던스·HBM sold-out·가격 코멘트로 2,000달러 논리를 유지/부분유지/훼손으로 판정.",
         f"지금 상태: {verdict}. {table}",
         f"지금 할 일: {action}",
-        "나중에: 같은 결과는 다시 안 보냄. 15:20에 국내 종가만 한 번 더 볼 수 있음. 만료 2026-10-02.",
-        "익절/줄일 때: 이 알림은 HOLD/WATCH만. 매도 신호가 아닙니다.",
+        "나중에: 같은 결과는 다시 안 보냄. 15:20에 국내 종가만 한 번 더 볼 수 있음. 4Q는 14주. 만료 2026-10-02.",
+        "익절/줄일 때: 이 알림은 논리 판정이지 매도 신호가 아님.",
         f"하지 말 것: 컨센 {cfg['cons_rev_bn']}B/{cfg['cons_eps']}를 확정 실적으로 쓰기. 조회 실패를 호재로 읽기. 추격·신용·미수. 투자 권유 아님.",
         f"출처: {cfg['ir_news']}",
         f"조회: IR {'OK' if ir_ok else '실패'} / 시세 {'OK' if quotes else '실패'} {ir_err or q_err}",
@@ -319,7 +395,10 @@ def main() -> int:
     state[flag] = True
     if not pr.get("published"):
         state["empty_notified"] = True
-    state["last_key"] = json.dumps({"rev": pr.get("rev_bn"), "eps": pr.get("eps"), "verdict": verdict}, sort_keys=True)
+    state["last_key"] = json.dumps(
+        {"rev": pr.get("rev_bn"), "eps": pr.get("eps"), "gm": pr.get("gm_pct"), "verdict": verdict},
+        sort_keys=True,
+    )
     save_state(state, now)
     return 0
 
