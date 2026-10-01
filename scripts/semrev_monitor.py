@@ -18,14 +18,14 @@ CFG_PATH = ROOT / "configs" / "semrev.json"
 STATE_PATH = ROOT / "state" / "semrev.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
-AMD_POS = ("공식", "확정", "방문했다", "방한했다", "만났다", "체결", "공급 계약", "우선 공급", "ir ", "press")
-AMD_NEG = ("추진", "검토", "소식통", "알려졌다", "전망", "예상", "sources", "expected to visit")
-AMD_NEED = ("리사 수", "lisa su", "amd")
-AMD_KO = ("방한", "한국", "서울", "삼성")
+AMD_POS = ("공식 방한", "방한 확정", "방문했다", "방한했다", "서울을 방문", "visited korea", "visit to korea", "advancing ai korea")
+AMD_NEG = ("추진", "검토", "소식통", "알려졌다", "전망", "예상", "expected to", "is expected", "sources said", "업계에 따르면")
+AMD_NEED = ("리사 수", "lisa su")
+AMD_KO = ("방한", "한국 방문", "서울", "visit")
 ETF_NEED = ("리밸런싱", "정기변경", "수시변경")
 ETF_NAME = ("tiger 반도체top10", "반도체top10", "sol ai반도체", "396500", "ai반도체top2")
 ETF_SIZE = ("비중", "편입", "편출", "억원", "조원", "구성")
-OFFICIAL_HOST = ("amd.com", "samsung.com", "yonhapnews", "yna.co.kr")
+OFFICIAL_HOST = ("amd.com", "news.samsung.com", "samsung.com/sec/ir", "yonhapnews", "yna.co.kr")
 
 
 def load_json(path: Path, fallback: dict) -> dict:
@@ -52,36 +52,26 @@ def fetch(url: str, timeout: int = 20) -> str:
     return raw.decode("utf-8", errors="ignore")
 
 
-def parse_uk_shares(text: str) -> int:
-    cleaned = text.replace(",", "").replace("+", "").strip()
+def parse_quant(text: str) -> int:
+    cleaned = str(text).replace(",", "").replace("+", "").strip()
     if not cleaned or cleaned == "-":
         return 0
     return int(float(cleaned))
 
 
 def fetch_foreign_days(code: str, need: int) -> list[dict]:
-    url = f"https://finance.naver.com/item/frgn.naver?code={code}"
-    html = fetch(url)
-    rows = []
-    for block in re.findall(r"<tr[^>]*>(.*?)</tr>", html, flags=re.S | re.I):
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", block, flags=re.S | re.I)
-        texts = [re.sub(r"<[^>]+>", "", c) for c in cells]
-        texts = [re.sub(r"\s+", "", t) for t in texts]
-        if len(texts) < 7:
+    url = f"https://m.stock.naver.com/api/stock/{code}/trend"
+    rows = json.loads(fetch(url))
+    out = []
+    for row in rows:
+        day_raw = str(row.get("bizdate") or "")
+        if len(day_raw) != 8:
             continue
-        m = re.match(r"(\d{4})\.(\d{2})\.(\d{2})", texts[0])
-        if not m:
-            continue
-        day = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
-        try:
-            foreign = parse_uk_shares(texts[6] if len(texts) > 6 else texts[-3])
-        except ValueError:
-            continue
-        rows.append({"day": day, "foreign": foreign})
-        if len(rows) >= need + 2:
+        day = f"{day_raw[:4]}-{day_raw[4:6]}-{day_raw[6:8]}"
+        out.append({"day": day, "foreign": parse_quant(row.get("foreignerPureBuyQuant") or "0")})
+        if len(out) >= need + 2:
             break
-    rows.sort(key=lambda x: x["day"], reverse=True)
-    return rows[:need]
+    return out[: max(need, 3)]
 
 
 def flow3_hit(cfg: dict) -> tuple[bool, str, dict]:
@@ -128,9 +118,12 @@ def amd_hit(items: list[dict]) -> tuple[bool, str]:
         t = it["text"]
         if not any(k in t for k in AMD_NEED):
             continue
-        if not any(k in t for k in AMD_KO) and "korea" not in t:
+        if not any(k in t for k in AMD_KO):
             continue
-        if any(k in t for k in AMD_NEG) and not any(k in t for k in AMD_POS):
+        if any(k in t for k in AMD_NEG):
+            continue
+        timed = ("10월" in t) or ("october" in t) or ("2026-10" in t) or ("oct. 8" in t) or ("10/8" in t)
+        if not timed:
             continue
         host_ok = any(h in t for h in OFFICIAL_HOST)
         pos_ok = any(k in t for k in AMD_POS)

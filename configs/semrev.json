@@ -18,7 +18,7 @@
     "rule": "삼성전자와 SK하이닉스 외국인 순매수가 최근 거래일 3일 연속 양수일 때만 충족. 미충족은 침묵."
   },
   "sources": {
-    "frgn": "https://finance.naver.com/item/frgn.naver?code={code}",
+    "frgn": "https://m.stock.naver.com/api/stock/{code}/trend",
     "rss": [
       "https://news.google.com/rss/search?q=AMD+%22Lisa+Su%22+(Korea+OR+%ED%95%9C%EA%B5%AD)+(%EB%B0%A9%EB%AC%B8+OR+visit+OR+%EA%B3%B5%EC%8B%9D)&hl=ko&gl=KR&ceid=KR:ko",
       "https://news.google.com/rss/search?q=%EB%A6%AC%EC%82%AC+%EC%88%98+AMD+(%EA%B3%B5%EC%8B%9D+OR+%EB%B0%A9%EB%AC%B8+%ED%99%95%EC%A0%95+OR+%EB%A7%8C%EB%82%AC%EB%8B%A4)+-%EC%B6%94%EC%A7%84+-%EA%B2%80%ED%86%A0&hl=ko&gl=KR&ceid=KR:ko",
