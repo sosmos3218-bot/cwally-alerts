@@ -1,0 +1,42 @@
+{
+  "name": "dkq3",
+  "title_prefix": "[PORT]",
+  "title_note": "AGENTS.md 허용 prefix에 DKQ3가 없어 [PORT] 사용. 본문에 동국제약을 적는다.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20 KST에만 붙임. 2026-11-02~11-17만 조회, 다른 해 침묵.",
+  "oneshot_kst": [
+    "2026-11-02 09:00",
+    "2026-11-17 15:20"
+  ],
+  "year_guard": 2026,
+  "window_start": "2026-11-02",
+  "window_end": "2026-11-17",
+  "window_note": "3분기 종료 9/30. 분기보고서 기한은 45일, 2026-11-14(토). 잠정이 이보다 일짜면 놓칠 수 있음.",
+  "ticker": "086450",
+  "display": "동국제약",
+  "event_label": "동국제약 2026 3분기 실적",
+  "target_won": 30000,
+  "h1": {
+    "sales_eok": 5099,
+    "op_eok": 534,
+    "opm_pct": 10.5,
+    "overseas_eok": 733,
+    "overseas_share_pct": 14.4,
+    "source": "2026 상반기 연결. 매출 5099억, 영업이익 534억, 영업이익률 10.5%, 해외·수출 733억(14.4%)."
+  },
+  "rules": {
+    "q_sales_keep_eok": 2500,
+    "q_op_break_eok": 230,
+    "q_opm_keep_pct": 10.0,
+    "overseas_share_keep_pct": 14.4,
+    "keep": "3Q 매출 2500억 이상, 영업이익 230억 초과, 영업이익률 10% 이상, 해외 비중이 상반기 14.4% 이상이거나 미공시. 허가·공장 지연 없음.",
+    "cut": "3Q 영업이익 230억 이하, 영업이익률 10% 미만, 해외 비중 12% 미만, 판촉비 잠식, 로렐린 3개월 허가 지연 또는 진천 공장 지연 공시."
+  },
+  "sources": [
+    "https://finance.naver.com/item/news_notice.naver?code=086450",
+    "https://finance.naver.com/item/news.naver?code=086450",
+    "https://dart.fss.or.kr/dsab007/detailSearch.ax"
+  ]
+}
