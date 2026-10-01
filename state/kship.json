@@ -1,11 +1,6 @@
 {
-  "updated_at": "2026-09-30 21:36 KST",
+  "updated_at": "2026-10-01 22:18 KST",
   "last_alert_date": "2026-09-30",
   "last_mode": "auto",
-  "month_end": true,
-  "prices": {
-    "etf": 7245.0,
-    "holdco": 323500.0,
-    "shi": 19700.0
-  }
+  "month_end": false
 }

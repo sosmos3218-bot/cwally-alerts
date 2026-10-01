@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-09-24 20:47 KST",
-  "last_sent_date": "2026-09-24",
-  "week_date": "2026-09-21",
-  "file_seq": 4959,
+  "updated_at": "2026-10-01 22:17 KST",
+  "last_sent_date": "2026-10-01",
+  "week_date": "2026-09-28",
+  "file_seq": 4969,
   "hits": [],
   "series": {
     "suji": {
-      "sale_week": 0.25549255769834467,
-      "jeonse_week": 0.06519460227081275,
-      "jeonse_13w": 1.6605380229645972
+      "sale_week": 0.19599407986596873,
+      "jeonse_week": 0.05663165548082105,
+      "jeonse_13w": 1.547092508057446
     },
     "yeongtong": {
-      "sale_week": 1.0853924982659136,
-      "jeonse_week": 0.4555222942770776,
-      "jeonse_13w": 3.2587462873373996
+      "sale_week": 0.36948575297630626,
+      "jeonse_week": 0.30290236743548693,
+      "jeonse_13w": 3.3447755813867053
     },
     "dongtan": {
-      "sale_week": 0.4461478378224415,
-      "jeonse_week": 0.48775350874643575,
-      "jeonse_13w": 4.638636271326213
+      "sale_week": 0.47039085801818814,
+      "jeonse_week": 0.28811224026457083,
+      "jeonse_13w": 4.509682512295732
     }
   },
   "permit": {
@@ -31,6 +31,12 @@
     }
   },
   "iros": {
-    "error": "<urlopen error timed out>"
+    "month": "2026-10",
+    "total": 0,
+    "series_a": 0,
+    "series_b": 0,
+    "prev_total": 200358,
+    "mom_pct": -100.0,
+    "source": "등기정보광장 매매 소유권이전"
   }
 }
