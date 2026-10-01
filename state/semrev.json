@@ -1,0 +1,11 @@
+{
+  "updated_at": null,
+  "fired": {
+    "amd": false,
+    "flow3": false,
+    "etf": false
+  },
+  "last_flow": {},
+  "last_sent": null,
+  "last_hits": []
+}
