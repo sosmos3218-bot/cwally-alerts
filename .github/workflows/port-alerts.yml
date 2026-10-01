@@ -244,6 +244,7 @@ jobs:
             python scripts/nov3_monitor.py
             python scripts/dhr_monitor.py auto
             python scripts/semrev_monitor.py
+            python scripts/dkq3_monitor.py auto
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + k091160 (afternoon)
@@ -313,6 +314,7 @@ jobs:
             python scripts/secdvd_monitor.py
             python scripts/nov3_monitor.py
             python scripts/semrev_monitor.py
+            python scripts/dkq3_monitor.py auto
           fi
           python scripts/ntfy_archive.py
       - name: Archive ntfy
