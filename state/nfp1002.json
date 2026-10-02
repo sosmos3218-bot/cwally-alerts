@@ -1,7 +1,22 @@
 {
   "final_notified": false,
-  "fail_notified": false,
+  "fail_notified": true,
   "empty_notified": false,
   "last_key": null,
-  "parsed": {}
+  "parsed": {},
+  "quotes": {
+    "tnx": [
+      5.285,
+      5.237
+    ],
+    "sox": [
+      13122.044,
+      12829.0
+    ],
+    "skhy": [
+      193.66,
+      193.5
+    ]
+  },
+  "updated_at": "2026-10-03T03:41:21.198462+09:00"
 }
