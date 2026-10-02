@@ -1,0 +1,28 @@
+{
+  "name": "nfp1002",
+  "title_prefix": "[NFP]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "22:45",
+  "oneshot_kst": ["2026-10-02 22:45"],
+  "window_start_kst": "2026-10-02 21:30",
+  "expire_date": "2026-10-03",
+  "event_year": 2026,
+  "release_at_kst": "2026-10-02 21:30",
+  "cash_open_kst": "2026-10-02 22:30",
+  "schedule_note": "BLS 8:30 ET=21:30 KST. 시세 반응은 현금장 오픈 22:30 KST 이후라 22:45 KST 일회성. UTC cron 45 13 2 10 *. 연도 가드 2026만.",
+  "prior": {"nfp": 162000, "unemp": 4.1, "ahe_mom": 0.3, "ahe_yoy": 3.1, "month": "2026-08"},
+  "consensus": {
+    "as_of": "2026-10-02",
+    "nfp": 90000,
+    "nfp_alt_bloomberg": 85000,
+    "unemp": 4.1,
+    "ahe_yoy": 3.2,
+    "ahe_mom": 0.3,
+    "ahe_mom_note": "하우스 0.2~0.3. 본비교는 0.3. 단일 잠금 아님.",
+    "source": "FactSet 2026-10-01 median 90k/4.1%. Reuters 2026-10-02 survey 90k, unemployment 4.1%, AHE yoy 3.2%. MUFG 2026-10-01 Bloomberg median 85k. AHE mom 미단일."
+  },
+  "tickers": {"tnx": "^TNX", "sox": "^SOX", "hynix": "SKHY"},
+  "sources": {"bls": "https://www.bls.gov/news.release/empsit.htm"},
+  "explain": "10월 2일 밤 미국 9월 고용보고서의 비농업고용, 실업률, 시간당 임금을 잠건 컨센서스와 비교하고 10년물, SOX, SK하이닉스 ADR(SKHY) 반응만 정리하는 일회 알림입니다."
+}
