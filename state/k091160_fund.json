@@ -41,20 +41,34 @@
         "q_key": "202609",
         "q": 772214.0
       }
+    },
+    "2026-10-02": {
+      "sam": {
+        "y_key": "202612",
+        "y": 3835980.0,
+        "q_key": "202609",
+        "q": 1081312.0
+      },
+      "hyn": {
+        "y_key": "202612",
+        "y": 2638857.0,
+        "q_key": "202609",
+        "q": 772214.0
+      }
     }
   },
   "effective": {
-    "consensus_detail": "자동 비교 이력 3일, 7일 이상 쌓이면 자동 판정. 그 전에는 config 수동값",
+    "consensus_detail": "자동 비교 이력 4일, 7일 이상 쌓이면 자동 판정. 그 전에는 config 수동값",
     "memory_quarter": "4Q26",
     "dram_qoq_pct": null,
     "nand_qoq_pct": null,
     "dram_dir": "up",
     "nand_dir": "up",
     "memory_src": "https://www.trendforce.com/presscenter/news",
-    "updated_at": "2026-10-01 22:18 KST"
+    "updated_at": "2026-10-02 21:37 KST"
   },
   "prelim": null,
   "last_alert_key": null,
   "fail_sent_date": null,
-  "updated_at": "2026-10-01 22:18 KST"
+  "updated_at": "2026-10-02 21:37 KST"
 }

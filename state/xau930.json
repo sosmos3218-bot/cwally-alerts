@@ -1,19 +1,19 @@
 {
   "pce_sent": true,
-  "nfp_sent": false,
+  "nfp_sent": true,
   "fail_pce": false,
   "fail_nfp": false,
-  "updated_at": "2026-10-01T22:18:46.155646+09:00",
+  "updated_at": "2026-10-02T21:37:54.087702+09:00",
   "last": {
-    "event": "pce",
-    "xau": 4221.7998046875,
-    "silver": 61.1150016784668,
-    "dxy": 101.19400024414062,
-    "ust2": 4.547999858856201,
-    "ust10": 5.247000217437744,
+    "event": "nfp",
+    "xau": 4212.10009765625,
+    "silver": 61.39500045776367,
+    "dxy": 102.05899810791016,
+    "ust2": 4.610000133514404,
+    "ust10": 5.2179999351501465,
     "real10": null,
     "real_date": null,
-    "printed": true,
+    "printed": null,
     "oct_hike_pct": null
   }
 }

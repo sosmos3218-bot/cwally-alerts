@@ -1,9 +1,9 @@
 {
   "final_notified": false,
   "fail_notified": false,
-  "empty_notified": false,
+  "empty_notified": true,
   "audit_notified": false,
-  "last_key": null,
+  "last_key": "{\"core_yoy\": 3.0, \"head_yoy\": 3.0, \"income_mom\": 0.2, \"mom_core\": 0.2, \"mom_head\": 0.3, \"published\": false, \"spend_mom\": 0.9}",
   "parsed": {
     "core_yoy": 3.0,
     "head_yoy": 3.0,
@@ -13,7 +13,7 @@
     "spend_mom": 0.9,
     "published": false
   },
-  "updated_at": "2026-10-01T22:18:20.917442+09:00",
+  "updated_at": "2026-10-02T21:37:27.831952+09:00",
   "bea_ok": true,
   "fred_ok": null,
   "trim_ok": null

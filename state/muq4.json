@@ -1,8 +1,8 @@
 {
-  "ah_notified": false,
+  "ah_notified": true,
   "session_notified": false,
   "fail_notified": false,
-  "empty_notified": false,
-  "last_key": null,
-  "updated_at": "2026-10-01T22:18:46.221589+09:00"
+  "empty_notified": true,
+  "last_key": "{\"eps\": null, \"gm\": null, \"rev\": null, \"verdict\": \"\\ubbf8\\ubc1c\\ud45c\"}",
+  "updated_at": "2026-10-02T21:39:10.247489+09:00"
 }
