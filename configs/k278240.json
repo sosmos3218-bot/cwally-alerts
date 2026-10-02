@@ -1,0 +1,39 @@
+{
+  "name": "k278240",
+  "title_prefix": "[278240]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. 장중이면 완료 거래일만 본다. year-guard 2026, 2026-11-14 종료.",
+  "year_guard": 2026,
+  "expire_date": "2026-11-14",
+  "user": "Cwally",
+  "source_note": "2026-10-02 278240 분석의 반대 근거와 판단 변경 조건. 매수 신호 아님. 278240보다 233740 우선.",
+  "baseline": {
+    "day": "2026-10-01",
+    "proxy_close": 15315,
+    "proxy_low": 14315,
+    "note": "이미 확인한 반대 근거일. 이 날은 신규 충족으로 보지 않는다."
+  },
+  "proxy": {
+    "code": "229200",
+    "name": "KODEX 코스닥150",
+    "high_52w": 21725,
+    "room_max_close": 18466,
+    "ret_5d_min": 0.08,
+    "hold_close": 15315,
+    "hold_days": 2,
+    "fail_close": 14315
+  },
+  "flow": {
+    "code": "278240",
+    "organ_min": 1
+  },
+  "prefer": "233740",
+  "sources": {
+    "proxy_price": "https://m.stock.naver.com/api/stock/229200/price?pageSize=12&page=1",
+    "proxy_basic": "https://m.stock.naver.com/api/stock/229200/basic",
+    "etf_trend": "https://m.stock.naver.com/api/stock/278240/trend",
+    "etf_basic": "https://m.stock.naver.com/api/stock/278240/basic"
+  }
+}
