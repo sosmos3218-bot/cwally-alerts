@@ -17,10 +17,11 @@ STATE_PATH = ROOT / "state" / "skc011790.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
 RULES = [
+    ("PREVIEW", ("결산실적공시예고", "결산실적공시 예고", "결산실적 예고")),
+    ("EARN", ("잠정실적", "손익구조")),
     ("CERT", ("고객인증", "인증통과", "공급계약", "단일판매", "양산", "수주계약", "앱솔릭스납품")),
     ("RAISE", ("유상증자", "채무보증", "자금보충", "출자증권취득")),
     ("SALE", ("지분매각", "영업양도", "매각결정")),
-    ("EARN", ("잠정실적", "결산실적", "손익구조", "분기보고서", "반기보고서")),
 ]
 
 
@@ -61,11 +62,28 @@ def classify(title: str) -> str | None:
     t = compact(title)
     kinds = []
     for kind, keys in RULES:
-        if any(k in t for k in keys):
+        if any(compact(k) in t for k in keys):
             kinds.append(kind)
     if not kinds:
         return None
     return "+".join(dict.fromkeys(kinds))
+
+
+def extract_dates(text: str, year: int) -> list[str]:
+    found = []
+    for y, m, d in re.findall(r"(20\d{2})\s*[.에/-]\s*(\d{1,2})\s*[.월/-]\s*(\d{1,2})", text or ""):
+        found.append(f"{int(y):04d}-{int(m):02d}-{int(d):02d}")
+    for m, d in re.findall(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일", text or ""):
+        found.append(f"{year:04d}-{int(m):02d}-{int(d):02d}")
+    out = []
+    for item in found:
+        try:
+            datetime.strptime(item, "%Y-%m-%d")
+        except ValueError:
+            continue
+        if item not in out:
+            out.append(item)
+    return out
 
 
 def parse_notices(code: str) -> list[dict]:
@@ -76,9 +94,16 @@ def parse_notices(code: str) -> list[dict]:
     for row in rows:
         title = (row.get("title") or "").strip()
         date = (row.get("datetime") or row.get("date") or "")[:10]
+        body = row.get("contents") or row.get("content") or row.get("body") or ""
         nid = str(row.get("no") or f"{code}:{date}:{title}")
         if title:
-            items.append({"id": f"{code}:{nid}", "date": date, "title": title, "kind": classify(title)})
+            items.append({
+                "id": f"{code}:{nid}",
+                "date": date,
+                "title": title,
+                "body": str(body),
+                "kind": classify(title),
+            })
     return items[:20]
 
 
@@ -125,6 +150,23 @@ def checklist(cfg: dict) -> list[str]:
         "앱솔릭스 고객 인증: 공급계약·납품·매출 인식 문구가 있는지. 출자 공시만으로는 조건 미충족.",
         "순차입: 실적 공시의 순차입·순부채. 10/1 기준 EV가 시총보다 약 3.4조 커서 부채 부담이 남아 있음.",
     ]
+
+
+def confirmed_preview_date(item: dict, today: str, year: int) -> str | None:
+    if "PREVIEW" not in (item.get("kind") or ""):
+        return None
+    dates = extract_dates(f"{item.get('title') or ''} {item.get('body') or ''}", year)
+    future = [d for d in dates if today <= d <= f"{year}-12-31"]
+    return future[0] if future else None
+
+
+def update_check_date(cfg: dict, date: str) -> bool:
+    earnings = cfg.setdefault("earnings", {})
+    if earnings.get("checklist_dates") == [date]:
+        return False
+    earnings["checklist_dates"] = [date]
+    CFG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return True
 
 
 def main() -> int:
@@ -185,9 +227,20 @@ def main() -> int:
     seen_ids = (seen + [d["id"] for d in notices])[-120:]
     sent = set(prev.get("checklist_sent") or [])
     due = today in (cfg.get("earnings") or {}).get("checklist_dates", []) and today not in sent
-    earn_new = any("EARN" in (d.get("kind") or "") for d in new_discs)
+    preview_new = [d for d in new_discs if "PREVIEW" in (d.get("kind") or "")]
+    earn_new = [d for d in new_discs if "EARN" in (d.get("kind") or "")]
+    date_updated = None
+    for item in preview_new:
+        found = confirmed_preview_date(item, today, now.year)
+        item["scheduled"] = found
+        if found and update_check_date(cfg, found):
+            date_updated = found
+            break
+    for item in earn_new:
+        dates = extract_dates(f"{item.get('title') or ''} {item.get('body') or ''}", now.year)
+        item["scheduled"] = dates[0] if dates else None
 
-    if not (zone_changed or new_discs or due or earn_new):
+    if not (zone_changed or new_discs or due or preview_new or earn_new):
         print(f"no skc event; silent zone={zone} price={price}")
         STATE_PATH.write_text(
             json.dumps(
@@ -199,6 +252,8 @@ def main() -> int:
                     "checklist_sent": list(sent),
                     "last_fail_date": prev.get("last_fail_date"),
                     "last_action": "WATCH",
+                    "official_date": (cfg.get("earnings") or {}).get("official_date"),
+                    "checklist_dates": (cfg.get("earnings") or {}).get("checklist_dates"),
                     "price_err": price_err,
                     "notice_err": notice_err,
                 },
@@ -211,7 +266,16 @@ def main() -> int:
         return 0
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
-    if zone == "LOW":
+    if preview_new:
+        sched = preview_new[0].get("scheduled") or "확인 불가"
+        action = f"예고 공시. 예정 실적일 {sched}. " + (
+            f"체크 날짜를 {date_updated}로 바꿈." if date_updated else "날짜가 없어 체크 날짜는 안 바꿈."
+        )
+        title = "[SKC] 실적 예고 | 날짜 확인"
+    elif earn_new:
+        action = "잠정실적 공시. 원문 확인 전 비중 변경 금지."
+        title = "[SKC] 잠정실적 | 원문 확인"
+    elif zone == "LOW":
         action = "하단 6.9만 이하. 매도의견 구간. 비중 확대 아님. 공시 확인."
         title = "[SKC] 6.9만 이하 | 추가매수 보류"
     elif zone == "GAP":
@@ -220,7 +284,7 @@ def main() -> int:
     elif zone == "HIGH":
         action = "컨센서스 상단 13만. 줄일 구간 점검. 추격 금지."
         title = "[SKC] 13만 상단 | 줄일 점검"
-    elif earn_new or due:
+    elif due:
         action = "실적 체크리스트. 원문 확인 전 비중 변경 금지."
         title = "[SKC] 3분기 체크 | 비중 보류"
     else:
@@ -228,17 +292,23 @@ def main() -> int:
         title = "[SKC] 조건 공시 | 원문 확인"
     lines = [
         f"{stamp} | SKC 011790 조건 감시",
-        "이게 뭐 알림: 판단 변경 조건과 반대 근거(글라스기판 인증, 화학 매각)를 보는 알림입니다.",
+        "이게 뭐 알림: 실적 예고·잠정실적과 판단 변경 조건을 보는 알림입니다.",
         f"지금 상태: {px} | 구간 {zone} | {action}",
         f"지금 할 일: {action}",
-        "나중에: 고객 인증·공급계약 또는 매출 인식, 동박 손익분기, 영업이익 2분기 연속 흑자, 목표주가 평균이 현재가 대비 15% 위로 재설정되면 판단을 다시 엽니다.",
-        "익절/줄일 때: 13만 원(컨센서스 상단) 도달 시 비중 점검. 인증 없이 오른 구간은 추격하지 말 것.",
-        "하지 말 것: 출자 공시를 양산 확정으로 보기. 신용·미수. 발표일 미확정을 확정일로 단정.",
+        "나중에: 고객 인증·공급계약 또는 매출 인식, 동박 손익분기, 영업이익 2분기 연속 흑자면 판단을 다시 엽니다.",
+        "익절/줄일 때: 13만 원 도달 시 비중 점검. 인증 없이 오른 구간은 추격하지 말 것.",
+        "하지 말 것: 추정일을 확정일로 보기. 신용·미수. 잠정실적 접수일을 예정일로 바꾸기.",
         "",
-        "3분기 발표일: 공시 미확정. 해외 추정 10/30 또는 11/2~11/3. 법정 기한 11/16(연결 연장 11/30).",
         "체크리스트:",
     ]
     lines.extend(f"- {row}" for row in checklist(cfg))
+    if preview_new or earn_new:
+        lines.append("")
+        lines.append("실적 공시:")
+        for d in (preview_new + earn_new)[:6]:
+            lines.append(f"- 제목: {d['title']}")
+            lines.append(f"  접수일: {d.get('date') or '없음'}")
+            lines.append(f"  예정 실적일: {d.get('scheduled') or '확인 불가'}")
     if new_discs:
         lines.append("")
         lines.append("새 공시:")
@@ -248,7 +318,7 @@ def main() -> int:
         lines.append(f"조회 부분 실패: 시세 {price_err or '없음'} | 공시 {notice_err or '없음'}")
     msg = "\n".join(lines)
     print(msg)
-    publish("cwally-port", title, msg, 4 if zone in {"LOW", "HIGH"} or new_discs else 3)
+    publish("cwally-port", title, msg, 4 if preview_new or earn_new or zone in {"LOW", "HIGH"} else 3)
     if due:
         sent.add(today)
     STATE_PATH.write_text(
@@ -261,6 +331,8 @@ def main() -> int:
                 "checklist_sent": sorted(sent),
                 "last_fail_date": prev.get("last_fail_date"),
                 "last_action": title,
+                "official_date": date_updated or prev.get("official_date"),
+                "checklist_dates": (cfg.get("earnings") or {}).get("checklist_dates"),
                 "price_err": price_err,
                 "notice_err": notice_err,
             },
