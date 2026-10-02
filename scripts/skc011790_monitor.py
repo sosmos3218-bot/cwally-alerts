@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+"""SKC(011790) condition watch. Weekday 15:20 KST only. Silent unless a condition changes."""
+from __future__ import annotations
+
+import json
+import re
+import sys
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+KST = timezone(timedelta(hours=9))
+ROOT = Path(__file__).resolve().parents[1]
+CFG_PATH = ROOT / "configs" / "skc011790.json"
+STATE_PATH = ROOT / "state" / "skc011790.json"
+UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
+
+RULES = [
+    ("CERT", ("고객인증", "인증통과", "공급계약", "단일판매", "양산", "수주계약", "앱솔릭스납품")),
+    ("RAISE", ("유상증자", "채무보증", "자금보충", "출자증권취득")),
+    ("SALE", ("지분매각", "영업양도", "매각결정")),
+    ("EARN", ("잠정실적", "결산실적", "손익구조", "분기보고서", "반기보고서")),
+]
+
+
+def load_json(path: Path, fallback: dict) -> dict:
+    if not path.exists():
+        return dict(fallback)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        fallback.update(data)
+        return fallback
+    except json.JSONDecodeError:
+        return fallback
+
+
+def http_get(url: str, timeout: int = 20) -> str:
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="ignore")
+
+
+def yahoo_price(ticker: str):
+    url = (
+        "https://query1.finance.yahoo.com/v8/finance/chart/"
+        + urllib.parse.quote(ticker)
+        + "?interval=1d&range=5d"
+    )
+    payload = json.loads(http_get(url))
+    meta = payload["chart"]["result"][0].get("meta", {})
+    price = meta.get("regularMarketPrice") or meta.get("previousClose")
+    return float(price) if price is not None else None
+
+
+def compact(text: str) -> str:
+    return re.sub(r"\s+", "", text or "")
+
+
+def classify(title: str) -> str | None:
+    t = compact(title)
+    kinds = []
+    for kind, keys in RULES:
+        if any(k in t for k in keys):
+            kinds.append(kind)
+    if not kinds:
+        return None
+    return "+".join(dict.fromkeys(kinds))
+
+
+def parse_notices(code: str) -> list[dict]:
+    url = f"https://stock.naver.com/api/domestic/detail/notice?itemCode={code}&startIdx=0&pageSize=20"
+    raw = json.loads(http_get(url))
+    rows = raw if isinstance(raw, list) else raw.get("result") or raw.get("list") or []
+    items = []
+    for row in rows:
+        title = (row.get("title") or "").strip()
+        date = (row.get("datetime") or row.get("date") or "")[:10]
+        nid = str(row.get("no") or f"{code}:{date}:{title}")
+        if title:
+            items.append({"id": f"{code}:{nid}", "date": date, "title": title, "kind": classify(title)})
+    return items[:20]
+
+
+def publish(topic: str, title: str, message: str, priority: int) -> None:
+    if topic not in {"cwally-port", "cwally-ops"}:
+        topic = "cwally-port"
+    payload = json.dumps(
+        {
+            "topic": topic,
+            "title": title,
+            "message": message,
+            "priority": priority,
+            "tags": ["chart_with_upwards_trend"],
+        }
+    ).encode()
+    req = urllib.request.Request(
+        "https://ntfy.sh",
+        data=payload,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        print(resp.read().decode())
+
+
+def zone_of(price: float | None, cfg: dict) -> str:
+    if price is None:
+        return "NONE"
+    if price <= cfg["consensus_low"]:
+        return "LOW"
+    if price <= cfg["gap15_price"]:
+        return "GAP"
+    if price >= cfg["consensus_high"]:
+        return "HIGH"
+    return "MID"
+
+
+def checklist(cfg: dict) -> list[str]:
+    e = cfg["earnings"]
+    return [
+        f"매출: 3분기 콘센서스 약 {e['revenue_consensus_bn']}억. 2분기 {e['q2_revenue_bn']}억. 미달이면 추격 금지.",
+        f"영업이익: 2분기 {e['q2_op_bn']}억. 적자 축소만으로는 판단 유지. 2분기 연속 흑자라야 상향 조건.",
+        f"동박 가동률: 손익분기 약 {e['foil_breakeven_util_pct']}%. {e['foil_note']}",
+        "앱솔릭스 고객 인증: 공급계약·납품·매출 인식 문구가 있는지. 출자 공시만으로는 조건 미충족.",
+        "순차입: 실적 공시의 순차입·순부채. 10/1 기준 EV가 시총보다 약 3.4조 커서 부채 부담이 남아 있음.",
+    ]
+
+
+def main() -> int:
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    now = datetime.now(KST)
+    today = now.strftime("%Y-%m-%d")
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    if now.year != int(cfg.get("year_guard") or 2026) or today > cfg.get("valid_until", "2026-12-31"):
+        print("year guard or expired; silent")
+        return 0
+
+    prev = load_json(
+        STATE_PATH,
+        {"updated_at": None, "price": None, "zone": None, "seen_ids": [], "checklist_sent": [], "last_fail_date": None, "last_action": None},
+    )
+    price = None
+    price_err = None
+    try:
+        price = yahoo_price(cfg["ticker"])
+    except Exception as exc:
+        price_err = str(exc)
+        print(f"price fetch failed: {exc}", file=sys.stderr)
+    notice_err = None
+    notices: list[dict] = []
+    try:
+        notices = parse_notices(cfg["code"])
+    except Exception as exc:
+        notice_err = str(exc)
+        print(f"notice fetch failed: {exc}", file=sys.stderr)
+
+    if price is None and notice_err:
+        if prev.get("last_fail_date") != today:
+            publish(
+                "cwally-ops",
+                "[SKC] 조회 실패 | 재실행 필요",
+                "\n".join([
+                    f"{stamp} | SKC 011790 조건 감시",
+                    "이게 뭐 알림: 시세와 공시 조회가 같이 실패했습니다. 조건 미충족이 아닙니다.",
+                    f"지금 상태: 시세 오류 {price_err or '없음'} | 공시 오류 {notice_err}",
+                    "지금 할 일: 다음 15:20 재실행을 기다립니다. 수동 확인은 네이버 종목공시.",
+                    "나중에: 한 쪽만 되면 그 값으로 조건을 다시 봅니다.",
+                    "익절/줄일 때: 해당 없음.",
+                    "하지 말 것: 실패를 관망으로 보지 말 것.",
+                ]),
+                4,
+            )
+        prev["last_fail_date"] = today
+        prev["updated_at"] = stamp
+        STATE_PATH.write_text(json.dumps(prev, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 1
+
+    zone = zone_of(price, cfg)
+    prev_zone = prev.get("zone")
+    zone_changed = prev_zone not in (None, zone) and zone in {"LOW", "GAP", "HIGH"}
+    seen = list(prev.get("seen_ids") or [])
+    cutoff = cfg.get("as_of") or today
+    new_discs = [d for d in notices if d.get("kind") and d["id"] not in seen and d.get("date", "") >= cutoff]
+    seen_ids = (seen + [d["id"] for d in notices])[-120:]
+    sent = set(prev.get("checklist_sent") or [])
+    due = today in (cfg.get("earnings") or {}).get("checklist_dates", []) and today not in sent
+    earn_new = any("EARN" in (d.get("kind") or "") for d in new_discs)
+
+    if not (zone_changed or new_discs or due or earn_new):
+        print(f"no skc event; silent zone={zone} price={price}")
+        STATE_PATH.write_text(
+            json.dumps(
+                {
+                    "updated_at": stamp,
+                    "price": price,
+                    "zone": zone if price is not None else prev_zone,
+                    "seen_ids": seen_ids,
+                    "checklist_sent": list(sent),
+                    "last_fail_date": prev.get("last_fail_date"),
+                    "last_action": "WATCH",
+                    "price_err": price_err,
+                    "notice_err": notice_err,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return 0
+
+    px = f"{price:,.0f}원" if price is not None else "시세 없음"
+    if zone == "LOW":
+        action = "하단 6.9만 이하. 매도의견 구간. 비중 확대 아님. 공시 확인."
+        title = "[SKC] 6.9만 이하 | 추가매수 보류"
+    elif zone == "GAP":
+        action = "컨센서스 10만 대비 15% 아래. 목표가 상향이 아님. 인증 전 관망."
+        title = "[SKC] 목표 대비 15% 아래 | 관망"
+    elif zone == "HIGH":
+        action = "컨센서스 상단 13만. 줄일 구간 점검. 추격 금지."
+        title = "[SKC] 13만 상단 | 줄일 점검"
+    elif earn_new or due:
+        action = "실적 체크리스트. 원문 확인 전 비중 변경 금지."
+        title = "[SKC] 3분기 체크 | 비중 보류"
+    else:
+        action = "조건 공시. 원문 확인 전 매수 금지."
+        title = "[SKC] 조건 공시 | 원문 확인"
+    lines = [
+        f"{stamp} | SKC 011790 조건 감시",
+        "이게 뭐 알림: 판단 변경 조건과 반대 근거(글라스기판 인증, 화학 매각)를 보는 알림입니다.",
+        f"지금 상태: {px} | 구간 {zone} | {action}",
+        f"지금 할 일: {action}",
+        "나중에: 고객 인증·공급계약 또는 매출 인식, 동박 손익분기, 영업이익 2분기 연속 흑자, 목표주가 평균이 현재가 대비 15% 위로 재설정되면 판단을 다시 엽니다.",
+        "익절/줄일 때: 13만 원(컨센서스 상단) 도달 시 비중 점검. 인증 없이 오른 구간은 추격하지 말 것.",
+        "하지 말 것: 출자 공시를 양산 확정으로 보기. 신용·미수. 발표일 미확정을 확정일로 단정.",
+        "",
+        "3분기 발표일: 공시 미확정. 해외 추정 10/30 또는 11/2~11/3. 법정 기한 11/16(연결 연장 11/30).",
+        "체크리스트:",
+    ]
+    lines.extend(f"- {row}" for row in checklist(cfg))
+    if new_discs:
+        lines.append("")
+        lines.append("새 공시:")
+        for d in new_discs[:8]:
+            lines.append(f"- [{d.get('kind')}] {d.get('date')} {d['title']}")
+    if price_err or notice_err:
+        lines.append(f"조회 부분 실패: 시세 {price_err or '없음'} | 공시 {notice_err or '없음'}")
+    msg = "\n".join(lines)
+    print(msg)
+    publish("cwally-port", title, msg, 4 if zone in {"LOW", "HIGH"} or new_discs else 3)
+    if due:
+        sent.add(today)
+    STATE_PATH.write_text(
+        json.dumps(
+            {
+                "updated_at": stamp,
+                "price": price,
+                "zone": zone if price is not None else prev_zone,
+                "seen_ids": seen_ids,
+                "checklist_sent": sorted(sent),
+                "last_fail_date": prev.get("last_fail_date"),
+                "last_action": title,
+                "price_err": price_err,
+                "notice_err": notice_err,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
