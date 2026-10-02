@@ -1,0 +1,31 @@
+{
+  "name": "ssb0005d0",
+  "title_prefix": "[0005D0]",
+  "display": "SOL 전고체배터리&실리콘음극재 조건 변경 감시",
+  "code": "0005D0",
+  "ticker": "0005D0.KS",
+  "as_of": "2026-10-02",
+  "ref_price": 15950,
+  "ref_price_note": "2026-10-02 11:23 KST 네이버 정규장 15,950원. 장중값이라 기준 종가가 아님.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "새 cron 없음. 평일 15:20 KST(UTC 06:20) afternoon에만 붙임. 15:30 마감 10분 전이라 확정 종가가 아님. 조건 변경과 조회 실패만 발송. 관망은 침묵.",
+  "alert_policy": "zone_or_filing_change_or_fail_once_per_day; first notice fetch is baseline; 관망은 침묵",
+  "valid_until": "2026-12-31",
+  "year_guard": 2026,
+  "price_break": 15000,
+  "value_weak_ratio": 0.5,
+  "value_lookback": 20,
+  "watch": [
+    {"code": "373220", "name": "LG에너지솔루션", "role": "delay_or_sample"},
+    {"code": "006400", "name": "삼성SDI", "role": "delay_or_sample"},
+    {"code": "247540", "name": "에코프로비엠", "role": "earnings"},
+    {"code": "457190", "name": "이수스페셜티케미컬", "role": "earnings"}
+  ],
+  "rules": {
+    "down_delay": [“양산지연”, “일정지연”, “상용화연기”, “개발지연”, “파일럿중단”, “수율미달”, “공급지연”],
+    "down_earn": [“잠정실적”, “손익구조”],
+    "up_sample": [“샘플공급”, “샘플채택”, “고객샘플”, “고객사채택”, “양산일정확정”, “전고체양산”, “실리콘음극”]
+  }
+}
