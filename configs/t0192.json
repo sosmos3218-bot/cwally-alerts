@@ -1,0 +1,42 @@
+{
+  "name": "0192T0",
+  "title_prefix": "[0192T0]",
+  "display": "SOL 코스닥TOP10 변경조건",
+  "as_of": "2026-10-02",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "기존 평일 15:20 KST(UTC 06:20) afternoon에만 붙임. 새 cron 없음. 15:20 가격은 확정 종가가 아님. 수급은 전일까지 확정분.",
+  "alert_policy": "state_change_or_fail_once; 관망은 침묵; 첫 실행은 기준점만 저장",
+  "valid_until": "2026-12-31",
+  "year_guard": 2026,
+  "code": "0192T0",
+  "baseline": {
+    "date": "2026-10-02",
+    "price": 7430,
+    "inav": 7429,
+    "premium_pct": -0.2,
+    "aum_uk": 321,
+    "low_52w": 5280
+  },
+  "up": {
+    "retest_price": 7000,
+    "note": "7,000원 재테스트이고 최근 확정일에 외국인·기관이 같이 순매수면 매력 상향 후보. 추격 금지."
+  },
+  "down": {
+    "name_hit_pct": 5.0,
+    "gap_abs_pct": 1.0,
+    "aum_drop_pct": 10.0,
+    "weights": {
+      "196170": 16.63,
+      "086520": 15.09,
+      "247540": 12.33
+    },
+    "note": "알테오젠 단독 또는 에코프로+에코프로비엠 합산 기여가 기준가 대비 -5%p. 괴리 절대값 1% 이상. 순자산 10% 이상 감소."
+  },
+  "counter": {
+    "flow_streak": 2,
+    "note": "반대 근거. 외국인·기관 동반 순매수가 2거래일 이어지면 정책 수급 가설만 확인. 매수 신호 아님."
+  },
+  "manual": "알테오젠·에코프로 계열 실적이 멀티플을 정당화하는지는 자동 판정하지 않음."
+}
