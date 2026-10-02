@@ -1,0 +1,30 @@
+{
+  "updated_at": "2026-10-02 14:53 KST",
+  "baseline_done": true,
+  "flags": {
+    "UP_RETEST": false,
+    "DOWN_ALT": false,
+    "DOWN_ECO": false,
+    "GAP": false,
+    "AUM": false,
+    "FLOW2": false
+  },
+  "flow_streak": 1,
+  "last_fail_date": null,
+  "last_action": "WATCH",
+  "baseline_date": "2026-10-02",
+  "baseline_price": 7425.0,
+  "baseline_names": {
+    "196170": 257500.0,
+    "086520": 89000.0,
+    "247540": 115200.0
+  },
+  "baseline_aum": 321.0,
+  "flow_date": "20261001",
+  "errors": [],
+  "price": 7425.0,
+  "premium_pct": -0.09862317738851649,
+  "aum_uk": 321.0,
+  "alt_contrib": 0.0,
+  "eco_contrib": 0.0
+}
