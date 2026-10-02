@@ -243,6 +243,7 @@ jobs:
             python scripts/sndk_monitor.py auto
             python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
+            python scripts/burry_monitor.py auto
             python scripts/s455850_monitor.py
             python scripts/yen489_monitor.py
             python scripts/spcx14_monitor.py auto
