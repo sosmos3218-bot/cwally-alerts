@@ -1,0 +1,30 @@
+{
+  "name": "377990",
+  "title_prefix": "[377990]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. 장중이면 완료 거래일만 본다. year-guard 2026, 2026-12-31 종료.",
+  "year_guard": 2026,
+  "expire_date": "2026-12-31",
+  "user": "Cwally",
+  "source_note": "2026-10-02 377990 분석의 판단 변경 조건. 매수 신호 아님. 수주잔고와 영업이익 추정 동시 상향은 자동 확인하지 않는다.",
+  "baseline": {
+    "day": "2026-10-02",
+    "ref_price": 25365,
+    "note": "분석 기준일. 이 날 종가는 신규 충족으로 보지 않는다."
+  },
+  "levels": {
+    "code": "377990",
+    "name": "TIGER Fn신재생에너지",
+    "high_52w": 39530,
+    "chase_close": 39000,
+    "chase_reset_below": 37000,
+    "box_fail_close": 22600,
+    "box_fail_note": "2026-09-03 저가 22,635 기준 박스 하단. 종가 22,600 미만이면 상향 조건의 가격 유지가 깨진 것으로 본다."
+  },
+  "sources": {
+    "price": "https://m.stock.naver.com/api/stock/377990/price?pageSize=8&page=1",
+    "basic": "https://m.stock.naver.com/api/stock/377990/basic"
+  }
+}
