@@ -326,7 +326,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state || true
+          git add state configs/skc011790.json || true
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update alert state"
           git pull --rebase origin main || true
