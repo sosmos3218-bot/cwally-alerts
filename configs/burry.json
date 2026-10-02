@@ -1,0 +1,25 @@
+{
+  "name": "burry",
+  "title_prefix": "[FLOW]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning에만 붙임. 조건이 바뀔 때만 발송. 15:20 슬롯에는 넣지 않음.",
+  "alert_policy": "transition_only",
+  "source_note": "박병창 쇼츠(2026-09-29) 바뀌는 조건의 운영 규칙. 매수/매도 신호가 아님.",
+  "sources": {
+    "hy_oas": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2",
+    "ig_oas": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLC0A0CM",
+    "fed_upper": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFEDTARU",
+    "spx_summary": "https://query1.finance.yahoo.com/v10/finance/quoteSummary/%5EGSPC?modules=defaultKeyStatistics,earningsTrend"
+  },
+  "rules": {
+    "hy_level_pct": 5.0,
+    "hy_4w_widen_bp": 75,
+    "ig_4w_widen_bp": 30,
+    "pe_4w_drop": 1.5,
+    "fed_cut_pct": 0.25,
+    "lookback_days": 28
+  },
+  "explain": "미국 하이일드 옵션조정 스프레드(OAS)가 5.0% 이상이거나 4주 +75bp, 또는 투자등급 OAS가 4주 +30bp면 청산 재평가. 실적 추정 하향과 선행 PER 4주 -1.5배가 같이 나와도 청산 재평가. 기준금리 상단 0.25%p 인하와 실적 추정 상향이 같이 나오면 시점 후퇴. 하나라도 조회 실패면 그 다리는 확인불가이고 충족으로 보지 않음."
+}
