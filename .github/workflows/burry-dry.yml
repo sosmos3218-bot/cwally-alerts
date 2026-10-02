@@ -1,0 +1,20 @@
+name: burry-dry
+
+# Manual fetch check only. No schedule. Does not publish ntfy.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: burry dry-run
+        run: python scripts/burry_monitor.py dry
