@@ -1,0 +1,9 @@
+{
+  "updated_at": null,
+  "fired": {
+    "confirm": false,
+    "fail": false
+  },
+  "last_sent": null,
+  "last_fail_day": null
+}
