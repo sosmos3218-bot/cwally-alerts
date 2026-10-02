@@ -18,6 +18,7 @@ on:
     - cron: "0 12 27 10 *"
     - cron: "40 6 28 10 *"
     - cron: "40 6 29 10 *"
+    - cron: "45 13 2 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -112,6 +113,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
             elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
+            elif [ "${{ github.event.schedule }}" = "45 13 2 10 *" ]; then JOB=nfp1002
             else JOB=morning
             fi
           fi
@@ -328,6 +330,12 @@ jobs:
             python scripts/hsteelq3_monitor.py auto
           fi
           python scripts/ntfy_archive.py
+      - name: Run nfp1002
+        if: steps.pick.outputs.job == 'nfp1002'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/nfp1002_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state

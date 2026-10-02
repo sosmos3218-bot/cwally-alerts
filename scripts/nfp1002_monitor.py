@@ -44,8 +44,8 @@ def num(token):
 
 def parse_bls(text):
     payroll = None
- m = re.search(
-        r"Total nonfarm payroll employment (increased|decreased|fell|edged down|changed little|was essentially unchanged)(?: by)? ([0-9,]+(?:,[0-9]{3})?) in September",
+    m = re.search(
+        r"Total nonfarm payroll employment (increased|decreased|fell|edged down|changed little|was essentially unchanged)(?: by)? ([0-9,]+) in September",
         text,
         re.I,
     )
@@ -54,8 +54,8 @@ def parse_bls(text):
         if payroll is not None and re.search(r"decreased|fell|edged down", m.group(1), re.I):
             payroll = -abs(payroll)
     if payroll is None:
-        m = re.search(r"in September \(([+-]?[0-9,]+)\)", text, re.I)
-        if m and re.search(r"nonfarm payroll", text[max(0, m.start()-180):m.end()+40], re.I):
+        m = re.search(r"nonfarm payroll employment.{0,80}in September \(([+-]?[0-9,]+)\)", text, re.I)
+        if m:
             payroll = num(m.group(1))
     unemp = None
     m = re.search(
@@ -81,9 +81,8 @@ def parse_bls(text):
     m = re.search(r"Over the year, average hourly earnings have increased by ([0-9.]+) percent", text, re.I)
     if m:
         ahe_yoy = num(m.group(1))
-    september = payroll is not None and bool(re.search(r"September", text))
     embargo = bool(re.search(r"EMBARGOED UNTIL", text, re.I) and re.search(r"October 2, 2026", text))
-    published = bool(september and not embargo and (unemp is not None or ahe_yoy is not None or ahe_mom is not None))
+    published = bool(payroll is not None and not embargo)
     return {
         "published": published,
         "nfp": payroll,
@@ -183,12 +182,12 @@ def advice(parsed, tnx_bp):
         cons_soft += 1
     if cons_hot and not cons_soft:
         extra = " 10년물이 5bp 이상 올랐으면 추가매수 하지 마세요." if (tnx_bp is None or tnx_bp >= 5) else " 10년물이 안 올랐으면 금리 반응을 확인 후에만 보세요."
-        return "추격매수 금지. SKHY·SOX 신규 매수 보류. 기존 반도체는 유지." + extra, "강한 고용"
+        return "추격매수 금지. SKHY, SOX 신규 매수 보류. 기존 반도체는 유지." + extra, "강한 고용"
     if cons_soft and not cons_hot:
         extra = " 10년물이 5bp 이상 내렸으면 급락분만 분할." if (tnx_bp is not None and tnx_bp <= -5) else " 금리 하락이 확인되기 전에는 사지 마세요."
         return "반등 추격 금지. 고용 한 방으로 비중 확대 금지." + extra, "약한 고용"
     if cons_hot and cons_soft:
-        return "헤드라인과 임금이 엿갈림. 손대지 말고 10년물 방향을 먼저 보세요.", "혼조"
+        return "헤드라인과 임금이 엇갈림. 손대지 말고 10년물 방향을 먼저 보세요.", "혼조"
     return "컨센서스 부합. 오늘 매매하지 마세요. 기존 보유 유지.", "부합"
 
 
@@ -271,7 +270,7 @@ def main():
         "지금 상태: " + status,
         "지금 할 일: " + call,
         "나중에: 같은 결과는 다시 안 보냄. 만료 2026-10-03. 이 신호는 당일 반응만.",
-        "익절/줄일 때: SOX·SKHY가 반등해도 고용이 강하면 추격 익절 금지. 약한 고용에 금리가 안 내리면 분할 매수 금지.",
+        "익절/줄일 때: SOX, SKHY가 반등해도 고용이 강하면 추격 익절 금지. 약한 고용에 금리가 안 내리면 분할 매수 금지.",
         "하지 말 것: 신용, 미수, 추격매수. 블루버그 8.5만 컨센서스를 이 숫자와 같은 잠금으로 쓰기. 임금 전월비 0.3은 단일 잠금이 아님.",
         "출처: " + cfg["sources"]["bls"] + " / " + cons.get("source", ""),
     ]
