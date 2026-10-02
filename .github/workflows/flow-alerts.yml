@@ -28,11 +28,12 @@ jobs:
         run: |
           python scripts/flow_monitor.py
           python scripts/secu_flow_monitor.py
+          python scripts/kosbrk_monitor.py
       - name: Persist state
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/flow_seen.json state/secu_flow.json
+          git add state/flow_seen.json state/secu_flow.json state/kosbrk.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main || true
