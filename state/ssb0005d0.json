@@ -1,0 +1,11 @@
+{
+  "updated_at": null,
+  "price": null,
+  "value": null,
+  "avg_value": null,
+  "zone": null,
+  "seen_ids": [],
+  "baseline_done": false,
+  "last_fail_date": null,
+  "last_action": null
+}
