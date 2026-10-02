@@ -1,0 +1,32 @@
+{
+  "name": "dram27",
+  "title_prefix": "[DRAM27]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "oneshot_kst": ["2026-10-14 22:00", "2026-10-29 22:00"],
+  "window_start_kst": "2026-10-05 09:00",
+  "expire_date": "2026-10-30",
+  "event_year": 2026,
+  "user": "Cwally",
+  "schedule_note": "주기 점검은 기존 평일 09:00 KST. 일요일과 10/13·14·28·29 오전만. CPI 발표 후 10/14 22:00 KST(UTC 13:00), PCE 발표 후 10/29 22:00 KST(UTC 13:00) 일회성. 연도 가드 2026만.",
+  "events": {
+    "cpi_kst": "2026-10-14 21:30",
+    "pce_kst": "2026-10-29 21:30",
+    "cpi_note": "9월 CPI 08:30 ET",
+    "pce_note": "9월 PCE 08:30 EDT, BEA 예고"
+  },
+  "paths": {
+    "bnk_asp_qoq_2027": [-1, -8, -15, -30],
+    "bnk_op_2027_tn": 389.5,
+    "bnk_op_2028_tn": 254.2,
+    "kiwoom_op_2027_tn": 346.4,
+    "kiwoom_op_2028_tn": 317.1,
+    "kiwoom_3q26_dram_qoq": 12,
+    "kiwoom_4q26_dram_qoq": 3,
+    "yuanta_op_2027_tn": 590.5,
+    "yuanta_op_2028_tn": 643.3,
+    "note": "2027 분기 ASP 경로는 BNK. 키움은 연간 영업이익과 4분기까지 상승 둔화만. 유안타는 분기 가격표 없음."
+  },
+  "explain": "문남중 2027년 6월 확장 종료 논거와 키움·유안타·BNK D램 경로를, 10월 14일 CPI 에너지와 10월 29일 PCE가 어느 가정에 먼저 닿는지 점검하는 알림입니다. 투자 권유가 아닙니다."
+}
