@@ -25,7 +25,7 @@
   "consensus": {
     "locked": false,
     "as_of": "2026-10-03",
-    "note": "단일 서베이 중앙값은 미잠금. TD 9/22 예비 헤드라인 0.54, 근원 0.20. Continuum 9/29 헤드라인 0.6, 근원 0.2. 비교 잠금으로 쓰지 않음.",
+    "note": "단일 서베이 중앙값은 미잠금. TD 9/22 예비 헤드라인 0.54, 근원 0.20. Continuum 9/29 헤드라인 0.6, 근원 0.2, 헤드라인 전년비 3.7, 근원 전년비 2.4. 비교 잠금으로 쓰지 않음.",
     "houses": [
       {"name": "TD Securities", "date": "2026-09-22", "headline_mom": 0.54, "core_mom": 0.20},
       {"name": "Continuum", "date": "2026-09-29", "headline_mom": 0.6, "core_mom": 0.2, "headline_yoy": 3.7, "core_yoy": 2.4, "energy_mom": 5.5}
@@ -37,11 +37,27 @@
     "hot_core_yoy_min": 2.6,
     "energy_led_headline_mom_min": 0.5
   },
-  "fomc": {"october": "2026-10-27/28", "december": "2026-12-08/09"},
+  "odds_asof": "2026-10-03",
+  "odds_note": "10월 인상 17~22%, 동결 78~83%. 12월 인상 65~75% 이상. CNBC 10/2 CME 인상 17%. 10/3 05:00 UTC 한 집계는 10/28 동결 78%, 인상 22%, 12/9 인상 합산 약 86%. 단일 잠금 아님.",
+  "break_rules": {
+    "october_hold_breaks": "근원 전월비 0.3% 이상 또는 근원 전년비 2.6% 이상이면 10월 동결이 깨짐. 헤드라인만 0.5% 이상이고 근원 0.2% 이하면 동결 유지.",
+    "december_hike_fades": "근원 전월비 0.2% 이하, 근원 전년비 2.4% 이하, 10년물 5bp 이상 하락이 같이 나와야 12월 인상 확률 하락 신호. 0으로 읽지 않음.",
+    "december_hike_firms": "근원 재가속이면 12월 인상은 기본 유지. 확률 재잠금은 발표 후 시세."
+  },
+  "fomc": {
+    "october": "2026-10-27/28",
+    "decision_kst": "2026-10-29 03:00",
+    "press_kst": "2026-10-29 03:30",
+    "sep": false,
+    "current_target": "3.75-4.00",
+    "statement_watch": ["동결 대 25bp", "고용 둔화 문장", "에너지 신규 인플레의 2차 파급", "추가 인상 여지"],
+    "december": "2026-12-08/09",
+    "december_note": "12월은 SEP 회의. 성명 시각 2026-12-09 04:00 KST, 기자회견 04:30 KST."
+  },
   "tickers": {"dxy": "DX-Y.NYB", "tnx": "^TNX", "kospi": "^KS11", "usdkrw": "KRW=X"},
   "sources": {
     "bls": "https://www.bls.gov/news.release/cpi.htm",
     "schedule": "https://www.bls.gov/schedule/2026/10_sched_list.htm"
   },
-  "explain": "10월 14일 밤 미국 9월 CPI를 헤드라인, 근원, 에너지, 주거로 나누고 10월 동결, 12월 인상 시나리오별 달러, 미국 10년물, KOSPI 반응 조건을 정리하는 일회 알림입니다."
+  "explain": "10월 14일 밤 미국 9월 CPI를 헤드라인, 근원, 에너지, 주거로 나누고 10월 동결이 깨지는 수치와 12월 인상 확률 변화 조건을 정리하는 일회 알림입니다."
 }
