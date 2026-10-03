@@ -1,0 +1,47 @@
+{
+  "name": "cl",
+  "title_prefix": "[CL]",
+  "ticker": "CL",
+  "display": "콜게이트-팜올리브",
+  "as_of": "2026-10-03",
+  "ref_price": 84.26,
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 후크만. 가격 구간 진입과 Q3 창만 발송. 2027년 이후 year-guard로 침묵.",
+  "year_guard": 2026,
+  "valid_until": "2026-12-31",
+  "cik": "0000021665",
+  "earnings_call_kst": "2026-10-30 21:30",
+  "window_start": "2026-10-30",
+  "window_end": "2026-11-06",
+  "send_dates": {
+    "q3_pre": "2026-10-30",
+    "q3_post": "2026-11-02"
+  },
+  "levels": {
+    "buy2": 78,
+    "buy1": 80,
+    "hold_ceiling": 90,
+    "stretch": 99
+  },
+  "change_rules": {
+    "upgrade_organic_gt": 3.0,
+    "downgrade_organic_lt": 1.0,
+    "upgrade_needs": "organic>3 and base EPS guide raise",
+    "downgrade_needs": "organic<1 or gross margin guide cut"
+  },
+  "guide_fy2026": {
+    "organic_lo": 1.0,
+    "organic_hi": 4.0,
+    "sales_lo": 2.0,
+    "sales_hi": 6.0,
+    "base_eps": "mid-single-digit",
+    "gross_margin": "roughly flat"
+  },
+  "sources": [
+    "https://investor.colgatepalmolive.com/",
+    "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000021665&type=8-K&dateb=&owner=include&count=10"
+  ],
+  "explain": "CL 변경조건 알림. 80달러 이하 분할만, 78달러 이하 2차. 유기성장 3% 초과+기준 EPS 상향이면 현가도 매수 구간. 유기 1% 미만 또는 마진 하향 가이든스면 78 아래를 기다림. 전액매수 신호가 아님."
+}
