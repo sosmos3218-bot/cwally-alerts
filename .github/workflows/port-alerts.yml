@@ -23,14 +23,16 @@ on:
     - cron: "10 0 15 10 *"
     - cron: "0 13 14 10 *"
     - cron: "0 13 29 10 *"
+    - cron: "10 0 7 10 *"
+    - cron: "30 6 7 10 *"
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | skc011790 | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790, zs1006]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -120,6 +122,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "45 13 2 10 *" ]; then JOB=nfp1002
             elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
+            elif [ "${{ github.event.schedule }}" = "10 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "30 6 7 10 *" ]; then JOB=zs1006
             else JOB=morning
             fi
           fi
@@ -363,6 +366,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/dram27_monitor.py auto
+      - name: Run zs1006
+        if: steps.pick.outputs.job == 'zs1006'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/zs1006_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
