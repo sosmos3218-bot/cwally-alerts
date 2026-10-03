@@ -262,6 +262,7 @@ jobs:
             python scripts/hsteelq3_monitor.py auto
             python scripts/dram27_monitor.py auto
             python scripts/genpact_monitor.py auto
+            python scripts/nke_monitor.py auto
           fi
           python scripts/ntfy_archive.py
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + k091160 + skc011790 (afternoon)
