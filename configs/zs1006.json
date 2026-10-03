@@ -1,0 +1,42 @@
+{
+  "name": "zs1006",
+  "title_prefix": "[ZS]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:10",
+  "oneshot_kst": ["2026-10-07 09:10", "2026-10-07 15:30"],
+  "window_start_kst": "2026-10-07 09:00",
+  "expire_date": "2026-10-07",
+  "event_year": 2026,
+  "event_kst": "2026-10-06 21:30",
+  "schedule_note": "인베스터 데이 2026-10-06 08:30 ET = 21:30 KST, 반나절. 종료 후 점검만. 1차 2026-10-07 09:10 KST = UTC 10 0 7 10 *. 폴백 2026-10-07 15:30 KST = UTC 30 6 7 10 *. 연도 가드 2026. 반복 cron 아님.",
+  "baseline": {
+    "as_of": "2026-10-02",
+    "price": 196.6,
+    "arr_low_b": 4.396,
+    "arr_high_b": 4.426,
+    "arr_growth_pct": 17.0,
+    "revenue_growth_low_pct": 16.6,
+    "revenue_growth_high_pct": 17.5,
+    "op_margin_pct": 23.7,
+    "fcf_margin_low_pct": 23.0,
+    "fcf_margin_high_pct": 23.5,
+    "ai_revenue_target": null,
+    "ai_note": "Q4 FY2026 AI 보안 수주 전분기 대비 50% 이상. 매출 목표는 미공개.",
+    "thesis": "196달러 분할매수. 계획 수량의 1/3만 선반영, 나머지는 인베스터 데이 확인 후."
+  },
+  "rules": {
+    "strengthen_arr_high_b": 4.426,
+    "strengthen_growth_pct": 17.5,
+    "strengthen_fcf_pct": 25.0,
+    "abandon_growth_pct": 15.0,
+    "abandon_price": 170.0
+  },
+  "sources": {
+    "press": "https://ir.zscaler.com/news-events/press-releases",
+    "event": "https://ir.zscaler.com/events/event-details/zscaler-investor-day-2026",
+    "announce": "https://ir.zscaler.com/news-releases/news-release-details/zscaler-host-investor-day-october-6",
+    "rss": "https://feeds.finance.yahoo.com/rss/2.0/headline?s=ZS&region=US&lang=en-US"
+  },
+  "explain": "지스케일러 10월 6일 인베스터 데이 이후 FY2027 ARR 가이던스, AI 보안 매출 목표, 장기 마진 목표가 기존 196달러 분할매수 논지를 유지, 강화, 폐기 중 어디로 바꾸는지 한 번만 알립니다."
+}
