@@ -1,0 +1,12 @@
+{
+  "updated_at": null,
+  "price": null,
+  "band": null,
+  "buy1_sent": false,
+  "buy2_sent": false,
+  "stretch_sent": false,
+  "q3_pre_sent": false,
+  "q3_post_sent": false,
+  "fail_sent_date": null,
+  "last_kind": null
+}
