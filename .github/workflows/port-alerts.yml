@@ -325,6 +325,9 @@ jobs:
             python scripts/t0192_monitor.py
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/yc232140_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/pce26_monitor.py auto
             python scripts/xau930_monitor.py auto
             python scripts/muq4_monitor.py auto
