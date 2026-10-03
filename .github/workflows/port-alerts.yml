@@ -253,6 +253,7 @@ jobs:
             python scripts/spcx14_monitor.py auto
             python scripts/nov3_monitor.py
             python scripts/dhr_monitor.py auto
+            python scripts/cl_monitor.py auto
             python scripts/semrev_monitor.py
             python scripts/dkq3_monitor.py auto
             python scripts/hsteelq3_monitor.py auto
