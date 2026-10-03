@@ -228,6 +228,21 @@ def emit(cfg, title, lines, pri):
     )
 
 
+def later_line(cfg):
+    rules = cfg.get("break_rules") or {}
+    bits = [rules.get("october_hold_breaks"), rules.get("december_hike_fades"), rules.get("december_hike_firms")]
+    text = " ".join(x for x in bits if x)
+    fomc = cfg.get("fomc") or {}
+    return (
+        "나중에: " + text
+        + " KOSPI 후속은 10월 15일 09:10. FOMC 성명 "
+        + str(fomc.get("decision_kst", "2026-10-29 03:00"))
+        + " KST, 기자회견 "
+        + str(fomc.get("press_kst", "2026-10-29 03:30"))
+        + " KST, SEP 없음. 만료 2026-10-15."
+    )
+
+
 def main():
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
@@ -294,7 +309,7 @@ def main():
             + " / KOSPI " + reaction(kospi_now, kospi_prev, "pct")
             + " / 원달러 " + reaction(krw_now, krw_prev, "pct") + ".",
             "지금 할 일: " + kospi_rule,
-            "나중에: 이 후속은 한 번만. 10월 15일 PPI는 별도 신호가 아님.",
+            later_line(cfg),
             "익절/줄일 때: " + dxy_rule,
             "하지 말 것: " + dont + " 신용, 미수, 추격매수.",
         ]
@@ -319,7 +334,7 @@ def main():
                 "이게 뭐 알림: " + cfg["explain"],
                 "지금 상태: 9월 발표문이 아직 아님. 8월 수치를 9월로 처리하지 않음.",
                 "지금 할 일: 발표 확인 전 포지션 유지. 이 대기를 매수, 매도 신호로 읽지 마세요.",
-                "나중에: 발표문이 열리면 창 안에서 한 번 보냅니다. 만료 2026-10-15.",
+                later_line(cfg),
                 "익절/줄일 때: 미발표 상태로 비중 조정 금지.",
                 "하지 말 것: 하우스 예비 전망을 컨센서스 잠금으로 쓰기. TD 0.54, Continuum 0.6은 미잠금.",
             ]
@@ -338,6 +353,7 @@ def main():
     code, tag = classify(parsed, cfg)
     call, dxy_rule, kospi_rule, dont = conditions(code)
     prior = cfg["prior"]
+    odds = cfg.get("odds_note") or "확률 미잠금"
     status = (
         "헤드라인 전월비 " + pct(parsed.get("headline_mom")) + f" (8월 {prior['headline_mom']})"
         + " / 전년비 " + pct(parsed.get("headline_yoy")) + f" (8월 {prior['headline_yoy']})"
@@ -345,7 +361,7 @@ def main():
         + " / 근원 전년비 " + pct(parsed.get("core_yoy")) + f" (8월 {prior['core_yoy']})"
         + " / 에너지 전월비 " + pct(parsed.get("energy_mom")) + f" (8월 {prior['energy_mom']})"
         + " / 주거 전월비 " + pct(parsed.get("shelter_mom")) + f" (8월 {prior['shelter_mom']})"
-        + ". 단일 컨센서스는 미잠금."
+        + ". 단일 컨센서스는 미잠금. 기준 확률 " + odds
         + " 달러지수 " + reaction(dxy_now, dxy_prev, "pct")
         + " / 10년물 " + reaction(tnx_now, tnx_prev, "bp")
         + " / KOSPI " + reaction(kospi_now, kospi_prev, "pct") + " (한국장 마감 후라 당일 반응 아님)"
@@ -357,7 +373,7 @@ def main():
         "이게 뭐 알림: " + cfg["explain"],
         "지금 상태: " + status,
         "지금 할 일: " + call + " " + dxy_rule,
-        "나중에: KOSPI 조건은 10월 15일 09:10 후속에서 한 번 더 봄. PPI는 10월 15일 21:30 KST. 만료 2026-10-15.",
+        later_line(cfg),
         "익절/줄일 때: " + kospi_rule,
         "하지 말 것: " + dont + " 신용, 미수, 추격매수. 하우스 예비치를 공식 컨센서스로 쓰기.",
         "출처: " + cfg["sources"]["bls"],
