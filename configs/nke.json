@@ -1,0 +1,50 @@
+{
+  "name": "NKE",
+  "title_prefix": "[NKE]",
+  "ticker": "NKE",
+  "display": "나이키",
+  "as_of": "2026-10-04",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning job에만 붙임. 15:20은 같은 전일 종가라 제외.",
+  "valid_until": "2027-06-30",
+  "alert_policy": "weekly_or_change",
+  "baseline": {
+    "price_date": "2026-10-02",
+    "price": 33.87,
+    "annual_dividend": 1.64,
+    "gm_q1_fy27": 42.8,
+    "china_yoy_reported": -22,
+    "china_yoy_cn": -26,
+    "adj_eps_fy27_lo": 1.15,
+    "adj_eps_fy27_hi": 1.35,
+    "na_yoy": 2
+  },
+  "thresholds": {
+    "buy_price": 30,
+    "watch_price": 32,
+    "gm_buy": 44,
+    "china_single_digit_floor": -10,
+    "china_break": -30,
+    "div_cut_below": 1.64
+  },
+  "buy_flip_need": 2,
+  "buy_flip_rules": [
+    "중화권 매출 감소가 한 자릿수(보고 -10%보다 양호)",
+    "회사가 FY2028 매출 증가를 가이던스에 명시",
+    "매출총이익률 44% 이상"
+  ],
+  "invalidate_rules": [
+    "연간 배당이 1.64달러 미만",
+    "중화권 감소 -30% 이하",
+    "조정 EPS 가이던스 상단이 1.15 미만"
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NKE?interval=1d&range=5d",
+    "ir": "https://investors.nike.com/investors/news-events-and-reports/default.aspx",
+    "sec": "https://data.sec.gov/submissions/CIK0000320187.json"
+  },
+  "cik": "0000320187",
+  "last_known_filing": "2026-10-02"
+}
