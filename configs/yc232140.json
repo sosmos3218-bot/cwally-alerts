@@ -1,0 +1,38 @@
+{
+  "name": "yc232140",
+  "title_prefix": "[PORT]",
+  "ticker": "232140",
+  "code": "232140",
+  "display": "와이씨",
+  "as_of": "2026-10-03",
+  "ref_price": 16890,
+  "ref_date": "2026-10-02",
+  "schedule_kst": "15:20",
+  "slot": "afternoon",
+  "year_guard": 2026,
+  "valid_until": "2026-11-20",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "contract": {
+    "counterparty": "삼성전자",
+    "amount_krw": 162150000000,
+    "start": "2026-08-26",
+    "end": "2027-06-30",
+    "days": 308,
+    "q3_straight_line_krw": 19000000000,
+    "q3_consensus_sales_krw": 119600000000,
+    "q3_consensus_op_krw": 18500000000,
+    "note": "308일 균등은 추정. 납품 일정표는 미확인."
+  },
+  "bands": {
+    "no_chase": 17300,
+    "zone1": 15500,
+    "zone2": 14200,
+    "zone3": 12400,
+    "kill": 11200,
+    "q3_sales_frontload_krw": 130000000000,
+    "q3_sales_miss_krw": 105000000000
+  },
+  "weights": {"zone1": 40, "zone2": 35, "zone3": 25},
+  "note": "15:20 가격은 장마감 10분 전이라 확정 종가가 아니다. 3분기 매출은 이 스크립트가 조회하지 않는다."
+}
