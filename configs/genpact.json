@@ -1,0 +1,51 @@
+{
+  "name": "genpact",
+  "title_prefix": "[GENPACT]",
+  "ticker": "G",
+  "display": "젠팩트 Q3 2026",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20 KST에만 붙임. 2026-11-06~11-09만 조회, 다른 해·창 밖은 침묵. 실적 판정 후 재발송 안 함.",
+  "oneshot_kst": ["2026-11-06 09:00", "2026-11-06 15:20", "2026-11-09 09:00"],
+  "oneshot_year": 2026,
+  "window_start": "2026-11-06",
+  "window_end": "2026-11-09",
+  "print_kst": "2026-11-06 06:00",
+  "event_label": "젠팩트 Q3 2026 실적, 미국 11-05 장후",
+  "cik": "0001398659",
+  "baseline_price": 33.29,
+  "baseline_asof": "2026-10-02",
+  "anchors": [30, 33, 42],
+  "weights": {
+    "pass": {"30": 0.05, "33": 0.25, "42": 0.70, "px": 39.2},
+    "hold": {"30": 0.20, "33": 0.55, "42": 0.25, "px": 34.7},
+    "fail": {"30": 0.65, "33": 0.30, "42": 0.05, "px": 31.5}
+  },
+  "checklist": {
+    "ats_pass": 28,
+    "ats_hold_low": 24,
+    "ats_fail": 20,
+    "core_pass": 0,
+    "core_hold_low": -1.5,
+    "core_fail": -2,
+    "eps_pass": 1.06,
+    "eps_hold_low": 1.04,
+    "eps_fail": 1.02,
+    "fy_eps_guide": 4.09,
+    "fy_rev_growth_min": 7
+  },
+  "q2_baseline": {
+    "ats_yoy": 24.1,
+    "ats_m": 363,
+    "core_yoy": 1.9,
+    "core_m": 980,
+    "adj_eps": 1.0,
+    "rev_m": 1343
+  },
+  "sources": [
+    "https://data.sec.gov/submissions/CIK0001398659.json",
+    "https://www.genpact.com/investors",
+    "https://www.nasdaq.com/market-activity/stocks/g/press-releases"
+  ]
+}
