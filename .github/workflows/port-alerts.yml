@@ -19,6 +19,8 @@ on:
     - cron: "40 6 28 10 *"
     - cron: "40 6 29 10 *"
     - cron: "45 13 2 10 *"
+    - cron: "45 13 14 10 *"
+    - cron: "10 0 15 10 *"
     - cron: "0 13 14 10 *"
     - cron: "0 13 29 10 *"
   workflow_dispatch:
@@ -116,6 +118,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
             elif [ "${{ github.event.schedule }}" = "45 13 2 10 *" ]; then JOB=nfp1002
+            elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
             else JOB=morning
             fi
@@ -345,6 +348,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/nfp1002_monitor.py auto
+      - name: Run cpi1014
+        if: steps.pick.outputs.job == 'cpi1014'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/cpi1014_monitor.py auto
       - name: Run dram27
         if: steps.pick.outputs.job == 'dram27'
         env:
