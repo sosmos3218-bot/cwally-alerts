@@ -237,6 +237,7 @@ jobs:
             python scripts/xau930_monitor.py auto
             python scripts/muq4_monitor.py auto
             python scripts/btc21_monitor.py
+            python scripts/btcbox_monitor.py
             python scripts/btcoct_monitor.py
             python scripts/btc90_monitor.py
             python scripts/smh_monitor.py
