@@ -31,11 +31,12 @@ jobs:
           python scripts/kosbrk_monitor.py
           python scripts/k278240_monitor.py
           python scripts/377990_monitor.py
+          python scripts/ethhl_monitor.py
       - name: Persist state
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json
+          git add state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main || true
