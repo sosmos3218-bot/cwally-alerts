@@ -1,0 +1,19 @@
+{
+  "name": "ratesbell",
+  "title_prefix": "[FLOW]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 후크. 상태 변경과 월요일 주간만 발송. 2027년 year-guard로 침묵.",
+  "year_guard": 2026,
+  "valid_until": "2026-12-31",
+  "ten_escalate": 5.5,
+  "ten_relief": 5.0,
+  "mtg_escalate": 7.5,
+  "mtg_weeks": 2,
+  "sources": {
+    "ten": "yahoo ^TNX",
+    "mortgage": "https://www.freddiemac.com/pmms/archive"
+  },
+  "explain": "2026-10-03 뉴데일리 국채·모기지 워닝벨 정리의 변경조건. 10년 5.50% 이상 또는 모기지 7.50% 2주 연속이면 경계. 10년 5% 아래면 되돌림. 그 사이는 관망."
+}
