@@ -6,5 +6,7 @@
   "final_notified": false,
   "empty_dates": [],
   "fail_dates": [],
-  "note": "2배 기준 32.32달러는 2026-06-30 순현금 주당 16.16의 2배. 3분기 원문 전 확정 아님."
+  "verify_dates": [],
+  "nov11_class": null,
+  "note": "11일 08:20 판정을 nov11_class에 남기고 12~13일 08:20에 SEC 원문과 대조. 2배 선 32.32달러."
 }
