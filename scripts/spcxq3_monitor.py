@@ -227,22 +227,57 @@ def score_fundamentals(found: dict, cfg: dict) -> dict:
 def verify_reread(first: dict, url: str, cfg: dict) -> dict:
     """Re-fetch the filing URL and check the four scores against the first pass."""
     if not url:
-        return {"status": "wait", "match": None, "detail": "원문 없음. 점검 대기", "second": {}}
+        return {"status": "wait", "match": None, "diffs": [], "detail": "원문 없음. 점검 대기", "second": {}}
     try:
         text = plain(fetch(url))
     except Exception as exc:
-        return {"status": "fail", "match": None, "detail": f"재독 조회 실패: {exc}", "second": {}}
+        return {"status": "fail", "match": None, "diffs": [], "detail": f"재독 조회 실패: {exc}", "second": {}}
     if not is_q3(text):
-        return {"status": "fail", "match": None, "detail": "재독 원문이 3분기 실적이 아님", "second": {}}
+        return {"status": "fail", "match": None, "diffs": [], "detail": "재독 원문이 3분기 실적이 아님", "second": {}}
     second = score_fundamentals({"status": "ok", "text": text, "url": url, "filed": first.get("filed") or ""}, cfg)
-    labels = all(first.get(k) == second.get(k) for k in ("ai", "capex", "star"))
-    nums = all((first.get("parsed") or {}).get(k) == (second.get("parsed") or {}).get(k) for k in ("ai", "revenue", "capex", "net_add", "arpu"))
-    match = labels and nums
+    diffs = item_diffs(first, second)
+    match = not diffs
     return {
         "status": "ok",
         "match": match,
-        "detail": "재독 수치와 통과/실패가 1차 채점과 같음" if match else "재독 결과와 1차 채점이 다름",
+        "diffs": diffs,
+        "detail": "재독 수치와 통과/실패가 1차 채점과 같음" if match else "다른 항목: " + ", ".join(diffs),
         "second": second,
+    }
+
+
+
+def label(ok):
+    if ok is True:
+        return "통과"
+    if ok is False:
+        return "실패"
+    return "보류"
+
+
+def item_diffs(first: dict, second: dict) -> list[str]:
+    diffs = []
+    fp = first.get("parsed") or {}
+    sp = second.get("parsed") or {}
+    if first.get("ai") != second.get("ai") or fp.get("ai") != sp.get("ai"):
+        diffs.append(f"AI 매출 1차 {label(first.get('ai'))} {fp.get('ai')} / 재독 {label(second.get('ai'))} {sp.get('ai')}")
+    if first.get("capex") != second.get("capex") or first.get("ratio") != second.get("ratio"):
+        diffs.append(f"캡엑스/매출 1차 {label(first.get('capex'))} {first.get('ratio')} / 재독 {label(second.get('capex'))} {second.get('ratio')}")
+    if fp.get("net_add") != sp.get("net_add"):
+        diffs.append(f"Starlink 순증 1차 {fp.get('net_add')} / 재독 {sp.get('net_add')}")
+    if fp.get("arpu") != sp.get("arpu"):
+        diffs.append(f"ARPU 1차 {fp.get('arpu')} / 재독 {sp.get('arpu')}")
+    return diffs
+
+
+def write_check(state: dict, stamp: str, scored: dict, checked: dict) -> None:
+    state["check"] = {
+        "at": stamp,
+        "url": scored.get("url") or "",
+        "status": checked.get("status"),
+        "match": checked.get("match"),
+        "diffs": checked.get("diffs") or [],
+        "sent": False,
     }
 
 
@@ -272,8 +307,9 @@ def verify_line(checked: dict, scored: dict) -> str:
     if checked.get("status") == "fail":
         return f"채점 점검: 조회 실패. {checked.get('detail')}. 원문 URL {url}."
     word = "일치" if checked.get("match") else "불일치"
+    diff_txt = "" if checked.get("match") else " 다른 항목: " + "; ".join(checked.get("diffs") or ["없음"]) + "."
     return (
-        f"채점 점검: {word}. 원문 URL {url}. "
+        f"채점 점검: {word}. 발송 없는 기록. 원문 URL {url}.{diff_txt} "
         f"AI {fmt_bn(parsed.get('ai'))} {mark(second.get('ai'), 'ok')}, "
         f"캡엑스/매출 {ratio_txt} {mark(second.get('capex'), 'ok')}, "
         f"순증 {parsed.get('net_add') or '없음'} {mark(second.get('star'), 'ok')}, "
@@ -362,6 +398,8 @@ def main() -> int:
     found = find_q3_text()
     scored = score_fundamentals(found, cfg)
     checked = verify_reread(scored, scored.get("url") or "", cfg)
+    write_check(state, stamp, scored, checked)
+    save_state(state)
     status = scored["status"]
     parsed = scored.get("parsed") or {}
     ai_ok = scored["ai"]
@@ -411,5 +449,26 @@ def main() -> int:
     return 0
 
 
+def check_only() -> int:
+    cfg = load_json(CFG_PATH, {})
+    now = datetime.now(KST)
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    if now.year != int(cfg.get("year_guard") or 2026):
+        print("spcxq3 check year-guard silent")
+        return 0
+    state = load_json(STATE_PATH, {"sent": {}})
+    found = find_q3_text()
+    scored = score_fundamentals(found, cfg)
+    checked = verify_reread(scored, scored.get("url") or "", cfg)
+    write_check(state, stamp, scored, checked)
+    state["updated_at"] = stamp
+    save_state(state)
+    diffs = checked.get("diffs") or []
+    print("check no-send", checked.get("status"), checked.get("match"), diffs)
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "check":
+        raise SystemExit(check_only())
     raise SystemExit(main())
