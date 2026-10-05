@@ -224,6 +224,28 @@ def score_fundamentals(found: dict, cfg: dict) -> dict:
     }
 
 
+def verify_reread(first: dict, url: str, cfg: dict) -> dict:
+    """Re-fetch the filing URL and check the four scores against the first pass."""
+    if not url:
+        return {"status": "wait", "match": None, "detail": "원문 없음. 점검 대기", "second": {}}
+    try:
+        text = plain(fetch(url))
+    except Exception as exc:
+        return {"status": "fail", "match": None, "detail": f"재독 조회 실패: {exc}", "second": {}}
+    if not is_q3(text):
+        return {"status": "fail", "match": None, "detail": "재독 원문이 3분기 실적이 아님", "second": {}}
+    second = score_fundamentals({"status": "ok", "text": text, "url": url, "filed": first.get("filed") or ""}, cfg)
+    labels = all(first.get(k) == second.get(k) for k in ("ai", "capex", "star"))
+    nums = all((first.get("parsed") or {}).get(k) == (second.get("parsed") or {}).get(k) for k in ("ai", "revenue", "capex", "net_add", "arpu"))
+    match = labels and nums
+    return {
+        "status": "ok",
+        "match": match,
+        "detail": "재독 수치와 통과/실패가 1차 채점과 같음" if match else "재독 결과와 1차 채점이 다름",
+        "second": second,
+    }
+
+
 def mark(ok: bool | None, status: str) -> str:
     if status == "fail":
         return "조회 실패"
@@ -236,17 +258,42 @@ def mark(ok: bool | None, status: str) -> str:
     return "보류"
 
 
+
+def verify_line(checked: dict, scored: dict) -> str:
+    second = checked.get("second") or {}
+    parsed = second.get("parsed") or scored.get("parsed") or {}
+    ratio = second.get("ratio")
+    if ratio is None:
+        ratio = scored.get("ratio")
+    ratio_txt = "없음" if ratio is None else f"{ratio:.2f}배"
+    url = scored.get("url") or "없음"
+    if checked.get("status") == "wait":
+        return f"채점 점검: 대기. 원문 URL {url}."
+    if checked.get("status") == "fail":
+        return f"채점 점검: 조회 실패. {checked.get('detail')}. 원문 URL {url}."
+    word = "일치" if checked.get("match") else "불일치"
+    return (
+        f"채점 점검: {word}. 원문 URL {url}. "
+        f"AI {fmt_bn(parsed.get('ai'))} {mark(second.get('ai'), 'ok')}, "
+        f"캡엑스/매출 {ratio_txt} {mark(second.get('capex'), 'ok')}, "
+        f"순증 {parsed.get('net_add') or '없음'} {mark(second.get('star'), 'ok')}, "
+        f"ARPU {parsed.get('arpu') or '없음'}."
+    )
+
+
 def fmt_bn(n: float | None) -> str:
     if n is None:
         return "숫자 없음"
     return f"{n / 1_000_000_000:.2f}억 달러"
 
 
-def action(price: float | None, checklist_pass: bool, any_fail: bool) -> str:
+def action(price: float | None, checklist_pass: bool, any_fail: bool, mismatch: bool = False) -> str:
     if price is None:
         return "가격 조회 실패. 매매 판단 보류."
     if price < 135:
         return "135달러 이탈. 비중 줄일 것. 신규 매수 금지."
+    if mismatch:
+        return "채점 점검 불일치. 매매 보류."
     if any_fail:
         return "실적 3항목 중 실패. 160달러 분할 금지. 보유 또는 축소 검토."
     if price < 145:
@@ -314,6 +361,7 @@ def main() -> int:
 
     found = find_q3_text()
     scored = score_fundamentals(found, cfg)
+    checked = verify_reread(scored, scored.get("url") or "", cfg)
     status = scored["status"]
     parsed = scored.get("parsed") or {}
     ai_ok = scored["ai"]
@@ -321,6 +369,7 @@ def main() -> int:
     star_ok = scored["star"]
     checklist_pass = status == "ok" and ai_ok is True and capex_ok is True and star_ok is True
     any_fail = status == "ok" and (ai_ok is False or capex_ok is False or star_ok is False)
+    mismatch = checked.get("match") is False
     ratio = scored.get("ratio")
     ratio_txt = "숫자 없음" if ratio is None else f"{ratio:.2f}배"
     lines = [
@@ -329,8 +378,9 @@ def main() -> int:
         f"Starlink: {mark(star_ok, status)}. 순증 {parsed.get('net_add') or '없음'}, ARPU {parsed.get('arpu') or '없음'}. 통과는 순증 120만 이상이고 ARPU 64달러 이상.",
         f"11월 락업 대비 거래량: {mark(volume_ok, 'ok')}. 5일 평균 {avg5:,.0f}주." if avg5 else "11월 락업 대비 거래량: 미확인. 거래량 조회 없음.",
         f"145달러 지지: {mark(support_145, 'ok')}. 135달러 지지: {mark(support_135, 'ok')}.",
+        verify_line(checked, scored),
     ]
-    do = action(price, checklist_pass, any_fail)
+    do = action(price, checklist_pass, any_fail, mismatch)
     price_txt = "조회값 없음" if price is None else f"{price:.2f}달러"
     vol_txt = "없음" if avg5 is None else f"{avg5 / 1_000_000:.1f}백만 주"
     src = scored.get("url") or "원문 없음"
@@ -354,8 +404,8 @@ def main() -> int:
         "하지 말 것: 160달러 위 추격, 신용, 미수. 미발표를 실패로 보지 말 것. 토큰 SPCX와 나스닥 SPCX를 섞지 말 것.",
     ])
     print(body)
-    publish(topic, title, body, 4 if support_135 is False or any_fail else 3, ["chart_with_upwards_trend"], server)
-    sent[day] = {"at": stamp, "kind": slot, "price": price, "avg5": avg5, "earnings": status}
+    publish(topic, title, body, 4 if support_135 is False or any_fail or mismatch else 3, ["chart_with_upwards_trend"], server)
+    sent[day] = {"at": stamp, "kind": slot, "price": price, "avg5": avg5, "earnings": status, "verify": checked.get("status"), "verify_match": checked.get("match"), "url": scored.get("url") or ""}
     state.update({"updated_at": stamp, "sent": sent, "last_price": price, "last_verdict": do})
     save_state(state)
     return 0
