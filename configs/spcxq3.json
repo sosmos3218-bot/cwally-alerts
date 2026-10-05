@@ -1,0 +1,62 @@
+{
+  "name": "spcxq3",
+  "title_prefix": "[PORT]",
+  "title_note": "AGENTS.md 허용 prefix는 [PORT]. SPCX는 제목 본문에 넣는다. 기존 spcx14와 별개.",
+  "ticker": "SPCX",
+  "display": "SPCX",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "05:10",
+  "schedule_note": "일회 슬롯만. 반복 cron 없음. KST 05:10은 미국 정규장 마감(16:00 EDT) 직후 10분.",
+  "oneshot_kst": [
+    "2026-10-10 05:10",
+    "2026-10-27 05:10",
+    "2026-11-04 05:10",
+    "2026-11-18 05:10",
+    "2026-12-09 05:10"
+  ],
+  "year_guard": 2026,
+  "ref_close": 158.96,
+  "ref_close_date": "2026-10-02",
+  "ipo_price": 135,
+  "support_split": 145,
+  "chase_line": 160,
+  "base_12m": 200,
+  "bull_12m": 235,
+  "bear_12m": 135,
+  "q2": {
+    "period_end": "2026-06-30",
+    "revenue": 7814000000,
+    "ai_revenue": 2561000000,
+    "capex": 18369000000,
+    "ai_capex": 15828000000,
+    "starlink_subscribers": 12000000,
+    "starlink_net_add": 1700000,
+    "starlink_arpu": 66
+  },
+  "rules": {
+    "ai_pass": "3분기 AI 매출 30억 달러 이상. 2분기 25.61억 대비 증가.",
+    "ai_fail": "3분기 AI 매출 25.61억 달러 미만, 또는 계약 해지·축소 문구.",
+    "capex_pass": "캡엑스/매출 2.0배 이하. 2분기는 2.35배.",
+    "capex_fail": "캡엑스/매출 2.35배 이상.",
+    "starlink_pass": "순증 120만 이상이고 ARPU 64달러 이상.",
+    "starlink_fail": "순증 100만 미만 또는 ARPU 60달러 미만.",
+    "volume_pass": "5일 평균 거래량 8,000만 주 이상이고 종가 145달러 이상. 11월 락업은 추정 13억 주.",
+    "volume_fail": "5일 평균 거래량 5,000만 주 미만, 또는 종가 135달러 미만.",
+    "support_145_pass": "종가 145달러 이상.",
+    "support_145_fail": "종가 145달러 미만.",
+    "support_135_pass": "종가 135달러 이상.",
+    "support_135_fail": "종가 135달러 미만. 비중 축소."
+  },
+  "lockup": {
+    "oct9_shares": 328400000,
+    "oct26_shares": 328400000,
+    "q3_shares_est": 1300000000,
+    "dec8_shares": 797600000,
+    "note": "물량은 보도 기준 추정. 공모설명서 원문으로 이번 턴 재검증하지 않음."
+  },
+  "sources": [
+    "https://query1.finance.yahoo.com/v8/finance/chart/SPCX",
+    "https://data.sec.gov/submissions/CIK0001181412.json"
+  ]
+}
