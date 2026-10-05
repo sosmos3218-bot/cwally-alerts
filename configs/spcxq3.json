@@ -34,6 +34,18 @@
     "starlink_net_add": 1700000,
     "starlink_arpu": 66
   },
+  "q3_period_end": "2026-09-30",
+  "cik": "0001181412",
+  "score": {
+    "ai_pass_usd": 3000000000,
+    "ai_fail_usd": 2561000000,
+    "capex_ratio_pass": 2.0,
+    "capex_ratio_fail": 2.35,
+    "net_add_pass": 1200000,
+    "net_add_fail": 1000000,
+    "arpu_pass": 64,
+    "arpu_fail": 60
+  },
   "rules": {
     "ai_pass": "3분기 AI 매출 30억 달러 이상. 2분기 25.61억 대비 증가.",
     "ai_fail": "3분기 AI 매출 25.61억 달러 미만, 또는 계약 해지·축소 문구.",
