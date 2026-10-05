@@ -7,12 +7,13 @@ This repo is the only place for GitHub Actions + ntfy.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).
 - Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]`.
-- Default attach: reuse weekday `09:00` KST (UTC 00:00) or `15:20` KST (UTC 06:20). Do not add a new weekday/repeating cron unless the user asks for a new recurring schedule. No hourly cron.
-- After-close / dated prints (KR earnings, FOMC, BOJ) MAY add a `m h D M *` oneshot cron without extra chat approval. Convert KST to UTC (`KST = UTC+9`). GitHub cron has no year, so the script MUST year-guard and stay silent in later years.
-- Extra chat approval is required only for a new repeating/hourly cron, a topic change, a new repo, a live ntfy test send, or an AGENTS.md edit; attaching a year-guarded one-shot to the existing 09:00/15:20 slots, plus typo/syntax/silence fixes, does not need a second ask.
-- Every new `m h D M *` cron MUST be mapped in `Decide jobs` to a single job id. Never let an unmatched schedule fall through to `morning`.
-- Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot extras go in `oneshot_kst`.
-- New alert = `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json` only. Workflow edits are allowed only to register that oneshot cron and its job map.
+- Repeating cron and hourly cron are forbidden. Do not add a new weekday or repeating schedule. No new workflow file.
+- One-shots stay on the existing dispatcher only. Source of truth is `oneshot_kst` in `configs/<name>.json`. Map that entry to one job id in the existing `Decide jobs` step. Do not create `.github/workflows/<alert>.yml`.
+- Never let an unmatched schedule fall through to `morning`. If `oneshot_kst` is not mapped, stop and report. Do not run the morning bundle.
+- GitHub cron has no year. A one-shot script MUST year-guard and stay silent in later years. Convert KST to UTC (`KST = UTC+9`) only when registering the mapped slot.
+- Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot times go in `oneshot_kst`.
+- New alert = `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json` only. Workflow YAML edits are not part of a normal alert add. Register a one-shot on the existing dispatcher only after `oneshot_kst` exists.
+- Extra chat approval is required for a repeating cron, a new workflow file, a topic change, a new repo, a live ntfy test send, or an AGENTS.md edit.
 - Do not duplicate Telegram Alpha Catch signals here.
 - Old single-purpose repos must have workflows disabled, not deleted immediately.
 
