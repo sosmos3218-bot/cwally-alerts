@@ -1,0 +1,23 @@
+{
+  "name": "PFFD",
+  "title_prefix": "[PFFD]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "기존 weekday morning cron 0 0 * * 1-5 재사용. 새 cron 없음.",
+  "ticker": "PFFD",
+  "tnx_ticker": "^TNX",
+  "price_max": 16.0,
+  "ttm_distribution": 1.2,
+  "yield_min_pct": 7.5,
+  "tnx_drop_pp": 0.15,
+  "baseline_date": "2026-10-05",
+  "baseline_price": 17.62,
+  "baseline_sec_yield_pct": 6.9,
+  "year_guard": [2026, 2027],
+  "valid_until": "2027-03-31",
+  "manual_only": [
+    "연준 추가 인상 경로 철회",
+    "의무전환형 비중 축소와 금융 우선주 스프레드 확대"
+  ]
+}
