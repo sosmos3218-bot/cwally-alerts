@@ -46,11 +46,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -443,6 +443,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/pathq3_monitor.py auto
+      - name: Run pffd
+        if: steps.pick.outputs.job == 'pffd' || steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pffd_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
