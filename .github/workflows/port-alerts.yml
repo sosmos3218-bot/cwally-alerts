@@ -32,6 +32,11 @@ on:
     - cron: "10 8 15 10 *"
     - cron: "0 23 4 11 *"
     - cron: "0 9 5 11 *"
+    - cron: "10 20 9 10 *"
+    - cron: "10 20 26 10 *"
+    - cron: "10 20 3 11 *"
+    - cron: "10 20 17 11 *"
+    - cron: "10 20 8 12 *"
   workflow_dispatch:
     inputs:
       job:
@@ -134,6 +139,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
             elif [ "${{ github.event.schedule }}" = "40 6 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
             elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
+            elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
             else JOB=morning
             fi
           fi
@@ -410,6 +416,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/pcor_monitor.py auto
+      - name: Run spcxq3
+        if: steps.pick.outputs.job == 'spcxq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/spcxq3_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
