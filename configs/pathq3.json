@@ -1,0 +1,38 @@
+{
+  "name": "pathq3",
+  "title_prefix": "[PATH]",
+  "ticker": "PATH",
+  "display": "UiPath",
+  "as_of": "2026-10-05",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "2026-12-03 07:30",
+  "oneshot_kst": ["2026-12-03 07:30", "2026-12-04 07:30", "2026-12-05 09:10"],
+  "oneshot_utc": ["30 22 2 12 *", "30 22 3 12 *", "10 0 5 12 *"],
+  "window_start": "2026-12-03",
+  "window_end": "2026-12-05",
+  "oneshot_year": 2026,
+  "event_note": "FY27 3분기 실적. 확정 발표일 없음. 전년 12-03, 추정 12-02 미국 장후. 1차 12-03 07:30 KST, 하루 밀리면 12-04 07:30 KST, 창 종료 12-05 09:10 KST. 연도 가드 2026만.",
+  "cik": "0001734722",
+  "filing_not_before": "2026-12-01",
+  "baseline": {
+    "q2_period_end": "2026-07-31",
+    "arr_b": 1.938,
+    "net_new_arr_m": 37,
+    "nrr": 109,
+    "million_customers": 387,
+    "million_customer_yoy": 21,
+    "q3_arr_guide_low_b": 1.992,
+    "q3_arr_guide_high_b": 1.997
+  },
+  "lines": {
+    "net_new_arr_m": 50,
+    "nrr": 110,
+    "million_customer_yoy": 20
+  },
+  "sources": [
+    "https://ir.uipath.com/news-events/press-releases",
+    "https://ir.uipath.com/"
+  ],
+  "explain": "UiPath FY27 3분기 실적에서 순증 ARR 5,000만달러, NRR 110%, 100만달러 이상 고객 증가율 20%를 재가속 판정선으로 충족, 미달, 해석불가를 나누는 일회 알림입니다."
+}
