@@ -40,6 +40,9 @@ on:
     - cron: "20 23 10 11 *"
     - cron: "20 23 11 11 *"
     - cron: "20 23 12 11 *"
+    - cron: "30 22 2 12 *"
+    - cron: "30 22 3 12 *"
+    - cron: "10 0 5 12 *"
   workflow_dispatch:
     inputs:
       job:
@@ -144,6 +147,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
             elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
             elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo
+            elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
             else JOB=morning
             fi
           fi
@@ -433,6 +437,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/oklo_monitor.py event
+      - name: Run pathq3
+        if: steps.pick.outputs.job == 'pathq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pathq3_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
