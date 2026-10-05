@@ -12,8 +12,10 @@ This repo is the only place for GitHub Actions + ntfy.
 - Never let an unmatched schedule fall through to `morning`. If `oneshot_kst` is not mapped, stop and report. Do not run the morning bundle.
 - GitHub cron has no year. A one-shot script MUST year-guard and stay silent in later years. Convert KST to UTC (`KST = UTC+9`) only when registering the mapped slot.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot times go in `oneshot_kst`.
-- New alert = `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json` only. Workflow YAML edits are not part of a normal alert add. Register a one-shot on the existing dispatcher only after `oneshot_kst` exists.
-- Extra chat approval is required for a repeating cron, a new workflow file, a topic change, a new repo, a live ntfy test send, or an AGENTS.md edit.
+- New alert files are only `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json`.
+- Creating an alert includes activating it in the same turn. After `oneshot_kst` exists, register it on the existing dispatcher in `.github/workflows/port-alerts.yml`: add only those cron slots, one `Decide jobs` branch for that job id, and one run step for that script. Do not ask for a second approval. Do not leave the alert unmapped.
+- That mapping is the only workflow edit included in a normal alert add. Do not add a YAML job, a new workflow file, or a repeating cron.
+- Extra chat approval is required for a repeating cron, a new workflow file, a topic change, a new repo, a live ntfy test send, an AGENTS.md edit, or any workflow edit outside that one-shot mapping.
 - Do not duplicate Telegram Alpha Catch signals here.
 - Old single-purpose repos must have workflows disabled, not deleted immediately.
 
