@@ -1,0 +1,49 @@
+{
+  "name": "OKLO",
+  "title_prefix": "[OKLO]",
+  "ticker": "OKLO",
+  "display": "오클로",
+  "as_of": "2026-10-05",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "event_year": 2026,
+  "valid_until": "2026-12-15",
+  "expire_date": "2026-11-13",
+  "window_start_kst": "2026-11-11T08:00:00",
+  "schedule_kst": "09:00",
+  "schedule_note": "2배 가격은 새 cron 없이 기존 평일 09:00 KST morning에만 붙음. 실적 체크리스트는 일회 슬롯.",
+  "oneshot_kst": [
+    "2026-11-11 08:20",
+    "2026-11-12 08:20",
+    "2026-11-13 08:20"
+  ],
+  "baseline": {
+    "price_date": "2026-10-02",
+    "price": 35.87,
+    "net_cash_bil": 3.0056,
+    "liquidity_bil": 3.0063,
+    "net_cash_per_share": 16.16,
+    "shares": 186017650,
+    "shares_asof": "2026-08-04",
+    "two_x": 32.32,
+    "h1_ocf_mil": 65.5,
+    "h1_capex_mil": 126.9,
+    "atm_used_gross_bil": 1.0,
+    "atm_new_cap_bil": 1.0,
+    "last_10q": "2026-08-07",
+    "last_atm_8k": "2026-09-11"
+  },
+  "checklist": [
+    "현금+채무증권이 30.06억달러에서 얼마나 줄었는지",
+    "9월 11일 신규 ATM 10억달러 사용액과 주식 수",
+    "설비투자가 상반기 1.269억달러 대비 가속인지",
+    "Aurora-INL 임계 또는 2028 목표 변경 문구",
+    "주가/16.16이 2배 이하인지"
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/OKLO?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0001849056.json"
+  },
+  "cik": "0001849056",
+  "last_known_filing": "2026-09-11"
+}
