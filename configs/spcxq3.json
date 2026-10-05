@@ -70,5 +70,17 @@
   "sources": [
     "https://query1.finance.yahoo.com/v8/finance/chart/SPCX",
     "https://data.sec.gov/submissions/CIK0001181412.json"
-  ]
+  ],
+  "verify": {
+    "when": "기존 일회 슬롯에서 3분기 8-K 원문 URL이 확인되면 같은 URL을 다시 읽는다.",
+    "checks": [
+      "AI 매출",
+      "캡엑스/매출",
+      "Starlink 순증",
+      "ARPU"
+    ],
+    "match": "재독 숫자와 통과/실패가 1차 채점과 같으면 일치.",
+    "mismatch": "다르면 불일치. 매매 보류. 실패 판정으로 대체하지 않음.",
+    "absent": "원문 없으면 점검 대기. 미발표는 실패가 아님."
+  }
 }
