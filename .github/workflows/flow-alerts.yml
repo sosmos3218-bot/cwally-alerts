@@ -26,13 +26,31 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: |
-          python scripts/flow_monitor.py
-          python scripts/secu_flow_monitor.py
-          python scripts/kosbrk_monitor.py
-          python scripts/k278240_monitor.py
-          python scripts/377990_monitor.py
-          python scripts/ethhl_monitor.py
+          failed=0
+          run_one() {
+            local label="$1"
+            shift
+            echo "::group::$label"
+            if "$@"; then
+              echo "$label ok"
+            else
+              echo "::error::$label failed (exit $?)"
+              failed=1
+            fi
+            echo "::endgroup::"
+          }
+          run_one flow_monitor python scripts/flow_monitor.py
+          run_one secu_flow python scripts/secu_flow_monitor.py
+          run_one kosbrk python scripts/kosbrk_monitor.py
+          run_one k278240 python scripts/k278240_monitor.py
+          run_one 377990 python scripts/377990_monitor.py
+          run_one ethhl python scripts/ethhl_monitor.py
+          if [ "$failed" -ne 0 ]; then
+            echo "one or more flow scripts failed"
+            exit 1
+          fi
       - name: Persist state
+        if: always()
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"

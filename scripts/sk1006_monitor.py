@@ -8,6 +8,9 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ntfy_util import publish  # noqa: E402
+
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "sk1006.json"
@@ -39,28 +42,6 @@ def num(value):
         return float(str(value).replace(",", "").replace("+", ""))
     except ValueError:
         return None
-
-
-def publish(topic: str, title: str, message: str, priority: int) -> None:
-    if topic not in {"cwally-port", "cwally-ops"}:
-        topic = "cwally-port"
-    payload = json.dumps(
-        {
-            "topic": topic,
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": ["chart_with_upwards_trend"],
-        }
-    ).encode()
-    req = urllib.request.Request(
-        "https://ntfy.sh",
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
 
 
 def save(state: dict) -> None:
@@ -159,7 +140,7 @@ def main() -> int:
     if err:
         if not state.get("fail_notified"):
             publish(
-                "cwally-ops",
+                "cwally-port",
                 "[FLOW] SK 조회 실패 | 재실행",
                 "\n".join([
                     f"{stamp} | SK주 034730 블록 앵커",

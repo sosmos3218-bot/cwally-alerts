@@ -2,7 +2,7 @@
   "ntfy_server": "https://ntfy.sh",
   "topics": {
     "port": "cwally-port",
-    "flow": "cwally-flow",
+    "flow": "cwally-port",
     "ops": "cwally-ops"
   },
   "slots": {

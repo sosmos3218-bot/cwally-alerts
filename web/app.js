@@ -1,4 +1,4 @@
-const TOPICS = ["cwally-port", "cwally-flow", "cwally-ops"];
+const TOPICS = ["cwally-port", "cwally-ops"];
 const ARCHIVE_URL =
   "https://raw.githubusercontent.com/sosmos3218-bot/cwally-alerts/main/state/archive.json";
 

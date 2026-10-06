@@ -42,14 +42,25 @@ def parse_uk(val: str) -> float:
     return float(cleaned) * 100_000_000
 
 
-def fetch_flow(day: str) -> dict:
+def fetch_flow(day: str) -> dict | None:
     import requests
-    from bs4 import BeautifulSoup
 
     url = NAVER.format(day=day)
-    resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"}, timeout=30)
-    resp.encoding = "euc-kr"
-    resp.raise_for_status()
+    try:
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"}, timeout=30)
+        resp.encoding = "euc-kr"
+        if resp.status_code == 410 or resp.status_code >= 400:
+            print(f"Naver flow HTTP {resp.status_code}; quiet skip")
+            return None
+        resp.raise_for_status()
+    except requests.HTTPError as exc:
+        print(f"Naver flow HTTPError; quiet skip: {exc}")
+        return None
+    except requests.RequestException as exc:
+        print(f"Naver flow request error; quiet skip: {exc}")
+        return None
+    from bs4 import BeautifulSoup
+
     target = f"{day[2:4]}.{day[4:6]}.{day[6:8]}"
     soup = BeautifulSoup(resp.text, "html.parser")
     for tr in soup.find_all("tr"):
@@ -67,7 +78,8 @@ def fetch_flow(day: str) -> dict:
             "연기금 등": parse_uk(cells[9]),
             "기타법인": parse_uk(cells[10]) if len(cells) > 10 else 0.0,
         }
-    raise RuntimeError(f"Naver에 {target} 수급 없음")
+    print(f"Naver에 {target} 수급 없음; quiet skip")
+    return None
 
 
 def fetch_deposit_series():
@@ -168,7 +180,13 @@ def main() -> int:
             cfg = {}
     topic = "cwally-port"
     server = cfg.get("ntfy_server") or "https://ntfy.sh"
-    flow = fetch_flow(day)
+    try:
+        flow = fetch_flow(day)
+    except Exception as exc:
+        print(f"Naver flow unexpected error; quiet skip: {exc}")
+        return 0
+    if not flow:
+        return 0
     if flow["외국인"] == 0 and flow["기관합계"] == 0:
         print("zero flow; market maybe open")
         return 0

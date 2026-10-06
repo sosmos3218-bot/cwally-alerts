@@ -58,6 +58,10 @@ on:
     - cron: "5 0 1 12 *"
     - cron: "12 23 1 12 *"
     - cron: "12 23 2 12 *"
+    # ustsy10 oneshot_kst remaining (KST→UTC): 2026-10-07/08/09 02:15
+    - cron: "15 17 6 10 *"
+    - cron: "15 17 7 10 *"
+    - cron: "15 17 8 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -145,7 +149,8 @@ jobs:
           YC=auto
           KX=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+            if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
+            elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
             elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
@@ -166,7 +171,10 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ]; then JOB=isrgq3
             elif [ "${{ github.event.schedule }}" = "5 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 20 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 23 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 0 25 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 2 12 *" ]; then JOB=aeo
             elif [ "${{ github.event.schedule }}" = "40 6 * * 1-5" ]; then JOB=0090b0
-            else JOB=morning
+            elif [ "${{ github.event.schedule }}" = "15 17 6 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 7 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 8 10 *" ]; then JOB=ustsy10
+            else
+              echo "unmatched schedule: ${{ github.event.schedule }}"
+              exit 1
             fi
           fi
           [ -z "$JOB" ] && JOB=all
@@ -485,6 +493,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/0090b0_monitor.py auto
+      - name: Run ustsy10
+        if: steps.pick.outputs.job == 'ustsy10'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/ustsy10_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
