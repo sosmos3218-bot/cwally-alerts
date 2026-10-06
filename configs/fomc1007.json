@@ -1,10 +1,13 @@
 {
   "name": "fomc1007",
-  "title_prefix": "[FLOW]",
+  "title_prefix": "[FOMC]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "03:20",
-  "oneshot_kst": ["2026-10-08 03:20", "2026-10-08 09:10"],
+  "oneshot_kst": [
+    "2026-10-08 03:20",
+    "2026-10-08 09:10"
+  ],
   "window_start_kst": "2026-10-08 03:05",
   "expire_date": "2026-10-08",
   "event_year": 2026,
@@ -19,7 +22,12 @@
     "dove_break": "속도 조절 또는 대기 의견, 고용 둔화를 속도 조절 사유로 적음, 유가를 통과(look through)로 보면 비둘기.",
     "split": "의견이 갈리면 손대지 않음. 10월 9일 미시간 기대 인플레와 서비스 물가를 기다림."
   },
-  "tickers": {"dji": "^DJI", "sox": "^SOX", "us2y": "2YY=F", "tnx": "^TNX"},
+  "tickers": {
+    "dji": "^DJI",
+    "sox": "^SOX",
+    "us2y": "2YY=F",
+    "tnx": "^TNX"
+  },
   "sources": {
     "minutes": [
       "https://www.federalreserve.gov/monetarypolicy/fomcminutes20260916.htm",

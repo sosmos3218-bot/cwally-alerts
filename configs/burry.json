@@ -1,6 +1,6 @@
 {
   "name": "burry",
-  "title_prefix": "[FLOW]",
+  "title_prefix": "[BURRY]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",

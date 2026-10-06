@@ -1,17 +1,35 @@
 {
   "name": "tsmc1015",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[TSMC]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "oneshot_kst": ["2026-10-15 15:40", "2026-10-15 17:10"],
+  "oneshot_kst": [
+    "2026-10-15 15:40",
+    "2026-10-15 17:10"
+  ],
   "window_start_kst": "2026-10-15 15:20",
   "expire_date": "2026-10-15",
   "event_year": 2026,
   "release_at_kst": "2026-10-15 15:00",
-  "q3_actual_compare": {"revenue_usd_bn": 40.2, "gross_margin": 67.7, "operating_margin": 60.3},
-  "q3_guidance": {"revenue_low": 44.6, "revenue_high": 45.8, "gm_low": 65.0, "gm_high": 67.0, "om_low": 56.0, "om_high": 58.0, "fx": 32.0},
-  "thresholds": {"q4_pass_qoq": 8.0, "q4_hold_qoq": 3.0},
+  "q3_actual_compare": {
+    "revenue_usd_bn": 40.2,
+    "gross_margin": 67.7,
+    "operating_margin": 60.3
+  },
+  "q3_guidance": {
+    "revenue_low": 44.6,
+    "revenue_high": 45.8,
+    "gm_low": 65.0,
+    "gm_high": 67.0,
+    "om_low": 56.0,
+    "om_high": 58.0,
+    "fx": 32.0
+  },
+  "thresholds": {
+    "q4_pass_qoq": 8.0,
+    "q4_hold_qoq": 3.0
+  },
   "schedule_note": "TSMC 3Q26 컨퍼런스 2026-10-15 14:00 대만 = 15:00 KST. 1차 15:40 KST = UTC 40 6 15 10 *. 원문 없으면 17:10 KST = UTC 10 8 15 10 * 재확인. 연도 가드 2026만. 기존 15:20 평일 슬롯은 건드리지 않음.",
   "sources": {
     "q3_page": "https://investor.tsmc.com/english/quarterly-results/2026/q3",

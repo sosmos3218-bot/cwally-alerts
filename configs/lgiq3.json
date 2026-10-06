@@ -1,6 +1,6 @@
 {
   "name": "lgiq3",
-  "title_prefix": "[LG]",
+  "title_prefix": "[LGIT]",
   "title_note": "AGENTS.md 허용 prefix [LG]. 기존 lg.json은 LG지주 003550. 이 알림은 LG이노텍 011070 3분기 일회 점검.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",

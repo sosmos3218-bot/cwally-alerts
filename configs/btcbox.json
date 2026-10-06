@@ -1,6 +1,6 @@
 {
   "name": "btcbox",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[BTCBOX]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "event_year": 2026,

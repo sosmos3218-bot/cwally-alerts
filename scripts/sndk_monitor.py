@@ -76,7 +76,7 @@ def body_common(stamp: str, phase: str) -> list[str]:
 
 def kr_pre(cfg: dict, stamp: str) -> tuple[str, list[str]]:
     a = cfg["anchors"]
-    title = "[PORT] 국내 5개부터 | 연결 스위치 꺼짐"
+    title = "[SNDK] 국내 5개부터 | 연결 스위치 꺼짐"
     lines = body_common(stamp, "10/28 국내 선행")
     lines += [
         "지금 결과: 삼성·하이닉스 3분기 숫자 창. SNDK 실적은 아직 11/5 미국 장후.",
@@ -97,7 +97,7 @@ def kr_pre(cfg: dict, stamp: str) -> tuple[str, list[str]]:
 
 def sndk_pre(cfg: dict, stamp: str) -> tuple[str, list[str]]:
     a = cfg["anchors"]
-    title = "[PORT] 오늘 장후 SNDK | 연결 보류"
+    title = "[SNDK] 오늘 장후 SNDK | 연결 보류"
     lines = body_common(stamp, "11/5 실적 전")
     lines += [
         f"지금 결과: 발표는 미국 장후, KST {cfg['print_kst']} 전후. 숫자는 아직 없음.",
@@ -119,13 +119,13 @@ def sndk_pre(cfg: dict, stamp: str) -> tuple[str, list[str]]:
 def sndk_post(cfg: dict, stamp: str, ir_ok: bool, headline: str) -> tuple[str, list[str]]:
     a = cfg["anchors"]
     if ir_ok and headline:
-        title = "[PORT] SNDK 발표문 열림 | 5개 대조"
+        title = "[SNDK] 발표문 열림 | 5개 대조"
         status = f"IR에서 관련 문구를 찾음. {headline}"
     elif ir_ok:
-        title = "[PORT] SNDK 숫자 직접 대조 | 연결 기본 꺼짐"
+        title = "[SNDK] 숫자 직접 대조 | 연결 기본 꺼짐"
         status = "IR은 열렸으나 Q1 숫자 문구는 확인 불가. 추정하지 않음."
     else:
-        title = "[PORT] SNDK IR 조회 실패 | 직접 확인"
+        title = "[SNDK] IR 조회 실패 | 직접 확인"
         status = f"IR 조회 실패. {headline or '출처 없음'}."
     lines = body_common(stamp, "11/6 실적 후")
     lines += [

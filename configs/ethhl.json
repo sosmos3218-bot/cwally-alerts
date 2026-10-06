@@ -1,6 +1,6 @@
 {
   "name": "ethhl",
-  "title_prefix": "[FLOW]",
+  "title_prefix": "[ETH]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "event_year": 2026,

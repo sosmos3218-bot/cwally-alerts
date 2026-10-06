@@ -366,7 +366,7 @@ def main() -> int:
         quote = yahoo(cfg.get("ticker") or "SPCX")
     except Exception as exc:
         print(f"price fetch fail: {exc}", file=sys.stderr)
-        title = "[PORT] SPCX 가격 조회 실패 | 판단 보류"
+        title = "[SPCX] 가격 조회 실패 | 판단 보류"
         body = "\n".join([
             f"{stamp} | SPCX | {slot}",
             "이게 뭐 알림: SPCX 가격 조회가 실패했습니다. 조건 미충족이 아닙니다.",
@@ -431,7 +431,7 @@ def main() -> int:
     else:
         what = "SPCX 락업 물량 다음 거래일 가격 지지 판정입니다."
         later = "11월 대량 락업은 3분기 실적 이틀 뒤로 추정. 확정일이 아니다."
-    title = f"[PORT] SPCX {price_txt} | {do.split('.')[0]}"
+    title = f"[SPCX] {price_txt} | {do.split('.')[0]}"
     body = "\n".join([
         f"{stamp} | SPCX | {slot} | 기준가 158.96달러(2026-10-02)",
         f"이게 뭐 알림: {what}",

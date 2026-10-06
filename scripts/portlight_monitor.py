@@ -246,7 +246,7 @@ def main() -> int:
     if {"kospi", "samsung", "hynix"} <= set(fetch_fail) or "ktb10" in fetch_fail:
         publish(
             resolve_topic("port", cfg.get("ntfy_topic")),
-            "[PORT] 조회 실패 | 신호등 미적용",
+            "[PORTLIGHT] 조회 실패 | 신호등 미적용",
             "\n".join(
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | PORTLIGHT",
@@ -266,7 +266,7 @@ def main() -> int:
         save_state(state)
         return 1
 
-    title = f"[PORT] {pos} | 금리 {rate} 반도체 {chip}"
+    title = f"[PORTLIGHT] {pos} | 금리 {rate} 반도체 {chip}"
     body = "\n".join(
         [
             f"{now.strftime('%Y-%m-%d %H:%M KST')} | PORTLIGHT 주간",

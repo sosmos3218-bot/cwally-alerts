@@ -1,6 +1,6 @@
 {
   "name": "yc232140",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[232140]",
   "ticker": "232140",
   "code": "232140",
   "display": "와이씨",
@@ -33,6 +33,10 @@
     "q3_sales_frontload_krw": 130000000000,
     "q3_sales_miss_krw": 105000000000
   },
-  "weights": {"zone1": 40, "zone2": 35, "zone3": 25},
+  "weights": {
+    "zone1": 40,
+    "zone2": 35,
+    "zone3": 25
+  },
   "note": "15:20 가격은 장마감 10분 전이라 확정 종가가 아니다. 3분기 매출은 이 스크립트가 조회하지 않는다."
 }

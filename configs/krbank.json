@@ -1,6 +1,6 @@
 {
   "name": "KRBANK",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[KRBANK]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
@@ -9,8 +9,16 @@
   "as_of": "2026-09-28",
   "user": "Cwally",
   "names": {
-    "woori": {"code": "316140", "ticker": "316140.KS", "name": "우리금융"},
-    "hana": {"code": "086790", "ticker": "086790.KS", "name": "하나금융"}
+    "woori": {
+      "code": "316140",
+      "ticker": "316140.KS",
+      "name": "우리금융"
+    },
+    "hana": {
+      "code": "086790",
+      "ticker": "086790.KS",
+      "name": "하나금융"
+    }
   },
   "mark": {
     "woori_px": 35350,
@@ -26,6 +34,6 @@
     "woori_trim_hi": 44000,
     "hana_trim_lo": 160000,
     "hana_trim_hi": 166000,
-    "pbr_done": 0.90
+    "pbr_done": 0.9
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "dkq3",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[DKQ3]",
   "title_note": "AGENTS.md 허용 prefix에 DKQ3가 없어 [PORT] 사용. 본문에 동국제약을 적는다.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",

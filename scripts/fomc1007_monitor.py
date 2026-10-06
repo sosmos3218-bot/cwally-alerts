@@ -229,7 +229,7 @@ def main():
             save_state(st, now)
             return 0
         if not st.get("fail_notified"):
-            emit(cfg, "[FLOW] 의사록 조회 실패 | 매매 금지", [
+            emit(cfg, "[FOMC] 의사록 조회 실패 | 매매 금지", [
                 now.strftime("%Y-%m-%d %H:%M KST") + " | FLOW | 9월 FOMC 의사록",
                 "이게 뭐 알림: " + cfg["explain"],
                 "지금 상태: 조회 실패. " + (err or "출처 없음") + ". 매파나 비둘기로 처리하지 않음.",
@@ -255,7 +255,7 @@ def main():
         + " / 2년물선물 " + reaction(y_now, y_prev, "bp")
         + " / 10년물 " + reaction(tnx_now, tnx_prev, "bp") + "."
     )
-    title = f"[FLOW] 의사록 {tag} | {call.split('.')[0]}"
+    title = f"[FOMC] 의사록 {tag} | {call.split('.')[0]}"
     lines = [
         now.strftime("%Y-%m-%d %H:%M KST") + " | FLOW | 9월 FOMC 의사록",
         "이게 뭐 알림: " + cfg["explain"],

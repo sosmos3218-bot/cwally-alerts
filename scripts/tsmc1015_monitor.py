@@ -268,7 +268,7 @@ def main():
                 "익절/줄일 때: 조회 실패로 비중 조정 금지.",
                 "하지 말 것: 조회 실패를 실적 미스로 읽기.",
             ]
-            emit(cfg, "[PORT] TSMC 조회 실패 | 채점 보류", lines, 4)
+            emit(cfg, "[TSMC] 조회 실패 | 채점 보류", lines, 4)
             st["fail_notified"] = True
             save_state(st, now)
             return 0
@@ -285,7 +285,7 @@ def main():
             "익절/줄일 때: 미발표 상태로 비중 조정 금지.",
             "하지 말 것: 가이던스 상단을 실적으로 확정하기.",
         ]
-        emit(cfg, "[PORT] TSMC 원문 없음 | 보유 유지", lines, 3)
+        emit(cfg, "[TSMC] 원문 없음 | 보유 유지", lines, 3)
         st["empty_notified"] = True
         save_state(st, now)
         return 0
@@ -314,7 +314,7 @@ def main():
         "하지 말 것: " + dont + " 신용, 미수, 추격매수.",
         "출처: " + cfg["sources"]["q3_page"],
     ]
-    title = f"[PORT] TSMC {score} | {do.split('.')[0]}"
+    title = f"[TSMC] {score} | {do.split('.')[0]}"
     if mode == "dry":
         print(title)
         print("\n".join(lines))

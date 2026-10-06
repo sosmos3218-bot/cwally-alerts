@@ -1,6 +1,6 @@
 {
   "name": "PORTLIGHT",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[PORTLIGHT]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "21:00",

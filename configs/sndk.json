@@ -1,6 +1,6 @@
 {
   "name": "sndk",
-  "title_prefix": "[PORT]",
+  "title_prefix": "[SNDK]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",

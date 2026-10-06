@@ -190,7 +190,7 @@ def main() -> int:
         if not state.get("fail_notified"):
             emit(
                 cfg,
-                "[PORT] 동국제약 3Q 조회 실패 | 판정 유보",
+                "[DKQ3] 동국제약 3Q 조회 실패 | 판정 유보",
                 [
                     f"{stamp} | PORT | {cfg['event_label']}",
                     "이게 뭐 알림: 동국제약 3분기 실적이 나오면 상반기 대비 매출, 영업이익률, 해외 비중을 보고 목표 3만원을 유지할지 재평가.",
@@ -219,16 +219,16 @@ def main() -> int:
     share_txt = fmt(parsed.get("share"), "%")
     h1_share = h1["overseas_share_pct"]
     if tag == "유지":
-        title = "[PORT] 동국제약 3Q 목표 3만 유지 | 숫자 확인"
+        title = "[DKQ3] 동국제약 3Q 목표 3만 유지 | 숫자 확인"
         action = "목표 3만원은 유지. 추격 매수는 하지 마세요. 해외 비중이 비어 있으면 공시 원문만 다시 보세요."
     elif tag == "하향":
-        title = "[PORT] 동국제약 3Q 목표 3만 재검토 | 조건 이탈"
+        title = "[DKQ3] 동국제약 3Q 목표 3만 재검토 | 조건 이탈"
         action = "목표 3만원은 유지하지 마세요. 신규 매수 보류. 보유는 공시 원문 확인 후 줄일지 판단."
     elif tag == "부분유지":
-        title = "[PORT] 동국제약 3Q 목표 3만 보류 | 일부만 확인"
+        title = "[DKQ3] 동국제약 3Q 목표 3만 보류 | 일부만 확인"
         action = "매출 또는 이익은 나왔지만 해외 비중·판촉·허가 중 하나가 비었거나 약함. 3만원 유지는 보류."
     else:
-        title = "[PORT] 동국제약 3Q 아직 없음 | 판정 유보"
+        title = "[DKQ3] 동국제약 3Q 아직 없음 | 판정 유보"
         action = "분기 숫자가 안 보입니다. 다음 공시까지 대기. 3만원 유지 여부 유보."
     lines = [
         f"{stamp} | PORT | {cfg['event_label']} | {tag}",

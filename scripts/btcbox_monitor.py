@@ -209,15 +209,15 @@ def copy_for(kind: str, cfg: dict, close, close_note: str, etf, yld, y_note: str
     y_txt = y_note or "없음"
     explain = cfg["explain"]
     titles = {
-        "FETCH_FAIL": "[PORT] BTC 조회 실패 | 판정 보류",
-        "DATA_MISSING": "[PORT] BTC 자료 없음 | 판정 보류",
-        "BREAK_82": "[PORT] 82,000 종가 이탈 | 비중 축소",
-        "CHASE_87": "[PORT] 87,200 안착+ETF+금리 | 추격 후보",
-        "TOUCH_87_WAIT": "[PORT] 87,200만 터치 | 추격 금지",
-        "TOP_WAIT": "[PORT] 85,800 위, 조건 충족 | 돌파 대기",
-        "RANGE_TOP": "[PORT] 85,800 상단 | 추가매수 금지",
-        "SETUP_WAIT": "[PORT] ETF·금리만 충족 | 가격 대기",
-        "RANGE_HOLD": "[PORT] 박스 유지 | 추가매수 보류",
+        "FETCH_FAIL": "[BTCBOX] BTC 조회 실패 | 판정 보류",
+        "DATA_MISSING": "[BTCBOX] BTC 자료 없음 | 판정 보류",
+        "BREAK_82": "[BTCBOX] 82,000 종가 이탈 | 비중 축소",
+        "CHASE_87": "[BTCBOX] 87,200 안착+ETF+금리 | 추격 후보",
+        "TOUCH_87_WAIT": "[BTCBOX] 87,200만 터치 | 추격 금지",
+        "TOP_WAIT": "[BTCBOX] 85,800 위, 조건 충족 | 돌파 대기",
+        "RANGE_TOP": "[BTCBOX] 85,800 상단 | 추가매수 금지",
+        "SETUP_WAIT": "[BTCBOX] ETF·금리만 충족 | 가격 대기",
+        "RANGE_HOLD": "[BTCBOX] 박스 유지 | 추가매수 보류",
     }
     actions = {
         "FETCH_FAIL": "시세를 직접 확인하고 이 알림으로 매매하지 마세요.",

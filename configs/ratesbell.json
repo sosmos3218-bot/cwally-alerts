@@ -1,6 +1,6 @@
 {
   "name": "ratesbell",
-  "title_prefix": "[FLOW]",
+  "title_prefix": "[RATES]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",

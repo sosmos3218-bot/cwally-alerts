@@ -107,14 +107,14 @@ def copy_for(kind: str, cfg: dict, close, close_note: str) -> tuple[str, list[st
     px = f"{close:.4f}달러" if close is not None else "없음"
     explain = cfg["explain"]
     titles = {
-        "FETCH_FAIL": "[PORT] XRP 조회 실패 | 판정 보류",
-        "DATA_MISSING": "[PORT] XRP 종가 없음 | 판정 보류",
-        "BREAK_130": "[PORT] XRP 1.30 이탈 | 1.20 수요 확인",
-        "BREAK_145": "[PORT] XRP 1.45 이탈 | 반등 논리 폐기",
-        "SETTLE_170": "[PORT] XRP 1.70 안착 | 다음 공급 1.80",
-        "BREAKOUT_160": "[PORT] XRP 1.60 안착 | 1.80 대기, 2.40 보류",
-        "RECLAIM_154": "[PORT] XRP 1.54 회복 | 1.60 재시험 후보",
-        "RANGE_HOLD": "[PORT] XRP 박스 유지 | 추가매수 보류",
+        "FETCH_FAIL": "[XRPBOX] XRP 조회 실패 | 판정 보류",
+        "DATA_MISSING": "[XRPBOX] XRP 종가 없음 | 판정 보류",
+        "BREAK_130": "[XRPBOX] XRP 1.30 이탈 | 1.20 수요 확인",
+        "BREAK_145": "[XRPBOX] XRP 1.45 이탈 | 반등 논리 폐기",
+        "SETTLE_170": "[XRPBOX] XRP 1.70 안착 | 다음 공급 1.80",
+        "BREAKOUT_160": "[XRPBOX] XRP 1.60 안착 | 1.80 대기, 2.40 보류",
+        "RECLAIM_154": "[XRPBOX] XRP 1.54 회복 | 1.60 재시험 후보",
+        "RANGE_HOLD": "[XRPBOX] XRP 박스 유지 | 추가매수 보류",
     }
     actions = {
         "FETCH_FAIL": "시세를 직접 확인하고 이 알림으로 매매하지 마세요.",

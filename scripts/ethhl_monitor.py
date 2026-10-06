@@ -168,16 +168,16 @@ def copy_for(kind: str, hits: list[str], cfg: dict, snap: dict) -> tuple[str, li
         f"기준 {fmt_usd(snap.get('short_baseline'))}, 절반 기준 1억3900만달러."
     )
     titles = {
-        "FETCH_FAIL": "[FLOW] ETH 조회 실패 | 판정 보류",
-        "NONE": "[FLOW] ETH 2538 해석 유지 | 추가매수 보류",
-        "CLOSE_2500": "[FLOW] ETH 2500 이탈 | 2538 지지 해석 폐기",
-        "LIQ_3PCT": "[FLOW] ETH 롱 청산 3% 안 | 추가매수 금지",
-        "SHORT_HALF": "[FLOW] ETH 2304 숏 절반 | 반대 근거 약해",
-        "LONG_GONE": "[FLOW] ETH 0x0392 롱 없음 | 2538 단서 소멸",
+        "FETCH_FAIL": "[ETH] 조회 실패 | 판정 보류",
+        "NONE": "[ETH] 2538 해석 유지 | 추가매수 보류",
+        "CLOSE_2500": "[ETH] 2500 이탈 | 2538 지지 해석 폐기",
+        "LIQ_3PCT": "[ETH] 롱 청산 3% 안 | 추가매수 금지",
+        "SHORT_HALF": "[ETH] 2304 숏 절반 | 반대 근거 약해",
+        "LONG_GONE": "[ETH] 0x0392 롱 없음 | 2538 단서 소멸",
     }
-    title = titles.get(kind) or "[FLOW] ETH 변경조건 복수 | 2538 지지 재검토"
+    title = titles.get(kind) or "[ETH] 변경조건 복수 | 2538 지지 재검토"
     if kind not in titles and hits:
-        title = "[FLOW] ETH 변경조건 복수 | 2538 지지 재검토"
+        title = "[ETH] 변경조건 복수 | 2538 지지 재검토"
     action = {
         "FETCH_FAIL": "시세와 포지션을 직접 확인하고 이 알림으로 매매하지 마세요.",
         "NONE": "변경 조건 없습니다. 2538달러를 지지로 보지 말고 추가매수하지 마세요.",

@@ -35,7 +35,7 @@ def main() -> int:
 
     m = cfg["mark"]
     x = cfg["exit"]
-    title = "[PORT] 우리·하나 2027·PBR 0.9가 만기"
+    title = "[KRBANK] 우리·하나 2027·PBR 0.9가 만기"
     lines = [
         f"{stamp} | KRBANK",
         "이게 뭐 알림: 우리금융·하나금융 보유 만기 메모입니다. 달력이 아니라 환원·CET1·PBR 조건입니다.",

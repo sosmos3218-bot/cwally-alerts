@@ -1,7 +1,7 @@
 {
   "name": "spcxq3",
-  "title_prefix": "[PORT]",
-  "title_note": "AGENTS.md 허용 prefix는 [PORT]. SPCX는 제목 본문에 넣는다. 기존 spcx14와 별개.",
+  "title_prefix": "[SPCX]",
+  "title_note": "전용 prefix [SPCX]. AGENTS.md 허용 목록에 등록됨.",
   "ticker": "SPCX",
   "display": "SPCX",
   "ntfy_topic": "cwally-port",

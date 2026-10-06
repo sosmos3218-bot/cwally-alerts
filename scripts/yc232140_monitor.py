@@ -124,7 +124,7 @@ def main() -> int:
         if prev.get("last_fail_date") != today and not dry:
             publish(
                 "cwally-ops",
-                "[PORT] 와이씨 조회 실패 | 재실행 필요",
+                "[232140] 와이씨 조회 실패 | 재실행 필요",
                 "\n".join([
                     f"{stamp} | 와이씨 232140",
                     "이게 뭐 알림: 시세 조회가 실패했습니다. 조건 미충족이 아닙니다.",
@@ -152,23 +152,23 @@ def main() -> int:
     px = f"{price:,.0f}원"
     weights = cfg["weights"]
     if zone == "KILL":
-        title = "[PORT] 와이씨 11,200 이탈 | 매수 중단"
+        title = "[232140] 와이씨 11,200 이탈 | 매수 중단"
         action = "11,200원 이하입니다. 분할 매수를 중단하고 재검토합니다."
         priority = 4
     elif zone == "ZONE3":
-        title = "[PORT] 와이씨 12,400 도달 | 3차 25%"
+        title = "[232140] 와이씨 12,400 도달 | 3차 25%"
         action = f"3차 구간입니다. 의도 비중의 {weights['zone3']}%만 봅니다."
         priority = 4
     elif zone == "ZONE2":
-        title = "[PORT] 와이씨 14,200 도달 | 2차 35%"
+        title = "[232140] 와이씨 14,200 도달 | 2차 35%"
         action = f"2차 구간입니다. 의도 비중의 {weights['zone2']}%만 봅니다."
         priority = 3
     elif zone == "ZONE1":
-        title = "[PORT] 와이씨 15,500 도달 | 1차 40%"
+        title = "[232140] 와이씨 15,500 도달 | 1차 40%"
         action = f"1차 구간입니다. 의도 비중의 {weights['zone1']}%만 봅니다. 17,300원 위 추격은 하지 않습니다."
         priority = 3
     else:
-        title = "[PORT] 와이씨 17,300 초과 | 추격 금지"
+        title = "[232140] 와이씨 17,300 초과 | 추격 금지"
         action = "17,300원을 넘었습니다. 사지 않습니다."
         priority = 3
     lines = [

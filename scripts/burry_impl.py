@@ -169,7 +169,7 @@ def main():
     fed = fed_view(fed_rows)
     dec = decide(hy, ig, fed, earn, rules)
     kind = "FETCH_FAIL" if dec["core_fail"] else dec["signal"]
-    print(f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | 바뀌는 조건")
+    print(f"{now.strftime('%Y-%m-%d %H:%M KST')} | BURRY | 바뀌는 조건")
     print(f"HY {hy} | IG {ig} | FED {fed} | PE {earn}")
     print("조회 메모: " + " / ".join(errors))
     print(f"kind={kind} signal={dec['signal']} dry={dry} missing={dec['missing']}")
