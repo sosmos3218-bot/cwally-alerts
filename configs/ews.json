@@ -1,0 +1,42 @@
+{
+  "name": "EWS",
+  "title_prefix": "[EWS]",
+  "ticker": "EWS",
+  "display": "iShares MSCI Singapore ETF",
+  "as_of": "2026-10-06",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning job에만 붙임. 미국 마감 후 시세. MAS 10월 성명은 확정 시각이 아니라 NLT 2026-10-14라 원샷 미등록.",
+  "valid_until": "2027-06-30",
+  "alert_policy": "state_change_only",
+  "baseline": {
+    "price_date": "2026-10-05",
+    "nav": 33.14,
+    "close": 33.26,
+    "ref_high": 34.38,
+    "ref_high_source": "iShares 52주 고점 상단, 2026-10-05",
+    "pe": 19.28,
+    "pe_date": "2026-10-02",
+    "pb": 2.05,
+    "financials_pct": 56.0
+  },
+  "thresholds": {
+    "drawdown_pct": 10.0,
+    "drawdown_clear_pct": 8.0,
+    "pe_zone": 16.5,
+    "pe_clear": 17.5
+  },
+  "mas_last_known": "2026-07-27",
+  "mas_window_nlt": "2026-10-14",
+  "not_auto": [
+    "은행 건전성(NIM, 대손, CET1)은 공시 원문 미대조라 자동 판정하지 않음",
+    "근원물가 2.5% 상회 지속은 자동 판정하지 않음",
+    "AI 수출 둔화는 자동 판정하지 않음",
+    "긴축 단독은 중립 철회가 아님. 철회는 물가+긴축+수출 둔화 동시라 이 알림 범위 밖"
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/EWS?interval=1d&range=5d",
+    "mas": "https://www.mas.gov.sg/monetary-policy/past-monetary-policy-decisions"
+  }
+}

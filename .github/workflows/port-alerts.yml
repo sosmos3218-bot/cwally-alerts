@@ -377,6 +377,7 @@ jobs:
             python scripts/dram27_monitor.py auto
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
+            python scripts/ews_monitor.py auto
             python scripts/oklo_monitor.py auto
             python scripts/d0chk_monitor.py
           fi
