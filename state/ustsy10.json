@@ -1,19 +1,19 @@
 {
   "announce_notified": true,
-  "result_3y_notified": false,
+  "result_3y_notified": true,
   "result_10y_notified": false,
   "result_30y_notified": false,
   "fail_notified": false,
-  "last_phase": "announce",
-  "updated_at": "2026-10-02T14:18:15.697270+09:00",
+  "last_phase": "result_3y",
+  "updated_at": "2026-10-07T02:15:32.788809+09:00",
   "parsed": {
     "3y": {
       "cusip": "91282CRQ6",
       "auction_date": "2026-10-06",
       "offering_bn": 58.0,
-      "high_yield": null,
-      "btc": null,
-      "indirect": null,
+      "high_yield": 4.932,
+      "btc": 2.62,
+      "indirect": 57.59484240323201,
       "tail": null
     },
     "10y": {
