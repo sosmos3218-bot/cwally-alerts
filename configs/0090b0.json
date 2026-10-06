@@ -1,0 +1,17 @@
+{
+  "name": "0090B0",
+  "title_prefix": "[PORT]",
+  "code": "0090B0",
+  "display": "PLUS K방산소부장",
+  "schedule_kst": "15:40",
+  "schedule_utc": "40 6 * * 1-5",
+  "schedule_note": "평일 장마감 후 15:40 KST. 전용 반복 cron 1개. 종료일 없음.",
+  "alert_policy": "weekday_close_zone",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "buy1": 7400,
+  "accel": 7000,
+  "buy2": 6500,
+  "premium_abs": 1.5,
+  "end_date": null
+}
