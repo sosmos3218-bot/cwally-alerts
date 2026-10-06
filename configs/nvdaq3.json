@@ -1,7 +1,7 @@
 {
   "name": "nvdaq3",
-  "title_prefix": "[SMH]",
-  "title_note": "AGENTS.md 허용 prefix에 [NVDA]가 없어 [SMH] 사용. 본문은 엔비디아 FY2027 3분기. AGENTS.md는 수정하지 않음.",
+  "title_prefix": "[NVDA]",
+  "title_note": "사용자 승인으로 제목 prefix [NVDA]. AGENTS.md 허용 목록에는 아직 없음.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "job_id": "nvdaq3",
