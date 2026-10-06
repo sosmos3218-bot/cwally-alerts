@@ -13,5 +13,7 @@
   "accel": 7000,
   "buy2": 6500,
   "premium_abs": 1.5,
-  "end_date": null
+  "end_date": null,
+  "cron_approved": "2026-10-06",
+  "cron_utc": "40 6 * * 1-5"
 }
