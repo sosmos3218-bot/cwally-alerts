@@ -150,6 +150,10 @@ def main() -> int:
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    if now.year != int(cfg.get("year_guard") or 2026):
+        # 2026 3Q 스윙 카드. GitHub one-shot cron(10/27~10/29)에는 연도가 없어 내년에도 울리므로 연도 밖이면 침묵.
+        print("year guard; silent")
+        return 0
     confirmed = bool(cfg.get("print_date_confirmed"))
     print_d = (cfg.get("print_date") or "").strip() or None
     notice = fetch_3q_notice()
