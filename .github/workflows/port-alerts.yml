@@ -10,7 +10,6 @@ on:
     - cron: "20 6 * * 1-5"
     - cron: "40 6 * * 1-5"
     - cron: "0 12 * * 0"
-    - cron: "0 19 15 9 *"
     - cron: "45 18 16 9 *"
     - cron: "15 7 18 9 *"
     - cron: "15 7 28 10 *"
@@ -26,6 +25,7 @@ on:
     - cron: "10 0 7 10 *"
     - cron: "30 6 7 10 *"
     - cron: "10 7 6 10 *"
+    - cron: "30 9 6 10 *"
     - cron: "20 18 7 10 *"
     - cron: "10 0 8 10 *"
     - cron: "40 6 15 10 *"
@@ -76,11 +76,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
+        description: steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
+        options: [all, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -163,7 +163,6 @@ jobs:
             if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
             elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
             elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
-            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
             elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
             elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
             elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
@@ -171,7 +170,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
             elif [ "${{ github.event.schedule }}" = "10 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "30 6 7 10 *" ]; then JOB=zs1006
-            elif [ "${{ github.event.schedule }}" = "10 7 6 10 *" ]; then JOB=sk1006
+            elif [ "${{ github.event.schedule }}" = "10 7 6 10 *" ] || [ "${{ github.event.schedule }}" = "30 9 6 10 *" ]; then JOB=sk1006
             elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
             elif [ "${{ github.event.schedule }}" = "40 6 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
             elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
@@ -228,8 +227,8 @@ jobs:
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
+      - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -240,9 +239,6 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
             python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
-          fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "clarity" ]; then
-            python scripts/clarity_monitor.py
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
             python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"

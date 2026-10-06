@@ -15,7 +15,7 @@
 
 | 슬롯 | KST | 잡 |
 |---|---|---|
-| port morning | 평일 09:00 | steel + alux + clarity + hce + … (morning 번들) |
+| port morning | 평일 09:00 | steel + alux + hce + … (morning 번들) |
 | port afternoon | 평일 15:20 | square + silicon2 + … (afternoon 번들) |
 | flow | 평일 15:40 | KOSPI 수급 + secu_flow + kosbrk + … |
 | portlight | 일요일 21:00 | portlight |

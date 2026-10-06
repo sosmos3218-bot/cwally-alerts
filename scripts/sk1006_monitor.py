@@ -124,11 +124,14 @@ def main() -> int:
     today = now.strftime("%Y-%m-%d")
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     state = load_json(STATE_PATH, {"final_notified": False, "fail_notified": False, "last_action": None, "parsed": {}})
-    if now.year != int(cfg.get("event_year") or 2026) or today > cfg.get("expire_date", "2026-10-06"):
-        print("year guard or expired; silent")
+    if now.year != int(cfg.get("event_year") or 2026):
+        print("year guard; silent")
         return 0
-    if today != cfg.get("expire_date"):
-        print(f"not event date {today}; silent")
+    # Event day is 10/6. GitHub cron can arrive hours late, so accept runs until 10/7 12:00 KST.
+    start = datetime.fromisoformat(cfg.get("window_start_kst", "2026-10-06 15:40")).replace(tzinfo=KST)
+    end = datetime.fromisoformat(cfg.get("window_end_kst", "2026-10-07 12:00")).replace(tzinfo=KST)
+    if not (start <= now <= end):
+        print(f"outside window {start:%m-%d %H:%M}~{end:%m-%d %H:%M}; silent")
         return 0
     if state.get("final_notified"):
         print("already notified; silent")
@@ -138,26 +141,30 @@ def main() -> int:
     state["parsed"] = parsed
     state["updated_at"] = stamp
     if err:
+        # 10/6 row not posted yet (Naver posts investor trend after close) or fetch error.
+        # Never send a trading alert on missing data. Notify cwally-ops once, quietly, and retry at the next slot.
         if not state.get("fail_notified"):
-            publish(
-                "cwally-port",
-                "[FLOW] SK 조회 실패 | 재실행",
-                "\n".join([
-                    f"{stamp} | SK주 034730 블록 앵커",
-                    "이게 뭐 알림: 10월 6일 종가·거래량·외국인·기관 조회가 실패했습니다. 패스가 아닙니다.",
-                    f"지금 상태: {err}",
-                    "지금 할 일: 월요장 원문을 네이버에서 확인. 재실행은 sk1006 수동 실행.",
-                    "나중에: 조회가 되면 매수/패스를 다시 보냅니다.",
-                    "익절/줄일 때: 해당 없음.",
-                    "하지 말 것: 조회 실패를 패스로 보지 말 것.",
-                ]),
-                4,
-            )
+            try:
+                publish(
+                    "cwally-ops",
+                    "[FLOW] SK 수급 미게시 | 다음 슬롯 재시도",
+                    "\n".join([
+                        f"{stamp} | sk1006",
+                        "이게 뭐 알림: SK(034730) 10/6(화) 종가·수급 데이터가 아직 없어 판정을 미뤘습니다.",
+                        f"지금 상태: {err}",
+                        "지금 할 일: 없음. 18:30 KST 재시도 또는 수동 실행(job=sk1006).",
+                        "나중에: 데이터가 잡히면 cwally-port 로 매수/패스 1회.",
+                        "하지 말 것: 이 메시지를 패스로 보기.",
+                    ]),
+                    2,
+                )
+            except Exception as exc:
+                print(f"ops notify fail: {exc}", file=sys.stderr)
             state["fail_notified"] = True
-        state["last_action"] = "FAIL"
+        state["last_action"] = "WAIT"
         save(state)
-        print(f"fetch failed: {err}", file=sys.stderr)
-        return 1
+        print(f"data not ready: {err}")
+        return 0
 
     action, label, why = judge(parsed, cfg)
     held = "유지" if parsed["close"] >= cfg["anchor"]["block_price"] else "이탈"
