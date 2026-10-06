@@ -1,0 +1,70 @@
+{
+  "name": "aeo",
+  "title_prefix": "[AEO]",
+  "ticker": "AEO",
+  "display": "아메리칸 이글",
+  "as_of": "2026-10-06",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:05",
+  "oneshot_kst": [
+    "2026-10-13 09:05",
+    "2026-10-20 09:05",
+    "2026-10-27 09:05",
+    "2026-11-03 09:05",
+    "2026-11-10 09:05",
+    "2026-11-17 09:05",
+    "2026-11-24 09:05",
+    "2026-11-25 08:12",
+    "2026-11-25 09:12",
+    "2026-12-01 09:05",
+    "2026-12-02 08:12",
+    "2026-12-03 08:12"
+  ],
+  "window_start_kst": "2026-10-13 09:05",
+  "expire_date": "2026-12-03",
+  "event_year": 2026,
+  "cik": "0000919012",
+  "last_known_filing": "2026-09-10",
+  "baseline": {
+    "price_date": "2026-10-05",
+    "price": 18.11,
+    "entry_price": 15.0,
+    "annual_dividend": 0.50,
+    "ae_comp": -1,
+    "aerie_comp": 19,
+    "inventory_units": 9,
+    "oi_guide_lo": 540,
+    "oi_guide_hi": 550,
+    "tariff_oi_benefit": 161,
+    "q3_oi_lo": 110,
+    "q3_oi_hi": 115
+  },
+  "thresholds": {
+    "entry_price": 15.0,
+    "exit_price": 15.5,
+    "ae_comp_flip": 0,
+    "inventory_units_max": 10,
+    "op_margin_ex_refund": 8.0,
+    "aerie_comp_support": 15,
+    "div_cut_below": 0.50,
+    "flip_need": 2
+  },
+  "change_rules": [
+    "본진 American Eagle 동일점포가 0% 초과",
+    "재고 수량 증가율이 10% 미만",
+    "환급 제외 영업이익률이 8% 안팎(7.5% 이상) 유지"
+  ],
+  "counter_rules": [
+    "Aerie 동일점포가 10%대 중후반(15% 이상)으로 이어지면 관망 반대 근거",
+    "배당 0.50달러와 자사주 감소가 하방을 받치면 15달러 진입 근거",
+    "52주 저점 14.06달러에서 이미 반등한 18달러대는 추세 매수 근거가 아님"
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/AEO?interval=1d&range=5d",
+    "ir": "https://www.aeo-inc.com/",
+    "sec": "https://data.sec.gov/submissions/CIK0000919012.json"
+  },
+  "schedule_note": "반복 cron 없음. 가격은 2026-10-13부터 2026-12-01까지 화요일 09:05 KST 일회 슬롯(UTC 05:00 같은 날). 실적 추정창은 11/24 장마감 후와 12/1~12/2 장마감 후. 11/25 08:12 KST=UTC 12 23 24 11 *, 11/25 09:12=UTC 12 0 25 11 *, 12/02 08:12=UTC 12 23 1 12 *, 12/03 08:12=UTC 12 23 2 12 *. 연도 가드 2026만. 실적일 미확정.",
+  "explain": "AEO 관망의 반대 근거(Aerie, 배당, 15달러)와 변경 조건 3개(본진 컴프, 재고 수량, 환급 제외 영업이익률)만 보는 일회 알림."
+}
