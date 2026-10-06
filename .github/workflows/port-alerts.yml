@@ -222,9 +222,303 @@ jobs:
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + druck + pltr + addstop + sec + krbank
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'druck' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
+            python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
+            python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "clarity" ]; then
+            python scripts/clarity_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
+            python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
+            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
+            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
+            MODE="${{ steps.pick.outputs.krwfx_mode }}"
+            [ "$JOB" = "krwfx" ] && [ "$MODE" = "auto" ] && MODE=weekly
+            python scripts/krwfx_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
+            python scripts/port_monitor.py
+          fi
+          if [ "$JOB" = "portlight" ]; then
+            python scripts/portlight_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
+            python scripts/ccrev_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "shinwon" ]; then
+            MODE=event
+            [ "$JOB" = "shinwon" ] && MODE=force
+            python scripts/shinwon_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
+            MODE=event
+            [ "$JOB" = "protec" ] && MODE=force
+            python scripts/protec_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "2ub" ]; then
+            python scripts/2ub_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "druck" ]; then
+            python scripts/druck_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
+            python scripts/pltr_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
+            python scripts/addstop_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
+            python scripts/sec_monitor.py auto
+            python scripts/secdvd_monitor.py
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krbank" ]; then
+            MODE=auto
+            [ "$JOB" = "krbank" ] && MODE=force
+            python scripts/krbank_monitor.py "$MODE"
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
+            python scripts/ratesbell_monitor.py auto
+            python scripts/pce26_monitor.py auto
+            python scripts/xau930_monitor.py auto
+            python scripts/muq4_monitor.py auto
+            python scripts/btc21_monitor.py
+            python scripts/btcbox_monitor.py
+            python scripts/xrpbox_monitor.py
+            python scripts/btcoct_monitor.py
+            python scripts/btc90_monitor.py
+            python scripts/smh_monitor.py
+            python scripts/sndk_monitor.py auto
+            python scripts/secdvd_monitor.py
+            python scripts/gval_monitor.py
+            python scripts/burry_monitor.py auto
+            python scripts/s455850_monitor.py
+            python scripts/yen489_monitor.py
+            python scripts/spcx14_monitor.py auto
+            python scripts/nov3_monitor.py
+            python scripts/dhr_monitor.py auto
+            python scripts/cl_monitor.py auto
+            python scripts/semrev_monitor.py
+            python scripts/dkq3_monitor.py auto
+            python scripts/hsteelq3_monitor.py auto
+            python scripts/dram27_monitor.py auto
+            python scripts/genpact_monitor.py auto
+            python scripts/nke_monitor.py auto
+            python scripts/oklo_monitor.py auto
+          fi
+          python scripts/ntfy_archive.py
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + k091160 + skc011790 (afternoon)
+        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'k091160' || steps.pick.outputs.job == 'skc011790' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
+        run: |
+          JOB="${{ steps.pick.outputs.job }}"
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
+            node scripts/square_sell_alert.mjs
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "silicon2" ]; then
+            python scripts/silicon2_monitor.py "${{ steps.pick.outputs.silicon2_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "cover0198" ]; then
+            python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "0220wl" ]; then
+            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.wl_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
+            python scripts/ustsy_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sgyn" ]; then
+            pip install -q openpyxl
+            python scripts/sgyn_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/yencarry_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "kship" ]; then
+            if [ "$JOB" = "kship" ]; then
+              python scripts/kship_monitor.py force
+            else
+              python scripts/kship_monitor.py auto
+            fi
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/shinwon_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
+            python scripts/protec_monitor.py event
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/druck_monitor.py
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
+            python scripts/pltr_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
+            python scripts/addstop_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "k091160" ]; then
+            python scripts/k091160_fund.py
+            python scripts/k091160_monitor.py
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "skc011790" ]; then
+            python scripts/skc011790_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/ssb0005d0_monitor.py
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/t0192_monitor.py
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/yc232140_monitor.py auto
+          fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/pce26_monitor.py auto
+            python scripts/xau930_monitor.py auto
+            python scripts/muq4_monitor.py auto
+            python scripts/btc21_monitor.py
+            python scripts/secdvd_monitor.py
+            python scripts/nov3_monitor.py
+            python scripts/semrev_monitor.py
+            python scripts/dkq3_monitor.py auto
+            python scripts/hsteelq3_monitor.py auto
+            python scripts/genpact_monitor.py auto
+          fi
+          python scripts/ntfy_archive.py
+      - name: Run nfp1002
+        if: steps.pick.outputs.job == 'nfp1002'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/nfp1002_monitor.py auto
+      - name: Run cpi1014
+        if: steps.pick.outputs.job == 'cpi1014'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/cpi1014_monitor.py auto
+      - name: Run dram27
+        if: steps.pick.outputs.job == 'dram27'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/dram27_monitor.py auto
+      - name: Run zs1006
+        if: steps.pick.outputs.job == 'zs1006'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/zs1006_monitor.py auto
+      - name: Run fomc1007
+        if: steps.pick.outputs.job == 'fomc1007'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/fomc1007_monitor.py auto
+      - name: Run sk1006
+        if: steps.pick.outputs.job == 'sk1006'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/sk1006_monitor.py auto
+      - name: Run tsmc1015
+        if: steps.pick.outputs.job == 'tsmc1015'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/tsmc1015_monitor.py auto
+      - name: Run pcor
+        if: steps.pick.outputs.job == 'pcor'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pcor_monitor.py auto
+      - name: Run spcxq3
+        if: steps.pick.outputs.job == 'spcxq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/spcxq3_monitor.py auto
+      - name: Run oklo
+        if: steps.pick.outputs.job == 'oklo'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/oklo_monitor.py event
+      - name: Run pathq3
+        if: steps.pick.outputs.job == 'pathq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pathq3_monitor.py auto
+      - name: Run pffd
+        if: steps.pick.outputs.job == 'pffd' || steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pffd_monitor.py auto
+      - name: Run isrgq3
+        if: steps.pick.outputs.job == 'isrgq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/isrgq3_monitor.py auto
+      - name: Run aeo
+        if: steps.pick.outputs.job == 'aeo'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/aeo_monitor.py auto
+      - name: Run 0090b0
+        if: steps.pick.outputs.job == '0090b0'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/0090b0_monitor.py auto
+      - name: Run ustsy10
+        if: steps.pick.outputs.job == 'ustsy10'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/ustsy10_monitor.py auto
       - name: Run lgiq3
         if: steps.pick.outputs.job == 'lgiq3'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/lgiq3_monitor.py auto
+      - name: Archive ntfy
+        run: python scripts/ntfy_archive.py
+      - name: Persist state
+        run: |
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state configs/skc011790.json || true
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update alert state"
+          git pull --rebase origin main || true
+          git push origin HEAD:main
