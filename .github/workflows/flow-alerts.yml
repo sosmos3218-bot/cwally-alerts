@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: "40 6 * * 1-5"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "run even if the flow slot already ran today"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -29,10 +34,10 @@ jobs:
         id: guard
         run: |
           RUN=1
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            # late GitHub cron: skip if the on-time external trigger already ran the flow slot today
-            git fetch -q origin main && git show origin/main:state/slot_runs.json > /tmp/slot_runs.json 2>/dev/null || echo '{}' > /tmp/slot_runs.json
-            SLOT_RUNS=/tmp/slot_runs.json python scripts/slot_guard.py check flow || RUN=0
+          if [ "${{ github.event.inputs.force }}" != "true" ]; then
+            # once per KST day: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md)
+            git fetch -q origin main && git show origin/main:state/slots/flow.json > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+            SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check flow || RUN=0
           fi
           echo "run=$RUN" >> "$GITHUB_OUTPUT"
       - name: Run flow
@@ -70,7 +75,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slot_runs.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
+          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main

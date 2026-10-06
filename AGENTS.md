@@ -3,7 +3,7 @@
 This repo is the only place for GitHub Actions + ntfy.
 
 - Never create a new repository for an ntfy alert.
-- Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` for Kikii/server, workflow failures (`scripts/ops_notify.py`), and data-fetch failure notices (titles with 조회 실패/수집 실패/파싱 실패/해석 불가/미게시 are routed by `ntfy_util.route_topic`; custom publishers must call it too). A fetch failure is never a trade signal, so it never goes to `cwally-port`.
+- Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` for ops/system alerts only: workflow failures (`scripts/ops_notify.py`) and data-fetch failure notices (titles with 조회 실패/수집 실패/파싱 실패/해석 불가/미게시 are routed by `ntfy_util.route_topic`; custom publishers must call it too). A fetch failure is never a trade signal, so it never goes to `cwally-port`.
 - `[PORT]` is only for the port universe check (`port_monitor.py`) and `[FLOW]` only for market/stock investor flow (`flow_monitor`, `secu_flow`, `sk1006`). Every other alert uses its own prefix.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).
@@ -36,7 +36,7 @@ Attach recurring alerts here before asking for a new time. Times are KST; the cr
 
 ## On-time external trigger
 
-GitHub schedule events arrive hours late. The on-time trigger is an external cron (Kikii) that runs `gh workflow run` for the morning / afternoon / flow slots; see `docs/kikii-dispatch.md`. `scripts/slot_guard.py` + `state/slot_runs.json` make the late GitHub cron skip a slot already run that KST day. Keep the GitHub crons as the fallback. KRX holidays live in `scripts/kr_calendar.py` (update every December).
+GitHub schedule events arrive hours late. On-time runs come from an external cron calling `workflow_dispatch` for the morning / afternoon / flow / 0090b0 slots; see `docs/ontime-dispatch.md`. `scripts/slot_guard.py` + `state/slots/<slot>.json` let each slot run once per KST day, so a late GitHub cron or a duplicate dispatch skips. Keep the GitHub crons as the fallback. KRX holidays live in `scripts/kr_calendar.py` (update every December).
 
 ## ntfy copy style
 

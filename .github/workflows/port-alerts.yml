@@ -196,10 +196,11 @@ jobs:
             fi
           fi
           [ -z "$JOB" ] && JOB=all
-          if [ "${{ github.event_name }}" = "schedule" ] && { [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; }; then
-            # late GitHub cron: skip if the external on-time trigger already ran this slot today (docs/kikii-dispatch.md)
-            git fetch -q origin main && git show origin/main:state/slot_runs.json > /tmp/slot_runs.json 2>/dev/null || echo '{}' > /tmp/slot_runs.json
-            if ! SLOT_RUNS=/tmp/slot_runs.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ]; then
+            # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
+            # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
+            git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+            if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
           fi
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
           DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
@@ -504,7 +505,9 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/0090b0_monitor.py auto
+        run: |
+          python scripts/slot_guard.py mark 0090b0
+          python scripts/0090b0_monitor.py auto
       - name: Run ustsy10
         if: steps.pick.outputs.job == 'ustsy10'
         env:
