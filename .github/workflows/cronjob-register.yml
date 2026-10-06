@@ -1,0 +1,66 @@
+name: cwally-cronjob-register
+
+# Registers ONE one-shot time on cron-job.org (port-alerts.yml dispatch, {"job":"oneshot"}).
+# New workflow file approved in chat 2026-10-06. workflow_dispatch only: no schedule, no ntfy alert
+# except the ops notice on failure. See scripts/cronjob_register.py for the checks.
+
+concurrency:
+  group: cwally-cronjob-register
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "cron-job.org job title, e.g. cwally oneshot 03:35 KST (Oct 8) fedodds"
+        required: true
+        type: string
+      kst:
+        description: "YYYY-MM-DD HH:MM KST (must be an oneshot_kst entry)"
+        required: true
+        type: string
+      expires_kst:
+        description: "YYYY-MM-DD HH:MM:SS KST (same year, not before kst)"
+        required: true
+        type: string
+      dry_run:
+        description: "run every check but do not create the job"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Register one oneshot
+        env:
+          CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+          CRONJOB_TITLE: ${{ inputs.title }}
+          CRONJOB_KST: ${{ inputs.kst }}
+          CRONJOB_EXPIRES_KST: ${{ inputs.expires_kst }}
+          CRONJOB_DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: |
+          set +e
+          python scripts/cronjob_register.py
+          rc=$?
+          if [ "$rc" = "10" ]; then
+            echo "already registered, skip"
+            exit 0
+          fi
+          exit "$rc"
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+          REGISTER_KST: ${{ inputs.kst }}
+        run: python scripts/ops_notify.py cronjob-register "$REGISTER_KST"
