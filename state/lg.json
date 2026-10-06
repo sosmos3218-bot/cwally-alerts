@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-10-02 21:36 KST",
-  "zone": "BUY1",
-  "price": 111100.0,
+  "updated_at": "2026-10-06 22:21 KST",
+  "zone": "BETWEEN",
+  "price": 115400.0,
   "below_hits": 0,
   "stop_sent": false,
   "shock_sent": false,
