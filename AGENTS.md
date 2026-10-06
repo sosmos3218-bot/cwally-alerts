@@ -19,7 +19,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - New alert files are only `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json`.
 - Creating an alert includes activating it in the same turn. After `oneshot_kst` exists, register it on the existing dispatcher in `.github/workflows/port-alerts.yml`: add only those cron slots, one `Decide jobs` branch for that job id, and one run step for that script. Do not ask for a second approval. Do not leave the alert unmapped. Then register every new `oneshot_kst` time on the external cron (cron-job.org) as a one-off `port-alerts.yml` dispatch with `{"job":"oneshot"}`; list the times with `python scripts/oneshot_pick.py plan --from <YYYY-MM-DD> --to <YYYY-MM-DD>`. That registration is part of the alert add and needs no extra approval.
 - That mapping is the only workflow edit included in a normal alert add. Do not add a YAML job, a new workflow file, or a repeating cron.
-- Extra chat approval is required for a new repeating cron time, a new workflow file, a topic change, a new repo, a live ntfy test send, an AGENTS.md edit, or any workflow edit outside that one-shot mapping.
+- Extra chat approval is required for a new repeating cron time, a new workflow file, a topic change, a new repo, a live ntfy test send, an AGENTS.md edit other than the same-commit title-prefix add above, or any workflow edit outside that one-shot mapping.
 - Do not duplicate Telegram Alpha Catch signals here.
 - Old single-purpose repos must have workflows disabled, not deleted immediately.
 
