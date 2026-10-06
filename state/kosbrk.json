@@ -1,12 +1,22 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-10-06 22:34 KST",
   "fired": {
     "close_break": false,
     "intraday_break": false,
     "flow_expand": false
   },
-  "flow_days": [],
+  "flow_days": [
+    {
+      "day": "2026-10-06",
+      "foreign": -17575.0
+    }
+  ],
   "seen_links": [],
   "last_sent": null,
-  "last_fail_day": null
+  "last_fail_day": null,
+  "last_bar": {
+    "day": "2026-10-06",
+    "close": 6941.39,
+    "low": 6897.38
+  }
 }
