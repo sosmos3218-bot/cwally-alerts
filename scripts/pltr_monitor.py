@@ -151,7 +151,7 @@ def body(cfg: dict, now: datetime, kind: str, source: str, metrics: dict | None,
     base = cfg["q2_baseline"]
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | PLTR | Q3 2026",
-        "이게 무 알림: 팔란티어 3분기 실적이 나와 김승호 매도조건 중 성장·수주만 다시 보라는 알림입니다.",
+        "이게 뭐 알림: 팔란티어 3분기 실적이 나와 김승호 매도조건 중 성장·수주만 다시 보라는 알림입니다.",
     ]
     if kind == "date":
         lines += [

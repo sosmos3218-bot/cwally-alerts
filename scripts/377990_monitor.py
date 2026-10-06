@@ -53,7 +53,7 @@ def fail_once(state: dict, now: datetime, cfg: dict, title: str, note: str, dry:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     body = "\n".join(
         [
-            f"{stamp} | 377990 | 사용자 Cwally",
+            f"{stamp} | 377990",
             "이게 뭐 알림: 377990 판단 변경 조건 점검 중 시세 조회가 실패했습니다.",
             f"지금 상태: {note}",
             "지금 할 일: 실패를 조건 충족으로 보지 마세요. TIGER Fn신재생에너지 종가를 직접 확인하세요.",
@@ -172,7 +172,7 @@ def main() -> int:
 
     body = "\n".join(
         [
-            f"{stamp} | 377990 | 사용자 Cwally",
+            f"{stamp} | 377990",
             "이게 뭐 알림: TIGER Fn신재생에너지 판단 변경 조건입니다. 매수 신호가 아닙니다.",
             f"지금 상태: {day} 완료 종가 {close:,.0f}. 추격 기준 {chase_close:,.0f}, 박스 하단 {box_fail:,.0f}. 수주잔고와 영업이익 추정 동시 상향은 미확인.",
             f"지금 할 일: {action}",

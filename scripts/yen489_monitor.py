@@ -140,7 +140,7 @@ def send(cfg: dict, title: str, lines: list[str], priority: int, dry: bool) -> N
 def fail_body(stamp: str, why: str) -> list[str]:
     return [
         f"{stamp} | 489000 | 점검 실패",
-        "이게 무 알림: PLUS 일본엔화초단기국채(489000)의 엔강·한일 금리차 조건 점검이다.",
+        "이게 뭐 알림: PLUS 일본엔화초단기국채(489000)의 엔강·한일 금리차 조건 점검이다.",
         f"지금 결과/상태: 조회 실패. 조건 미충족이 아니다. 사유: {why}",
         "지금 할 일: 원/엔과 한은·일한 정책금리만 수동으로 확인한다.",
         "나중에: 데이터가 나오면 다음날 09:00에 다시 판정한다.",
@@ -152,7 +152,7 @@ def fail_body(stamp: str, why: str) -> list[str]:
 def fx_body(stamp: str, status: str, do_now: str) -> list[str]:
     return [
         f"{stamp} | 489000 | 엔화",
-        "이게 무 알림: 489000 재검토 조건 1. 원/엔이 저점권을 벗어나거나 의미 있게 엔강한지 본다.",
+        "이게 뭐 알림: 489000 재검토 조건 1. 원/엔이 저점권을 벗어나거나 의미 있게 엔강한지 본다.",
         f"지금 결과/상태: {status}",
         f"지금 할 일: {do_now}",
         "나중에: 같은 단계는 다시 안 보낸다. 더 센 단계(880원 이탈 → 900원 엔강)만 추가 발송.",
@@ -164,7 +164,7 @@ def fx_body(stamp: str, status: str, do_now: str) -> list[str]:
 def rate_body(stamp: str, status: str, do_now: str) -> list[str]:
     return [
         f"{stamp} | 489000 | 금리차",
-        "이게 무 알림: 489000 재검토 조건 2. 한일 단기 정책금리 차가 줄었는지 본다.",
+        "이게 뭐 알림: 489000 재검토 조건 2. 한일 단기 정책금리 차가 줄었는지 본다.",
         f"지금 결과/상태: {status}",
         f"지금 할 일: {do_now}",
         "나중에: 다음 한은 10/22·11/26, 일한 10/30·12/18. 같은 단계는 다시 안 보낸다.",

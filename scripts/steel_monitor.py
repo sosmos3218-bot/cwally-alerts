@@ -29,7 +29,7 @@ DO_NOW = {
     "REVIEW": "비중을 줄이고 논거를 다시 보세요.",
     "TARGET1": "현대제철·풍산은 일부 팔아 익절하세요.",
     "TARGET2": "철강 3종목 전체의 40~50%를 줄이세요.",
-    "STRETCH": "더 정리할지 검토하세요. 추가 매수는 말세요.",
+    "STRETCH": "더 정리할지 검토하세요. 추가 매수는 마세요.",
     "ABOVE_BUY1": "지금은 따라잡지 말고, 가격이 내려오기를 기다리세요.",
     "BETWEEN": "새로 사지 말고 현금을 유지하세요.",
     "DATA_FAIL": "시세를 다시 확인하세요.",
@@ -143,7 +143,7 @@ def main():
         lines.append(f"- {meta['name']} {meta['weight_pct']}% | {px} | {ZONE_KO.get(z, z)}")
     if changes:
         lines.append("")
-        lines.append("바렌 구간:")
+        lines.append("밴드 구간:")
         for name, old, z, kind in changes:
             lines.append(f"- {name}: {ZONE_KO.get(old, old)} → {ZONE_KO.get(z, z)} ({kind})")
     todo = []

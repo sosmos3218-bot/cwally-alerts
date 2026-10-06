@@ -346,7 +346,8 @@ def main() -> int:
         title = f"[USTSY] 30년 {sc30['label']} | 감시 종료"
     elif mode in {"force", "dry"}:
         send, kind = True, phase
-        title = f"[USTSY] 강제점검 | {phase}"
+        phase_ko = {"announce": "공고 확인", "result_3y": "3년 결과", "result_10y": "10년 결과", "result_30y": "30년 결과", "wait": "입찰 대기"}.get(phase, phase)
+        title = f"[USTSY] 수동 점검 | {phase_ko}"
 
     todo = "공고·결과 전까지 미국채 ETF 비중을 이 알림으로 바꾸지 마세요."
     if kind == "announce":

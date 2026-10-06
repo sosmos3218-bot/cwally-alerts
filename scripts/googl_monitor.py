@@ -80,7 +80,7 @@ def copy_for(kind: str, stamp: str, cfg: dict, price) -> tuple[str, list[str], i
     lv = cfg["levels"]
     tr = cfg["tranche"]
     w = cfg["max_weight_pct"]
-    common = [f"{stamp} | GOOGL | {cfg['display']}", f"이게 무슨 알림: {cfg['explain']}"]
+    common = [f"{stamp} | GOOGL | {cfg['display']}", f"이게 뭐 알림: {cfg['explain']}"]
     later = (
         "나중에: 2026년 4분기~2027년 2분기만 모아가는 창. "
         "분기마다 검색(서비스) 성장 10% 이상, 클라우드 성장 25% 이상+이익률 개선, "

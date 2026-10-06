@@ -190,7 +190,7 @@ def main() -> int:
         title = "[SEMREV] 수급 조회 실패 | 판정 보류"
         body = "\n".join(
             [
-                f"{stamp} | SEMREV | 사용자 Cwally",
+                f"{stamp} | SEMREV",
                 "이게 뭐 알림: 반도체 재검토 조건 점검 중 수급 조회가 실패했습니다.",
                 f"지금 상태: {flow_note}",
                 "지금 할 일: 실패를 정상으로 보지 마세요. 네이버 외인 수급을 직접 확인하세요.",
@@ -237,7 +237,7 @@ def main() -> int:
     title = "[SEMREV] " + " / ".join(labels[k] for k in new_hits) + " | 영상 재검토"
     body = "\n".join(
         [
-            f"{stamp} | SEMREV | 사용자 Cwally",
+            f"{stamp} | SEMREV",
             "이게 뭐 알림: 반도체 ETF 영상 판단을 다시 볼 조건입니다. 매수 신호가 아닙니다.",
             f"지금 상태: AMD {amd_note}. 수급 {flow_note}. ETF {etf_note}.",
             "지금 할 일: 해당 조건의 원문(공식 보도/운용 공지/외인 3일 숫자)만 확인하고, 영상 서술을 다시 보세요.",

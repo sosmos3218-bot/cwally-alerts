@@ -24,9 +24,9 @@ TAG_KO = {
 }
 DO_NOW = {
     "REVIEW": "비중을 줄일지 검토하세요. Horizon 인수·채굴 종료 일정을 먼저 확인하세요.",
-    "JPM": "익절을 검토하되, 계약 인수 공시가 없으면 추가 매수는 말세요.",
+    "JPM": "익절을 검토하되, 계약 인수 공시가 없으면 추가 매수는 마세요.",
     "CONSENSUS": "표적 달성입니다. 추격 매수 금지, 일부 정리를 검토하세요.",
-    "WATCH": "새 공시·일정만 보고, 오늘 새로 사지 말세요.",
+    "WATCH": "새 공시·일정만 보고, 오늘 새로 사지 마세요.",
 }
 TITLE_BY_TAG = {
     "REVIEW": "$30 하회 재검토",
@@ -172,20 +172,23 @@ def main() -> int:
         if hot or new_live:
             send = True
             title = f"[IREN] 새 공시/일정 | {TITLE_BY_TAG.get(tag, tag)}" if hot else f"[IREN] 일정 | {TITLE_BY_TAG.get(tag, tag)}"
-            pri = 5 if hot else 4
+            # SEC 공시는 P4, 뉴스 헤드라인(RSS)만이면 P2, 일정만이면 P3. '관찰 유지'류는 P5를 쓰지 않는다.
+            sec_hot = any(it.get("src") == "sec" for it in hot)
+            pri = 4 if sec_hot else 2 if hot else 3
             tags = "warning,zap" if hot else "calendar,zap"
         else:
             print("no iren event; silent")
     else:
         send = True
+        pri = 2
         title = f"[IREN] 주간 체크 | {TITLE_BY_TAG.get(tag, tag)}" if now.weekday() == 0 else f"[IREN] {TITLE_BY_TAG.get(tag, tag)}"
 
     lines = [
         f"{stamp} | IREN | {cfg['display']}",
-        "이게 뭐 알림: IREN(에이아런 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.",
+        "이게 뭐 알림: IREN(아이렌 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.",
         f"지금 상태: {px} | {TAG_KO.get(tag, tag)}. 계약 ARR $40억 / 가동 $10억 / 갱 $30억.",
         f"지금 할 일: {DO_NOW.get(tag, '')}",
-        "나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 말세요.",
+        "나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 마세요.",
         "익절: $65 근처에서 일부, $80 근처에서 추가 정리를 검토하세요.",
         "줄일 때: $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.",
         "하지 말 것: 공시 없이 추격매수, 신용/미수. 이 알림만으로 한번에 다 사지 말 것.",

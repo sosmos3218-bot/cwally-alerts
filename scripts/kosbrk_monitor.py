@@ -68,7 +68,7 @@ def fail_once(state: dict, now: datetime, cfg: dict, title: str, note: str, dry:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     body = "\n".join(
         [
-            f"{stamp} | KOSBRK | 사용자 Cwally",
+            f"{stamp} | KOSBRK",
             "이게 뭐 알림: 코스피 대기 논리 변경 조건 점검 중 조회가 실패했습니다.",
             f"지금 상태: {note}",
             "지금 할 일: 실패를 조건 미충족으로 보지 마세요. 네이버 코스피 종가·외국인 수급을 직접 확인하세요.",
@@ -257,7 +257,7 @@ def main() -> int:
     title = "[KOSBRK] " + " / ".join(labels[k] for k in new_hits) + " | 대기 논리 재검토"
     body = "\n".join(
         [
-            f"{stamp} | KOSBRK | 사용자 Cwally",
+            f"{stamp} | KOSBRK",
             "이게 뭐 알림: 문남중 코스피 대기 주장의 변경 조건입니다. 매도 신호가 아닙니다.",
             f"지금 상태: {day} 종가 {close:,.2f} / 저가 {low:,.2f}. 수급 {flow_note}. 가이던스 {guide_note}.",
             "지금 할 일: 연말 전고점 회복 대기를 다시 보세요. 새 매수는 보류하세요.",

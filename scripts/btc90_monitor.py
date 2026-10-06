@@ -240,7 +240,7 @@ def copy_for(kind, cfg, close_date, close, etf_txt, senate_label, senate_note, f
         "CLARITY": "공식 일정 단서만 있습니다. 통과를 기정사실로 사지 마세요.",
     }
     later = {
-        "FETCH_FAIL": "다음 평일 09:00 KST에 다시 뱃니다.",
+        "FETCH_FAIL": "다음 평일 09:00 KST에 다시 봅니다.",
         "DATA_MISSING": "ETF가 뜨면 같은 슬롯에서 다시 판정합니다.",
         "SNAPSHOT": "이후에는 9만 종가, 8만/7만5천 이탈, FOMC, 클라리티 공식 일정이 아니면 조용히 넘어갑니다.",
         "TREND": "되돌림 때 8만 종가가 깨지면 다시 알립니다.",
@@ -251,7 +251,7 @@ def copy_for(kind, cfg, close_date, close, etf_txt, senate_label, senate_note, f
         "CLARITY": "확정 표결 날짜가 나오기 전에는 같은 단서로 반복하지 않습니다.",
     }
     body = [
-        f"이게 무 알림: {cfg['explain']}",
+        f"이게 뭐 알림: {cfg['explain']}",
         f"지금 결과: {kind} | UTC 종가 {day} {px} | ETF {etf_txt} | 상원 {senate_label}" + (" | FOMC 창구" if fomc_on else ""),
         f"지금 할 일: {now_do[kind]}",
         f"나중에: {later[kind]} 다음 금리: {fomc}.",
@@ -259,7 +259,8 @@ def copy_for(kind, cfg, close_date, close, etf_txt, senate_label, senate_note, f
         "하지 말 것: 장중 터치로 판정, 소문 추격, 신용/미수, 조회 실패를 호재/악재로 보기.",
         f"상원 메모: {senate_note}",
     ]
-    pri = 5 if kind in {"FAIL", "TREND", "CLARITY", "FOMC"} else 4 if kind in {"WEAK", "FETCH_FAIL"} else 3
+    # 일정 단서(CLARITY/FOMC)는 정보성이라 P3. 시나리오 전환만 P5.
+    pri = 5 if kind == "FAIL" else 4 if kind in {"TREND", "WEAK"} else 3
     return titles[kind], body, pri
 
 

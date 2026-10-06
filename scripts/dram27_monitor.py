@@ -137,7 +137,7 @@ def main() -> int:
         save_state(st, now)
         return 0
     title, lines, pri = copy_for(phase)
-    body = [now.strftime("%Y-%m-%d %H:%M KST") + " | DRAM27 | 사용자 Cwally", *lines]
+    body = [now.strftime("%Y-%m-%d %H:%M KST") + " | DRAM27", *lines]
     print(title)
     print("\n".join(body))
     if mode == "dry":

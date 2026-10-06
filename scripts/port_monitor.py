@@ -147,6 +147,16 @@ def parse_op_trn(text: str) -> float | None:
     return None
 
 
+def cfg_period_start() -> str:
+    now = datetime.now(timezone(timedelta(hours=9)))
+    q_start_month = ((now.month - 1) // 3) * 3 + 1 - 3  # 직전 분기 시작월
+    year = now.year
+    if q_start_month <= 0:
+        q_start_month += 12
+        year -= 1
+    return f"{year}-{q_start_month:02d}-01"
+
+
 def latest_notice_op(code: str) -> tuple[float | None, str | None]:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import naver_api
@@ -157,7 +167,9 @@ def latest_notice_op(code: str) -> tuple[float | None, str | None]:
         print(f"notice fail {code}: {exc}", file=sys.stderr)
         return None, None
     pat = re.compile(r"잠정실적|매출액또는손익|영업실적|실적발표|영업\(잠정\)")
-    hit = next((it for it in items if pat.search(it["title"])), None)
+    # 3Q(7/1~9/30) 실적만. 2Q 정정공시 등을 3Q 잠정으로 오인하지 않도록 본문 실적기간을 확인한다.
+    period = cfg_period_start()
+    hit = next((it for it in items if pat.search(it["title"]) and period in it["text"]), None)
     if not hit:
         return None, None
     title = hit["title"]
@@ -186,12 +198,12 @@ def dca_verdict(cfg: dict, need_samsung: bool, need_hynix: bool) -> tuple[str, s
     hg = gap(hop, cons_h) if need_hynix else None
     if need_samsung:
         if sop is None:
-            lines.append(f"삼성 영업이익 미확인. 콘센 {cons_s:.1f}조. 공시제 {st or '없음'}.")
+            lines.append(f"삼성 영업이익 미확인. 콘센 {cons_s:.1f}조. 최근 공시: {st or '없음'}.")
         else:
             lines.append(f"삼성 영업이익 {sop:.1f}조 / 콘센 {cons_s:.1f}조 ({sg:+.1f}%).")
     if need_hynix:
         if hop is None:
-            lines.append(f"닉스 영업이익 미확인. 콘센 {cons_h:.1f}조. 공시제 {ht or '없음'}.")
+            lines.append(f"닉스 영업이익 미확인. 콘센 {cons_h:.1f}조. 최근 공시: {ht or '없음'}.")
         else:
             lines.append(f"닉스 영업이익 {hop:.1f}조 / 콘센 {cons_h:.1f}조 ({hg:+.1f}%).")
 
@@ -213,7 +225,7 @@ def dca_verdict(cfg: dict, need_samsung: bool, need_hynix: bool) -> tuple[str, s
     else:
         title = "2·3차 유지 | 콘센 -15% 이내"
         key = "EVENT:DCA_KEEP"
-        lines.append("지금 할 일: 2차·3차 가격대는 유지. 위로 추격해서 채우지 말세요.")
+        lines.append("지금 할 일: 2차·3차 가격대는 유지. 위로 추격해서 채우지 마세요.")
     lines.append("나중에: 삼성 2차 23.5만~24.5만, 3차 21만~22.5만. 닉스 2차 160만~170만, 3차 145만~155만.")
     lines.append("익절/줄일 때: 1차 매수가 -20% 조각만 절반 감액. 신용·미수 금지.")
     lines.append("하지 말 것: 잠정 전 전량 추가, 공시 미확인 상태에서 2·3차 체결.")
@@ -368,7 +380,7 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str
         if "samsung_prelim" in ids:
             cons = cfg.get("samsung_op_consensus_trn", 114)
             live_lines.append(
-                f"잠정 영업이익 기준 {cons}조. 플러마이너스는 ±5% 유지, +10%는 전자 28·닉스 21, -10%는 전자 20·닉스 16·주식 50."
+                f"잠정 영업이익 기준 {cons}조. 콘센 대비 ±5% 이내면 유지, +10%는 전자 28·닉스 21, -10%는 전자 20·닉스 16·주식 50."
             )
         if "samsung_confirm" in ids:
             live_lines.append("확정에서 HBM이 밀리면 전자 20·닉스 14. 가이던스가 내리고 재고가 늘면 반도체 32·KB 10·화재 6.")
@@ -377,7 +389,7 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str
         if "bok_nov" in ids:
             live_lines.append("11월에 3.25%가 확인되면 화재 3, 채권 안에서 10년 15. 종목은 그대로.")
         if "fomc_oct" in ids:
-            live_lines.append("10월 연준 회의는 점 그림이 없습니다. +25bp여도 12월 규칙을 앞당게 적용하지 말고, 현금만 15로 둘리세요.")
+            live_lines.append("10월 연준 회의는 점 그림이 없습니다. +25bp여도 12월 규칙을 앞당겨 적용하지 말고, 현금만 15로 늘리세요.")
         if "fomc_dec" in ids:
             live_lines.append("12월 연준: 동결+점 그림 내림이면 10년 18. +25bp면 닉스 16·현대차 3·현금 15. +50bp면 주식 35·현금 30으로 중지.")
     soon_lines = []
@@ -466,22 +478,24 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    later = [
-        "나중에: 빈자리는 현금으로 둘립니다. 새 종목은 넣지 말세요. 10월 22일 금통위, 10월 삼성 잠정·확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
-    ]
-    later.extend(soon_lines)
-    later.extend(live_lines)
-
-    lines = [
+    alloc = f"주식 {eq}, 채권 35(짧은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. " + " ".join(reasons)
+    head = [
         f"{stamp} | PORT 장전 체크",
-        "이게 무슨 알림: 8종목 유니버스 장전 체크입니다. 기본은 주식 55, 채권 35, 현금 10입니다. 버크셔ETF는 총자산 12%입니다.",
+        "이게 뭐 알림: 8종목 유니버스 장전 체크입니다. 기본은 주식 55, 채권 35, 현금 10입니다. 버크셔ETF는 총자산 12%입니다.",
         f"지금 결과/상태: 원달러 {fmt(fx, 1)}, WTI {fmt(wti, 2)}, 국고 3년 {fmt(ktb3, 3)}, 국고 10년 {fmt(ktb10, 3)}.",
-        f"지금 할 일: 주식 {eq}, 채권 35(짮은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. "
-        + " ".join(reasons),
-        *later,
-        "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
-        "하지 말 것: 추격 매수, 신용·미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
     ]
+    if live_lines:
+        # 이벤트 날: 이벤트 블록이 자체 지금 할 일/나중에/익절/하지 말 것을 갖고 있으므로 배분은 한 줄 참고로만 붙인다(중복 섹션 제거).
+        lines = [*head, *live_lines, f"배분 참고: {alloc.strip()}", *soon_lines]
+    else:
+        lines = [
+            *head,
+            f"지금 할 일: {alloc.strip()}",
+            "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요. 10월 22일 금통위, 10월 삼성 잠정·확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
+            *soon_lines,
+            "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
+            "하지 말 것: 추격 매수, 신용·미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
+        ]
 
     msg = "\n".join(lines)
     print(msg)
