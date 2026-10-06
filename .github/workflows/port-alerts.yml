@@ -94,6 +94,10 @@ on:
     - cron: "12 0 16 10 *"
     - cron: "12 0 23 10 *"
     - cron: "12 0 30 10 *"
+    # pyplq3 oneshot_kst (KST→UTC): 2026-10-27 20:40/21:40/22:40. 콜 08:00 ET = 21:00 KST
+    - cron: "40 11 27 10 *"
+    - cron: "40 12 27 10 *"
+    - cron: "40 13 27 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -207,6 +211,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 16 11 *" ]; then JOB=lgcnsq3
             elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
+            elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -589,6 +594,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/lgesq3_monitor.py auto
+      - name: Run pyplq3
+        if: steps.pick.outputs.job == 'pyplq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/pyplq3_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
