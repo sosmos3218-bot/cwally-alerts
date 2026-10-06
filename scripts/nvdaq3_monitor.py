@@ -222,7 +222,7 @@ def main() -> int:
             print(f"fetch fail {url}: {exc}")
     if mode != "dry" and not ok:
         if not state.get("fail_notified"):
-            emit(cfg, "[SMH] 엔비디아 3Q 조회 실패 | 판정 유보", [
+            emit(cfg, "[NVDA] 엔비디아 3Q 조회 실패 | 판정 유보", [
                 f"{stamp} | PORT | {cfg['event_label']}",
                 "이게 뭐 알림: 엔비디아 FY2027 3분기 매출, 매출총이익률, Rubin 비중, 중국 매출, 4분기 가이던스를 통과·중립·하향으로 판정합니다.",
                 f"지금 상태: 조회 실패. {err or '출처 없음'}. 숫자를 추정하지 않음.",
@@ -248,13 +248,13 @@ def main() -> int:
     b = cfg["baselines"]
     j = judge(parsed, b) if parsed.get("published") else None
     if j and j["thesis"] == "낮춤":
-        title = "[SMH] 엔비디아 3Q 기준 미달 | 보유 논거 낮춤"
+        title = "[NVDA] 엔비디아 3Q 기준 미달 | 보유 논거 낮춤"
         todo = "신규 매수 중단. 보유 논거는 낮춤. 원문 확인 전 전량 매도는 하지 마세요."
     elif j:
-        title = "[SMH] 엔비디아 3Q 체크 | 보유 논거 유지"
+        title = "[NVDA] 엔비디아 3Q 체크 | 보유 논거 유지"
         todo = "보유 논거 유지. 상단 초과만으로 추가매수하지 마세요."
     else:
-        title = "[SMH] 엔비디아 3Q 아직 없음 | 판정 유보"
+        title = "[NVDA] 엔비디아 3Q 아직 없음 | 판정 유보"
         todo = "공식 실적이 안 보입니다. 매수·매도 없음."
         j = {"rev": "확인불가", "gm": "확인불가", "rubin": "확인불가", "china": "확인불가", "q4": "확인불가", "thesis": "유보", "downs": 0}
     lines = [
