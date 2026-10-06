@@ -8,6 +8,7 @@ on:
   schedule:
     - cron: "0 0 * * 1-5"
     - cron: "20 6 * * 1-5"
+    - cron: "40 6 * * 1-5"
     - cron: "0 12 * * 0"
     - cron: "0 19 15 9 *"
     - cron: "45 18 16 9 *"
@@ -164,6 +165,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
             elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ]; then JOB=isrgq3
             elif [ "${{ github.event.schedule }}" = "5 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 20 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 23 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 0 25 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 2 12 *" ]; then JOB=aeo
+            elif [ "${{ github.event.schedule }}" = "40 6 * * 1-5" ]; then JOB=0090b0
             else JOB=morning
             fi
           fi
@@ -477,6 +479,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/aeo_monitor.py auto
+      - name: Run 0090b0
+        if: steps.pick.outputs.job == '0090b0'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/0090b0_monitor.py auto
       - name: Archive ntfy
         run: python scripts/ntfy_archive.py
       - name: Persist state
