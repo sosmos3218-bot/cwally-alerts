@@ -57,5 +57,5 @@ jobs:
           git add state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
-          git pull --rebase origin main || true
+          git pull --rebase origin main
           git push origin HEAD:main

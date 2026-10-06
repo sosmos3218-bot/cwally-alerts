@@ -83,6 +83,9 @@ def playbook(cfg: dict, result: str) -> list[str]:
 def main() -> int:
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
+    if now.year != int(cfg.get("event_year", 2026)):
+        print(f"year guard: {now.year} != {cfg.get('event_year', 2026)}; silent")
+        return 0
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
     state = {

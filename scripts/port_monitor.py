@@ -507,14 +507,6 @@ def main() -> int:
             5 if halt or (vkey == "EVENT:DCA_CANCEL") else (4 if is_live else 3),
             "chart_with_upwards_trend,kr",
         )
-    try:
-        run_cmd([sys.executable, str(ROOT / "scripts" / "brk10_monitor.py"), "event"], check=False)
-    except Exception as exc:
-        print(f"brk10 hook fail: {exc}", file=sys.stderr)
-    try:
-        run_cmd([sys.executable, str(ROOT / "scripts" / "googl_monitor.py"), "event"], check=False)
-    except Exception as exc:
-        print(f"googl hook fail: {exc}", file=sys.stderr)
     return 0
 
 

@@ -4,7 +4,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "event_year": 2026,
-  "schedule_kst": "2026-09-22 09:00",
+  "schedule_kst": "09:00",
   "window_start_kst": "2026-09-22 00:00",
   "expire_date": "2026-11-03",
   "invalidate_date": "2026-11-01",

@@ -19,7 +19,6 @@ on:
     - cron: "0 12 27 10 *"
     - cron: "40 6 28 10 *"
     - cron: "40 6 29 10 *"
-    - cron: "45 13 2 10 *"
     - cron: "45 13 14 10 *"
     - cron: "10 0 15 10 *"
     - cron: "0 13 14 10 *"
@@ -46,6 +45,7 @@ on:
     - cron: "10 0 5 12 *"
     - cron: "40 20 20 10 *"
     - cron: "10 22 20 10 *"
+    - cron: "0 23 20 10 *"
     - cron: "5 0 13 10 *"
     - cron: "5 0 20 10 *"
     - cron: "5 0 27 10 *"
@@ -70,11 +70,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | druck | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
+        description: steel | alux | square | clarity | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
+        options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -162,7 +162,6 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
             elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
-            elif [ "${{ github.event.schedule }}" = "45 13 2 10 *" ]; then JOB=nfp1002
             elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
             elif [ "${{ github.event.schedule }}" = "10 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "30 6 7 10 *" ]; then JOB=zs1006
@@ -173,7 +172,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
             elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo
             elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
-            elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ]; then JOB=isrgq3
+            elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ] || [ "${{ github.event.schedule }}" = "0 23 20 10 *" ]; then JOB=isrgq3
             elif [ "${{ github.event.schedule }}" = "5 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 20 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 23 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 0 25 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 2 12 *" ]; then JOB=aeo
             elif [ "${{ github.event.schedule }}" = "40 6 * * 1-5" ]; then JOB=0090b0
             elif [ "${{ github.event.schedule }}" = "15 17 6 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 7 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 8 10 *" ]; then JOB=ustsy10
@@ -222,8 +221,8 @@ jobs:
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + druck + pltr + addstop + sec + krbank
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'druck' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
+      - name: Run steel + alux + clarity + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'clarity' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
@@ -257,6 +256,8 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
             python scripts/port_monitor.py
+            python scripts/brk10_monitor.py event
+            python scripts/googl_monitor.py event
           fi
           if [ "$JOB" = "portlight" ]; then
             python scripts/portlight_monitor.py auto
@@ -277,9 +278,6 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "2ub" ]; then
             python scripts/2ub_monitor.py auto
           fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "druck" ]; then
-            python scripts/druck_monitor.py
-          fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
             python scripts/pltr_monitor.py auto
           fi
@@ -288,7 +286,6 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
             python scripts/sec_monitor.py auto
-            python scripts/secdvd_monitor.py
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krbank" ]; then
             MODE=auto
@@ -297,17 +294,12 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/ratesbell_monitor.py auto
-            python scripts/pce26_monitor.py auto
-            python scripts/xau930_monitor.py auto
-            python scripts/muq4_monitor.py auto
-            python scripts/btc21_monitor.py
             python scripts/btcbox_monitor.py
             python scripts/xrpbox_monitor.py
             python scripts/btcoct_monitor.py
             python scripts/btc90_monitor.py
             python scripts/smh_monitor.py
             python scripts/sndk_monitor.py auto
-            python scripts/secdvd_monitor.py
             python scripts/gval_monitor.py
             python scripts/burry_monitor.py auto
             python scripts/s455850_monitor.py
@@ -323,9 +315,10 @@ jobs:
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
             python scripts/oklo_monitor.py auto
+            python scripts/d0chk_monitor.py
           fi
           python scripts/ntfy_archive.py
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + druck + pltr + addstop + k091160 + skc011790 (afternoon)
+      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'k091160' || steps.pick.outputs.job == 'skc011790' || steps.pick.outputs.job == 'all'
         env:
           NTFY_TOPIC: cwally-port
@@ -371,9 +364,6 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
             python scripts/protec_monitor.py event
           fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/druck_monitor.py
-          fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
             python scripts/pltr_monitor.py auto
           fi
@@ -397,24 +387,14 @@ jobs:
             python scripts/yc232140_monitor.py auto
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/pce26_monitor.py auto
-            python scripts/xau930_monitor.py auto
-            python scripts/muq4_monitor.py auto
-            python scripts/btc21_monitor.py
-            python scripts/secdvd_monitor.py
             python scripts/nov3_monitor.py
             python scripts/semrev_monitor.py
             python scripts/dkq3_monitor.py auto
             python scripts/hsteelq3_monitor.py auto
             python scripts/genpact_monitor.py auto
+            python scripts/d0chk_monitor.py
           fi
           python scripts/ntfy_archive.py
-      - name: Run nfp1002
-        if: steps.pick.outputs.job == 'nfp1002'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/nfp1002_monitor.py auto
       - name: Run cpi1014
         if: steps.pick.outputs.job == 'cpi1014'
         env:
@@ -517,8 +497,8 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state configs/skc011790.json || true
+          git add state configs/skc011790.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update alert state"
-          git pull --rebase origin main || true
+          git pull --rebase origin main
           git push origin HEAD:main

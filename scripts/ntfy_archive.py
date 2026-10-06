@@ -49,18 +49,7 @@ def fetch_topic(server: str, topic: str) -> list[dict]:
     return out
 
 
-def run_btcwk() -> None:
-    try:
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import btcwk_monitor
-
-        btcwk_monitor.main()
-    except Exception as exc:
-        print(f"btcwk hook: {exc}")
-
-
 def main() -> int:
-    run_btcwk()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     prev = {"items": []}
     if STATE_PATH.exists():

@@ -1,7 +1,7 @@
 {
   "name": "ccrev",
   "title_prefix": "[CCREV]",
-  "display": "091160 55	o40 + 커버드콜 0% 유지(인출 시에만 10-20% 재검토)",
+  "display": "091160 55→40 + 커버드콜 0% 유지(인출 시에만 10-20% 재검토)",
   "as_of": "2026-09-17",
   "schedule_kst": "09:00",
   "ntfy_topic": "cwally-port",

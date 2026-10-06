@@ -6,7 +6,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` only for Kikii/server.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).
-- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]`.
+- Title prefix required: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[CLARITY]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]` `[0005D0]` `[0192T0]` `[091160]` `[278240]` `[2UB]` `[377990]` `[489000]` `[ADDSTOP]` `[AEO]` `[BRK10]` `[BTC90]` `[BTCOCT]` `[CL]` `[CPI]` `[DHR]` `[DRAM27]` `[GENPACT]` `[GOOGL]` `[ISRG]` `[KOSBRK]` `[NKE]` `[NOV3]` `[OKLO]` `[PATH]` `[PCOR]` `[PFFD]` `[PLTR]` `[PROTEC]` `[SEMREV]` `[SHINWON]` `[SKC]` `[SMH]` `[ZS]`.
 - Hourly cron is forbidden. No new workflow file.
 - Recurring alerts attach to an existing repeating slot first (see "Repeating slots" below): add the script to that slot's job in the existing workflow and set `schedule_kst` to the slot time. That is a normal alert add and needs no extra approval.
 - A new repeating cron (a time that is not an existing slot) needs chat approval. After approval, record it in `configs/<name>.json` as `"cron_approved": "YYYY-MM-DD"` plus `"cron_utc": "<cron string>"`, and add the slot to the table below in the same commit. A repeating cron without `cron_approved` is a violation.
