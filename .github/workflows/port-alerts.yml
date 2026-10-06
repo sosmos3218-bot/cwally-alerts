@@ -75,3 +75,156 @@ on:
         default: all
         type: choice
         options: [all, steel, alux, square, clarity, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, druck, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
+      steel_mode:
+        description: weekly | quarterly | event
+        default: weekly
+        type: choice
+        options: [weekly, quarterly, event]
+      alux_mode:
+        description: weekly | event
+        default: weekly
+        type: choice
+        options: [weekly, event]
+      hce_mode:
+        description: daily | event
+        default: daily
+        type: choice
+        options: [daily, event]
+      silicon2_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      cover0198_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      lg_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      wl_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      iren_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      yencarry_mode:
+        description: auto | fed | weekly | event | boj_press
+        default: auto
+        type: choice
+        options: [auto, fed, weekly, event, boj_press]
+      krwfx_mode:
+        description: auto | weekly | force
+        default: auto
+        type: choice
+        options: [auto, weekly, force]
+      force_square:
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Decide jobs
+        id: pick
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          YC=auto
+          KX=auto
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
+            elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+            elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
+            elif [ "${{ github.event.schedule }}" = "0 19 15 9 *" ]; then JOB=clarity
+            elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
+            elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
+            elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
+            elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
+            elif [ "${{ github.event.schedule }}" = "45 13 2 10 *" ]; then JOB=nfp1002
+            elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
+            elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
+            elif [ "${{ github.event.schedule }}" = "10 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "30 6 7 10 *" ]; then JOB=zs1006
+            elif [ "${{ github.event.schedule }}" = "10 7 6 10 *" ]; then JOB=sk1006
+            elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
+            elif [ "${{ github.event.schedule }}" = "40 6 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
+            elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
+            elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
+            elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo
+            elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
+            elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ]; then JOB=isrgq3
+            elif [ "${{ github.event.schedule }}" = "5 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 20 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 23 24 11 *" ] || [ "${{ github.event.schedule }}" = "12 0 25 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 1 12 *" ] || [ "${{ github.event.schedule }}" = "12 23 2 12 *" ]; then JOB=aeo
+            elif [ "${{ github.event.schedule }}" = "40 6 * * 1-5" ]; then JOB=0090b0
+            elif [ "${{ github.event.schedule }}" = "15 17 6 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 7 10 *" ] || [ "${{ github.event.schedule }}" = "15 17 8 10 *" ]; then JOB=ustsy10
+            elif [ "${{ github.event.schedule }}" = "10 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 3 11 *" ]; then JOB=lgiq3
+            else
+              echo "unmatched schedule: ${{ github.event.schedule }}"
+              exit 1
+            fi
+          fi
+          [ -z "$JOB" ] && JOB=all
+          echo "job=$JOB" >> "$GITHUB_OUTPUT"
+          DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
+          if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
+          elif [ "$DOW" = "1" ]; then SM=weekly
+          else SM=event
+          fi
+          AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
+          if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
+          if [ "$JOB" = "hce" ]; then HM=daily; fi
+          S2=event
+          C8=event
+          LG=event
+          WL=event
+          IR=event
+          if [ "$DOW" = "1" ]; then IR=weekly; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SM="${{ github.event.inputs.steel_mode }}"
+            AM="${{ github.event.inputs.alux_mode }}"
+            HM="${{ github.event.inputs.hce_mode }}"
+            S2="${{ github.event.inputs.silicon2_mode }}"
+            C8="${{ github.event.inputs.cover0198_mode }}"
+            LG="${{ github.event.inputs.lg_mode }}"
+            WL="${{ github.event.inputs.wl_mode }}"
+            IR="${{ github.event.inputs.iren_mode }}"
+            YC="${{ github.event.inputs.yencarry_mode }}"
+            KX="${{ github.event.inputs.krwfx_mode }}"
+            [ -z "$KX" ] && KX=auto
+          fi
+          echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
+          echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
+          echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
+          echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
+          echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
+          echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
+          echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
+          echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
+          echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
+          echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
+      - name: Run lgiq3
+        if: steps.pick.outputs.job == 'lgiq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/lgiq3_monitor.py auto
