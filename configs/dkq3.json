@@ -35,8 +35,7 @@
     "cut": "3Q 영업이익 230억 이하, 영업이익률 10% 미만, 해외 비중 12% 미만, 판촉비 잠식, 로렐린 3개월 허가 지연 또는 진천 공장 지연 공시."
   },
   "sources": [
-    "https://finance.naver.com/item/news_notice.naver?code=086450",
-    "https://finance.naver.com/item/news.naver?code=086450",
-    "https://dart.fss.or.kr/dsab007/detailSearch.ax"
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=086450&page=1&pageSize=30",
+    "https://m.stock.naver.com/api/news/stock/086450?pageSize=20&page=1"
   ]
 }

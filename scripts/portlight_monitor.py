@@ -89,22 +89,16 @@ def ecos_series(cfg: dict, item: str) -> list[float]:
         return []
 
 
-def naver_yield(code: str) -> float | None:
+def naver_yield(code: str):
+    """Latest KTB yield via Naver mobile marketIndex API (legacy interestDailyQuote is 410)."""
     if not code:
         return None
-    url = (
-        "https://finance.naver.com/marketindex/interestDailyQuote.naver?marketindexCd="
-        + urllib.parse.quote(code)
-    )
-    req = urllib.request.Request(url, headers=UA)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import naver_api
+
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            html = resp.read().decode("euc-kr", errors="ignore")
-        rows = re.findall(r"(\d{4}\.\d{2}\.\d{2})</td>\s*<td[^>]*>\s*([0-9]+\.[0-9]+)", html)
-        if rows:
-            return float(rows[0][1])
-        nums = re.findall(r">([0-9]\.[0-9]{2,3})<", html)
-        return float(nums[0]) if nums else None
+        val, _day = naver_api.bond_close(code)
+        return val
     except Exception as exc:
         print(f"naver fail {code}: {exc}", file=sys.stderr)
         return None

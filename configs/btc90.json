@@ -10,11 +10,14 @@
   "confirm_usd": 90000,
   "hold_usd": 80000,
   "fail_usd": 75000,
-  "fomc_dates": ["2026-10-28", "2026-10-29"],
+  "fomc_dates": [
+    "2026-10-28",
+    "2026-10-29"
+  ],
   "fomc_note": "FOMC 2026-10-27~28, 발표 10-28 14:00 ET / 10-29 03:00 KST",
   "schedule_note": "새 cron 없음. 평일 기존 09:00 KST morning에만 붙임. UTC 일간 종가(09:00 KST)와 직전 미국 현물 ETF를 본다. 연도 가드 2026만. 첫 스냅샷 후 국면 변경, FOMC 창구, 클라리티 공식 일정만 재발송.",
   "sources": {
-    "daily": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=8",
+    "daily": "https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=8",
     "kraken_daily": "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440",
     "spot": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
     "etf": "https://farside.co.uk/btc/",

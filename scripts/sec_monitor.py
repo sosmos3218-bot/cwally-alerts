@@ -69,8 +69,8 @@ WATCH_LINE = {
 }
 
 EARN_SOURCES = [
-    "https://finance.naver.com/item/news_news.naver?code=005930&page=1",
-    "https://finance.naver.com/item/main.naver?code=005930",
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=005930&page=1&pageSize=20",
+    "https://m.stock.naver.com/api/news/stock/005930?pageSize=20&page=1",
     "https://www.samsung.com/sec/ir/financial-information/earnings-release/",
     "https://news.samsung.com/kr/?s=%EC%98%81%EC%97%85%EC%9D%B4%EC%9D%B5",
 ]
@@ -194,7 +194,16 @@ def fetch_text(url: str) -> str:
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=25) as resp:
         raw = resp.read()
-    return raw.decode("utf-8", errors="ignore")
+    text = raw.decode("utf-8", errors="ignore")
+    if text.lstrip()[:1] in "[{":
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import naver_api
+
+            return naver_api.flatten_text(json.loads(text))
+        except (ValueError, ImportError):
+            pass
+    return text
 
 
 def to_jo(num: float, unit: str) -> float:

@@ -67,33 +67,40 @@ def box_stats(rows, lookback: int, range_max: float):
     return ok, range_pct, hi, lo
 
 
+CONSENSUS_HIST: dict = {}
+
+
 def earnings_drop(ticker: str, drop_pct: float):
-    url = (
-        "https://query2.finance.yahoo.com/v10/finance/quoteSummary/"
-        + urllib.parse.quote(ticker)
-        + "?modules=earningsTrend"
-    )
+    """Consensus operating-profit revision via Naver (Yahoo quoteSummary returns 401).
+
+    Naver gives only the current consensus, so the daily value is kept in state
+    (consensus_hist) and compared with the oldest sample 7~35 days back.
+    """
+    code = ticker.split(".")[0]
     try:
-        payload = http_json(url)
-        result = payload["quoteSummary"]["result"][0]
-        trends = (((result.get("earningsTrend") or {}).get("trend")) or [])
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import naver_api
+
+        info = naver_api.get_json(f"https://m.stock.naver.com/api/stock/{code}/finance/quarter")["financeInfo"]
+        key = next(t["key"] for t in info["trTitleList"] if t.get("isConsensus") == "Y")
+        row = next(r for r in info["rowList"] if r.get("title") == "영업이익")
+        avg = naver_api.num(row["columns"][key]["value"])
     except Exception as exc:
         print(f"earn fetch fail {ticker}: {exc}", file=sys.stderr)
         return None, None, None
-    pick = None
-    for item in trends:
-        if item.get("period") in {"0q", "+1q"}:
-            pick = item
-            if item.get("period") == "0q":
-                break
-    if not pick:
+    if avg is None:
         return None, None, None
-    est = pick.get("earningsEstimate") or {}
-    avg = (est.get("avg") or {}).get("raw")
-    ago = (est.get("thirtyDaysAgo") or {}).get("raw") or (est.get("sevenDaysAgo") or {}).get("raw")
-    if avg is None or ago in (None, 0):
-        return None, avg, ago
-    chg = avg / ago - 1
+    today = datetime.now(KST).date()
+    hist = CONSENSUS_HIST.setdefault(ticker, {})
+    hist = {d: v for d, v in hist.items() if d.startswith(key + ":")} or {}
+    hist[f"{key}:{today.isoformat()}"] = avg
+    cutoff = (today - timedelta(days=35)).isoformat()
+    hist = {d: v for d, v in hist.items() if d.split(":")[1] >= cutoff}
+    CONSENSUS_HIST[ticker] = hist
+    old = [v for d, v in sorted(hist.items()) if (today - datetime.strptime(d.split(":")[1], "%Y-%m-%d").date()).days >= 7]
+    if not old or old[0] == 0:
+        return None, avg, None
+    chg = avg / old[0] - 1
     return chg <= drop_pct, avg, chg
 
 
@@ -151,6 +158,7 @@ def main() -> int:
             prev.update(json.loads(STATE_PATH.read_text(encoding="utf-8")))
         except json.JSONDecodeError:
             pass
+    CONSENSUS_HIST.update(prev.get("consensus_hist") or {})
 
     rows, last = [], None
     range_pct = hi = lo = None
@@ -269,6 +277,7 @@ def main() -> int:
                 "last_px": last,
                 "range_pct": range_pct,
                 "news_hits": news_hits,
+                "consensus_hist": CONSENSUS_HIST,
                 "last_alert_date": today.isoformat() if send else last_alert,
             },
             ensure_ascii=False,

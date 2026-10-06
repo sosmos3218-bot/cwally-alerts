@@ -89,24 +89,15 @@ def ecos_yield(cfg: dict, item: str):
 
 
 def naver_yield(code: str):
+    """Latest KTB yield via Naver mobile marketIndex API (legacy interestDailyQuote is 410)."""
     if not code:
         return None
-    url = (
-        "https://finance.naver.com/marketindex/interestDailyQuote.naver?marketindexCd="
-        + urllib.parse.quote(code)
-    )
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import naver_api
+
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            html = resp.read().decode("euc-kr", errors="ignore")
-        rows = re.findall(
-            r"(\d{4}\.\d{2}\.\d{2})</td>\s*<td[^>]*>\s*([0-9]+\.[0-9]+)",
-            html,
-        )
-        if rows:
-            return float(rows[0][1])
-        nums = re.findall(r">([0-9]\.[0-9]{2,3})<", html)
-        return float(nums[0]) if nums else None
+        val, _day = naver_api.bond_close(code)
+        return val
     except Exception as exc:
         print(f"naver fail {code}: {exc}", file=sys.stderr)
         return None
@@ -156,24 +147,20 @@ def parse_op_trn(text: str) -> float | None:
 
 
 def latest_notice_op(code: str) -> tuple[float | None, str | None]:
-    html = http_get(f"https://finance.naver.com/item/news_notice.naver?code={code}")
-    if not html:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import naver_api
+
+    try:
+        items = naver_api.notices(code, 30)
+    except Exception as exc:
+        print(f"notice fail {code}: {exc}", file=sys.stderr)
         return None, None
-    items = re.findall(
-        r'href="([^"]+)"[^>]*>([^<]*(잠정실적|매출액또는손익|영업실적|실적발표)[^<]*)',
-        html,
-        flags=re.I,
-    )
-    title = items[0][1].strip() if items else None
-    blob = title or ""
-    if items:
-        href = items[0][0]
-        if href.startswith("/"):
-            href = "https://finance.naver.com" + href
-        body = http_get(href)
-        if body:
-            blob = title + " " + re.sub(r"<[^>]+>", " ", body)
-    op = parse_op_trn(blob or html)
+    pat = re.compile(r"잠정실적|매출액또는손익|영업실적|실적발표|영업\(잠정\)")
+    hit = next((it for it in items if pat.search(it["title"])), None)
+    if not hit:
+        return None, None
+    title = hit["title"]
+    op = parse_op_trn(title + " " + hit["text"])
     return op, title
 
 

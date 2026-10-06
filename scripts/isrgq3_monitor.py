@@ -16,7 +16,8 @@ from ntfy_util import publish, resolve_server, resolve_topic
 KST = timezone(timedelta(hours=9))
 CFG = ROOT / "configs" / "isrgq3.json"
 STATE = ROOT / "state" / "isrgq3.json"
-UA = {"User-Agent": "cwally-alerts/1.0 (public filings; GitHub Actions)"}
+# SEC/BLS block anonymous UAs; they require a contact (https://www.sec.gov/os/accessing-edgar-data)
+UA = {"User-Agent": "cwally-alerts sosmos3218@gmail.com", "Accept-Encoding": "identity"}
 
 
 def fetch(url):

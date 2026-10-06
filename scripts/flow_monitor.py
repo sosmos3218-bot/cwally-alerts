@@ -43,43 +43,23 @@ def parse_uk(val: str) -> float:
 
 
 def fetch_flow(day: str) -> dict | None:
-    import requests
+    """KOSPI investor net buy (won) from Naver mobile API. Legacy investorDealTrendDay is 410."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import naver_api
 
-    url = NAVER.format(day=day)
+    now_kst = datetime.now(timezone(timedelta(hours=9)))
+    if day == now_kst.strftime("%Y%m%d") and now_kst.strftime("%H:%M") < "15:35":
+        print("장중 수급(잠정치)이라 판정 안 함; quiet skip")
+        return None
     try:
-        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"}, timeout=30)
-        resp.encoding = "euc-kr"
-        if resp.status_code == 410 or resp.status_code >= 400:
-            print(f"Naver flow HTTP {resp.status_code}; quiet skip")
-            return None
-        resp.raise_for_status()
-    except requests.HTTPError as exc:
-        print(f"Naver flow HTTPError; quiet skip: {exc}")
+        flow = naver_api.kospi_trend(day)
+    except Exception as exc:
+        print(f"Naver mobile flow fail; quiet skip: {exc}")
         return None
-    except requests.RequestException as exc:
-        print(f"Naver flow request error; quiet skip: {exc}")
+    if not flow:
+        print(f"Naver에 {day} 수급 없음(장중이거나 휴장); quiet skip")
         return None
-    from bs4 import BeautifulSoup
-
-    target = f"{day[2:4]}.{day[4:6]}.{day[6:8]}"
-    soup = BeautifulSoup(resp.text, "html.parser")
-    for tr in soup.find_all("tr"):
-        cells = [td.get_text(strip=True) for td in tr.find_all("td")]
-        if not cells or cells[0] != target or len(cells) < 11:
-            continue
-        return {
-            "개인": parse_uk(cells[1]),
-            "외국인": parse_uk(cells[2]),
-            "기관합계": parse_uk(cells[3]),
-            "금융투자": parse_uk(cells[4]),
-            "투신(사모)": parse_uk(cells[6]),
-            "은행": parse_uk(cells[7]),
-            "기타금융": parse_uk(cells[8]),
-            "연기금 등": parse_uk(cells[9]),
-            "기타법인": parse_uk(cells[10]) if len(cells) > 10 else 0.0,
-        }
-    print(f"Naver에 {target} 수급 없음; quiet skip")
-    return None
+    return flow
 
 
 def fetch_deposit_series():
@@ -145,10 +125,23 @@ def fetch_index(day: str):
     day_dt = datetime.strptime(day, "%Y%m%d").date()
     start = (day_dt - timedelta(days=10)).strftime("%Y-%m-%d")
     end = day_dt.strftime("%Y-%m-%d")
-    idx = fdr.DataReader("KS11", start, end)
-    dates = idx.index.strftime("%Y-%m-%d").tolist()
-    if idx.empty or end not in dates:
-        return None, None
+    try:
+        idx = fdr.DataReader("KS11", start, end)
+        dates = idx.index.strftime("%Y-%m-%d").tolist()
+    except Exception as exc:
+        print(f"fdr index fail: {exc}")
+        idx, dates = None, []
+    if idx is None or idx.empty or end not in dates:
+        try:
+            sys.path.insert(0, str(ROOT / "scripts"))
+            import naver_api
+
+            rows = naver_api.get_json("https://m.stock.naver.com/api/index/KOSPI/price?pageSize=3&page=1")
+            row = next(r for r in rows if r.get("localTradedAt") == end)
+            return naver_api.num(row["closePrice"]), naver_api.num(row["fluctuationsRatio"])
+        except Exception as exc:
+            print(f"naver index fail: {exc}")
+            return None, None
     close = float(idx.loc[end]["Close"])
     loc = idx.index.get_loc(end)
     if loc == 0:
@@ -168,10 +161,14 @@ def ntfy(server, topic, title, message, priority=3):
 
 def main() -> int:
     now = datetime.now(KST)
-    if now.weekday() >= 5:
-        print("weekend skip")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import kr_calendar
+
+    session = kr_calendar.session_day(now)
+    if not kr_calendar.is_trading_day(session):
+        print(f"{session} KRX 휴장/주말 skip")
         return 0
-    day = now.strftime("%Y%m%d")
+    day = session.strftime("%Y%m%d")
     cfg = {}
     if CFG_PATH.exists():
         try:
@@ -201,7 +198,7 @@ def main() -> int:
     idx_txt = f"코스피 {close:,.2f} ({chg:+.2f}%)" if close is not None else "지수 없음"
     flags = []
     if h4:
-        flags.append("외국인+기관이 각 3천억 이상 사다(훨호)")
+        flags.append("외국인+기관이 각 3천억 이상 샀다(강한 매수)")
     else:
         flags.append("외국인+기관 동시 강매수는 아님")
     if h5_info:
@@ -223,10 +220,10 @@ def main() -> int:
         do_now = "장이 과열 조짐입니다. 새로 추격해 사지 말고, 이미 있는 포지션은 익절 라인만 지키세요."
         title = "[FLOW] 과열 조짐 | 추격 금지"
     elif h4:
-        do_now = "외국인·기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 말세요."
+        do_now = "외국인·기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 마세요."
         title = "[FLOW] 외국인+기관 강매수"
     elif h5:
-        do_now = "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 말세요."
+        do_now = "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 마세요."
         title = "[FLOW] 예탁금 호흡 | 종목 주문 아님"
     else:
         do_now = "특별한 강매수·과열 신호는 없습니다. 기존 계획대로 두세요."

@@ -88,27 +88,16 @@ def yahoo_price(ticker):
 
 
 def fetch_notices(code):
-    url = f"https://finance.naver.com/item/news_notice.naver?code={code}"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+    """Exchange/DART notices via stock.naver.com API (legacy news_notice page is 410)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import naver_api
+
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            html = resp.read().decode("euc-kr", errors="ignore")
+        items = naver_api.notices(code, 15)
     except Exception as exc:
         print(exc, file=sys.stderr)
         return []
-    items = []
-    for m in re.finditer(r'<a[^>]*href="(/item/news_read[^"]+)"[^>]*>([^<]+)</a>', html, re.I):
-        title = unescape(re.sub(r"\s+", " ", m.group(2))).strip()
-        href = "https://finance.naver.com" + unescape(m.group(1))
-        if title:
-            items.append({"id": href, "title": title, "url": href})
-    out, seen = [], set()
-    for it in items:
-        if it["id"] in seen:
-            continue
-        seen.add(it["id"])
-        out.append(it)
-    return out[:15]
+    return [{"id": it["id"], "title": it["title"], "url": it["url"]} for it in items if it["title"]][:15]
 
 
 def ntfy_publish(server, topic, title, message, priority, tags):
@@ -152,6 +141,9 @@ def main():
     notices = fetch_notices(cfg["code"])
     prev = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {"seen_notices": [], "zone": None}
     seen = list(prev.get("seen_notices") or [])
+    if notices and all(str(s).startswith("http") for s in seen):
+        # 2026-10 migration: legacy ids were finance.naver URLs; seed silently instead of re-sending old notices
+        seen = [n["id"] for n in notices]
     new = [n for n in notices if n["id"] not in set(seen)]
     hot = [n for n in new if any(k.lower() in n["title"].lower() for k in cfg["keywords"])]
     for n in reversed(new):

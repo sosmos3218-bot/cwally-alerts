@@ -47,7 +47,7 @@
     "fx_hit": "영업이익이 1,400~1,800억이고 환율·재고·시차 문구가 있으며 점유율 훼손이 없으면 시차 가정 맞음."
   },
   "sources": [
-    "https://finance.naver.com/item/dart.naver?code=011070",
-    "https://finance.naver.com/item/news.naver?code=011070"
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=011070&page=1&pageSize=30",
+    "https://m.stock.naver.com/api/news/stock/011070?pageSize=20&page=1"
   ]
 }

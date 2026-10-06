@@ -71,10 +71,17 @@ def load_state() -> dict:
 
 def main() -> int:
     now = datetime.now(KST)
-    if now.weekday() >= 5:
-        print("weekend skip")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import kr_calendar
+
+    session = kr_calendar.session_day(now)
+    if not kr_calendar.is_trading_day(session):
+        print(f"{session} KRX 휴장/주말 skip")
         return 0
-    day = now.strftime("%Y%m%d")
+    if session == now.date() and now.strftime("%H:%M") < "15:35":
+        print("장중 수급(잠정치)이라 판정 안 함; silent")
+        return 0
+    day = session.strftime("%Y%m%d")
     st = load_state()
     if st.get("last_day") == day:
         print("already sent today; silent")
@@ -88,7 +95,8 @@ def main() -> int:
                 f"삼성전자우·하이닉스 수급 조회 실패: {exc}\n판정은 보내지 않았습니다. 다음 영업일 자동 재시도.", 3, ["warning"])
         return 0
     if sec is None and hyx is None:
-        print(f"{day} 데이터 없음(휴장 추정); silent")
+        # 영업일인데 행이 없으면 휴장이 아니라 미게시(지연)다. 판정하지 않고 다음 슬롯 재시도.
+        print(f"{day} 영업일 데이터 미게시; silent retry next slot")
         return 0
     if sec is None or hyx is None:
         publish(resolve_topic("ops"), "[FLOW] 수급 누락 | 판정 미갱신",

@@ -63,68 +63,34 @@ def http_text(url):
 
 
 def fetch_3q_notice():
-    hits = []
-    urls = [
-        "https://m.stock.naver.com/front-api/disclosure/list?reutersCode=267270&pageSize=30",
-        "https://m.stock.naver.com/api/json/news/newsListJson.nhn?code=267270&pageSize=30",
-    ]
-    for url in urls:
-        try:
-            payload = http_json(url)
-        except Exception as exc:
-            print(f"notice fetch fail {url}: {exc}", file=sys.stderr)
-            continue
-        rows = payload
-        for key in ("result", "data", "list", "newsList"):
-            if isinstance(payload, dict) and key in payload:
-                rows = payload[key]
-                break
-        if isinstance(rows, dict):
-            rows = rows.get("list") or rows.get("items") or []
-        if not isinstance(rows, list):
-            continue
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            title = str(row.get("title") or row.get("tit") or row.get("reportNm") or "")
-            raw_dt = str(
-                row.get("datetime")
-                or row.get("date")
-                or row.get("rceptDt")
-                or row.get("regDate")
-                or ""
-            )
-            hits.append((title, raw_dt))
-    if not hits:
-        try:
-            html = http_text("https://finance.naver.com/item/news_notice.naver?code=267270")
-        except Exception as exc:
-            print(f"notice html fail: {exc}", file=sys.stderr)
-            html = ""
-        for m in re.finditer(r"(20\d{2}[.-]\d{2}[.-]\d{2}).{0,80}([^<]{4,80})", html):
-            hits.append((m.group(2), m.group(1)))
+    """3Q earnings IR/잠정실적 notice via stock.naver.com notice API.
 
-    picked = None
-    for title, raw_dt in hits:
-        if not any(k in title for k in ("기업설명회", "잠정실적", "영업(잠정)", "Earnings", "IR")):
-            continue
-        if any(k in title for k in ("1분기", "2분기", "1Q", "2Q", "Q1", "Q2")):
-            continue
-        digits = re.sub(r"\D", "", raw_dt)[:8]
-        if len(digits) == 8:
-            day = f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
-        else:
-            continue
+    Legacy finance.naver news_notice is 410 and m.stock front-api/disclosure is 404.
+    Only notices whose body is about 3Q results count; roadshow/Corporate Day IR does not.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import naver_api
+
+    try:
+        items = naver_api.notices("267270", 30)
+    except Exception as exc:
+        print(f"notice api fail: {exc}", file=sys.stderr)
+        return None
+    for it in items:
+        title, text = it["title"], it["text"]
+        day = it["datetime"][:10]
         if day < NOTICE_CUTOFF:
             continue
-        body_dates = re.findall(r"2026[.-](1[01])[.-](\d{2})", title)
-        if body_dates:
-            mm, dd = body_dates[0]
-            day = f"2026-{mm}-{dd}"
-        kind = "ir" if "기업설명회" in title or "IR" in title else "print"
-        picked = {"title": title.strip(), "date": day, "kind": kind}
-        break
-    return picked
+        if "영업(잠정)" in title or "잠정실적" in title:
+            if "2026-07-01" not in text:
+                continue
+            return {"title": title.strip(), "date": day, "kind": "print"}
+        if "기업설명회" in title or "IR" in title:
+            if not any(k in text for k in ("3분기", "3Q", "'26년 3분기", "26년 3분기")):
+                continue
+            m = __import__("re").search(r"일시\s*(2026-\d{2}-\d{2})", text)
+            return {"title": title.strip(), "date": m.group(1) if m else day, "kind": "ir"}
+    return None
 
 
 def yahoo_price(ticker: str):

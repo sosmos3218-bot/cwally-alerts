@@ -15,7 +15,8 @@ from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "pltr.json"
 STATE_PATH = ROOT / "state" / "pltr.json"
-UA = {"User-Agent": "cwally-alerts research monitor"}
+# SEC/BLS block anonymous UAs; they require a contact (https://www.sec.gov/os/accessing-edgar-data)
+UA = {"User-Agent": "cwally-alerts sosmos3218@gmail.com", "Accept-Encoding": "identity"}
 
 DATE_RE = re.compile(
     r"announces date of (third|3rd) quarter 2026 earnings|third quarter 2026 earnings release and webcast",

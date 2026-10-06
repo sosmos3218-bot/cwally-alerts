@@ -47,7 +47,16 @@ def emit(cfg: dict, title: str, lines: list[str], priority: int = 4) -> None:
 def fetch(url: str) -> str:
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=25) as resp:
-        return resp.read().decode("utf-8", errors="ignore")
+        text = resp.read().decode("utf-8", errors="ignore")
+    if text.lstrip()[:1] in "[{":
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import naver_api
+
+            return naver_api.flatten_text(json.loads(text))
+        except (ValueError, ImportError):
+            pass
+    return text
 
 
 def strip_html(html: str) -> str:
@@ -251,7 +260,7 @@ def main() -> int:
         "익절/줄일 때: 이 알림은 경로 판정이지 매도 지시가 아님. 1,200억 초과만으로 익절하지 마세요.",
         "하지 말 것: 전망 기사를 잠정으로 쓰기. 조회 실패를 호재로 읽기. 추격, 신용, 미수. 투자 권유 아님.",
         f"출처: {cfg['sources'][0]}",
-        f"조회: {'OK' if ok else '실패'} {err}",
+        f"조회: {'OK' if ok and not err else ('일부 실패: ' + err if ok else '실패: ' + err)}",
     ]
     if mode == "dry":
         print(title)

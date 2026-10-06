@@ -34,6 +34,17 @@ def http_get(url: str, timeout: int = 20) -> str:
         return resp.read().decode("utf-8", errors="ignore")
 
 
+def naver_session(code: str):
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import naver_api
+
+    rows = [r for r in naver_api.stock_trend(code, 5) if r["close"] is not None]
+    if not rows:
+        return None, None
+    d = rows[0]["day"]
+    return f"{d[:4]}-{d[4:6]}-{d[6:8]}", rows[0]["close"]
+
+
 def yahoo_session(ticker: str):
     url = (
         "https://query1.finance.yahoo.com/v8/finance/chart/"
@@ -72,27 +83,23 @@ def parse_num(text: str):
 
 
 def naver_foreign_bn(code: str, session_date: str, close):
-    url = f"https://finance.naver.com/item/frgn.naver?code={code}"
-    html = http_get(url)
-    want = datetime.strptime(session_date, "%Y-%m-%d").strftime("%Y.%m.%d")
-    alt = datetime.strptime(session_date, "%Y-%m-%d").strftime("%m.%d")
-    rows = re.findall(r"<tr[^>]*>\s*(.*?)\s*</tr>", html, flags=re.I | re.S)
-    for row in rows:
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, flags=re.I | re.S)
-        texts = [re.sub(r"<[^>]+>", "", c).replace("&nbsp;", " ").strip() for c in cells]
-        if not texts:
+    """Foreign net buy (억원) for session via Naver mobile trend API (legacy frgn page redirects)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import naver_api
+
+    want = session_date.replace("-", "")
+    try:
+        rows = naver_api.stock_trend(code, 10)
+    except Exception as exc:
+        print(f"trend fail {code}: {exc}", file=sys.stderr)
+        return None
+    for r in rows:
+        if r["day"] != want or r["foreign"] is None:
             continue
-        if want not in texts[0] and alt not in texts[0]:
-            continue
-        nums = [parse_num(t) for t in texts[1:]]
-        nums = [n for n in nums if n is not None]
-        if len(nums) < 2:
-            continue
-        foreign_shares = nums[-1]
-        px = close if close is not None else nums[0]
+        px = close if close is not None else r["close"]
         if px is None:
             return None
-        return foreign_shares * px / 100_000_000.0
+        return r["foreign"] * px / 100_000_000.0
     return None
 
 
@@ -176,9 +183,10 @@ def main() -> int:
     px_etf = px_hanmi = px_jusung = None
     price_fail = False
     try:
-        etf_date, px_etf = yahoo_session(cfg["etf"]["yahoo"])
-        hanmi_date, px_hanmi = yahoo_session(cfg["hanmi"]["yahoo"])
-        jusung_date, px_jusung = yahoo_session(cfg["jusung"]["yahoo"])
+        # Naver trend lists only closed sessions; Yahoo intraday bars mixed live prices into the 종가 check.
+        etf_date, px_etf = naver_session(cfg["etf"]["code"])
+        hanmi_date, px_hanmi = naver_session(cfg["hanmi"]["code"])
+        jusung_date, px_jusung = naver_session(cfg["jusung"]["code"])
     except Exception as exc:
         print(f"price fetch failed: {exc}", file=sys.stderr)
         price_fail = True

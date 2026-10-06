@@ -33,8 +33,7 @@
     "down": "연결 영업이익 1,000억 미만, 또는 판재 스프레드 축소, 또는 봉형강 적자 확대."
   },
   "sources": [
-    "https://finance.naver.com/item/dart.naver?code=004020",
-    "https://finance.naver.com/item/news.naver?code=004020",
-    "https://dart.fss.or.kr/dsab007/detailSearch.ax"
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=004020&page=1&pageSize=30",
+    "https://m.stock.naver.com/api/news/stock/004020?pageSize=20&page=1"
   ]
 }
