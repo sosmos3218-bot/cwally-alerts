@@ -31,35 +31,34 @@
   "year_guard": 2026,
   "window_start": "2026-10-07",
   "window_end": "2026-10-30",
-  "window_note": "회사 확정 발표일 미확인. 2분기 잠정은 2026-07-07. 3분기 잠정은 10월 7~16일 가능성이 큼. 10-30이 마지막. 다른 해 침묵. 결과 전송 후 재실행 없음.",
+  "window_note": "2026-10-06 보도상 10-08 잠정실적 예정. 회사 공식 확정 일정은 미확인. 기존 10-07~10-30 원샷 시각 유지. 다른 해 침묵. 결과 전송 후 재실행 없음.",
   "ticker": "373220",
   "display": "LG에너지솔루션",
   "event_label": "LG에너지솔루션 2026 3분기 잠정",
   "anchor": {
     "price": 390000,
     "as_of": "2026-10-06",
-    "mcap_jo": 86.8,
-    "note": "2026-10-06 종가 390,000원. 선행 PER 약 56배, 2025 BPS 86,391원 대비 PBR 약 4.5배. 목표주가 평균 49.5만~52.0만."
+    "mcap_jo": 91.26,
+    "note": "2026-10-06 15:30 KST 회사 IR 주가정보상 정규장 종가 390,000원, 시총 91.26조원. 애프터마켓 가격과 구분. https://ir.gsifn.io/lgensol/ir_daily.html?koreng=1"
   },
   "consensus": {
-    "sales_eok": 89600,
-    "sales_note": "2026-10-02 데이터뉴스, NH·미래에셋·키움·iM 4사 평균 8조9592억을 8.96조로 반올림.",
-    "op_eok": 3491,
-    "ex_ampc_eok": -495,
-    "ampc_eok": 3986,
+    "sales_eok": 88257,
+    "op_eok": 3217,
+    "as_of": "2026-10-06",
+    "source": "https://www.etoday.co.kr/news/view/2632858",
+    "ampc_estimate_eok": 3750,
+    "ampc_estimate_note": "삼성증권 추정치. 실제 3분기 AMPC로 취급하지 않음.",
+    "q2_ex_ampc_eok": -1277,
     "ess_target_gwh": 90,
-    "ess_secured_gwh_lo": 20,
-    "ess_secured_gwh_hi": 30,
-    "ess_note": "2026 ESS 신규 수주 목표 약 90GWh. 10월 2일 증권사 추정 확보분 20~30GWh."
+    "ess_note": "연간 신규 수주 목표 90GWh. 2026년 누적 신규 수주 확정치는 확인 전이며 기사와 증권사 추정을 합산하지 않음."
   },
   "rules": {
-    "up": "AMPC 제외 영업이익 0 이상이고 영업이익이 3,491억 이상이며 ESS 수주 지연·폴란드 BEP 부인 문구가 없음.",
-    "hold": "영업이익이 컨센서스 ±15%이고 AMPC 제외 적자가 -800억보다 깊지 않음.",
-    "down": "영업이익 2,967억 미만, 또는 AMPC 제외 적자 -800억보다 깊음, 또는 ESS 수주 지연, 또는 폴란드 BEP 부인.",
-    "price": "39만 원은 2027년 이익 정상화 선반영. 본업 흑자 확인 전 상향은 아님."
+    "positive": "공시상 AMPC 제외 영업이익 0 이상이면 매수 재검토 조건 1개로 표시. ESS 신규 수주 등 두 번째 독립 조건 확인 전 매수 신호 금지.",
+    "neutral": "AMPC 제외 영업손실이 2분기 -1,277억원보다 축소됐으나 흑자 미달이면 중립 유지.",
+    "risk": "AMPC 제외 영업손실이 2분기 -1,277억원보다 확대되면 위험 점검. 공식 수치 누락은 판정 유보.",
+    "price": "2026-10-06 정규장 종가 390,000원은 참고치. 가격만으로 매수·회피 판정 금지."
   },
   "sources": [
-    "https://stock.naver.com/api/domestic/detail/notice?itemCode=373220&page=1&pageSize=30",
-    "https://m.stock.naver.com/api/news/stock/373220?pageSize=20&page=1"
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=373220&page=1&pageSize=30"
   ]
 }
