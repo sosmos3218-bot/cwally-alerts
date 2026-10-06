@@ -30,7 +30,7 @@
     "price_date": "2026-10-05",
     "price": 18.11,
     "entry_price": 15.0,
-    "annual_dividend": 0.50,
+    "annual_dividend": 0.5,
     "ae_comp": -1,
     "aerie_comp": 19,
     "inventory_units": 9,
@@ -47,7 +47,7 @@
     "inventory_units_max": 10,
     "op_margin_ex_refund": 8.0,
     "aerie_comp_support": 15,
-    "div_cut_below": 0.50,
+    "div_cut_below": 0.5,
     "flip_need": 2
   },
   "change_rules": [
@@ -65,6 +65,6 @@
     "ir": "https://www.aeo-inc.com/",
     "sec": "https://data.sec.gov/submissions/CIK0000919012.json"
   },
-  "schedule_note": "반복 cron 없음. 가격은 2026-10-13부터 2026-12-01까지 화요일 09:05 KST 일회 슬롯(UTC 05:00 같은 날). 실적 추정창은 11/24 장마감 후와 12/1~12/2 장마감 후. 11/25 08:12 KST=UTC 12 23 24 11 *, 11/25 09:12=UTC 12 0 25 11 *, 12/02 08:12=UTC 12 23 1 12 *, 12/03 08:12=UTC 12 23 2 12 *. 연도 가드 2026만. 실적일 미확정.",
+  "schedule_note": "반복 cron 없음. 가격은 2026-10-13부터 2026-12-01까지 화요일 09:05 KST 일회 슬롯(UTC 00:05 같은 날, cron 5 0). 실적 추정창은 11/24 장마감 후와 12/1~12/2 장마감 후. 11/25 08:12 KST=UTC 12 23 24 11 *, 11/25 09:12=UTC 12 0 25 11 *, 12/02 08:12=UTC 12 23 1 12 *, 12/03 08:12=UTC 12 23 2 12 *. 연도 가드 2026만. 실적일 미확정.",
   "explain": "AEO 관망의 반대 근거(Aerie, 배당, 15달러)와 변경 조건 3개(본진 컴프, 재고 수량, 환급 제외 영업이익률)만 보는 일회 알림."
 }
