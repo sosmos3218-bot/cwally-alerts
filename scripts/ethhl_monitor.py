@@ -47,6 +47,9 @@ def save_state(state: dict) -> None:
 
 def eth_position(cfg: dict, user: str) -> tuple[dict | None, str]:
     data = fetch_json(cfg["sources"]["hyperliquid"], {"type": "clearinghouseState", "user": user})
+    # misfire guard: an empty/odd payload must be FETCH_FAIL, not "롱 없음(LONG_GONE)"
+    if not isinstance(data, dict) or "marginSummary" not in data or not isinstance(data.get("assetPositions"), list):
+        raise RuntimeError(f"unexpected hyperliquid payload: {str(data)[:120]}")
     for ap in data.get("assetPositions") or []:
         pos = ap.get("position") or {}
         if pos.get("coin") == "ETH":
@@ -146,7 +149,7 @@ def evaluate(cfg: dict) -> tuple[str, list[str], dict, list[str]]:
 def fmt_usd(v) -> str:
     if v is None:
         return "없음"
-    return f"{v/1_000_000:.1f}억달러"
+    return f"{v/100_000_000:.2f}억달러"
 
 
 def fmt_px(v) -> str:

@@ -80,7 +80,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
+        options: [all, morning, afternoon, 0090b0, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -140,17 +140,17 @@ permissions:
 
 jobs:
   port:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - name: Decide jobs
@@ -189,6 +189,11 @@ jobs:
             fi
           fi
           [ -z "$JOB" ] && JOB=all
+          if [ "${{ github.event_name }}" = "schedule" ] && { [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; }; then
+            # late GitHub cron: skip if the external on-time trigger already ran this slot today (docs/kikii-dispatch.md)
+            git fetch -q origin main && git show origin/main:state/slot_runs.json > /tmp/slot_runs.json 2>/dev/null || echo '{}' > /tmp/slot_runs.json
+            if ! SLOT_RUNS=/tmp/slot_runs.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+          fi
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
           DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
           if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
@@ -230,10 +235,16 @@ jobs:
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: |
           JOB="${{ steps.pick.outputs.job }}"
+          # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)
+          set +e
+          failed=0
+          trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
             python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
           fi
@@ -301,13 +312,11 @@ jobs:
             python scripts/xrpbox_monitor.py
             python scripts/btcoct_monitor.py
             python scripts/btc90_monitor.py
-            python scripts/smh_monitor.py
             python scripts/sndk_monitor.py auto
             python scripts/gval_monitor.py
             python scripts/burry_monitor.py auto
             python scripts/s455850_monitor.py
             python scripts/yen489_monitor.py
-            python scripts/spcx14_monitor.py auto
             python scripts/nov3_monitor.py
             python scripts/dhr_monitor.py auto
             python scripts/cl_monitor.py auto
@@ -321,6 +330,7 @@ jobs:
             python scripts/d0chk_monitor.py
           fi
           python scripts/ntfy_archive.py
+          exit $failed
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 (afternoon)
         if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'k091160' || steps.pick.outputs.job == 'skc011790' || steps.pick.outputs.job == 'all'
         env:
@@ -329,6 +339,11 @@ jobs:
           FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
+          # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)
+          set +e
+          failed=0
+          trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
             node scripts/square_sell_alert.mjs
           fi
@@ -398,6 +413,7 @@ jobs:
             python scripts/d0chk_monitor.py
           fi
           python scripts/ntfy_archive.py
+          exit $failed
       - name: Run cpi1014
         if: steps.pick.outputs.job == 'cpi1014'
         env:
@@ -501,13 +517,20 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/lgcnsq3_monitor.py auto
       - name: Archive ntfy
+        if: always()
         run: python scripts/ntfy_archive.py
       - name: Persist state
+        if: always()
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state configs/skc011790.json
+          git add state
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update alert state"
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/ops_notify.py port-alerts "${{ steps.pick.outputs.job }}"

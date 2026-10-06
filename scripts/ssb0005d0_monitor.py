@@ -8,6 +8,7 @@ import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from ntfy_util import route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,7 +118,7 @@ def publish(topic: str, title: str, message: str, priority: int) -> None:
         topic = "cwally-port"
     payload = json.dumps(
         {
-            "topic": topic,
+            "topic": route_topic(topic, title),
             "title": title,
             "message": message,
             "priority": priority,

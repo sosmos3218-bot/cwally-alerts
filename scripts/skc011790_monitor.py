@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from ntfy_util import route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -112,7 +113,7 @@ def publish(topic: str, title: str, message: str, priority: int) -> None:
         topic = "cwally-port"
     payload = json.dumps(
         {
-            "topic": topic,
+            "topic": route_topic(topic, title),
             "title": title,
             "message": message,
             "priority": priority,
@@ -165,7 +166,7 @@ def update_check_date(cfg: dict, date: str) -> bool:
     if earnings.get("checklist_dates") == [date]:
         return False
     earnings["checklist_dates"] = [date]
-    CFG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # config is read-only; the confirmed date is persisted in state/skc011790.json (checklist_dates)
     return True
 
 
@@ -182,6 +183,8 @@ def main() -> int:
         STATE_PATH,
         {"updated_at": None, "price": None, "zone": None, "seen_ids": [], "checklist_sent": [], "last_fail_date": None, "last_action": None},
     )
+    if prev.get("checklist_dates"):
+        cfg.setdefault("earnings", {})["checklist_dates"] = list(prev["checklist_dates"])
     price = None
     price_err = None
     try:

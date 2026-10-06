@@ -3,6 +3,7 @@ from __future__ import annotations
 import json, sys, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from ntfy_util import route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,7 +88,7 @@ def zone(price, bands):
 
 
 def ntfy_publish(server, topic, title, message, priority, tags):
-    payload = json.dumps({"topic": topic, "title": title, "message": message, "priority": priority, "tags": tags.split(",")}).encode()
+    payload = json.dumps({"topic": route_topic(topic, title), "title": title, "message": message, "priority": priority, "tags": tags.split(",")}).encode()
     req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         print(resp.read().decode())

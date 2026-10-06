@@ -10,6 +10,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from subprocess import run as run_cmd
+from ntfy_util import route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -245,7 +246,7 @@ def wtxt(w):
 def ntfy_publish(server, topic, title, message, priority, tags):
     payload = json.dumps(
         {
-            "topic": topic,
+            "topic": route_topic(topic, title),
             "title": title,
             "message": message,
             "priority": priority,

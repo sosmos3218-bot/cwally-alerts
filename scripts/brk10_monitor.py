@@ -7,6 +7,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from ntfy_util import route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -121,7 +122,7 @@ def fx_zone(fx, fx_bands):
 def ntfy_publish(server, topic, title, message, priority, tags):
     payload = json.dumps(
         {
-            "topic": topic,
+            "topic": route_topic(topic, title),
             "title": title,
             "message": message,
             "priority": priority,

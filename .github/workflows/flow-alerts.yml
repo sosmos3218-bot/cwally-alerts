@@ -1,5 +1,9 @@
 name: cwally-flow-alerts
 
+concurrency:
+  group: cwally-flow-main
+  cancel-in-progress: false
+
 on:
   schedule:
     - cron: "40 6 * * 1-5"
@@ -10,23 +14,35 @@ permissions:
 
 jobs:
   flow:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install requests beautifulsoup4 finance-datareader
+      - name: Slot guard
+        id: guard
+        run: |
+          RUN=1
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # late GitHub cron: skip if the on-time external trigger already ran the flow slot today
+            git fetch -q origin main && git show origin/main:state/slot_runs.json > /tmp/slot_runs.json 2>/dev/null || echo '{}' > /tmp/slot_runs.json
+            SLOT_RUNS=/tmp/slot_runs.json python scripts/slot_guard.py check flow || RUN=0
+          fi
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
       - name: Run flow
+        if: steps.guard.outputs.run == '1'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: |
           failed=0
+          python scripts/slot_guard.py mark flow
           run_one() {
             local label="$1"
             shift
@@ -54,8 +70,13 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
+          git add state/slot_runs.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/ops_notify.py flow-alerts flow
