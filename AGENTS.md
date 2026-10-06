@@ -11,12 +11,12 @@ This repo is the only place for GitHub Actions + ntfy.
 - Hourly cron is forbidden. No new workflow file.
 - Recurring alerts attach to an existing repeating slot first (see "Repeating slots" below): add the script to that slot's job in the existing workflow and set `schedule_kst` to the slot time. That is a normal alert add and needs no extra approval.
 - A new repeating cron (a time that is not an existing slot) needs chat approval. After approval, record it in `configs/<name>.json` as `"cron_approved": "YYYY-MM-DD"` plus `"cron_utc": "<cron string>"`, and add the slot to the table below in the same commit. A repeating cron without `cron_approved` is a violation.
-- One-shots stay on the existing dispatcher only. Source of truth is `oneshot_kst` in `configs/<name>.json`. Map that entry to one job id in the existing `Decide jobs` step. Do not create `.github/workflows/<alert>.yml`.
+- One-shots stay on the existing dispatcher only. Source of truth is `oneshot_kst` in `configs/<name>.json`. Map that entry to one job id in the existing `Decide jobs` step (that GitHub cron is the late fallback). Do not create `.github/workflows/<alert>.yml`. A mode argument other than the default (`auto`; `oklo` uses `event`, `hce` uses `daily`) goes in `oneshot_args` as `{"YYYY-MM-DD HH:MM": "<mode>"}`.
 - Never let an unmatched schedule fall through to `morning`. If `oneshot_kst` is not mapped, stop and report. Do not run the morning bundle.
 - GitHub cron has no year. A one-shot script MUST year-guard and stay silent in later years. Convert KST to UTC (`KST = UTC+9`) only when registering the mapped slot.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot times go in `oneshot_kst`.
 - New alert files are only `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json`.
-- Creating an alert includes activating it in the same turn. After `oneshot_kst` exists, register it on the existing dispatcher in `.github/workflows/port-alerts.yml`: add only those cron slots, one `Decide jobs` branch for that job id, and one run step for that script. Do not ask for a second approval. Do not leave the alert unmapped.
+- Creating an alert includes activating it in the same turn. After `oneshot_kst` exists, register it on the existing dispatcher in `.github/workflows/port-alerts.yml`: add only those cron slots, one `Decide jobs` branch for that job id, and one run step for that script. Do not ask for a second approval. Do not leave the alert unmapped. Then register every new `oneshot_kst` time on the external cron (cron-job.org) as a one-off `port-alerts.yml` dispatch with `{"job":"oneshot"}`; list the times with `python scripts/oneshot_pick.py plan --from <YYYY-MM-DD> --to <YYYY-MM-DD>`. That registration is part of the alert add and needs no extra approval.
 - That mapping is the only workflow edit included in a normal alert add. Do not add a YAML job, a new workflow file, or a repeating cron.
 - Extra chat approval is required for a new repeating cron time, a new workflow file, a topic change, a new repo, a live ntfy test send, an AGENTS.md edit, or any workflow edit outside that one-shot mapping.
 - Do not duplicate Telegram Alpha Catch signals here.
@@ -36,7 +36,8 @@ Attach recurring alerts here before asking for a new time. Times are KST; the cr
 
 ## On-time external trigger
 
-GitHub schedule events arrive hours late. On-time runs come from an external cron calling `workflow_dispatch` for the morning / afternoon / flow / 0090b0 slots; see `docs/ontime-dispatch.md`. `scripts/slot_guard.py` + `state/slots/<slot>.json` let each slot run once per KST day, so a late GitHub cron or a duplicate dispatch skips. Keep the GitHub crons as the fallback. KRX holidays live in `scripts/kr_calendar.py` (update every December).
+GitHub schedule events arrive hours late. On-time runs come from an external cron calling `workflow_dispatch` for the morning / afternoon / flow / 0090b0 slots; see `docs/ontime-dispatch.md`. `scripts/slot_guard.py` + `state/slots/<slot>.json` let each slot run once per KST day, so a late GitHub cron or a duplicate dispatch skips. Keep the GitHub crons as the fallback.
+One-shots are on time the same way: the external cron dispatches `job=oneshot` at each `oneshot_kst` time, and `scripts/oneshot_pick.py` runs every one-shot whose time is within the last 60 minutes and not yet recorded in `state/slots/oneshot.json` (key `<name>@<YYYY-MM-DD HH:MM>`). A late GitHub one-shot cron checks that file and skips an occurrence that already ran. An occurrence is recorded *before* its script runs, so a failed script is not re-sent by the fallback; it raises the ops notice instead, and a manual retry is a dispatch of that alert's job id (if listed) or a `force` run of its script. One-shot times at 09:00 / 15:20 for alerts already in that slot bundle are left to the slot. KRX holidays live in `scripts/kr_calendar.py` (update every December).
 
 ## ntfy copy style
 

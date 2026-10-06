@@ -92,11 +92,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | sk1006 | oklo | pffd | all
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, sk1006, oklo, pffd]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -207,6 +207,32 @@ jobs:
             fi
           fi
           [ -z "$JOB" ] && JOB=all
+          # One-shot dedupe (scripts/oneshot_pick.py, state/slots/oneshot.json, docs/ontime-dispatch.md).
+          # Read the marks from origin/main: this run's checkout can predate the on-time run's push.
+          sync_oneshot_marks() {
+            git fetch -q origin main
+            mkdir -p state/slots
+            git show origin/main:state/slots/oneshot.json > state/slots/oneshot.json 2>/dev/null || echo '{"done": {}}' > state/slots/oneshot.json
+          }
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            case "$JOB" in
+              morning|afternoon|portlight|0090b0) ;;
+              *)
+                # late GitHub one-shot cron = fallback; skip if the on-time dispatch already ran it
+                sync_oneshot_marks
+                rc=0; KEY=$(python scripts/oneshot_pick.py check-cron "$JOB" "${{ github.event.schedule }}") || rc=$?
+                if [ "$rc" = "10" ]; then echo "one-shot $KEY already ran on time; skip"; JOB=skip
+                elif [ "$rc" = "0" ]; then python scripts/oneshot_pick.py mark "$KEY"
+                else echo "one-shot cron not listed in oneshot_kst ($KEY); run without mark"
+                fi
+                ;;
+            esac
+          fi
+          if [ "$JOB" = "oneshot" ]; then
+            sync_oneshot_marks
+            rc=0; python scripts/oneshot_pick.py pick --out "$RUNNER_TEMP/oneshot_plan.json" || rc=$?
+            if [ "$rc" = "10" ]; then JOB=skip; elif [ "$rc" != "0" ]; then exit "$rc"; fi
+          fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ]; then
             # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
             # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
@@ -549,6 +575,13 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/lgesq3_monitor.py auto
+      - name: Run due one-shots (dispatch job=oneshot)
+        if: steps.pick.outputs.job == 'oneshot'
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/oneshot_pick.py run "$RUNNER_TEMP/oneshot_plan.json"
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py

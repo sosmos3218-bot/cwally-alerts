@@ -39,6 +39,26 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 
 토큰: fine-grained PAT, 저장소 `cwally-alerts`만, **Actions: Read and write** (Metadata read는 자동). 다른 권한은 주지 않는다.
 
+## 원샷 (`job=oneshot`)
+
+원샷도 외부 cron으로 정시에 돌린다. 원샷 시각마다 일회성 job을 하나 등록하고, 내용은 모두 같다.
+
+```
+POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches
+Body: {"ref":"main","inputs":{"job":"oneshot"}}
+```
+
+- `Decide jobs`가 `scripts/oneshot_pick.py pick`을 부른다. `configs/*.json`의 `oneshot_kst` 중
+  `예정 시각 <= 지금 < 예정 시각 + 60분`이고 `state/slots/oneshot.json`에 없는 것만 고른다. 없으면 `job=skip`(발송 없음).
+- 고른 원샷은 실행 **전에** `<name>@<YYYY-MM-DD HH:MM>` 키로 기록한다(slot_guard와 같은 원칙).
+  스크립트가 실패하면 ops 알림이 가고, 늦게 온 GitHub cron은 기록을 보고 건너뛴다. 같은 원샷이 두 번 발송되는 것보다 낫다.
+- GitHub 원샷 cron은 백업이다. `check-cron`이 기록을 보고 이미 정시에 돈 원샷이면 `job=skip`, 아니면 실행하고 기록한다.
+  picker가 고장 나도(종료 코드 10/0/3 외) 백업 cron은 기록 없이 그대로 실행된다.
+- 09:00 / 15:20 원샷 중 그 슬롯 묶음에 이미 들어 있는 알림(`schedule_kst`에 그 시각이 있음)은 슬롯이 처리하므로 고르지 않는다.
+- 등록할 시각 목록: `python scripts/oneshot_pick.py plan --from 2026-10-06 --to 2026-10-31` (`oneshot` 줄만 등록).
+- 기본 인자는 `auto`(oklo `event`, hce `daily`). 다른 인자는 config의 `oneshot_args`에 시각별로 둔다(예: yencarry `boj_press`).
+- 확인용 수동 실행: 원샷이 없는 시각에 `job=oneshot`을 dispatch하면 `due=[]`로 skip되어야 한다.
+
 ## 중복 방지 (slot_guard)
 
 - 슬롯 실행이 시작되면 `scripts/slot_guard.py mark <slot>`이 `state/slots/<slot>.json`에 KST 날짜를 쓰고 Persist가 push한다.

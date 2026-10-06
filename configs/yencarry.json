@@ -7,6 +7,8 @@
   "fed_schedule_kst": "03:45",
   "boj_send_after_kst": "12:00",
   "boj_press_kst": "16:15",
+  "oneshot_kst": ["2026-09-17 03:45", "2026-09-18 16:15", "2026-10-30 16:15", "2026-12-18 16:15"],
+  "oneshot_args": {"2026-09-17 03:45": "fed", "2026-09-18 16:15": "boj_press", "2026-10-30 16:15": "boj_press", "2026-12-18 16:15": "boj_press"},
   "period": "weekly",
   "once": false,
   "as_of": "2026-09-16",
