@@ -1,0 +1,46 @@
+{
+  "name": "nvdaq3",
+  "title_prefix": "[SMH]",
+  "title_note": "AGENTS.md 허용 prefix에 [NVDA]가 없어 [SMH] 사용. 본문은 엔비디아 FY2027 3분기. AGENTS.md는 수정하지 않음.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "nvdaq3",
+  "schedule_kst": "2026-11-18 07:10 / 2026-11-19 07:10 / 2026-11-20 07:10 / 2026-11-26 07:10 / 2026-11-27 07:10",
+  "oneshot_kst": [
+    "2026-11-18 07:10",
+    "2026-11-19 07:10",
+    "2026-11-20 07:10",
+    "2026-11-26 07:10",
+    "2026-11-27 07:10"
+  ],
+  "cron_utc": [
+    "10 22 17 11 *",
+    "10 22 18 11 *",
+    "10 22 19 11 *",
+    "10 22 25 11 *",
+    "10 22 26 11 *"
+  ],
+  "year_guard": 2026,
+  "window_start": "2026-11-18",
+  "window_end": "2026-11-27",
+  "window_note": "회사 확정 발표일 미확인. 벤더 추정 11-17, 11-18, 11-25 장후. 미국 장후는 다음날 06:00 KST 전후라 07:10 KST에 조회. 하루 지연 버퍼 포함. 2026년만. 마지막 슬롯만 미발표 1회.",
+  "ticker": "NVDA",
+  "display": "엔비디아",
+  "event_label": "엔비디아 FY2027 3분기 실적",
+  "baselines": {
+    "revenue_mid_b": 108.0,
+    "revenue_lo_b": 105.8,
+    "revenue_hi_b": 110.2,
+    "gm_mid": 74.0,
+    "gm_lo": 73.5,
+    "gm_down": 73.0,
+    "rubin_watch": 20,
+    "q4_gm_floor": 71.0,
+    "china_baseline": 0,
+    "source": "2026-08-26 공식 3분기 전망. Rubin 20%와 4분기 마진 71~72%는 콜 전언."
+  },
+  "sources": [
+    "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027",
+    "https://data.sec.gov/submissions/CIK0001045810.json"
+  ]
+}
