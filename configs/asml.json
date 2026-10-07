@@ -1,0 +1,64 @@
+{
+  "name": "asml",
+  "title_prefix": "[ASML]",
+  "display": "ASML 홀딩",
+  "ticker_eur": "ASML.AS",
+  "ticker_usd": "ASML",
+  "as_of": "2026-10-07",
+  "basis": "2026-10-07 Aside ASML 투자매력 분석. 결론: 장기 경쟁력은 강하지만 현 가격(€1,636.40, 2026-10-06 암스테르담 종가)은 성장 선반영. 신규는 실적 확인 후 €1,400~1,500 분할, 보유는 유지.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 반복 cron 없음. 기존 평일 09:00 KST morning 묶음에서 slot 모드로 실행. 전 거래일 암스테르담 종가로 구간이 바뀔 때만 발송하고, 매주 첫 실행에 주간 점검 1건을 보낸다. 실적 원샷은 SEC 6-K(보도자료 사본) 기준이라 발표(14:00~15:00 KST) 뒤 약 5시간 늦게 올라오는 것을 감안해 19:40, 22:40, 다음날 08:40 KST로 둔다.",
+  "year_guard": [2026, 2027],
+  "valid_until": "2027-06-10",
+  "eps_eur": {
+    "y2026e": 38.35,
+    "y2027e": 51.92,
+    "as_of": "2026-10-06",
+    "source": "Yahoo Finance ASML.AS analysis (Avg. Estimate)"
+  },
+  "levels_eur": {
+    "bear": 1080,
+    "zone_low": 1400,
+    "zone_high": 1500,
+    "fair": 1800,
+    "bull": 2124
+  },
+  "level_notes": {
+    "zone": "2027E EPS €51.92 기준 PER 약 27~29배. 분석의 선호 진입 구간",
+    "fair": "Morningstar 적정가치 €1,800 (2026-07-15)",
+    "bull": "강세 시나리오 EPS €59 x 36배",
+    "bear": "약세 시나리오 EPS €40 x 27배"
+  },
+  "tranche_pct": [33, 33, 34],
+  "oneshot_kst": [
+    "2026-10-14 19:40",
+    "2026-10-14 22:40",
+    "2026-10-15 08:40"
+  ],
+  "earnings": {
+    "event_year": 2026,
+    "quarter": "Q3",
+    "next_quarter": "Q4",
+    "release_kst": "2026-10-14 14:00",
+    "window_start": "2026-10-14",
+    "window_end": "2026-10-15",
+    "final_kst": "2026-10-15 08:40",
+    "sec_cik": "0000937966",
+    "h1_sales_bn": 18.093,
+    "fy_guide_low": 43.0,
+    "fy_guide_high": 45.0,
+    "q_guide_low": 11.0,
+    "q_guide_high": 12.0,
+    "q_gm_low": 55.0,
+    "q_gm_high": 57.0
+  },
+  "sec_user_agent": "cwally-alerts sosmos3218@gmail.com",
+  "explain": "ASML 가격 구간과 실적 판정 알림. 2026-10-07 분석 기준값으로만 판단합니다. 자동 매수 신호가 아닙니다.",
+  "sources": [
+    "https://investor.asml.com/news-releases/news-release-details/q2-2026-financial-results",
+    "https://data.sec.gov/submissions/CIK0000937966.json",
+    "https://finance.yahoo.com/quote/ASML.AS/analysis/"
+  ]
+}
