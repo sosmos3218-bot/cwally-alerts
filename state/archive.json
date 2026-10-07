@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-08 03:35 KST",
+  "updated_at": "2026-10-08 06:59 KST",
   "items": [
+    {
+      "id": "k0HI21O3aTqa",
+      "topic": "cwally-ops",
+      "title": "[FOMC] 확률 조회 실패 | 유지로 읽지 마",
+      "message": "2026-10-08 03:35 KST | FOMC | 9월 FOMC 의사록 이후\n이게 뭐 알림: 9월 의사록과 9월 CPI 이후 CME 연방기금 선물로 10월 동결 77~85%와 12월 인상 가격이 유지되는지 판정하는 2026년 일회 알림입니다.\n지금 상태: 조회 실패. The read operation timed out. 77~85% 유지로 처리하지 않음.\n지금 할 일: CME FedWatch를 직접 확인. 이 실패로 금리, 달러, 수출주 포지션을 바꾸지 마세요.\n나중에: 같은 사건 재시도가 숫자를 보면 판정을 보냅니다. 만료 2026-10-15.\n익절/줄일 때: 실패 알림으로 비중 조정 금지.\n하지 말 것: 조회 실패를 동결 유지나 인상 철회로 읽기.\n꺼지는 때: 2026-10-15 09:25 KST (FOMC 의사록/CPI 일회 알림, 10/15 09:25가 마지막)",
+      "priority": 4,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1791398151
+    },
     {
       "id": "aKzO6iANSLhr",
       "topic": "cwally-port",
