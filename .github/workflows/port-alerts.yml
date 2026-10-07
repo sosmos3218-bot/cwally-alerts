@@ -383,6 +383,9 @@ jobs:
             python scripts/krbank_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
+            python scripts/uamcert_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/ratesbell_monitor.py auto
             python scripts/btcbox_monitor.py
             python scripts/xrpbox_monitor.py

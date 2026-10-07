@@ -1,0 +1,38 @@
+{
+  "name": "uamcert",
+  "title_prefix": "[0144M0]",
+  "display": "0144M0 JOBY/ACHR 인증 공시",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 2026-10-07 16:20 결론 알림 이후부터. 2027-06-30 이후 침묵.",
+  "valid_from": "2026-10-08",
+  "valid_until": "2027-06-30",
+  "issuers": [
+    {
+      "ticker": "JOBY",
+      "cik": "0001819848",
+      "name": "Joby Aviation",
+      "baseline_acc": "0001628280-26-061440",
+      "baseline_date": "2026-09-11"
+    },
+    {
+      "ticker": "ACHR",
+      "cik": "0001824502",
+      "name": "Archer Aviation",
+      "baseline_acc": "0001824502-26-000078",
+      "baseline_date": "2026-10-02"
+    }
+  ],
+  "forms": ["8-K", "8-K/A"],
+  "keywords": [
+    "type certification",
+    "type certificate",
+    "faa certification",
+    "conforming aircraft",
+    "type inspection authorization",
+    "for-credit",
+    "part 135",
+    "air carrier certificate"
+  ]
+}
