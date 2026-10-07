@@ -413,6 +413,7 @@ jobs:
             python scripts/nke_monitor.py auto
             python scripts/ceg_monitor.py auto
             python scripts/ews_monitor.py auto
+            python scripts/vtrspg_monitor.py auto
             python scripts/oklo_monitor.py auto
             python scripts/d0chk_monitor.py
             python scripts/asml_monitor.py slot
