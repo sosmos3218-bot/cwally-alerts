@@ -114,6 +114,8 @@ on:
     - cron: "40 13 6 11 *"
     - cron: "40 13 9 11 *"
     - cron: "10 0 10 11 *"
+    # 0144m0 oneshot_kst (KST→UTC): 2026-10-07 16:20. 분석 일회 전달
+    - cron: "20 7 7 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -229,6 +231,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "5 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 12 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 13 10 *" ]; then JOB=usd240
             elif [ "${{ github.event.schedule }}" = "14 0 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 5 11 *" ]; then JOB=sdiq3
             elif [ "${{ github.event.schedule }}" = "40 13 6 11 *" ] || [ "${{ github.event.schedule }}" = "40 13 9 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 10 11 *" ]; then JOB=ceg
+            elif [ "${{ github.event.schedule }}" = "20 7 7 10 *" ]; then JOB=0144m0
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -624,6 +627,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/ceg_monitor.py earn
+      - name: Run 0144m0
+        if: steps.pick.outputs.job == '0144m0'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/0144m0_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
