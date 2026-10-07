@@ -7,9 +7,9 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning job에만 붙임. 미국 전일 종가 점검.",
-  "year_guard": 2026,
-  "valid_until": "2026-11-20",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning. 보유 월요 상태와 38/55 구간.",
+  "year_guard": null,
+  "valid_until": "2027-01-29",
   "alert_policy": "weekly_or_change",
   "cik": "0001315098",
   "earnings_est_kst": "2026-10-29 21:30",
@@ -37,6 +37,8 @@
     "sec": "https://data.sec.gov/submissions/CIK0001315098.json",
     "ir": "https://ir.roblox.com/"
   },
-  "ends_kst": "2026-11-20 09:00",
-  "ends_note": "Q3 실적 확인 창 종료. 평일 09:00 점검 후 자동 종료"
+  "ends_kst": "2027-01-29 09:00",
+  "ends_note": "보유 월요 38/55 점검. 2027-01 광고 배분 시작 확인 후 종료",
+  "holding": true,
+  "holding_note": "보유 확인 2026-10-07. 수량, 평단 미확인."
 }

@@ -93,7 +93,7 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     return "\n".join(
         [
             f"{stamp} | RBLX | 관망 조건 점검",
-            "이게 뭐 알림: 로블록스 관망 판단의 가격 구간과 Q3 bookings 조건만 보는 알림입니다. 매수 지시가 아닙니다.",
+            "이게 뭐 알림: 보유 중인 로블록스 가격 구간과 Q3 bookings 조건만 보는 알림입니다. 추가매수 지시가 아닙니다.",
             f"지금 결과/상태: {status}",
             f"지금 할 일: {action}",
             f"나중에: {later}",
@@ -144,9 +144,6 @@ def main() -> int:
         },
     )
     today = now.date()
-    if today.year != int(cfg["year_guard"]) and mode not in {"force", "dry"}:
-        print(f"year guard {cfg['year_guard']}; silent")
-        return 0
     if today.isoformat() > cfg["valid_until"] and mode not in {"force", "dry"}:
         print(f"after {cfg['valid_until']}; silent")
         return 0
@@ -186,14 +183,14 @@ def main() -> int:
         window = today.isoformat() in WINDOW and today.isoformat() not in (state.get("sent_dates") or [])
         if changed or weekly or window or mode == "force":
             if zone == "below_38":
-                title = "[RBLX] 38달러 이하 | 신규 보류 유지"
-                action = "약세 목표가 안입니다. 가격만으로 사지 마세요. Q3 bookings 조건을 기다리세요."
+                title = "[RBLX] 38달러 이하 | 보유 재검토"
+                action = "보유는 유지하되 추가하지 마세요. 38달러 아래는 약세 목표가 안이라 비중 재검토 구간입니다."
             elif zone == "above_55":
-                title = "[RBLX] 55달러 위 | 추격 금지"
-                action = "모건스탠리 목표가 위입니다. 관망 유지, 추격 금지."
+                title = "[RBLX] 55달러 위 | 추가 금지"
+                action = "보유는 유지하세요. 55달러 위 추가는 금지입니다."
             else:
-                title = "[RBLX] 38~55달러 | 관망"
-                action = "신규 투입 보류. 10/29 실적 전 비중을 바꾸지 마세요."
+                title = "[RBLX] 38~55달러 | 보유 유지"
+                action = "보유 유지, 추가 없음. 10/29 실적 전 비중을 바꾸지 마세요."
             why = "구간 변경" if changed else "월요일 상태" if weekly else "실적 창"
             alerts.append(
                 (
@@ -202,9 +199,9 @@ def main() -> int:
                         stamp,
                         f"RBLX {price:.2f}달러. 기준일 {base['price_date']} {base['price']}달러. 구간 {prev} -> {zone}. {why}. Q3 bookings 가이드 15.76~16.53억 달러.",
                         action,
-                        "상향은 bookings 16.53억 초과와 미국/캐나다 시간당 수익화 반등. 하향은 15.76억 미만.",
-                        "55달러 위는 추격 금지. 38달러 아래도 실적 확인 전 신규 매수 아님.",
-                        "목표가 터치를 매수 신호로 쓰기. 신용, 미수, 추격.",
+                        "보유 유지. 상향은 bookings 16.53억 초과와 미국/캐나다 시간당 수익화 반등. 하향은 15.76억 미만이면 비중 재검토.",
+                        "55달러 위 추가 금지. 38달러 아래는 보유 재검토이지 추가매수 아님.",
+                        "목표가 터치를 추가매수 신호로 쓰기. 신용, 미수, 추격.",
                     ),
                     4 if zone != "hold" else 3,
                 )
