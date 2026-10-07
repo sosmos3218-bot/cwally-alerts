@@ -1,0 +1,42 @@
+{
+  "name": "ceg",
+  "title_prefix": "[CEG]",
+  "ticker": "CEG",
+  "display": "컨스텔레이션 에너지",
+  "as_of": "2026-10-07",
+  "ref_price": 300.40,
+  "ref_date": "2026-10-06",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "가격 점검은 기존 평일 09:00 KST morning만. 실적 창 3회만 oneshot. 새 반복 cron 없음. 2027년은 year-guard로 침묵.",
+  "year_guard": 2026,
+  "valid_until": "2026-11-13",
+  "oneshot_kst": [
+    "2026-11-06 22:40",
+    "2026-11-09 22:40",
+    "2026-11-10 09:10"
+  ],
+  "oneshot_args": {
+    "2026-11-06 22:40": "earn",
+    "2026-11-09 22:40": "earn",
+    "2026-11-10 09:10": "earn"
+  },
+  "levels": {
+    "upgrade": 240.0,
+    "stretch": 348.0
+  },
+  "guide_2026": {
+    "lo": 11.50,
+    "hi": 12.50,
+    "mid": 12.00
+  },
+  "earnings_note": "실적일은 회사 확정 아님. 집계 사이트 추정 11/6과 11/9만 창으로 본다.",
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/CEG?interval=1d&range=5d",
+    "ir": "https://investors.constellationenergy.com/news-releases",
+    "sec": "https://data.sec.gov/submissions/CIK0001868275.json"
+  },
+  "cik": "0001868275",
+  "explain": "CEG 중간 판단의 변경 조건 알림. 240달러 이하면 매력 상향 검토, 348달러 이상이면 추격 금지. 2026 조정 EPS 가이던스 하단이 11.50 미만이면 매력 하락. 매수 지시가 아님."
+}
