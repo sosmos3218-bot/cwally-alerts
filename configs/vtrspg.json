@@ -1,0 +1,47 @@
+{
+  "name": "VTRSPG",
+  "title_prefix": "[VTRSPG]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning job에만 붙임. 미국 마감 후 시세와 10년물.",
+  "valid_until": "2031-10-06",
+  "alert_policy": "state_change_only",
+  "as_of": "2026-10-07",
+  "baseline": {
+    "price_date": "2026-10-06",
+    "yield_date": "2026-10-05",
+    "yield_10y": 5.31,
+    "vtr_price": 81.87,
+    "vtr_ffo": 3.88,
+    "vtr_ffo_note": "2026 Normalized FFO 가이던스 중간값. 실적 후 수동 갱신.",
+    "spg_price": 201.76,
+    "spg_ffo": 13.25,
+    "spg_ffo_note": "2026 Real Estate FFO 가이던스 중간값. 실적 후 수동 갱신.",
+    "vtr_spread": -0.0057,
+    "spg_spread": 0.0126
+  },
+  "thresholds": {
+    "yield_low": 4.5,
+    "yield_mid": 5.0,
+    "yield_stress": 5.5,
+    "vtr_mult_cheap": 19.0,
+    "vtr_mult_rich": 23.0,
+    "spg_mult_cheap": 14.0,
+    "spg_mult_rich": 17.0
+  },
+  "earnings": {
+    "vtr": "2026-10-27",
+    "spg_from": "2026-11-02",
+    "spg_to": "2026-11-05"
+  },
+  "sources": {
+    "vtr": "https://query1.finance.yahoo.com/v8/finance/chart/VTR?interval=1d&range=5d",
+    "spg": "https://query1.finance.yahoo.com/v8/finance/chart/SPG?interval=1d&range=5d",
+    "tnx": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=5d"
+  },
+  "not_auto": [
+    "FFO 성장률과 점유, NOI는 공시 원문 미대조라 자동 판정하지 않음",
+    "5년 총수익 표는 스프레드 고정 가정. 이 알림은 그 가정을 재계산하지 않음"
+  ]
+}
