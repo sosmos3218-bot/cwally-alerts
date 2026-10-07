@@ -18,7 +18,8 @@ KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "rblx.json"
 STATE_PATH = ROOT / "state" / "rblx.json"
 UA = {"User-Agent": "cwally-alerts rblx research monitor research@example.com"}
-WINDOW = {"2026-10-29", "2026-10-30"}
+WINDOW = {"2026-10-29"}
+Q3_JUDGE = "2026-10-30"
 
 
 def load_json(path: Path, fallback: dict) -> dict:
@@ -90,6 +91,45 @@ def zone_of(price: float, stop: float, review: float, high: float) -> str:
         return "above_55"
     return "hold"
 
+
+
+def pnl_text(price: float | None, shares: float, cost: float) -> str:
+    if price is None:
+        return "평가손익 미확인"
+    pnl = (price - cost) * shares
+    pct = (price / cost - 1) * 100
+    return f"28주 평가 {pnl:+.2f}달러({pct:+.1f}%), 현재가 {price:.2f}달러, 평단 {cost:.4f}달러"
+
+
+def q3_judgment(bookings: float | None, lo: float, hi: float, price: float | None, shares: float, cost: float) -> tuple[str, str, str, int]:
+    pnl = pnl_text(price, shares, cost)
+    if bookings is None:
+        return (
+            "[RBLX] 10/30 실적 | bookings 확인 불가",
+            f"2026-10-30 판정. bookings를 읽지 못했습니다. 15.76억 미만이 아닙니다. {pnl}.",
+            "ir.roblox.com 원문에서 Q3 bookings를 직접 보세요. 비중을 바꾸지 마세요.",
+            4,
+        )
+    if bookings < lo:
+        return (
+            "[RBLX] 10/30 실적 | 가이드 하단 미달, 비중 재검토",
+            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 하단 {lo:.0f} 미만. {pnl}.",
+            "보유 28주 비중 재검토. 파싱값과 원문이 다르면 원문을 우선하세요. 매도 지시가 아닙니다.",
+            5,
+        )
+    if bookings > hi:
+        return (
+            "[RBLX] 10/30 실적 | 가이드 상단 초과",
+            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 상단 {hi:.0f} 초과. 미국/캐나다 수익화는 미확인. {pnl}.",
+            "보유 유지. 상단 초과만으로 추가하지 마세요.",
+            4,
+        )
+    return (
+        "[RBLX] 10/30 실적 | 가이드 안, 보유 유지",
+        f"파싱 bookings {bookings:.0f}백만 달러, 가이드 {lo:.0f}~{hi:.0f} 안. {pnl}.",
+        "보유 유지. 가이드 안은 추가 조건이 아닙니다.",
+        3,
+    )
 
 def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str) -> str:
     return "\n".join(
@@ -187,6 +227,8 @@ def main() -> int:
         changed = zone != prev
         weekly = today.weekday() == 0 and state.get("last_weekly") != today.isoformat()
         window = today.isoformat() in WINDOW and today.isoformat() not in (state.get("sent_dates") or [])
+        if today.isoformat() == Q3_JUDGE:
+            window = False
         if changed or weekly or window or mode == "force":
             if zone == "loss20":
                 title = "[RBLX] 평단 -20% | 보유 재검토"
@@ -228,6 +270,39 @@ def main() -> int:
             state["zone"] = zone
             print(f"price zone unchanged ({zone}); silent")
 
+
+    if today.isoformat() == Q3_JUDGE and (Q3_JUDGE not in (state.get("sent_dates") or []) or mode == "force"):
+        shares = float(cfg["position"]["shares"])
+        cost = float(cfg["position"]["avg_cost"])
+        ir_text = ""
+        try:
+            ir_text = visible(fetch(cfg["sources"]["ir"]))
+        except Exception as exc:
+            print(f"q3 ir fail: {exc}")
+        bookings = parse_bookings(ir_text) if ir_text else None
+        lo = base["q3_bookings_lo_m"]
+        hi = base["q3_bookings_hi_m"]
+        title, status, action, pri = q3_judgment(bookings, lo, hi, price, shares, cost)
+        alerts.append(
+            (
+                title,
+                body(
+                    stamp,
+                    status,
+                    action,
+                    "상향은 16.53억 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다.",
+                    "확인 불가와 가이드 안을 매도나 추가매수로 쓰지 마세요.",
+                    "파싱 실패를 15.76억 미만으로 세기. 주가 반응으로 조건 충족 단정.",
+                ),
+                pri,
+            )
+        )
+        sent = list(state.get("sent_dates") or [])
+        if Q3_JUDGE not in sent:
+            sent.append(Q3_JUDGE)
+        state["sent_dates"] = sent
+        state["q3_bookings_m"] = bookings
+
     filing = None
     ferr = None
     try:
@@ -236,7 +311,7 @@ def main() -> int:
         ferr = str(exc)
         print(f"sec fail: {exc}")
     last_filing = state.get("last_filing") or base["last_known_filing"]
-    if filing and last_filing and filing > last_filing:
+    if today.isoformat() != Q3_JUDGE and filing and last_filing and filing > last_filing:
         ir_text = ""
         try:
             ir_text = visible(fetch(cfg["sources"]["ir"]))

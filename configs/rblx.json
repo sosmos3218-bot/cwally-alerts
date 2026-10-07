@@ -7,7 +7,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning. 보유 28주, 평단 대비 -10/-20%와 55달러.",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning. 10/30은 Q3 bookings 판정.",
   "year_guard": null,
   "valid_until": "2027-01-29",
   "alert_policy": "weekly_or_change",
@@ -47,5 +47,7 @@
     "shares": 28,
     "avg_cost": 47.9164,
     "currency": "USD"
-  }
+  },
+  "q3_judge_kst": "2026-10-30 09:00",
+  "q3_judge_note": "기존 morning 슬롯. 새 cron 없음. bookings 15.76억 미만이면 28주 평가손익과 비중 재검토, 가이드 안이면 보유 유지."
 }
