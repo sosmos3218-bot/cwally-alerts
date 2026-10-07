@@ -426,6 +426,7 @@ jobs:
             python scripts/spg_monitor.py auto
             python scripts/sivr_monitor.py auto
             python scripts/lghpref_monitor.py auto
+            python scripts/skinc_monitor.py auto
           fi
           python scripts/ntfy_archive.py
           exit $failed

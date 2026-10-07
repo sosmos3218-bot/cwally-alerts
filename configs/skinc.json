@@ -1,0 +1,23 @@
+{
+  "name": "skinc",
+  "title_prefix": "[SKINC]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning 슬롯. 월요일 주간, 이벤트일만 발송.",
+  "ticker": "034730.KS",
+  "baseline_close": 580000,
+  "baseline_date": "2026-10-07",
+  "event_dates": ["2026-11-02", "2026-12-01", "2027-01-04"],
+  "move_alert_pct": 8,
+  "facts": {
+    "sale_shares": 1653924,
+    "sale_krw": 944000000000,
+    "settle_window": "2026-11-02~2026-12-01",
+    "voting_after": "30.5%",
+    "cancel_date": "2027-01-04",
+    "cancel_shares": 14692601
+  },
+  "ends_kst": "2027-01-04 09:00",
+  "ends_note": "자사주 소각 예정일 아침이 마지막. 11/2 결제·12/1 창 종료는 그 전 이벤트"
+}
