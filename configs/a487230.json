@@ -1,0 +1,41 @@
+{
+  "name": "a487230",
+  "title_prefix": "[487230]",
+  "ticker": "487230",
+  "display": "KODEX 미국AI전력핵심인프라",
+  "as_of": "2026-10-07",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "기존 afternoon 슬롯(평일 15:20 KST)만. 새 반복 cron 없음. 수주/가이던스 확인은 자동 탐지하지 않음.",
+  "year_guard": 2026,
+  "valid_until": "2026-12-30",
+  "ref": {
+    "price": 20610,
+    "price_time": "2026-10-07 14:23 KST",
+    "prev_close": 20080,
+    "low_52w": 16085,
+    "high_52w": 28773,
+    "inav": 20732
+  },
+  "levels": {
+    "settle": 20000,
+    "value_weak_krw": 8000000000,
+    "etf_drop_pct": -4.0,
+    "holding_drop_pct": -6.0,
+    "fx_move_pct": 1.5
+  },
+  "holdings": [
+    {"name": "블룸에너지", "symbol": "BE", "weight": 19.56},
+    {"name": "GE버노바", "symbol": "GEV", "weight": 15.84},
+    {"name": "버티브", "symbol": "VRT", "weight": 14.64},
+    {"name": "콴타서비스", "symbol": "PWR", "weight": 11.68}
+  ],
+  "sources": {
+    "basic": "https://m.stock.naver.com/api/stock/487230/basic",
+    "integration": "https://m.stock.naver.com/api/stock/487230/integration",
+    "fx": "https://query1.finance.yahoo.com/v8/finance/chart/KRW=X?interval=1d&range=5d",
+    "yahoo": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
+  },
+  "explain": "2026-10-07 분석 변경 조건. 2만원 안착 이탈, 15:20 대금 80억 미만, ETF 일간 -4% 이하, 상위 4종목 일간 -6% 이하, 기준 대비 원화 강세 1.5% 이상. 매수 지시가 아님."
+}
