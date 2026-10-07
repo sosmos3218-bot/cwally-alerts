@@ -98,6 +98,11 @@ on:
     - cron: "40 11 27 10 *"
     - cron: "40 12 27 10 *"
     - cron: "40 13 27 10 *"
+    # usd240 oneshot_kst (KST→UTC): 2026-10-07/08/12/13 16:05. 10-09 한글날 휴장 제외
+    - cron: "5 7 7 10 *"
+    - cron: "5 7 8 10 *"
+    - cron: "5 7 12 10 *"
+    - cron: "5 7 13 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -212,6 +217,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
+            elif [ "${{ github.event.schedule }}" = "5 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 12 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 13 10 *" ]; then JOB=usd240
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -600,6 +606,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/pyplq3_monitor.py auto
+      - name: Run usd240
+        if: steps.pick.outputs.job == 'usd240'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/usd240_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
