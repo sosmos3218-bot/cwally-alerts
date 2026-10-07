@@ -1,0 +1,30 @@
+{
+  "name": "hbmasp",
+  "title_prefix": "[HBMASP]",
+  "created_at": "2026-10-07T22:10:00+09:00",
+  "active_from": "2026-10-07",
+  "expire_date": "2026-11-13",
+  "year_guard": 2026,
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 붙임. 월요일 기준 리마인더 1회, 평일은 새 공시 제목만.",
+  "baseline": {
+    "lock": "블렌디드 ASP",
+    "offer_not_contract": "매일경제 2026-10-02 삼성 HBM4 제시가 1Gb당 4달러대 중후반, HBM3E 약 1.5달러 대비 3배 이상. 확정 계약가 아님.",
+    "later_report": "조선비즈 2026-10-07 현재 대비 2배 이상 인상 추진.",
+    "trendforce": "트렌드포스 2026-09-29 2027년 HBM 블렌디드 ASP +121%.",
+    "kb": "KB증권 2026-10-01 삼성 2027년 HBM 판매가 100% 이상, HBM4 매출 비중 40%에서 80%.",
+    "sk": "SK증권 2026-10-06 삼성 2026년 영업이익 366.8조원, 2027년 568조원, HBM 판가 +103%. 점추정.",
+    "goldman": "골드만삭스 2026-05말 삼성 2026/2027/2028년 374/530/610조원. 하이닉스 2026년 271조원, 2028년 454조원. 2027년 하이닉스 단일은 미확인.",
+    "direction": "같은 ASP 충격에서 SK하이닉스 영업이익 탄력성이 크고 삼성전자는 연결에서 희석. 금액 민감도는 만들지 않음."
+  },
+  "notices": {
+    "size": 30,
+    "codes": {"005930": "삼성전자", "000660": "SK하이닉스"},
+    "title_pattern": "HBM|고대역폭|공급가|판매가|공급계약|단일판매"
+  },
+  "ends_kst": "2026-11-13 09:00",
+  "ends_note": "10월 HBM4 협상 창과 11월 초 확정 보도 확인 후 종료"
+}
