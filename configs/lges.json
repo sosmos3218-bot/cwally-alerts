@@ -15,5 +15,7 @@
     "note": "목표 90GWh와 2Q AMPC 제외 -1,277억원은 판단 기준. 공시되지 않은 누적 수주량은 계산하지 않음."
   },
   "source": "https://stock.naver.com/api/domestic/detail/notice?itemCode=373220&page=1&pageSize=30",
-  "original_source": "https://www.lgensol.com/kr/investors/electronic-disclosure"
+  "original_source": "https://www.lgensol.com/kr/investors/electronic-disclosure",
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 15:20 신규 공시 감시"
 }

@@ -50,5 +50,7 @@
     "sec": "https://data.sec.gov/submissions/CIK0001849056.json"
   },
   "cik": "0001849056",
-  "last_known_filing": "2026-09-11"
+  "last_known_filing": "2026-09-11",
+  "ends_kst": "2026-12-15 09:00",
+  "ends_note": "평일 09:00 순현금 구간 점검, 실적 알림은 11/13이 마지막"
 }

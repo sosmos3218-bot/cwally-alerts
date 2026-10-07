@@ -35,5 +35,7 @@
     "proxy_basic": "https://m.stock.naver.com/api/stock/229200/basic",
     "etf_trend": "https://m.stock.naver.com/api/stock/278240/trend",
     "etf_basic": "https://m.stock.naver.com/api/stock/278240/basic"
-  }
+  },
+  "ends_kst": "2026-11-13 15:40",
+  "ends_note": "평일 15:40 점검, 만료일 11/14가 토요일이라 11/13이 마지막"
 }

@@ -36,5 +36,7 @@
     "quarterly": "https://investor.tsmc.com/english/quarterly-results",
     "news": "https://pr.tsmc.com/english/news"
   },
-  "explain": "TSMC 3분기 원문만으로 매출, 매출총이익률, 4분기 가이던스, 2027년 캐팩스와 가격, CoWoS와 2나노를 채점하는 일회 알림입니다."
+  "explain": "TSMC 3분기 원문만으로 매출, 매출총이익률, 4분기 가이던스, 2027년 캐팩스와 가격, CoWoS와 2나노를 채점하는 일회 알림입니다.",
+  "ends_kst": "2026-10-15 17:10",
+  "ends_note": "TSMC 실적일 일회 알림(15:40, 17:10), 17:10이 마지막"
 }

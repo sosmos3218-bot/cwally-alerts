@@ -49,5 +49,7 @@
     "op_break": 100.0,
     "eps_break": 13000,
     "q4_op_floor": 120.0
-  }
+  },
+  "ends_kst": null,
+  "ends_note": "3분기 실적 판정만 11/3에 끝, 가격 구간 알림은 수동 해제 전까지"
 }

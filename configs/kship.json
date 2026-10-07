@@ -22,5 +22,7 @@
   },
   "min_rebalance_krw": 300000,
   "flng_min_trn": 2.0,
-  "offshore_goal_pct": 70
+  "offshore_goal_pct": 70,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 매월 마지막 평일 15:20"
 }

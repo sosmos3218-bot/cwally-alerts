@@ -31,5 +31,7 @@
   "sources": [
     "https://www.cmegroup.com/CmeWS/mvc/Quotes/V2/RateWatch/303?pageSize=50&pageNumber=1"
   ],
-  "explain": "9월 의사록과 9월 CPI 이후 CME 연방기금 선물로 10월 동결 77~85%와 12월 인상 가격이 유지되는지 판정하는 2026년 일회 알림입니다."
+  "explain": "9월 의사록과 9월 CPI 이후 CME 연방기금 선물로 10월 동결 77~85%와 12월 인상 가격이 유지되는지 판정하는 2026년 일회 알림입니다.",
+  "ends_kst": "2026-10-15 09:25",
+  "ends_note": "FOMC 의사록/CPI 일회 알림, 10/15 09:25가 마지막"
 }

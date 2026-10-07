@@ -35,5 +35,7 @@
     "chip_red_5d": -7.0,
     "kospi_red_1d": -2.5,
     "chip_yellow_5d": 8.0
-  }
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 일요일 21:00"
 }

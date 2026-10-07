@@ -13,5 +13,7 @@
   "jusung": {"code": "036930", "yahoo": "036930.KQ", "foreign_sell_bn": 200},
   "isu": {"code": "007660", "yahoo": "007660.KS"},
   "kr_holidays": ["2026-09-24", "2026-09-25"],
-  "oneshot_year": 2026
+  "oneshot_year": 2026,
+  "ends_kst": "2026-12-31 09:00",
+  "ends_note": "평일 09:00 수준 변화 때만 발송, 2026년 말 종료"
 }

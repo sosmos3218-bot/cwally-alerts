@@ -38,5 +38,7 @@
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/EWS?interval=1d&range=5d",
     "mas": "https://www.mas.gov.sg/monetary-policy/past-monetary-policy-decisions"
-  }
+  },
+  "ends_kst": "2027-06-30 09:00",
+  "ends_note": "평일 09:00 가격 구간 점검, 이후 자동 종료"
 }

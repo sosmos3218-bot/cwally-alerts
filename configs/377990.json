@@ -26,5 +26,7 @@
   "sources": {
     "price": "https://m.stock.naver.com/api/stock/377990/price?pageSize=8&page=1",
     "basic": "https://m.stock.naver.com/api/stock/377990/basic"
-  }
+  },
+  "ends_kst": "2026-12-31 15:40",
+  "ends_note": "평일 15:40 판단 변경 조건 점검, 이후 자동 종료"
 }

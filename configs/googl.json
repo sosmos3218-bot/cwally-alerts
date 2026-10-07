@@ -28,5 +28,7 @@
   "sources": [
     "https://abc.xyz/investor/",
     "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001652044&type=8-K&dateb=&owner=include&count=10"
-  ]
+  ],
+  "ends_kst": "2027-06-30 09:00",
+  "ends_note": "평일 09:00 구간 진입 때만 발송, 이후 자동 종료"
 }

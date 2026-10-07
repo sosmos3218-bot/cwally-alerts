@@ -49,5 +49,7 @@
   "sources": [
     "https://stock.naver.com/api/domestic/detail/notice?itemCode=011070&page=1&pageSize=30",
     "https://m.stock.naver.com/api/news/stock/011070?pageSize=20&page=1"
-  ]
+  ],
+  "ends_kst": "2026-11-03 09:10",
+  "ends_note": "LG이노텍 3분기 실적 일회 알림, 11/3 09:10이 마지막"
 }

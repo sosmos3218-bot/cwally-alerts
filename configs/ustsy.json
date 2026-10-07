@@ -20,5 +20,7 @@
   },
   "exclude": ["453850", "458250", "472870"],
   "strip_max_pct": 10,
-  "yen_max_pct": 0
+  "yen_max_pct": 0,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 15:20 원달러 구간 알림"
 }

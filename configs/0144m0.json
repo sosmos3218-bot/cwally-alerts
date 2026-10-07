@@ -26,5 +26,7 @@
   "verdict": "low",
   "sources": {
     "quote": "https://m.stock.naver.com/api/etf/0144M0/basic"
-  }
+  },
+  "ends_kst": "2026-10-07 16:20",
+  "ends_note": "10/7 16:20 분석 1회 전달로 끝"
 }

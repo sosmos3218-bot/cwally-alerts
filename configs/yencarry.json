@@ -23,5 +23,7 @@
   "fomc_dates": ["2026-09-16", "2026-10-28", "2026-12-09"],
   "boj_dates": ["2026-09-18", "2026-10-30", "2026-12-18"],
   "boj_force": true,
-  "boj_press_force": true
+  "boj_press_force": true,
+  "ends_kst": null,
+  "ends_note": "일본은행/연준 일회 알림은 12/18까지, 구간 감시와 월요일 점검은 수동 해제 전까지"
 }

@@ -59,5 +59,7 @@
     "bls": "https://www.bls.gov/news.release/cpi.htm",
     "schedule": "https://www.bls.gov/schedule/2026/10_sched_list.htm"
   },
-  "explain": "10월 14일 밤 미국 9월 CPI를 헤드라인, 근원, 에너지, 주거로 나누고 10월 동결이 깨지는 수치와 12월 인상 확률 변화 조건을 정리하는 일회 알림입니다."
+  "explain": "10월 14일 밤 미국 9월 CPI를 헤드라인, 근원, 에너지, 주거로 나누고 10월 동결이 깨지는 수치와 12월 인상 확률 변화 조건을 정리하는 일회 알림입니다.",
+  "ends_kst": "2026-10-15 09:10",
+  "ends_note": "CPI 발표 전후 일회 알림, 10/15 09:10이 마지막"
 }

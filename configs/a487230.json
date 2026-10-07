@@ -37,5 +37,7 @@
     "fx": "https://query1.finance.yahoo.com/v8/finance/chart/KRW=X?interval=1d&range=5d",
     "yahoo": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=5d"
   },
-  "explain": "2026-10-07 분석 변경 조건. 2만원 안착 이탈, 15:20 대금 80억 미만, ETF 일간 -4% 이하, 상위 4종목 일간 -6% 이하, 기준 대비 원화 강세 1.5% 이상. 매수 지시가 아님."
+  "explain": "2026-10-07 분석 변경 조건. 2만원 안착 이탈, 15:20 대금 80억 미만, ETF 일간 -4% 이하, 상위 4종목 일간 -6% 이하, 기준 대비 원화 강세 1.5% 이상. 매수 지시가 아님.",
+  "ends_kst": "2026-12-30 15:20",
+  "ends_note": "평일 15:20 변경 조건 점검, 이후 자동 종료"
 }

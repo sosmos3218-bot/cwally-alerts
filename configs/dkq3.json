@@ -37,5 +37,7 @@
   "sources": [
     "https://stock.naver.com/api/domestic/detail/notice?itemCode=086450&page=1&pageSize=30",
     "https://m.stock.naver.com/api/news/stock/086450?pageSize=20&page=1"
-  ]
+  ],
+  "ends_kst": "2026-11-17 15:20",
+  "ends_note": "3분기 실적 창 평일 09:00/15:20 점검, 이후 자동 종료"
 }

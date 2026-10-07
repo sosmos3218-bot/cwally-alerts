@@ -43,5 +43,7 @@
     "https://investor.colgatepalmolive.com/",
     "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000021665&type=8-K&dateb=&owner=include&count=10"
   ],
-  "explain": "CL 변경조건 알림. 80달러 이하 분할만, 78달러 이하 2차. 유기성장 3% 초과+기준 EPS 상향이면 현가도 매수 구간. 유기 1% 미만 또는 마진 하향 가이든스면 78 아래를 기다림. 전액매수 신호가 아님."
+  "explain": "CL 변경조건 알림. 80달러 이하 분할만, 78달러 이하 2차. 유기성장 3% 초과+기준 EPS 상향이면 현가도 매수 구간. 유기 1% 미만 또는 마진 하향 가이든스면 78 아래를 기다림. 전액매수 신호가 아님.",
+  "ends_kst": "2026-12-31 09:00",
+  "ends_note": "평일 09:00 가격/실적 점검, 이후 자동 종료"
 }

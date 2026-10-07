@@ -16,5 +16,7 @@
   "box_persist_days": 45,
   "earn_drop_pct": -0.03,
   "cooldown_days": 7,
-  "cc_band_pct": [10, 20]
+  "cc_band_pct": [10, 20],
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 09:00 조건 충족 때 발송(7일 간격)"
 }

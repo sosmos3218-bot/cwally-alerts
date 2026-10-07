@@ -47,5 +47,7 @@
     "https://data.sec.gov/submissions/CIK0001398659.json",
     "https://www.genpact.com/investors",
     "https://www.nasdaq.com/market-activity/stocks/g/press-releases"
-  ]
+  ],
+  "ends_kst": "2026-11-09 15:20",
+  "ends_note": "11/6~11/9 실적 확인, 평일 09:00/15:20, 이후 자동 종료"
 }

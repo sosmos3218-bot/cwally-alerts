@@ -44,5 +44,7 @@
     "for-credit",
     "part 135",
     "air carrier certificate"
-  ]
+  ],
+  "ends_kst": "2027-06-30 09:00",
+  "ends_note": "평일 09:00 인증 공시 감시, 이후 자동 종료"
 }

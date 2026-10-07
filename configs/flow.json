@@ -3,5 +3,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "slot_kst": "15:40",
-  "explain": "오늘 코스피에서 누가 사고 팔았는지 요약입니다. 특정 종목을 사라는 주문 신호가 아닙니다."
+  "explain": "오늘 코스피에서 누가 사고 팔았는지 요약입니다. 특정 종목을 사라는 주문 신호가 아닙니다.",
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 15:40 코스피 수급 요약"
 }

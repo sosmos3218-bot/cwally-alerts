@@ -8,7 +8,7 @@ import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import route_topic  # noqa: E402
+from ntfy_util import append_ends, route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,6 +152,7 @@ def fetch_index(day: str):
 
 
 def ntfy(server, topic, title, message, priority=3):
+    message = append_ends(message)  # AGENTS.md "Alert end line"
     payload = json.dumps(
         {"topic": route_topic(topic, title), "title": title, "message": message, "priority": priority, "tags": ["chart_with_upwards_trend"]}
     ).encode()

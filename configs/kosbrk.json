@@ -30,5 +30,7 @@
     "rss": [
       "https://news.google.com/rss/search?q=(%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90+OR+SK%ED%95%98%EC%9D%B4%EB%8B%89%EC%8A%A4+OR+%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%A0)+(%EA%B0%80%EC%9D%B4%EB%8D%98%EC%8A%A4+%ED%95%98%ED%96%A5+OR+%EC%8B%A4%EC%A0%81+%EA%B0%80%EC%9D%B4%EB%8D%98%EC%8A%A4+%ED%95%98%ED%9A%8C+OR+%EC%A0%84%EB%A7%9D%EC%B9%98+%ED%95%98%ED%96%A5+OR+guidance+cut)&hl=ko&gl=KR&ceid=KR:ko"
     ]
-  }
+  },
+  "ends_kst": "2026-12-31 15:40",
+  "ends_note": "평일 15:40 점검, 이후 자동 종료"
 }

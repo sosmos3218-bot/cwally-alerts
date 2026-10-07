@@ -46,5 +46,7 @@
     "sec": "https://data.sec.gov/submissions/CIK0000320187.json"
   },
   "cik": "0000320187",
-  "last_known_filing": "2026-10-02"
+  "last_known_filing": "2026-10-02",
+  "ends_kst": "2027-06-30 09:00",
+  "ends_note": "평일 09:00 가격/배당/실적 조건 점검, 이후 자동 종료"
 }

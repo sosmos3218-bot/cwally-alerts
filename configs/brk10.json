@@ -28,5 +28,7 @@
     "low": 1320,
     "high": 1520
   },
-  "tranche": {"first_pct": 30, "second_pct": 40, "third_pct": 30}
+  "tranche": {"first_pct": 30, "second_pct": 40, "third_pct": 30},
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 09:00 구간 변화 때 발송"
 }

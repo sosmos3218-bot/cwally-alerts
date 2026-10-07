@@ -19,5 +19,7 @@
     "daily": "https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=1440",
     "realized": "https://bitcoin-data.com/api/v1/realized-price"
   },
-  "explain": "10월 사이클 저점 시나리오 점검. 50주/200주 이평, 실현가격, 6~7월 저점과 비교합니다. 투자 권유 아닙니다."
+  "explain": "10월 사이클 저점 시나리오 점검. 50주/200주 이평, 실현가격, 6~7월 저점과 비교합니다. 투자 권유 아닙니다.",
+  "ends_kst": "2026-11-03 09:00",
+  "ends_note": "평일 09:00 10월 저점 시나리오 점검, 이후 자동 종료"
 }

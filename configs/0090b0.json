@@ -15,5 +15,7 @@
   "premium_abs": 1.5,
   "end_date": null,
   "cron_approved": "2026-10-06",
-  "cron_utc": "40 6 * * 1-5"
+  "cron_utc": "40 6 * * 1-5",
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 15:40대 가격/괴리 구간 알림"
 }

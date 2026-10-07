@@ -60,5 +60,7 @@
   },
   "sources": [
     "https://stock.naver.com/api/domestic/detail/notice?itemCode=373220&page=1&pageSize=30"
-  ]
+  ],
+  "ends_kst": "2026-10-30 09:12",
+  "ends_note": "LG에너지솔루션 3분기 잠정실적 일회 알림, 10/30 09:12가 마지막"
 }

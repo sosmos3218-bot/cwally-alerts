@@ -39,5 +39,7 @@
     "helious_30y": "https://helious.io/auctions/30-year-bond",
     "helious_3y": "https://helious.io/auctions/3-year-note"
   },
-  "explain": "10월 1일 재무부 10년·30년 입찰 공고의 확정 규모·CUSIP·WI 개시와, 10/6 3년·10/7 10년·10/8 30년 결과가 9/23 5년물 약세를 복제하는지 봅니다."
+  "explain": "10월 1일 재무부 10년·30년 입찰 공고의 확정 규모·CUSIP·WI 개시와, 10/6 3년·10/7 10년·10/8 30년 결과가 9/23 5년물 약세를 복제하는지 봅니다.",
+  "ends_kst": "2026-10-09 02:15",
+  "ends_note": "10년물 입찰 결과 일회 알림, 10/9 02:15가 마지막"
 }

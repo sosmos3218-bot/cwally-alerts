@@ -8,7 +8,7 @@ import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import route_topic  # noqa: E402
+from ntfy_util import append_ends, route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,6 +97,7 @@ def is_lfp_start(title: str) -> bool:
 
 
 def publish(topic: str, title: str, message: str, priority: int) -> None:
+    message = append_ends(message)  # AGENTS.md "Alert end line"
     if topic not in {"cwally-port", "cwally-ops"}:
         topic = "cwally-port"
     payload = json.dumps(

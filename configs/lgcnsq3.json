@@ -64,5 +64,7 @@
     "https://m.stock.naver.com/api/stock/064400/finance/quarter",
     "https://m.stock.naver.com/api/stock/064400/finance/annual"
   ],
-  "data_note": "잠정공시 표는 단위 백만원(2Q26 공시 2026-07-31 기준). 매출액이나 영업이익이 없으면 추정하지 않고 cwally-ops로 숫자 미확인."
+  "data_note": "잠정공시 표는 단위 백만원(2Q26 공시 2026-07-31 기준). 매출액이나 영업이익이 없으면 추정하지 않고 cwally-ops로 숫자 미확인.",
+  "ends_kst": "2026-11-16 15:20",
+  "ends_note": "LG씨엔에스 3분기 확인, 11/16 15:20이 마지막"
 }

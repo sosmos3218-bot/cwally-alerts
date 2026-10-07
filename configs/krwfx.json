@@ -17,5 +17,7 @@
     "1m": 21,
     "3m": 63
   },
-  "gap_warn_pct": 0.8
+  "gap_warn_pct": 0.8,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 매주 월요일 09:00"
 }

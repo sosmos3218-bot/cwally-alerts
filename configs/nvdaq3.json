@@ -42,5 +42,7 @@
   "sources": [
     "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027",
     "https://data.sec.gov/submissions/CIK0001045810.json"
-  ]
+  ],
+  "ends_kst": "2026-11-27 07:10",
+  "ends_note": "엔비디아 3분기 일회 알림, 11/27 07:10이 마지막"
 }
