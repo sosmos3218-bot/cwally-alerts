@@ -1,8 +1,11 @@
 {
-  "updated_at": "2026-10-06 22:36 KST",
-  "last_sent_date": null,
-  "last_zone": null,
-  "last_status": "no_hit",
-  "price": 7455.0,
-  "premium": 0.41
+  "updated_at": "2026-10-07 15:41 KST",
+  "last_sent_date": "2026-10-07",
+  "last_zone": "BUY1",
+  "last_status": "sent",
+  "price": 7205.0,
+  "premium": 0.07,
+  "flags": [
+    "BUY1"
+  ]
 }
