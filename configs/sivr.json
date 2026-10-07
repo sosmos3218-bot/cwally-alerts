@@ -1,0 +1,58 @@
+{
+  "name": "SIVR",
+  "title_prefix": "[SIVR]",
+  "ticker": "SIVR",
+  "display": "abrdn Physical Silver Shares ETF (은 현물 ETF)",
+  "as_of": "2026-10-07",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning job에만 붙임. 미국 마감 후 종가(직전 미국 거래일)를 본다. 월요일 아침은 금요일 종가.",
+  "valid_until": "2027-04-07",
+  "alert_policy": "state_change_only",
+  "baseline": {
+    "price_date": "2026-10-06",
+    "close": 58.3,
+    "jpm_target_spot_2027_avg": 63.9,
+    "jpm_target_sivr_equiv": 61.0,
+    "jpm_target_note": "J.P. Morgan 2026-08-13 전망(2027 평균 63.9달러) x SIVR/현물 약 0.953 = 약 61달러. 환산은 근사치이고 목표가가 바뀌면 수동 갱신.",
+    "analysis_note": "몬테카를로(변동성 33%/45%, 3년, 목표 환산 61달러): 일괄 매수 기대 손익비가 2 이상이 되는 매수가는 변동성 33%에서 50달러 이하, 45%에서 45달러 이하. 목표가 52달러로 낮추면 한 단계씩 더 내려가야 함."
+  },
+  "tiers": [
+    {
+      "id": "t50",
+      "level": 50.0,
+      "step": 1,
+      "label": "1차"
+    },
+    {
+      "id": "t45",
+      "level": 45.0,
+      "step": 2,
+      "label": "2차"
+    },
+    {
+      "id": "t40",
+      "level": 40.0,
+      "step": 3,
+      "label": "3차(마지막)"
+    }
+  ],
+  "tier_total": 3,
+  "rearm_pct": 6.0,
+  "upper": {
+    "level": 66.0,
+    "rearm_level": 63.0
+  },
+  "target_weight_note": "목표 비중은 포트폴리오의 5% 이하(허용 손실 -3%p 기준 예시). 단계마다 목표의 1/3.",
+  "not_auto": [
+    "J.P. Morgan 목표가 하향 여부는 자동 판정하지 않음. 가격 알림이 켜져도 목표가를 직접 확인할 것",
+    "연준 금리 인상 여부, 태양광 수요는 자동 판정하지 않음",
+    "이 알림은 매수 지시가 아니라 가격 기준 도달 알림"
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/SIVR?interval=1d&range=5d"
+  },
+  "ends_kst": "2027-04-07 09:00",
+  "ends_note": "평일 09:00 가격 사다리 점검, 6개월 뒤 자동 종료"
+}
