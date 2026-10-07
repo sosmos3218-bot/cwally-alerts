@@ -441,6 +441,7 @@ jobs:
           if [ "$JOB" = "afternoon" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
             python scripts/lges_monitor.py auto
+            python scripts/lgcnsq3_monitor.py slot
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
             python scripts/ustsy_monitor.py event
