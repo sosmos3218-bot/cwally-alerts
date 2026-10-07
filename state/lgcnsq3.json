@@ -1,7 +1,9 @@
 {
-  "sent_dates": [],
+  "snapshot_sent": false,
+  "date_notified": null,
   "result_notified": false,
-  "fail_dates": [],
+  "consensus_live": null,
+  "ops_sent": {},
   "last_key": null,
   "updated_at": null
 }
