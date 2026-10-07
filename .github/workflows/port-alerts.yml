@@ -359,6 +359,7 @@ jobs:
           fi
           if [ "$JOB" = "portlight" ]; then
             python scripts/portlight_monitor.py auto
+            python scripts/isareb_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
