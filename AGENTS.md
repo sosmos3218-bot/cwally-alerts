@@ -18,6 +18,7 @@ This repo is the only place for GitHub Actions + ntfy.
 - GitHub cron has no year. A one-shot script MUST year-guard and stay silent in later years. Convert KST to UTC (`KST = UTC+9`) only when registering the mapped slot.
 - Put the chosen KST time in `configs/<name>.json` as `schedule_kst`. One-shot times go in `oneshot_kst`.
 - New alert files are only `configs/<name>.json` + `scripts/<name>_monitor.py` + `state/<name>.json`.
+- Alert end line (approved in chat 2026-10-07): every alert config has `ends_kst` (`"YYYY-MM-DD HH:MM"` KST = the last time the alert can still send, or `null` = no end date) and `ends_note` (short Korean reason or what ends when). `ntfy_util.publish()` appends `꺼지는 때: <ends_kst> KST (<ends_note>)` as the last body line, finding the config from the running script name `<name>_monitor.py`. A custom publisher must pass its message through `ntfy_util.append_ends()`. When a window is extended or one-shots are added, update `ends_kst` in the same commit. New alerts without `ends_kst` are incomplete.
 - Creating an alert includes activating it in the same turn. After `oneshot_kst` exists, register it on the existing dispatcher in `.github/workflows/port-alerts.yml`: add only those cron slots, one `Decide jobs` branch for that job id, and one run step for that script. Do not ask for a second approval. Do not leave the alert unmapped. Then register every new `oneshot_kst` time on the external cron (cron-job.org) as a one-off `port-alerts.yml` dispatch with `{"job":"oneshot"}`; list the times with `python scripts/oneshot_pick.py plan --from <YYYY-MM-DD> --to <YYYY-MM-DD>`. That registration is part of the alert add and needs no extra approval.
 - That mapping is the only workflow edit included in a normal alert add. Do not add a YAML job, a new workflow file, or a repeating cron.
 - Extra chat approval is required for a new repeating cron time, a new workflow file, a topic change, a new repo, a live ntfy test send, an AGENTS.md edit other than the same-commit title-prefix add above, or any workflow edit outside that one-shot mapping.
@@ -52,6 +53,7 @@ Required body order:
 4. 나중에
 5. 익절/줄일 때
 6. 하지 말 것
+7. 꺼지는 때 (자동: `ntfy_util`이 `ends_kst`/`ends_note`로 맨 끝에 붙임. 본문에 직접 쓰지 않는다)
 
 Title format: `[NAME] 한 줄 행동`
 Example: `[HCE] 아직 결과 없음 | 추가매수 보류`
