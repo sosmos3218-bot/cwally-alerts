@@ -349,7 +349,7 @@ def main() -> int:
         "이게 뭐 알림: " + cfg["explain"],
         "지금 상태: " + status,
         "지금 할 일: " + sc["semis"] + " " + sc["krw"] + caution,
-        "나중에: 오늘 21:30 KST 미국 9월 CPI(CPI 알림 별도). 이 판정은 CPI 전 잠정이라 CPI 근원이 0.3% 이상이면 B, D 쪽으로 한 칸 이동해서 읽기. 미확인: GS, MS, BAC 실적일은 이 판정에서 제외.",
+        "나중에: 오늘 21:30 KST 미국 9월 CPI(CPI 알림 별도). 이 판정은 CPI 전 잠정이라 CPI 근원이 0.3% 이상이면 B, D 쪽으로 한 칸 이동해서 읽기. BAC는 10/14 19:45 KST 발표라 이 판정에 없고, MS는 일정 미확인이라 제외.",
         f"익절/줄일 때: 오늘 외국인 순매도 {base['watch_foreign_sell_tn']:.0f}조원 이상(10/7은 약 {base['foreign_net_sell_krw_tn_1007']}조원)이거나 원/달러가 {base['watch_usdkrw_up']:,}원 위로 안착하면 반도체 비중 점검.",
         "하지 말 것: " + sc["dont"] + " 은행 한 곳 실적으로 시나리오를 확정하기.",
         "출처: Yahoo Finance 일봉(^TNX, JPM, WFC, C, ^GSPC, ^SOX, ^KS11, KRW=X), SEC EDGAR JPM 8-K, state/ustsy10.json",
