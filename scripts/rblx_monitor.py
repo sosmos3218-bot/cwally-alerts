@@ -81,9 +81,11 @@ def parse_bookings(blob: str) -> float | None:
     return val * (1000 if m.group(2).lower() == "billion" else 1)
 
 
-def zone_of(price: float, low: float, high: float) -> str:
-    if price <= low:
-        return "below_38"
+def zone_of(price: float, stop: float, review: float, high: float) -> str:
+    if price <= stop:
+        return "loss20"
+    if price <= review:
+        return "loss10"
     if price > high:
         return "above_55"
     return "hold"
@@ -176,20 +178,27 @@ def main() -> int:
             )
             state["fetch_fail_date"] = today.isoformat()
     else:
-        zone = zone_of(price, levels["jefferies"], levels["hold_ceiling"])
+        shares = float(cfg["position"]["shares"])
+        cost = float(cfg["position"]["avg_cost"])
+        pnl = (price - cost) * shares
+        pct = (price / cost - 1) * 100
+        zone = zone_of(price, levels["loss20"], levels["loss10"], levels["hold_ceiling"])
         prev = state.get("zone") or "hold"
         changed = zone != prev
         weekly = today.weekday() == 0 and state.get("last_weekly") != today.isoformat()
         window = today.isoformat() in WINDOW and today.isoformat() not in (state.get("sent_dates") or [])
         if changed or weekly or window or mode == "force":
-            if zone == "below_38":
-                title = "[RBLX] 38달러 이하 | 보유 재검토"
-                action = "보유는 유지하되 추가하지 마세요. 38달러 아래는 약세 목표가 안이라 비중 재검토 구간입니다."
+            if zone == "loss20":
+                title = "[RBLX] 평단 -20% | 보유 재검토"
+                action = "28주 보유는 유지하되 추가하지 마세요. 평단 대비 -20%는 비중 재검토 구간입니다."
+            elif zone == "loss10":
+                title = "[RBLX] 평단 -10% | 추가 금지"
+                action = "보유는 유지하세요. -10% 아래 추가는 금지입니다."
             elif zone == "above_55":
                 title = "[RBLX] 55달러 위 | 추가 금지"
                 action = "보유는 유지하세요. 55달러 위 추가는 금지입니다."
             else:
-                title = "[RBLX] 38~55달러 | 보유 유지"
+                title = "[RBLX] -10%~55달러 | 보유 유지"
                 action = "보유 유지, 추가 없음. 10/29 실적 전 비중을 바꾸지 마세요."
             why = "구간 변경" if changed else "월요일 상태" if weekly else "실적 창"
             alerts.append(
@@ -197,11 +206,11 @@ def main() -> int:
                     title,
                     body(
                         stamp,
-                        f"RBLX {price:.2f}달러. 기준일 {base['price_date']} {base['price']}달러. 구간 {prev} -> {zone}. {why}. Q3 bookings 가이드 15.76~16.53억 달러.",
+                        f"RBLX {price:.2f}달러. 28주, 평단 {cost:.4f}달러, 평가 {pnl:+.2f}달러({pct:+.1f}%). 구간 {prev} -> {zone}. {why}. Q3 bookings 가이드 15.76~16.53억 달러.",
                         action,
                         "보유 유지. 상향은 bookings 16.53억 초과와 미국/캐나다 시간당 수익화 반등. 하향은 15.76억 미만이면 비중 재검토.",
-                        "55달러 위 추가 금지. 38달러 아래는 보유 재검토이지 추가매수 아님.",
-                        "목표가 터치를 추가매수 신호로 쓰기. 신용, 미수, 추격.",
+                        "55달러 위 추가 금지. -10%는 추가 금지, -20%는 보유 재검토이지 매도 지시 아님.",
+                        "손실 폭 터치를 추가매수나 전량매도 신호로 쓰기. 신용, 미수, 추격.",
                     ),
                     4 if zone != "hold" else 3,
                 )

@@ -7,6 +7,8 @@
   "earnings_fingerprint": null,
   "sent_dates": [],
   "fetch_fail_date": null,
-  "note": "2026-10-07 보유 확인. 수량, 평단 미확인. Q2 주주서한 2026-07-30 반영. 다음 8-K/10-Q부터 판정. 추가매수 신호 아님.",
-  "holding": true
+  "note": "2026-10-07 보유 28주, 평단 47.9164. -10% 43.12, -20% 38.33. 추가매수 신호 아님.",
+  "holding": true,
+  "shares": 28,
+  "avg_cost": 47.9164
 }

@@ -7,7 +7,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning. 보유 월요 상태와 38/55 구간.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning. 보유 28주, 평단 대비 -10/-20%와 55달러.",
   "year_guard": null,
   "valid_until": "2027-01-29",
   "alert_policy": "weekly_or_change",
@@ -25,6 +25,8 @@
     "last_known_filing": "2026-07-30"
   },
   "levels": {
+    "loss10": 43.12,
+    "loss20": 38.33,
     "jefferies": 38,
     "hold_ceiling": 55
   },
@@ -38,7 +40,12 @@
     "ir": "https://ir.roblox.com/"
   },
   "ends_kst": "2027-01-29 09:00",
-  "ends_note": "보유 월요 38/55 점검. 2027-01 광고 배분 시작 확인 후 종료",
+  "ends_note": "보유 28주 월요 -10/-20% 점검. 2027-01 광고 배분 시작 확인 후 종료",
   "holding": true,
-  "holding_note": "보유 확인 2026-10-07. 수량, 평단 미확인."
+  "holding_note": "보유 28주, 평단 47.9164달러. 2026-10-07 확인.",
+  "position": {
+    "shares": 28,
+    "avg_cost": 47.9164,
+    "currency": "USD"
+  }
 }
