@@ -139,12 +139,13 @@ def verdict(news: dict, cons: dict, base: dict) -> str:
         return "발표 전"
     op = news.get("op")
     margin = news.get("margin")
+    floor = float(base.get("h1_margin_pct") or 7.8)
     eps_fail = cons.get("fy_eps") is not None and cons["fy_eps"] < 4730
-    margin_fail = (isinstance(margin, float) and margin < 8.4) or (isinstance(op, float) and op <= 1202)
+    margin_fail = (isinstance(margin, float) and margin < floor) or (isinstance(op, float) and op <= 1202)
     if margin_fail and (eps_fail or news.get("target_cut") or cons.get("cut_vs_baseline")):
-        return "회복 철회"
-    if isinstance(margin, float) and margin >= 9.0 and isinstance(op, float) and op > 1202 and not eps_fail:
-        return "판단 유지"
+        return "매력 하락"
+    if isinstance(margin, float) and margin > floor and isinstance(op, float) and op > 1202 and not eps_fail:
+        return "매력 상향"
     return "보류"
 
 
@@ -192,7 +193,7 @@ def main() -> int:
         if today not in fails:
             emit(cfg, "[LG] 064400 조회 실패 | 판정 유보", [
                 f"{stamp} | PORT | {cfg['event_label']}",
-                "이게 뭐 알림: LG씨엔에스 064400 3분기 발표일과 컨센서스 변화, 영업이익률 9% 기준을 점검합니다.",
+                "이게 뭐 알림: LG씨엔에스 064400 중립 상단 판단의 변경 조건, 3분기 마진과 목표주가 하향을 점검합니다.",
                 f"지금 상태: 조회 실패. {err or '출처 없음'}. 숫자를 추정하지 않음.",
                 "지금 할 일: 다음 슬롯까지 대기. 매수·매도 없음.",
                 "나중에: 같은 날 실패는 다시 안 보냄. 마지막 2026-11-16 09:10.",
@@ -217,29 +218,30 @@ def main() -> int:
     fy_30 = float(b["fy_eps"]) - float(b["fy_eps_30d"])
     live_target = cons.get("target")
     live_eps = cons.get("fy_eps")
-    if act == "판단 유지":
-        title = "[LG] 064400 3Q 마진 회복 | 판단 유지"
-        todo = "신규는 한 번에 넣지 말고 나눠 보세요. 추격은 하지 마세요."
-    elif act == "회복 철회":
-        title = "[LG] 064400 3Q 마진 실패 | 신규 중단"
-        todo = "하반기 회복 가정을 거두세요. 신규 매수 중단."
+    if act == "매력 상향":
+        title = "[LG] 064400 3Q 마진 상회 | 판단 상향"
+        todo = "상반기 마진을 넘었습니다. 신규는 나눠 보세요. 추격은 하지 마세요."
+    elif act == "매력 하락":
+        title = "[LG] 064400 3Q 미스+하향 | 신규 중단"
+        todo = "실적 미스와 추정 하향이 겹쳤습니다. 신규 매수 중단."
     elif act == "추정 하향":
         title = "[LG] 064400 목표 하향 | 신규 보류"
         todo = "실적 전 목표 하향입니다. 발표 숫자 나오기 전 추가매수 없음."
     elif act == "보류":
         title = "[LG] 064400 3Q 확인 부족 | 보류"
-        todo = "마진·EPS가 기준을 동시에 통과하지 않았습니다. 추가매수 없음."
+        todo = "마진과 추정 하향이 기준을 동시에 통과하지 않았습니다. 추가매수 없음."
     else:
-        title = "[LG] 064400 실적 전 점검 | 신규 보류"
-        todo = "잠정 숫자가 없습니다. 매수·매도 없음. 다음 슬롯에서 일정과 추정을 다시 봅니다."
+        title = "[LG] 064400 중립 상단 | 신규 보류"
+        todo = "잠정 숫자가 없습니다. 매수·매도 없음. 3분기 마진이 상반기 7.8%를 넘고 수주 마진이 확인되기 전 추가매수 없음."
     lines = [
         f"{stamp} | PORT | {cfg['event_label']} | {act}",
-        "이게 뭐 알림: 064400 3분기 발표 일정, EPS·영업이익 추정의 7일·30일 변화, 목표주가 하향, 영업이익률 9% 기준을 확인합니다.",
+        "이게 뭐 알림: 064400 현 판단은 중립 상단입니다. 3분기 발표, 상반기 마진 7.8% 상회, 목표주가 하향을 확인합니다.",
         (
             f"지금 상태: {act}. 공식 일정 {news.get('date_hit') or '미확인'}. "
-            f"기준일 {cfg['baseline_asof']} 3분기 EPS {b['q3_eps']}원, 7일 전 대비 {eps_7:+.0f}원, 30일 전 대비 {eps_30:+.0f}원. "
+            f"기준 종가 {b['price']:,}원({cfg['baseline_asof']}, 목표가 {b['target']:,}원, 괴리 약 33%). "
+            f"상반기 영업이익 +1.1%, 2분기 영업이익 -9.2%. "
+            f"3분기 EPS {b['q3_eps']}원, 7일 전 대비 {eps_7:+.0f}원, 30일 전 대비 {eps_30:+.0f}원. "
             f"2026년 EPS {b['fy_eps']}원, 7일 전 대비 {fy_7:+.0f}원, 30일 전 대비 {fy_30:+.0f}원. "
-            f"목표 {fmt(float(b['target']))}원({b['target_asof']}, 직전 {fmt(float(b['target_prev']))}원). "
             f"당일 조회 목표 {fmt(live_target, '원')}, 당일 EPS {fmt(live_eps, '원')}. "
             f"알려진 하향: {b['known_cut']}. 기사 하향 문구 {yn(news.get('target_cut'))}. "
             f"잠정 영업이익 {fmt(news.get('op'), '억')}, 매출 {fmt(news.get('sales'), '억')}, 마진 {news.get('margin') if news.get('margin') is not None else '확인 불가'}. "
@@ -247,7 +249,7 @@ def main() -> int:
         ),
         f"지금 할 일: {todo}",
         "나중에: 발표 전은 슬롯마다 1회. 잠정 결과는 1회만. 마지막 2026-11-16 09:10. 그 뒤 침묵.",
-        "익절/줄일 때: 마진 9%와 EPS 유지가 같이 통과될 때만 기존 판단을 유지. 마진 실패에 추정 하향이 겹치면 신규 중단.",
+        "익절/줄일 때: 3분기 마진이 7.8%를 넘고 영업이익이 1,202억을 넘으며 연간 EPS가 4,730원 이상이면 판단 상향. 마진 실패에 추정 하향이 겹치면 신규 중단.",
         "하지 말 것: 전망 기사를 잠정으로 쓰기. 조회 실패를 호재로 읽기. 추격, 신용, 미수. 투자 권유 아님.",
         f"출처: {cfg['sources'][0]}",
         f"조회: {'OK' if ok else '실패'} {err}",
