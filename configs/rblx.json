@@ -1,0 +1,42 @@
+{
+  "name": "rblx",
+  "title_prefix": "[RBLX]",
+  "ticker": "RBLX",
+  "display": "로블록스",
+  "as_of": "2026-10-07",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST(UTC 00:00) morning job에만 붙임. 미국 전일 종가 점검.",
+  "year_guard": 2026,
+  "valid_until": "2026-11-20",
+  "alert_policy": "weekly_or_change",
+  "cik": "0001315098",
+  "earnings_est_kst": "2026-10-29 21:30",
+  "earnings_note": "Q3 2026 실적 예정 2026-10-29 장전(8:30 ET 추정). 09:00 KST는 전일 종가와 공시 확인용.",
+  "baseline": {
+    "price_date": "2026-10-06",
+    "price": 45.56,
+    "q2_bookings_m": 1557,
+    "q2_dau_m": 123,
+    "q3_bookings_lo_m": 1576,
+    "q3_bookings_hi_m": 1653,
+    "cash_investments_b": 6.1,
+    "last_known_filing": "2026-07-30"
+  },
+  "levels": {
+    "jefferies": 38,
+    "hold_ceiling": 55
+  },
+  "change_rules": {
+    "upgrade": "새 공시 bookings가 16.53억 달러 초과이고 미국/캐나다 시간당 수익화 하락이 멈춘 문구",
+    "downgrade": "새 공시 bookings가 15.76억 달러 미만"
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/RBLX?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0001315098.json",
+    "ir": "https://ir.roblox.com/"
+  },
+  "ends_kst": "2026-11-20 09:00",
+  "ends_note": "Q3 실적 확인 창 종료. 평일 09:00 점검 후 자동 종료"
+}
