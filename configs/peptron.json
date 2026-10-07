@@ -1,0 +1,53 @@
+{
+  "name": "peptron",
+  "title_prefix": "[PEPT]",
+  "display": "펩트론 087010 릴리 평가 종료 이후 공시 점검",
+  "ticker": "087010",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "기존 평일 09:00 morning 슬롯",
+  "schedule_note": "새 cron 없음. 한국 거래일 09:00에 Naver 거래소 공시 목록의 새 글과 분기 실적 열 변화를 확인한다. 조건 변화가 있을 때만 보낸다. 주간 요약은 없다.",
+  "baseline_year": 2026,
+  "active_until": "2027-06-30",
+  "monitor_start": "2026-10-08",
+  "baseline": {
+    "analysis_as_of": "2026-10-07",
+    "close_2026_10_07": 96900,
+    "close_2026_10_06": 130600,
+    "lilly": "2026-10-07 릴리 SmartDepot 기술평가 기간 종료. 후속 상업화 계약 없이 종료, 회사는 협력 가능성 종료는 아니라고 밝힘. 종료 안내는 홈페이지 공지였고 DART 공시는 없음.",
+    "h1_2026_report": {
+      "rcp_no": "20260814002979",
+      "cash_eok": 123.1,
+      "deposit_eok": 253.1,
+      "short_fin_eok": 141.8,
+      "strict_liquid_eok": 518.0,
+      "fvpl_debt_eok": 649.2,
+      "borrowings_eok": 90.5,
+      "eb_face_eok": 241.8,
+      "eb_put_from": "2027-08-05",
+      "capex_remaining_eok": 792.2,
+      "ohsong2_end": "2028-02-15",
+      "op_cfo_h1_eok": -80.4,
+      "capex_h1_eok": 73.6
+    },
+    "pt403": "2026-08-25 식약처 1상 IND 신청. 승인 공시는 2026-10-07 기준 없음."
+  },
+  "rules": {
+    "title_exclude": ["주식선물", "투자주의", "투자경고", "투자위험", "단일가", "과열", "가격제한폭", "공매도", "시장조치", "불성실공시", "조회공시요구", "소수계좌"],
+    "lilly_words": ["릴리", "Lilly", "SmartDepot", "스마트데포", "플랫폼 기술", "기술평가", "기술 평가", "평가 계약", "기술이전", "라이선스", "물질이전", "본계약"],
+    "financing_words": ["유상증자", "전환사채", "신주인수권", "교환사채", "사채", "차입", "자금조달", "감자", "자기주식"],
+    "capex_words": ["신규시설투자", "시설투자"],
+    "trial_words": ["임상시험"],
+    "major_title": "투자판단 관련 주요경영사항"
+  },
+  "sources": {
+    "notices": "https://stock.naver.com/api/domestic/detail/notice?itemCode=087010&page=1&pageSize=100",
+    "notice_page": "https://m.stock.naver.com/domestic/stock/087010/notice",
+    "quarter": "https://m.stock.naver.com/api/stock/087010/finance/quarter",
+    "trend": "https://m.stock.naver.com/api/stock/087010/trend?pageSize=10",
+    "baseline_dart": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260814002979"
+  },
+  "data_policy": "Naver 거래소 공시 목록에는 DART 정기보고서(분기보고서)가 없다. 새 분기 보고서는 Naver finance/quarter의 확정 열이 늘어나는 것으로 감지하고, 현금과 capex는 자동 추출하지 않고 수동 확인으로 표시한다. 조회 실패는 cwally-ops로만 보내고 매매 신호를 만들지 않는다.",
+  "ends_kst": "2027-06-30 09:00",
+  "ends_note": "평일 09:00 점검. 2027-06-30 이후 자동 침묵, EB 조기상환 청구(2027-08-05) 전 연장 여부 검토"
+}
