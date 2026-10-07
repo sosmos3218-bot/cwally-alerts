@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-06 22:22 KST",
-  "last_zone": "NO_CHASE",
+  "updated_at": "2026-10-07 15:22 KST",
+  "last_zone": "WAIT",
   "last_fail_date": null,
-  "last_action": "ALERT",
-  "price": 18130.0,
+  "last_action": "WATCH",
+  "price": 17190.0,
   "errors": []
 }

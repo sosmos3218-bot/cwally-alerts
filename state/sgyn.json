@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-01 22:17 KST",
-  "last_sent_date": "2026-10-01",
+  "updated_at": "2026-10-07 15:20 KST",
+  "last_sent_date": "2026-10-07",
   "week_date": "2026-09-28",
   "file_seq": 4969,
   "hits": [],
@@ -27,16 +27,17 @@
       "count": 426,
       "prev": 670,
       "mom_pct": -36.417910447761194,
-      "source": "수원시 토허 통계"
+      "source": "수원시 토허 통계",
+      "error": "<urlopen error timed out>"
     }
   },
   "iros": {
     "month": "2026-10",
-    "total": 0,
-    "series_a": 0,
-    "series_b": 0,
-    "prev_total": 200358,
-    "mom_pct": -100.0,
+    "total": 18486,
+    "series_a": 7323,
+    "series_b": 11163,
+    "prev_total": 229604,
+    "mom_pct": -91.94874653751677,
     "source": "등기정보광장 매매 소유권이전"
   }
 }
