@@ -120,6 +120,8 @@ on:
     - cron: "40 10 14 10 *"
     - cron: "40 13 14 10 *"
     - cron: "40 23 14 10 *"
+    # bankrate1014 oneshot_kst (KST→UTC): 2026-10-14 08:00 (= 10-13 23:00 UTC). 10/13 은행 실적 + 10년물 5.31% 시나리오 판정
+    - cron: "0 23 13 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -237,6 +239,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 13 6 11 *" ] || [ "${{ github.event.schedule }}" = "40 13 9 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 10 11 *" ]; then JOB=ceg
             elif [ "${{ github.event.schedule }}" = "20 7 7 10 *" ]; then JOB=0144m0
             elif [ "${{ github.event.schedule }}" = "40 10 14 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "40 23 14 10 *" ]; then JOB=asml
+            elif [ "${{ github.event.schedule }}" = "0 23 13 10 *" ]; then JOB=bankrate1014
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -656,6 +659,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/asml_monitor.py auto
+      - name: Run bankrate1014
+        if: steps.pick.outputs.job == 'bankrate1014'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/bankrate1014_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
