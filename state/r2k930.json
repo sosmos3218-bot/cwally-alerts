@@ -1,0 +1,11 @@
+{
+  "etf_band": null,
+  "russell_band": null,
+  "ust10_band": null,
+  "fx_band": null,
+  "aum_band": null,
+  "weekly_sent": {},
+  "ops_daily": {},
+  "ended_sent": false,
+  "last_observation": null
+}

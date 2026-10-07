@@ -418,6 +418,7 @@ jobs:
             python scripts/d0chk_monitor.py
             python scripts/asml_monitor.py slot
             python scripts/samg26_monitor.py auto
+            python scripts/r2k930_monitor.py auto
           fi
           python scripts/ntfy_archive.py
           exit $failed
