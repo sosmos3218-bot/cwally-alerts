@@ -1,0 +1,53 @@
+{
+  "name": "hbmchk",
+  "title_prefix": "[HBMCHK]",
+  "created_at": "2026-10-07T15:12:07+09:00",
+  "active_from": "2026-10-07",
+  "notice_window_start": "2026-10-07",
+  "expire_date": "2026-12-31",
+  "year_guard": 2026,
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 또는 one-shot 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 통합. 조건을 새로 충족하거나 새 관련 공시가 있을 때만 발송.",
+  "policy": {
+    "purpose": "보수적 영상 팩트체크 후 사람의 투자 위험 재검토를 돕는 관찰 알림. 어떤 규칙도 자동 매수 또는 자동 매도 신호가 아님.",
+    "kr_semiconductor": "삼성전자와 SK하이닉스는 외국인 3거래일 연속 순매수와 종가 MA20 이상만 수급 회복 관찰로 표시. 실제 HBM4 확정 계약, 실적 전망 상향, 자사주 매입 종료는 알고리즘이 검증하지 않으므로 확인 전 신규매수 보류. 목표가 재확인이나 시세 3배 주장은 근거로 사용하지 않음.",
+    "us_correction": "NVDA와 SNDK는 최근 30거래일 최고 종가 대비 5%, 10% 조정만 위험 검토 계기로 표시. 목표가 또는 매수 가격으로 해석하지 않음.",
+    "sol_475300": "기존 25,000원 선 아래의 완료 일봉만 신규진입 보류 및 보유 위험 점검으로 표시. 사용자 보유 여부를 추정하거나 자동 매도를 지시하지 않음."
+  },
+  "kr": {
+    "trend_size": 40,
+    "ma_days": 20,
+    "foreign_positive_days": 3,
+    "stocks": {
+      "005930": {"name": "삼성전자"},
+      "000660": {"name": "SK하이닉스"},
+      "475300": {"name": "SOL 반도체전공정", "risk_line": 25000}
+    },
+    "source": "Naver mobile stock trend API, completed daily close and foreign net-buy shares. 같은 날 장중 자료는 항상 제외하고 직전 KRX 거래일을 요구."
+  },
+  "notices": {
+    "size": 30,
+    "codes": ["005930", "000660"],
+    "title_pattern": "HBM|고대역폭|잠정실적|영업실적|매출액또는손익|자기주식|실적발표|분기보고서|사업보고서|반기보고서|단일판매|공급계약",
+    "source": "Naver domestic notice API. 시간대 없는 datetime은 API 공시표시일로만 안내하고 당일 누락 방지를 위해 2026-10-07 표시일부터 감시. 제목 키워드는 원문 재검토 대상을 고를 뿐 확정 계약, 실적 상향 또는 자사주 매입 종료로 분류하지 않음."
+  },
+  "us": {
+    "lookback_trading_days": 30,
+    "drawdown_tiers_pct": [5, 10],
+    "completed_after_ny": "16:30",
+    "source": "Yahoo Finance chart API range=3mo interval=1d includePrePost=false. regularMarketPrice 또는 previousClose 대체 없음.",
+    "tickers": {
+      "NVDA": {"name": "엔비디아", "official_ir": "https://investor.nvidia.com/"},
+      "SNDK": {"name": "샌디스크", "official_ir": "https://investor.sandisk.com/"}
+    }
+  },
+  "pending_manual_fundamentals": [
+    "삼성전자 및 SK하이닉스 HBM4가 제안 또는 협의가 아니라 최종 확정 계약인지 공식 원문 확인",
+    "공식 실적 또는 회사 전망에서 이익 전망이 실제 상향됐는지 확인",
+    "자사주 매입 종료 여부와 종료 후 외국인 수급 정상화를 별도로 확인",
+    "NVDA와 SNDK는 기존 nvdaq3 및 sndk 실적 모니터와 공식 IR에서 실적을 확인하고 이 모니터가 중복 판정하지 않음"
+  ]
+}

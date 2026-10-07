@@ -384,6 +384,7 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/uamcert_monitor.py auto
+            python scripts/hbmchk_monitor.py
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/ratesbell_monitor.py auto
