@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""0144M0 follow-up: JOBY/ACHR 8-K only when certification language appears."""
+"""0144M0 follow-up: JOBY/ACHR/BETA 8-K only when certification language appears."""
 from __future__ import annotations
 
 import json
@@ -76,7 +76,7 @@ def hits(text: str, keywords: list[str]) -> list[str]:
 def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str) -> str:
     return "\n".join(
         [
-            f"{stamp} | 0144M0 | JOBY/ACHR 인증 공시",
+            f"{stamp} | 0144M0 | JOBY/ACHR/BETA 인증 공시",
             "이게 뭐 알림: 0144M0 상위 개발사의 새 8-K에 인증 문구가 있을 때만 보내는 알림입니다. 매수 지시가 아닙니다.",
             f"지금 결과/상태: {status}",
             f"지금 할 일: {action}",
@@ -156,8 +156,8 @@ def main() -> int:
                 "[0144M0] 인증 공시 조회 실패 | 조건 미확인",
                 body(
                     stamp,
-                    "JOBY 또는 ACHR 8-K 조회에 실패했습니다. 인증 공시가 없다는 뜻이 아닙니다.",
-                    "SEC EDGAR에서 JOBY, ACHR 최신 8-K를 직접 보세요.",
+                    "JOBY, ACHR, BETA 8-K 조회에 실패했습니다. 인증 공시가 없다는 뜻이 아닙니다.",
+                    "SEC EDGAR에서 JOBY, ACHR, BETA 최신 8-K를 직접 보세요.",
                     "다음 평일 09:00 KST에 재시도합니다.",
                     "이번 알림으로 비중을 바꾸지 마세요.",
                     "조회 실패를 인증 없음이나 매수 신호로 읽기.",

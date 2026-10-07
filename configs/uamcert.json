@@ -1,11 +1,11 @@
 {
   "name": "uamcert",
   "title_prefix": "[0144M0]",
-  "display": "0144M0 JOBY/ACHR 인증 공시",
+  "display": "0144M0 JOBY/ACHR/BETA 인증 공시",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 2026-10-07 16:20 결론 알림 이후부터. 2027-06-30 이후 침묵.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 2026-10-07 16:20 결론 알림 이후부터. 2027-06-30 이후 침묵. BETA 8-K는 2026-10-07에 같은 문구 조건으로 추가. 기준은 2026-08-12 8-K.",
   "valid_from": "2026-10-08",
   "valid_until": "2027-06-30",
   "issuers": [
@@ -22,9 +22,19 @@
       "name": "Archer Aviation",
       "baseline_acc": "0001824502-26-000078",
       "baseline_date": "2026-10-02"
+    },
+    {
+      "ticker": "BETA",
+      "cik": "0001784570",
+      "name": "BETA Technologies",
+      "baseline_acc": "0001628280-26-055933",
+      "baseline_date": "2026-08-12"
     }
   ],
-  "forms": ["8-K", "8-K/A"],
+  "forms": [
+    "8-K",
+    "8-K/A"
+  ],
   "keywords": [
     "type certification",
     "type certificate",
