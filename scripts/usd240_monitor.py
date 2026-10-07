@@ -42,22 +42,28 @@ def save_state(st, now):
 
 
 def fetch_oct_close():
-    """KRX October USD futures close. Spot is not a substitute."""
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/KRW=X?interval=1d&range=5d"
+    """October USD futures close. Spot is not accepted."""
+    url = "https://scanner.tradingview.com/symbol?symbol=KRX:USDV2026&fields=close,description,expiration&no_404=true"
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=25) as resp:
         data = json.loads(resp.read().decode())
-    result = data["chart"]["result"][0]
-    meta = result["meta"]
-    price = meta.get("regularMarketPrice")
-    prev = meta.get("chartPreviousClose")
+    price = data.get("close")
+    desc = str(data.get("description") or "")
+    exp = str(data.get("expiration") or "")
     if price is None:
-        raise ValueError("no price")
+        raise ValueError("no close")
+    if exp != "20261019" or "Oct 2026" not in desc:
+        raise ValueError(f"not October 2026 contract: {desc} {exp}")
+    px = float(price)
+    if not 1000 < px < 2000:
+        raise ValueError(f"close out of range: {px}")
     return {
-        "price": float(price),
-        "prev": float(prev) if prev is not None else None,
-        "source": "yahoo KRW=X spot",
-        "futures": False,
+        "price": px,
+        "prev": None,
+        "source": "TradingView KRX:USDV2026 close",
+        "futures": True,
+        "description": desc,
+        "expiration": exp,
     }
 
 
