@@ -54,7 +54,7 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     return "\n".join(
         [
             f"{stamp} | VTR SPG | 변경조건 점검",
-            "이게 뭐 알림: Ventas(VTR)와 Simon(SPG) 5년 비교의 금리, 배수 변경만 보는 알림입니다. 매수 지시가 아닙니다.",
+            "이게 뭐 알림: Ventas(VTR)와 Simon(SPG)의 12개월, 3년 금리 시나리오에서 구간이 바뀌면 보내는 알림입니다. 매수 지시가 아닙니다.",
             f"지금 결과/상태: {status}",
             f"지금 할 일: {action}",
             f"나중에: {later}",
@@ -117,8 +117,8 @@ def main() -> int:
         vtr = price_of(src["vtr"])
         spg = price_of(src["spg"])
         tnx = price_of(src["tnx"])
-        # Yahoo ^TNX is the yield times 10.
-        y10 = (tnx / 10.0) if tnx is not None else None
+        # Yahoo ^TNX is sometimes yield*10 and sometimes the yield.
+        y10 = None if tnx is None else (tnx / 10.0 if tnx > 20 else tnx)
     except Exception as exc:
         err = str(exc)
     print(f"vtr={vtr} spg={spg} y10={y10} err={err}")
@@ -166,7 +166,7 @@ def main() -> int:
                 later = "4.5% 아래로 내려가면 성장 창, 5.0% 위로 올라가면 인컴 고수로 다시 알립니다."
             elif band == "high":
                 title = "[VTRSPG] 10년물 5%대 | 인컴 유지"
-                action = "SPG 쪽 배분을 유지하세요. VTR 추격 매수는 하지 마세요."
+                action = "신규 매수는 SPG 버퍼가 더 큽니다. VTR 추격 매수는 하지 마세요."
                 later = "5.5% 이상이면 하향 성장 가정에서 국채가 앞섭니다."
             else:
                 title = "[VTRSPG] 10년물 5.5% 이상 | 국채 우선"
@@ -237,7 +237,7 @@ def main() -> int:
                 body(
                     stamp,
                     "VTR 3분기 실적일 2026-10-27. 자동 판정 없음.",
-                    "SHOP 동일점유 NOI가 16% 가이던스를 넘는지, FFO 가이던스가 3.85~3.90달러에 머무는지 공시에서 보세요.",
+                    "SHOP 동일점포 NOI가 16% 가이던스를 넘는지, FFO 가이던스가 3.85~3.90달러에 머무는지 공시에서 보세요.",
                     "넘기면 성장 조건이 살아 있습니다. 배수가 21배 근처면 이미 반영된 성장입니다.",
                     "실적 헤드라인만으로 사지 마세요.",
                     "가이던스 유지를 상향으로 읽기.",
