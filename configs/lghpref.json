@@ -1,0 +1,79 @@
+{
+  "name": "lghpref",
+  "title_prefix": "[051905]",
+  "display": "LG생활건강우 051905 관망 조건 점검",
+  "ticker": "051905",
+  "ticker_common": "051900",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "기존 평일 09:00 morning 슬롯",
+  "schedule_note": "새 cron 없음. 한국 거래일 09:00에 직전 완료 KRX 세션 종가를 확인한다. 한국 휴일에는 실행하지 않는다. ISO 주차의 첫 거래일에 주간 요약을 보내며, 그날 실행하지 못했으면 같은 주 첫 성공 실행에서 보충한다.",
+  "calendar_start": "2026-01-01",
+  "calendar_end": "2026-12-31",
+  "baseline_year": 2026,
+  "monitor_start": "2026-10-07",
+  "baseline": {
+    "analysis_as_of": "2026-10-07",
+    "verdict": "관망",
+    "price_pref": 94600,
+    "price_common": 270500,
+    "price_kind": "2026-10-07 17:59 KST 애프터마켓 표시가. KRX 정규장 확정 종가가 아님",
+    "discount_pct": 65.03,
+    "forward_per_on_common_eps": 7.1,
+    "pbr_on_common_bps": 0.28,
+    "eps_note": "추정 EPS 13,333원과 BPS 337,569원은 보통주 기준 값이다. 우선주에 그대로 나눈 값이라 참고용이다.",
+    "q2_2026": {
+      "revenue_eok": 16574,
+      "op_eok": 1028,
+      "net_parent_eok": 738,
+      "source": "2026-07-29 잠정 공시",
+      "one_off_note": "회사는 미국 관세 환급이 일시 개선 요인이라고 밝혔다. 일회성 제외 영업이익은 확인하지 못했다."
+    },
+    "q3_2026_consensus": {
+      "revenue_eok": 16438,
+      "op_eok": 1057,
+      "as_of": "2026-10-06",
+      "source": "Naver FnGuide"
+    },
+    "dps_2026_consensus_common": 3019,
+    "dividends_pref": {
+      "interim_2026": 1500,
+      "final_2025": 1050,
+      "note": "직전 12개월 우선주 합계 2,550원은 investing.com 배당 기록과 회사 IR 기준 추정"
+    }
+  },
+  "rules": {
+    "price_zone_pref_krw": 90000,
+    "discount_zone_pct": 67,
+    "liq_window_sessions": 20,
+    "liq_median_value_eok": 10,
+    "liq_dry_window_sessions": 5,
+    "liq_dry_avg_volume": 1000,
+    "q3_ok_op_eok": 1057,
+    "q3_shock_op_eok": 800,
+    "dps_cut_below_krw": 2100,
+    "estimate_change_pct": 5,
+    "split_requires": [
+      "q3_ok",
+      "liq_ok"
+    ],
+    "split_note": "분할 검토 후보는 3분기 영업이익 조건과 유동성 조건이 모두 맞을 때만 만든다. 가격 조건(90,000원 이하 또는 할인율 67% 이상)은 별도 알림이며 단독으로 분할 신호가 아니다. 이 AND 해석은 2026-10-07 분석 문장이 모호해 보수적으로 고른 것이다.",
+    "avoid_any": [
+      "q3_shock",
+      "liq_dry",
+      "div_risk"
+    ],
+    "q3_key": "202609"
+  },
+  "sources": {
+    "trend_pref": "https://m.stock.naver.com/api/stock/051905/trend?pageSize=30",
+    "trend_common": "https://m.stock.naver.com/api/stock/051900/trend?pageSize=30",
+    "annual": "https://m.stock.naver.com/api/stock/051900/finance/annual",
+    "quarter": "https://m.stock.naver.com/api/stock/051900/finance/quarter",
+    "notices": "https://stock.naver.com/api/domestic/detail/notice?itemCode=051900&page=1&pageSize=100",
+    "notice_page": "https://m.stock.naver.com/domestic/stock/051900/notice"
+  },
+  "data_policy": "우선주와 보통주 종가 날짜가 kr_calendar 기준 직전 완료 세션과 정확히 일치해야 한다. 거래대금은 종가 x 거래량 추정이다(KRX 일별 거래대금 필드 없음). 누락은 0이나 이전값으로 대체하지 않는다.",
+  "ends_kst": "2026-12-30 09:00",
+  "ends_note": "평일 09:00 점검, 2026년 마지막 거래일에 종료. 2026 결산배당(2027년 2월)은 범위 밖, 연장은 요청 시"
+}

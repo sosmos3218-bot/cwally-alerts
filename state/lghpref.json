@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "opinion": null,
+  "price_zone": null,
+  "liq_ok": null,
+  "liq_dry": null,
+  "q3_state": null,
+  "div_risk": null,
+  "consensus_reference": {},
+  "latest_actual_key": null,
+  "notices_seeded": false,
+  "seen_notice_ids": [],
+  "weekly_sent": {},
+  "ops_daily": {}
+}
