@@ -1,10 +1,10 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-10-07 09:06 KST",
   "fx_key": null,
   "rate_key": null,
   "fail_sent_date": null,
-  "last_jpy100": null,
-  "last_low_52w": null,
+  "last_jpy100": 845.0328780450114,
+  "last_low_52w": 845.0328780450114,
   "last_kr_policy": 3.0,
   "last_jp_policy": 1.25,
   "last_bok": null,

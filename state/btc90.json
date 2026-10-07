@@ -1,13 +1,18 @@
 {
-  "snapshot_sent": false,
+  "snapshot_sent": true,
   "fail_notified": false,
   "missing_notified": 0,
-  "last_kind": null,
-  "last_alert_key": null,
+  "last_kind": "SNAPSHOT",
+  "last_alert_key": "2026-10-07|SNAPSHOT|HOLD|2026-10-06:-3.2|NOT_SCHEDULED",
   "trend_sent": false,
   "break80_sent": false,
   "break75_sent": false,
   "fomc_sent": false,
   "clarity_sent": false,
-  "updated_at": null
+  "updated_at": "2026-10-07T09:01:46.622077+09:00",
+  "regime": "HOLD",
+  "close": 85580.91,
+  "close_date": "2026-10-06",
+  "etf": "2026-10-06 순-3.2백만달러",
+  "senate": "NOT_SCHEDULED"
 }

@@ -1,6 +1,9 @@
 {
-  "updated_at": "2026-09-17 13:32 KST",
-  "zone": "OBSERVE",
-  "price": 144000.0,
-  "last_event_ids": []
+  "updated_at": "2026-10-07 09:00 KST",
+  "zone": "REDUCE",
+  "price": 118500.0,
+  "last_event_ids": [],
+  "print_date": "2026-10-28",
+  "print_date_confirmed": false,
+  "notice": null
 }

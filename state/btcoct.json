@@ -1,9 +1,12 @@
 {
-  "snapshot_sent": false,
+  "snapshot_sent": true,
   "fail_notified": false,
-  "last_kind": null,
+  "last_kind": "WEEKLY_ABOVE",
   "confirmed_sent": false,
   "invalidated_sent": false,
-  "weekly_above_sent": false,
-  "updated_at": null
+  "weekly_above_sent": true,
+  "updated_at": "2026-10-07T09:01:45.540060+09:00",
+  "spot": 85532.515,
+  "sma50": 78061.68400000001,
+  "sma200": 66236.3455
 }

@@ -1,8 +1,20 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-10-07 09:01 KST",
   "box_ok": false,
   "box_since": null,
+  "box_persist_days": 0,
   "earn_down": false,
   "ready": false,
+  "last_px": 6941.39,
+  "range_pct": 0.39507493342277183,
+  "news_hits": 1,
+  "consensus_hist": {
+    "005930.KS": {
+      "202609:2026-10-07": 1066401.0
+    },
+    "000660.KS": {
+      "202609:2026-10-07": 771965.0
+    }
+  },
   "last_alert_date": null
 }

@@ -1,8 +1,10 @@
 {
-  "updated_at": "2026-09-17 13:32 KST",
-  "price": 42.62,
+  "updated_at": "2026-10-07 09:01 KST",
+  "price": 41.28,
   "tag": "WATCH",
-  "last_event_ids": [],
+  "last_event_ids": [
+    "h24"
+  ],
   "seen_ids": [
     "https://finance.yahoo.com/technology/ai/articles/nvidia-makes-bold-move-expand-182542229.html?.tsrc=rss",
     "https://beincrypto.com/iren-stock-falls-ai-execution-doubts/?.tsrc=rss",
@@ -33,6 +35,22 @@
     "https://247wallst.com/investing/2026/09/15/coreweave-imploded-over-the-last-few-months-one-high-conviction-wall-street-pro-says-200-gains-start-now/?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/iren-rebounds-earnings-dip-time-151900132.html?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/why-iren-iren-down-6-001814288.html?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/nbis-stock-rallies-as-neocloud-operator-hikes-prices-peers-iren-crwv-jump-as-well/cZtrBwmRB5R?.tsrc=rss"
+    "https://stocktwits.com/news-articles/markets/equity/nbis-stock-rallies-as-neocloud-operator-hikes-prices-peers-iren-crwv-jump-as-well/cZtrBwmRB5R?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/goldman-sachs-flags-spacex-stock-171739702.html?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/cryptocurrency/crypto-stocks-rise-with-bitcoin-above-84-k-analysts-raise-riot-robinhood-price-targets/cZMZ29DRBgF?.tsrc=rss",
+    "https://www.fool.com/investing/2026/09/26/2-data-center-stocks-make-fortune/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/09/26/jpmorgan-predicts-iren-will-generate-24-billion-in-annual-revenue-by-2030/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/09/28/irens-yearlong-downward-trend-continues-a-prominent-wall-street-firm-says-it-will-double-and-then-some/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-vs-riot-platforms-bitcoin-142800496.html?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-just-got-reality-check-145246343.html?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-stock-is-up-17-in-2026-heres-where-the-stock-could-go?ref=yahoofinance&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-bit-ire-infrastructure-upgrade-190631990.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/09/30/cipher-digital-slips-3-despite-20-year-barber-lake-lease-extension-terawulf-retreats-2-iren-limited-treads-water/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/10/02/applied-digital-spikes-7-as-another-75-mw-comes-online-at-polaris-forge-1-iren-advances-6/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-doubles-down-pricing-revenue-132800232.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/10/05/applied-digital-falls-4-despite-bringing-75-mw-online-at-polaris-forge-1-iren-and-cipher-digital-also-slide-4/?.tsrc=rss",
+    "https://www.fool.com/investing/2026/10/05/what-caused-the-surge-in-iren-s-ai-neocloud-stock-in-september/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/did-iren-pivot-bitcoin-mining-150655271.html?.tsrc=rss",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000110465926112411/0001104659-26-112411-index.htm"
   ]
 }

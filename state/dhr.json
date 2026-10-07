@@ -1,7 +1,6 @@
 {
-  "updated_at": null,
-  "price": null,
-  "band": null,
+  "price": 215.61,
+  "band": "HOLD",
   "buy2_sent": false,
   "buy3_sent": false,
   "trim_sent": false,
@@ -9,5 +8,6 @@
   "q3_pre_sent": false,
   "q3_post_sent": false,
   "fail_sent_date": null,
-  "last_kind": null
+  "last_kind": null,
+  "updated_at": "2026-10-07T09:06:23.104221+09:00"
 }
