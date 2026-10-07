@@ -424,6 +424,7 @@ jobs:
             python scripts/d0chk_monitor.py
             python scripts/asml_monitor.py slot
             python scripts/samg26_monitor.py auto
+            python scripts/peptron_monitor.py auto
             python scripts/r2k930_monitor.py auto
             python scripts/spg_monitor.py auto
             python scripts/sivr_monitor.py auto
