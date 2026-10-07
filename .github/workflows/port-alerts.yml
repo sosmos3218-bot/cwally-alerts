@@ -22,8 +22,6 @@ on:
     - cron: "10 0 15 10 *"
     - cron: "0 13 14 10 *"
     - cron: "0 13 29 10 *"
-    - cron: "10 0 7 10 *"
-    - cron: "30 6 7 10 *"
     - cron: "10 7 6 10 *"
     - cron: "30 9 6 10 *"
     - cron: "20 18 7 10 *"
@@ -103,6 +101,15 @@ on:
     - cron: "5 7 8 10 *"
     - cron: "5 7 12 10 *"
     - cron: "5 7 13 10 *"
+    # sdiq3 oneshot_kst (KST→UTC): 2026-10-28 09:14/16:14, 10-29 09:14, 10-30 09:14, 11-03 09:14, 11-04 09:14/16:14, 11-05 09:14
+    - cron: "14 0 28 10 *"
+    - cron: "14 7 28 10 *"
+    - cron: "14 0 29 10 *"
+    - cron: "14 0 30 10 *"
+    - cron: "14 0 3 11 *"
+    - cron: "14 0 4 11 *"
+    - cron: "14 7 4 11 *"
+    - cron: "14 0 5 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -199,7 +206,6 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
             elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
-            elif [ "${{ github.event.schedule }}" = "10 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "30 6 7 10 *" ]; then JOB=zs1006
             elif [ "${{ github.event.schedule }}" = "10 7 6 10 *" ] || [ "${{ github.event.schedule }}" = "30 9 6 10 *" ]; then JOB=sk1006
             elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
             elif [ "${{ github.event.schedule }}" = "35 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 15 10 *" ]; then JOB=fedodds
@@ -218,6 +224,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             elif [ "${{ github.event.schedule }}" = "5 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 12 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 13 10 *" ]; then JOB=usd240
+            elif [ "${{ github.event.schedule }}" = "14 0 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 5 11 *" ]; then JOB=sdiq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -490,12 +497,6 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/dram27_monitor.py auto
-      - name: Run zs1006
-        if: steps.pick.outputs.job == 'zs1006'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/zs1006_monitor.py auto
       - name: Run fomc1007
         if: steps.pick.outputs.job == 'fomc1007'
         env:
@@ -612,6 +613,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/usd240_monitor.py auto
+      - name: Run sdiq3
+        if: steps.pick.outputs.job == 'sdiq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/sdiq3_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
