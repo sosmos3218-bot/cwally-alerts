@@ -3,6 +3,8 @@
 
 Periodic: weekday 09:00 KST morning slot. One-shots cover the Oct 27 window only.
 Missing numbers stay missing. News is not a company filing.
+Peer print 2026-10-08: LGES 373220 sales 96,434 / OP 7,560 / AMPC 4,169 / ex-AMPC 3,391 eok.
+Compensation amount is not in that filing. Sungrow 10GWh is not a confirmed order.
 """
 from __future__ import annotations
 
@@ -191,7 +193,7 @@ def lines_for(cfg: dict, now: datetime, status: str, action: str, later: str) ->
         f"지금 할 일: {action}",
         f"나중에: {later}",
         "익절/줄일 때: 일회성 제외 적자 또는 북미 LFP 지연 공시가 있으면 축소 점검. 주가 상승만으로 줄이지 마세요.",
-        "하지 말 것: 미확인 숫자를 추정으로 채우기. 목표주가 상향만으로 분할매수. 우선주 006405와 혼동.",
+        "하지 말 것: 미확인 숫자를 추정으로 채우기. 목표주가 상향만으로 분할매수. 우선주 006405와 혼동. 선그로우 10GWh를 확정 수주로 읽기.",
     ]
 
 
@@ -284,9 +286,13 @@ def main() -> int:
         action = "분할매수 검토. 추가 매수 신호가 아닙니다. 일회성 제외 흑자와 ESS 비중을 원문에서 다시 보세요."
         title = "[SDI] 분할매수 검토 | 조건 충족"
     else:
-        action = "보유. 562,000원 대비 추격하지 마세요. 숫자 미확인은 상향 조건이 아닙니다."
+        action = "보유. 562,000원 대비 추격하지 마세요. 숫자 미확인과 선그로우 미확정은 상향 조건이 아닙니다."
         title = "[SDI] 보유 | 변경 조건 미충족"
-    later = "상향은 일회성 제외 흑자, ESS 28% 이상, LFP 지연 없음. 하향은 제외 적자 또는 LFP 지연 공시. 전고체 2027 지연은 멀티플 약화."
+    later = (
+        "피어 373220은 10/8 잠정 매출 96,434억, 영업이익 7,560억, AMPC 4,169억, AMPC 제외 3,391억. "
+        "보상금 금액은 공시에 없음. 확정 실적 11/3. 선그로우 10GWh는 확정 수주 아님. "
+        "상향은 일회성 제외 흑자, ESS 28% 이상, LFP 지연 없음. 기간은 2027년 ESS 이익."
+    )
     send(cfg, title, "\n".join(lines_for(cfg, now, status, action, later)), 4 if verdict != "보유" else 3, dry)
     if not dry:
         state["verdict"] = verdict
