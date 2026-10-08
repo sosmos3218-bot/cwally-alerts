@@ -1,6 +1,12 @@
 {
-  "updated_at": null,
-  "last_sent_day": null,
+  "updated_at": "2026-10-08 15:40 KST",
+  "last_sent_day": "2026-10-08",
   "last_fail_day": null,
-  "last": null
+  "last": {
+    "day": "2026-10-08",
+    "close": 1338.3,
+    "hit": true,
+    "next_center": 1342,
+    "next_day": "2026-10-12"
+  }
 }
