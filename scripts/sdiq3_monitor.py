@@ -4,6 +4,7 @@
 Basis: the 1,600억 bar is Mirae Asset's Q3 OP estimate 3,023억 minus AMPC 1,420억, so the actual is
 compared the same way (OP - AMPC). Compensation is not in the bar; it is shown on its own line and,
 when its amount is disclosed, it can only block an upgrade (one-off income never lifts the verdict).
+Peer 373220 print 2026-10-08 is context only. Sungrow 10GWh is not a confirmed order.
 Failures and missing numbers go to cwally-ops, never as a trading line.
 """
 from __future__ import annotations
@@ -164,9 +165,13 @@ def result_message(cfg: dict, item: dict, p: dict, now: datetime) -> tuple[str, 
             f"공시 {item['id']}, 조회 {now:%Y-%m-%d %H:%M} KST. {DISCLOSURES}"
         ),
         f"지금 할 일: {action}",
-        "나중에: 기준 1,600억원은 미래에셋 추정(영업이익 3,023억원 - AMPC 1,420억원)이고 확정 컨센서스가 아닙니다. 확정 실적에서 다시 보세요.",
+        (
+            "나중에: 기준 1,600억원은 미래에셋 추정이고 확정 컨센서스가 아닙니다. "
+            "피어 373220은 10/8 잠정 매출 96,434억, 영업이익 7,560억, AMPC 4,169억, AMPC 제외 3,391억. "
+            "보상금 금액은 그 공시에 없습니다. 선그로우 10GWh는 확정 수주가 아닙니다."
+        ),
         "익절/줄일 때: AMPC 제외 이익이 적자로 정정되면 보유 비중을 재평가하세요.",
-        "하지 말 것: 우선주 괴리나 목표주가만으로 이 판정을 바꾸지 마세요.",
+        "하지 말 것: 우선주 괴리, 목표주가, 미확정 수주만으로 이 판정을 바꾸지 마세요.",
     ]
     return title, lines
 
