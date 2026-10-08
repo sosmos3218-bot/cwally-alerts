@@ -1,6 +1,50 @@
 {
-  "updated_at": "2026-10-08 15:41 KST",
+  "updated_at": "2026-10-08 15:54 KST",
   "items": [
+    {
+      "id": "jwBujonPYfNT",
+      "topic": "cwally-port",
+      "title": "[SECQ3] 설치 확인 | 매매 신호 아님",
+      "message": "이게 뭐 알림: 삼성전자 3분기 확정실적(10/29 10:00 컨콜) 부문 손익, HBM4 비중, 4분기 전망을 SK하이닉스와 비교하는 원샷 알림 설치 확인.\n지금 결과/상태: 설치 완료. 실행 10/29 08:10, 09:40, 11:10, 16:10, 10/30 09:16, SK 갱신 11/3 09:16 KST.\n지금 할 일: 없음. 결과는 10/29 아침 공식 자료가 올라오면 1회 옵니다.\n나중에: SK하이닉스 3분기 실적이 삼성보다 늦으면 11/3까지 1회 갱신합니다.\n익절/줄일 때: [SEC] 가격 기준을 따릅니다(1차 33만~38만원, 2차 46만~50만원).\n하지 말 것: 이 설치 알림을 매매 신호로 보지 마세요.\n꺼지는 때: 2026-11-03 09:16 KST (삼성전자 3분기 확정실적 비교, 11/3 SK하이닉스 갱신 회차가 마지막)",
+      "priority": 2,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1791442130
+    },
+    {
+      "id": "VfCnALhwiAOp",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-29 09:40",
+      "message": "2026-10-08 15:48 KST | OPS | cronjob-register / 2026-10-29 09:40\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37739603053",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791442083
+    },
+    {
+      "id": "GmLg82ZvRsbK",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-29 08:10",
+      "message": "2026-10-08 15:46 KST | OPS | cronjob-register / 2026-10-29 08:10\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37739481629",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791442013
+    },
+    {
+      "id": "4BIcqMqRR4uA",
+      "topic": "cwally-port",
+      "title": "[0090B0] 7천 이하 | 분할 가속",
+      "message": "2026-10-08 15:41 KST | 0090B0 | PLUS K방산소부장\n이게 뭐 알림: 방산 소부장 ETF 장마감 가격 구간 점검입니다.\n지금 상태: 6,970원 (-3.26%) / NAV 7,218원 / 괴리 +0.19% / 거래량 149,845주 / 순자산 141억.\n지금 할 일: 7,000원 이하입니다. 거래량이 유지되면 분할 속도만 올리세요. 한 번에 채우지 마세요.\n나중에: 다음 평일 15:40 KST에 다시 점검합니다. 종료일 없습니다.\n익절/줄일 때: 이 알림은 매수 구간만 봅니다. 고점 대비 반등만으로 익절하지 마세요.\n하지 말 것: 일시 추격, 신용, 미수, 코어 비중화 금지. 체계업체 ETF와 역할을 섞지 마세요.\n꺼지는 때: 종료일 없음 (수동 해제 전까지 평일 15:40대 가격/괴리 구간 알림)",
+      "priority": 4,
+      "tags": [
+        "chart_with_downwards_trend"
+      ],
+      "time": 1791441680
+    },
     {
       "id": "fAbTqlS0ZmIh",
       "topic": "cwally-port",
