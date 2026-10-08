@@ -1,0 +1,45 @@
+{
+  "name": "isrg",
+  "title_prefix": "[ISRG]",
+  "ticker": "ISRG",
+  "display": "인튜이티브 서지컬",
+  "as_of": "2026-10-07",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 3분기 절차 채점은 isrgq3.",
+  "valid_until": "2027-01-22",
+  "alert_policy": "weekly_or_change",
+  "cik": "0001035267",
+  "holding": false,
+  "holding_note": "보유 여부 미확인. 가격 구간 알림이지 보유 손절 신호가 아님.",
+  "baseline": {
+    "price_date": "2026-10-07",
+    "price": 414.52,
+    "market_cap_b": 146.4,
+    "trail_pe": 47.5,
+    "fwd_pe": 36.7,
+    "low_52w": 328.57,
+    "high_52w": 603.88,
+    "analyst_target": 477.47,
+    "us_da_vinci_q2": 12,
+    "guidance_low": 13.5,
+    "guidance_high": 15.5,
+    "last_known_filing": "2026-07-27"
+  },
+  "levels": {
+    "split": 380,
+    "chase": 500
+  },
+  "change_rules": {
+    "upgrade": "미국 다빈치 시술 성장 재가속, 2027 가이던스가 중간값 이상, 다빈치5·SP 설치가 가격 할인 없이 유지",
+    "downgrade": "미국 시술 성장 10% 미만과 가이던스 하향, 기구 매출 성장이 시술 성장 미만, 시스템 ASP 하락"
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/ISRG?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0001035267.json",
+    "ir": "https://investor.intuitivesurgical.com/news-releases"
+  },
+  "ends_kst": "2027-01-22 09:00",
+  "ends_note": "평일 09:00 가격 구간·월요일 상태. 3분기 채점은 isrgq3. 2027-01-22 morning이 마지막"
+}

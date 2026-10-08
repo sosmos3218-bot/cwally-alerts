@@ -424,6 +424,7 @@ jobs:
             python scripts/dram27_monitor.py auto
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
+            python scripts/isrg_monitor.py auto
             python scripts/rblx_monitor.py auto
             python scripts/pdd_monitor.py auto
             python scripts/133690_monitor.py auto
