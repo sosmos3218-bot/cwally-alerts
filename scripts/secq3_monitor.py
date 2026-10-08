@@ -448,6 +448,36 @@ def sec_bands() -> str:
         return "[SEC] 가격 구간 알림 기준을 따릅니다."
 
 
+
+def mix_addon(d: dict) -> tuple[str, float, str]:
+    """Won add-on only if the official text states a non-price mix figure. Else 0."""
+    text = d.get("official_text") or ""
+    foundry = None
+    m = re.search(r"(?:파운드리|Foundry)[^0-9\-]{0,30}(-?[\d,.]+)\s*(조\s*원|조원|억원)", text, re.I)
+    if m:
+        raw = float(m.group(1).replace(",", ""))
+        if "억" in m.group(2):
+            raw /= 10000.0
+        if -80 < raw < 80:
+            foundry = round(raw, 2)
+    d["foundry_op"] = foundry
+    mix = None
+    mm = re.search(r"(?:믹스\s*효과|구조적\s*(?:증분|가산)|mix effect)[^0-9\-]{0,24}(-?[\d,.]+)\s*(조\s*원|조원)", text, re.I)
+    if mm and not re.search(r"가격|ASP|판가", mm.group(0)):
+        mix = round(float(mm.group(1).replace(",", "")), 2)
+    missing = []
+    if d.get("ds_op") is None:
+        missing.append("DS 영업이익")
+    if d.get("hbm4_pct") is None:
+        missing.append("HBM 매출 비중")
+    if foundry is None:
+        missing.append("파운드리 손익")
+    if missing or mix is None:
+        why = ", ".join(missing) if missing else "원문에 가격이 아닌 믹스 조 원 없음"
+        return "계산 불가", 0.0, why
+    return "계산 가능", mix, "확정 원문이 가격이 아닌 믹스 효과를 조 원으로 적음"
+
+
 def evaluate(cfg: dict, d: dict) -> list[tuple[str, str, str]]:
     r = cfg["rules"]
     res = []
@@ -509,6 +539,7 @@ def build(cfg: dict, d: dict, now: datetime) -> tuple[str, str, int]:
         f"- 디스플레이 {f1(d.get('sdc_op'))}, 하만 {f1(d.get('harman_op'))}",
         "- HBM4 매출 비중: " + (f"{d['hbm4_pct']:g}% (원문: {cut(d.get('hbm4_snip'), 60)})" if d.get("hbm4_pct") is not None
                              else "공식 자료에 수치 없음. 참고: " + cfg["hbm4_ref"]["text"]),
+        "- 믹스 가산: " + (lambda r: f"{r[0]}, {r[1]:.2f}조 원. {r[2]}. 정상화 43.6조, 반영 {43.6 + r[1]:.2f}조. +20조는 민감도 상한")(mix_addon(d)),
         f"- 4분기 전망: {cut(d.get('q4_overall'), 70)}",
         f"- 4분기 메모리: {cut(d.get('q4_memory'), 80)}",
         f"- SK 비교 마진: 삼성 DS {d.get('ds_opm', '?')}% vs SK {d.get('sk_opm', '?')}% ({'SK 3분기 실적' if sk['kind'] == 'actual' else 'SK 3분기 컨센서스, 실적 전'}), 격차 {d['gap']:+.1f}%p" if d.get("gap") is not None else "- SK 비교 마진: 계산 불가",
@@ -594,6 +625,7 @@ def gather(cfg: dict, state: dict, now: datetime, opts: dict) -> dict:
     d["q4_overall"], d["q4_memory"] = pk.get("overall"), pk.get("memory") or pk.get("ds")
     d["q4_tone"] = tone(pk.get("memory") or pk.get("ds"), cfg["rules"])
 
+    d["official_text"] = "\n".join([news_text or "", deck.get("text") or ""])
     d["hbm4_pct"], d["hbm4_snip"] = hbm4_official([news_text or "", deck.get("text") or ""])
     if d["hbm4_pct"] is None and now >= datetime(2026, 10, 29, 11, 0, tzinfo=KST) and not opts.get("offline"):
         d["news"] = hbm4_news(now)
