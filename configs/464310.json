@@ -1,0 +1,42 @@
+{
+  "name": "464310",
+  "title_prefix": "[464310]",
+  "ticker": "464310.KS",
+  "display": "TIGER 글로벌AI&로보틱스 INDXX",
+  "as_of": "2026-10-08",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "새 cron 없음. 평일 15:20 KST afternoon 기존 슬롯. 국내 휴머노이드 ETF는 비교 대상이 아니다.",
+  "year_guard": null,
+  "valid_until": "2027-04-08",
+  "alert_policy": "weekly_or_change",
+  "baseline": {
+    "price_date": "2026-10-07",
+    "price": 13380,
+    "note": "2026-10-07 종가. 2026-10-08 14:24 KST 장중 13,090원은 기준가로 쓰지 않는다."
+  },
+  "levels": {
+    "low_break": 12720,
+    "low_break_note": "2026-10-08 화면 52주 저가. 이탈은 회피 검토 조건이지 매도 지시가 아니다.",
+    "near_low": 13102,
+    "near_low_note": "52주 저가의 3% 위. 저점 근접 표시만 한다.",
+    "high_52w": 18090,
+    "high_note": "2026-10-08 화면 52주 고가. 고점 대비 낙폭 계산용."
+  },
+  "judgment": {
+    "stance": "중립",
+    "note": "2026-10-08 대화 결론. 위성만 가능, 코어 아님. 매수 보고서의 1개월 반등과 골드만 380억 달러는 기각."
+  },
+  "change_rules": {
+    "upgrade": "12,720원 유지와 일본 공장자동화 수주 바닥. 수주는 이 알림이 확인하지 않는다.",
+    "downgrade": "12,720원 이하. 일본 제조 PMI 50 하회는 이 알림이 확인하지 않는다."
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/464310.KS?interval=1d&range=5d"
+  },
+  "ends_kst": "2027-04-08 15:20",
+  "ends_note": "2026-10-08 변경조건 6개월 감시. 연장 없으면 종료",
+  "holding": false,
+  "holding_note": "보유 여부 미확인. 매매 신호가 아니다."
+}
