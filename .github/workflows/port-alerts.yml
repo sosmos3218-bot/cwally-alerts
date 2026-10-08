@@ -138,6 +138,27 @@ on:
     - cron: "10 3 12 11 *"
     - cron: "10 3 13 11 *"
     - cron: "10 3 14 11 *"
+    # dearq3 oneshot_kst (KST→UTC): 2026-11-02~13 16:26, 11-03~13/16 09:17. 3Q 잠정 창, 16:22는 sdichg와 겹쳐 16:26
+    - cron: "26 7 2 11 *"
+    - cron: "17 0 3 11 *"
+    - cron: "26 7 3 11 *"
+    - cron: "17 0 4 11 *"
+    - cron: "26 7 4 11 *"
+    - cron: "17 0 5 11 *"
+    - cron: "26 7 5 11 *"
+    - cron: "17 0 6 11 *"
+    - cron: "26 7 6 11 *"
+    - cron: "17 0 9 11 *"
+    - cron: "26 7 9 11 *"
+    - cron: "17 0 10 11 *"
+    - cron: "26 7 10 11 *"
+    - cron: "17 0 11 11 *"
+    - cron: "26 7 11 11 *"
+    - cron: "17 0 12 11 *"
+    - cron: "26 7 12 11 *"
+    - cron: "17 0 13 11 *"
+    - cron: "26 7 13 11 *"
+    - cron: "17 0 16 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -258,6 +279,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 10 14 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "40 23 14 10 *" ]; then JOB=asml
             elif [ "${{ github.event.schedule }}" = "0 23 13 10 *" ]; then JOB=bankrate1014
             elif [ "${{ github.event.schedule }}" = "23 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "23 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 7 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 10 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 11 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 14 11 *" ]; then JOB=wbtnq3
+            elif [ "${{ github.event.schedule }}" = "26 7 2 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 3 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 6 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 9 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 11 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 13 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 16 11 *" ]; then JOB=dearq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -677,6 +699,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/sdiq3_monitor.py auto
+      - name: Run dearq3
+        if: steps.pick.outputs.job == 'dearq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/dearq3_monitor.py auto
       - name: Run ceg
         if: steps.pick.outputs.job == 'ceg'
         env:
