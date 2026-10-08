@@ -1,6 +1,50 @@
 {
-  "updated_at": "2026-10-08 14:56 KST",
+  "updated_at": "2026-10-08 15:05 KST",
   "items": [
+    {
+      "id": "RnbzpnR7KTYM",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-11-13 09:17",
+      "message": "2026-10-08 15:03 KST | OPS | cronjob-register / 2026-11-13 09:17\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37735528592",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791439413
+    },
+    {
+      "id": "W8v0HDNu2FnW",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-11-13 09:17",
+      "message": "2026-10-08 15:01 KST | OPS | cronjob-register / 2026-11-13 09:17\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37735370096",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791439309
+    },
+    {
+      "id": "6OupD5fYpwdd",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-11-13 09:17",
+      "message": "2026-10-08 15:00 KST | OPS | cronjob-register / 2026-11-13 09:17\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37735276547",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791439252
+    },
+    {
+      "id": "vr7vcFNg7puK",
+      "topic": "cwally-port",
+      "title": "[CNSDS] 설치 확인 | 매매 신호 아님",
+      "message": "이게 뭐 알림: LG씨엔에스와 삼성SDS 가격 전환 알림 설치 확인. 매매 신호 아님.\n지금 결과/상태: 평일 15:20 기존 슬롯. LG CNS 8만원 미만이고 삼성SDS 17.5만원 초과면 가격 할인 유지.\n지금 할 일: 없음. 선이 바뀔 때와 월요일에만 옵니다.\n나중에: 3분기 실적은 [LG] lgcnsq3, 가격 구간은 [LGCNS].\n익절/줄일 때: 이 설치 알림으로 비중을 바꾸지 마세요.\n하지 말 것: 설치 확인을 매수 신호로 읽기. GPU 5000원 하한을 확정으로 읽기.\n꺼지는 때: 2026-12-31 15:20 KST (2026년 상대가격 전환 감시 종료)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1791439151
+    },
     {
       "id": "pZjANS99CmfH",
       "topic": "cwally-port",
