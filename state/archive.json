@@ -1,6 +1,50 @@
 {
-  "updated_at": "2026-10-08 16:12 KST",
+  "updated_at": "2026-10-08 18:25 KST",
   "items": [
+    {
+      "id": "9w0dYU3qwx6s",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-12 08:42",
+      "message": "2026-10-08 17:45 KST | OPS | cronjob-register / 2026-10-12 08:42\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37751967337",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791449152
+    },
+    {
+      "id": "SBbQVhkuHCiS",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-29 16:42",
+      "message": "2026-10-08 17:44 KST | OPS | cronjob-register / 2026-10-29 16:42\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37751745409",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791449052
+    },
+    {
+      "id": "aWSUmjJDywWU",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-12 08:42",
+      "message": "2026-10-08 17:43 KST | OPS | cronjob-register / 2026-10-12 08:42\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/37751743466",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791449032
+    },
+    {
+      "id": "SF308mEfEpoL",
+      "topic": "cwally-port",
+      "title": "[Q3FLOW] 설치 확인 | 매매 신호 아님",
+      "message": "이게 뭐 알림: 10월 8일 수급 판단 점검 알림 설치 확인입니다.\n지금 결과/상태: 매출 195.0조, 영업이익 107.4조. 종가 262,000원(-2.42%), 코스피 6625.93(-2.62%). 외국인 약 1.99조, 기관 약 1.67조 순매도.\n지금 할 일: 당일 하락만으로 팔거나 쫓아 사지 마세요. 기준 판단은 수급·차익실현입니다.\n나중에: Gb당 4달러 중후반 제시가. HBM3E 약 1.50달러 대비 산술 3배. 확정 계약가 아님. 확정 계약과 부문 손익은 10월 29일 창의 [SECQ3]를 보세요.\n익절/줄일 때: 회사 원문에 HBM4 매출이 전분기 대비 3배에 뚜렷이 못 미치거나, DX 적자가 3.1조원을 넘거나, 107.4조 대부분이 일회성이면 판단을 바꿉니다.\n하지 말 것: 제시가 3배를 확정 계약으로 보지 마세요. 이 알림은 매매 신호가 아닙니다.\n꺼지는 때: 2026-10-29 16:42 KST (10/12 다음 장 전 기준 전달, 10/29 확정실적 창 이후 판단 유지 여부 1회)",
+      "priority": 3,
+      "tags": [
+        "chart_with_downwards_trend"
+      ],
+      "time": 1791449010
+    },
     {
       "id": "GHzEuZ0jPARU",
       "topic": "cwally-port",
