@@ -82,6 +82,9 @@ on:
     - cron: "25 0 8 10 *"
     - cron: "5 14 14 10 *"
     - cron: "25 0 15 10 *"
+    # lges1103 oneshot_kst (KST→UTC): 2026-11-03 09:22, 16:32. 확정 실적 판정
+    - cron: "22 0 3 11 *"
+    - cron: "32 7 3 11 *"
     # lgesq3 oneshot_kst (KST→UTC): 10-07 09:12/16:12, 10-08 09:12/16:12, 10-09 09:12, 10-13/16/23/30 09:12
     - cron: "12 0 7 10 *"
     - cron: "12 7 7 10 *"
@@ -269,6 +272,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 3 11 *" ]; then JOB=lgiq3
             elif [ "${{ github.event.schedule }}" = "18 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 16 11 *" ]; then JOB=lgcnsq3
             elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
+            elif [ "${{ github.event.schedule }}" = "22 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "32 7 3 11 *" ]; then JOB=lges1103
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             elif [ "${{ github.event.schedule }}" = "5 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 12 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 13 10 *" ]; then JOB=usd240
@@ -671,6 +675,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/nvdaq3_monitor.py auto
+      - name: Run lges1103
+        if: steps.pick.outputs.job == 'lges1103'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/lges1103_monitor.py auto
       - name: Run lgesq3
         if: steps.pick.outputs.job == 'lgesq3'
         env:

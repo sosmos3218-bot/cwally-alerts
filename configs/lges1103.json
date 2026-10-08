@@ -1,0 +1,38 @@
+{
+  "name": "lges1103",
+  "title_prefix": "[LGESF]",
+  "title_note": "AGENTS.md prefix [LGESF]. 기존 [LG]는 LG지주와 3분기 잠정 lgesq3. 이 알림은 373220 2026-11-03 확정 실적 판정.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "lges1103",
+  "schedule_kst": "2026-11-03 09:22 / 2026-11-03 16:32",
+  "oneshot_kst": ["2026-11-03 09:22", "2026-11-03 16:32"],
+  "cron_utc": ["22 0 3 11 *", "32 7 3 11 *"],
+  "year_guard": 2026,
+  "window_start": "2026-11-03",
+  "window_end": "2026-11-03",
+  "window_note": "확정 실적과 컨퍼런스콜은 2026-11-03. 09:22는 장전 공시 확인, 16:32는 콜 이후 재판정. 다른 해 침묵. 결과 전송 후 재발송 없음.",
+  "ticker": "373220",
+  "display": "LG에너지솔루션",
+  "event_label": "LG에너지솔루션 2026 3분기 확정",
+  "prelim": {
+    "as_of": "2026-10-08",
+    "sales_eok": 96434,
+    "op_eok": 7560,
+    "ampc_eok": 4169,
+    "ex_ampc_eok": 3391,
+    "source": "https://en.yna.co.kr/view/AEN20261008001451320",
+    "compensation_note": "잠정 공시에 보상금 금액 없음. 추정액 사용 금지."
+  },
+  "rules": {
+    "upgrade": "보상금 금액이 공시되고, AMPC 제외 영업이익에서 보상금을 뺀 값이 2,000억원 이상이며, 확정 영업이익이 잠정 7,560억원의 90% 이상일 때만 상향.",
+    "keep": "AMPC 제외 흑자는 유지되나 보상금 미확인, 보상금 차감 후 2,000억 미만, 또는 사업부·현금흐름 미공개면 조건부 분할매수 유지.",
+    "drop": "AMPC 제외 영업이익이 적자이거나 확정 영업이익이 잠정 대비 30% 이상 낮으면 철회.",
+    "hold": "필수 숫자가 없으면 유지·상향·철회를 하지 않고 판정 유보."
+  },
+  "sources": [
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=373220&page=1&pageSize=30"
+  ],
+  "ends_kst": "2026-11-03 16:32",
+  "ends_note": "LG에너지솔루션 3분기 확정 실적 일회 판정, 11/3 16:32가 마지막"
+}
