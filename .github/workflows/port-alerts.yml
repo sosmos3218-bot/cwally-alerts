@@ -24,7 +24,8 @@ on:
     - cron: "0 13 29 10 *"
     - cron: "20 18 7 10 *"
     - cron: "10 0 8 10 *"
-    - cron: "40 6 15 10 *"
+    # tsmc1015 oneshot_kst (KST->UTC): 2026-10-15 16:30, 17:10. call end, guidance only. 15:40 removed
+    - cron: "30 7 15 10 *"
     - cron: "10 8 15 10 *"
     - cron: "0 23 4 11 *"
     - cron: "0 9 5 11 *"
@@ -270,7 +271,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
             elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
             elif [ "${{ github.event.schedule }}" = "35 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 15 10 *" ]; then JOB=fedodds
-            elif [ "${{ github.event.schedule }}" = "40 6 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
+            elif [ "${{ github.event.schedule }}" = "30 7 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
             elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
             elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
             elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo

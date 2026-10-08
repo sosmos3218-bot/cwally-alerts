@@ -3,40 +3,44 @@
   "title_prefix": "[TSMC]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "15:40",
+  "schedule_kst": "16:30",
   "oneshot_kst": [
-    "2026-10-15 15:40",
+    "2026-10-15 16:30",
     "2026-10-15 17:10"
   ],
-  "window_start_kst": "2026-10-15 15:20",
+  "window_start_kst": "2026-10-15 16:20",
   "expire_date": "2026-10-15",
   "event_year": 2026,
   "release_at_kst": "2026-10-15 15:00",
-  "q3_actual_compare": {
-    "revenue_usd_bn": 40.2,
-    "gross_margin": 67.7,
-    "operating_margin": 60.3
+  "call_end_kst": "2026-10-15 16:30",
+  "baseline": {
+    "price_usd": 472,
+    "asof": "2026-10-08",
+    "judgment": "중립",
+    "note": "가격 반응은 판정에 넣지 않음. 10/8 ADR 약 472달러 중립."
   },
   "q3_guidance": {
     "revenue_low": 44.6,
     "revenue_high": 45.8,
     "gm_low": 65.0,
     "gm_high": 67.0,
-    "om_low": 56.0,
-    "om_high": 58.0,
     "fx": 32.0
   },
-  "thresholds": {
-    "q4_pass_qoq": 8.0,
-    "q4_hold_qoq": 3.0
+  "rules": {
+    "gm_floor": 60.0,
+    "capex_2026_low": 60.0,
+    "capex_2026_high": 64.0,
+    "upgrade": "2027 CAPEX 상향 또는 2026 CAPEX 64 초과, 가이던스 매출총이익률 하단 60% 이상, 웨이퍼 가격 인상 공식 언급이 모두 있을 때 상향",
+    "downgrade": "가이던스 매출총이익률 하단 60% 미만, 가격 인하, 2027 수요 둔화 언급 중 하나면 하향",
+    "else": "항목 누락이거나 조건이 섞이면 유지. 누락을 합격으로 채우지 않음"
   },
-  "schedule_note": "TSMC 3Q26 컨퍼런스 2026-10-15 14:00 대만 = 15:00 KST. 1차 15:40 KST = UTC 40 6 15 10 *. 원문 없으면 17:10 KST = UTC 10 8 15 10 * 재확인. 연도 가드 2026만. 기존 15:20 평일 슬롯은 건드리지 않음.",
+  "schedule_note": "콜 15:00-16:30 KST. 판정은 16:30 KST = UTC 30 7 15 10 *. 원문 없으면 17:10 KST = UTC 10 8 15 10 * 한 번만 재확인. 15:40 콜 중 슬롯은 제거. 연도 가드 2026. 가격 반응 없음.",
   "sources": {
     "q3_page": "https://investor.tsmc.com/english/quarterly-results/2026/q3",
     "quarterly": "https://investor.tsmc.com/english/quarterly-results",
     "news": "https://pr.tsmc.com/english/news"
   },
-  "explain": "TSMC 3분기 원문만으로 매출, 매출총이익률, 4분기 가이던스, 2027년 캐팩스와 가격, CoWoS와 2나노를 채점하는 일회 알림입니다.",
+  "explain": "TSMC 3분기 보도자료와 콜만 보고 달러 매출, 매출총이익률, 4분기 가이던스, 2026-2027 CAPEX, 웨이퍼 가격을 추출해 472달러 중립을 유지, 상향, 하향 중 하나로 갱신하는 일회 알림입니다.",
   "ends_kst": "2026-10-15 17:10",
-  "ends_note": "TSMC 실적일 일회 알림(15:40, 17:10), 17:10이 마지막"
+  "ends_note": "TSMC 실적 판정 일회 알림(16:30, 원문 없으면 17:10), 17:10이 마지막"
 }

@@ -68,34 +68,48 @@ def band(text, quarter):
     return float(m.group(1)), float(m.group(2))
 
 
+def gm_band(text, label):
+    m = re.search(
+        label + r".{0,400}?gross (?:profit )?margin is expected to be between ([0-9]+(?:\.[0-9]+)?)% and ([0-9]+(?:\.[0-9]+)?)%",
+        text,
+        re.I,
+    )
+    if not m:
+        return None, None
+    return float(m.group(1)), float(m.group(2))
+
+
+def capex_near(text, year):
+    hits = nums(year + r".{0,80}?capital (?:budget|expenditure).{0,40}?US\$\s*([0-9]+(?:\.[0-9]+)?)\s*billion", text)
+    if hits:
+        return hits[0]
+    hits = nums(r"capital (?:budget|expenditure).{0,40}?(?:for )?" + year + r".{0,40}?US\$\s*([0-9]+(?:\.[0-9]+)?)\s*billion", text)
+    return hits[0] if hits else None
+
+
 def parse_release(text):
     third = bool(re.search(r"third quarter (?:ended|of) (?:September|Sep\.?) 30,? 2026", text, re.I))
     embargo = bool(re.search(r"embargoed until", text, re.I))
     revenue = first(
-        r"(?:third quarter revenue (?:was|of)|revenue was|in US dollar terms, third quarter revenue was) US\$\s*([0-9]+(?:\.[0-9]+)?)\s*billion",
+        r"(?:third quarter revenue (?:was|of)|in US dollar terms, third quarter revenue was) US\$\s*([0-9]+(?:\.[0-9]+)?)\s*billion",
         text,
     )
     if revenue is None:
-        hits = nums(r"US\$\s*([0-9]{2}(?:\.[0-9]+)?)\s*billion", text)
-        hits = [x for x in hits if 40 <= x <= 70]
+        hits = [x for x in nums(r"US\$\s*([0-9]{2}(?:\.[0-9]+)?)\s*billion", text) if 40 <= x <= 70]
         revenue = hits[0] if hits else None
     gm = first(r"gross margin (?:was|of|reached|came in at)\s*([0-9]+(?:\.[0-9]+)?)\s*%", text)
     om = first(r"operating margin (?:was|of|reached|came in at)\s*([0-9]+(?:\.[0-9]+)?)\s*%", text)
     q4_low, q4_high = band(text, r"fourth quarter 2026")
     if q4_low is None:
         q4_low, q4_high = band(text, r"fourth quarter")
-    q4_gm = re.search(
-        r"fourth quarter.{0,400}?gross (?:profit )?margin is expected to be between ([0-9]+(?:\.[0-9]+)?)% and ([0-9]+(?:\.[0-9]+)?)%",
-        text,
-        re.I,
-    )
-    capex_2027 = nums(r"2027 capital (?:budget|expenditure).{0,40}?US\$\s*([0-9]+(?:\.[0-9]+)?)\s*billion", text)
-    price_up = bool(re.search(r"(price increase|raise (?:our )?prices|pricing (?:will|to) increase|higher (?:wafer )?prices)", text, re.I))
+    q4_gm_low, q4_gm_high = gm_band(text, r"fourth quarter")
+    fy_gm_low, fy_gm_high = gm_band(text, r"full year|2026")
+    capex_2026 = capex_near(text, "2026")
+    capex_2027 = capex_near(text, "2027")
+    price_up = bool(re.search(r"(price increase|raise (?:our )?prices|pricing (?:will|to) increase|higher (?:wafer )?prices|wafer price.{0,20}increase)", text, re.I))
     price_down = bool(re.search(r"(price concession|discount|lower (?:wafer )?prices|pricing pressure)", text, re.I))
-    cowos = bool(re.search(r"CoWoS|advanced packaging", text, re.I))
-    cowos_tight = bool(re.search(r"(CoWoS|advanced packaging).{0,80}(tight|constrained|shortage|insufficient)", text, re.I))
-    n2 = bool(re.search(r"\bN2\b|2nm|2-nanometer|2 nanometer", text, re.I))
-    n2_mix = first(r"(?:N2|2nm|2-nanometer).{0,40}?([0-9]+(?:\.[0-9]+)?)\s*% of wafer revenue", text)
+    asp = first(r"(?:wafer )?(?:price|ASP).{0,30}?([0-9]+(?:\.[0-9]+)?)\s*%", text)
+    cautious = bool(re.search(r"2027.{0,80}(slow|softer|moderate|pause|cautious|digest)", text, re.I))
     published = bool(third and revenue is not None and gm is not None and not embargo)
     return {
         "published": published,
@@ -106,99 +120,72 @@ def parse_release(text):
         "om": om,
         "q4_low": q4_low,
         "q4_high": q4_high,
-        "q4_gm_low": float(q4_gm.group(1)) if q4_gm else None,
-        "q4_gm_high": float(q4_gm.group(2)) if q4_gm else None,
-        "capex_2027": capex_2027[0] if capex_2027 else None,
+        "q4_gm_low": q4_gm_low,
+        "q4_gm_high": q4_gm_high,
+        "fy_gm_low": fy_gm_low,
+        "fy_gm_high": fy_gm_high,
+        "capex_2026": capex_2026,
+        "capex_2027": capex_2027,
         "price_up": price_up,
         "price_down": price_down,
-        "cowos": cowos,
-        "cowos_tight": cowos_tight,
-        "n2": n2,
-        "n2_mix": n2_mix,
+        "asp": asp,
+        "cautious": cautious,
     }
 
 
-def mark_rev(v):
+def fmt(v, suffix=""):
     if v is None:
-        return "확인 불가", "원문에 달러 매출 없음"
-    if v > 45.8:
-        return "합격", f"사실 {v:.2f}억 달러, 가이던스 상단 458억 초과"
-    if v >= 44.6:
-        return "보류", f"사실 {v:.2f}억 달러, 가이던스 446~458억 안"
-    return "실패", f"사실 {v:.2f}억 달러, 가이던스 하단 446억 미만"
+        return "확인 불가"
+    if isinstance(v, float):
+        return f"{v:.2f}{suffix}" if v < 100 else f"{v:.0f}{suffix}"
+    return str(v)
 
 
-def mark_gm(v):
-    if v is None:
-        return "확인 불가", "원문에 매출총이익률 없음"
-    if v >= 67:
-        return "합격", f"사실 {v:.1f}%, 67% 이상"
-    if v >= 65:
-        return "보류", f"사실 {v:.1f}%, 가이던스 안이나 67% 미만"
-    return "실패", f"사실 {v:.1f}%, 가이던스 하단 65% 미만"
-
-
-def mark_q4(parsed):
-    lo, hi = parsed.get("q4_low"), parsed.get("q4_high")
-    base = parsed.get("revenue")
-    if lo is None or hi is None or not base:
-        return "확인 불가", "원문에 4분기 달러 가이던스 구간 없음", None
-    mid = (lo + hi) / 2
-    qoq = (mid / base - 1) * 100
-    fact = f"사실 중간값 {mid:.2f}억 달러, 3분기 대비 {qoq:+.1f}%"
-    if qoq >= 8:
-        return "합격", fact, qoq
-    if qoq >= 3:
-        return "보류", fact, qoq
-    return "실패", fact, qoq
-
-
-def mark_capex_price(parsed):
-    if parsed.get("price_down"):
-        return "실패", "사실 원문에 가격 양보 또는 인하 표현"
-    if parsed.get("capex_2027") and parsed.get("price_up"):
-        return "합격", f"사실 2027 캐팩스 {parsed['capex_2027']:.0f}억 달러, 가격 인상 표현 있음"
-    if parsed.get("price_up"):
-        return "합격", "사실 가격 인상 표현 있음. 2027 캐팩스 금액은 원문 없음"
-    if parsed.get("capex_2027"):
-        return "보류", f"사실 2027 캐팩스 {parsed['capex_2027']:.0f}억 달러. 가격 코멘트 없음"
-    return "확인 불가", "원문에 2027 캐팩스 금액과 가격 코멘트 없음"
-
-
-def mark_capacity(parsed):
-    if not parsed.get("cowos") and not parsed.get("n2"):
-        return "확인 불가", "원문에 CoWoS, 2나노 언급 없음"
-    bits = []
-    if parsed.get("n2_mix") is not None:
-        bits.append(f"2나노 웨이퍼 비중 {parsed['n2_mix']:.1f}%")
-    elif parsed.get("n2"):
-        bits.append("2나노 언급 있음, 비중 수치 없음")
-    if parsed.get("cowos_tight"):
-        bits.append("CoWoS 또는 선진 패키징 타이트")
-    elif parsed.get("cowos"):
-        bits.append("CoWoS 또는 선진 패키징 언급, 병목 표현 없음")
-    fact = "사실 " + ", ".join(bits)
-    if parsed.get("n2") and parsed.get("cowos_tight"):
-        return "합격", fact
-    return "보류", fact
-
-
-def overall(parts):
-    rev, gm, q4, cap, capc = parts
-    forward_fail = sum(x == "실패" for x in (q4, cap, capc))
-    if rev == "실패" or gm == "실패" or forward_fail >= 2:
-        return "실패"
-    if rev == "합격" and gm == "합격" and forward_fail == 0:
-        return "합격"
-    return "보류"
+def judge(parsed, cfg):
+    rules = cfg["rules"]
+    floor = rules["gm_floor"]
+    gm_guide = parsed.get("q4_gm_low")
+    if gm_guide is None:
+        gm_guide = parsed.get("fy_gm_low")
+    capex_up = False
+    if parsed.get("capex_2027") and parsed["capex_2027"] > rules["capex_2026_high"]:
+        capex_up = True
+    if parsed.get("capex_2026") and parsed["capex_2026"] > rules["capex_2026_high"]:
+        capex_up = True
+    missing = []
+    if parsed.get("revenue") is None:
+        missing.append("달러 매출")
+    if parsed.get("gm") is None:
+        missing.append("매출총이익률")
+    if parsed.get("q4_low") is None:
+        missing.append("4분기 가이던스")
+    if parsed.get("capex_2026") is None and parsed.get("capex_2027") is None:
+        missing.append("CAPEX")
+    if not parsed.get("price_up") and not parsed.get("price_down") and parsed.get("asp") is None:
+        missing.append("웨이퍼 ASP")
+    if parsed.get("price_down") or parsed.get("cautious") or (gm_guide is not None and gm_guide < floor):
+        why = []
+        if gm_guide is not None and gm_guide < floor:
+            why.append(f"가이던스 매출총이익률 하단 {gm_guide:.1f}% < {floor:.0f}%")
+        if parsed.get("price_down"):
+            why.append("가격 인하 또는 양보")
+        if parsed.get("cautious"):
+            why.append("2027 수요 둔화 언급")
+        return "하향", "; ".join(why)
+    if capex_up and parsed.get("price_up") and gm_guide is not None and gm_guide >= floor and not missing:
+        return "상향", f"CAPEX 상향, 마진 하단 {gm_guide:.1f}%, 웨이퍼 가격 인상 언급"
+    note = "조건이 섞이거나 항목이 빠져 472달러 중립 유지"
+    if missing:
+        note += ". 확인 불가: " + ", ".join(missing)
+    return "유지", note
 
 
 def action(score):
-    if score == "합격":
-        return "보유 유지. 판단 변경 없음. 조정 시 분할 매수.", "기존 보유 유지, 고점 추격 금지.", "원문 없는 법인 목표가로 확대 금지."
-    if score == "실패":
-        return "비중 확대 보류로 변경. 기존 보유는 2027 캐팩스 설명 전 유지.", "가이던스 하단 이탈이면 추가매수 중단.", "실패를 즉시 전량 매도로 읽지 말 것."
-    return "보유 유지, 비중 확대 보류. 판단 변경 없음.", "4분기 중간값이 한 자릿수면 추가매수 보류.", "확인 불가 항목을 합격으로 채우지 말 것."
+    if score == "상향":
+        return "중립을 상향으로 갱신. 추가 매수는 분할만.", "마진 하단이 다시 60% 아래로 내려가면 상향 철회.", "가격 급등을 추격하지 말 것."
+    if score == "하향":
+        return "중립을 하향으로 갱신. 추가매수 중단.", "마진 하단 60% 회복과 가격 인상 확인 전 비중 확대 금지.", "하향을 즉시 전량 매도로 읽지 말 것."
+    return "472달러 중립 유지. 비중 변경 없음.", "빠진 항목이 콜 원문에 있으면 그때만 재판단.", "확인 불가를 상향으로 채우지 말 것."
 
 
 def collect(cfg):
@@ -207,10 +194,10 @@ def collect(cfg):
     for key in ("q3_page", "quarterly", "news"):
         url = cfg["sources"][key]
         try:
-            raw, final = fetch(url)
+            raw, _ = fetch(url)
             blobs.append(textify(raw))
             for href in re.findall(r'href="([^"]+)"', raw, re.I):
-                if re.search(r"2026.*q3|third-quarter|3q26|q3-2026", href, re.I) and href.lower().endswith((".htm", ".html", ".pdf")):
+                if re.search(r"2026.*q3|third-quarter|3q26|q3-2026|transcript|conference", href, re.I) and href.lower().endswith((".htm", ".html", ".pdf")):
                     link = href if href.startswith("http") else "https://investor.tsmc.com" + href
                     try:
                         raw2, _ = fetch(link)
@@ -233,10 +220,42 @@ def emit(cfg, title, lines, pri):
     )
 
 
+def field_line(parsed):
+    q4 = "확인 불가"
+    if parsed.get("q4_low") is not None:
+        q4 = f"{parsed['q4_low']:.2f}~{parsed['q4_high']:.2f}십억달러"
+        if parsed.get("q4_gm_low") is not None:
+            q4 += f", 매출총이익률 {parsed['q4_gm_low']:.1f}~{parsed['q4_gm_high']:.1f}%"
+    asp = "인상 언급" if parsed.get("price_up") else ("인하 언급" if parsed.get("price_down") else "확인 불가")
+    if parsed.get("asp") is not None:
+        asp += f", 수치 {parsed['asp']:.1f}%"
+    return (
+        f"달러 매출 {fmt(parsed.get('revenue'), '십억달러')}"
+        f", 매출총이익률 {fmt(parsed.get('gm'), '%')}"
+        f", 4분기 {q4}"
+        f", 2026 CAPEX {fmt(parsed.get('capex_2026'), '십억달러')}"
+        f", 2027 CAPEX {fmt(parsed.get('capex_2027'), '십억달러')}"
+        f", 웨이퍼 ASP {asp}"
+    )
+
+
 def main():
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
     now = datetime.now(KST)
+    if mode == "install":
+        lines = [
+            now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 설치 확인",
+            "이게 뭐 알림: " + cfg["explain"],
+            "지금 상태: 설치 확인. 매매 신호 아님. 기준은 2026-10-08 472달러 중립.",
+            "지금 할 일: 없음. 10월 15일 16:30 KST에 보도자료와 콜만 보고 판정.",
+            "나중에: 원문이 없으면 17:10에 한 번 재확인. 가격 반응은 넣지 않음.",
+            "익절/줄일 때: 이 확인 알림으로 비중 조정 금지.",
+            "하지 말 것: 설치 확인을 상향이나 하향으로 읽기.",
+        ]
+        emit(cfg, "[TSMC] 설치 확인 | 매매 신호 아님", lines, 3)
+        print("install sent")
+        return 0
     st = load_state()
     start = datetime.fromisoformat(cfg["window_start_kst"]).replace(tzinfo=KST)
     expire = datetime.fromisoformat(cfg["expire_date"] + "T23:59:59").replace(tzinfo=KST)
@@ -260,15 +279,15 @@ def main():
             return 0
         if not text and not st.get("fail_notified"):
             lines = [
-                now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 실적",
+                now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 판정",
                 "이게 뭐 알림: " + cfg["explain"],
-                "지금 상태: 조회 실패. " + (err or "출처 없음") + ". 실패로 채점하지 않음.",
+                "지금 상태: 조회 실패. " + (err or "출처 없음") + ". 실패로 하향하지 않음. 중립 유지.",
                 "지금 할 일: IR 원문을 직접 확인. 이 실패로 매매하지 마세요.",
-                "나중에: 17:10 KST 재확인. 그래도 없으면 창 종료. 만료 2026-10-15.",
+                "나중에: 17:10 KST 재확인. 그래도 없으면 창 종료.",
                 "익절/줄일 때: 조회 실패로 비중 조정 금지.",
                 "하지 말 것: 조회 실패를 실적 미스로 읽기.",
             ]
-            emit(cfg, "[TSMC] 조회 실패 | 채점 보류", lines, 4)
+            emit(cfg, "[TSMC] 조회 실패 | 중립 유지", lines, 4)
             st["fail_notified"] = True
             save_state(st, now)
             return 0
@@ -277,41 +296,28 @@ def main():
             save_state(st, now)
             return 0
         lines = [
-            now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 실적",
+            now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 판정",
             "이게 뭐 알림: " + cfg["explain"],
-            "지금 상태: 3분기 원문이 아직 아님. 2분기 수치로 채점하지 않음.",
+            "지금 상태: 3분기 원문이 아직 아님. 472달러 중립 유지. 2분기 수치로 채점하지 않음.",
             "지금 할 일: 보유 유지. 발표 전 추가매수 금지.",
-            "나중에: 17:10 KST에 원문만 다시 채점. 만료 2026-10-15.",
+            "나중에: 17:10 KST에 원문만 다시 판정.",
             "익절/줄일 때: 미발표 상태로 비중 조정 금지.",
-            "하지 말 것: 가이던스 상단을 실적으로 확정하기.",
+            "하지 말 것: 월매출 합산을 공식 달러 매출로 확정하기.",
         ]
-        emit(cfg, "[TSMC] 원문 없음 | 보유 유지", lines, 3)
+        emit(cfg, "[TSMC] 원문 없음 | 중립 유지", lines, 3)
         st["empty_notified"] = True
         save_state(st, now)
         return 0
-    rev_s, rev_f = mark_rev(parsed.get("revenue"))
-    gm_s, gm_f = mark_gm(parsed.get("gm"))
-    q4_s, q4_f, _ = mark_q4(parsed)
-    cap_s, cap_f = mark_capex_price(parsed)
-    capc_s, capc_f = mark_capacity(parsed)
-    score = overall((rev_s, gm_s, q4_s, cap_s, capc_s))
-    do, trim, dont = action(score)
-    om = parsed.get("om")
-    om_txt = f"{om:.1f}%" if om is not None else "확인 불가"
+    score, why = judge(parsed, cfg)
+    do, later, dont = action(score)
     lines = [
-        now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 실적 채점",
+        now.strftime("%Y-%m-%d %H:%M KST") + " | TSMC | 3분기 가이던스 판정",
         "이게 뭐 알림: " + cfg["explain"],
-        "지금 상태: 종합 " + score
-        + ". 매출 " + rev_s + " / " + rev_f
-        + ". 매출총이익률 " + gm_s + " / " + gm_f
-        + ". 영업이익률 사실 " + om_txt
-        + ". 4분기 " + q4_s + " / " + q4_f
-        + ". 2027 캐팩스·가격 " + cap_s + " / " + cap_f
-        + ". CoWoS·2나노 " + capc_s + " / " + capc_f + ".",
+        "지금 상태: " + score + ". " + why + ". " + field_line(parsed) + ". 가격 반응은 사용하지 않음.",
         "지금 할 일: " + do,
-        "나중에: 확인 불가 항목은 콜 트랜스크립트에서만 보완. 이 알림은 2026-10-15 한 번.",
-        "익절/줄일 때: " + trim,
-        "하지 말 것: " + dont + " 신용, 미수, 추격매수.",
+        "나중에: " + later,
+        "익절/줄일 때: " + dont,
+        "하지 말 것: 미국 프리마켓 가격으로 이 판정을 바꾸기. 투자 권유 아님.",
         "출처: " + cfg["sources"]["q3_page"],
     ]
     title = f"[TSMC] {score} | {do.split('.')[0]}"
@@ -320,7 +326,7 @@ def main():
         print("\n".join(lines))
         save_state(st, now)
         return 0
-    emit(cfg, title, lines, 4 if score != "보류" else 3)
+    emit(cfg, title, lines, 4 if score != "유지" else 3)
     st["final_notified"] = True
     st["score"] = score
     st["last_key"] = json.dumps(parsed, sort_keys=True, default=str)
