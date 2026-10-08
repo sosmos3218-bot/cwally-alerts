@@ -101,6 +101,12 @@ on:
     - cron: "5 7 8 10 *"
     - cron: "5 7 12 10 *"
     - cron: "5 7 13 10 *"
+    # sdichg oneshot_kst (KST→UTC): 2026-10-08 11:40 install, 10-27 08:40/16:20, 10-28 16:22, 11-04 16:22. 09:00은 morning 슬롯
+    - cron: "40 2 8 10 *"
+    - cron: "40 23 26 10 *"
+    - cron: "20 7 27 10 *"
+    - cron: "22 7 28 10 *"
+    - cron: "22 7 4 11 *"
     # sdiq3 oneshot_kst (KST→UTC): 2026-10-28 09:14/16:14, 10-29 09:14, 10-30 09:14, 11-03 09:14, 11-04 09:14/16:14, 11-05 09:14
     - cron: "14 0 28 10 *"
     - cron: "14 7 28 10 *"
@@ -235,6 +241,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             elif [ "${{ github.event.schedule }}" = "5 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 12 10 *" ] || [ "${{ github.event.schedule }}" = "5 7 13 10 *" ]; then JOB=usd240
+            elif [ "${{ github.event.schedule }}" = "40 2 8 10 *" ] || [ "${{ github.event.schedule }}" = "40 23 26 10 *" ] || [ "${{ github.event.schedule }}" = "20 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 4 11 *" ]; then JOB=sdichg
             elif [ "${{ github.event.schedule }}" = "14 0 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "14 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "14 0 5 11 *" ]; then JOB=sdiq3
             elif [ "${{ github.event.schedule }}" = "40 13 6 11 *" ] || [ "${{ github.event.schedule }}" = "40 13 9 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 10 11 *" ]; then JOB=ceg
             elif [ "${{ github.event.schedule }}" = "20 7 7 10 *" ]; then JOB=0144m0
@@ -395,6 +402,7 @@ jobs:
             python scripts/uamcert_monitor.py auto
             python scripts/hbmchk_monitor.py
             python scripts/hbmasp_monitor.py
+            python scripts/sdichg_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/ratesbell_monitor.py auto
@@ -640,6 +648,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/usd240_monitor.py auto
+      - name: Run sdichg
+        if: steps.pick.outputs.job == 'sdichg'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/sdichg_monitor.py auto
       - name: Run sdiq3
         if: steps.pick.outputs.job == 'sdiq3'
         env:

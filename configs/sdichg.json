@@ -1,0 +1,49 @@
+{
+  "name": "sdichg",
+  "title_prefix": "[SDI]",
+  "title_note": "AGENTS.md 허용 prefix [SDI]. 삼성SDI 006400 변경 조건 주기 점검. 우선주 006405 아님. sdiq3 잠정 비교와 별개.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "sdichg",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 슬롯. 09:00 원샷은 슬롯이 처리.",
+  "oneshot_kst": [
+    "2026-10-08 11:40",
+    "2026-10-27 08:40",
+    "2026-10-27 16:20",
+    "2026-10-28 16:22",
+    "2026-11-04 16:22"
+  ],
+  "oneshot_args": {
+    "2026-10-08 11:40": "install"
+  },
+  "cron_utc": [
+    "40 2 8 10 *",
+    "40 23 26 10 *",
+    "20 7 27 10 *",
+    "22 7 28 10 *",
+    "22 7 4 11 *"
+  ],
+  "year_guard": 2026,
+  "ticker": "006400",
+  "display": "삼성SDI",
+  "baseline_date": "2026-10-07",
+  "baseline_price": 562000,
+  "baseline_target": 735368,
+  "baseline_target_note": "2026-10-07 와이즈리포트 19개사 평균. 새로 읽지 못하면 이 숫자를 현재 컨센서스로 쓰지 않는다.",
+  "ess_upgrade_pct": 28,
+  "event_dates": ["2026-10-27", "2026-10-28", "2026-10-29", "2026-11-04", "2026-11-05"],
+  "event_note": "3분기 실적일은 2026-10-07 기준 회사 확정일 미확인. Quartr 추정 10-27. 창은 10-27 전후와 11-04/05.",
+  "rules": {
+    "upgrade": "공시에서 일회성(AMPC, 보상금) 제외 영업이익이 흑자이고 ESS 매출 비중이 28% 이상이며 북미 LFP 지연 공시가 없을 때만 분할매수 검토",
+    "reduce": "일회성 제외 영업이익이 적자이거나, 회사 공시에 북미 LFP 4분기 가동 지연 또는 2027년으로 밀린다는 문구가 있으면 축소 점검",
+    "hold": "숫자 미확인, ESS 비중 미기재, 전고체 일정 미확인은 보유. 주가 상승만으로 축소하지 않음"
+  },
+  "sources": [
+    "https://m.stock.naver.com/api/stock/006400/trend?pageSize=5",
+    "https://stock.naver.com/api/domestic/detail/notice?itemCode=006400&page=1&pageSize=30",
+    "https://m.stock.naver.com/api/stock/006400/integration"
+  ],
+  "ends_kst": "2027-01-15 09:00",
+  "ends_note": "변경 조건 주기 알림. 4분기 잠정과 북미 LFP 가동 확인 창 다음인 2027-01-15 09:00이 마지막"
+}
