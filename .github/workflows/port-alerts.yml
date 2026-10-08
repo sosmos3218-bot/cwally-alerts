@@ -176,7 +176,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, secq3probe, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -761,20 +761,6 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/secq3_monitor.py auto
-      - name: Probe secq3 sources (temporary, no send)
-        if: steps.pick.outputs.job == 'secq3probe'
-        run: |
-          python scripts/secq3_monitor.py dry --offline --now 2026-10-29T08:10 --qlabel "2Q 26" --outlook "하반기 전망" --deck https://images.samsung.com/is/content/samsung/assets/global/ir/docs/2026_2Q_conference_eng.pdf --news "https://news.samsung.com/kr/삼성전자-2026년-2분기-실적-발표" | head -12
-          python - <<'PY'
-          import sys; sys.path.insert(0, "scripts")
-          import secq3_monitor as m, json
-          c = json.load(open("configs/secq3.json"))["samsung"]
-          for k in ("deck_url", "newsroom_url", "newsroom_rss"):
-              try:
-                  b = m.fetch(c[k]); print("PROBE", k, "404/not yet" if b is None else f"ok {len(b)} bytes")
-              except Exception as e:
-                  print("PROBE", k, "ERROR", type(e).__name__, e)
-          PY
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
