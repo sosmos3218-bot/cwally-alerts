@@ -1,0 +1,18 @@
+{
+  "name": "cnsds",
+  "title_prefix": "[CNSDS]",
+  "title_note": "LG씨엔에스 대 삼성SDS 가격 전환. 가격 구간은 [LGCNS], 3분기 실적은 [LG] lgcnsq3.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "새 cron 없음. 기존 평일 15:20 KST afternoon 슬롯. 전환 조건이 바뀔 때와 월요일만 발송.",
+  "year_guard": 2026,
+  "cns": "064400",
+  "sds": "018260",
+  "cns_cut": 80000,
+  "sds_cut": 175000,
+  "as_of": "2026-10-08",
+  "basis": "2026-10-08 대화. 실제 시세에선 LG CNS가 2025 PER과 배당에서 싸다. 동일 주가 가설에선 삼성SDS가 싸다. 전환은 삼성SDS 175000원 이하 또는 LG CNS 80000원 이상. GPU EPS 5000원 하한은 전력비 없는 가정.",
+  "ends_kst": "2026-12-31 15:20",
+  "ends_note": "2026년 상대가격 전환 감시 종료"
+}
