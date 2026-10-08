@@ -1,11 +1,21 @@
 {
-  "etf_band": null,
-  "russell_band": null,
-  "ust10_band": null,
-  "fx_band": null,
-  "aum_band": null,
-  "weekly_sent": {},
+  "etf_band": "neutral",
+  "russell_band": "normal",
+  "ust10_band": "tight",
+  "fx_band": "firm",
+  "aum_band": "small",
+  "weekly_sent": {
+    "2026-W41": "2026-10-07"
+  },
   "ops_daily": {},
   "ended_sent": false,
-  "last_observation": null
+  "last_observation": {
+    "session": "2026-10-07",
+    "close": 15935.0,
+    "russell": 2793.2041015625,
+    "ust10": 5.277,
+    "fx": 1338.7,
+    "aum": 21289000000.0
+  },
+  "updated_at": "2026-10-08T09:06:42+09:00"
 }

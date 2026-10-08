@@ -1,11 +1,13 @@
 {
-  "updated_at": null,
-  "yield_band": null,
-  "vtr_zone": null,
-  "spg_zone": null,
+  "updated_at": "2026-10-08T09:06:32.183705+09:00",
+  "yield_band": "high",
+  "vtr_zone": "base",
+  "spg_zone": "base",
   "earnings_sent": [],
   "fetch_fail_date": null,
-  "last_yield": null,
-  "last_vtr": null,
-  "last_spg": null
+  "last_yield": 5.277,
+  "last_vtr": 80.04,
+  "last_spg": 197.59,
+  "last_vtr_mult": 20.63,
+  "last_spg_mult": 14.91
 }

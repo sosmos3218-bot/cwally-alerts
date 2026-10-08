@@ -27,12 +27,19 @@
     "20260814003350"
   ],
   "seen_us_notice_ids": [],
-  "weekly_sent": {},
+  "weekly_sent": {
+    "2026-W41": "2026-10-07"
+  },
   "sent_fingerprints": [],
   "ops_daily": {},
   "install_test_sent": "2026-10-07T15:45:26+09:00",
-  "last_observation": null,
-  "updated_at": "2026-10-07T15:45:26+09:00",
+  "last_observation": {
+    "session": "2026-10-07",
+    "close": 22050.0,
+    "eps": 2048.0,
+    "op": 233.0
+  },
+  "updated_at": "2026-10-08T09:06:36+09:00",
   "notices_seeded": true,
   "seen_notice_ids": [
     "105790501",

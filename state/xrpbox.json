@@ -1,9 +1,9 @@
 {
-  "verdict": "RANGE_HOLD",
+  "verdict": "BREAK_145",
   "baseline_sent": true,
   "fail_notified": false,
   "missing_notified": 0,
-  "updated_at": "2026-10-07T09:01:44.988473+09:00",
-  "close": 1.497,
-  "close_note": "coinbase UTC 일봉 2026-10-06 종가 1.4970"
+  "updated_at": "2026-10-08T09:01:46.316974+09:00",
+  "close": 1.4211,
+  "close_note": "coinbase UTC 일봉 2026-10-07 종가 1.4211"
 }

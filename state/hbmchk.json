@@ -4,6 +4,9 @@
   "sol_below_line": false,
   "us_notified_tier": {},
   "notice_versions": [],
-  "ops_daily": {},
-  "updated_at": null
+  "ops_daily": {
+    "us-NVDA": "2026-10-08",
+    "us-SNDK": "2026-10-08"
+  },
+  "updated_at": "2026-10-08T09:01:11.950481+09:00"
 }

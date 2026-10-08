@@ -1,9 +1,9 @@
 {
-  "updated_at": null,
-  "price_zone": null,
-  "yield_band": null,
+  "updated_at": "2026-10-08T09:06:44.450054+09:00",
+  "price_zone": "rich",
+  "yield_band": "base",
   "weekly_sent": {},
   "fetch_fail_date": null,
-  "last_price": null,
-  "last_yield": null
+  "last_price": 197.59,
+  "last_yield": 5.277
 }
