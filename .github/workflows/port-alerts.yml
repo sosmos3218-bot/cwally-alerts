@@ -71,6 +71,13 @@ on:
     - cron: "10 0 12 11 *"
     - cron: "10 7 13 11 *"
     - cron: "10 0 16 11 *"
+    # secq3 oneshot_kst (KST→UTC): 2026-10-29 08:10, 09:40, 11:10, 16:10, 10-30 09:16, 11-03 09:16
+    - cron: "10 23 28 10 *"
+    - cron: "40 0 29 10 *"
+    - cron: "10 2 29 10 *"
+    - cron: "10 7 29 10 *"
+    - cron: "16 0 30 10 *"
+    - cron: "16 0 3 11 *"
     # nvdaq3 oneshot_kst (KST→UTC): 2026-11-18/19/20/26/27 07:10
     - cron: "10 22 17 11 *"
     - cron: "10 22 18 11 *"
@@ -284,6 +291,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 23 13 10 *" ]; then JOB=bankrate1014
             elif [ "${{ github.event.schedule }}" = "23 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "23 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 7 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 10 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 11 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 14 11 *" ]; then JOB=wbtnq3
             elif [ "${{ github.event.schedule }}" = "26 7 2 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 3 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 6 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 9 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 11 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 13 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 16 11 *" ]; then JOB=dearq3
+            elif [ "${{ github.event.schedule }}" = "10 23 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 2 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 29 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 3 11 *" ]; then JOB=secq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -747,6 +755,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/wbtnq3_monitor.py auto
+      - name: Run secq3
+        if: steps.pick.outputs.job == 'secq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/secq3_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
