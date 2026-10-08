@@ -425,6 +425,7 @@ jobs:
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
             python scripts/rblx_monitor.py auto
+            python scripts/pdd_monitor.py auto
             python scripts/133690_monitor.py auto
             python scripts/ceg_monitor.py auto
             python scripts/ews_monitor.py auto

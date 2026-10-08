@@ -1,0 +1,51 @@
+{
+  "name": "pdd",
+  "title_prefix": "[PDD]",
+  "ticker": "PDD",
+  "display": "핀둬둬",
+  "as_of": "2026-10-08",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning. 3Q26 판정은 2026-11-18 09:00.",
+  "year_guard": null,
+  "valid_until": "2027-02-26",
+  "alert_policy": "weekly_or_change",
+  "cik": "0001737806",
+  "earnings_est_kst": "2026-11-17 22:30",
+  "earnings_note": "3Q26 추정 발표 2026-11-17 장전(ET). 09:00 KST 판정은 다음날 11-18.",
+  "baseline": {
+    "price_date": "2026-10-07",
+    "price": 78.50,
+    "shares_b": 1.4234,
+    "mcap_b": 111.74,
+    "cash_sti_b": 67.3,
+    "financial_debt_b": 0.71,
+    "ttm_oi_b": 14.51,
+    "oi_note": "TTM 영업이익 145.1억달러는 집계치. 4Q25 역산 포함 가능. 공식 확정치 아님.",
+    "cash_date": "2026-06-30",
+    "last_known_filing": "2026-08-24",
+    "online_mkt_yoy": 0.035,
+    "txn_yoy": 0.13,
+    "nongaap_opm": 0.26
+  },
+  "levels": {
+    "cash_haircut": 0.5,
+    "watch_ev_oi": 8.0
+  },
+  "change_rules": {
+    "watch": "현금 50%만 인정한 조정 EV/TTM 영업이익이 8배 이상이면 신규 매수 중단, 관망",
+    "avoid": "미국·EU 영업제한, 영업현금흐름 2분기 연속 적자, 현금 접근 의문. 자동 판정 안 함",
+    "upgrade": "온라인 마케팅 2분기 연속 5% 이상, 거래서비스 10% 이상, 비GAAP 영업이익률 25% 이상, 자본배분 정책"
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/PDD?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0001737806.json",
+    "ir": "https://investor.pddholdings.com/"
+  },
+  "ends_kst": "2027-02-26 09:00",
+  "ends_note": "3Q26·4Q26 변경조건 점검 후 종료. 연장 시 ends_kst 수정",
+  "holding": false,
+  "holding_note": "보유 수량 미확인. 가격·변경조건만 알림.",
+  "q3_judge_kst": "2026-11-18 09:00"
+}
