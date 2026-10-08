@@ -1,5 +1,8 @@
 {
-  "seen_ids": [],
+  "seen_ids": [
+    "150999347",
+    "151002508"
+  ],
   "last_fail_day": null,
-  "updated_at": null
+  "updated_at": "2026-10-08T15:20:34+09:00"
 }

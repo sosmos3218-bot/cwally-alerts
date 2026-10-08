@@ -1,7 +1,7 @@
 {
-  "verdict": null,
-  "cns": null,
-  "sds": null,
+  "verdict": "CNS",
+  "cns": 69200.0,
+  "sds": 207000.0,
   "last_alert_date": null,
-  "updated_at": null
+  "updated_at": "2026-10-08T15:20:39+09:00"
 }

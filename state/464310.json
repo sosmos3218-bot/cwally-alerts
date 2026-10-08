@@ -1,7 +1,7 @@
 {
-  "updated_at": null,
-  "last_price": null,
-  "zone": null,
+  "updated_at": "2026-10-08T15:22:32.128043+09:00",
+  "last_price": 13075.0,
+  "zone": "near",
   "last_weekly": null,
   "fetch_fail_date": null
 }
