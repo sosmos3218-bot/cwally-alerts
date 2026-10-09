@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-08 15:20 KST",
-  "last_sent_date": "2026-10-08",
+  "updated_at": "2026-10-09 15:20 KST",
+  "last_sent_date": "2026-10-09",
   "week_date": "2026-10-05",
   "file_seq": 4975,
   "hits": [],
@@ -28,7 +28,7 @@
       "prev": 670,
       "mom_pct": -36.417910447761194,
       "source": "수원시 토허 통계",
-      "error": "Remote end closed connection without response"
+      "error": "<urlopen error timed out>"
     }
   },
   "iros": {
