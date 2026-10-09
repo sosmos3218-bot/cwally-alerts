@@ -1,17 +1,12 @@
 {
-  "verdict": "RANGE_HOLD",
+  "verdict": "BREAK_82",
   "baseline_sent": true,
   "fail_notified": false,
   "missing_notified": 0,
-  "updated_at": "2026-10-08T09:01:19.455128+09:00",
-  "close": 83250.0,
-  "close_note": "coinbase UTC 일봉 2026-10-07 종가 83250",
+  "updated_at": "2026-10-09T09:01:17.810745+09:00",
+  "close": 81677.85,
+  "close_note": "coinbase UTC 일봉 2026-10-08 종가 81678",
   "etf": [
-    {
-      "date": "2026-10-02",
-      "total_m": 189.9,
-      "incomplete": false
-    },
     {
       "date": "2026-10-05",
       "total_m": -89.8,
@@ -21,8 +16,13 @@
       "date": "2026-10-06",
       "total_m": 118.8,
       "incomplete": false
+    },
+    {
+      "date": "2026-10-07",
+      "total_m": -484.9,
+      "incomplete": false
     }
   ],
-  "yield": 5.2769999504089355,
-  "yield_note": "Yahoo ^TNX 5.28%"
+  "yield": 5.230999946594238,
+  "yield_note": "Yahoo ^TNX 5.23%"
 }

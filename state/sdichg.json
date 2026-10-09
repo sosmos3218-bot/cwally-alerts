@@ -1,7 +1,10 @@
 {
-  "updated_at": null,
-  "verdict": null,
+  "updated_at": "2026-10-09T09:01:14+09:00",
+  "verdict": "보유",
   "last_weekly": null,
-  "last_price": null,
-  "event_sent": []
+  "last_price": 567000.0,
+  "event_sent": [],
+  "last_target": null,
+  "last_core": null,
+  "last_ess": null
 }
