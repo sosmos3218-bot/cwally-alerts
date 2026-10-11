@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic
+from naver_api import get_json, notices  # legacy finance.naver.com pages are gone (410); see naver_api.py
 
 KST = timezone(timedelta(hours=9))
 CFG = ROOT / "configs" / "kzq3.json"
@@ -53,25 +54,78 @@ def save_state(st, now):
     STATE.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def collect(cfg):
-    blobs, errors = [], []
+TITLE_KEY = "연결재무제표기준영업(잠정)실적"  # KRX 공정공시, consolidated only (estimates are consolidated)
+UNIT_TO_EOK = {"백만원": 100.0, "억원": 1.0, "천원": 100000.0, "조원": 0.0001}
+
+
+def parse_notice(body, period_end):
+    """Consolidated 영업이익 (억원) from a KRX 영업(잠정)실적 notice body.
+
+    period_end: "YYYY-MM-DD" end of the 당기실적 period (Q3 = YYYY-09-30). Returns
+    {"op": 억원 for the quarter, "ytd": 억원 cumulative, "period": "<start> ~ <end>"} or None.
+    """
+    m = re.search(r"당기실적\s*(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})", body or "")
+    if not m or m.group(2) != period_end:
+        return None
+    um = re.search(r"단위\s*[:：]\s*(조원|억원|백만원|천원)", body)
+    if not um:
+        return None
+    div = UNIT_TO_EOK[um.group(1)]
+    row = re.search(r"영업이익\s*당해실적\s*(-?[\d,]+(?:\.\d+)?)[^가-힣]{0,80}?누계실적\s*(-?[\d,]+(?:\.\d+)?)", body)
+    if not row:
+        return None
+    op = float(row.group(1).replace(",", "")) / div
+    ytd = float(row.group(2).replace(",", "")) / div
+    return {"op": round(op), "ytd": round(ytd), "period": f"{m.group(1)} ~ {m.group(2)}"}
+
+
+def find_result(period_end, since):
+    """(result, info, errors). Source 1: KRX/DART 공정공시 via stock.naver.com notice API.
+    Source 2 (only if source 1 is empty): m.stock.naver.com finance/quarter, accepted only when
+    the quarter column is NOT a consensus estimate."""
+    errors = []
     try:
-        raw, _ = fetch(cfg["sources"]["news"])
-        blobs.append(textify(raw))
+        for r in notices("010130", 60):
+            if TITLE_KEY not in r.get("title", "") or "정정" in r.get("title", ""):
+                continue
+            if str(r.get("datetime", ""))[:10] < since:
+                continue
+            got = parse_notice(r.get("text", ""), period_end)
+            if got:
+                got.update(source="notice", datetime=r.get("datetime"), title=r.get("title"))
+                return got, "notice", "; ".join(errors)
     except Exception as exc:
-        errors.append(f"news: {exc}")
-    return "\n".join(blobs), "; ".join(errors)
+        errors.append(f"notice: {exc}")
+    try:
+        key = period_end[:4] + period_end[5:7]
+        d = get_json("https://m.stock.naver.com/api/stock/010130/finance/quarter")["financeInfo"]
+        cons = {t["key"]: t.get("isConsensus") == "Y" for t in d["trTitleList"]}
+        if key in cons and not cons[key]:
+            for row in d["rowList"]:
+                if row["title"] == "영업이익":
+                    val = (row["columns"].get(key) or {}).get("value")
+                    if val not in (None, ""):
+                        return {"op": round(float(str(val).replace(",", ""))), "ytd": None, "period": key,
+                                "source": "naver_quarter", "datetime": None, "title": "naver finance/quarter"}, "naver_quarter", "; ".join(errors)
+    except Exception as exc:
+        errors.append(f"quarter: {exc}")
+    return None, "none", "; ".join(errors)
 
 
-def parse_op(text):
-    # Look for 3분기 영업이익 숫자 (억원)
-    m = re.search(r"3분기[^분]{0,40}영업이익[^억]{0,20}([0-9,]+)\s*억", text)
-    if m:
-        return int(m.group(1).replace(",", ""))
-    m = re.search(r"영업이익[^억]{0,30}([0-9,]+)\s*억[^원]{0,10}3분기", text)
-    if m:
-        return int(m.group(1).replace(",", ""))
-    return None
+def collect(cfg):
+    year = int(cfg.get("event_year", 2026))
+    since = cfg["window_start_kst"][:10]
+    return find_result(f"{year}-09-30", since)
+
+
+def selftest(cfg):
+    """Dry-run only: prove the parser on the already published Q2 notice (and Q1)."""
+    year = int(cfg.get("event_year", 2026))
+    out = []
+    for label, end in (("Q2", f"{year}-06-30"), ("Q1", f"{year}-03-31")):
+        got, _, err = find_result(end, f"{year}-01-01")
+        out.append((label, end, got, err))
+    return out
 
 
 def score(op, b):
@@ -116,15 +170,25 @@ def main():
         print("already final; skip")
         save_state(st, now)
         return 0
-    text, err = collect(cfg)
-    op = parse_op(text) if text else None
+    res, src, err = collect(cfg)
+    op = res["op"] if res else None
     b = cfg["baseline"]
     action, why = score(op, b)
     if mode == "dry":
         # dry: print the parse/score result only. No ntfy send, no state write.
         print("DRY RUN | no ntfy, no state write")
-        print(f"collect_error={err or '-'} text_chars={len(text or '')}")
+        print(f"collect_error={err or '-'} source={src}")
+        if res:
+            print(f"found: {res.get('title')} | posted {res.get('datetime')} (UTC) | period {res.get('period')} | ytd_eok={res.get('ytd')}")
         print(f"parsed_op_eok={op}")
+        for label, end, got, e in selftest(cfg):
+            if got:
+                extra = ""
+                if label == "Q2" and got.get("ytd") is not None:
+                    extra = f" | ytd {got['ytd']} vs baseline h1_op_eok {b['h1_op_eok']} -> {'MATCH' if got['ytd'] == b['h1_op_eok'] else 'MISMATCH'}"
+                print(f"selftest {label} ({end}): op_eok={got['op']} via {got['source']}{extra}")
+            else:
+                print(f"selftest {label} ({end}): NOT FOUND {e}")
         print(f"decision={action} | {why}")
         print(f"state(read-only)={json.dumps(st, ensure_ascii=False)}")
         if op is None:
