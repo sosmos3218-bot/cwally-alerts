@@ -112,7 +112,7 @@ def main():
         print("outside 2026 window; silent")
         save_state(st, now)
         return 0
-    if st.get("final_notified") and mode != "force":
+    if st.get("final_notified") and mode not in {"force", "dry"}:
         print("already final; skip")
         save_state(st, now)
         return 0
@@ -120,6 +120,18 @@ def main():
     op = parse_op(text) if text else None
     b = cfg["baseline"]
     action, why = score(op, b)
+    if mode == "dry":
+        # dry: print the parse/score result only. No ntfy send, no state write.
+        print("DRY RUN | no ntfy, no state write")
+        print(f"collect_error={err or '-'} text_chars={len(text or '')}")
+        print(f"parsed_op_eok={op}")
+        print(f"decision={action} | {why}")
+        print(f"state(read-only)={json.dumps(st, ensure_ascii=False)}")
+        if op is None:
+            print("would send: [KZ] 원문 없음 | 보유 유지" + (" (skipped: empty_notified already true)" if st.get("empty_notified") else ""))
+        else:
+            print(f"would send: [KZ] {action} | 3분기 vs 추정")
+        return 0
     if op is None and mode != "force":
         if not st.get("empty_notified"):
             lines = [
@@ -147,11 +159,6 @@ def main():
         "출처: " + cfg["sources"]["news"],
     ]
     title = f"[KZ] {action} | 3분기 vs 추정"
-    if mode == "dry":
-        print(title)
-        print("\n".join(lines))
-        save_state(st, now)
-        return 0
     emit(cfg, title, lines, 4 if action != "중립" else 3)
     st["final_notified"] = True
     st["score"] = action

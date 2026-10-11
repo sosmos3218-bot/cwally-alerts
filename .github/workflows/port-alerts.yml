@@ -177,14 +177,18 @@ on:
     - cron: "10 11 29 10 *"
     - cron: "40 14 29 10 *"
     - cron: "20 20 29 10 *"
+    # kzq3 oneshot_kst (KST→UTC): 2026-11-05 16:10, 11-06 09:10, 11-07 09:10. 고려아연 3분기 실적 창 (on-time = cron-job.org)
+    - cron: "10 7 5 11 *"
+    - cron: "10 0 6 11 *"
+    - cron: "10 0 7 11 *"
   workflow_dispatch:
     inputs:
       job:
-        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | oklo | pffd | ceg | all
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | oklo | pffd | ceg | kzq3 | all
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -235,6 +239,11 @@ on:
         default: auto
         type: choice
         options: [auto, weekly, force]
+      kzq3_mode:
+        description: "job=kzq3 only. dry = parse/score print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
       force_square:
         type: boolean
         default: true
@@ -263,6 +272,7 @@ jobs:
           JOB="${{ github.event.inputs.job }}"
           YC=auto
           KX=auto
+          KZ=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
             elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
@@ -302,6 +312,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 23 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 2 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 29 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 3 11 *" ]; then JOB=secq3
             elif [ "${{ github.event.schedule }}" = "42 23 11 10 *" ] || [ "${{ github.event.schedule }}" = "42 7 29 10 *" ]; then JOB=q3flow
             elif [ "${{ github.event.schedule }}" = "10 11 29 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 29 10 *" ] || [ "${{ github.event.schedule }}" = "20 20 29 10 *" ]; then JOB=llyq3
+            elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ]; then JOB=kzq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -367,6 +378,8 @@ jobs:
             YC="${{ github.event.inputs.yencarry_mode }}"
             KX="${{ github.event.inputs.krwfx_mode }}"
             [ -z "$KX" ] && KX=auto
+            KZ="${{ github.event.inputs.kzq3_mode }}"
+            [ -z "$KZ" ] && KZ=dry
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -378,6 +391,7 @@ jobs:
           echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
+          echo "kzq3_mode=$KZ" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
@@ -783,6 +797,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/q3flow_monitor.py auto
+      - name: Run kzq3
+        if: steps.pick.outputs.job == 'kzq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/kzq3_monitor.py "${{ steps.pick.outputs.kzq3_mode }}"
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
