@@ -66,13 +66,29 @@ jobs:
         run: |
           python scripts/slot_guard.py mark afternoon
           python scripts/square_monitor.py ${{ steps.decide.outputs.square_mode }}
+      - name: Slot guard morning
+        if: steps.decide.outputs.job == 'morning' || steps.decide.outputs.job == 'all'
+        id: guard_morning
+        run: |
+          RUN=1
+          git fetch -q origin main && git show origin/main:state/slots/morning.json > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+          SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check morning || RUN=0
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+      - name: Run morning bundle
+        if: (steps.decide.outputs.job == 'morning' || steps.decide.outputs.job == 'all') && steps.guard_morning.outputs.run == '1'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          python scripts/slot_guard.py mark morning
+          python scripts/kosown_monitor.py
       - name: Persist state
         if: always()
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/afternoon.json state/square.json || true
+          git add state/slots/afternoon.json state/slots/morning.json state/square.json state/kosown.json || true
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
-          git commit -m "chore: update afternoon state" || true
+          git commit -m "chore: update state" || true
           git pull --rebase origin main || true
           git push origin HEAD:main || true
