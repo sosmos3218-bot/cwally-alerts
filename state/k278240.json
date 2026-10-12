@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-09 15:40 KST",
+  "updated_at": "2026-10-12 15:40 KST",
   "fired": {
     "confirm": false,
     "fail": false
@@ -7,10 +7,10 @@
   "last_sent": null,
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-10-08",
-    "close": 15165.0,
-    "ret5": 0.0491,
-    "flow": "2026-10-08 기관 -10,860주",
+    "day": "2026-10-12",
+    "close": 14385.0,
+    "ret5": -0.0607,
+    "flow": "2026-10-08 기관 -10,860주 (종가일 2026-10-12와 불일치, 충족 아님)",
     "hold_ok": false
   }
 }
