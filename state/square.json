@@ -1,5 +1,8 @@
 {
-  "updated_at": "2026-10-12",
-  "last_status": null,
-  "discount": null
+  "updated_at": "2026-10-12 15:20 KST",
+  "last_status": "HIGH",
+  "last_price_sq": 987000.0,
+  "last_price_hx": 1612000.0,
+  "discount": 0.4582,
+  "last_sent": true
 }
