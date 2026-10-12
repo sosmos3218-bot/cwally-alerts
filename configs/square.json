@@ -1,0 +1,18 @@
+{
+  "name": "square",
+  "title_prefix": "[SQUARE]",
+  "ticker_sq": "402340.KS",
+  "ticker_hx": "000660.KS",
+  "code": "402340",
+  "display": "SK스퀘어",
+  "schedule_kst": "15:20",
+  "ntfy_topic": "cwally-port",
+  "shares_sq": 131923998,
+  "shares_hx": 146100000,
+  "other_nav": 4800000000000,
+  "attractive_discount": 0.40,
+  "high_attractive": 0.45,
+  "year_guard": 2026,
+  "ends_kst": null,
+  "ends_note": "하이닉스 사이클과 NAV 할인 모니터링. 종료 없음"
+}
