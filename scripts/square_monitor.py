@@ -44,6 +44,8 @@ def ntfy_publish(server, topic, title, message, priority):
         print(resp.read().decode())
 
 def main() -> int:
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    dry = mode == "dry"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     if now.year != int(cfg.get("year_guard") or 2026):
@@ -83,7 +85,12 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     title = f"[SQUARE] {status_ko}"
-    # send only if status changed or weekly (Monday) or force-like
+    print(f"TITLE: {title}")
+    print(f"STATUS: {status} DISCOUNT: {discount*100:.1f}%")
+    if dry:
+        print("DRY RUN: no publish, no state write")
+        return 0
+    # send only if status changed or weekly (Monday)
     changed = prev.get("last_status") != status
     is_monday = now.weekday() == 0
     if changed or is_monday or prev.get("last_status") is None:

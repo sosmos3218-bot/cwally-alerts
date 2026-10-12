@@ -1,1 +1,78 @@
-$(cat /tmp/port-alerts.yml)
+name: cwally-port-alerts
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"   # morning 09:00 KST
+    - cron: "20 6 * * 1-5"  # afternoon 15:20 KST
+    - cron: "0 12 * * 0"    # portlight Sunday 21:00 KST
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "which job to run"
+        type: choice
+        options:
+          - morning
+          - afternoon
+          - portlight
+          - all
+          - oneshot
+        default: afternoon
+      square_mode:
+        description: "mode for square monitor (dry/auto)"
+        type: choice
+        options:
+          - auto
+          - dry
+        default: auto
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Decide jobs
+        id: decide
+        run: |
+          JOB="${{ github.event.inputs.job || 'afternoon' }}"
+          echo "job=$JOB" >> "$GITHUB_OUTPUT"
+          echo "square_mode=${{ github.event.inputs.square_mode || 'auto' }}" >> "$GITHUB_OUTPUT"
+      - name: Slot guard afternoon
+        if: steps.decide.outputs.job == 'afternoon' || steps.decide.outputs.job == 'all'
+        id: guard_afternoon
+        run: |
+          RUN=1
+          git fetch -q origin main && git show origin/main:state/slots/afternoon.json > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+          SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check afternoon || RUN=0
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+      - name: Run afternoon bundle
+        if: (steps.decide.outputs.job == 'afternoon' || steps.decide.outputs.job == 'all') && steps.guard_afternoon.outputs.run == '1'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          python scripts/slot_guard.py mark afternoon
+          python scripts/square_monitor.py ${{ steps.decide.outputs.square_mode }}
+      - name: Persist state
+        if: always()
+        run: |
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/slots/afternoon.json state/square.json || true
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update afternoon state" || true
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
