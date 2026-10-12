@@ -1,0 +1,19 @@
+{
+  "name": "461490",
+  "title_prefix": "[461490]",
+  "ticker": "461490.KS",
+  "display": "RISE 글로벌자산배분액티브",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "기존 평일 15:20 KST afternoon 슬롯에 연결. 가격 변동·저점 근접 시 발송. 새 cron 없음.",
+  "year_guard": 2026,
+  "valid_until": "2026-12-31",
+  "levels": {
+    "near_low": 14400,
+    "watch": 14500
+  },
+  "explain": "RISE 글로벌자산배분액티브(461490) 주기 점검. 장기 방어형 코어용 저비용 분산. 현 시점 단기 일시매수는 중립 이하, 장기 적립식으로 중상.",
+  "ends_kst": "2026-12-31 15:20",
+  "ends_note": "평일 15:20 점검, 2026년 말 자동 종료"
+}
