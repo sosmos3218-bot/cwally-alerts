@@ -1,0 +1,31 @@
+{
+  "name": "396520",
+  "title_prefix": "[396520]",
+  "ticker": "396520",
+  "display": "TIGER 차이나반도체FACTSET",
+  "as_of": "2026-10-12",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning 슬롯에 부착. 1~3년 테마 보유 점검용.",
+  "year_guard": null,
+  "valid_until": null,
+  "alert_policy": "drawdown_or_change",
+  "baseline": {
+    "price_date": "2026-10-12",
+    "price": 11345,
+    "note": "2026-10-12 장중 기준 약 11,345원"
+  },
+  "levels": {
+    "loss30": 7941,
+    "loss40": 6807
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/396520.KS?interval=1d&range=5d"
+  },
+  "ends_kst": null,
+  "ends_note": "1~3년 중장기 테마 보유 점검. 테마 손상 또는 사용자 종료 시 종료",
+  "holding": false,
+  "holding_note": "대화 기반 분석용. 실제 보유 여부는 별도 확인.",
+  "notes": "기준가 11,345원 대비 -30% 약 7,941원, -40% 약 6,807원. 지정학 리스크 중점 테마."
+}
