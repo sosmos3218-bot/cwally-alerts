@@ -6,9 +6,9 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "2026-10-21 일회성 (정규 슬롯 아님)",
-  "schedule_note": "3분기 실적 발표 전 모니터링 리마인더. 일회성 oneshot. 2026년만 year-guard.",
+  "schedule_note": "3분기 실적 발표 전 모니터링 리마인더. 일회성 oneshot. 09:00 morning 슬롯과 겹치지 않게 09:05 KST. 2026년만 year-guard.",
   "year_guard": 2026,
-  "oneshot_kst": ["2026-10-21 09:00"],
+  "oneshot_kst": ["2026-10-21 09:05"],
   "ends_kst": "2026-10-24 09:00",
   "ends_note": "3분기 실적·가이던스 확인 후 종료",
   "explain": "삼성E&A 수주 16조·마진 10% 시나리오 모니터링. 매수 지시 아님."
