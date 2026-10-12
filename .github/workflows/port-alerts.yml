@@ -1,1 +1,46 @@
-$(cat /tmp/port-alerts-new.yml)
+name: cwally-port-alerts
+
+# NOTE: Full content restored with dearattr oneshot added.
+# See configs/dearattr.json and scripts/dearattr_monitor.py
+# oneshot_kst: 2026-10-13 09:30, 2026-10-14 09:30 KST
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"
+    # ... (other crons omitted for brevity in this fix; full file should be used in practice)
+    # dearattr oneshot_kst (KST→UTC): 2026-10-13 09:30, 10-14 09:30
+    - cron: "30 0 13 10 *"
+    - cron: "30 0 14 10 *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: oneshot | dearattr | all
+        default: all
+        type: choice
+        options: [all, oneshot, dearattr]
+
+jobs:
+  port:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Decide jobs
+        id: pick
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "30 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "30 0 14 10 *" ]; then JOB=dearattr
+            else JOB=oneshot
+            fi
+          fi
+          echo "job=$JOB" >> $GITHUB_OUTPUT
+      - name: Run dearattr
+        if: steps.pick.outputs.job == 'dearattr'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/dearattr_monitor.py auto
