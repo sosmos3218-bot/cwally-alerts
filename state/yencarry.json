@@ -3,12 +3,12 @@
   "fed_sent_date": "2026-09-16",
   "boj_sent_date": null,
   "boj_press_sent_date": "2026-09-18",
-  "weekly_sent_week": null,
+  "weekly_sent_week": "2026-W42",
   "last_event_key": "원달러 1,339원 → 1,340 이탈",
   "last_quotes": {
-    "usdjpy": 158.197,
-    "usdkrw": 1339.4,
+    "usdjpy": 158.168,
+    "usdkrw": 1340.38,
     "jgb30": 4.134
   },
-  "updated_at": "2026-10-09T15:22:04.249376+09:00"
+  "updated_at": "2026-10-12T09:00:55.397595+09:00"
 }

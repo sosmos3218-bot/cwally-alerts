@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-10-09T09:01:14+09:00",
+  "updated_at": "2026-10-12T09:01:16+09:00",
   "verdict": "보유",
-  "last_weekly": null,
+  "last_weekly": "2026-10-12",
   "last_price": 567000.0,
   "event_sent": [],
   "last_target": null,

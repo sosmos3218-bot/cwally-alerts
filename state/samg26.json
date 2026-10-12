@@ -28,18 +28,19 @@
   ],
   "seen_us_notice_ids": [],
   "weekly_sent": {
-    "2026-W41": "2026-10-07"
+    "2026-W41": "2026-10-07",
+    "2026-W42": "2026-10-08"
   },
   "sent_fingerprints": [],
   "ops_daily": {},
   "install_test_sent": "2026-10-07T15:45:26+09:00",
   "last_observation": {
-    "session": "2026-10-07",
-    "close": 22050.0,
+    "session": "2026-10-08",
+    "close": 21850.0,
     "eps": 2048.0,
     "op": 233.0
   },
-  "updated_at": "2026-10-08T09:06:36+09:00",
+  "updated_at": "2026-10-12T09:06:40+09:00",
   "notices_seeded": true,
   "seen_notice_ids": [
     "105790501",

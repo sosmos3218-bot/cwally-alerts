@@ -66,17 +66,18 @@
     "1561367"
   ],
   "weekly_sent": {
-    "2026-W41": "2026-10-07"
+    "2026-W41": "2026-10-07",
+    "2026-W42": "2026-10-08"
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-10-07",
-    "pref_close": 93900.0,
-    "common_close": 270500.0,
-    "discount_pct": 65.29,
-    "liq_median_value_eok": 7.62,
-    "avg5_volume": 6766,
-    "dps": 3086.0
+    "session": "2026-10-08",
+    "pref_close": 93100.0,
+    "common_close": 266000.0,
+    "discount_pct": 65.0,
+    "liq_median_value_eok": 7.36,
+    "avg5_volume": 4489,
+    "dps": 3002.0
   },
-  "updated_at": "2026-10-08T09:06:45+09:00"
+  "updated_at": "2026-10-12T09:06:51+09:00"
 }
