@@ -184,8 +184,8 @@ on:
     # dearattr oneshot_kst (KST→UTC): 2026-10-13 09:30, 10-14 09:30 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "30 0 13 10 *"
     - cron: "30 0 14 10 *"
-    # sena oneshot_kst (KST→UTC): 2026-10-21 09:00 (GitHub fallback; on-time = cron-job.org job=oneshot)
-    - cron: "0 0 21 10 *"
+    # sena oneshot_kst (KST→UTC): 2026-10-21 09:05, moved off the 09:00 morning slot (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "5 0 21 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -324,7 +324,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 11 29 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 29 10 *" ] || [ "${{ github.event.schedule }}" = "20 20 29 10 *" ]; then JOB=llyq3
             elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ]; then JOB=kzq3
             elif [ "${{ github.event.schedule }}" = "30 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "30 0 14 10 *" ]; then JOB=dearattr
-            elif [ "${{ github.event.schedule }}" = "0 0 21 10 *" ]; then JOB=sena
+            elif [ "${{ github.event.schedule }}" = "5 0 21 10 *" ]; then JOB=sena
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
