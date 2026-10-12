@@ -5,7 +5,7 @@
   "display": "삼성E&A",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "09:00",
+  "schedule_kst": "2026-10-21 일회성 (정규 슬롯 아님)",
   "schedule_note": "3분기 실적 발표 전 모니터링 리마인더. 일회성 oneshot. 2026년만 year-guard.",
   "year_guard": 2026,
   "oneshot_kst": ["2026-10-21 09:00"],
