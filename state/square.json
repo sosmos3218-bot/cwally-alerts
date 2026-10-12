@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-12 15:20 KST",
+  "updated_at": "2026-10-13 00:44 KST",
   "last_status": "HIGH",
-  "last_price_sq": 987000.0,
-  "last_price_hx": 1612000.0,
-  "discount": 0.4582,
-  "last_sent": true
+  "last_price_sq": 984000.0,
+  "last_price_hx": 1605000.0,
+  "discount": 0.4575,
+  "last_sent": false
 }
