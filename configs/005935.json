@@ -1,0 +1,16 @@
+{
+  "name": "005935",
+  "title_prefix": "[005935]",
+  "display": "삼성전자우 005935 괴리율 모니터링",
+  "ticker": "005935",
+  "ticker_common": "005930",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "기존 평일 09:00 morning 슬롯",
+  "entry_discount": 30.0,
+  "exit_discount": 18.0,
+  "hold_min": 25.0,
+  "hold_max": 29.0,
+  "ends_kst": "2026-12-31 09:00",
+  "ends_note": "2026년 말까지 괴리율 모니터링, 실적 공시 후 재점검"
+}
