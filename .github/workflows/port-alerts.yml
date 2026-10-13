@@ -9,7 +9,7 @@ on:
     - cron: "0 0 * * 1-5"   # morning 09:00 KST
     - cron: "20 6 * * 1-5"  # afternoon 15:20 KST
     - cron: "0 12 * * 0"    # portlight Sunday 21:00 KST
-    - cron: "0 0 14 10 *"   # MANH oneshot backup 2026-10-14 09:00 KST
+    - cron: "0 0 28 10 *"   # MANH post-Q3 oneshot backup 2026-10-28 09:00 KST
   workflow_dispatch:
     inputs:
       job:
