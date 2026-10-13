@@ -1,31 +1,45 @@
 {
+  "name": "alux",
+  "title_prefix": "[ALUX]",
+  "display": "에이럭스 475580 3분기 실적 판정, 해안정찰 수주, CB와 자금조달 공시, 종가 7,600 돌파",
   "ticker": "475580.KQ",
   "code": "475580",
-  "name": "에이럭스",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "bands": {
-    "buy1": [6900, 7200],
-    "buy2": [6200, 6600],
-    "buy3": [5400, 5800],
-    "stop_close": 5000,
-    "no_chase": 8000,
-    "tp1a": [8800, 9200],
-    "tp1b": [9800, 10500],
-    "target": 9500
+  "schedule_kst": "기존 평일 09:00 morning 슬롯 (월요일 weekly, 그 외 event)",
+  "schedule_note": "새 cron 없음. 평일에는 새 공시, 3분기 실적 확정, 종가 돌파가 있을 때만 보낸다. 월요일 weekly는 상태 한 줄 요약을 보낸다.",
+  "plan_revised": "2026-10-13",
+  "plan_note": "관망. 3분기 실적이 기준을 넘고 가격이 7,300원 이하일 때만 50% 진입, 나머지 50%는 CB 해법 또는 해안정찰 수주 확인과 종가 7,600 돌파 뒤. 투자기간은 2027-03 사업보고서까지.",
+  "q3": {
+    "period": "2026/09",
+    "naver_key": "202609",
+    "gpm_min": 28.0,
+    "op_min_eok": -10.0,
+    "op_drop_eok": -25.0,
+    "cash_min_eok": 150.0,
+    "active_until": "2026-12-31",
+    "cash_definition": "현금및현금성자산 + 단기금융자산 + 당기손익-공정가치측정금융자산(유동), 연결, 억원",
+    "entry_price_cap": 7300
   },
-  "keywords": [
-    "분기보고서",
-    "잠정실적",
-    "매출액또는손익구조",
-    "공급계약",
-    "단일판매",
-    "유상증자",
-    "전환사채",
-    "CB",
-    "타법인주식",
-    "주요사항"
-  ],
-  "ends_kst": null,
-  "ends_note": "수동 해제 전까지 가격 구간과 신규 공시 때 발송"
+  "breakout": {
+    "close": 7600,
+    "rearm_below": 7250,
+    "volume_x": 2.0
+  },
+  "rules": {
+    "title_exclude": ["주식선물", "투자주의", "투자경고", "투자위험", "단일가", "과열", "가격제한폭", "공매도", "시장조치", "불성실공시", "조회공시요구", "소수계좌"],
+    "coastal_words": ["해안정찰", "해안 정찰", "해안감시", "해안 감시", "해안경계", "방위사업청", "방사청"],
+    "contract_words": ["계약", "수주", "선정", "낙찰"],
+    "financing_words": ["전환사채", "전환가액", "전환가격", "조기상환", "사채", "교환사채", "신주인수권", "유상증자", "감자", "차입", "담보제공"],
+    "general_words": ["분기보고서", "잠정실적", "영업(잠정)", "매출액또는손익구조", "공급계약", "단일판매", "타법인주식", "주요사항", "주요경영사항"]
+  },
+  "sources": {
+    "notices": "https://stock.naver.com/api/domestic/detail/notice?itemCode=475580&page=1&pageSize=15",
+    "quarter": "https://m.stock.naver.com/api/stock/475580/finance/quarter",
+    "trend": "https://m.stock.naver.com/api/stock/475580/trend?pageSize=30",
+    "wisereport": "https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd=475580"
+  },
+  "data_policy": "3분기 숫자는 WiseReport 연결 분기 열이 확정(2026/09, 추정 아님)이면 거기서, 영업이익은 Naver 분기 확정 열로도 교차 확인한다. 매출총이익이나 현금성자산을 못 읽으면 판정을 보내지 않고 cwally-ops로만 숫자 미확인 안내를 하루 1회 보낸다. 조회 실패는 매매 신호로 보내지 않는다.",
+  "ends_kst": "2027-03-31 09:00",
+  "ends_note": "평일 09:00 점검. 2027-03 사업보고서 확인 뒤 연장 여부 검토, 이후 자동 침묵"
 }
