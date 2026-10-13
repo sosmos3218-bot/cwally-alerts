@@ -1,1 +1,13 @@
-$(cat /tmp/cwally-alerts/configs/truen417790.json)
+{
+  "name": "truen417790",
+  "title_prefix": "[TRUEN]",
+  "ticker": "417790",
+  "display": "\ud2b8\ub8e8\uc5d4",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "oneshot_kst": [],
+  "explain": "\ud2b8\ub8e8\uc5d4(417790) \uc8fc\uae30\uc801 \uc810\uac80 \uc54c\ub9bc. 3\ubd84\uae30 \uc2e4\uc801 \ubc1c\ud45c \ud6c4 \ud574\uc678 \ub9e4\ucd9c\u00b7IoT \ube44\uc911 \ubcc0\ud654, \uc790\uc0ac\uc8fc \uc18c\uac01\u00b7\ubc30\ub2f9 \uc815\ucc45 \uc5c5\ub370\uc774\ud2b8, \uc21c\ud604\uae08 \ud65c\uc6a9 \uc2dc\ub098\ub9ac\uc624\ub97c \uc694\uc57d.",
+  "ends_kst": null,
+  "ends_note": "3\ubd84\uae30 \uc2e4\uc801 \ubc0f \ud574\uc678\u00b7\ud658\uc6d0 \uc815\ucc45 \ubaa8\ub2c8\ud130\ub9c1 \uc9c0\uc18d"
+}
