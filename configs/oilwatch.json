@@ -1,0 +1,35 @@
+{
+  "name": "oilwatch",
+  "title_prefix": "[OIL]",
+  "display": "브렌트, 정제마진 추정치, 원/달러 경계 감시",
+  "as_of": "2026-10-13",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 슬롯에만 붙임. 브렌트는 직전 미국 거래일 종가, 정제마진은 페트로넷 최근 5거래일 평균, 환율은 네이버 FX_USDKRW 최근 종가.",
+  "valid_until": "2027-04-13",
+  "alert_policy": "state_change_only",
+  "first_run": "baseline_only",
+  "brent": {"high": 120.0, "high_rearm": 115.0, "low": 85.0, "low_rearm": 88.0},
+  "usdkrw": {"low": 1300.0, "low_rearm": 1310.0, "port_rule_note": "[PORT]의 1,340 이하 2일 연속 규칙과 별개다. 이 알림은 1,300 미만만 본다."},
+  "margin": {
+    "low": 15.0,
+    "low_rearm": 18.0,
+    "window_days": 5,
+    "weights": {"gasoline": 0.25, "kerosene": 0.15, "diesel": 0.35, "dubai": 0.75},
+    "offset": 5.4,
+    "method_note": "공식 싱가포르 복합정제마진은 무료 공개 출처가 없다. 페트로넷(한국석유공사, 오피넷 운영기관) 메인 차트의 싱가포르 FOB 휘발유/등유/경유와 두바이유로 0.25G+0.15K+0.35D-0.75Dubai를 만들고 5.4달러를 뺀 추정치다. 2026-09 3~5주 하나증권 주간 수치(30.9/32.1/37.4)와 비교해 오차 약 1달러 이내로 맞춘 값. 추정치이므로 경계 근처에서는 증권사 주간 수치로 다시 확인할 것."
+  },
+  "sources": {
+    "brent": "https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?interval=1d&range=10d",
+    "petronet": "https://www.petronet.co.kr/v4/main.jsp",
+    "usdkrw": "https://api.stock.naver.com/marketindex/exchange/FX_USDKRW/prices?page=1&pageSize=2"
+  },
+  "not_auto": [
+    "공식 복합정제마진(하나증권 등 주간 집계)은 자동으로 가져오지 않는다. 이 알림의 정제마진은 추정치다",
+    "S-Oil 실적은 [SOILQ3]가 따로 본다",
+    "이 알림은 매매 지시가 아니라 시나리오 경계 도달 알림이다"
+  ],
+  "ends_kst": "2027-04-13 09:00",
+  "ends_note": "평일 09:00 유가/정제마진/환율 경계 점검, 6개월 뒤 자동 종료"
+}

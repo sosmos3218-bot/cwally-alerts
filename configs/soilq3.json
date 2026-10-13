@@ -1,0 +1,29 @@
+{
+  "name": "soilq3",
+  "title_prefix": "[SOILQ3]",
+  "ticker": "010950",
+  "display": "S-Oil 2026년 3분기 잠정실적",
+  "as_of": "2026-10-13",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 슬롯에 붙임. 발표일이 공시로 확정되지 않아(investing.com 예정일 10/22) 원샷 대신 창 기간 매일 공시를 본다. S-Oil 잠정실적 공시는 보통 당일 06:50 전후에 올라와 09:00 실행이 같은 날 잡는다.",
+  "window_start": "2026-10-14",
+  "valid_until": "2026-11-14",
+  "alert_policy": "state_change_only",
+  "quarter_start": "2026-07-01",
+  "consensus_key": "202609",
+  "grade_band_pct": 10.0,
+  "expected_date_note": "investing.com 예정일 2026-10-22, 회사 공시로는 미확인(2026-10-13 기준)",
+  "sources": {
+    "notice": "https://stock.naver.com/api/domestic/detail/notice?itemCode=010950&pageSize=30",
+    "consensus": "https://m.stock.naver.com/api/stock/010950/finance/quarter"
+  },
+  "not_auto": [
+    "컨퍼런스콜의 4분기 가이던스와 정제마진 코멘트는 자동 판정하지 않는다",
+    "재고평가손익 규모는 자동 분리하지 않는다. 영업이익 비교는 보고 수치 그대로다",
+    "이 알림은 매매 지시가 아니다"
+  ],
+  "ends_kst": "2026-11-14 09:00",
+  "ends_note": "S-Oil 3분기 실적 창, 실적 알림 후에도 이 날까지 IR 공시만 추가로 봄"
+}
