@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-10-09 15:41 KST",
-  "last_sent_date": "2026-10-09",
+  "updated_at": "2026-10-13 15:41 KST",
+  "last_sent_date": "2026-10-13",
   "last_zone": "ACCEL",
   "last_status": "sent",
-  "price": 6970.0,
-  "premium": 0.19,
+  "price": 6550.0,
+  "premium": 0.45,
   "flags": [
     "ACCEL"
   ]

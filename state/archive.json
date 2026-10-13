@@ -1,6 +1,19 @@
 {
-  "updated_at": "2026-10-13 15:20 KST",
+  "updated_at": "2026-10-13 15:41 KST",
   "items": [
+    {
+      "id": "lg4iEZ8ZKwma",
+      "topic": "cwally-port",
+      "title": "[KOSPI] 폐기 | 종가 6,400 하회",
+      "message": "8단계 경로 전체 폐기. 하방이 주 시나리오. 8200/9385/12000 목표 취소. 오늘 종가 6035.35.",
+      "priority": 5,
+      "tags": [
+        "x",
+        "no_entry",
+        "chart_with_downwards_trend"
+      ],
+      "time": 1791873641
+    },
     {
       "id": "DdKMiqaTsvBR",
       "topic": "cwally-ops",
