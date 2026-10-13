@@ -9,6 +9,7 @@ on:
     - cron: "0 0 * * 1-5"   # morning 09:00 KST
     - cron: "20 6 * * 1-5"  # afternoon 15:20 KST
     - cron: "0 12 * * 0"    # portlight Sunday 21:00 KST
+    - cron: "0 0 14 10 *"   # MANH oneshot backup 2026-10-14 09:00 KST
   workflow_dispatch:
     inputs:
       job:
@@ -50,6 +51,9 @@ jobs:
           JOB="${{ github.event.inputs.job || 'afternoon' }}"
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
           echo "square_mode=${{ github.event.inputs.square_mode || 'auto' }}" >> "$GITHUB_OUTPUT"
+          if [ "$JOB" = "oneshot" ]; then
+            python scripts/oneshot_pick.py pick --out /tmp/oneshot_plan.json || echo "skip"
+          fi
       - name: Slot guard afternoon
         if: steps.decide.outputs.job == 'afternoon' || steps.decide.outputs.job == 'all'
         id: guard_afternoon
@@ -82,12 +86,23 @@ jobs:
         run: |
           python scripts/slot_guard.py mark morning
           python scripts/kosown_monitor.py
+      - name: Run oneshot
+        if: steps.decide.outputs.job == 'oneshot'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          if [ -f /tmp/oneshot_plan.json ]; then
+            python scripts/oneshot_pick.py run /tmp/oneshot_plan.json
+          else
+            echo "no oneshot due"
+          fi
       - name: Persist state
         if: always()
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/afternoon.json state/slots/morning.json state/square.json state/kosown.json || true
+          git add state/slots/afternoon.json state/slots/morning.json state/slots/oneshot.json state/square.json state/kosown.json || true
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update state" || true
           git pull --rebase origin main || true
