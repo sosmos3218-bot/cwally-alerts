@@ -1,0 +1,1 @@
+$(cat /tmp/cwally-alerts/scripts/truen417790_monitor.py)
