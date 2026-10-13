@@ -3,7 +3,7 @@
 
 Based on 2026-10-13 analysis: long-term dividend + relative value.
 Entry: discount >= 30%, Exit: <= 18%, Hold: 25-29%.
-Uses existing morning slot. No new cron.
+Uses existing morning slot + oneshot around Oct 29. No new cron.
 """
 from __future__ import annotations
 
@@ -40,11 +40,11 @@ def get_price(code: str) -> float | None:
         pass
     return None
 
-def run() -> int:
+def run(force: bool = False) -> int:
     cfg = load_json(CFG_PATH)
     state = load_json(STATE_PATH)
     now = datetime.now(KST)
-    if now.weekday() >= 5:  # weekend
+    if now.weekday() >= 5 and not force:  # weekend, unless oneshot
         return 0
     pref = get_price(cfg["ticker"])
     common = get_price(cfg["ticker_common"])
@@ -65,17 +65,17 @@ def run() -> int:
             events.append(f"괴리율 {discount:.1f}%로 청산 구간(18%이하) 도달")
     else:
         action = "유지"
-    # Weekly summary on Monday
+    # Weekly summary on Monday or force (oneshot)
     iso_week = now.isocalendar()
     week_key = f"{iso_week[0]}-W{iso_week[1]:02d}"
-    weekly_due = now.weekday() == 0 and state.get("last_weekly") != week_key
+    weekly_due = (now.weekday() == 0 and state.get("last_weekly") != week_key) or force
     if not events and not weekly_due:
         state.update({"last_discount": discount, "last_pref": pref, "last_common": common, "updated": now.isoformat()})
         save_state(state)
         return 0
-    title = f"{cfg['title_prefix']} 괴리율 {discount:.1f}% | {action}"
+    title = f"{cfg['title_prefix']} 괴리율 {discount:.1f}% | {action}" + (" (공시 원샷)" if force else "")
     lines = [
-        f"이게 뭐 알림: 삼성전자우 005935 괴리율 점검. 배당/장기 보유 + 상대가치 관점.",
+        f"이게 뭐 알림: 삼성전자우 005935 괴리율 점검. 배당/장기 보유 + 상대가치 관점." + (" 10/29 공시 전후 원샷." if force else ""),
         f"지금 결과/상태: 우선주 {pref:,.0f}원, 보통주 {common:,.0f}원, 괴리율 {discount:.1f}%",
         f"현재 구간: 진입 30%이상 / 유지 25-29% / 청산 18%이하. 현재 판단: {action}",
         "지금 할 일: " + ("비중 확대 검토" if action == "확대 검토" else "비중 축소 검토" if action == "축소 검토" else "기존 비중 유지, 공시 확인"),
@@ -102,4 +102,5 @@ def run() -> int:
     return 0
 
 if __name__ == "__main__":
-    raise SystemExit(run())
+    force = len(sys.argv) > 1  # oneshot passes arg
+    raise SystemExit(run(force=force))
