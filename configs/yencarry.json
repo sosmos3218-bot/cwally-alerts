@@ -7,21 +7,41 @@
   "fed_schedule_kst": "03:45",
   "boj_send_after_kst": "12:00",
   "boj_press_kst": "16:15",
-  "oneshot_kst": ["2026-09-17 03:45", "2026-09-18 16:15", "2026-10-30 16:15", "2026-12-18 16:15"],
-  "oneshot_args": {"2026-09-17 03:45": "fed", "2026-09-18 16:15": "boj_press", "2026-10-30 16:15": "boj_press", "2026-12-18 16:15": "boj_press"},
+  "oneshot_kst": [
+    "2026-09-17 03:45",
+    "2026-09-18 16:15",
+    "2026-10-30 16:15",
+    "2026-12-18 16:15"
+  ],
+  "oneshot_args": {
+    "2026-09-17 03:45": "fed",
+    "2026-09-18 16:15": "boj_press",
+    "2026-10-30 16:15": "boj_press",
+    "2026-12-18 16:15": "boj_press"
+  },
   "period": "weekly",
   "once": false,
-  "as_of": "2026-09-16",
+  "as_of": "2026-10-13",
   "levels": {
     "usdjpy_low": 152,
     "usdjpy_high": 160,
     "usdkrw_low": 1340,
     "usdkrw_high": 1400,
     "jgb30_warn": 4.3,
-    "jgb30_danger": 4.5
+    "jgb30_danger": 4.5,
+    "usdjpy_watch": 158,
+    "jgb30_watch": 4.25
   },
-  "fomc_dates": ["2026-09-16", "2026-10-28", "2026-12-09"],
-  "boj_dates": ["2026-09-18", "2026-10-30", "2026-12-18"],
+  "fomc_dates": [
+    "2026-09-16",
+    "2026-10-28",
+    "2026-12-09"
+  ],
+  "boj_dates": [
+    "2026-09-18",
+    "2026-10-30",
+    "2026-12-18"
+  ],
   "boj_force": true,
   "boj_press_force": true,
   "ends_kst": null,
