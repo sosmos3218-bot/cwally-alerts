@@ -61,3 +61,10 @@ Title format: `[NAME] 한 줄 행동`
 Example: `[HCE] 아직 결과 없음 | 추가매수 보류`
 
 Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
+## Workflow file edit rules
+
+- Never rewrite a whole `.github/workflows/*.yml` file. Change only the lines you need (minimal diff), starting from the current main content.
+- Never commit placeholder text such as "truncated for brevity" or "rest unchanged". `.github/workflows/workflow-lint.yml` fails on it, on a missing `jobs:`/`on:`, on a >20% line-count drop (override only with `[allow-shrink]` in the commit message), and on actionlint syntax errors.
+- Exception (approved in chat 2026-10-13): `workflow-lint.yml` is allowed as an extra workflow file. It runs on push/PR only, has no schedule, and is read-only. This does not allow any other new workflow file.
+- Before committing a workflow edit, fetch the current file, apply the edit, and check that the line count did not shrink unexpectedly. After committing, confirm the push-triggered run is not a Failure.
+- If a workflow file is found broken, restore it from the last good commit first, then re-apply the intended change as a minimal diff.
