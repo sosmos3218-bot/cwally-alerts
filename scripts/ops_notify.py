@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Post a workflow-failure notice to cwally-ops (never cwally-port).
 
-usage: python scripts/ops_notify.py "<workflow>" "<job/slot>"
+usage: python scripts/ops_notify.py "<workflow>" "<job/slot>" ["lint"]
 Reads GITHUB_SERVER_URL / GITHUB_REPOSITORY / GITHUB_RUN_ID for the run link.
 """
 from __future__ import annotations
@@ -19,12 +19,26 @@ KST = timezone(timedelta(hours=9))
 def main() -> int:
     wf = sys.argv[1] if len(sys.argv) > 1 else "workflow"
     job = sys.argv[2] if len(sys.argv) > 2 else "?"
+    kind = sys.argv[3] if len(sys.argv) > 3 else ""
     url = "{}/{}/actions/runs/{}".format(
         os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
         os.environ.get("GITHUB_REPOSITORY", "sosmos3218-bot/cwally-alerts"),
         os.environ.get("GITHUB_RUN_ID", ""),
     )
     now = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
+    if kind == "lint":
+        msg = "\n".join([
+            f"{now} | OPS | {wf} / {job}",
+            "이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.",
+            "지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.",
+            f"지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. {url}",
+        ])
+        title = f"[OPS] 워크플로 검사 실패 | {wf} {job}"
+        try:
+            publish("cwally-ops", title, msg, priority=4, tags=["warning"])
+        except Exception as exc:  # never fail the job because the notice failed
+            print(f"ops notify failed: {exc}", file=sys.stderr)
+        return 0
     msg = "\n".join([
         f"{now} | OPS | {wf} / {job}",
         "이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.",
