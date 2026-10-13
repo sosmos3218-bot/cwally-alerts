@@ -187,6 +187,8 @@ def breaks(cfg: dict, usdjpy: float | None, usdkrw: float | None, j30: float | N
         out.append(f"달러/엔 {fmt(usdjpy)} → 152 이탈")
     if usdjpy is not None and usdjpy >= lv["usdjpy_high"]:
         out.append(f"달러/엔 {fmt(usdjpy)} → 160 돌파")
+    elif usdjpy is not None and usdjpy >= lv.get("usdjpy_watch", 158):
+        out.append(f"달러/엔 {fmt(usdjpy)} → 158 돌파")
     if usdkrw is not None and usdkrw <= lv["usdkrw_low"]:
         out.append(f"원달러 {fmt(usdkrw, 0)}원 → 1,340 이탈")
     if usdkrw is not None and usdkrw >= lv["usdkrw_high"]:
@@ -195,6 +197,8 @@ def breaks(cfg: dict, usdjpy: float | None, usdkrw: float | None, j30: float | N
         out.append(f"일본 30년 {fmt(j30, 2)}% → 4.5 돌파")
     elif j30 is not None and j30 >= lv["jgb30_warn"]:
         out.append(f"일본 30년 {fmt(j30, 2)}% → 4.3 돌파")
+    elif j30 is not None and j30 >= lv.get("jgb30_watch", 4.25):
+        out.append(f"일본 30년 {fmt(j30, 2)}% → 4.25 돌파")
     return out
 
 
@@ -211,6 +215,10 @@ def action_line(keys: list[str]) -> str:
         bits.append("달러 보유 줄이기")
     if "1,400 돌파" in blob:
         bits.append("달러 일부 사기")
+    if "158 돌파" in blob:
+        bits.append("엔 약세 경계 구간, 160 근처 개입 위험. 엔 추격 금지")
+    if "4.25 돌파" in blob:
+        bits.append("일본 초장기 사상 최고권. 확인만, 미국 초장기 판단은 4.3 알림 때")
     if "4.5 돌파" in blob:
         bits.append("미국 초장기 추가 축소")
     elif "4.3 돌파" in blob:
