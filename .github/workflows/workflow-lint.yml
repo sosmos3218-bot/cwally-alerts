@@ -1,0 +1,64 @@
+name: workflow-lint
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Guard against truncated or placeholder workflows
+        run: |
+          set -u
+          fail=0
+          for f in .github/workflows/*.yml; do
+            if grep -Eiq 'truncated for brevity|rest of (the )?(file|workflow)|unchanged\)|full content from /tmp' "$f"; then
+              echo "::error file=$f::placeholder or truncation text found"
+              fail=1
+            fi
+            if ! grep -Eq '^jobs:' "$f"; then
+              echo "::error file=$f::top-level jobs: is missing"
+              fail=1
+            fi
+            if ! grep -Eq '^on:' "$f"; then
+              echo "::error file=$f::top-level on: is missing"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Guard against large shrink of a workflow file
+        run: |
+          set -u
+          if git log -1 --format=%B | grep -q '\[allow-shrink\]'; then
+            echo "allow-shrink requested in commit message"
+            exit 0
+          fi
+          fail=0
+          for f in $(git diff --name-only HEAD~1 HEAD -- .github/workflows 2>/dev/null); do
+            [ -f "$f" ] || continue
+            old=$(git show "HEAD~1:$f" 2>/dev/null | wc -l)
+            new=$(wc -l < "$f")
+            if [ "$old" -ge 50 ] && [ $((new * 100)) -lt $((old * 80)) ]; then
+              echo "::error file=$f::line count dropped from $old to $new (>20%). Restore the file and apply a minimal diff, or add [allow-shrink] to the commit message."
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: actionlint (syntax and expressions)
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
+          ./actionlint -color -shellcheck= -pyflakes=
