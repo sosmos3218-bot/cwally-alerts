@@ -24,7 +24,7 @@ jobs:
           set -u
           fail=0
           for f in .github/workflows/*.yml; do
-            if grep -Eiq 'truncated for brevity|rest of (the )?(file|workflow)|unchanged\)|full content from /tmp' "$f"; then
+            if grep -Eiq 'truncated for brevit[y]|rest of (the )?(file|workflow)|unchanged\)|full content from /tm[p]' "$f"; then
               echo "::error file=$f::placeholder or truncation text found"
               fail=1
             fi
