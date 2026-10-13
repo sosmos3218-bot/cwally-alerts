@@ -1,190 +1,447 @@
 #!/usr/bin/env python3
+"""Alux (475580) watch: Q3 verdict, coastal recon order, CB and financing notices, 7,600 close breakout.
+
+Runs inside the weekday morning slot (no new cron). Modes:
+  event   change-only (weekdays except Monday)
+  weekly  event checks plus one status message (Monday)
+  dry     print what would be sent, never publish, never write state
+Anything else is treated like event.
+"""
 from __future__ import annotations
-import json, re, sys, urllib.parse, urllib.request
-from datetime import datetime, timezone, timedelta
-from html import unescape
+
+import json
+import re
+import sys
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import route_topic  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import naver_api  # noqa: E402
+import ntfy_util  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
+CFG_PATH = ROOT / "configs" / "alux.json"
 STATE_PATH = ROOT / "state" / "alux_seen.json"
-ZONE_KO = {
-    "BUY1": "1차 매수 (6,900~7,200원)",
-    "BUY2": "2차 매수 (6,200~6,600원)",
-    "BUY3": "3차 매수 (5,400~5,800원)",
-    "STOP": "손절 (종가 5,000원 이탈)",
-    "TP1A": "1차 익절 (8,800~9,200원)",
-    "TP1B": "2차 익절 (9,800~10,500원)",
-    "NO_CHASE": "8,000원 위. 추격 금지",
-    "BELOW_BUY3": "3차 아래. 물타기 금지",
-    "WAIT": "매수·익절 사이. 대기",
-    "DATA_FAIL": "시세 조회 실패",
-}
-DO_NOW = {
-    "BUY1": "매수금의 40%만 사세요.",
-    "BUY2": "35%를 더 사세요.",
-    "BUY3": "남은 25%만 사세요. 5,000원 아래에서 물타기 금지.",
-    "STOP": "종가 5,000원을 껈으면 전량 팔세요.",
-    "TP1A": "보유의 30%를 팔아 익절하세요.",
-    "TP1B": "보유의 40%를 더 팔세요.",
-    "NO_CHASE": "지금 따라잡지 마세요. 가격이 내려오기를 기다리세요.",
-    "BELOW_BUY3": "새로 사지 말고, 5,000원 손절선만 지키세요.",
-    "WAIT": "새 주문 없이 들고 계세요.",
-    "DATA_FAIL": "시세를 다시 확인하세요.",
-}
-TITLE_BY_ZONE = {
-    "STOP": "손절 5,000 이탈",
-    "BUY3": "3차 25%만",
-    "BUY2": "2차 35% 추가",
-    "BUY1": "1차 40%만",
-    "TP1A": "30% 익절",
-    "TP1B": "40% 익절",
-    "NO_CHASE": "8,000 위 추격 금지",
-    "BELOW_BUY3": "물타기 금지",
-    "WAIT": "대기 유지",
-    "DATA_FAIL": "시세 확인",
-}
+UA = {"User-Agent": "Mozilla/5.0 (cwally-alerts; +mailto:sosmos3218@gmail.com)"}
+WR_BASE = "https://navercomp.wisereport.co.kr/v2/company/"
+TOPIC = "cwally-port"
+OPS = "cwally-ops"
 
 
-def zone(price, b):
-    if price is None:
-        return "DATA_FAIL"
-    if price <= b["stop_close"]:
-        return "STOP"
-    lo3, hi3 = b["buy3"]
-    lo2, hi2 = b["buy2"]
-    lo1, hi1 = b["buy1"]
-    loa, hia = b["tp1a"]
-    lob, hib = b["tp1b"]
-    if lo3 <= price <= hi3:
-        return "BUY3"
-    if lo2 <= price <= hi2:
-        return "BUY2"
-    if lo1 <= price <= hi1:
-        return "BUY1"
-    if lob <= price <= hib or price > hib:
-        return "TP1B"
-    if loa <= price <= hia:
-        return "TP1A"
-    if price >= b["no_chase"]:
-        return "NO_CHASE"
-    if price < lo3:
-        return "BELOW_BUY3"
-    return "WAIT"
-
-
-def yahoo_price(ticker):
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/" + urllib.parse.quote(ticker) + "?interval=1d&range=5d"
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 cwally-alerts"})
+# ---------------------------------------------------------------- helpers
+def load_json(path: Path, default):
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            payload = json.loads(resp.read().decode())
-        meta = payload["chart"]["result"][0].get("meta", {})
-        price = meta.get("regularMarketPrice") or meta.get("previousClose")
-        return float(price) if price is not None else None
-    except Exception as exc:
-        print(exc, file=sys.stderr)
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
+
+
+def fmt_won(x) -> str:
+    return "없음" if x is None else f"{x:,.0f}원"
+
+
+def fmt_eok(x, digits: int = 1) -> str:
+    return "없음" if x is None else f"{x:,.{digits}f}억"
+
+
+def body_lines(now: str, what: str, status: str, todo: str, later: str, reduce: str, avoid: str) -> str:
+    # ntfy copy style order. The end line is appended by ntfy_util.publish().
+    return "\n".join(
+        [
+            f"{now} | ALUX | 에이럭스 475580",
+            f"이게 뭐 알림: {what}",
+            f"지금 결과: {status}",
+            f"지금 할 일: {todo}",
+            f"나중에: {later}",
+            f"줄일 때: {reduce}",
+            f"하지 말 것: {avoid}",
+        ]
+    )
+
+
+# ---------------------------------------------------------------- price
+def completed_closes(code: str, now: datetime, size: int = 30) -> list[dict]:
+    """Newest first. Today's row counts only after 15:40 KST."""
+    rows = [r for r in naver_api.stock_trend(code, size) if r.get("day") and r.get("close") is not None]
+    rows.sort(key=lambda r: r["day"], reverse=True)
+    today = now.strftime("%Y%m%d")
+    after_close = now.hour * 60 + now.minute >= 15 * 60 + 40
+    return [r for r in rows if r["day"] < today or (r["day"] == today and after_close)]
+
+
+def volume_ratio(rows: list[dict]) -> float | None:
+    if len(rows) < 6 or not rows[0].get("volume"):
+        return None
+    prev = [r["volume"] for r in rows[1:21] if r.get("volume")]
+    if len(prev) < 5:
+        return None
+    avg = sum(prev) / len(prev)
+    return rows[0]["volume"] / avg if avg else None
+
+
+# ---------------------------------------------------------------- Q3 numbers
+def _http_text(url: str, referer: str | None = None) -> str:
+    headers = dict(UA)
+    if referer:
+        headers["Referer"] = referer
+        headers["X-Requested-With"] = "XMLHttpRequest"
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        return resp.read().decode("utf-8", errors="ignore")
+
+
+def _cell(row: dict, idx: int):
+    v = row.get(f"DATA{idx + 1}")
+    if v is None or v == "":
+        return None
+    try:
+        return float(str(v).replace(",", ""))
+    except ValueError:
         return None
 
 
-def fetch_notices(code):
-    """Exchange/DART notices via stock.naver.com API (legacy news_notice page is 410)."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import naver_api
-
-    try:
-        items = naver_api.notices(code, 15)
-    except Exception as exc:
-        print(exc, file=sys.stderr)
-        return []
-    return [{"id": it["id"], "title": it["title"], "url": it["url"]} for it in items if it["title"]][:15]
+def _clean_name(name: str) -> str:
+    return re.sub(r"^[\s.*]+", "", str(name or "")).strip()
 
 
-def ntfy_publish(server, topic, title, message, priority, tags):
-    payload = json.dumps({"topic": route_topic(topic, title), "title": title, "message": message, "priority": priority, "tags": tags.split(",")}).encode()
-    req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
+def wisereport_quarter(code: str, period: str) -> dict | None:
+    """Confirmed (non-estimate) consolidated quarter column, in eok won. None if that column is not posted yet."""
+    page = f"{WR_BASE}c1010001.aspx?cmp_cd={code}"
+    html = _http_text(page)
+    m = re.search(r"encparam\s*:\s*'([^']+)'", html)
+    if not m:
+        raise RuntimeError("wisereport encparam not found")
+    enc = m.group(1)
+    out: dict = {}
+    for rpt in (0, 1):  # 0 income statement, 1 balance sheet
+        url = f"{WR_BASE}cF3002.aspx?cmp_cd={code}&frq=1&rpt={rpt}&finGubun=MAIN&frqTyp=1&cn=&encparam={enc}"
+        data = json.loads(_http_text(url, referer=page))
+        idx = None
+        for i, head in enumerate(data.get("YYMM") or []):
+            first = re.split(r"<br", str(head), flags=re.I)[0].strip()
+            if first.replace("(E)", "") == period and "(E)" not in first:
+                idx = i
+                break
+        if idx is None:
+            return None
+        rows = {}
+        for r in data.get("DATA") or []:
+            rows.setdefault(_clean_name(r.get("ACC_NM")), r)
+        if rpt == 0:
+            rev_row = next((r for n, r in rows.items() if n.startswith("매출액")), None)
+            out["rev"] = _cell(rev_row, idx) if rev_row else None
+            out["gross"] = _cell(rows["매출총이익"], idx) if "매출총이익" in rows else None
+            out["op"] = _cell(rows["영업이익"], idx) if "영업이익" in rows else None
+        else:
+            out["cash"] = _cell(rows["현금및현금성자산"], idx) if "현금및현금성자산" in rows else None
+            out["short_fin"] = _cell(rows["단기금융자산"], idx) if "단기금융자산" in rows else None
+            out["fvpl"] = _cell(rows["당기손익-공정가치측정금융자산"], idx) if "당기손익-공정가치측정금융자산" in rows else None
+    return out if out.get("rev") is not None else None
 
 
-def build_body(now, px, z, hot, zone_changed, prev_z, q_window):
-    lines = [
-        f"{now} | ALUX | 에이럭스 475580",
-        "이게 뭐 알림: 에이럭스 매매 가이드입니다. 군드론 납기·실적·증자를 보고 살지 말지 결정합니다.",
-        f"지금 상태: {px}원 | {ZONE_KO.get(z, z)}" + (f" (이전 {ZONE_KO.get(prev_z, prev_z)})" if zone_changed and prev_z else ""),
-        f"지금 할 일: {DO_NOW.get(z, '대기하세요.')}",
-        "나중에: 2차 6,200~6,600 / 3차 5,400~5,800에서만 더 삽니다. 실적 발표 직전에는 새로 사지 마세요.",
-        "익절: 8,800~9,200원에서 30%, 9,800~10,500원에서 40%. 타깃 9,500원.",
-        "줄일 때: 종가 5,000원 이탈 전량. 적자 다시 늘어나거나 유증/전환사채면 비중 축소. 계약 취소면 폐기.",
-        "하지 말 것: 8,000원 위 추격매수, 신용/미수, 5,000원 아래 물타기.",
-    ]
-    if q_window:
-        lines.append("이번 국면: 3분기 실적창(10/1~11/20). 발표 직전 추격 금지.")
-    if hot:
-        lines.append("")
-        lines.append("새 공시:")
-        for n in hot[:5]:
-            lines.append(f"- {n['title']}")
-            lines.append(f"  {n['url']}")
-    return lines
+def naver_quarter(code: str, key: str) -> dict | None:
+    raw = naver_api.get_json(f"https://m.stock.naver.com/api/stock/{code}/finance/quarter")
+    info = (raw or {}).get("financeInfo") or {}
+    titles = {t.get("key"): t for t in info.get("trTitleList") or []}
+    t = titles.get(key)
+    if not t or t.get("isConsensus") != "N":
+        return None
+    vals = {}
+    for r in info.get("rowList") or []:
+        vals[r.get("title")] = ((r.get("columns") or {}).get(key) or {}).get("value")
+    rev, op = naver_api.num(vals.get("매출액")), naver_api.num(vals.get("영업이익"))
+    return {"rev": rev, "op": op} if rev is not None else None
 
 
-def main():
-    mode = (sys.argv[1] if len(sys.argv) > 1 else "event").lower()
-    cfg = json.loads((ROOT / "configs" / "alux.json").read_text(encoding="utf-8"))
-    topic = "cwally-port"
-    server = "https://ntfy.sh"
-    now_dt = datetime.now(KST)
-    now = now_dt.strftime("%Y-%m-%d %H:%M KST")
-    price = yahoo_price(cfg["ticker"])
-    z = zone(price, cfg["bands"])
-    notices = fetch_notices(cfg["code"])
-    prev = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {"seen_notices": [], "zone": None}
-    seen = list(prev.get("seen_notices") or [])
-    if notices and all(str(s).startswith("http") for s in seen):
-        # 2026-10 migration: legacy ids were finance.naver URLs; seed silently instead of re-sending old notices
-        seen = [n["id"] for n in notices]
-    new = [n for n in notices if n["id"] not in set(seen)]
-    hot = [n for n in new if any(k.lower() in n["title"].lower() for k in cfg["keywords"])]
-    for n in reversed(new):
-        seen.append(n["id"])
-    STATE_PATH.write_text(
-        json.dumps({"updated_at": now, "zone": z if z != "DATA_FAIL" else prev.get("zone"), "price": price, "seen_notices": seen[-80:]}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    px = f"{price:,.0f}" if price is not None else "없음"
-    prev_z = prev.get("zone")
-    zone_changed = bool(prev_z) and z not in {prev_z, "DATA_FAIL"}
-    q_window = now_dt.month == 10 or (now_dt.month == 11 and now_dt.day <= 20)
-    should = False
-    pri = 3
-    tags = "chart_with_upwards_trend"
-    title = f"[ALUX] {TITLE_BY_ZONE.get(z, z)}"
-    if mode == "weekly":
-        should = True
-        title = f"[ALUX] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
-    elif mode == "event":
-        if hot:
-            should = True
-            title = f"[ALUX] 새 공시 | {TITLE_BY_ZONE.get(z, z)}"
-            pri = 5
-            tags = "warning,memo"
-        if zone_changed:
-            should = True
-            title = f"[ALUX] 구간 변화 | {TITLE_BY_ZONE.get(z, z)}"
-            pri = 5 if z in {"STOP", "BUY3", "TP1A", "TP1B"} else 4
-        if not should:
-            print("no alux event; silent")
-            return 0
+def judge_q3(q: dict, nums: dict) -> dict:
+    gpm = (nums["gross"] / nums["rev"] * 100.0) if nums.get("gross") is not None and nums.get("rev") else None
+    op = nums.get("op")
+    cash = None
+    if nums.get("cash") is not None:
+        cash = nums["cash"] + (nums.get("short_fin") or 0.0) + (nums.get("fvpl") or 0.0)
+    ok_g = None if gpm is None else gpm >= q["gpm_min"]
+    ok_o = None if op is None else op >= q["op_min_eok"]
+    ok_c = None if cash is None else cash >= q["cash_min_eok"]
+    drop = (op is not None and op < q["op_drop_eok"]) or (cash is not None and cash < q["cash_min_eok"])
+    known = [ok_g, ok_o, ok_c]
+    if drop:
+        verdict = "DROP"
+    elif None in known:
+        verdict = "MISSING"
+    elif all(known):
+        verdict = "UP"
     else:
-        should = True
-        title = f"[ALUX] {mode} | {TITLE_BY_ZONE.get(z, z)}"
-    lines = build_body(now, px, z, hot, zone_changed, prev_z, q_window)
-    msg = "\n".join(lines)
-    print(msg)
-    if should:
-        ntfy_publish(server, topic, title, msg, pri, tags)
+        verdict = "HOLD"
+    return {"verdict": verdict, "gpm": gpm, "op": op, "cash": cash, "ok": [ok_g, ok_o, ok_c], "rev": nums.get("rev")}
+
+
+def mark(ok) -> str:
+    return "확인 못 함" if ok is None else ("충족" if ok else "미달")
+
+
+def q3_message(q: dict, j: dict, close: float | None, now_s: str) -> tuple[str, str, int, str]:
+    gpm_txt = "없음" if j["gpm"] is None else "%.1f%%" % j["gpm"]
+    status = (
+        f"3분기 매출 {fmt_eok(j['rev'])}. "
+        f"매출총이익률 {gpm_txt} (기준 {q['gpm_min']:.0f}% 이상, {mark(j['ok'][0])}). "
+        f"영업이익 {fmt_eok(j['op'])} (기준 {q['op_min_eok']:.0f}억 이상, {mark(j['ok'][1])}). "
+        f"현금성자산 {fmt_eok(j['cash'], 0)} (기준 {q['cash_min_eok']:.0f}억 이상, {mark(j['ok'][2])}). "
+        "숫자는 WiseReport/Naver 연결 값이라 회사 공시와 다르면 공시가 우선입니다."
+    )
+    cap = q["entry_price_cap"]
+    price_note = f" 지금 종가는 {fmt_won(close)}입니다." if close is not None else ""
+    what = "에이럭스 3분기 실적이 확정되어 중립 상향 기준 세 가지로 자동 판정했습니다."
+    if j["verdict"] == "UP":
+        title = "[ALUX] 3Q 중립 상향 | 계획의 50%만, 지정가"
+        todo = f"계획 금액의 50%만 {cap:,}원 이하 지정가로 사세요.{price_note} {cap:,}원 위면 사지 마세요."
+        later = "나머지 50%는 CB 해법 확정 또는 해안정찰 수주를 확인하고 종가 7,600원 돌파(거래량 2배)가 나온 뒤에만 삽니다."
+        reduce = "산 뒤 종가가 진입가 아래로 8% 빠지거나 7,000원을 이탈하면 정리합니다. 7,500~7,750원에서 절반 익절."
+        avoid = f"{cap:,}원 위 추격매수, 신용과 미수, 한 번에 전액 진입."
+        pri, tags = 4, "chart_with_upwards_trend"
+    elif j["verdict"] == "DROP":
+        title = "[ALUX] 3Q 탈락 | 검토 중단"
+        todo = "새로 사지 마세요. 영업적자 -25억 초과 또는 현금성자산 150억 미만이라 신규 진입 검토를 멈춥니다."
+        later = "다음 판단은 2027-03 사업보고서입니다. 그 전에는 CB 해법이나 큰 수주 공시가 나올 때만 다시 봅니다."
+        reduce = "이미 들고 있다면 종가 5,600원 이탈 때 정리하는 기존 기준을 지키세요."
+        avoid = "물타기, 신용과 미수, 반등 추격."
+        pri, tags = 4, "warning"
+    else:
+        title = "[ALUX] 3Q 관망 유지 | 아직 사지 마세요"
+        todo = "아직 사지 마세요. 세 기준 중 일부가 미달이지만 탈락선은 넘지 않았습니다."
+        later = "다음 판단은 2027-03 사업보고서입니다. 그 전에는 CB 해법이나 큰 수주 공시가 나올 때 다시 봅니다."
+        reduce = "이미 들고 있다면 종가 5,600원 이탈 때 정리하는 기존 기준을 지키세요."
+        avoid = "실적 일부만 보고 추격매수, 신용과 미수."
+        pri, tags = 3, "eyes"
+    return title, body_lines(now_s, what, status, todo, later, reduce, avoid), pri, tags
+
+
+# ---------------------------------------------------------------- notices
+def classify(n: dict, rules: dict) -> str | None:
+    title = n["title"]
+    if any(w in title for w in rules["title_exclude"]):
+        return None
+    text = title + " " + (n.get("text") or "")[:4000]
+    coastal_title = any(w in title for w in rules["coastal_words"])
+    coastal_body = any(w in text for w in rules["coastal_words"])
+    if coastal_title or (coastal_body and any(w in title for w in rules["contract_words"])):
+        return "ORDER"
+    if any(w in title for w in rules["financing_words"]):
+        return "FIN"
+    if any(w in title for w in rules["general_words"]):
+        return "GENERAL"
+    return None
+
+
+CLASS_KO = {"ORDER": "해안정찰/방산 수주", "FIN": "CB와 자금조달", "GENERAL": "주요 공시"}
+
+
+# ---------------------------------------------------------------- main
+class Out:
+    def __init__(self, dry: bool):
+        self.dry = dry
+        self.sent: list[str] = []
+
+    def send(self, topic: str, title: str, message: str, priority: int, tags: list[str]) -> bool:
+        if self.dry:
+            print(f"DRY RUN would send to {topic}: {title}\n{message}\n")
+            return True
+        try:
+            ntfy_util.publish(topic, title, message, priority=priority, tags=tags)
+            self.sent.append(title)
+            return True
+        except Exception as exc:  # state must not advance when the send failed
+            print(f"publish failed: {exc}", file=sys.stderr)
+            return False
+
+
+def ops_once(out: Out, state: dict, key: str, title: str, text: str, today: str) -> None:
+    sent = state.setdefault("ops_day", {})
+    if sent.get(key) == today:
+        return
+    if out.send(OPS, title, text, 3, ["warning"]):
+        sent[key] = today
+
+
+def main() -> int:
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "event").lower()
+    dry = mode == "dry"
+    cfg = load_json(CFG_PATH, {})
+    if not cfg:
+        print("config missing", file=sys.stderr)
+        return 1
+    state = load_json(STATE_PATH, {})
+    now = datetime.now(KST)
+    now_s = now.strftime("%Y-%m-%d %H:%M KST")
+    today = now.strftime("%Y-%m-%d")
+    end = cfg.get("ends_kst")
+    if end and now > datetime.strptime(end, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
+        print("alux alert ended; silent")
+        return 0
+
+    out = Out(dry)
+    code = cfg["code"]
+    q = cfg["q3"]
+    bo = cfg["breakout"]
+    rules = cfg["rules"]
+    state.setdefault("seen_notices", [])
+    state.setdefault("breakout", {"active": False})
+    state.setdefault("q3", {"done": False})
+
+    # price
+    rows: list[dict] = []
+    try:
+        rows = completed_closes(code, now)
+    except Exception as exc:
+        print(f"trend failed: {exc}", file=sys.stderr)
+    last = rows[0] if rows else None
+    close = last["close"] if last else None
+    if last is None:
+        ops_once(out, state, "price", "[ALUX] 시세 조회 실패", f"{now_s} 에이럭스 종가를 읽지 못했습니다. 돌파 판단은 건너뛰었습니다. 매매 신호가 아닙니다.", today)
+
+    # 1) Q3 verdict (once)
+    q3 = state["q3"]
+    if not q3.get("done") and today <= q["active_until"]:
+        try:
+            wr = None
+            try:
+                wr = wisereport_quarter(code, q["period"])
+            except Exception as exc:
+                print(f"wisereport failed: {exc}", file=sys.stderr)
+            nq = None
+            try:
+                nq = naver_quarter(code, q["naver_key"])
+            except Exception as exc:
+                print(f"naver quarter failed: {exc}", file=sys.stderr)
+            if wr or nq:
+                nums = dict(wr or {})
+                if nums.get("rev") is None and nq:
+                    nums["rev"] = nq["rev"]
+                if nums.get("op") is None and nq:
+                    nums["op"] = nq["op"]
+                j = judge_q3(q, nums)
+                if j["verdict"] == "MISSING":
+                    miss = [n for n, ok in zip(["매출총이익률", "영업이익", "현금성자산"], j["ok"]) if ok is None]
+                    ops_once(
+                        out, state, "q3",
+                        "[ALUX] 3Q 숫자 미확인",
+                        f"{now_s} 3분기 확정 열은 보이는데 {', '.join(miss)}을 읽지 못해 판정을 미뤘습니다. 내일 다시 시도합니다. 공시 원문을 직접 확인하세요. 매매 신호가 아닙니다.",
+                        today,
+                    )
+                else:
+                    title, msg, pri, tags = q3_message(q, j, close, now_s)
+                    if out.send(TOPIC, title, msg, pri, tags.split(",")):
+                        q3.update({"done": True, "verdict": j["verdict"], "sent_kst": now_s,
+                                   "gpm": j["gpm"], "op": j["op"], "cash": j["cash"], "rev": j["rev"]})
+        except Exception as exc:
+            print(f"q3 check failed: {exc}", file=sys.stderr)
+            ops_once(out, state, "q3err", "[ALUX] 3Q 실적 조회 실패", f"{now_s} 3분기 실적 조회 중 오류가 났습니다. 매매 신호가 아닙니다.", today)
+
+    # 2) notices: coastal order, CB and financing, other key disclosures
+    try:
+        notices = naver_api.notices(code, 15)
+    except Exception as exc:
+        notices = []
+        print(f"notices failed: {exc}", file=sys.stderr)
+        ops_once(out, state, "notice", "[ALUX] 공시 조회 실패", f"{now_s} 에이럭스 공시 목록을 읽지 못했습니다. 매매 신호가 아닙니다.", today)
+    seen = list(state["seen_notices"])
+    if notices and not seen:
+        seen = [n["id"] for n in notices]  # first run: seed silently
+        state["seen_notices"] = seen
+    new = [n for n in notices if n["id"] not in set(seen)]
+    cutoff = (now - timedelta(days=14)).strftime("%Y-%m-%d")
+    # only notices from the last 14 days can alert; older unseen ones are marked seen silently
+    hits = [(classify(n, rules), n) for n in new if str(n.get("datetime") or "")[:10] >= cutoff]
+    hits = [(c, n) for c, n in hits if c]
+    if hits:
+        order = {"ORDER": 0, "FIN": 1, "GENERAL": 2}
+        hits.sort(key=lambda x: order[x[0]])
+        top = hits[0][0]
+        lines = []
+        for c, n in hits[:6]:
+            lines.append(f"- [{CLASS_KO[c]}] {n['title']}")
+        lines.append(hits[0][1]["url"])
+        if top == "ORDER":
+            title = "[ALUX] 해안정찰/방산 수주 공시 | 원문 확인"
+            todo = "공시 원문에서 계약 금액과 기간을 먼저 확인하세요. 아직 사지 마세요."
+        elif top == "FIN":
+            title = "[ALUX] CB/자금조달 공시 | 원문 확인"
+            todo = "전환가액, 상환 조건, 유상증자 방식을 원문에서 확인하세요. 아직 사지 마세요."
+        else:
+            title = "[ALUX] 새 공시 | 원문 확인"
+            todo = "공시 원문을 확인하세요. 아직 사지 마세요."
+        msg = body_lines(
+            now_s,
+            "에이럭스 새 공시 알림입니다. 해안정찰 수주, CB와 자금조달, 주요 공시를 봅니다.",
+            "새 공시 " + str(len(hits)) + "건\n" + "\n".join(lines),
+            todo,
+            "CB 해법 확정이나 해안정찰 수주가 확인되면 중립 상향 판정과 함께 봅니다.",
+            "주식 증자나 고금리 차입으로 CB를 막는 내용이면 신규 진입 검토를 멈춥니다.",
+            "제목만 보고 판단, 신용과 미수.",
+        )
+        pri = 5 if top in {"ORDER", "FIN"} else 4
+        if out.send(TOPIC, title, msg, pri, ["warning", "memo"]):
+            for n in reversed(new):
+                if n["id"] not in seen:
+                    seen.append(n["id"])
+    else:
+        for n in reversed(new):  # nothing matched: mark as seen so it is not rechecked
+            seen.append(n["id"])
+    state["seen_notices"] = seen[-80:]
+
+    # 3) close breakout (7,600), re-arm below 7,250
+    b = state["breakout"]
+    if last is not None:
+        if close < bo["rearm_below"]:
+            b["active"] = False
+        elif close >= bo["close"] and not b.get("active"):
+            vr = volume_ratio(rows)
+            vtxt = "거래량 비교 불가" if vr is None else f"거래량 20일 평균의 {vr:.1f}배"
+            vok = vr is not None and vr >= bo["volume_x"]
+            verdict = state["q3"].get("verdict")
+            if verdict == "UP":
+                todo = "3분기 중립 상향이 확인된 상태입니다. " + ("거래량 조건도 맞으니 나머지 50% 진입을 검토하세요." if vok else "다만 거래량 2배가 아직이라 하루 이틀 더 지켜보세요.")
+            else:
+                todo = "3분기 중립 상향 판정이 없으면 사지 마세요. 가격만 오른 상태입니다."
+            msg = body_lines(
+                now_s,
+                f"에이럭스 종가 {bo['close']:,}원 돌파 알림입니다. 8~10월 박스 상단 매물대를 넘었는지 봅니다.",
+                f"{last['day']} 종가 {fmt_won(close)}, {vtxt} (기준 {bo['volume_x']:.0f}배 {'충족' if vok else '미충족'}). 3분기 판정: {verdict or '아직 없음'}.",
+                todo,
+                "7,250원 위에서 종가가 유지되는지 보세요. 다음 목표는 8,700~9,500원입니다.",
+                "종가가 7,250원 아래로 다시 내려오면 돌파 실패로 봅니다.",
+                "3분기 판정 전 추격매수, 8,000원 위 급등 추격, 신용과 미수.",
+            )
+            if out.send(TOPIC, f"[ALUX] 종가 {bo['close']:,} 돌파 | 실적 판정부터", msg, 4, ["rocket"]):
+                b["active"] = True
+                b["sent_day"] = last["day"]
+
+    # 4) Monday status line
+    if mode == "weekly":
+        v = state["q3"].get("verdict")
+        gap = "" if close is None else f" (7,600까지 {bo['close'] - close:+,.0f}원)"
+        q3txt = f"판정 {v}" if v else "3분기 실적 발표 전"
+        msg = body_lines(
+            now_s,
+            "에이럭스 주간 상태 요약입니다. 매주 월요일에 한 번만 옵니다.",
+            f"종가 {fmt_won(close)}{gap}. 3분기: {q3txt}. 돌파 알림 {'발송됨' if b.get('active') else '대기'}.",
+            "관망입니다. 3분기 판정이 나오기 전에는 사지 않습니다.",
+            "3분기 실적 발표는 11월 중순으로 추정합니다. 해안정찰 결과는 연말 예정입니다.",
+            "이미 들고 있다면 종가 5,600원 이탈 때 정리합니다.",
+            "추격매수, 신용과 미수.",
+        )
+        out.send(TOPIC, "[ALUX] 주간 체크 | 관망 유지" if not v else f"[ALUX] 주간 체크 | 3Q {v}", msg, 3, ["calendar"])
+
+    if close is not None:
+        state["price"] = close
+        state["close_day"] = last["day"]
+    state["updated_at"] = now_s
+    state.pop("zone", None)
+    if dry:
+        print("DRY RUN: state not written")
+        return 0
+    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
