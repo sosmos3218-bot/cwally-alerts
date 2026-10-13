@@ -63,3 +63,9 @@ jobs:
           bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
           # actionlint 1.7.7 still enforces the old 10-input limit for workflow_dispatch; GitHub now allows more, so that one message is ignored.
           ./actionlint -color -shellcheck= -pyflakes= -ignore 'maximum number of inputs'
+
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python3 scripts/ops_notify.py workflow-lint "${GITHUB_SHA::7}" lint
