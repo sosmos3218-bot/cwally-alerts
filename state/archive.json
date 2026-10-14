@@ -1,6 +1,39 @@
 {
-  "updated_at": "2026-10-14 09:30 KST",
+  "updated_at": "2026-10-14 13:50 KST",
   "items": [
+    {
+      "id": "6DgKW01ZZFrJ",
+      "topic": "cwally-port",
+      "title": "[두산 점검 설정] 설치 확인 테스트",
+      "message": "두산 3Q26 실적과 SK실트론 금융조건 점검 루틴을 등록했습니다. 첫 점검은 10월 26일 17:30 KST입니다. 이 알림은 수신 확인용이며 투자 판단이 아닙니다.",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1791953112
+    },
+    {
+      "id": "ZzqTFy9Gb2V0",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 9cca16c",
+      "message": "2026-10-14 10:12 KST | OPS | workflow-lint / 9cca16c\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/38494439590",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791940354
+    },
+    {
+      "id": "MJBBwMBfdHWU",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts",
+      "message": "2026-10-14 09:30 KST | OPS | port-alerts / \n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/38490565378",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791937836
+    },
     {
       "id": "6A6mNGcxtqaM",
       "topic": "cwally-ops",
