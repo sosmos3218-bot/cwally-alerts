@@ -1,0 +1,37 @@
+{
+  "name": "446770",
+  "title_prefix": "[446770]",
+  "code": "446770",
+  "display": "ACE 글로벌반도체TOP4 Plus",
+  "created_at": "2026-10-14T15:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 직전 거래일 완료 종가만 사용. 새 단계 첫 도달과 실적 관문 판정 때만 발송.",
+  "alert_policy": "tier_first_touch_plus_gate",
+  "peak": {"date": "2026-06-22", "close": 104849, "note": "2026-06-22 종가 고점. 고정 기준(새 고점이 나와도 바꾸지 않음)"},
+  "tiers": [
+    {"id": "t1", "pct": -30, "price": 73394, "weight_pct": 2, "gated": false},
+    {"id": "t2", "pct": -35, "price": 68152, "weight_pct": 2, "gated": true},
+    {"id": "t3", "pct": -40, "price": 62909, "weight_pct": 2, "gated": true}
+  ],
+  "target_weight": {
+    "stock_sleeve_pct": 6,
+    "note": "주식 슬리브의 6%(총자산 약 3.3%). 단계마다 1/3인 2%씩. 삼성전자 24 + SK하이닉스 19 + ACE 6 = 반도체 49%로 50% 상한 안. 하이닉스와 ASML 중복 노출 때문에 더 키우지 않음",
+    "semis_cap_stock_sleeve_pct": 50
+  },
+  "gate": {
+    "rule": "SK하이닉스 3분기(2026-07-01~09-30) 영업이익이 컨센서스 대비 op_miss_cancel_pct 이하이면 2, 3차 취소. 잠정실적 공시 확인 전에는 2, 3차 보류",
+    "source_config": "configs/port.json (hynix_op_consensus_trn, op_miss_cancel_pct 를 그대로 읽음)",
+    "period_start": "2026-07-01",
+    "expected": "2026-10-27~28 SK하이닉스 3분기 실적"
+  },
+  "sources": {
+    "price": "Naver m.stock.naver.com/api/stock/446770/trend (완료 일봉 종가, 당일 행 제외)",
+    "earnings": "Naver stock.naver.com/api/domestic/detail/notice?itemCode=000660 (port_monitor.latest_notice_op 재사용)"
+  },
+  "year_guard": null,
+  "ends_kst": "2027-03-31 09:00",
+  "ends_note": "6월 고점 기준이 낡는 시점. 4분기 실적 뒤 재설계"
+}
