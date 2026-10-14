@@ -1,16 +1,21 @@
 {
-  "updated_at": "2026-10-13 01:02 KST",
+  "updated_at": "2026-10-14 15:40 KST",
   "fired": {
     "confirm": false,
-    "fail": false
+    "fail": true
   },
-  "last_sent": null,
+  "last_sent": {
+    "at": "2026-10-14 15:40 KST",
+    "hits": [
+      "fail"
+    ]
+  },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-10-12",
-    "close": 14385.0,
-    "ret5": -0.0607,
-    "flow": "2026-10-12 기관 -19,786주",
+    "day": "2026-10-14",
+    "close": 13920.0,
+    "ret5": -0.1218,
+    "flow": "2026-10-13 기관 -8,993주 (종가일 2026-10-14와 불일치, 충족 아님)",
     "hold_ok": false
   }
 }

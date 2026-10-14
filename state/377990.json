@@ -1,13 +1,18 @@
 {
-  "updated_at": "2026-10-13 01:02 KST",
+  "updated_at": "2026-10-14 15:40 KST",
   "fired": {
     "chase": false,
-    "box_fail": false
+    "box_fail": true
   },
-  "last_sent": null,
+  "last_sent": {
+    "at": "2026-10-14 15:40 KST",
+    "hits": [
+      "box_fail"
+    ]
+  },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-10-12",
-    "close": 23200.0
+    "day": "2026-10-14",
+    "close": 22450.0
   }
 }

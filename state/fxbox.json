@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-10-12 15:40 KST",
-  "last_sent_day": "2026-10-12",
+  "updated_at": "2026-10-14 15:40 KST",
+  "last_sent_day": "2026-10-14",
   "last_fail_day": null,
   "last": {
-    "day": "2026-10-12",
-    "close": 1333.4,
-    "hit": false,
-    "next_center": 1340,
-    "next_day": "2026-10-13"
+    "day": "2026-10-14",
+    "close": 1338.2,
+    "hit": true,
+    "next_center": 1342,
+    "next_day": "2026-10-15"
   }
 }
