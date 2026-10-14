@@ -2,7 +2,8 @@
   "minutes_notified": false,
   "cpi_notified": false,
   "fail_notified": {
-    "minutes": true
+    "minutes": true,
+    "cpi": true
   },
-  "updated_at": "2026-10-08T09:25:24.144912+09:00"
+  "updated_at": "2026-10-14T23:05:24.246898+09:00"
 }
