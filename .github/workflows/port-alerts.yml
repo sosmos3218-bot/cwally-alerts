@@ -194,11 +194,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | oklo | pffd | ceg | kzq3 | dearattr | sena | manh | truen417790 | all
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | oklo | pffd | ceg | kzq3 | dearattr | sena | manh | truen417790 | bankrate1014 | all
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, bankrate1014]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
