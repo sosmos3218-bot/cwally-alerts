@@ -1,9 +1,38 @@
 {
   "final_notified": false,
   "fail_notified": false,
-  "empty_notified": false,
+  "empty_notified": true,
   "kospi_notified": false,
   "last_key": null,
-  "parsed": {},
-  "tag": null
+  "parsed": {
+    "published": false,
+    "september": true,
+    "embargo": true,
+    "headline_mom": 0.6,
+    "headline_yoy": 3.7,
+    "core_mom": 0.3,
+    "core_yoy": 2.6,
+    "energy_mom": 5.2,
+    "shelter_mom": 0.4
+  },
+  "tag": null,
+  "quotes": {
+    "dxy": [
+      102.727,
+      102.21
+    ],
+    "tnx": [
+      5.306,
+      5.231
+    ],
+    "kospi": [
+      6008.81,
+      6941.39
+    ],
+    "krw": [
+      1339.98,
+      1339.08
+    ]
+  },
+  "updated_at": "2026-10-14T22:46:05.855070+09:00"
 }
