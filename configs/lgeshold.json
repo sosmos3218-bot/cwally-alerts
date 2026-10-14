@@ -1,0 +1,19 @@
+{
+  "name": "lgeshold",
+  "title_prefix": "[LGESH]",
+  "display": "LG에너지솔루션 중장기 구간",
+  "ticker": "373220",
+  "schedule_kst": "15:20",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "purpose": "대화 기반 중장기 투자 기준(매수 36-40만, 손절 30만, 목표 50/55만) 구간 진입 시에만 알림. 가격만으로 매매 신호 아님.",
+  "zones": {
+    "stop": 300000,
+    "buy_low": 360000,
+    "buy_high": 400000,
+    "target1": 500000,
+    "target2": 550000
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 15:20 구간 진입 감시"
+}
