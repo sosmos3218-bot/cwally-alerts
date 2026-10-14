@@ -5,7 +5,7 @@
   "band": "HOLD",
   "weekly_sent": "2026-W42",
   "fail_sent_date": null,
-  "earn_final": false,
+  "earn_final": true,
   "earn_verdict": null,
   "earn_summary": null
 }
