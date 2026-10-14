@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-14 19:40 KST",
+  "updated_at": "2026-10-14 21:00 KST",
   "items": [
+    {
+      "id": "LuxfaWfJZvh4",
+      "topic": "cwally-ops",
+      "title": "[ASML] 3분기 실적 숫자 미확인 | 원문 확인",
+      "message": "2026-10-14 19:40 KST | ASML\n이게 뭐 알림: ASML 3분기 실적 판정 알림입니다.\n지금 결과/상태: 보도자료는 찾았지만 매출이나 연간 전망 숫자를 읽지 못했습니다.\n지금 할 일: 원문을 직접 확인하세요: https://www.sec.gov/Archives/edgar/data/937966/000162828026065813/pressreleasefinancialresul.htm\n나중에: 문구가 바뀌었으면 파서를 고쳐야 합니다.\n익절/줄일 때: 이번 알림은 매매 신호가 아닙니다.\n하지 말 것: 한 번에 전액 매수, 신용/미수, 급등일 추격, 조회 실패나 가격만 보고 자동 매수하기.\n꺼지는 때: 2027-06-10 23:59 KST (가격 구간/주간 점검 종료. 3분기 실적 판정은 2026-10-15 08:40이 마지막)",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791974423
+    },
     {
       "id": "1ruCaJ5Tvgc4",
       "topic": "cwally-port",
