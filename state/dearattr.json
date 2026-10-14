@@ -1,5 +1,6 @@
 {
-  "notified": false,
-  "last_price": null,
-  "last_verdict": null
+  "notified": true,
+  "last_price": 18700.0,
+  "last_verdict": "중립",
+  "updated_at": "2026-10-14T14:47:51+09:00"
 }
