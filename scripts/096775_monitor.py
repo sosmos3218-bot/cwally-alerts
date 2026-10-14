@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
-"""SK이노베이션 우선주 096775 괴리율 점검 (상대가치 포지션).
+"""SK이노베이션 우선주 096775: 보통주(096770) 대비 괴리율 점검.
 
-Slot: existing weekday 09:00 morning. No new cron.
-Sends on zone change or weekly summary.
+Slot: existing weekday 09:00 morning bundle. No new cron.
+Sends to cwally-port only when zone changes, disparity moves >= change_alert_pct,
+or weekly summary. Lookup problems go to cwally-ops.
+
+Zones (configs/096775.json):
+  high   : disparity >= 50%   (매력 구간, 비중 확대 검토)
+  watch  : 45% <= disparity < 50%
+  review : 40% <= disparity < 45%  (재검토)
+  exit   : disparity < 40% (35% 이하 지속 시 청산 검토)
+  change_alert_pct : |Δ괴리율| >= 2.0%p 시 알림
+
+Modes: auto (default), dry (no state, no send).
 """
 from __future__ import annotations
 
@@ -22,12 +32,21 @@ CFG_PATH = ROOT / "configs" / "096775.json"
 STATE_PATH = ROOT / "state" / "096775.json"
 CLOSE_READY = (20, 30)
 
+ZONE_KO = {
+    "high": "매력 구간(50%+)",
+    "watch": "관찰(45~50%)",
+    "review": "재검토(40~45%)",
+    "exit": "청산 검토(<40%)",
+}
+
+
 def read_json(path: Path) -> dict:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
+
 
 def save_state(state: dict, now: datetime) -> None:
     state["updated_at"] = now.isoformat(timespec="seconds")
@@ -36,99 +55,165 @@ def save_state(state: dict, now: datetime) -> None:
     tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     tmp.replace(STATE_PATH)
 
+
 def expected_session(now: datetime) -> date:
     d = now.date()
     if is_trading_day(d) and (now.hour, now.minute) >= CLOSE_READY:
         return d
     return prev_trading_day(d)
 
-def fetch_close(code: str, session: date) -> float | None:
+
+def fetch_close(code: str, session: date) -> tuple[float | None, str | None]:
     rows = stock_trend(code, 5)
     key = session.strftime("%Y%m%d")
     for r in rows:
         if r.get("day") == key and r.get("close") is not None:
-            return float(r["close"])
-    return None
+            return r["close"], r.get("day")
+    return None, None
 
-def zone_of(pct: float, rules: dict) -> str:
-    if pct >= rules["zone_high"]:
+
+def zone_of(disp: float, rules: dict) -> str:
+    if disp >= rules["zone_high"]:
         return "high"
-    if pct >= rules["zone_watch"]:
+    if disp >= rules["zone_watch"]:
         return "watch"
-    if pct >= rules["zone_review"]:
+    if disp >= rules["zone_review"]:
         return "review"
-    if pct >= rules["zone_exit"]:
-        return "exit"
-    return "low"
+    return "exit"
 
-ZONE_KO = {
-    "high": "상대가치 매력 높음 (50% 이상)",
-    "watch": "보통 수준 (45~50%)",
-    "review": "1차 재평가 구간 (40~45%)",
-    "exit": "적극 축소 고려 (35~40%)",
-    "low": "상대가치 약화 (35% 미만)",
-}
 
-def main() -> int:
-    now = datetime.now(KST)
-    if not is_trading_day(now.date()):
-        print("not trading day")
-        return 0
-    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    state = read_json(STATE_PATH)
-    session = expected_session(now)
-    try:
-        pref = fetch_close(cfg["ticker"], session)
-        common = fetch_close(cfg["ticker_common"], session)
-    except Exception as exc:
-        print(f"fetch fail: {exc}")
-        return 0
-    if pref is None or common is None or common <= 0:
-        print("no close")
-        return 0
-    discount = (1 - pref / common) * 100
-    z = zone_of(discount, cfg["rules"])
-    prev_z = state.get("zone")
-    prev_d = state.get("discount_pct")
-    iso = now.isocalendar()
-    week_key = f"{iso[0]}-W{iso[1]:02d}"
-    weekly = not (state.get("weekly_sent") or {}).get(week_key)
-    changed = prev_z is not None and z != prev_z
-    big_move = prev_d is not None and abs(discount - prev_d) >= cfg["rules"]["change_alert_pct"]
-    if not (changed or weekly or big_move):
-        print(f"no event: {discount:.1f}% {z}")
-        return 0
-    title = f"{cfg['title_prefix']} 괴리율 {discount:.1f}% | {ZONE_KO[z]}"
-    lines = [
-        "이게 뭐 알림: SK이노베이션 우선주(096775) 상대가치(괴리율) 점검.",
-        f"지금 결과/상태: 우선주 {pref:,.0f}원, 보통주 {common:,.0f}원 ({session:%Y-%m-%d}). 괴리율 {discount:.1f}%. 구간: {ZONE_KO[z]}",
-        "지금 할 일: " + (
-            "50% 이상이면 분할 매수 또는 보유 유지 검토." if z == "high" else
-            "40% 근접이면 부분 익절 또는 비중 축소 검토." if z in ("review", "exit") else
-            "35% 이하이면 상대가치 포지션 정리 검토." if z == "low" else
-            "보유 유지. 정책 발표와 실적 모니터링."
-        ),
-        "나중에: 주주환원 정책 발표(연말~내년 초)와 3분기 실적 확인.",
-        "익절/줄일 때: 괴리율 40% 부근 1차 재평가, 35% 이하 적극 축소.",
-        "하지 말 것: 괴리율만 보고 기계적 전량 매도, 유동성 무시하고 시장가 주문.",
+def evaluate(cfg: dict, state: dict, disp: float, prev_disp: float | None) -> dict:
+    rules = cfg["rules"]
+    zone = zone_of(disp, rules)
+    events: list[str] = []
+    prev_zone = state.get("zone")
+    if prev_zone and zone != prev_zone:
+        events.append(f"구간 변경: {ZONE_KO.get(prev_zone, prev_zone)} -> {ZONE_KO[zone]}")
+    delta = None
+    if prev_disp is not None:
+        delta = disp - prev_disp
+        if abs(delta) >= rules["change_alert_pct"]:
+            events.append(f"괴리율 변동 {delta:+.1f}%p (기준 {rules['change_alert_pct']}%p)")
+    iso = datetime.now(KST).isocalendar()
+    iso_week = f"{iso[0]}-W{iso[1]:02d}"
+    weekly_due = not (state.get("weekly_sent") or {}).get(iso_week)
+    return {
+        "zone": zone,
+        "events": events,
+        "delta": delta,
+        "weekly_due": weekly_due,
+        "iso_week": iso_week,
+    }
+
+
+def todo_line(zone: str) -> str:
+    if zone == "high":
+        return "비중 확대 검토. 유동성 확인하고 지정가 분할만. 정책 발표 전엔 과도한 확대 금지."
+    if zone == "watch":
+        return "관찰 유지. 45% 아래로 내려가면 재검토. 신규 매수는 보류."
+    if zone == "review":
+        return "40%대면 비중 축소 검토. 35% 이하 지속 시 청산 검토."
+    return "35% 이하 지속 시 청산 검토. 신규 매수 금지."
+
+
+def build_message(cfg: dict, disp: float, pref: float, common: float, session: date, res: dict, kind: str) -> tuple[str, list[str]]:
+    rules = cfg["rules"]
+    zone = res["zone"]
+    title = f"{cfg['title_prefix']} {ZONE_KO[zone]} | 괴리율 {disp:.1f}%"
+    status = [
+        f"우선주 {pref:,.0f}원, 보통주 {common:,.0f}원 ({session:%Y-%m-%d} 완료 세션)",
+        f"괴리율 {disp:.1f}% ({ZONE_KO[zone]}, 기준 high {rules['zone_high']}% / review {rules['zone_review']}% / exit {rules['zone_exit']}%)",
     ]
-    dry = "--dry" in sys.argv
+    if res.get("delta") is not None:
+        status.append(f"전일 대비 {res['delta']:+.1f}%p")
+    lines = [
+        "이게 뭐 알림: SK이노베이션 우선주 096775 보통주(096770) 대비 괴리율 점검. 1~2년 상대가치 포지션.",
+        "지금 결과/상태:",
+        *[f"- {s}" for s in status],
+    ]
+    if res["events"]:
+        lines.append("바뀐 점:")
+        lines += [f"- {e}" for e in res["events"]]
+    lines += [
+        "지금 할 일: " + todo_line(zone),
+        "나중에: 주주환원 정책 발표(연내~내년 초)와 3분기 실적 확인. 정책이 우선주 우대면 기준 상향, 보통주 중심이면 하향.",
+        "익절/줄일 때: 괴리율 40% 이하로 좁혀지면 비중 축소, 35% 이하 지속 시 청산 검토.",
+        "하지 말 것: 괴리율만 보고 시장가 매수, 유동성 무시, 정책 발표 전 과도한 확대.",
+        f"출처: Naver m.stock API (trend)",
+    ]
+    return title, lines
+
+
+def send(cfg: dict, title: str, lines: list[str], dry: bool, ops: bool = False, priority: int = 3) -> bool:
+    topic = "cwally-ops" if ops else "cwally-port"
     if dry:
-        print("[dry]", title, *lines, sep="\n")
-        return 0
+        print(f"[dry] topic={topic}", title, *lines, "dry-run; no ntfy", sep="\n")
+        return True
     try:
-        publish(cfg["ntfy_topic"], title, "\n".join(lines), 3, ["chart_with_upwards_trend"], resolve_server(cfg.get("ntfy_server")))
-        state["zone"] = z
-        state["discount_pct"] = discount
-        state["pref"] = pref
-        state["common"] = common
-        state.setdefault("weekly_sent", {})[week_key] = True
-        save_state(state, now)
-        print("sent")
+        publish(topic, title, "\n".join(lines), priority,
+                ["warning"] if ops else ["chart_with_upwards_trend"],
+                resolve_server(cfg.get("ntfy_server")))
+        return True
     except Exception as exc:
-        print(f"publish fail: {exc}")
+        print(f"publish failed: {type(exc).__name__}")
+        return False
+
+
+def problem(cfg: dict, state: dict, now: datetime, key: str, detail: str, dry: bool) -> None:
+    day = now.strftime("%Y-%m-%d")
+    ops_daily = state.setdefault("ops_daily", {})
+    if ops_daily.get(key) == day and not dry:
+        print(f"ops already sent today: {key}")
+        return
+    title = f"{cfg['title_prefix']} {key} 조회 실패 | 판단 유보"
+    lines = [
+        "이게 뭐 알림: SK이노베이션 우선주 096775 괴리율 점검의 데이터 문제 안내.",
+        f"지금 결과/상태: {detail}. {now:%Y-%m-%d %H:%M} KST. 이번 실행의 판단은 막았습니다.",
+        "지금 할 일: 없음. 다음 거래일에 자동 재시도합니다.",
+        "나중에: 이틀 이상 계속되면 Naver API 변경 여부를 확인하세요.",
+        "익절/줄일 때: 이 알림만으로 판단하지 마세요.",
+        "하지 말 것: 누락된 숫자를 0이나 예전 값으로 보고 매매.",
+    ]
+    if send(cfg, title, lines, dry, ops=True, priority=2) and not dry:
+        ops_daily[key] = day
+
+
+def run(mode: str) -> int:
+    now = datetime.now(KST)
+    cfg = read_json(CFG_PATH)
+    if not cfg:
+        print("config missing")
         return 1
+    state = read_json(STATE_PATH)
+    dry = mode == "dry"
+    session = expected_session(now)
+    pref, pref_day = fetch_close(cfg["ticker"], session)
+    common, common_day = fetch_close(cfg["ticker_common"], session)
+    if pref is None or common is None or pref_day != common_day:
+        problem(cfg, state, now, "시세", f"우선주/보통주 {session:%Y-%m-%d} 종가 불일치 또는 누락", dry)
+        return 0
+    disp = (1 - pref / common) * 100
+    prev_disp = state.get("disparity")
+    res = evaluate(cfg, state, disp, prev_disp)
+    should_send = bool(res["events"]) or res["weekly_due"]
+    if should_send:
+        kind = "event" if res["events"] else "weekly"
+        title, lines = build_message(cfg, disp, pref, common, session, res, kind)
+        if send(cfg, title, lines, dry) and not dry:
+            state["disparity"] = disp
+            state["zone"] = res["zone"]
+            state["last_session"] = session.isoformat()
+            weekly = state.setdefault("weekly_sent", {})
+            weekly[res["iso_week"]] = True
+            save_state(state, now)
+    else:
+        print(f"no change: disp={disp:.1f}% zone={res['zone']}")
     return 0
 
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    mode_arg = sys.argv[1] if len(sys.argv) > 1 else "auto"
+    if mode_arg not in {"auto", "dry"}:
+        print(f"unknown mode: {mode_arg}")
+        sys.exit(2)
+    sys.exit(run(mode_arg))
