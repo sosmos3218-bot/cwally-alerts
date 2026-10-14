@@ -1,7 +1,20 @@
 {
-  "final_notified": false,
+  "final_notified": true,
   "fail_notified": false,
-  "last_phase": null,
-  "updated_at": null,
-  "result": {}
+  "last_phase": "final",
+  "updated_at": "2026-10-14T13:53:28.990814+09:00",
+  "result": {
+    "code": "C",
+    "bank": "bad",
+    "breakout": false,
+    "touch_only": false,
+    "eps_score": -1,
+    "px_score": -1,
+    "avg_bank_pct": -2.4462727825641544,
+    "excess_pp": -2.4233448463310907,
+    "us_date": "2026-10-13",
+    "jpm_adj_eps": 5.57,
+    "tnx_close": 5.2170000076293945,
+    "sent_at": "2026-10-14T13:53:28.990814+09:00"
+  }
 }
