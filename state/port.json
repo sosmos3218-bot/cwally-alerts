@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-10-12 09:00 KST",
+  "updated_at": "2026-10-14 13:54 KST",
   "zone": "BASE",
   "last_alert_key": "BASE",
   "last_sent_key": "BASE",
   "last_sent_date": "2026-10-12",
-  "last_skip_reason": null,
-  "fx": 1340.38,
-  "wti": 91.02,
-  "ktb3": 3.983,
-  "ktb10": 4.395,
+  "last_skip_reason": "quiet_base",
+  "fx": 1336.53,
+  "wti": 94.69,
+  "ktb3": 3.857,
+  "ktb10": 4.229,
   "history": [
     {
       "date": "2026-09-17",
@@ -44,6 +44,13 @@
       "wti": 91.02,
       "ktb3": 3.983,
       "ktb10": 4.395
+    },
+    {
+      "date": "2026-10-14",
+      "fx": 1336.53,
+      "wti": 94.69,
+      "ktb3": 3.857,
+      "ktb10": 4.229
     }
   ]
 }

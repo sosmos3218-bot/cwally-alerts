@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-10-12 09:06 KST",
-  "session_date": "2026-10-08",
+  "updated_at": "2026-10-14 13:59 KST",
+  "session_date": "2026-10-13",
   "level": 0,
   "triggers": [],
-  "last_sent_key": "2026-10-08:0",
+  "last_sent_key": "2026-10-13:0",
   "fail_sent_date": null,
-  "px_etf": 31200.0,
-  "px_hanmi": 263000.0,
-  "px_jusung": 263500.0,
-  "jusung_foreign_bn": 531.445245
+  "px_etf": 29155.0,
+  "px_hanmi": 230000.0,
+  "px_jusung": 264000.0,
+  "jusung_foreign_bn": -190.99344
 }

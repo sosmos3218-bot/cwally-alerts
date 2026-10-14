@@ -1,1 +1,4 @@
-$(cat /tmp/cwally-alerts/state/truen417790.json)
+{
+  "updated_at": "2026-10-14 14:00 KST",
+  "last_sent": "2026-10-14 14:00 KST"
+}

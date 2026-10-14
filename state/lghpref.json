@@ -71,13 +71,13 @@
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-10-08",
-    "pref_close": 93100.0,
-    "common_close": 266000.0,
-    "discount_pct": 65.0,
-    "liq_median_value_eok": 7.36,
-    "avg5_volume": 4489,
-    "dps": 3002.0
+    "session": "2026-10-13",
+    "pref_close": 91200.0,
+    "common_close": 261500.0,
+    "discount_pct": 65.12,
+    "liq_median_value_eok": 7.29,
+    "avg5_volume": 5297,
+    "dps": 2973.0
   },
-  "updated_at": "2026-10-12T09:06:51+09:00"
+  "updated_at": "2026-10-14T13:59:51+09:00"
 }

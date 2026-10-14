@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "price_band": "above_review",
+  "price_band": "review",
   "price_reference": {
     "price": 23000,
     "observed_at": "2026-10-07 15:18 KST",
@@ -8,13 +8,13 @@
   },
   "consensus_reference": {
     "year": 2026,
-    "sales_eok": 1645.0,
-    "op_eok": 233.0,
-    "eps_krw": 2048.0,
-    "as_of": "2026-10-06",
-    "source": "분석 기준 Naver FnGuide 컨센서스"
+    "eps_krw": 1746.0,
+    "op_eok": 212.0,
+    "sales_eok": 1624.0,
+    "as_of": "2026-10-13",
+    "source": "Naver FnGuide 컨센서스"
   },
-  "earnings_gate": "maintained",
+  "earnings_gate": "broken",
   "latest_actual_key": "202606",
   "latest_cfo_verified": {
     "period": "2026H1",
@@ -29,18 +29,18 @@
   "seen_us_notice_ids": [],
   "weekly_sent": {
     "2026-W41": "2026-10-07",
-    "2026-W42": "2026-10-08"
+    "2026-W42": "2026-10-13"
   },
   "sent_fingerprints": [],
   "ops_daily": {},
   "install_test_sent": "2026-10-07T15:45:26+09:00",
   "last_observation": {
-    "session": "2026-10-08",
-    "close": 21850.0,
-    "eps": 2048.0,
-    "op": 233.0
+    "session": "2026-10-13",
+    "close": 20400.0,
+    "eps": 1746.0,
+    "op": 212.0
   },
-  "updated_at": "2026-10-12T09:06:40+09:00",
+  "updated_at": "2026-10-14T13:59:43+09:00",
   "notices_seeded": true,
   "seen_notice_ids": [
     "105790501",
