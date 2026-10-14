@@ -1,0 +1,14 @@
+{
+  "name": "kosreb",
+  "title_prefix": "[KOSREB]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": null,
+  "oneshot_kst": ["2026-10-14 23:10", "2026-10-15 09:20"],
+  "window_start_kst": "2026-10-14 22:00",
+  "expire_date": "2026-10-15",
+  "event_year": 2026,
+  "explain": "키움 10/14 리포트 반등 시나리오를 9월 CPI 결과, 14일 코스피 마감과 외국인 수급, 반도체 선행 PER, 27~28년 컨센 방향으로 재평가하는 일회 알림입니다.",
+  "ends_kst": "2026-10-15 09:20",
+  "ends_note": "CPI 이후 코스피 반응 재평가 일회, 15일 아침이 마지막"
+}
