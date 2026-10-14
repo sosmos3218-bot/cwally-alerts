@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-14 09:00 KST",
+  "updated_at": "2026-10-14 09:30 KST",
   "items": [
+    {
+      "id": "6A6mNGcxtqaM",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts",
+      "message": "2026-10-14 09:00 KST | OPS | port-alerts / \n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/38487646667",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1791936051
+    },
     {
       "id": "59JlNDCWWr7g",
       "topic": "cwally-ops",
