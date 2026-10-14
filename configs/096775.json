@@ -1,0 +1,29 @@
+{
+  "name": "096775",
+  "title_prefix": "[096775]",
+  "display": "SK이노베이션 우선주 096775 괴리율 점검",
+  "ticker": "096775",
+  "ticker_common": "096770",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "기존 평일 09:00 morning 슬롯",
+  "schedule_note": "새 cron 없음. 한국 거래일 09:00에 직전 완료 세션 종가로 괴리율을 확인한다.",
+  "calendar_start": "2026-10-14",
+  "calendar_end": "2027-10-14",
+  "monitor_start": "2026-10-14",
+  "rules": {
+    "zone_high": 50.0,
+    "zone_watch": 45.0,
+    "zone_review": 40.0,
+    "zone_exit": 35.0,
+    "change_alert_pct": 2.0,
+    "liq_dry_avg_volume": 500
+  },
+  "sources": {
+    "trend_pref": "https://m.stock.naver.com/api/stock/096775/trend?pageSize=10",
+    "trend_common": "https://m.stock.naver.com/api/stock/096770/trend?pageSize=5"
+  },
+  "data_policy": "우선주와 보통주 종가 날짜가 직전 완료 세션과 일치해야 한다. 누락은 대체하지 않는다.",
+  "ends_kst": "2027-10-14 09:00",
+  "ends_note": "1~2년 상대가치 포지션 점검용. 정책 발표 후 또는 괴리율 35% 이하 지속 시 재평가."
+}
