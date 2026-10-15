@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic
 
 KST = timezone(timedelta(hours=9))
+RELEASE_AT = datetime(2026, 10, 14, 21, 30, tzinfo=KST)
 CFG = ROOT / "configs" / "cpi1014.json"
 STATE = ROOT / "state" / "cpi1014.json"
 # SEC/BLS block anonymous UAs; they require a contact (https://www.sec.gov/os/accessing-edgar-data)
@@ -64,7 +65,7 @@ def grab(text, pattern):
 
 def parse_bls(text):
     september = bool(re.search(r"CONSUMER PRICE INDEX\s*-\s*SEPTEMBER 2026", text, re.I))
-    embargo = bool(re.search(r"EMBARGOED UNTIL", text, re.I) and re.search(r"October 14, 2026", text))
+    embargo = bool(re.search(r"EMBARGOED UNTIL", text, re.I) and re.search(r"October 14, 2026", text) and datetime.now(KST) < RELEASE_AT)
     headline_mom = grab(
         text,
         r"CPI-U\)? (increased|rose|decreased|fell|declined|was unchanged) ([0-9.]+) percent on a seasonally adjusted basis in September",
