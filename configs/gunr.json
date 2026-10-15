@@ -1,0 +1,19 @@
+{
+  "name": "gunr",
+  "title_prefix": "[GUNR]",
+  "ticker": "GUNR",
+  "display": "GUNR 청연자원",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "평일 09:00 KST morning 슬롯. 새 cron 없음. 주간 요약 + 일간 ±5% 변화 시 알림.",
+  "alert_policy": "weekly_or_change",
+  "change_pct": 5.0,
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/GUNR?interval=1d&range=1mo"
+  },
+  "ends_kst": null,
+  "ends_note": "수동 삭제 전까지 무기한",
+  "holding": false,
+  "holding_note": "미보유(진입대기). 평가손익 없음."
+}
