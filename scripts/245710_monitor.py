@@ -3,6 +3,7 @@
 
 afternoon 슬롯(평일 15:20 KST). 245710 실시간 가격과 실시간 추정 NAV(iNAV), VN지수 직전 완료 종가를 본다.
 - 1차 후보: 가격 <= 26,000원 AND iNAV 대비 할인 >= 2% AND 중단 상태 아님
+- 2차 후보: 가격 <= 24,700원 AND iNAV 대비 할인 >= 2% AND 중단 상태 아님
 - 중단: VN지수 완료 종가 < 1,650 (회복 시 해제 알림)
 - 3차 추세 확인: VN지수 완료 종가 3거래일 연속 >= 1,780
 modes: auto(기본) | dry(발송 없음, state 안 씀) | install(설치 확인 1회, state 안 씀)
@@ -32,6 +33,7 @@ def load_state() -> dict:
         "updated_at": None,
         "stop": None,
         "buy1_armed": True,
+        "buy2_armed": True,
         "confirm_armed": True,
         "last_price": None,
         "last_inav": None,
@@ -107,7 +109,7 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     return "\n".join(
         [
             f"{stamp} | 245710 | ACE 베트남VN30(합성)",
-            "이게 뭐 알림: ISA 1,000만원 3분할 지정가 조건 알림. 1차 26,000원 이하+iNAV 할인 2% 이상, VN지수 1,650 미만이면 중단, VN지수 1,780 이상 3거래일이면 3차. 자동 주문 아님.",
+            "이게 뭐 알림: ISA 1,000만원 3분할 지정가 조건 알림. 1차 26,000원, 2차 24,700원 이하(각각 iNAV 할인 2% 이상), VN지수 1,650 미만이면 중단, VN지수 1,780 이상 3거래일이면 3차. 자동 주문 아님.",
             f"지금 결과/상태: {status}",
             f"지금 할 일: {action}",
             f"나중에: {later}",
@@ -129,7 +131,7 @@ def main() -> int:
     today = now.strftime("%Y%m%d")
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
-    b1, st, cf = cfg["buy1"], cfg["stop"], cfg["confirm"]
+    b1, b2, st, cf = cfg["buy1"], cfg["buy2"], cfg["stop"], cfg["confirm"]
 
     end = cfg.get("ends_kst")
     if mode != "install" and end and now > datetime.strptime(end, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
@@ -146,6 +148,7 @@ def main() -> int:
     streak = vn[: cf["days"]]
     is_confirm = len(streak) == cf["days"] and all(c >= cf["vn_close_min"] for _, c in streak)
     is_buy1 = bool(price and disc is not None and price <= b1["price_max"] and disc >= b1["discount_min_pct"] and is_stop is False)
+    is_buy2 = bool(price and disc is not None and price <= b2["price_max"] and disc >= b2["discount_min_pct"] and is_stop is False)
 
     q_txt = f"가격 {price:,.0f}원, iNAV {inav:,.0f}원, 할인 {disc:.1f}%" if disc is not None else f"가격/iNAV 조회 실패({qerr})"
     v_txt = (f"VN지수 직전 종가 {vn_last[1]:,.2f}({vn_last[0][4:6]}/{vn_last[0][6:]}), 최근 3일 " + " / ".join(f"{c:,.0f}" for _, c in streak)) if vn_last else f"VN지수 조회 실패({verr})"
@@ -157,13 +160,14 @@ def main() -> int:
         flags = []
         flags.append("중단 상태" if is_stop else "중단 아님")
         flags.append("1차 조건 충족" if is_buy1 else "1차 조건 미충족")
+        flags.append("2차 조건 충족" if is_buy2 else "2차 조건 미충족")
         flags.append("3차 추세 확인됨" if is_confirm else "3차 추세 미확인")
         publish(
             topic,
             "[245710] 설치 확인 | 매매 신호 아님",
             body(stamp, f"평일 15:20 KST afternoon 슬롯에 붙였습니다. {status} 지금 판정: {', '.join(flags)}.",
                  "설치 확인만 하세요. 이 알림으로 사지 마세요.",
-                 "1차 조건이 새로 켜질 때, VN지수 1,650 이탈/회복 때, 1,780 3거래일 확인 때만 옵니다.",
+                 "1차, 2차 조건이 새로 켜질 때, VN지수 1,650 이탈/회복 때, 1,780 3거래일 확인 때만 옵니다.",
                  TRIM, "설치 확인을 매수 신호로 읽기."),
             3, ["information_source"], server,
         )
@@ -198,23 +202,40 @@ def main() -> int:
             else:
                 alerts.append((
                     "[245710] VN지수 1,650 회복 | 분할 중단 해제",
-                    body(stamp, status, "중단만 풀림. 1차는 가격과 할인 조건을 다시 만족할 때만.",
-                         "1차 조건이 켜지면 따로 알림.", TRIM, "해제 알림을 매수 신호로 읽기."),
+                    body(stamp, status, "중단만 풀림. 1차, 2차는 가격과 할인 조건을 다시 만족할 때만.",
+                         "1차, 2차 조건이 켜지면 따로 알림.", TRIM, "해제 알림을 매수 신호로 읽기."),
                     3,
                 ))
         state["stop"] = is_stop
 
-        if is_buy1 and state.get("buy1_armed", True):
+        fire1 = is_buy1 and state.get("buy1_armed", True)
+        fire2 = is_buy2 and state.get("buy2_armed", True)
+        order_tip = "가격은 그때 HTS 추정NAV x 0.98 이하. 주문은 다음 거래일 KST 11:15~13:30(호치민 오전장)에, 그때 조건을 한 번 더 확인하고."
+        if fire2:
+            both = fire1
+            amt = b1["amount_manwon"] + b2["amount_manwon"] if both else b2["amount_manwon"]
+            title = (f"[245710] 1, 2차 조건 동시 충족 | {amt}만원 지정가 검토" if both
+                     else f"[245710] 2차 조건 충족 | {amt}만원 지정가 검토")
+            act = (f"ISA에서 1차 {b1['amount_manwon']}만원과 2차 {b2['amount_manwon']}만원을 지정가로 나눠 주문. 2차는 {b2['price_max']:,}원 이하. " if both
+                   else f"ISA에서 2차 {b2['amount_manwon']}만원을 {b2['price_max']:,}원 이하 지정가로 주문. 1차를 아직 안 샀다면 1차부터. ") + order_tip
+            alerts.append((title, body(stamp, status, act,
+                                       "3차는 VN지수 1,780 이상 3거래일 확인 뒤(가격 28,500원 이하). 2차 뒤에는 가격만 보고 더 사지 않음.", TRIM, AVOID), 4))
+            state["buy2_armed"] = False
+            if both:
+                state["buy1_armed"] = False
+        elif fire1:
             alerts.append((
                 f"[245710] 1차 조건 충족 | {b1['amount_manwon']}만원 지정가 검토",
                 body(stamp, status,
-                     f"ISA에서 {b1['amount_manwon']}만원을 지정가로 주문. 가격은 그때 HTS 추정NAV x 0.98 이하, 26,000원 이하. 주문은 다음 거래일 KST 11:15~13:30(호치민 오전장)에, 그때 조건을 한 번 더 확인하고.",
-                     "2차는 24,700원 이하. 3차는 VN지수 1,780 이상 3거래일 확인 뒤(가격 28,500원 이하).", TRIM, AVOID),
+                     f"ISA에서 {b1['amount_manwon']}만원을 지정가로 주문. {b1['price_max']:,}원 이하. " + order_tip,
+                     f"2차는 {b2['price_max']:,}원 이하(할인 2% 이상). 3차는 VN지수 1,780 이상 3거래일 확인 뒤(가격 28,500원 이하).", TRIM, AVOID),
                 4,
             ))
             state["buy1_armed"] = False
-        elif not state.get("buy1_armed", True) and price > b1["rearm_price"]:
+        if not state.get("buy1_armed", True) and not fire1 and price > b1["rearm_price"]:
             state["buy1_armed"] = True
+        if not state.get("buy2_armed", True) and not fire2 and price > b2["rearm_price"]:
+            state["buy2_armed"] = True
 
         if is_confirm and state.get("confirm_armed", True) and not first:
             cap_ok = price <= cf["price_cap"]
@@ -240,7 +261,7 @@ def main() -> int:
         if not dry:
             publish(topic, title, msg, pri, ["chart_with_downwards_trend"], server)
     if not alerts:
-        print(f"no alert (stop={is_stop} buy1={is_buy1} confirm={is_confirm} first={first})")
+        print(f"no alert (stop={is_stop} buy1={is_buy1} buy2={is_buy2} confirm={is_confirm} first={first})")
     if dry:
         print("DRY RUN: no publish, state not written")
         return 0
