@@ -1,0 +1,45 @@
+{
+  "name": "xle",
+  "title_prefix": "[XLE]",
+  "symbol": "XLE",
+  "display": "State Street Energy Select Sector SPDR ETF",
+  "created_at": "2026-10-15T11:40:00+09:00",
+  "as_of": "2026-10-15",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 조건이 새로 켜질 때만 발송.",
+  "alert_policy": "change_only",
+  "account": "해외주식 계좌 가정. 한국 중개형 ISA에는 XLE를 넣을 수 없음. 2026년 해외주식 양도차익이 이미 250만원 공제를 넘어 올해 실현 이익은 22% 과세 대상. 자동 주문 아님",
+  "baseline": {
+    "price_date": "2026-10-14",
+    "close": 67.63,
+    "high_52w": 67.72,
+    "close_2026_10_07": 63.36,
+    "analysis_note": "2026-10-15 판단: 52주 고점 터치 뒤라 추격 금지. 1차는 10/7 종가 부근 63.50달러 이하. 2차 58달러는 공급 차질이 2027년에도 남는다는 확인이 있을 때만이며 자동 판정하지 않음. EIA 10/6 STEO 기본 경로는 브렌트 4Q26 105달러에서 4Q27 74달러."
+  },
+  "buy1": {
+    "close_max": 63.5,
+    "rearm_close": 66.0,
+    "alloc_note": "유가 충격 헤지로 포트폴리오 3~5% 이내",
+    "note": "XLE 완료 종가 63.50달러 이하이면 한 번 울림. 종가가 66달러 위로 올라가면 다시 무장"
+  },
+  "oil_link": {
+    "brent_symbol": "BZ=F",
+    "brent_low": 85.0,
+    "note": "브렌트 85달러 미만 경계는 [OIL](oilwatch)이 따로 울린다. 이 알림은 브렌트를 판정에 쓰지 않고 참고값으로만 적는다."
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "Yahoo Finance chart v8 XLE 1d 1y (미국 동부시간 기준 완료 일봉만 사용, 당일 진행 봉 제외)",
+    "brent": "Yahoo Finance chart v8 BZ=F 1d 1mo (참고값)"
+  },
+  "not_auto": [
+    "2차 58달러 구간과 공급 차질 지속 여부는 자동 판정하지 않음",
+    "브렌트 85달러 미만 경계는 [OIL]이 따로 본다. 이 알림은 브렌트로 조건을 바꾸지 않음",
+    "이 알림은 매수 지시가 아니라 가격 기준 도달 알림"
+  ],
+  "ends_kst": "2027-04-13 23:59",
+  "ends_note": "평일 09:00 XLE 63.50달러 1차 가격 점검, 2027-04-13 실행이 마지막"
+}
