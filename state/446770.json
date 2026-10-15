@@ -1,1 +1,10 @@
-{}
+{
+  "updated_at": "2026-10-15T09:06:50.273837+09:00",
+  "last_day": "20261014",
+  "last_close": 73995.0,
+  "max_tier": 0,
+  "gate": "wait",
+  "gate_op_trn": null,
+  "gate_title": null,
+  "fetch_fail_date": null
+}

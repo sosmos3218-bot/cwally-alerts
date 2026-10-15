@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "kr_flow_active": {},
-  "sol_below_line": false,
+  "sol_below_line": true,
   "us_notified_tier": {
     "SNDK": 10
   },
   "notice_versions": [],
   "ops_daily": {
-    "us-NVDA": "2026-10-09",
-    "us-SNDK": "2026-10-09"
+    "us-NVDA": "2026-10-15",
+    "us-SNDK": "2026-10-15"
   },
-  "updated_at": "2026-10-12T09:01:08.498500+09:00"
+  "updated_at": "2026-10-15T09:01:04.744532+09:00"
 }
