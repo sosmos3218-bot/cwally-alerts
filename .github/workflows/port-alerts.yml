@@ -541,6 +541,7 @@ jobs:
             python scripts/kosown_monitor.py
             python scripts/005935_monitor.py
             python scripts/oilwatch_monitor.py auto
+            python scripts/xle_monitor.py auto
             python scripts/soilq3_monitor.py auto
             python scripts/jpfy27_monitor.py auto
             python scripts/446770_monitor.py auto
