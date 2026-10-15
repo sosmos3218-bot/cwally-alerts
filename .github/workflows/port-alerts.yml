@@ -644,6 +644,9 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/245710_monitor.py auto
           fi
+          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
+            python scripts/473640_monitor.py auto
+          fi
           python scripts/ntfy_archive.py
           exit $failed
       - name: Run cpi1014
