@@ -1,10 +1,11 @@
 {
-  "updated_at": "2026-10-14 15:20 KST",
+  "updated_at": "2026-10-15 15:20 KST",
   "zone": "STOP20",
-  "price": 2475.0,
+  "price": 2295.0,
   "common_price": 7470.0,
-  "ratio": 0.3313253012048193,
+  "ratio": 0.3072289156626506,
   "quality_flags": [
+    "GAP",
     "LAG"
   ],
   "last_event_ids": []

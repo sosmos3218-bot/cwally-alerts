@@ -1,15 +1,15 @@
 {
   "snapshot_sent": true,
-  "date_notified": null,
+  "date_notified": "2026-10-30",
   "result_notified": false,
   "consensus_live": {
-    "sales": 16315.0,
-    "op": 1355.0,
-    "fy_op": 5830.0,
-    "fy_sales": 65702.0,
-    "as_of": "2026-10-14"
+    "sales": 16311.0,
+    "op": 1358.0,
+    "fy_op": 5861.0,
+    "fy_sales": 65712.0,
+    "as_of": "2026-10-15"
   },
   "ops_sent": {},
   "last_key": null,
-  "updated_at": "2026-10-14T15:20:31+09:00"
+  "updated_at": "2026-10-15T15:20:31+09:00"
 }

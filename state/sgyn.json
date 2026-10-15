@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-10-14 15:20 KST",
-  "last_sent_date": "2026-10-14",
-  "week_date": "2026-10-05",
-  "file_seq": 4975,
+  "updated_at": "2026-10-15 15:20 KST",
+  "last_sent_date": "2026-10-15",
+  "week_date": "2026-10-12",
+  "file_seq": 4985,
   "hits": [],
   "series": {
     "suji": {
-      "sale_week": 0.18291964101988523,
-      "jeonse_week": 0.040747099110549634,
-      "jeonse_13w": 1.378667540167755
+      "sale_week": 0.3443050543007642,
+      "jeonse_week": 0.13153811856736475,
+      "jeonse_13w": 1.3350077142951111
     },
     "yeongtong": {
-      "sale_week": 0.6211329514582031,
-      "jeonse_week": 0.3445891690655678,
-      "jeonse_13w": 3.199566594264791
+      "sale_week": 0.6864217933752359,
+      "jeonse_week": 0.44136528899798577,
+      "jeonse_13w": 3.4206890019487846
     },
     "dongtan": {
-      "sale_week": 0.3341773034753359,
-      "jeonse_week": 0.33909604660862236,
-      "jeonse_13w": 4.489110239822902
+      "sale_week": 0.664484832752299,
+      "jeonse_week": 0.401280100698731,
+      "jeonse_13w": 4.388450575196634
     }
   },
   "permit": {
@@ -27,8 +27,7 @@
       "count": 426,
       "prev": 670,
       "mom_pct": -36.417910447761194,
-      "source": "수원시 토허 통계",
-      "error": "<urlopen error timed out>"
+      "source": "수원시 토허 통계"
     }
   },
   "iros": {
@@ -38,6 +37,7 @@
     "series_b": 38752,
     "prev_total": 233156,
     "mom_pct": -72.75944003156684,
-    "source": "등기정보광장 매매 소유권이전"
+    "source": "등기정보광장 매매 소유권이전",
+    "error": "<urlopen error timed out>"
   }
 }
