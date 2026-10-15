@@ -10,6 +10,8 @@ from pathlib import Path
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ntfy_util import publish
 CFG = json.loads((ROOT / "configs" / "semicrit.json").read_text(encoding="utf-8"))
 
 def year_ok() -> bool:
@@ -51,7 +53,6 @@ def main() -> int:
         print(title)
         print(body)
         return 0
-    from scripts.ntfy_util import publish
     publish("cwally-port", title, body)
     print(f"sent {now}")
     return 0
