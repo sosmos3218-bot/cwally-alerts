@@ -1,0 +1,35 @@
+{
+  "name": "xlp",
+  "title_prefix": "[XLP]",
+  "symbol": "XLP",
+  "display": "State Street Consumer Staples Select Sector SPDR ETF",
+  "created_at": "2026-10-15T11:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 조건이 새로 켜질 때만 발송.",
+  "alert_policy": "change_only",
+  "account": "미국 주식 해외 계좌 일반 과세 가정. 한국 ISA에는 XLP를 넣을 수 없음. 자동 주문 아님",
+  "buy1": {
+    "close_max": 78.0,
+    "rearm_close": 80.0,
+    "alloc_note": "2~3% 이내",
+    "note": "XLP 완료 종가 78달러 이하(향후 1년 PER 약 18배 환산, SSGA 2026-10-13 기준 20.11배 대비) AND 직전 거래일이 +2% 이상 급등일이 아님. 종가가 80달러 위로 올라가면 다시 무장"
+  },
+  "buy2": {
+    "close_max": 75.0,
+    "rearm_close": 77.5,
+    "spy_drawdown_min_pct": 10.0,
+    "alloc_note": "합계 5% 이하",
+    "note": "XLP 완료 종가 75달러 이하(52주 저점 75.16달러 부근) AND SPY 완료 종가가 최근 52주 종가 고점 대비 10% 이상 하락 AND 급등일 아님. 종가가 77.5달러 위로 올라가면 다시 무장"
+  },
+  "surge_day_pct": 2.0,
+  "stale_days": 6,
+  "sources": {
+    "bars": "Yahoo Finance chart v8 XLP, SPY 1d 1y (미국 동부시간 기준 완료 일봉만 사용, 당일 진행 봉 제외)"
+  },
+  "year_guard": null,
+  "ends_kst": "2027-04-15 23:59",
+  "ends_note": "6개월 뒤 78/75달러 기준과 향후 PER 환산을 재설계"
+}
