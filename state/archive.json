@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-15 10:50 KST",
+  "updated_at": "2026-10-15 10:58 KST",
   "items": [
+    {
+      "id": "mj5N1PPYhaMY",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 3f4f230",
+      "message": "2026-10-15 10:54 KST | OPS | workflow-lint / 3f4f230\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/38668150064",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792029265
+    },
     {
       "id": "iJ0RLmcG6SY2",
       "topic": "cwally-port",
