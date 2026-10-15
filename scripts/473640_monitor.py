@@ -33,6 +33,7 @@ def load_state() -> dict:
         "updated_at": None,
         "buy1_armed": True,
         "hold": None,
+        "buy1_hold_sent": False,
         "last_price": None,
         "last_inav": None,
         "last_premium_pct": None,
@@ -226,13 +227,16 @@ def main() -> int:
 
         if is_buy1 and state.get("buy1_armed", True):
             if is_hold:
-                alerts.append((
-                    "[473640] 가격, 괴리율 충족 | 보류 조건 때문에 검토 보류",
-                    body(stamp, status + " 보류 이유: " + ", ".join(reasons) + ".",
-                         "가격 조건은 맞았지만 무효 조건이 켜져 있어 사지 않습니다.",
-                         "보류가 풀린 뒤에도 27,000원 이하, 괴리율 0% 이하면 그때 검토.", TRIM, AVOID),
-                    4,
-                ))
+                # 보류 중에는 알림만 1회 보내고 무장은 유지한다. 보류가 풀린 날 조건이 아직 맞으면 1차 알림이 온다.
+                if not state.get("buy1_hold_sent"):
+                    alerts.append((
+                        "[473640] 가격, 괴리율 충족 | 보류 조건 때문에 검토 보류",
+                        body(stamp, status + " 보류 이유: " + ", ".join(reasons) + ".",
+                             "가격 조건은 맞았지만 무효 조건이 켜져 있어 사지 않습니다.",
+                             "보류가 풀린 날 27,000원 이하, 괴리율 0% 이하가 계속 맞으면 1차 알림이 따로 옵니다.", TRIM, AVOID),
+                        4,
+                    ))
+                    state["buy1_hold_sent"] = True
             else:
                 alerts.append((
                     "[473640] 1차 조건 충족 | 지정가 1차 검토",
@@ -240,9 +244,12 @@ def main() -> int:
                          "2차는 52주 저점 부근(약 25,000원)에서 따로 판단. 1차 뒤 가격만 보고 바로 더 사지 않음.", TRIM, AVOID),
                     4,
                 ))
-            state["buy1_armed"] = False
+                state["buy1_armed"] = False
+                state["buy1_hold_sent"] = False
         elif not state.get("buy1_armed", True) and price > b1["rearm_price"]:
             state["buy1_armed"] = True
+        if not is_buy1:
+            state["buy1_hold_sent"] = False
 
         state.update(last_price=price, last_inav=inav, last_premium_pct=round(prem, 3), last_gold=(g_last[0] if g_last else None))
 
