@@ -11,9 +11,32 @@
   "schedule_note": "새 cron 없음. 기존 port-alerts afternoon 평일 15:20 KST 슬롯에 부착. 한국장 실시간 가격과 베트남 오후장 iNAV가 함께 살아 있는 시간. VN지수는 직전 완료 종가만 사용. 조건이 새로 켜질 때만 발송.",
   "alert_policy": "change_only",
   "account": "중개형 ISA, 1,000만원 3분할 계획(1차 300 / 2차 300 / 3차 400만원). 자동 주문 아님",
-  "buy1": {"price_max": 26000, "discount_min_pct": 2.0, "rearm_price": 26500, "amount_manwon": 300, "note": "가격 26,000원 이하 AND iNAV 대비 할인 2% 이상 AND 중단 상태 아님. 26,500원 위로 올라가면 다시 무장"},
-  "stop": {"vn_close_below": 1650, "note": "VN지수 직전 완료 종가 1,650 미만이면 남은 분할 중단. 1,650 이상 회복 시 해제 알림"},
-  "confirm": {"vn_close_min": 1780, "days": 3, "price_cap": 28500, "amount_manwon": 400, "rearm_below": 1750, "note": "VN지수 완료 종가 3거래일 연속 1,780 이상이면 3차 추세 확인. 1,750 미만 종가가 나오면 다시 무장"},
+  "buy1": {
+    "price_max": 26000,
+    "discount_min_pct": 2.0,
+    "rearm_price": 26500,
+    "amount_manwon": 300,
+    "note": "가격 26,000원 이하 AND iNAV 대비 할인 2% 이상 AND 중단 상태 아님. 26,500원 위로 올라가면 다시 무장"
+  },
+  "buy2": {
+    "price_max": 24700,
+    "discount_min_pct": 2.0,
+    "rearm_price": 25200,
+    "amount_manwon": 300,
+    "note": "가격 24,700원 이하 AND iNAV 대비 할인 2% 이상 AND 중단 상태 아님. 25,200원 위로 올라가면 다시 무장. 1차와 같은 날 처음 충족되면 한 알림으로 묶음"
+  },
+  "stop": {
+    "vn_close_below": 1650,
+    "note": "VN지수 직전 완료 종가 1,650 미만이면 남은 분할 중단. 1,650 이상 회복 시 해제 알림"
+  },
+  "confirm": {
+    "vn_close_min": 1780,
+    "days": 3,
+    "price_cap": 28500,
+    "amount_manwon": 400,
+    "rearm_below": 1750,
+    "note": "VN지수 완료 종가 3거래일 연속 1,780 이상이면 3차 추세 확인. 1,750 미만 종가가 나오면 다시 무장"
+  },
   "discount_warn_pct": 5.0,
   "sources": {
     "price_inav": "Naver m.stock.naver.com/api/stock/245710/basic (closePrice 실시간) + /integration (totalInfos nav = 실시간 추정 NAV)",
