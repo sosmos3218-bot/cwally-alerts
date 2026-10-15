@@ -545,6 +545,7 @@ jobs:
             python scripts/jpfy27_monitor.py auto
             python scripts/446770_monitor.py auto
             python scripts/hynixlad_monitor.py auto
+            python scripts/xlp_monitor.py auto
           fi
           python scripts/ntfy_archive.py
           exit $failed
