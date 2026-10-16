@@ -4,18 +4,10 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "기존 flow 슬롯 평일 15:40 KST 재사용. 종가 상방 레벨 돌파 알림(kosdown 반대 방향).",
+  "ticker": "005930",
+  "levels": [220000, 230000],
   "year_guard": 2026,
   "expire_date": "2026-12-31",
-  "user": "Cwally",
-  "levels": [
-    220000,
-    230000
-  ],
-  "sources": {
-    "price": "https://m.stock.naver.com/api/stock/005930/price?pageSize=2&page=1",
-    "basic": "https://m.stock.naver.com/api/stock/005930/basic"
-  },
   "ends_kst": "2026-12-31 15:40",
   "ends_note": "평일 15:40 점검, 2026년 종료"
 }

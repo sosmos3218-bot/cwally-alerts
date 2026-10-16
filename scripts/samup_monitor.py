@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SAMUP upside level alert (stock/005930). Silent unless the close newly crosses above a level or fetch fails."""
+"""SAMUP upside level break alert."""
 from __future__ import annotations
 
 import json
@@ -15,8 +15,8 @@ from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "samup.json"
 STATE_PATH = ROOT / "state" / "samup.json"
-DRY = False
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
+CODE = "005930"
 
 
 def load_json(path: Path, fallback: dict) -> dict:
@@ -43,52 +43,12 @@ def num(text: str) -> float:
 
 
 def save(state: dict) -> None:
-    if DRY:
-        return
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def fail_once(state: dict, now: datetime, cfg: dict, title: str, note: str, dry: bool) -> None:
-    day = now.strftime("%Y-%m-%d")
-    stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    body = "\n".join([
-        f"{stamp} | SAMUP",
-        "이게 뭐 알림: 삼성전자(005930) 상방 레벨 점검 중 시세 조회가 실패했습니다.",
-        f"지금 상태: {note}",
-        "지금 할 일: 네이버 삼성전자(005930) 종가를 직접 확인하세요.",
-        "나중에: 다음 평일 15:40 KST에 다시 봅니다.",
-        "익절/줄일 때: 이 실패로 매매하지 마세요.",
-        "하지 말 것: 조회 실패를 레벨 돌파로 해석.",
-    ])
-    print(body)
-    if not dry and state.get("last_fail_day") != day:
-        publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 4, ["warning"], resolve_server(cfg.get("ntfy_server")))
-        state["last_fail_day"] = day
-    state["updated_at"] = stamp
-    save(state)
-
-
-def latest_closed(price_rows: list, basic: dict) -> dict | None:
-    status = str((basic or {}).get("marketStatus") or "").upper()
-    today = datetime.now(KST).strftime("%Y-%m-%d")
-    rows = list(price_rows or [])
-    now = datetime.now(KST)
-    after_close = now.weekday() < 5 and now.strftime("%H:%M") >= "15:30"
-    if rows and (status == "CLOSE" or after_close) and str(rows[0].get("localTradedAt") or "")[:10] == today:
-        return rows[0]
-    for row in rows:
-        if str(row.get("localTradedAt") or "")[:10] < today:
-            return row
-    return None
-
-
 def main() -> int:
-    global DRY
     dry = "dry" in [a.lower() for a in sys.argv[1:]]
-    DRY = dry
-    if dry:
-        print("DRY RUN: no ntfy, no state write")
     cfg = load_json(CFG_PATH, {})
     now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -110,23 +70,13 @@ def main() -> int:
         return 0
 
     try:
-        basic = json.loads(fetch(cfg["sources"]["basic"]))
-        price_rows = json.loads(fetch(cfg["sources"]["price"]))
+        basic = json.loads(fetch(f"https://m.stock.naver.com/api/stock/{CODE}/basic"))
+        close = num(basic.get("closePrice"))
+        day = now.strftime("%Y-%m-%d")
     except Exception as exc:
-        fail_once(state, now, cfg, "[SAMUP] 시세 조회 실패 | 판정 보류", f"삼성전자(005930) 시세 조회 실패: {exc}", dry)
+        print(f"fetch fail: {exc}")
         return 0
 
-    bar = latest_closed(price_rows, basic)
-    if not bar:
-        print("samup no closed bar; silent")
-        state["updated_at"] = stamp
-        save(state)
-        return 0
-
-    day = str(bar.get("localTradedAt") or "")[:10]
-    close = num(bar.get("closePrice"))
-
-    # Reset if fell back below a level
     for lv in levels:
         key = str(int(lv))
         if close < lv:
@@ -142,23 +92,23 @@ def main() -> int:
     state["fired"] = fired
     state["updated_at"] = stamp
     state["last_bar"] = {"day": day, "close": close}
-    print(stamp, "day", day, "close", close, "fired", fired, "new", new_hits)
+    print(stamp, "close", close, "new", new_hits)
 
     if not new_hits:
         save(state)
-        print("samup silent; no new level cross")
+        print("samup silent")
         return 0
 
-    broken = ", ".join(f"{int(lv):,}" for lv in new_hits)
-    title = f"[SAMUP] 종가 {close:,.0f} | {broken} 돌파 | 추격매수 금지"
+    broken = ", ".join(f"{int(lv)}" for lv in new_hits)
+    title = f"[SAMUP] 종가 {close:,.0f} | {broken} 돌파 | 상방 확인"
     body = "\n".join([
         f"{stamp} | SAMUP",
-        "이게 뭐 알림: 삼성전자(005930) 종가가 상방 레벨을 위로 넘었습니다. 매수 신호가 아닙니다.",
-        f"지금 상태: {day} 종가 {close:,.0f}. 돌파 레벨: {broken}.",
-        "지금 할 일: 보유 비중과 익절 기준을 점검하세요. 새로 사지 않습니다.",
-        "나중에: 종가가 해당 레벨 아래로 다시 내려가면 같은 레벨은 리셋됩니다.",
-        "익절/줄일 때: 기존 종목별 익절 규칙을 따르세요. 이 알림 자체는 주문이 아닙니다.",
-        "하지 말 것: 레벨 돌파를 보고 추격매수. 신용/미수.",
+        "이게 뭐 알림: 삼성전자 상방 레벨 돌파입니다. 매수 신호가 아닙니다.",
+        f"지금 상태: 종가 {close:,.0f}. 돌파 레벨: {broken}.",
+        "지금 할 일: 안착과 수급을 점검하세요. 하방 시나리오 유지.",
+        "나중에: 종가가 레벨 아래로 내려오면 리셋됩니다.",
+        "익절/줄일 때: 이 알림은 매수 주문이 아닙니다.",
+        "하지 말 것: 즉시 추격 매수 해석. 신용/미수.",
     ])
     print(body)
     if not dry:
