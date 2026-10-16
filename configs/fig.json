@@ -1,0 +1,44 @@
+{
+  "name": "fig",
+  "title_prefix": "[FIG]",
+  "ticker": "FIG",
+  "display": "피그마",
+  "as_of": "2026-10-16",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. Q3 실적 창(11/4) 전후 가격 구간 점검.",
+  "valid_until": "2026-11-15",
+  "alert_policy": "weekly_or_change",
+  "cik": "0001846576",
+  "holding": false,
+  "holding_note": "보유 여부 미확인. 가격 구간 알림이지 보유 손절 신호가 아님.",
+  "baseline": {
+    "price_date": "2026-10-15",
+    "price": 22.99,
+    "market_cap_b": 12.25,
+    "trail_pe": null,
+    "fwd_pe": 80,
+    "low_52w": 16.60,
+    "high_52w": 67.68,
+    "analyst_target": 30.10,
+    "q3_guidance_low": 373,
+    "q3_guidance_high": 375,
+    "last_known_filing": "2026-08-05"
+  },
+  "levels": {
+    "split": 20,
+    "chase": 27
+  },
+  "change_rules": {
+    "upgrade": "Q3 매출 380M+ 비트와 가이던스 상향, NDR 유지, AI 기여 확인",
+    "downgrade": "매출 가이던스 미스, NDR 하락, 가이던스 하향"
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/FIG?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0001846576.json",
+    "ir": "https://investor.figma.com/"
+  },
+  "ends_kst": "2026-11-15 09:00",
+  "ends_note": "평일 09:00 가격 구간·월요일 상태. Q3 실적(11/4) 창 후 정리. 2026-11-15 morning이 마지막"
+}
