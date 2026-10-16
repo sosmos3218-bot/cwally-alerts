@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-16 11:38 KST",
+  "updated_at": "2026-10-16 13:23 KST",
   "items": [
+    {
+      "id": "QnEnW6Ue8qNo",
+      "topic": "cwally-port",
+      "title": "218420 알림 설치 테스트",
+      "message": "218420 재검토/축소 조건 알림 설치 확인용입니다. 조건 충족 시에만 발송됩니다. 폰에서 수신되면 알려주세요.",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1792119342
+    },
     {
       "id": "oUJPe6tXwXwY",
       "topic": "cwally-port",
