@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""KOSPI downside level alert. Silent unless the daily close newly drops below a level or a fetch fails."""
+"""KOSPI downside level break alert. Silent unless a new level is broken or fetch fails."""
 from __future__ import annotations
 
 import json
@@ -22,8 +22,9 @@ def load_json(path: Path, fallback: dict) -> dict:
     if not path.exists():
         return dict(fallback)
     try:
+        data = json.loads(path.read_text(encoding="utf-8"))
         out = dict(fallback)
-        out.update(json.loads(path.read_text(encoding="utf-8")))
+        out.update(data)
         return out
     except json.JSONDecodeError:
         return dict(fallback)
@@ -37,9 +38,7 @@ def fetch(url: str, timeout: int = 20) -> str:
 
 def num(text: str) -> float:
     cleaned = str(text).replace(",", "").replace("+", "").strip()
-    if not cleaned or cleaned == "-":
-        return 0.0
-    return float(cleaned)
+    return float(cleaned) if cleaned and cleaned != "-" else 0.0
 
 
 def save(state: dict) -> None:
@@ -47,7 +46,27 @@ def save(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def latest_closed(price_rows: list[dict], basic: dict) -> dict | None:
+def fail_once(state: dict, now: datetime, cfg: dict, title: str, note: str, dry: bool) -> None:
+    day = now.strftime("%Y-%m-%d")
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    body = "\n".join([
+        f"{stamp} | KOSDOWN",
+        "이게 뭐 알림: 코스피 하방 레벨 점검 중 시세 조회가 실패했습니다.",
+        f"지금 상태: {note}",
+        "지금 할 일: 네이버 코스피 종가를 직접 확인하세요.",
+        "나중에: 다음 평일 15:40 KST에 다시 봅니다.",
+        "익절/줄일 때: 이 실패로 매매하지 마세요.",
+        "하지 말 것: 조회 실패를 레벨 이탈로 해석.",
+    ])
+    print(body)
+    if not dry and state.get("last_fail_day") != day:
+        publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 4, ["warning"], resolve_server(cfg.get("ntfy_server")))
+        state["last_fail_day"] = day
+    state["updated_at"] = stamp
+    save(state)
+
+
+def latest_closed(price_rows: list, basic: dict) -> dict | None:
     status = str((basic or {}).get("marketStatus") or "").upper()
     today = datetime.now(KST).strftime("%Y-%m-%d")
     rows = list(price_rows or [])
@@ -64,85 +83,78 @@ def main() -> int:
     cfg = load_json(CFG_PATH, {})
     now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    levels = sorted((float(x) for x in cfg.get("levels") or []), reverse=True)
     state = load_json(STATE_PATH, {"updated_at": None, "fired": {}, "last_sent": None, "last_fail_day": None})
-    fired = {str(int(lv)): bool((state.get("fired") or {}).get(str(int(lv)))) for lv in levels}
-    if dry:
-        print("DRY RUN: no ntfy, no state write")
+    levels = sorted([float(x) for x in (cfg.get("levels") or [5550, 5450, 5300, 5200, 5000])], reverse=True)
+    fired = dict(state.get("fired") or {})
+    for lv in levels:
+        fired.setdefault(str(int(lv)), False)
+
+    if now.year != int(cfg.get("year_guard") or 2026):
+        print("kosdown year-guard silent")
+        return 0
+    expire = datetime.strptime(cfg.get("expire_date") or "2026-12-31", "%Y-%m-%d").date()
+    if now.date() > expire:
+        print("kosdown expired silent")
+        return 0
     if now.weekday() >= 5:
         print("kosdown weekend silent")
         return 0
 
     try:
         basic = json.loads(fetch(cfg["sources"]["basic"]))
-        rows = json.loads(fetch(cfg["sources"]["price"]))
+        price_rows = json.loads(fetch(cfg["sources"]["price"]))
     except Exception as exc:
-        day = now.strftime("%Y-%m-%d")
-        title = "[KOSDOWN] 코스피 시세 조회 실패 | 판정 보류"
-        body = "\n".join(
-            [
-                f"{stamp} | KOSDOWN",
-                "이게 뭐 알림: 코스피 하락 레벨 점검 중 조회가 실패했습니다.",
-                f"지금 상태: {exc}",
-                "지금 할 일: 실패를 레벨 유지로 보지 마세요. 네이버 코스피 종가를 직접 확인하세요.",
-                "나중에: 다음 평일 15:40 KST에 다시 봅니다.",
-                "익절/줄일 때: 이 실패로 사거나 팔지 마세요.",
-                "하지 말 것: 조회 실패를 하락 신호로 해석.",
-            ]
-        )
-        print(body)
-        if not dry and state.get("last_fail_day") != day:
-            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 3, ["warning"], resolve_server(cfg.get("ntfy_server")))
-            state["last_fail_day"] = day
-            state["updated_at"] = stamp
-            save(state)
+        fail_once(state, now, cfg, "[KOSDOWN] 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
         return 0
 
-    bar = latest_closed(rows, basic)
+    bar = latest_closed(price_rows, basic)
     if not bar:
         print("kosdown no closed bar; silent")
+        state["updated_at"] = stamp
+        save(state)
         return 0
+
     day = str(bar.get("localTradedAt") or "")[:10]
     close = num(bar.get("closePrice"))
 
-    new_hits = []
+    # Reset if recovered above a level
     for lv in levels:
         key = str(int(lv))
         if close > lv:
             fired[key] = False
-        elif close < lv and not fired[key]:
+
+    new_hits = []
+    for lv in levels:
+        key = str(int(lv))
+        if close <= lv and not fired.get(key):
             fired[key] = True
             new_hits.append(lv)
 
-    print(stamp, "day", day, "close", close, "fired", fired, "new", new_hits)
-    if dry:
-        if new_hits:
-            print("would send: [KOSDOWN] 코스피 종가 " + ", ".join(f"{lv:,.0f}" for lv in new_hits) + " 아래")
-        return 0
+    state["fired"] = fired
+    state["updated_at"] = stamp
+    state["last_bar"] = {"day": day, "close": close}
+    print(stamp, "close", close, "new", new_hits)
 
-    state.update({"fired": fired, "updated_at": stamp, "last_bar": {"day": day, "close": close}})
     if not new_hits:
         save(state)
         print("kosdown silent; no new level break")
         return 0
 
-    lows = ", ".join(f"{lv:,.0f}" for lv in new_hits)
-    below = [k for k, v in fired.items() if v]
-    title = f"[KOSDOWN] 코스피 종가 {lows} 아래 | 새 매수 보류"
-    body = "\n".join(
-        [
-            f"{stamp} | KOSDOWN",
-            "이게 뭐 알림: 코스피 종가가 정해둔 하락 레벨 아래로 내려갔습니다.",
-            f"지금 상태: {day} 종가 {close:,.2f}. 새로 깬 레벨 {lows}. 지금 아래인 레벨 {', '.join(below)}.",
-            "지금 할 일: 새 매수는 잠시 멈추고 보유 비중을 확인하세요.",
-            "나중에: 종가가 레벨 위로 회복하면 그 레벨은 리셋되고 다시 깨지면 또 알립니다.",
-            "익절/줄일 때: 이 알림은 매도 주문이 아닙니다. 기존 종목별 규칙을 따르세요.",
-            "하지 말 것: 공포 추격 매도. 신용/미수.",
-        ]
-    )
+    broken = ", ".join(f"{int(lv)}" for lv in new_hits)
+    title = f"[KOSDOWN] 종가 {close:,.2f} | {broken} 이탈 | 하방 확인"
+    body = "\n".join([
+        f"{stamp} | KOSDOWN",
+        "이게 뭐 알림: 코스피 하방 시나리오 레벨 이탈입니다. 매도 신호가 아닙니다.",
+        f"지금 상태: {day} 종가 {close:,.2f}. 이탈 레벨: {broken}.",
+        "지금 할 일: 해당 지지 재확인과 외국인 수급을 점검하세요. 추가 하방 가능성 열어두세요.",
+        "나중에: 종가가 해당 레벨 위로 회복하면 같은 레벨은 리셋됩니다.",
+        "익절/줄일 때: 이 알림은 줄이라는 주문이 아닙니다.",
+        "하지 말 것: 레벨 이탈을 즉시 추격 매도로 해석. 신용/미수.",
+    ])
     print(body)
-    publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 4, ["chart_with_downwards_trend"], resolve_server(cfg.get("ntfy_server")))
-    state["last_sent"] = {"at": stamp, "levels": [int(x) for x in new_hits]}
+    if not dry:
+        publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 4, ["warning"], resolve_server(cfg.get("ntfy_server")))
+        state["last_sent"] = {"at": stamp, "hits": new_hits}
     save(state)
     return 0
 

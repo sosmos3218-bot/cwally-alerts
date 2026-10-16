@@ -1,17 +1,6 @@
 {
-  "updated_at": "2026-10-16 15:50 KST",
-  "fired": {
-    "5550": false,
-    "5450": false,
-    "5300": false,
-    "5200": false,
-    "5000": false
-  },
-  "last_bar": {
-    "day": "2026-10-16",
-    "close": 5668.05
-  },
+  "updated_at": null,
+  "fired": {},
   "last_sent": null,
-  "last_fail_day": null,
-  "init_note": "2026-10-16 종가 5,668.05로 초기화. 모든 레벨이 종가 아래라 발사 표시 없음."
+  "last_fail_day": null
 }

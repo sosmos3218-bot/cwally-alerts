@@ -4,14 +4,15 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40, flow-alerts.yml / flow) 재사용. 일봉 종가 기준.",
+  "schedule_note": "기존 flow 슬롯 평일 15:40 KST 재사용. 하방 레벨 이탈 알림.",
+  "year_guard": 2026,
+  "expire_date": "2026-12-31",
   "user": "Cwally",
   "levels": [5550, 5450, 5300, 5200, 5000],
-  "level_rule": "종가가 레벨 아래로 내려가면 1회 알림. 종가가 레벨 위로 회복하면 그 레벨 리셋.",
   "sources": {
     "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=2&page=1",
     "basic": "https://m.stock.naver.com/api/index/KOSPI/basic"
   },
-  "ends_kst": null,
-  "ends_note": "종료일 없음. 평일 15:40 종가 점검"
+  "ends_kst": "2026-12-31 15:40",
+  "ends_note": "평일 15:40 점검, 2026년 종료"
 }
