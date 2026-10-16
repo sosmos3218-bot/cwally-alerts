@@ -1,0 +1,13 @@
+{
+  "updated_at": null,
+  "fired": {
+    "band_high": false,
+    "band_low": false
+  },
+  "last_move_day": null,
+  "last_fail_day": null,
+  "last_bar": null,
+  "last_sent": null,
+  "earnings_notified": false,
+  "empty_notified": false
+}
