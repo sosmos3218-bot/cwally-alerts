@@ -1,0 +1,32 @@
+{
+  "name": "neeq3",
+  "title_prefix": "[NEE]",
+  "ticker": "NEE",
+  "display": "NextEra Energy",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "23:40",
+  "oneshot_kst": ["2026-10-21 20:40", "2026-10-21 22:40", "2026-10-21 23:40"],
+  "window_start_kst": "2026-10-21 20:00",
+  "expire_date": "2026-10-21",
+  "event_year": 2026,
+  "release_at_kst": "2026-10-21 20:30",
+  "call_at_kst": "2026-10-21 22:00",
+  "cik": "0000753308",
+  "baseline": {
+    "guidance_low": 3.92,
+    "guidance_high": 4.02,
+    "analyst_target": 97.0,
+    "pre_price": 79.0,
+    "long_term_cagr": 8.0
+  },
+  "sources": {
+    "news": "https://www.investor.nexteraenergy.com/news-and-events/news-releases",
+    "sec": "https://data.sec.gov/submissions/CIK0000753308.json",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NEE?interval=1d&range=5d"
+  },
+  "schedule_note": "NEE Q3 2026 BMO 2026-10-21, call 9am ET=22:00 KST. 1차 20:40=UTC 40 11 21 10 *. 2차 22:40=UTC 40 13 21 10 *. 3차 23:40=UTC 40 14 21 10 *. 연도 가드 2026만.",
+  "explain": "NEE 3분기 실적 직후 EPS/가이던스, 주가 반응, Dominion 합병 규제 진행, 현재가 vs 목표가 비교로 보유/관심/주의 중 하나로 갱신하는 일회 알림입니다. 투자 권유가 아닙니다.",
+  "ends_kst": "2026-10-21 23:40",
+  "ends_note": "실적일 일회 알림(10/21 20:40, 22:40, 23:40), 23:40이 마지막"
+}
