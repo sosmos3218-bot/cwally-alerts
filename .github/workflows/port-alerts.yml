@@ -191,6 +191,10 @@ on:
     # kosreb oneshot_kst (KST→UTC): 2026-10-14 23:10, 10-15 09:20. CPI 후 코스피 반등 재평가 (GitHub fallback)
     - cron: "10 14 14 10 *"
     - cron: "20 0 15 10 *"
+    # neeq3 oneshot_kst (KST→UTC): 2026-10-21 20:40, 22:40, 23:40. Q3 실적 판정
+    - cron: "40 11 21 10 *"
+    - cron: "40 13 21 10 *"
+    - cron: "40 14 21 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -338,6 +342,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "5 0 21 10 *" ]; then JOB=sena
             elif [ "${{ github.event.schedule }}" = "0 0 28 10 *" ]; then JOB=manh
             elif [ "${{ github.event.schedule }}" = "10 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 15 10 *" ]; then JOB=kosreb
+            elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -889,6 +894,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/oneshot_pick.py run "$RUNNER_TEMP/oneshot_plan.json"
+      - name: Run neeq3
+        if: steps.pick.outputs.job == 'neeq3' || steps.pick.outputs.job == 'oneshot' || steps.pick.outputs.job == 'all'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/neeq3_monitor.py auto
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
