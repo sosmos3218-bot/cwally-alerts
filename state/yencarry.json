@@ -4,11 +4,11 @@
   "boj_sent_date": null,
   "boj_press_sent_date": "2026-09-18",
   "weekly_sent_week": "2026-W42",
-  "last_event_key": "원달러 1,340원 → 1,340 이탈",
+  "last_event_key": "달러/엔 158.1 → 158 돌파",
   "last_quotes": {
-    "usdjpy": 157.994,
-    "usdkrw": 1348.18,
+    "usdjpy": 158.136,
+    "usdkrw": 1340.85,
     "jgb30": 4.063
   },
-  "updated_at": "2026-10-15T15:21:43.609119+09:00"
+  "updated_at": "2026-10-16T09:00:59.258449+09:00"
 }

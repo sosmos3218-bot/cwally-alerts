@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-15T09:06:37.173478+09:00",
+  "updated_at": "2026-10-16T09:06:54.675362+09:00",
   "price_zone": "rich",
   "yield_band": "base",
   "weekly_sent": {
@@ -7,6 +7,6 @@
     "2026-W42": "2026-10-12"
   },
   "fetch_fail_date": null,
-  "last_price": 198.7,
-  "last_yield": 5.19
+  "last_price": 203.39,
+  "last_yield": 5.089
 }
