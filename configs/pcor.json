@@ -1,1 +1,67 @@
-$(cat /tmp/pcor.json)
+{
+  "name": "pcor",
+  "title_prefix": "[PCOR]",
+  "ticker": "PCOR",
+  "display": "Procore",
+  "as_of": "2026-10-05",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "08:00",
+  "oneshot_kst": ["2026-11-05 08:00", "2026-11-05 18:00"],
+  "window_start_kst": "2026-11-05 07:30",
+  "expire_date": "2026-11-06",
+  "event_year": 2026,
+  "release_at_kst": "2026-11-05 05:00",
+  "schedule_note": "3Q26 실적은 2026-11-04 미국장 마감 후. 1차 2026-11-05 08:00 KST = UTC 0 23 4 11 *. 원문 없으면 18:00 KST = UTC 0 9 5 11 * 재확인. 연도 가드 2026만. 새 cron 파일과 평일 반복 슬롯은 추가하지 않음. 디스패치 매핑은 워크플로 승인 후.",
+  "baseline": {
+    "price_date": "2026-10-02",
+    "price": 50.95,
+    "q2_revenue_m": 375,
+    "q2_yoy": 16,
+    "q2_nongaap_om": 21,
+    "q2_fcf_m": 65,
+    "q2_customers_100k": 2871,
+    "q2_customers_yoy": 14,
+    "q2_grr": 95,
+    "q3_guide_low_m": 382,
+    "q3_guide_high_m": 384,
+    "q3_guide_yoy": 13.3,
+    "q3_base_m": 339,
+    "fy26_guide_low_m": 1510,
+    "fy26_guide_high_m": 1514
+  },
+  "thresholds": {
+    "buy1": 50,
+    "buy2": 45,
+    "rev_pass": 15,
+    "rev_hold": 12,
+    "om_pass": 20,
+    "om_hold": 19,
+    "fcf_pass": 50,
+    "fcf_hold": 20,
+    "cust_pass": 12,
+    "cust_hold": 8,
+    "grr_pass": 95,
+    "grr_hold": 93,
+    "g27_pass": 14,
+    "g27_hold": 12
+  },
+  "checklist": {
+    "매출 증가율": "통과 15% 이상 / 보류 12% 이상 15% 미만 / 축소 12% 미만",
+    "non-GAAP 영업이익률": "통과 20% 이상 / 보류 19% 이상 20% 미만 / 축소 19% 미만",
+    "자유현금흐름": "통과 5,000만 달러 이상 / 보류 2,000만 이상 5,000만 미만 / 축소 2,000만 미만",
+    "10만 달러 이상 고객 증가": "통과 전년비 12% 이상 / 보류 8% 이상 12% 미만 / 축소 8% 미만",
+    "총매출 유지율": "통과 95% 이상 / 보류 93% 이상 95% 미만 / 축소 93% 미만",
+    "2027 가이던스": "통과 상향 또는 증가율 14% 이상 / 보류 유지 또는 12% 이상 14% 미만 / 축소 하향 또는 12% 미만"
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/PCOR?interval=1d&range=5d",
+    "press": "https://www.procore.com/press",
+    "ir": "https://investors.procore.com/",
+    "sec": "https://data.sec.gov/submissions/CIK0001611052.json"
+  },
+  "cik": "0001611052",
+  "explain": "Procore 3분기 원문만으로 매출 증가율, non-GAAP 영업이익률, 자유현금흐름, 10만달러 고객, 총매출 유지율, 2027 가이던스를 통과/보류/축소로 나누는 일회 알림입니다.",
+  "ends_kst": "2026-11-05 18:00",
+  "ends_note": "Procore 3분기 일회 알림, 11/5 18:00이 마지막"
+}
