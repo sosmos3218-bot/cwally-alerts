@@ -7,6 +7,8 @@ KRX 장 마감 뒤(15:45 KST) 당일 완료 종가로 구간을 판정하고, �
   구간 2: 2,270원 <= 종가 (2,600원 미만이거나 거래량 부족) -> 구 저점 회복, 실적 전 소액만
   구간 3: 종가 >= 2,600원 이고 거래량 >= 직전 20거래일 평균 -> 추세 회복
 아래로 내려가는 판정은 경계선 -1%(recover_buffer_pct)에서 한다(하루 흔들림 방지).
+3분기 실적: 네이버 분기 실적 칸(q3_gate.period_key)이 컨센서스(isConsensus=Y)에서 실제치로 바뀌면 영업이익을
+  9억 이상 유지 / 5~8억 둔화 / 5억 미만 악화로 한 번 판정해 알린다(정수 억 단위라 반올림 한계 있음).
 공시: CB/정정/유상증자/실적 등 주요 공시가 새로 올라오면 알린다(공매도 과열, 투자주의 등 시장조치는 제외).
 첫 실행은 기준일 종가로 구간을 정하고 공시 목록을 조용히 기록한다.
 modes: auto(기본) | dry(발송 없음, state 안 씀) | install(설치 확인 1회, state 안 씀)
@@ -116,6 +118,32 @@ def zone_alert(prev: int, z: int, lines: dict) -> tuple[str, str, int]:
                 "추세 회복이 꺾였습니다. 새로 더 사지 말고 2,270원 지지 여부를 보세요.", 3)
     return ("[REMED] 2,600원 회복(거래량 동반) | 추세 전환, 추격 금지",
             "추세가 돌아선 신호입니다. 다음 날 바로 추격하지 말고 눌림(2,600원 부근)과 실적을 보고 판단하세요.", 4)
+
+
+QUARTER = "https://m.stock.naver.com/api/stock/{code}/finance/quarter"
+
+
+def quarter_op(code: str, key: str) -> tuple[float | None, str]:
+    """(영업이익 억원, 상태). 상태: actual | pending | missing."""
+    raw = naver_api.get_json(QUARTER.format(code=code))
+    fin = (raw or {}).get("financeInfo") or {}
+    col = next((t for t in fin.get("trTitleList") or [] if t.get("key") == key), None)
+    if col is None:
+        return None, "missing"
+    if str(col.get("isConsensus") or "").upper() == "Y":
+        return None, "pending"
+    row = next((r for r in fin.get("rowList") or [] if r.get("title") == "영업이익"), None)
+    val = naver_api.num(((row or {}).get("columns") or {}).get(key, {}).get("value")) if row else None
+    return (val, "actual") if val is not None else (None, "pending")
+
+
+def q3_grade(op: float, gate: dict) -> tuple[str, str, int]:
+    keep, slow = float(gate.get("maintain", 9)), float(gate.get("slow_min", 5))
+    if op >= keep:
+        return ("유지", "실적 조건은 통과. 진입은 종가 구간(2,270원 위 마감)과 함께 볼 때만 목표 비중 1/3씩 분할.", 4)
+    if op >= slow:
+        return ("둔화", "2분기 9억보다 둔화. 진입을 서두르지 말고 4분기 흐름이나 2,600원 회복(거래량 동반)을 기다리세요.", 3)
+    return ("악화", "실적 개선 근거가 약해졌습니다. 신규 진입 보류, 기준선을 다시 잡습니다.", 4)
 
 
 def notice_alerts(cfg: dict, items: list[dict], seen: set[str]) -> list[dict]:
@@ -242,6 +270,21 @@ def main() -> int:
                           if cb_fix else "공시 원문을 먼저 읽으세요. 희석(CB, 유상증자)이나 실적 변화면 기준선을 다시 봅니다.")
                 alerts.append((title, body(stamp, status, action, LATER, TRIM, AVOID), 4))
         state["seen_notices"] = sorted(seen | {it["id"] for it in items})[-60:]
+
+    gate = cfg.get("q3_gate") or {}
+    if gate and not state.get("q3_done"):
+        try:
+            op, st = quarter_op(code, str(gate.get("period_key") or "202609"))
+        except Exception as exc:  # noqa: BLE001
+            op, st = None, f"error {exc}"
+        print(f"q3 {gate.get('period_key')} op={op} status={st}")
+        if st == "actual" and op is not None:
+            grade, action, pri = q3_grade(op, gate)
+            status = (f"3분기 영업이익 {op:,.0f}억 원(네이버 분기 실적, 정수 억 단위). 직전 2분기 9억, 1분기 7억. "
+                      f"판정 {grade}: 9억 이상 유지 / 5~8억 둔화 / 5억 미만 악화.")
+            alerts.append((f"[REMED] 3분기 영업이익 {op:,.0f}억 | {grade}",
+                           body(stamp, status, action, "분기보고서 원문(DART)에서 일회성 손익과 순현금을 확인하세요. " + LATER, TRIM, AVOID), pri))
+            state["q3_done"] = {"op": op, "grade": grade, "at": stamp}
 
     for title, msg, pri in alerts:
         print(title)
