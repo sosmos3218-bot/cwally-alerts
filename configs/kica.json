@@ -1,0 +1,40 @@
+{
+  "name": "kica",
+  "title_prefix": "[KICA]",
+  "ticker": "053300",
+  "display": "한국정보인증",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. KRX 정규장 종가(siseJson) 기준. 평소엔 침묵하고 조건일 때만 발송.",
+  "oneshot_kst": ["2026-11-13 18:00"],
+  "oneshot_note": "3분기 분기보고서 공시일 추정. 법정 기한 11-14(토)이고 1분기는 기한 하루 전(05-14)에 공시. 확정 일정 아님.",
+  "year_guard": 2026,
+  "holding": true,
+  "levels": {
+    "band_low": 4500,
+    "band_high": 6500,
+    "move_pct": 5.0,
+    "band_reset_margin": 100
+  },
+  "baseline": {
+    "day": "2026-10-16",
+    "close": 5160,
+    "note": "설정일 종가. 이 날은 신규 충족으로 보지 않는다."
+  },
+  "earnings": {
+    "key": "202609",
+    "period_end": "2026-09-30",
+    "prev_q3_op_eok": 83,
+    "q2_op_eok": 85,
+    "h1_op_eok": 176,
+    "expire_date": "2026-11-13"
+  },
+  "sources": {
+    "daily": "https://api.finance.naver.com/siseJson.naver?symbol=053300&requestType=1&startTime={start}&endTime={end}&timeframe=day",
+    "integration": "https://m.stock.naver.com/api/stock/053300/integration",
+    "quarter": "https://m.stock.naver.com/api/stock/053300/finance/quarter"
+  },
+  "ends_kst": "2026-11-13 18:00",
+  "ends_note": "3분기 실적 공시일 확인 후 종료. 평일 15:40 조건 알림은 이때까지, 연장은 별도 결정"
+}
