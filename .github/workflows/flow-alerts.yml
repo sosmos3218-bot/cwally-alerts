@@ -63,6 +63,7 @@ jobs:
           run_one flow_monitor python scripts/flow_monitor.py
           run_one secu_flow python scripts/secu_flow_monitor.py
           run_one kosbrk python scripts/kosbrk_monitor.py
+          run_one kosdown python scripts/kosdown_monitor.py
           run_one k278240 python scripts/k278240_monitor.py
           run_one 377990 python scripts/377990_monitor.py
           run_one ethhl python scripts/ethhl_monitor.py
@@ -76,7 +77,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/k278240.json state/377990.json state/ethhl.json state/fxbox.json
+          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/k278240.json state/377990.json state/ethhl.json state/fxbox.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main
