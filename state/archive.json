@@ -1,6 +1,39 @@
 {
-  "updated_at": "2026-10-16 09:12 KST",
+  "updated_at": "2026-10-16 11:38 KST",
   "items": [
+    {
+      "id": "oUJPe6tXwXwY",
+      "topic": "cwally-port",
+      "title": "[NKE] Investor Day 점검 설치 확인",
+      "message": "NKE Investor Day(11/16~17) 자동 대조 루틴이 설치됐습니다. 11/18 11:00 KST부터 최대 3회(11/18~11/20) 확인하고, 결과는 이 topic으로 1회만 옵니다. 이 메시지는 설치 테스트입니다.",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1792115878
+    },
+    {
+      "id": "WwDetXNWC5U7",
+      "topic": "cwally-port",
+      "title": "[CELL3Q] 설치 확인",
+      "message": "셀트리온(068270) 3Q26 확정 IR 자료 감시를 설치했습니다. 평일 18:00 KST에 IR 자료실을 확인하고, \"2026년 3분기 경영실적\"이 올라오면 제품별 매출, 미국 리베이트, 4분기 가이던스로 10/16 192,600원 판단을 유지/상향/하향 중 하나로 1회 보냅니다. 투자 권유 아님.\n꺼지는 때: 2026-11-20 18:00 KST 실행이 마지막 (판정 1회 발송 후 이후 실행은 즉시 종료)",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1792115293
+    },
+    {
+      "id": "J8EaQOrlVV39",
+      "topic": "cwally-port",
+      "title": "[설치 확인] 물가채 vs 국고채 주간 모니터링",
+      "message": "테스트 알림입니다. 이 알림이 보이면 수신 확인이라고 답해 주세요. 첫 실제 알림은 10/19(월) 09:00 KST 예정입니다.",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1792114791
+    },
     {
       "id": "Gr64chbj3S6b",
       "topic": "cwally-port",
