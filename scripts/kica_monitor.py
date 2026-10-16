@@ -3,7 +3,9 @@
 
   kica_monitor.py            daily (flow slot 15:40): silent unless a condition hits
   kica_monitor.py daily dry  same, prints only (no ntfy, no state write)
-  kica_monitor.py auto       Q3 2026 earnings one-shot (oneshot_pick passes "auto")
+  kica_monitor.py auto       Q3 2026 earnings one-shot (oneshot_pick passes "auto"); candidates 11-12/13/16.
+                             Sends once on the first day results are found; silent if not yet published,
+                             except on the last candidate day (one "미게시" notice). Silent after a send.
   kica_monitor.py dry        earnings preview + daily preview, no ntfy, no state write
   kica_monitor.py force      earnings one-shot ignoring the date window
   kica_monitor.py install    one install-confirmation send (AGENTS.md), no state write
@@ -196,7 +198,7 @@ def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
             "이게 뭐 알림: 한국정보인증 종가가 정해둔 조건(하루 5% 이상 변동, 4,500~6,500원 밖)에 걸렸습니다. 매매 신호가 아닙니다.",
             f"지금 결과/상태: {day} 종가 {close:,}원 (전일 {prev['close']:,}원, {chg:+.2f}%). {valuation(cfg)}.",
             f"지금 할 일: {action}",
-            "나중에: 3분기 분기보고서(11월 13일 전후 예상)에서 영업이익을 확인합니다. 밴드 알림은 종가가 안쪽으로 100원 돌아오면 다시 열립니다.",
+            "나중에: 3분기 분기보고서(11월 12~16일 예상)에서 영업이익을 확인합니다. 밴드 알림은 종가가 안쪽으로 100원 돌아오면 다시 열립니다.",
             "익절/줄일 때: 이 알림은 주문이 아닙니다. 줄일지는 본인이 미리 정한 기준으로 판단하세요.",
             "하지 말 것: 하루 움직임만 보고 추격매수. 신용/미수.",
         ]
@@ -237,6 +239,11 @@ def quarter(cfg: dict) -> dict | None:
     return {"op": op, "rev": num(rows.get("매출액")), "ni": num(rows.get("당기순이익"))}
 
 
+def last_oneshot_day(cfg: dict) -> str:
+    days = sorted(str(t)[:10] for t in (cfg.get("oneshot_kst") or []))
+    return days[-1] if days else cfg["earnings"]["expire_date"]
+
+
 def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> None:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     e = cfg["earnings"]
@@ -254,6 +261,10 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
         save(state, dry)
         return
     if q is None:
+        final_day = last_oneshot_day(cfg)
+        if mode == "auto" and now.strftime("%Y-%m-%d") < final_day:
+            print(f"kica earnings not published yet; silent until final candidate {final_day}")
+            return
         if state.get("empty_notified") and not dry:
             print("kica earnings not published; already told")
             return
@@ -263,7 +274,7 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
                 "이게 뭐 알림: 한국정보인증 3분기 실적을 확인하려 했는데 아직 게시되지 않았습니다.",
                 "지금 결과/상태: 네이버 분기 실적에 2026.09 확정치가 없습니다. 공시가 아직 없거나 반영이 늦은 것입니다.",
                 "지금 할 일: DART에서 한국정보인증 분기보고서가 올라왔는지 직접 확인하세요.",
-                "나중에: 법정 제출 기한은 11월 14일(토)이라 실제로는 11월 16일(월)까지 밀릴 수 있습니다. 자동 재확인은 없습니다.",
+                "나중에: 11월 12일, 13일, 16일 후보일에도 확인되지 않았습니다. 이후 자동 재확인은 없습니다. 지연 공시나 정정 여부를 확인하세요.",
                 "익절/줄일 때: 실적 숫자를 확인하기 전에는 판단하지 마세요.",
                 "하지 말 것: 미게시를 호재나 악재로 해석.",
             ]
