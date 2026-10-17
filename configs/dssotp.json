@@ -1,0 +1,74 @@
+{
+  "name": "dssotp",
+  "title_prefix": "[DSSOTP]",
+  "ticker": "000150",
+  "display": "두산",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. 두산 3분기 연결 잠정실적 공정공시가 처음 확인된 날 한 번만 보내고 평소엔 침묵. 대만 장 마감(14:30 KST) 뒤라 대만 3사도 당일 종가.",
+  "year_guard": 2026,
+  "holding": null,
+  "holding_note": "보유 여부 미확인. 보유자 전제 문구를 쓰지 않는다.",
+  "trigger": {
+    "title_key": "연결재무제표기준영업(잠정)실적",
+    "period_end": "2026-09-30",
+    "since": "2026-10-01",
+    "expire_date": "2026-11-16",
+    "expire_note": "3분기 보고서 법정 기한 11-14(토) 다음 영업일. 이날까지 잠정실적 공시가 없으면 미게시 안내 1회.",
+    "prev": {
+      "label": "2분기",
+      "rev_eok": 55861,
+      "op_eok": 4884,
+      "sep_rev_eok": 6020,
+      "sep_op_eok": 1569
+    },
+    "ebg_q3_op_est_eok": 2263,
+    "ebg_q3_op_est_note": "메리츠 2026-10-01 전자BG 3Q26 영업이익 추정"
+  },
+  "sotp": {
+    "ebg_ebitda_2027e_eok": 12900,
+    "ebg_note": "전자BG 2027E EBITDA 1.29조. 메리츠 2027E 전자BG 영업이익 1조1,793억에 감가상각을 더한 추정치(직전 분석값, 출처 미확인).",
+    "multiples": [12, 14, 16, 18, 20],
+    "discounts_pct": [40, 50, 60, 70, 80],
+    "base_discount_pct": 50,
+    "conservative_discount_pct": 80,
+    "discount_note": "지분가치(상장/비상장 자회사)에만 할인. 전자BG와 실트론 영업가치는 할인하지 않음. 기준 50%, 메리츠 방식 80%는 보수 줄로 함께 표시.",
+    "siltron_eok": 23000,
+    "siltron_note": "SK실트론 70.6% 인수가 2.3조(종결 예정 2027-01-31). 메리츠 PER 기준 3.54조는 반영 안 함.",
+    "net_debt_eok": 30000,
+    "net_debt_note": "실트론 인수 후 별도 순차입금 전망 약 3조(나이스신용평가).",
+    "other_stakes_eok": 6090,
+    "other_stakes_note": "오리콤, 두산포트폴리오홀딩스, 로지스틱스솔루션, 모빌리티이노베이션, 기타 투자자산(메리츠 장부가 합계).",
+    "listed": [
+      {"code": "034020", "name": "두산에너빌리티", "shares_held": 194666532, "note": "상장주식 640,561,146주 x 30.39%"},
+      {"code": "454910", "name": "두산로보틱스", "shares_held": 32394250, "note": "49.98%, 2026-02 PRS 처분 후"}
+    ],
+    "preferred": [
+      {"code": "000155", "shares": 3432220},
+      {"code": "000157", "shares": 845176}
+    ],
+    "common_shares_out": 13522969,
+    "common_shares_note": "2026-10-02 소각 후 보통주 14,237,411주에서 자사주를 뺀 유통주식수(메리츠 기준)."
+  },
+  "peers": {
+    "baseline_date": "2026-09-30",
+    "source": "메리츠증권 2026-10-01 두산 리포트 표6(Bloomberg 컨센서스) 2027E EV/EBITDA",
+    "method": "현재 배수 = 기준 배수 x (현재 주가 / 9-30 종가). 순차입금과 2027E EBITDA 추정치는 기준일 값으로 고정한 근사.",
+    "stale_days": 45,
+    "items": [
+      {"code": "2383", "name": "EMC", "market": "tse", "ev_ebitda_2027e": 16.3, "base_price": 4935},
+      {"code": "6274", "name": "TUC", "market": "otc", "ev_ebitda_2027e": 14.4, "base_price": 1520},
+      {"code": "6213", "name": "ITEQ", "market": "tse", "ev_ebitda_2027e": 13.4, "base_price": 623}
+    ]
+  },
+  "sources": {
+    "krx_daily": "https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=1&startTime={start}&endTime={end}&timeframe=day",
+    "notice": "stock.naver.com/api/domestic/detail/notice (naver_api.notices)",
+    "tw_live": "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={chans}",
+    "twse_day": "https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={yyyymm01}&stockNo={code}",
+    "tpex_day": "https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock?code={code}&date={yyyy}/{mm}/01&response=json"
+  },
+  "ends_kst": "2026-11-16 15:40",
+  "ends_note": "두산 3분기 잠정실적 확인 후 1회 발송. 11-16까지 미게시면 미게시 안내 1회 후 종료"
+}
