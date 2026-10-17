@@ -352,96 +352,21 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 23 13 10 *" ]; then JOB=bankrate1014
             elif [ "${{ github.event.schedule }}" = "23 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "23 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 7 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 10 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 11 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 3 14 11 *" ]; then JOB=wbtnq3
             elif [ "${{ github.event.schedule }}" = "26 7 2 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 3 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 4 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 4 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 5 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 6 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 9 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 11 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 13 11 *" ] || [ "${{ github.event.schedule }}" = "26 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "17 0 16 11 *" ]; then JOB=dearq3
-            elif [ "${{ github.event.schedule }}" = "10 23 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 2 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 29 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 3 11 *" ]; then JOB=secq3
-            elif [ "${{ github.event.schedule }}" = "42 23 11 10 *" ] || [ "${{ github.event.schedule }}" = "42 7 29 10 *" ]; then JOB=q3flow
             elif [ "${{ github.event.schedule }}" = "10 11 29 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 29 10 *" ] || [ "${{ github.event.schedule }}" = "20 20 29 10 *" ]; then JOB=llyq3
             elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ]; then JOB=kzq3
+            elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "30 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "30 0 14 10 *" ]; then JOB=dearattr
             elif [ "${{ github.event.schedule }}" = "5 0 21 10 *" ]; then JOB=sena
             elif [ "${{ github.event.schedule }}" = "0 0 28 10 *" ]; then JOB=manh
             elif [ "${{ github.event.schedule }}" = "10 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 15 10 *" ]; then JOB=kosreb
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
-            elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             else
-              echo "unmatched schedule: ${{ github.event.schedule }}"
+              echo "unmapped schedule ${{ github.event.schedule }}; stop" >&2
               exit 1
             fi
           fi
-          [ -z "$JOB" ] && JOB=all
-          # One-shot dedupe (scripts/oneshot_pick.py, state/slots/oneshot.json, docs/ontime-dispatch.md).
-          # Read the marks from origin/main: this run's checkout can predate the on-time run's push.
-          sync_oneshot_marks() {
-            git fetch -q origin main
-            mkdir -p state/slots
-            git show origin/main:state/slots/oneshot.json > state/slots/oneshot.json 2>/dev/null || echo '{"done": {}}' > state/slots/oneshot.json
-          }
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            case "$JOB" in
-              morning|afternoon|portlight|0090b0) ;;
-              *)
-                # late GitHub one-shot cron = fallback; skip if the on-time dispatch already ran it
-                sync_oneshot_marks
-                rc=0; KEY=$(python scripts/oneshot_pick.py check-cron "$JOB" "${{ github.event.schedule }}") || rc=$?
-                if [ "$rc" = "10" ]; then echo "one-shot $KEY already ran on time; skip"; JOB=skip
-                elif [ "$rc" = "0" ]; then python scripts/oneshot_pick.py mark "$KEY"
-                else echo "one-shot cron not listed in oneshot_kst ($KEY); run without mark"
-                fi
-                ;;
-            esac
-          fi
-          if [ "$JOB" = "oneshot" ]; then
-            sync_oneshot_marks
-            rc=0; python scripts/oneshot_pick.py pick --out "$RUNNER_TEMP/oneshot_plan.json" || rc=$?
-            if [ "$rc" = "10" ]; then JOB=skip; elif [ "$rc" != "0" ]; then exit "$rc"; fi
-          fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ]; then
-            # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
-            # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
-            git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
-            if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
-          fi
+          echo "job=$JOB"
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
-          DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
-          if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
-          elif [ "$DOW" = "1" ]; then SM=weekly
-          else SM=event
-          fi
-          AM=$SM; [ "$AM" = "quarterly" ] && AM=weekly
-          if [ "$DOW" = "1" ]; then HM=daily; else HM=event; fi
-          if [ "$JOB" = "hce" ]; then HM=daily; fi
-          S2=event
-          C8=event
-          LG=event
-          WL=event
-          IR=event
-          if [ "$DOW" = "1" ]; then IR=weekly; fi
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            SM="${{ github.event.inputs.steel_mode }}"
-            AM="${{ github.event.inputs.alux_mode }}"
-            HM="${{ github.event.inputs.hce_mode }}"
-            S2="${{ github.event.inputs.silicon2_mode }}"
-            C8="${{ github.event.inputs.cover0198_mode }}"
-            LG="${{ github.event.inputs.lg_mode }}"
-            WL="${{ github.event.inputs.wl_mode }}"
-            IR="${{ github.event.inputs.iren_mode }}"
-            YC="${{ github.event.inputs.yencarry_mode }}"
-            KX="${{ github.event.inputs.krwfx_mode }}"
-            [ -z "$KX" ] && KX=auto
-            KZ="${{ github.event.inputs.kzq3_mode }}"
-            [ -z "$KZ" ] && KZ=dry
-            KO="${{ github.event.inputs.kosreb_mode }}"
-            [ -z "$KO" ] && KO=dry
-            KC="${{ github.event.inputs.kica_mode }}"
-            [ -z "$KC" ] && KC=dry
-          fi
-          echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
-          echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
-          echo "hce_mode=$HM" >> "$GITHUB_OUTPUT"
-          echo "silicon2_mode=$S2" >> "$GITHUB_OUTPUT"
-          echo "cover0198_mode=$C8" >> "$GITHUB_OUTPUT"
-          echo "lg_mode=$LG" >> "$GITHUB_OUTPUT"
-          echo "wl_mode=$WL" >> "$GITHUB_OUTPUT"
-          echo "iren_mode=$IR" >> "$GITHUB_OUTPUT"
           echo "yencarry_mode=$YC" >> "$GITHUB_OUTPUT"
           echo "krwfx_mode=$KX" >> "$GITHUB_OUTPUT"
           echo "kzq3_mode=$KZ" >> "$GITHUB_OUTPUT"
@@ -449,34 +374,33 @@ jobs:
           echo "kica_mode=$KC" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
-        env:
-          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
         run: |
+          set -euo pipefail
           JOB="${{ steps.pick.outputs.job }}"
-          # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)
-          set +e
-          failed=0
-          trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
-            python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
+            MODE="${{ github.event.inputs.steel_mode || 'weekly' }}"
+            python scripts/steel_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "alux" ]; then
-            python scripts/alux_monitor.py "${{ steps.pick.outputs.alux_mode }}"
+            MODE="${{ github.event.inputs.alux_mode || 'weekly' }}"
+            python scripts/alux_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "hce" ]; then
-            python scripts/hce_monitor.py "${{ steps.pick.outputs.hce_mode }}"
+            MODE="${{ github.event.inputs.hce_mode || 'daily' }}"
+            python scripts/hce_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "lg" ]; then
-            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
+            MODE="${{ github.event.inputs.lg_mode || 'event' }}"
+            python scripts/lg_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
-            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
+            MODE="${{ github.event.inputs.iren_mode || 'event' }}"
+            python scripts/iren_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
-            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+            MODE="${{ steps.pick.outputs.yencarry_mode }}"
+            [ "$JOB" = "yencarry" ] && [ "$MODE" = "auto" ] && MODE="${{ github.event.inputs.yencarry_mode || 'auto' }}"
+            python scripts/yencarry_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
             MODE="${{ steps.pick.outputs.krwfx_mode }}"
@@ -490,6 +414,7 @@ jobs:
           fi
           if [ "$JOB" = "portlight" ]; then
             python scripts/portlight_monitor.py auto
+            python scripts/ghtrend_monitor.py auto
             python scripts/isareb_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
@@ -518,437 +443,5 @@ jobs:
             python scripts/sec_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krbank" ]; then
-            MODE=auto
-            [ "$JOB" = "krbank" ] && MODE=force
-            python scripts/krbank_monitor.py "$MODE"
+            python scripts/krbank_monitor.py auto
           fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
-            python scripts/uamcert_monitor.py auto
-            python scripts/hbmchk_monitor.py
-            python scripts/hbmasp_monitor.py
-            python scripts/sdichg_monitor.py auto
-          fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
-            python scripts/ratesbell_monitor.py auto
-            python scripts/btcbox_monitor.py
-            python scripts/xrpbox_monitor.py
-            python scripts/btcoct_monitor.py
-            python scripts/btc90_monitor.py
-            python scripts/sndk_monitor.py auto
-            python scripts/gval_monitor.py
-            python scripts/burry_monitor.py auto
-            python scripts/s455850_monitor.py
-            python scripts/yen489_monitor.py
-            python scripts/nov3_monitor.py
-            python scripts/dhr_monitor.py auto
-            python scripts/cl_monitor.py auto
-            python scripts/semrev_monitor.py
-            python scripts/dkq3_monitor.py auto
-            python scripts/hsteelq3_monitor.py auto
-            python scripts/dram27_monitor.py auto
-            python scripts/genpact_monitor.py auto
-            python scripts/nke_monitor.py auto
-            python scripts/isrg_monitor.py auto
-            python scripts/rblx_monitor.py auto
-            python scripts/pdd_monitor.py auto
-            python scripts/133690_monitor.py auto
-            python scripts/ceg_monitor.py auto
-            python scripts/ews_monitor.py auto
-            python scripts/vtrspg_monitor.py auto
-            python scripts/oklo_monitor.py auto
-            python scripts/d0chk_monitor.py
-            python scripts/asml_monitor.py slot
-            python scripts/samg26_monitor.py auto
-            python scripts/peptron_monitor.py auto
-            python scripts/r2k930_monitor.py auto
-            python scripts/spg_monitor.py auto
-            python scripts/sivr_monitor.py auto
-            python scripts/lghpref_monitor.py auto
-            python scripts/skinc_monitor.py auto
-            python scripts/kosown_monitor.py
-            python scripts/005935_monitor.py
-            python scripts/oilwatch_monitor.py auto
-            python scripts/xle_monitor.py auto
-            python scripts/soilq3_monitor.py auto
-            python scripts/jpfy27_monitor.py auto
-            python scripts/446770_monitor.py auto
-            python scripts/hynixlad_monitor.py auto
-            python scripts/xlp_monitor.py auto
-          fi
-          python scripts/ntfy_archive.py
-          exit $failed
-      - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 + 464310 + 461490 (afternoon)
-        if: steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'square' || steps.pick.outputs.job == 'silicon2' || steps.pick.outputs.job == 'cover0198' || steps.pick.outputs.job == '0220wl' || steps.pick.outputs.job == 'ustsy' || steps.pick.outputs.job == 'sgyn' || steps.pick.outputs.job == 'kship' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'k091160' || steps.pick.outputs.job == 'skc011790' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
-        run: |
-          JOB="${{ steps.pick.outputs.job }}"
-          # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)
-          set +e
-          failed=0
-          trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
-            node scripts/square_sell_alert.mjs
-            python scripts/square_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "silicon2" ]; then
-            python scripts/silicon2_monitor.py "${{ steps.pick.outputs.silicon2_mode }}"
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "cover0198" ]; then
-            python scripts/cover0198_monitor.py "${{ steps.pick.outputs.cover0198_mode }}"
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "0220wl" ]; then
-            python scripts/0220wl_monitor.py "${{ steps.pick.outputs.wl_mode }}"
-          fi
-          if [ "$JOB" = "afternoon" ]; then
-            python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
-            python scripts/lges_monitor.py auto
-            python scripts/lgcnsq3_monitor.py slot
-            python scripts/lgcns_monitor.py slot
-            python scripts/cnsds_monitor.py slot
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
-            python scripts/ustsy_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sgyn" ]; then
-            pip install -q openpyxl
-            python scripts/sgyn_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/yencarry_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "kship" ]; then
-            if [ "$JOB" = "kship" ]; then
-              python scripts/kship_monitor.py force
-            else
-              python scripts/kship_monitor.py auto
-            fi
-          fi
-          if [ "$JOB" = "afternoon" ]; then
-            python scripts/shinwon_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
-            python scripts/protec_monitor.py event
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "pltr" ]; then
-            python scripts/pltr_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "addstop" ]; then
-            python scripts/addstop_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "k091160" ]; then
-            python scripts/k091160_fund.py
-            python scripts/k091160_monitor.py
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "skc011790" ]; then
-            python scripts/skc011790_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/ssb0005d0_monitor.py
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/t0192_monitor.py
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/yc232140_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/nov3_monitor.py
-            python scripts/semrev_monitor.py
-            python scripts/dkq3_monitor.py auto
-            python scripts/hsteelq3_monitor.py auto
-            python scripts/genpact_monitor.py auto
-            python scripts/d0chk_monitor.py
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/464310_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/461490_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/245710_monitor.py auto
-          fi
-          if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
-            python scripts/473640_monitor.py auto
-          fi
-          python scripts/ntfy_archive.py
-          exit $failed
-      - name: Run cpi1014
-        if: steps.pick.outputs.job == 'cpi1014'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/cpi1014_monitor.py auto
-      - name: Run dram27
-        if: steps.pick.outputs.job == 'dram27'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/dram27_monitor.py auto
-      - name: Run fomc1007
-        if: steps.pick.outputs.job == 'fomc1007'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/fomc1007_monitor.py auto
-      - name: Run fedodds
-        if: steps.pick.outputs.job == 'fedodds'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/fedodds_monitor.py auto
-      - name: Run tsmc1015
-        if: steps.pick.outputs.job == 'tsmc1015'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/tsmc1015_monitor.py auto
-      - name: Run pcor
-        if: steps.pick.outputs.job == 'pcor'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pcor_monitor.py auto
-      - name: Run spcxq3
-        if: steps.pick.outputs.job == 'spcxq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/spcxq3_monitor.py auto
-      - name: Run oklo
-        if: steps.pick.outputs.job == 'oklo'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/oklo_monitor.py event
-      - name: Run pathq3
-        if: steps.pick.outputs.job == 'pathq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pathq3_monitor.py auto
-      - name: Run pffd
-        if: steps.pick.outputs.job == 'pffd' || steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pffd_monitor.py auto
-      - name: Run llyq3
-        if: steps.pick.outputs.job == 'llyq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/llyq3_monitor.py auto
-      - name: Run isrgq3
-        if: steps.pick.outputs.job == 'isrgq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/isrgq3_monitor.py auto
-      - name: Run aeo
-        if: steps.pick.outputs.job == 'aeo'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/aeo_monitor.py auto
-      - name: Run 0090b0
-        if: steps.pick.outputs.job == '0090b0'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: |
-          python scripts/slot_guard.py mark 0090b0
-          python scripts/0090b0_monitor.py auto
-      - name: Run ustsy10
-        if: steps.pick.outputs.job == 'ustsy10'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/ustsy10_monitor.py auto
-      - name: Run lgiq3
-        if: steps.pick.outputs.job == 'lgiq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/lgiq3_monitor.py auto
-      - name: Run lgcnsq3
-        if: steps.pick.outputs.job == 'lgcnsq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/lgcnsq3_monitor.py auto
-      - name: Run nvdaq3
-        if: steps.pick.outputs.job == 'nvdaq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/nvdaq3_monitor.py auto
-      - name: Run crwvq3
-        if: steps.pick.outputs.job == 'crwvq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/crwvq3_monitor.py auto
-      - name: Run lges1103
-        if: steps.pick.outputs.job == 'lges1103'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/lges1103_monitor.py auto
-      - name: Run lgesq3
-        if: steps.pick.outputs.job == 'lgesq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/lgesq3_monitor.py auto
-      - name: Run pyplq3
-        if: steps.pick.outputs.job == 'pyplq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pyplq3_monitor.py auto
-      - name: Run usd240
-        if: steps.pick.outputs.job == 'usd240'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/usd240_monitor.py auto
-      - name: Run sdichg
-        if: steps.pick.outputs.job == 'sdichg'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/sdichg_monitor.py auto
-      - name: Run sdiq3
-        if: steps.pick.outputs.job == 'sdiq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/sdiq3_monitor.py auto
-      - name: Run dearq3
-        if: steps.pick.outputs.job == 'dearq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/dearq3_monitor.py auto
-      - name: Run ceg
-        if: steps.pick.outputs.job == 'ceg'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/ceg_monitor.py earn
-      - name: Run 0144m0
-        if: steps.pick.outputs.job == '0144m0'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/0144m0_monitor.py auto
-      - name: Run asml
-        if: steps.pick.outputs.job == 'asml'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/asml_monitor.py auto
-      - name: Run bankrate1014
-        if: steps.pick.outputs.job == 'bankrate1014'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/bankrate1014_monitor.py auto
-      - name: Run wbtnq3
-        if: steps.pick.outputs.job == 'wbtnq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/wbtnq3_monitor.py auto
-      - name: Run secq3
-        if: steps.pick.outputs.job == 'secq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/secq3_monitor.py auto
-      - name: Run q3flow
-        if: steps.pick.outputs.job == 'q3flow'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/q3flow_monitor.py auto
-      - name: Run kzq3
-        if: steps.pick.outputs.job == 'kzq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/kzq3_monitor.py "${{ steps.pick.outputs.kzq3_mode }}"
-      - name: Run dearattr
-        if: steps.pick.outputs.job == 'dearattr'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
-        run: python scripts/dearattr_monitor.py "${ONEOFF_MODE:-auto}"
-      - name: Run sena
-        if: steps.pick.outputs.job == 'sena'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
-        run: python scripts/sena_monitor.py "${ONEOFF_MODE:-auto}"
-      - name: Run manh
-        if: steps.pick.outputs.job == 'manh'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/manh_monitor.py auto
-      - name: Run truen417790
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'truen417790' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/truen417790_monitor.py auto
-      - name: Run kosreb
-        if: steps.pick.outputs.job == 'kosreb' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/kosreb_monitor.py "${{ steps.pick.outputs.kosreb_mode }}"
-      - name: Run kica
-        if: steps.pick.outputs.job == 'kica'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/kica_monitor.py "${{ steps.pick.outputs.kica_mode }}"
-      - name: Run due one-shots (dispatch job=oneshot)
-        if: steps.pick.outputs.job == 'oneshot'
-        env:
-          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/oneshot_pick.py run "$RUNNER_TEMP/oneshot_plan.json"
-      - name: Run neeq3
-        if: steps.pick.outputs.job == 'neeq3' || steps.pick.outputs.job == 'oneshot' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/neeq3_monitor.py auto
-      - name: Archive ntfy
-        if: always()
-        run: python scripts/ntfy_archive.py
-      - name: Persist state
-        if: always()
-        run: |
-          git config user.name "cwally-alerts-bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state
-          if git diff --staged --quiet; then echo unchanged; exit 0; fi
-          git commit -m "chore: update alert state"
-          git pull --rebase origin main
-          git push origin HEAD:main
-      - name: Notify ops on failure
-        if: failure()
-        env:
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/ops_notify.py port-alerts "${{ steps.pick.outputs.job }}"
