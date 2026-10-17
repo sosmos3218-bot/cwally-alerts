@@ -68,3 +68,4 @@ Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
 - Exception (approved in chat 2026-10-13): `workflow-lint.yml` is allowed as an extra workflow file. It runs on push/PR only, has no schedule, and is read-only. This does not allow any other new workflow file.
 - Before committing a workflow edit, fetch the current file, apply the edit, and check that the line count did not shrink unexpectedly. After committing, confirm the push-triggered run is not a Failure.
 - If a workflow file is found broken, restore it from the last good commit first, then re-apply the intended change as a minimal diff.
+- Shared workflow files (approved in chat 2026-10-16): immediately before editing any `.github/workflows/*.yml`, fetch the current main version again; never edit from an older copy. Right after pushing, check the push-triggered `workflow-lint` run; if it fails, restore the file from the last good commit first, then re-apply the change as a minimal diff.
