@@ -7,7 +7,10 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "08:00",
-  "oneshot_kst": ["2026-11-05 08:00", "2026-11-05 18:00"],
+  "oneshot_kst": [
+    "2026-11-05 08:00",
+    "2026-11-05 18:00"
+  ],
   "window_start_kst": "2026-11-05 07:30",
   "expire_date": "2026-11-06",
   "event_year": 2026,
@@ -63,5 +66,17 @@
   "cik": "0001611052",
   "explain": "Procore 3분기 원문만으로 매출 증가율, non-GAAP 영업이익률, 자유현금흐름, 10만달러 고객, 총매출 유지율, 2027 가이던스를 통과/보류/축소로 나누는 일회 알림입니다.",
   "ends_kst": "2026-11-05 18:00",
-  "ends_note": "Procore 3분기 일회 알림, 11/5 18:00이 마지막"
+  "ends_note": "Procore 3분기 일회 알림, 11/5 18:00이 마지막",
+  "acquisition": {
+    "name": "DroneDeploy",
+    "closed": "2026-09-09",
+    "price_m": 845,
+    "source": "Procore 8-K 2026-09-09 (merger consummated), 2026-07-29 press release (about $845M cash)",
+    "rule": "3분기(9/30 종료)와 2027 가이던스에 인수 매출 포함. 기여분이나 인수 효과 제외 증가율이 원문에 없으면 매출 증가율과 2027 가이던스는 최대 보류."
+  },
+  "reference_lines": {
+    "dronedeploy": "기여 매출 숫자가 있으면 표시, 없으면 '기여분 미공시'",
+    "data_center": "data center 문장에 금액이나 %가 있을 때만 그 문장 표시. 없으면 줄 생략",
+    "excluded": "상업용, 연구소는 넣지 않음(원문 수치 가능성 낮고 오탐 위험). 2026-10-17 결정"
+  }
 }

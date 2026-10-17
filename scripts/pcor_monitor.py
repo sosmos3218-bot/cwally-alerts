@@ -111,7 +111,9 @@ def parse_release(text, cfg):
     cut = bool(re.search(r"2027.{0,80}(lower|reduc|cut|below prior)", text, re.I))
     kept = bool(re.search(r"2027.{0,80}(maintain|reaffirm|unchanged)", text, re.I))
     published = bool(third and revenue is not None)
+    acq = parse_acquisition(text)
     return {
+        **acq,
         "published": published,
         "revenue": revenue,
         "yoy": yoy,
@@ -127,6 +129,76 @@ def parse_release(text, cfg):
     }
 
 
+NUM = r"([0-9]+(?:\.[0-9]+)?)"
+BOILER = re.compile(r"forward-looking|risks and uncertainties|safe harbor|undue reliance", re.I)
+
+
+def parse_acquisition(text):
+    """DroneDeploy contribution / organic growth and a data center sentence with a number (reference only)."""
+    dd_rev = first(r"DroneDeploy[^.]{0,80}?(?:contributed|contribution of|revenue of|added)\s*(?:approximately\s*)?\$\s*" + NUM + r"\s*million", text)
+    if dd_rev is None:
+        dd_rev = first(r"\$\s*" + NUM + r"\s*million[^.]{0,60}?(?:from|attributable to|contributed by)\s*(?:the\s*)?DroneDeploy", text)
+    organic_yoy = first(r"organic revenue (?:growth|grew|increased)[^.]{0,40}?" + NUM + r"\s*(?:%|percent)", text)
+    if organic_yoy is None:
+        organic_yoy = first(r"excluding (?:the (?:impact|contribution) of )?(?:the )?DroneDeploy[^.]{0,80}?(?:revenue )?(?:grew|growth of|increased|increase of)\s*" + NUM + r"\s*(?:%|percent)", text)
+    g27_organic = first(r"2027[^.]{0,160}?(?:organic|excluding (?:the (?:impact|contribution) of )?(?:the )?DroneDeploy)[^.]{0,100}?" + NUM + r"\s*(?:%|percent)", text)
+    dc_sentence = None
+    for sent in re.split(r"(?<=[.!?])\s+", text or ""):
+        if len(sent) > 400 or BOILER.search(sent):
+            continue
+        if re.search(r"data cent(?:er|re)s?", sent, re.I) and re.search(r"\$\s?[0-9]|[0-9]+(?:\.[0-9]+)?\s*(?:%|percent)", sent):
+            dc_sentence = sent.strip()[:220].rstrip(".")
+            break
+    return {
+        "dd_mentioned": bool(re.search(r"DroneDeploy", text or "")),
+        "dd_rev": dd_rev,
+        "organic_yoy": organic_yoy,
+        "g27_organic": g27_organic,
+        "dc_sentence": dc_sentence,
+    }
+
+
+def acquisition_in_period(cfg, period_end="2026-09-30"):
+    acq = cfg.get("acquisition") or {}
+    return bool(acq.get("closed")) and str(acq["closed"]) <= period_end
+
+
+def cap_hold(mark, fact, why):
+    if mark == "통과":
+        return "보류", fact + f", {why}라 최대 보류"
+    return mark, fact
+
+
+def mark_revenue(parsed, cfg, th):
+    if not acquisition_in_period(cfg):
+        return band(parsed.get("yoy"), th["rev_pass"], th["rev_hold"], "%")
+    if parsed.get("organic_yoy") is not None:
+        s_, f_ = band(parsed["organic_yoy"], th["rev_pass"], th["rev_hold"], "%")
+        return s_, f_ + " (DroneDeploy 제외 증가율)"
+    if parsed.get("dd_rev") is not None and parsed.get("revenue") is not None:
+        org = ((parsed["revenue"] - parsed["dd_rev"]) / cfg["baseline"]["q3_base_m"] - 1) * 100
+        s_, f_ = band(org, th["rev_pass"], th["rev_hold"], "%")
+        return s_, f_ + f" (DroneDeploy {parsed['dd_rev']:g}백만달러 빼고 계산)"
+    s_, f_ = band(parsed.get("yoy"), th["rev_pass"], th["rev_hold"], "%")
+    return cap_hold(s_, f_ + " (인수 효과 포함)", "DroneDeploy 기여분 미공시")
+
+
+def reference_line(parsed, cfg):
+    acq = cfg.get("acquisition") or {}
+    parts = []
+    if acq:
+        if parsed.get("dd_rev") is not None:
+            parts.append(f"DroneDeploy 기여 매출 {parsed['dd_rev']:g}백만달러")
+        elif parsed.get("organic_yoy") is not None:
+            parts.append(f"DroneDeploy 기여 금액 미공시, 제외 증가율 {parsed['organic_yoy']:g}% 공시")
+        else:
+            parts.append("DroneDeploy 기여분 미공시")
+        parts.append(f"인수 완료 {acq.get('closed')}, 약 {acq.get('price_m')}백만달러 현금")
+    if parsed.get("dc_sentence"):
+        parts.append("데이터센터 원문: " + parsed["dc_sentence"])
+    return "참고(판정 미반영): " + ". ".join(parts) + "." if parts else None
+
+
 def band(v, pass_at, hold_at, unit):
     if v is None:
         return "확인 불가", "원문 수치 없음"
@@ -137,17 +209,28 @@ def band(v, pass_at, hold_at, unit):
     return "축소", f"사실 {v:.1f}{unit}, 축소선 {hold_at:g}{unit} 미만"
 
 
-def mark_guide(parsed, th):
+def mark_guide(parsed, th, cfg=None):
+    cfg = cfg or {}
+    acq = acquisition_in_period(cfg)
     if parsed.get("cut"):
         return "축소", "사실 2027 가이던스 하향 표현"
+    if acq and parsed.get("g27_organic") is not None:
+        s_, f_ = band(parsed["g27_organic"], th["g27_pass"], th["g27_hold"], "%")
+        return s_, f_ + " (DroneDeploy 제외 2027 증가율)"
+    base = (cfg.get("baseline") or {}).get("fy26_guide_high_m", 1514)
     if parsed.get("raised"):
-        return "통과", "사실 2027 가이던스 상향 표현"
-    if parsed.get("g27"):
-        growth = (parsed["g27"] / 1514 - 1) * 100
-        return band(growth, th["g27_pass"], th["g27_hold"], "%")
-    if parsed.get("kept"):
+        s_, f_ = "통과", "사실 2027 가이던스 상향 표현"
+    elif parsed.get("g27"):
+        growth = (parsed["g27"] / base - 1) * 100
+        s_, f_ = band(growth, th["g27_pass"], th["g27_hold"], "%")
+        f_ += f" (인수 전 2026 가이던스 {base:g} 대비)"
+    elif parsed.get("kept"):
         return "보류", "사실 2027 가이던스 유지 표현, 금액 없음"
-    return "확인 불가", "원문에 2027 가이던스 금액과 상하향 표현 없음"
+    else:
+        return "확인 불가", "원문에 2027 가이던스 금액과 상하향 표현 없음"
+    if acq:
+        return cap_hold(s_, f_ + " (인수 매출 포함 가능)", "DroneDeploy 제외 수치 미공시")
+    return s_, f_
 
 
 def overall(marks):
@@ -205,7 +288,7 @@ def main():
         print("outside 2026 window; silent")
         save_state(st, now)
         return 0
-    if st.get("final_notified") and mode != "force":
+    if st.get("final_notified") and mode not in {"force", "dry"}:
         print("already scored; skip")
         save_state(st, now)
         return 0
@@ -216,8 +299,7 @@ def main():
     st["price"] = px
     if not parsed.get("published"):
         if mode == "dry":
-            print("not published", err)
-            save_state(st, now)
+            print("DRY RUN: not published", err)
             return 0
         if not text and not st.get("fail_notified"):
             lines = [
@@ -250,12 +332,12 @@ def main():
         st["empty_notified"] = True
         save_state(st, now)
         return 0
-    rev_s, rev_f = band(parsed.get("yoy"), th["rev_pass"], th["rev_hold"], "%")
+    rev_s, rev_f = mark_revenue(parsed, cfg, th)
     om_s, om_f = band(parsed.get("om"), th["om_pass"], th["om_hold"], "%")
     fcf_s, fcf_f = band(parsed.get("fcf"), th["fcf_pass"], th["fcf_hold"], "백만달러")
     cust_s, cust_f = band(parsed.get("cust_yoy"), th["cust_pass"], th["cust_hold"], "%")
     grr_s, grr_f = band(parsed.get("grr"), th["grr_pass"], th["grr_hold"], "%")
-    g_s, g_f = mark_guide(parsed, th)
+    g_s, g_f = mark_guide(parsed, th, cfg)
     score = overall((rev_s, om_s, fcf_s, cust_s, grr_s, g_s))
     do, trim, dont = action(score, px)
     lines = [
@@ -274,11 +356,15 @@ def main():
         "하지 말 것: " + dont,
         "출처: " + cfg["sources"]["press"],
     ]
+    ref = reference_line(parsed, cfg)
+    if ref:
+        lines.insert(len(lines) - 1, ref)
     title = f"[PCOR] {score} | {do.split('.')[0]}"
     if mode == "dry":
+        print("DRY RUN: no ntfy, no state write")
+        print(json.dumps({k: parsed.get(k) for k in ("revenue", "yoy", "organic_yoy", "dd_rev", "g27", "g27_organic", "dd_mentioned", "dc_sentence")}, ensure_ascii=False))
         print(title)
         print("\n".join(lines))
-        save_state(st, now)
         return 0
     emit(cfg, title, lines, 4 if score != "보류" else 3)
     st["final_notified"] = True
