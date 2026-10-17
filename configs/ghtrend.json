@@ -1,0 +1,13 @@
+{
+  "name": "GHTREND",
+  "title_prefix": "[GHTREND]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "21:00",
+  "schedule_note": "일요일 21:00 KST 기존 portlight 슬롯에 붙임. 새 cron 승인 없음.",
+  "alert_policy": "sunday_weekly",
+  "top_n": 10,
+  "keywords": ["ai", "agent", "reverse", "claude", "mcp", "rust", "llm"],
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 일요일 21:00"
+}
