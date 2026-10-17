@@ -185,6 +185,13 @@ on:
     - cron: "0 9 12 11 *"
     - cron: "0 9 13 11 *"
     - cron: "0 9 16 11 *"
+    # crwvq3 oneshot_kst (KST->UTC): 2026-11-10/12/13/17/18/20 07:25. earnings date unconfirmed
+    - cron: "25 22 9 11 *"
+    - cron: "25 22 11 11 *"
+    - cron: "25 22 12 11 *"
+    - cron: "25 22 16 11 *"
+    - cron: "25 22 17 11 *"
+    - cron: "25 22 19 11 *"
     # dearattr oneshot_kst (KST→UTC): 2026-10-13 09:30, 10-14 09:30 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "30 0 13 10 *"
     - cron: "30 0 14 10 *"
@@ -354,6 +361,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 15 10 *" ]; then JOB=kosreb
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
+            elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -483,6 +491,10 @@ jobs:
           if [ "$JOB" = "portlight" ]; then
             python scripts/portlight_monitor.py auto
             python scripts/isareb_monitor.py auto
+            python scripts/ghtrend_monitor.py auto
+          fi
+          if [ "$JOB" = "morning" ]; then
+            python scripts/fig_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
@@ -907,6 +919,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/kica_monitor.py "${{ steps.pick.outputs.kica_mode }}"
+      - name: Run crwvq3
+        if: steps.pick.outputs.job == 'crwvq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/crwvq3_monitor.py auto
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
