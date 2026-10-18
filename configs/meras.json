@@ -1,0 +1,21 @@
+{
+  "name": "meras",
+  "title_prefix": "[MERAS]",
+  "created_at": "2026-10-18T13:40:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 메르 A/S 핵심 3항목(미국 10년물, 삼성전자+SK하이닉스, 한국카본) 종합 요약. 직전 대비 유의 변동 시 또는 주간 첫 영업일 발송.",
+  "alert_policy": "notable_change_or_weekly",
+  "purpose": "메르 블로그 A/S(불장에 취하지 마라) 핵심 포인트 주기 점검. 매수 신호 아님.",
+  "items": {
+    "us10y": {"label": "미국 10년물", "ref_level": 5.3, "note": "10월 재매수 평단 근처"},
+    "sam": {"code": "005930", "label": "삼성전자"},
+    "hynix": {"code": "000660", "label": "SK하이닉스"},
+    "carbon": {"code": "017960", "label": "한국카본"}
+  },
+  "year_guard": null,
+  "ends_kst": "2026-12-31 09:00",
+  "ends_note": "연말까지 또는 사용자 지시로 종료"
+}
