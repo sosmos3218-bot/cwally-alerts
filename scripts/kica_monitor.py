@@ -6,6 +6,7 @@
   kica_monitor.py auto       Q3 2026 earnings one-shot (oneshot_pick passes "auto"); candidates 11-12/13/16.
                              Sends once on the first day results are found; silent if not yet published,
                              except on the last candidate day (one "미게시" notice). Silent after a send.
+                             Includes dividend-focused holding re-evaluation (yield>=3.5%, OP YoY>=5%).
   kica_monitor.py dry        earnings preview + daily preview, no ntfy, no state write
   kica_monitor.py force      earnings one-shot ignoring the date window
   kica_monitor.py install    one install-confirmation send (AGENTS.md), no state write
@@ -115,13 +116,21 @@ def krx_bars(cfg: dict, now: datetime) -> list[dict]:
     return sorted(bars, key=lambda b: b["day"], reverse=True)
 
 
-def valuation(cfg: dict) -> str:
+def valuation(cfg: dict) -> tuple[str, float | None]:
     try:
         j = json.loads(fetch(cfg["sources"]["integration"]))
         m = {x.get("code"): x.get("value") for x in j.get("totalInfos", [])}
-        return f"PER {m.get('per')}, PBR {m.get('pbr')}, 배당수익률 {m.get('dividendYieldRatio')}"
-    except Exception as exc:  # valuation is nice-to-have; never block the alert
-        return f"밸류 조회 실패({exc.__class__.__name__})"
+        dy_str = m.get("dividendYieldRatio") or ""
+        dy = None
+        if dy_str:
+            try:
+                dy = float(str(dy_str).replace("%", "").replace(",", "").strip())
+            except ValueError:
+                pass
+        txt = f"PER {m.get('per')}, PBR {m.get('pbr')}, 배당수익률 {dy_str}"
+        return txt, dy
+    except Exception as exc:
+        return f"밸류 조회 실패({exc.__class__.__name__})", None
 
 
 def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
@@ -192,11 +201,12 @@ def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
         action = "크게 빠졌습니다. 서두르지 말고 이유(공시, 뉴스)를 먼저 확인하세요."
     else:
         action = "크게 올랐습니다. 이유(공시, 뉴스)를 먼저 확인하세요."
+    val_txt, _ = valuation(cfg)
     body = "\n".join(
         [
             f"{stamp} | 053300",
             "이게 뭐 알림: 한국정보인증 종가가 정해둔 조건(하루 5% 이상 변동, 4,500~6,500원 밖)에 걸렸습니다. 매매 신호가 아닙니다.",
-            f"지금 결과/상태: {day} 종가 {close:,}원 (전일 {prev['close']:,}원, {chg:+.2f}%). {valuation(cfg)}.",
+            f"지금 결과/상태: {day} 종가 {close:,}원 (전일 {prev['close']:,}원, {chg:+.2f}%). {val_txt}.",
             f"지금 할 일: {action}",
             "나중에: 3분기 분기보고서(11월 12~16일 예상)에서 영업이익을 확인합니다. 밴드 알림은 종가가 안쪽으로 100원 돌아오면 다시 열립니다.",
             "익절/줄일 때: 이 알림은 주문이 아닙니다. 줄일지는 본인이 미리 정한 기준으로 판단하세요.",
@@ -288,22 +298,28 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
     prev_q3, q2, h1 = float(e["prev_q3_op_eok"]), float(e["q2_op_eok"]), float(e["h1_op_eok"])
     yoy = (op - prev_q3) / prev_q3 * 100.0
     qoq = (op - q2) / q2 * 100.0
+    val_txt, dy = valuation(cfg)
+    dy_ok = dy is not None and dy >= 3.5
+    op_ok = yoy >= 5.0
+    logic = "유지" if (dy_ok and op_ok) else "재검토"
     if yoy >= 10:
         tone = "작년 3분기보다 늘었습니다"
     elif yoy <= -10:
         tone = "작년 3분기보다 줄었습니다"
     else:
         tone = "작년 3분기와 비슷합니다"
-    title = f"[KICA] 3분기 영업이익 {op:,.0f}억 | 전년비 {yoy:+.0f}%, 관찰"
+    title = f"[KICA] 3분기 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
     rev_txt = f"매출 {rev:,.0f}억, " if rev is not None else ""
     ni_txt = f", 순이익 {ni:,.0f}억" if ni is not None else ""
+    dy_note = f"배당수익률 {dy:.1f}% (기준 3.5% {'충족' if dy_ok else '미달'})" if dy is not None else "배당수익률 조회 실패"
+    op_note = f"영업이익 YoY {yoy:+.1f}% (기준 5% {'충족' if op_ok else '미달'})"
     body = "\n".join(
         [
             f"{stamp} | 053300",
-            "이게 뭐 알림: 한국정보인증 2026년 3분기 실적(연결) 결과입니다. 매매 신호가 아닙니다.",
-            f"지금 결과/상태: {rev_txt}영업이익 {op:,.0f}억{ni_txt}. 전년 3분기 {prev_q3:,.0f}억 대비 {yoy:+.0f}%, 2분기 {q2:,.0f}억 대비 {qoq:+.0f}%. {tone}. 1~3분기 누적 영업이익은 약 {h1 + op:,.0f}억(상반기 {h1:,.0f}억 기준).",
-            "지금 할 일: 다음 거래일 시가 반응을 보고 분기보고서(DART)에서 광고대행 자회사와 인증 사업 비중을 확인하세요.",
-            "나중에: 4분기 실적과 배당 정책(2025년 주당 200원)은 내년 초에 나옵니다.",
+            "이게 뭐 알림: 한국정보인증 2026년 3분기 실적(연결) 결과와 배당 중심 보유 논리 재평가입니다. 매매 신호가 아닙니다.",
+            f"지금 결과/상태: {rev_txt}영업이익 {op:,.0f}억{ni_txt}. 전년 3분기 {prev_q3:,.0f}억 대비 {yoy:+.0f}%, 2분기 {q2:,.0f}억 대비 {qoq:+.0f}%. {tone}. 1~3분기 누적 영업이익은 약 {h1 + op:,.0f}억(상반기 {h1:,.0f}억 기준). {val_txt}.",
+            f"지금 할 일: 배당 중심 논리 {logic}. {dy_note}. {op_note}. 충족이면 기존 논리 유지, 미달이면 배당 지속과 본업 성장을 재점검하세요.",
+            "나중에: 4분기 실적과 배당 정책(2025년 주당 200원) 은 내년 초에 나옵니다. 연간 기준은 그때 다시 확인합니다.",
             "익절/줄일 때: 이 알림은 주문이 아닙니다. 실적이 좋아도 줄일 기준은 본인이 미리 정한 값으로 판단하세요.",
             "하지 말 것: 한 분기 숫자만 보고 추격매수. 신용/미수.",
         ]
@@ -311,7 +327,7 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
     send(cfg, title, body, 4, dry)
     if not dry:
         state["earnings_notified"] = True
-        state["last_sent"] = {"at": stamp, "hits": ["earnings"], "op": op}
+        state["last_sent"] = {"at": stamp, "hits": ["earnings"], "op": op, "yoy": round(yoy, 1), "dy": dy}
     save(state, dry)
 
 
@@ -319,7 +335,7 @@ def install(cfg: dict) -> None:
     body = "\n".join(
         [
             "이게 뭐 알림: 한국정보인증(053300) 알림이 설치됐다는 확인입니다.",
-            "지금 결과/상태: 평일 15:40 종가 점검(하루 5% 이상 변동 또는 4,500~6,500원 이탈 때만 발송)과 11월 13일 18:00 3분기 실적 확인이 켜졌습니다.",
+            "지금 결과/상태: 평일 15:40 종가 점검(하루 5% 이상 변동 또는 4,500~6,500원 이탈 때만 발송)과 11월 13일 18:00 3분기 실적 확인이 켜졌습니다. 실적 알림에 배당수익률 3.5% 이상, 영업이익 YoY 5% 이상 기준 재평가가 포함됩니다.",
             "지금 할 일: 없음. 매매 신호가 아닙니다.",
             "나중에: 조건에 걸리면 [KICA] 제목으로 옵니다. 평소엔 조용합니다.",
             "익절/줄일 때: 해당 없음.",
