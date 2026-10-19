@@ -1,0 +1,29 @@
+{
+  "name": "kos5500",
+  "title_prefix": "[KOS5500]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "평일 09:00 직전 거래일 수정분 점검, 평일 15:40 당일 게시값 판정",
+  "oneshot_kst": ["2026-10-20 20:40"],
+  "oneshot_args": {"2026-10-20 20:40": "review"},
+  "event_year": 2026,
+  "review_day": "2026-10-20",
+  "start_day": "2026-10-20",
+  "ends_kst": null,
+  "ends_note": "종료일 없음. 2027년 실행 전 거래일 달력 갱신 필요. 10월 20일 원샷은 해당 연도에만 실행",
+  "support": 5500,
+  "recovery": 5800,
+  "middle": 5668.05,
+  "correction_threshold_eok": 1000,
+  "explain": "코스피 5500 유지, 재이탈, 5800 회복의 가격 조건과 외국인 수급 보강 여부를 전 거래일과 비교합니다. 주문 신호가 아닙니다.",
+  "data_policy": "사용자 승인 2026-10-19: 네이버 일별 게시값을 사용하고 KRX 최종 미확인을 항상 명시합니다. 조회 시각이나 18시 경과만으로 확정치라고 부르지 않습니다. 날짜가 다른 자료, 결측, 통합시장/NXT 수치는 대체하지 않습니다. 종목 수급은 순매수 주식 수이며 금액으로 환산하지 않습니다.",
+  "notification_policy": "장마감은 거래일마다 1회 보고. 다음 아침은 최초 보고, 판정/수급 부호 변경 또는 외국인 순매수 수정 폭 1000억원 이상일 때 보완. 원샷 1회 별도 보고. 오류는 cwally-ops에 사유별 하루 1회. 다음 아침에 10월 20일 원샷 보고 누락도 보충.",
+  "rule_note": "5800 초과 종가 2거래일 및 외국인 현물 3거래일 누적 순매수, 삼성전자/하이닉스 당일 외국인 동반 순매수는 관찰 규칙입니다. 검증된 수익률 또는 하락 확률을 의미하지 않습니다. KRX 최종 확인 조건은 자동 충족으로 처리하지 않습니다.",
+  "sources": {
+    "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=10&page=1",
+    "flow": "https://m.stock.naver.com/api/index/KOSPI/trend?bizdate={day}",
+    "stock": "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=10",
+    "public_index": "https://stock.naver.com/domestic/index/KOSPI/price",
+    "krx": "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020301"
+  }
+}

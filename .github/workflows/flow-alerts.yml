@@ -73,6 +73,7 @@ jobs:
           run_one fxbox python scripts/fxbox_monitor.py
           run_one kica python scripts/kica_monitor.py
           run_one dssotp python scripts/dssotp_monitor.py
+          run_one kos5500 python scripts/kos5500_monitor.py afterclose
           if [ "$failed" -ne 0 ]; then
             echo "one or more flow scripts failed"
             exit 1
@@ -82,7 +83,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/samup.json state/hynixup.json state/k278240.json state/377990.json state/ethhl.json state/fxbox.json state/kica.json state/dssotp.json
+          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/samup.json state/hynixup.json state/k278240.json state/377990.json state/ethhl.json state/fxbox.json state/kica.json state/dssotp.json state/kos5500.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main

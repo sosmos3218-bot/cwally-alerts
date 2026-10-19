@@ -224,6 +224,8 @@ on:
     - cron: "10 6 30 10 *"
     - cron: "10 8 30 10 *"
     - cron: "20 0 2 11 *"
+    # kos5500 one-shot 2026-10-20 20:40 KST, late fallback
+    - cron: "40 11 20 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -231,7 +233,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, bankrate1014, cpi1014, kica, hmcq3, asml]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -307,6 +309,11 @@ on:
         default: dry
         type: choice
         options: [dry, auto, force]
+      kos5500_mode:
+        description: "job=kos5500 only. dry = no ntfy/state; auto = observations"
+        type: choice
+        default: dry
+        options: [dry, auto]
       force_square:
         type: boolean
         default: true
@@ -388,6 +395,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "26 7 22 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 23 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 26 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 2 11 *" ]; then JOB=hmcq3
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
+            elif [ "${{ github.event.schedule }}" = "40 11 20 10 *" ]; then JOB=kos5500
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -524,6 +532,7 @@ jobs:
           fi
           if [ "$JOB" = "morning" ]; then
             python scripts/fig_monitor.py auto
+            python scripts/kos5500_monitor.py previous
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
@@ -967,6 +976,18 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/hmcq3_monitor.py "${{ steps.pick.outputs.hmcq3_mode }}"
+      - name: Run kos5500
+        if: steps.pick.outputs.job == 'kos5500'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          KOS5500_MODE: ${{ github.event.inputs.kos5500_mode || 'dry' }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            python scripts/kos5500_monitor.py review
+          else
+            python scripts/kos5500_monitor.py "$KOS5500_MODE"
+          fi
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
