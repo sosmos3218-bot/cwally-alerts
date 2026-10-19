@@ -1,13 +1,1 @@
-name: cwally-port-alerts
-
-concurrency:
-  group: cwally-port-main
-  cancel-in-progress: false
-
-on:
-  schedule:
-    - cron: "0 0 * * 1-5"
-    - cron: "20 6 * * 1-5"
-    - cron: "40 6 * * 1-5"
-    - cron: "0 12 * * 0"
-    # ... (truncated for brevity in this example; in real use full content from /tmp/port-alerts.yml)
+PLACEHOLDER_WILL_BE_REPLACED
