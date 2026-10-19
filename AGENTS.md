@@ -70,3 +70,10 @@ Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
 - Before committing a workflow edit, fetch the current file, apply the edit, and check that the line count did not shrink unexpectedly. After committing, confirm the push-triggered run is not a Failure.
 - If a workflow file is found broken, restore it from the last good commit first, then re-apply the intended change as a minimal diff.
 - Shared workflow files (approved in chat 2026-10-16): immediately before editing any `.github/workflows/*.yml`, fetch the current main version again; never edit from an older copy. Right after pushing, check the push-triggered `workflow-lint` run; if it fails, restore the file from the last good commit first, then re-apply the change as a minimal diff.
+
+### Re-prevention checklist (added 2026-10-19 after truncated port-alerts.yml incident)
+- Before any edit to `.github/workflows/*.yml`: `gh api .../contents/<file>` (or get_file_contents) to fetch the exact current main blob, never work from a local/cached/truncated copy.
+- Apply only the minimal line additions or changes. After edit, run `wc -l` and compare to the previous version; a drop >5% on a large file requires explicit confirmation.
+- Forbidden strings that workflow-lint will reject: `truncated for brevity`, `rest of the file`, `rest unchanged`, `full content from /tmp`, `PLACEHOLDER`, `TODO: restore`.
+- After push, immediately check the workflow-lint run conclusion. If failure, restore from the last successful commit SHA before any further edits.
+- When adding oneshot crons, copy the exact existing pattern (comment + 3 cron lines + elif extension) from a similar alert; do not regenerate the whole file.
