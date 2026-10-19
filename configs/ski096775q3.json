@@ -1,0 +1,19 @@
+{
+  "name": "ski096775q3",
+  "title_prefix": "[SKIQ3]",
+  "display": "SK이노베이션우 096775 3Q 실적 후 재평가 리마인더",
+  "ticker": "096775",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "일회성 oneshot",
+  "schedule_note": "2026년 3분기 실적 발표(10/29 전후) 후 재평가. 새 반복 cron 없음. year-guard 2026.",
+  "year_guard": 2026,
+  "oneshot_kst": [
+    "2026-10-29 16:15",
+    "2026-10-30 09:05",
+    "2026-10-31 09:05",
+    "2026-11-03 09:05"
+  ],
+  "ends_kst": "2026-11-03 09:05",
+  "ends_note": "3Q 실적·주주환원 정책 확인 후 종료. 구조적 괴리율 점검은 096775 알림 유지."
+}
