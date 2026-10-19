@@ -1,6 +1,127 @@
 {
-  "updated_at": "2026-10-19 16:59 KST",
+  "updated_at": "2026-10-19 18:30 KST",
   "items": [
+    {
+      "id": "6B1neB826QdT",
+      "topic": "cwally-port",
+      "title": "[GSAI] 설치 확인 | 매매 신호 아님",
+      "message": "2026-10-19 18:23 KST | GSAI\n이게 뭐 알림: 삼성전자+SK하이닉스 합산 외국인 순매수 전환 시그널 모니터링이 설치되었습니다. 매매 신호가 아닙니다.\n지금 상태: 합산 기준(연속 2일 순매수 + 하루 합산 5천억 원 이상)으로 flow 슬롯에 연결되었습니다.\n지금 할 일: 설치 확인 완료. 실제 시그널은 조건 충족 시에만 발송됩니다.\n나중에: 조건 해제 시 신호 중단. 다음 슬롯에서 확인.\n익절/줄일 때: 이 알림은 매수 주문이 아닙니다. 보유 기준을 따르세요.\n하지 말 것: 설치 확인을 매수 신호로 해석. 신용/미수.\n꺼지는 때: 종료일 없음 (합산 기준 외국인 순매수 전환 시그널 (연속 2일 + 하루 합산 5천억 이상) 수동 해제 전까지)",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1792401929
+    },
+    {
+      "id": "Z01PDPR6sHEI",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 9709e77",
+      "message": "2026-10-19 18:11 KST | OPS | workflow-lint / 9709e77\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39228126236",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792401066
+    },
+    {
+      "id": "hevospXC29hJ",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint f1392f6",
+      "message": "2026-10-19 18:10 KST | OPS | workflow-lint / f1392f6\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39228079217",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792401045
+    },
+    {
+      "id": "irk8HkHLvq2X",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 8daae35",
+      "message": "2026-10-19 17:43 KST | OPS | workflow-lint / 8daae35\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39224817132",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792399423
+    },
+    {
+      "id": "xcYoCxRj02fA",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 8895e6a",
+      "message": "2026-10-19 17:36 KST | OPS | workflow-lint / 8895e6a\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39223954053",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792398983
+    },
+    {
+      "id": "QBq9hRLyTJhS",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 737063e",
+      "message": "2026-10-19 17:34 KST | OPS | workflow-lint / 737063e\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39223755819",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792398888
+    },
+    {
+      "id": "5YGrdGiC60ha",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint ad178e8",
+      "message": "2026-10-19 17:34 KST | OPS | workflow-lint / ad178e8\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39223716179",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792398868
+    },
+    {
+      "id": "a2Qv2y8eHJdq",
+      "topic": "cwally-port",
+      "title": "[DOOSAN] 설치 확인 | 매매 신호 아님",
+      "message": "이게 뭐 알림: 두산 4종목(두산, 두산에너빌리티, 두산밥캣, 두산테스나) 가격, 외인 수급, 3분기 실적 알림이 설치됐다는 확인입니다.\n지금 결과/상태: 평일 09:00에 전 거래일 KRX 종가와 확정 수급으로 새 조건만 보냅니다. 등락 5% 이상, 외인 하루 100억 이상(에너빌 300억), 외인 5일 누적 300억, 외인 3일 연속 순매수. 월요일은 주간 요약. 실적은 D-3, D-1, 당일 안내와 발표일 17:05 결과 비교.\n지금 할 일: 없음. 매매 신호가 아닙니다.\n나중에: 밥캣 3분기 실적 10/29(콜 16:30). 두산, 에너빌은 예고 공시가 뜨면 알립니다. 테스나는 분기보고서 기한 11/16.\n익절/줄일 때: 해당 없음.\n하지 말 것: 이 알림을 매매 신호로 해석. 투자 권유 아님.\n꺼지는 때: 2026-11-20 09:00 KST (3분기 실적 시즌 종료)",
+      "priority": 3,
+      "tags": [
+        "office"
+      ],
+      "time": 1792398221
+    },
+    {
+      "id": "T4PaHEmDRdQ0",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-10-27 17:05",
+      "message": "2026-10-19 17:23 KST | OPS | cronjob-register / 2026-10-27 17:05\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39222333929",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792398183
+    },
+    {
+      "id": "WXCNB7IB3z0D",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-11-04 17:05",
+      "message": "2026-10-19 17:18 KST | OPS | cronjob-register / 2026-11-04 17:05\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39221797940",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792397906
+    },
+    {
+      "id": "ffps6bsUpL6J",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register 2026-11-03 17:05",
+      "message": "2026-10-19 17:17 KST | OPS | cronjob-register / 2026-11-03 17:05\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39221742426",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792397877
+    },
     {
       "id": "1MdoasMIo2Rv",
       "topic": "cwally-port",
@@ -4373,135 +4494,6 @@
         "memo"
       ],
       "time": 1790562470
-    },
-    {
-      "id": "uJW6kwkIh3jM",
-      "topic": "cwally-port",
-      "title": "[SQUARE] 주의 | 추가매수 보류",
-      "message": "이게 뭐 알림: SK스쾌어가 하이닉스보다 너무 약해지면 팔라는 점검입니다.\n지금 상태: 주의 관찰. 스쾌어 1,190,000원, 하이닉스 1,862,000원, 잠재 NAV 대비 할인 43.3%.\n지금 할 일: 지금 팔지는 말고, 내일 재검토만 하세요. 추가 매수는 말세요.\n나중에: 하이닉스 20일 10.3%, 60일 고점 대비 -29.7%. 스쾌어-하이닉스 20일 차이 2.2%p.\n익절/줄일 때: 조건1 하이닉스 사이클(하이닉스 조정 조짐), 조건2 상대약세(상대약세 평온). 둘 다 SELL이면 우선 줄입니다.\n하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.",
-      "priority": 4,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790337151
-    },
-    {
-      "id": "4Mbj7ilIvncd",
-      "topic": "cwally-port",
-      "title": "[IREN] 새 공시/일정 | 관찰 유지",
-      "message": "2026-09-25 11:58 KST | IREN | IREN\n이게 뭐 알림: IREN(에이아런 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.\n지금 상태: $46.15 | 관찰 구간. 계약 ARR $40억 / 가동 $10억 / 갱 $30억.\n지금 할 일: 새 공시·일정만 보고, 오늘 새로 사지 말세요.\n나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 말세요.\n익절: $65 근처에서 일부, $80 근처에서 추가 정리를 검토하세요.\n줄일 때: $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.\n하지 말 것: 공시 없이 추격매수, 신용/미수. 이 알림만으로 한번에 다 사지 말 것.\n\n21일 안 일정:\n- Horizon 2-4 인도/인수 2026-10-01\n\n새 키워드 공시/뉴스:\n- [yahoo] IREN Has Microsoft and $14 Billion of Funding. Execution Is the Real Test\n  https://finance.yahoo.com/technology/ai/articles/iren-microsoft-14-billion-funding-131403251.html?.tsrc=rss\n- [yahoo] 1 Year Into the Microsoft Deal, IREN Is Delivering and a Rally May Follow Soon\n  https://www.barchart.com/story/news/4695415/1-year-into-the-microsoft-deal-iren-is-delivering-and-a-rally-may-follow-soon?.tsrc=rss",
-      "priority": 5,
-      "tags": [
-        "warning",
-        "zap"
-      ],
-      "time": 1790305138
-    },
-    {
-      "id": "8Jd0oOE0W4FP",
-      "topic": "cwally-port",
-      "title": "[HCE] 구간 변화 | 1차만 매수",
-      "message": "2026-09-25 11:58 KST | HCE | HD현대건설기계\n이게 뭐 알림: HD현대건설기계(267270) 매매 가이드입니다. 주식 한도는 총자산 7%입니다.\n지금 상태: 129,700원 | 1차 매수 구간 (12.8~13.2만)\n지금 할 일: 1차만 사고, 남은 1/3은 남겼두세요.\n나중에: 매수는 13.0 / 12.0 / 11.0만 근처에서만. 실적·군산 일정을 보고 다음 트랜차를 정하세요.\n익절: 17.5~18.5만에서 20~30%, 20~21.5만에서 30~50% 줄입니다.\n줄일 때: 종가 12만 하회, 또는 가이던스 하향+군산 봉괴+관세 15% 파괴 중 2개 이상이면 전량 검토.\n하지 말 것: 추격매수, 신용/미수, 총자산 7% 초과. 군산 완공만 보고 비중 확대 금지.",
-      "priority": 4,
-      "tags": [
-        "tractor",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790305135
-    },
-    {
-      "id": "jCQg8bQBCdb2",
-      "topic": "cwally-port",
-      "title": "[STEEL] 구간 변화 | 2차 추가 검토",
-      "message": "2026-09-25 11:58 KST | STEEL | 철강 3종목\n이게 뭐 알림: 포스코홀딩스 60% / 현대제철 25% / 풍산 15% 매매 구간 점검입니다. 주식 한도는 총자산 30%입니다.\n지금 상태:\n- POSCO홀딩스 60% | 311,500원 | 2차 추가 매수 구간\n- 현대제철 25% | 31,950원 | 매수가 아니라 현금 유지\n- 풍산 15% | 76,700원 | 1차 매수 구간\n\n바렌 구간:\n- POSCO홀딩스: 1차 매수 구간 → 2차 추가 매수 구간 (진입)\n\n지금 할 일: POSCO홀딩스: 논거가 같으면 35%를 더 사세요. 풍산: 이 종목 매수금의 40%만 사세요.\n나중에: 2차·3차 가격에 내려왔을 때만 더 삽니다. 포스코 30.0~31.5만 / 현대제철 2.95~3.15만 / 풍산 6.8~7.3만이 2차입니다.\n익절: 포스코 40만·46만, 현대제철 4.0만·4.3만, 풍산 9.5만·10.5만. 2차 목표에서 전체 40~50% 줄입니다.\n줄일 때: 포스코 26만, 현대제철 2.5만, 풍산 5.6만 아래면 비중을 줄이고 다시 봅니다.\n하지 말 것: 위에서 추격매수, 신용/미수, 철강 비중 30% 초과.",
-      "priority": 4,
-      "tags": [
-        "factory",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790305133
-    },
-    {
-      "id": "i3LaN6iO07aq",
-      "topic": "cwally-port",
-      "title": "[SGYN] 유지",
-      "message": "2026-09-24 20:47 KST | SGYN | 기준 2026-09-21 | 부동산원+토허+등기\n이게 뭐 알림: 동탄·영통(광교)·수지 주간 매매·전세가 유지 선을 깨는지 보는 목요일 알림.\n지금 상태: 동탄 매매 +0.45% / 전세 +0.49% | 영통 매매 +1.09% / 전세 +0.46% | 수지 매매 +0.26% / 전세 +0.07%\n전세 13주 합: 동탄 +4.64% | 영통 +3.26% | 수지 +1.66%\n토허: 영통 8월 426건 (-36.42%). 수지·동탄은 지자체 주간 표 없음\n등기: 등기정보광장 수집실패. 권역별 생애최초는 월간. 권역별 생애최초는 월간 공표.\n지금 할 일: 추격하지 말고 다음 목요일까지 봅니다.\n나중에: 다음 목 15:20. 깨질 순서는 동탄→웰빙/영통→광교본체→수지.\n익절/줄일 때: 제목에 나온 권역만. 영통은 광교 본체+웰빙타운 공통 지표.\n하지 말 것: 네 권역 묶기. 유지 주에 추격.",
-      "priority": 3,
-      "tags": [
-        "house",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790250515
-    },
-    {
-      "id": "Zbk3vNp8RDL5",
-      "topic": "cwally-port",
-      "title": "[SQUARE] 주의 | 추가매수 보류",
-      "message": "이게 뭐 알림: SK스쾌어가 하이닉스보다 너무 약해지면 팔라는 점검입니다.\n지금 상태: 주의 관찰. 스쾌어 1,190,000원, 하이닉스 1,862,000원, 잠재 NAV 대비 할인 43.3%.\n지금 할 일: 지금 팔지는 말고, 내일 재검토만 하세요. 추가 매수는 말세요.\n나중에: 하이닉스 20일 10.3%, 60일 고점 대비 -29.7%. 스쾌어-하이닉스 20일 차이 2.2%p.\n익절/줄일 때: 조건1 하이닉스 사이클(하이닉스 조정 조짐), 조건2 상대약세(상대약세 평온). 둘 다 SELL이면 우선 줄입니다.\n하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.",
-      "priority": 4,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790250449
-    },
-    {
-      "id": "JlRHffEK4hPz",
-      "topic": "cwally-port",
-      "title": "[HCE] 구간 변화 | 1차만 매수",
-      "message": "2026-09-24 11:42 KST | HCE | HD현대건설기계\n이게 뭐 알림: HD현대건설기계(267270) 매매 가이드입니다. 주식 한도는 총자산 7%입니다.\n지금 상태: 129,700원 | 1차 매수 구간 (12.8~13.2만)\n지금 할 일: 1차만 사고, 남은 1/3은 남겼두세요.\n나중에: 매수는 13.0 / 12.0 / 11.0만 근처에서만. 실적·군산 일정을 보고 다음 트랜차를 정하세요.\n익절: 17.5~18.5만에서 20~30%, 20~21.5만에서 30~50% 줄입니다.\n줄일 때: 종가 12만 하회, 또는 가이던스 하향+군산 봉괴+관세 15% 파괴 중 2개 이상이면 전량 검토.\n하지 말 것: 추격매수, 신용/미수, 총자산 7% 초과. 군산 완공만 보고 비중 확대 금지.",
-      "priority": 4,
-      "tags": [
-        "tractor",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790217743
-    },
-    {
-      "id": "4vba4NDLNSsE",
-      "topic": "cwally-port",
-      "title": "[IREN] 새 공시/일정 | 관찰 유지",
-      "message": "2026-09-24 11:42 KST | IREN | IREN\n이게 뭐 알림: IREN(에이아런 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.\n지금 상태: $47.05 | 관찰 구간. 계약 ARR $40억 / 가동 $10억 / 갱 $30억.\n지금 할 일: 새 공시·일정만 보고, 오늘 새로 사지 말세요.\n나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 말세요.\n익절: $65 근처에서 일부, $80 근처에서 추가 정리를 검토하세요.\n줄일 때: $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.\n하지 말 것: 공시 없이 추격매수, 신용/미수. 이 알림만으로 한번에 다 사지 말 것.\n\n21일 안 일정:\n- Horizon 2-4 인도/인수 2026-10-01\n\n새 키워드 공시/뉴스:\n- [yahoo] IREN Has Microsoft and $14 Billion of Funding. Execution Is the Real Test\n  https://finance.yahoo.com/technology/ai/articles/iren-microsoft-14-billion-funding-131403251.html?.tsrc=rss\n- [yahoo] 1 Year Into the Microsoft Deal, IREN Is Delivering and a Rally May Follow Soon\n  https://www.barchart.com/story/news/4695415/1-year-into-the-microsoft-deal-iren-is-delivering-and-a-rally-may-follow-soon?.tsrc=rss",
-      "priority": 5,
-      "tags": [
-        "warning",
-        "zap"
-      ],
-      "time": 1790217743
-    },
-    {
-      "id": "yT0Ai0WS2b4q",
-      "topic": "cwally-port",
-      "title": "[STEEL] 구간 변화 | 2차 추가 검토",
-      "message": "2026-09-24 11:42 KST | STEEL | 철강 3종목\n이게 뭐 알림: 포스코홀딩스 60% / 현대제철 25% / 풍산 15% 매매 구간 점검입니다. 주식 한도는 총자산 30%입니다.\n지금 상태:\n- POSCO홀딩스 60% | 311,500원 | 2차 추가 매수 구간\n- 현대제철 25% | 31,950원 | 매수가 아니라 현금 유지\n- 풍산 15% | 76,700원 | 1차 매수 구간\n\n바렌 구간:\n- POSCO홀딩스: 1차 매수 구간 → 2차 추가 매수 구간 (진입)\n\n지금 할 일: POSCO홀딩스: 논거가 같으면 35%를 더 사세요. 풍산: 이 종목 매수금의 40%만 사세요.\n나중에: 2차·3차 가격에 내려왔을 때만 더 삽니다. 포스코 30.0~31.5만 / 현대제철 2.95~3.15만 / 풍산 6.8~7.3만이 2차입니다.\n익절: 포스코 40만·46만, 현대제철 4.0만·4.3만, 풍산 9.5만·10.5만. 2차 목표에서 전체 40~50% 줄입니다.\n줄일 때: 포스코 26만, 현대제철 2.5만, 풍산 5.6만 아래면 비중을 줄이고 다시 봅니다.\n하지 말 것: 위에서 추격매수, 신용/미수, 철강 비중 30% 초과.",
-      "priority": 4,
-      "tags": [
-        "factory",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790217741
-    },
-    {
-      "id": "Bu2u9kjEejnH",
-      "topic": "cwally-port",
-      "title": "[DRUCK] 교차보도만 | 매수 보류",
-      "message": "2026-09-23 20:38 KST | DRUCK | 드러켄밀러 방한 사실등급\n이게 뭐 알림: 9월 22일 전후 두산·삼성·하이닉스·네이버·쿠팡 회동 보도의 사실 등급을 갱신합니다.\n지금 상태: 등급 일부 사실 | 공식확인 없음 | 현장사진 없음 | 해외교차 없음 | 조회 정상.\n지금 할 일: 공식 확인은 없습니다. 교차보도만으로 비중을 늘리지 마세요.\n나중에: 22~23일 창이 끝나면 이 알림은 재실행하지 않습니다. 공시나 기업 확인이 나오면 그때만 다시 보세요.\n익절/줄일 때: 이 뉴스로 익절·손절 기준을 바꾸지 마세요. 기존 반도체 규칙만 따르세요.\n하지 말 것: 단독 전언 추격매수. 신용·미수. 확인 안 된 회동을 확정으로 단정.\n원문: https://www.hankyung.com/article/202609205724i",
-      "priority": 3,
-      "tags": [
-        "newspaper"
-      ],
-      "time": 1790163534
-    },
-    {
-      "id": "PdYNHiq4ae7h",
-      "topic": "cwally-port",
-      "title": "[USTSY] 70:30 유지",
-      "message": "2026-09-23 20:38 KST | USTSY | 원달러 1,364.7\n이게 뭐 알림: 미국 30년국채 헤지(484790) 70% / 비헤지(476760) 30% 비중을 원달러로 조정할지 보는 알림입니다.\n지금 상태: 밴드 사이. 대기 → 원달러 1,360~1,430. 기본 비중\n지금 할 일: 70:30을 그대로 두세요. 오늘 손대지 말세요.\n나중에: 다음 밴드로 이동할 때만 다시 조정합니다. 이율로 비중을 자주 갈이지 말세요.\n익절/줄일 때: 이 알림은 국채 ETF 매도 신호가 아닙니다. 헤지·비헤지 비중만 바꿉니다.\n하지 말 것: 이율만 보고 비중을 자주 바꾸기. 조정은 이탈분의 절반만. 엔화채·스트립채는 이 알림 범위 밖.",
-      "priority": 4,
-      "tags": [
-        "warning",
-        "us"
-      ],
-      "time": 1790163524
     }
   ]
 }
