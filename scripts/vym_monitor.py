@@ -41,24 +41,18 @@ def save_state(state: dict) -> None:
 
 
 def get_vym_data() -> dict:
-    # Simple Yahoo Finance quote for VYM
+    # Yahoo chart with dividend events for reliable TTM yield
     try:
-        text = fetch_text("https://query1.finance.yahoo.com/v8/finance/chart/VYM?interval=1d&range=1d")
+        text = fetch_text("https://query1.finance.yahoo.com/v8/finance/chart/VYM?interval=1d&range=1y&events=div")
         data = json.loads(text)
-        meta = data["chart"]["result"][0]["meta"]
+        result = data["chart"]["result"][0]
+        meta = result["meta"]
         price = meta.get("regularMarketPrice")
-        # Yield from trailing or approx
-        # Better: use dividend history or fixed recent
-        # For robustness, fetch dividend yield page or use known recent
-        yield_pct = None
-        try:
-            ytext = fetch_text("https://finance.yahoo.com/quote/VYM")
-            m = re.search(r'"trailingAnnualDividendYield"[^0-9]*([0-9.]+)', ytext)
-            if m:
-                yield_pct = float(m.group(1)) * 100
-        except Exception:
-            pass
-        return {"price": price, "yield": yield_pct, "src": "yahoo"}
+        events = result.get("events", {}).get("dividends", {})
+        divs = [d.get("amount", 0) for d in sorted(events.values(), key=lambda x: x.get("date", 0))[-4:]]
+        ttm = sum(divs) if divs else None
+        yld = (ttm / price * 100) if (ttm and price) else None
+        return {"price": price, "yield": yld, "ttm_div": ttm, "src": "yahoo-chart-div"}
     except Exception as e:
         return {"price": None, "yield": None, "error": str(e), "src": "fail"}
 
@@ -79,6 +73,30 @@ def main() -> int:
     now = datetime.now(KST)
     week = now.strftime("%G-W%V")
     state = load_state()
+
+    if mode == "install":
+        # One-time install confirmation only. Does not update weekly state.
+        title = "[VYM] 설치 확인 | 매매 신호 아님"
+        body = [
+            f"이게 뭐 알림: {cfg['explain']}",
+            "지금 결과: 설치 확인용 테스트 발송입니다. 실제 매력 판단은 다음 월요일부터.",
+            "지금 할 일: 알림이 도착했는지 확인하세요.",
+            "나중에: 매주 월요일 09:00 KST에 정상 점검 알림이 옵니다.",
+            "익절/줄일 때: 해당 없음.",
+            "하지 말 것: 이 메시지를 매매 신호로 해석하기.",
+        ]
+        msg = "\n".join([f"{now.strftime('%Y-%m-%d %H:%M KST')} | VYM | 설치 확인", *body])
+        print(msg)
+        publish(
+            resolve_topic("port", cfg.get("ntfy_topic")),
+            title,
+            msg,
+            3,
+            ["white_check_mark"],
+            resolve_server(cfg.get("ntfy_server")),
+        )
+        print("install confirmation sent")
+        return 0
 
     if mode not in {"force", "test", "dry", "dry-run"}:
         if now.weekday() != int(cfg.get("weekday_kst", 0)):
