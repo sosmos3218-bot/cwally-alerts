@@ -13,18 +13,12 @@
   "accel": 7000,
   "buy2": 6500,
   "premium_abs": 1.5,
-  "kospi_gate": {
-    "off_below": 6400,
-    "on_above": 6700,
-    "initial": "ON",
-    "source": "Grok KOSPI 경로 알림(10/8 6400~6700 재시험, 10/13 6400 하회 폐기)의 기준선을 고정값으로 복사. Grok 상태는 읽지 않음. Grok 기준이 바뀌면 이 두 값도 같이 고친다."
-  },
   "volume_avg_days": 5,
   "volume_ratio_min": 1.0,
-  "notify_policy": "구간 키(BUY1/ACCEL/ACCEL_WAIT/ACCEL_HOLD/BUY2, +PREM)가 바뀔 때만 발송. 휴장일과 지난 날짜 시세는 침묵.",
+  "notify_policy": "구간 키(BUY1/ACCEL/ACCEL_WAIT/BUY2, +PREM)가 바뀔 때만 발송. 휴장일과 지난 날짜 시세는 침묵.",
   "end_date": null,
   "cron_approved": "2026-10-06",
   "cron_utc": "40 6 * * 1-5",
   "ends_kst": null,
-  "ends_note": "수동 해제 전까지 평일 15:40 점검, 구간/KOSPI/거래량 조건이 바뀔 때만 알림"
+  "ends_note": "수동 해제 전까지 평일 15:40 점검, 구간/거래량 조건이 바뀔 때만 알림"
 }
