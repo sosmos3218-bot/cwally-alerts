@@ -48,13 +48,30 @@ def get_vym_data() -> dict:
         result = data["chart"]["result"][0]
         meta = result["meta"]
         price = meta.get("regularMarketPrice")
+        high52 = meta.get("fiftyTwoWeekHigh")
         events = result.get("events", {}).get("dividends", {})
         divs = [d.get("amount", 0) for d in sorted(events.values(), key=lambda x: x.get("date", 0))[-4:]]
         ttm = sum(divs) if divs else None
         yld = (ttm / price * 100) if (ttm and price) else None
-        return {"price": price, "yield": yld, "ttm_div": ttm, "src": "yahoo-chart-div"}
+        from_high = ((price - high52) / high52 * 100) if (price and high52) else None
+        return {"price": price, "yield": yld, "ttm_div": ttm, "high52": high52, "from_high": from_high, "src": "yahoo-chart-div"}
     except Exception as e:
         return {"price": None, "yield": None, "error": str(e), "src": "fail"}
+
+
+def get_schd_yield() -> float | None:
+    try:
+        text = fetch_text("https://query1.finance.yahoo.com/v8/finance/chart/SCHD?interval=1d&range=1y&events=div")
+        data = json.loads(text)
+        result = data["chart"]["result"][0]
+        meta = result["meta"]
+        price = meta.get("regularMarketPrice")
+        events = result.get("events", {}).get("dividends", {})
+        divs = [d.get("amount", 0) for d in sorted(events.values(), key=lambda x: x.get("date", 0))[-4:]]
+        ttm = sum(divs) if divs else None
+        return (ttm / price * 100) if (ttm and price) else None
+    except Exception:
+        return None
 
 
 def get_treasury() -> float | None:
@@ -108,6 +125,7 @@ def main() -> int:
 
     vym = get_vym_data()
     tsy = get_treasury()
+    schd_yld = get_schd_yield()
     price = vym.get("price")
     yld = vym.get("yield")
     thr = cfg.get("thresholds", {})
@@ -125,9 +143,13 @@ def main() -> int:
         gap = tsy - yld
 
     title = f"[VYM] {judgment} | 수익률 {yld:.2f}%" if yld else "[VYM] 조회 실패 | 직접 확인"
+    from_high_s = f"{vym.get('from_high'):.1f}" if vym.get("from_high") is not None else "확인불가"
+    yld_s = f"{yld:.2f}" if yld else "확인불가"
+    gap_s = f"{gap:.2f}" if gap else "확인불가"
+    schd_s = f"{schd_yld:.2f}" if schd_yld else "확인불가"
     body = [
         f"이게 뭐 알림: {cfg['explain']}",
-        f"지금 결과: 가격 ${price or '확인불가'} | 배당수익률 {yld or '확인불가'}% | 10Y 국채 {tsy or '확인불가'}% | 갭 {gap or '확인불가'}%p.",
+        f"지금 결과: 가격 ${price or '확인불가'} | 배당수익률 {yld_s}% | 52주 고점 대비 {from_high_s}% | 10Y 국채 {tsy or '확인불가'}% | 갭 {gap_s}%p | SCHD 수익률 {schd_s}%.",
         "지금 할 일: 성장주 편중 완화용 저비용 가치 분산이면 분할 진입 검토. 높은 현금흐름이 목적이면 SCHD나 국채 우선.",
         "나중에: 다음 월요일 09:00 KST에 다시 점검. 수익률 2.7% 이상 또는 가격 10% 이상 하락 시 매력 재평가.",
         "익절/줄일 때: 해당 없음. 장기 보유 목적.",
