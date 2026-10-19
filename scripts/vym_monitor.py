@@ -168,14 +168,15 @@ def main() -> int:
     print(msg)
     print(f"dry={dry} judgment={judgment}")
 
+    priority = 4 if (from_high is not None and from_high <= -15) else 3
     if dry:
-        print("dry-run; no ntfy")
+        print(f"dry-run; no ntfy (priority={priority})")
     else:
         publish(
             resolve_topic("port", cfg.get("ntfy_topic")),
             title,
             msg,
-            3,
+            priority,
             ["chart_with_upwards_trend"],
             resolve_server(cfg.get("ntfy_server")),
         )
