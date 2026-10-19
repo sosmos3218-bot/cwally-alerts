@@ -226,6 +226,23 @@ on:
     - cron: "20 0 2 11 *"
     # kos5500 one-shot 2026-10-20 20:40 KST, late fallback
     - cron: "40 11 20 10 *"
+    # doosan oneshot_kst (KST→UTC): 2026-10-26~11-16 평일 17:05. 두산 4종목 3분기 실적 결과 비교 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "5 8 26 10 *"
+    - cron: "5 8 27 10 *"
+    - cron: "5 8 28 10 *"
+    - cron: "5 8 29 10 *"
+    - cron: "5 8 30 10 *"
+    - cron: "5 8 2 11 *"
+    - cron: "5 8 3 11 *"
+    - cron: "5 8 4 11 *"
+    - cron: "5 8 5 11 *"
+    - cron: "5 8 6 11 *"
+    - cron: "5 8 9 11 *"
+    - cron: "5 8 10 11 *"
+    - cron: "5 8 11 11 *"
+    - cron: "5 8 12 11 *"
+    - cron: "5 8 13 11 *"
+    - cron: "5 8 16 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -396,6 +413,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
             elif [ "${{ github.event.schedule }}" = "40 11 20 10 *" ]; then JOB=kos5500
+            elif [ "${{ github.event.schedule }}" = "5 8 26 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 28 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 2 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 4 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 5 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 6 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 16 11 *" ]; then JOB=doosan
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1001,6 +1019,13 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/neeq3_monitor.py auto
+      - name: Run doosan
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'doosan'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/doosan_monitor.py slot; else python scripts/doosan_monitor.py auto; fi
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py

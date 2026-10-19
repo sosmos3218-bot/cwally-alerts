@@ -1,0 +1,65 @@
+{
+  "name": "doosan",
+  "title_prefix": "[DOOSAN]",
+  "display": "두산 4종목(두산, 두산에너빌리티, 두산밥캣, 두산테스나) 가격, 외인 수급, 3분기 실적 알림",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 (port-alerts morning 슬롯, 평일), 17:05 (one-shot 10/26~11/16 평일)",
+  "schedule_note": "새 반복 cron 없음. 평일 09:00 morning 슬롯에서 전 거래일 KRX 종가와 확정 수급을 판정하고 새 조건만 보냄(월요일은 주간 요약 포함). 실적 결과는 10/26~11/16 평일 17:05 one-shot(당일 공시 없으면 침묵), 놓치면 다음 날 09:00. 15:40에는 종목별 당일 수급이 미게시라 쓰지 않음.",
+  "approved": "2026-10-19 채팅 승인 (추천안 B, 조건 알림만)",
+  "year_guard": 2026,
+  "holding": null,
+  "holding_note": "보유 여부 미확인. 보유자 전제 문구를 쓰지 않는다.",
+  "tickers": [
+    {"code": "000150", "name": "두산", "short": "두산", "market": "KOSPI", "foreign_day_eok": 100},
+    {"code": "034020", "name": "두산에너빌리티", "short": "에너빌", "market": "KOSPI", "foreign_day_eok": 300},
+    {"code": "241560", "name": "두산밥캣", "short": "밥캣", "market": "KOSPI", "foreign_day_eok": 100},
+    {"code": "131970", "name": "두산테스나", "short": "테스나", "market": "KOSDAQ", "foreign_day_eok": 100}
+  ],
+  "rules": {
+    "price_pct": 5.0,
+    "price_strong_pct": 10.0,
+    "foreign_5d_eok": 300,
+    "foreign_strong_eok": 300,
+    "buy_streak_days": 3,
+    "rearm_ratio": 0.5,
+    "note": "각 조건은 종목과 방향별로 처음 걸릴 때만 보냄. 반대 방향이 나오거나 기준의 절반 아래인 날이 오면 다시 열림. 하루 외인 300억 이상 또는 10% 이상 등락은 우선순위 4. 기관은 표시만."
+  },
+  "earnings": {
+    "period_end": "2026-09-30",
+    "since": "2026-10-01",
+    "op_dev_pct": 10,
+    "dssotp_code": "000150",
+    "dart_code": "131970",
+    "dart_name": "두산테스나",
+    "dart_deadline": "2026-11-16",
+    "dart_note": "두산테스나는 잠정실적 공시를 하지 않고 분기보고서만 제출(2023~2025년 3분기 모두 11/14). 2026년 법정 기한 11/14(토) 다음 영업일 11/16.",
+    "known": {
+      "241560": {"date": "2026-10-29", "call": "16:30", "source": "결산실적공시 예고 2026-10-19 16:02 KST, IR 컨퍼런스콜 10/29 16:30"}
+    },
+    "consensus_seed": {
+      "000150": {"rev": 54187, "op": 4797, "as_of": "2026-10-19"},
+      "034020": {"rev": 44090, "op": 2480, "as_of": "2026-10-19"},
+      "241560": {"rev": 23679, "op": 1672, "as_of": "2026-10-19"},
+      "131970": {"rev": 805, "op": 63, "as_of": "2026-10-19"}
+    },
+    "consensus_source": "네이버 증권 분기 재무 컨센서스 열(isConsensus=Y, 2026.09). 발표 전 매일 09:00 state에 고정 저장"
+  },
+  "oneshot_kst": [
+    "2026-10-26 17:05", "2026-10-27 17:05", "2026-10-28 17:05", "2026-10-29 17:05", "2026-10-30 17:05",
+    "2026-11-02 17:05", "2026-11-03 17:05", "2026-11-04 17:05", "2026-11-05 17:05", "2026-11-06 17:05",
+    "2026-11-09 17:05", "2026-11-10 17:05", "2026-11-11 17:05", "2026-11-12 17:05", "2026-11-13 17:05",
+    "2026-11-16 17:05"
+  ],
+  "sources": {
+    "krx_days": "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=1&perPage=30&pagination=true",
+    "investor_check": "https://finance.daum.net/api/investor/days?symbolCode=A{code}&page=1&perPage=10&pagination=true",
+    "naver_trend": "m.stock.naver.com/api/stock/{code}/trend (naver_api.stock_trend)",
+    "naver_prev_close": "https://m.stock.naver.com/api/stock/{code}/integration",
+    "naver_notice": "stock.naver.com/api/domestic/detail/notice (naver_api.notices)",
+    "consensus": "https://m.stock.naver.com/api/stock/{code}/finance/quarter",
+    "dart_search": "https://dart.fss.or.kr/dsab007/detailSearch.ax (POST 조회 전용, 2026-10-19 승인)"
+  },
+  "ends_kst": "2026-11-20 09:00",
+  "ends_note": "3분기 실적 시즌 종료"
+}
