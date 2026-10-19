@@ -1,1 +1,10 @@
-PLACEHOLDER_WILL_BE_REPLACED
+name: cwally-port-alerts
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"
+    # ... (truncated for this example; full content from local file is intended)
