@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-16 15:21 KST",
-  "last_zone": "ZONE1",
+  "updated_at": "2026-10-19 15:21 KST",
+  "last_zone": "ZONE2",
   "last_fail_date": null,
   "last_action": "ALERT",
-  "price": 14860.0,
+  "price": 14150.0,
   "errors": []
 }
