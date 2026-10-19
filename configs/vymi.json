@@ -1,0 +1,103 @@
+{
+  "name": "vymi",
+  "title_prefix": "[VYMI]",
+  "ticker": "VYMI",
+  "display": "뱅가드 해외 고배당 ETF (VYMI)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 슬롯에 붙임. 1/4/7/10월 15일 이후 첫 평일(15일이 주말이면 다음 평일)에 분기 1회만 발송. 그달 안에서 아직 안 보냈으면 다음 평일에 따라잡기 발송.",
+  "alert_policy": "quarterly",
+  "quarter_months": [
+    1,
+    4,
+    7,
+    10
+  ],
+  "quarter_day": 15,
+  "first_quarter": "2027Q1",
+  "first_quarter_note": "설치일(2026-10-19) 기준 다음 실발송은 2027-01-15(금) 09:00 KST. 2026Q4는 발송하지 않음.",
+  "approved": "2026-10-19 chat (morning 슬롯 부착, 새 cron 없음)",
+  "benchmarks": {
+    "financials": "IXG",
+    "broad_ex_us": "VXUS"
+  },
+  "holdings_source": "https://investor.vanguard.com/vmf/api/VYMI/portfolio-holding/stock?start=1&count=50",
+  "holdings_note": "2026-09-30 뱅가드 보유종목 기준 상위 금융주 중 SEC XBRL 공시가 있는 곳. 비중은 실행 때 뱅가드에서 다시 읽고, 실패하면 아래 weight_pct를 씀.",
+  "financial_holdings": [
+    {
+      "name": "HSBC",
+      "cik": "0001089113",
+      "weight_pct": 1.8,
+      "concepts": [
+        "ifrs-full:AdjustmentsForImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLossLoansAndAdvances"
+      ],
+      "isin": "GB0005405286"
+    },
+    {
+      "name": "Royal Bank of Canada",
+      "cik": "0001000275",
+      "weight_pct": 1.46,
+      "concepts": [
+        "ifrs-full:AdditionalAllowanceRecognisedInProfitOrLossAllowanceAccountForCreditLossesOfFinancialAssets",
+        "-ifrs-full:IncreaseDecreaseInAllowanceAccountForCreditLossesOfFinancialAssets"
+      ],
+      "isin": "CA7800871021"
+    },
+    {
+      "name": "Mitsubishi UFJ",
+      "cik": "0000067088",
+      "weight_pct": 1.34,
+      "concepts": [
+        "us-gaap:ProvisionForLoanLossesExpensed",
+        "us-gaap:ProvisionForLoanLeaseAndOtherLosses"
+      ],
+      "isin": "JP3902900004"
+    },
+    {
+      "name": "Banco Santander",
+      "cik": "0000891478",
+      "weight_pct": 1.06,
+      "concepts": [
+        "ifrs-full:ImpairmentLossImpairmentGainAndReversalOfImpairmentLossDeterminedInAccordanceWithIFRS9",
+        "ifrs-full:ImpairmentLossOnFinancialAssets"
+      ],
+      "isin": "ES0113900J37"
+    },
+    {
+      "name": "Toronto-Dominion",
+      "cik": "0000947263",
+      "weight_pct": 1.03,
+      "concepts": [
+        "-ifrs-full:IncreaseDecreaseInAllowanceAccountForCreditLossesOfFinancialAssets"
+      ],
+      "isin": "CA8911605092"
+    },
+    {
+      "name": "Sumitomo Mitsui",
+      "cik": "0001022837",
+      "weight_pct": 0.85,
+      "concepts": [
+        "ifrs-full:ImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss",
+        "ifrs-full:AdditionalAllowanceRecognisedInProfitOrLossAllowanceAccountForCreditLossesOfFinancialAssets"
+      ],
+      "isin": "JP3890350006"
+    }
+  ],
+  "provision_stale_days": 400,
+  "rules": {
+    "drawdown_warn_pct": 15,
+    "dividend_yoy_warn_pct": -10,
+    "provision_up_pct": 20,
+    "relative_3m_warn_pp": -5
+  },
+  "sources": {
+    "price": "https://query1.finance.yahoo.com/v8/finance/chart/VYMI?range=10y&interval=1d&events=div",
+    "price_fallback": "https://stooq.com/q/d/l/?s=vymi.us&i=d",
+    "sec": "https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json"
+  },
+  "sec_user_agent": "cwally-alerts sosmos3218@gmail.com",
+  "ends_kst": null,
+  "ends_note": "분기 점검, 수동 해제 전까지",
+  "concepts_note": "앞에 - 가 붙은 항목은 현금흐름표 조정 항목이라 부호를 뒤집어 충당금(비용) 크기로 읽음. 여러 항목 중 최근 공시 기간이 가장 새로운 것을 씀."
+}
