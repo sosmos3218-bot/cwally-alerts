@@ -209,6 +209,17 @@ on:
     # memswing oneshot_kst (KST→UTC): 2026-10-19 18:30, 19:30. 10/19 확정 수급 스윙 진입 1회 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "30 9 19 10 *"
     - cron: "30 10 19 10 *"
+    # hmcq3 oneshot_kst (KST→UTC): 10-22~10-28 16:26, 10-29/10-30 15:10, 17:10, 11-02 09:20. 현대차 3Q 실적+2우B 배당 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "26 7 22 10 *"
+    - cron: "26 7 23 10 *"
+    - cron: "26 7 26 10 *"
+    - cron: "26 7 27 10 *"
+    - cron: "26 7 28 10 *"
+    - cron: "10 6 29 10 *"
+    - cron: "10 8 29 10 *"
+    - cron: "10 6 30 10 *"
+    - cron: "10 8 30 10 *"
+    - cron: "20 0 2 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -216,7 +227,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, bankrate1014, cpi1014, kica]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, bankrate1014, cpi1014, kica, hmcq3]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -287,6 +298,11 @@ on:
         default: dry
         type: choice
         options: [dry, auto, force]
+      hmcq3_mode:
+        description: "job=hmcq3 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
       force_square:
         type: boolean
         default: true
@@ -318,6 +334,7 @@ jobs:
           KZ=auto
           KO=auto
           KC=auto
+          HQ=auto
           if [ "${{ github.event_name }}" = "schedule" ]; then
             if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
             elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
@@ -364,6 +381,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 15 10 *" ]; then JOB=kosreb
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             elif [ "${{ github.event.schedule }}" = "30 9 19 10 *" ] || [ "${{ github.event.schedule }}" = "30 10 19 10 *" ]; then JOB=memswing
+            elif [ "${{ github.event.schedule }}" = "26 7 22 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 23 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 26 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 2 11 *" ]; then JOB=hmcq3
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
             else
@@ -437,6 +455,8 @@ jobs:
             [ -z "$KO" ] && KO=dry
             KC="${{ github.event.inputs.kica_mode }}"
             [ -z "$KC" ] && KC=dry
+            HQ="${{ github.event.inputs.hmcq3_mode }}"
+            [ -z "$HQ" ] && HQ=dry
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -451,6 +471,7 @@ jobs:
           echo "kzq3_mode=$KZ" >> "$GITHUB_OUTPUT"
           echo "kosreb_mode=$KO" >> "$GITHUB_OUTPUT"
           echo "kica_mode=$KC" >> "$GITHUB_OUTPUT"
+          echo "hmcq3_mode=$HQ" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
@@ -936,6 +957,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/memswing_monitor.py auto
+      - name: Run hmcq3
+        if: steps.pick.outputs.job == 'hmcq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/hmcq3_monitor.py "${{ steps.pick.outputs.hmcq3_mode }}"
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
