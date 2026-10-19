@@ -10,9 +10,12 @@
   "oneshot_kst": [
     "2026-11-12 18:00",
     "2026-11-13 18:00",
-    "2026-11-16 18:00"
+    "2026-11-16 18:00",
+    "2027-03-16 18:00",
+    "2027-03-17 18:00",
+    "2027-03-19 18:00"
   ],
-  "oneshot_note": "3분기 분기보고서 공시일 후보 3일. 법정 기한 11-14(토), 1분기는 기한 하루 전(05-14) 공시. 실적이 처음 확인된 날 한 번만 보내고 나머지는 침묵. 마지막 후보일(11-16)까지 미게시면 그때 한 번 미게시 안내.",
+  "oneshot_note": "3분기 분기보고서 공시일 후보 3일 (11월). 연간 실적 후보 3일 (2027년 3월 중순). 실적이 처음 확인된 날 한 번만 보내고 나머지는 침묵. 마지막 후보일까지 미게시면 그때 한 번 미게시 안내. 배당수익률 3.5% 이상, 영업이익 성장 5% 이상 기준으로 배당 중심 논리 재평가.",
   "year_guard": 2026,
   "holding": true,
   "levels": {
@@ -34,11 +37,18 @@
     "h1_op_eok": 176,
     "expire_date": "2026-11-16"
   },
+  "annual_earnings": {
+    "key": "202612",
+    "period_end": "2026-12-31",
+    "prev_annual_op_eok": 270,
+    "expire_date": "2027-03-19"
+  },
   "sources": {
     "daily": "https://api.finance.naver.com/siseJson.naver?symbol=053300&requestType=1&startTime={start}&endTime={end}&timeframe=day",
     "integration": "https://m.stock.naver.com/api/stock/053300/integration",
-    "quarter": "https://m.stock.naver.com/api/stock/053300/finance/quarter"
+    "quarter": "https://m.stock.naver.com/api/stock/053300/finance/quarter",
+    "annual": "https://m.stock.naver.com/api/stock/053300/finance/annual"
   },
   "ends_kst": null,
-  "ends_note": "평일 15:40 조건 알림은 종료일 없음. 3분기 실적 확인은 11-16 18:00 후보일까지"
+  "ends_note": "평일 15:40 조건 알림은 종료일 없음. 3분기 실적 확인은 11-16 18:00 후보일까지. 연간 실적 확인은 2027-03-19 18:00 후보일까지"
 }
