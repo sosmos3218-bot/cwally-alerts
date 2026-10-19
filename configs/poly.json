@@ -1,0 +1,12 @@
+{
+  "name": "POLY",
+  "title_prefix": "[POLY]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "21:00",
+  "schedule_note": "일요일 21:00 KST 기존 portlight 슬롯에 붙임. 새 cron 없음.",
+  "alert_policy": "sunday_weekly",
+  "limit": 8,
+  "ends_kst": null,
+  "ends_note": "주간 폴리마켓 브리핑 (수동 해제 전까지)"
+}
