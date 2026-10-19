@@ -3,10 +3,11 @@
 
   kica_monitor.py            daily (flow slot 15:40): silent unless a condition hits
   kica_monitor.py daily dry  same, prints only (no ntfy, no state write)
-  kica_monitor.py auto       Q3 2026 earnings one-shot (oneshot_pick passes "auto"); candidates 11-12/13/16.
+  kica_monitor.py auto       Q3 2026 or annual 2026 earnings one-shot (oneshot_pick passes "auto").
+                             Q3 candidates 11-12/13/16 2026. Annual candidates 3-16/17/19 2027.
                              Sends once on the first day results are found; silent if not yet published,
                              except on the last candidate day (one "미게시" notice). Silent after a send.
-                             Includes dividend-focused holding re-evaluation (yield>=3.5%, OP YoY>=5%).
+                             Includes dividend-focused holding re-evaluation (yield>=3.5%, OP growth>=5%).
   kica_monitor.py dry        earnings preview + daily preview, no ntfy, no state write
   kica_monitor.py force      earnings one-shot ignoring the date window
   kica_monitor.py install    one install-confirmation send (AGENTS.md), no state write
@@ -40,6 +41,8 @@ DEFAULT_STATE = {
     "last_sent": None,
     "earnings_notified": False,
     "empty_notified": False,
+    "annual_notified": False,
+    "annual_empty_notified": False,
 }
 
 
@@ -135,7 +138,7 @@ def valuation(cfg: dict) -> tuple[str, float | None]:
 
 def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    if now.year != int(cfg.get("year_guard") or 2026):
+    if now.year not in (2026, 2027):
         print("kica year-guard silent")
         return
     if now.weekday() >= 5:
@@ -208,7 +211,7 @@ def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
             "이게 뭐 알림: 한국정보인증 종가가 정해둔 조건(하루 5% 이상 변동, 4,500~6,500원 밖)에 걸렸습니다. 매매 신호가 아닙니다.",
             f"지금 결과/상태: {day} 종가 {close:,}원 (전일 {prev['close']:,}원, {chg:+.2f}%). {val_txt}.",
             f"지금 할 일: {action}",
-            "나중에: 3분기 분기보고서(11월 12~16일 예상)에서 영업이익을 확인합니다. 밴드 알림은 종가가 안쪽으로 100원 돌아오면 다시 열립니다.",
+            "나중에: 3분기 분기보고서(11월 12~16일 예상)과 연간 실적(2027년 3월 중순 예상)에서 영업이익을 확인합니다. 밴드 알림은 종가가 안쪽으로 100원 돌아오면 다시 열립니다.",
             "익절/줄일 때: 이 알림은 주문이 아닙니다. 줄일지는 본인이 미리 정한 기준으로 판단하세요.",
             "하지 말 것: 하루 움직임만 보고 추격매수. 신용/미수.",
         ]
@@ -241,7 +244,7 @@ def quarter(cfg: dict) -> dict | None:
     fi = json.loads(fetch(cfg["sources"]["quarter"]))["financeInfo"]
     cons = {t["key"]: t.get("isConsensus") == "Y" for t in fi["trTitleList"]}
     if key not in cons or cons[key]:
-        return None  # not reported yet (consensus/placeholder column)
+        return None
     rows = {r["title"]: (r["columns"].get(key) or {}).get("value") for r in fi["rowList"]}
     op = num(rows.get("영업이익"))
     if op is None:
@@ -249,20 +252,35 @@ def quarter(cfg: dict) -> dict | None:
     return {"op": op, "rev": num(rows.get("매출액")), "ni": num(rows.get("당기순이익"))}
 
 
-def last_oneshot_day(cfg: dict) -> str:
+def annual(cfg: dict) -> dict | None:
+    key = cfg["annual_earnings"]["key"]
+    fi = json.loads(fetch(cfg["sources"]["annual"]))["financeInfo"]
+    cons = {t["key"]: t.get("isConsensus") == "Y" for t in fi["trTitleList"]}
+    if key not in cons or cons[key]:
+        return None
+    rows = {r["title"]: (r["columns"].get(key) or {}).get("value") for r in fi["rowList"]}
+    op = num(rows.get("영업이익"))
+    if op is None:
+        return None
+    return {"op": op, "rev": num(rows.get("매출액")), "ni": num(rows.get("당기순이익"))}
+
+
+def last_oneshot_day(cfg: dict, kind: str = "q3") -> str:
     days = sorted(str(t)[:10] for t in (cfg.get("oneshot_kst") or []))
-    return days[-1] if days else cfg["earnings"]["expire_date"]
+    if kind == "annual":
+        return days[-1] if days else cfg["annual_earnings"]["expire_date"]
+    return days[2] if len(days) > 2 else cfg["earnings"]["expire_date"]
 
 
 def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> None:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     e = cfg["earnings"]
     expire = datetime.fromisoformat(e["expire_date"] + "T23:59:59").replace(tzinfo=KST)
-    if mode == "auto" and (now.year != int(cfg.get("year_guard") or 2026) or now > expire):
-        print("kica earnings outside window; silent")
+    if mode == "auto" and (now.year != 2026 or now > expire):
+        print("kica q3 earnings outside window; silent")
         return
     if state.get("earnings_notified") and mode != "force":
-        print("kica earnings already notified; silent")
+        print("kica q3 earnings already notified; silent")
         return
     try:
         q = quarter(cfg)
@@ -271,12 +289,12 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
         save(state, dry)
         return
     if q is None:
-        final_day = last_oneshot_day(cfg)
+        final_day = last_oneshot_day(cfg, "q3")
         if mode == "auto" and now.strftime("%Y-%m-%d") < final_day:
-            print(f"kica earnings not published yet; silent until final candidate {final_day}")
+            print(f"kica q3 earnings not published yet; silent until final candidate {final_day}")
             return
         if state.get("empty_notified") and not dry:
-            print("kica earnings not published; already told")
+            print("kica q3 earnings not published; already told")
             return
         body = "\n".join(
             [
@@ -319,7 +337,7 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
             "이게 뭐 알림: 한국정보인증 2026년 3분기 실적(연결) 결과와 배당 중심 보유 논리 재평가입니다. 매매 신호가 아닙니다.",
             f"지금 결과/상태: {rev_txt}영업이익 {op:,.0f}억{ni_txt}. 전년 3분기 {prev_q3:,.0f}억 대비 {yoy:+.0f}%, 2분기 {q2:,.0f}억 대비 {qoq:+.0f}%. {tone}. 1~3분기 누적 영업이익은 약 {h1 + op:,.0f}억(상반기 {h1:,.0f}억 기준). {val_txt}.",
             f"지금 할 일: 배당 중심 논리 {logic}. {dy_note}. {op_note}. 충족이면 기존 논리 유지, 미달이면 배당 지속과 본업 성장을 재점검하세요.",
-            "나중에: 4분기 실적과 배당 정책(2025년 주당 200원) 은 내년 초에 나옵니다. 연간 기준은 그때 다시 확인합니다.",
+            "나중에: 연간 실적과 배당 정책은 2027년 3월 중순에 확인합니다. 연간 기준은 그때 다시 확인합니다.",
             "익절/줄일 때: 이 알림은 주문이 아닙니다. 실적이 좋아도 줄일 기준은 본인이 미리 정한 값으로 판단하세요.",
             "하지 말 것: 한 분기 숫자만 보고 추격매수. 신용/미수.",
         ]
@@ -331,11 +349,87 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
     save(state, dry)
 
 
+def annual_earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> None:
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    ae = cfg["annual_earnings"]
+    expire = datetime.fromisoformat(ae["expire_date"] + "T23:59:59").replace(tzinfo=KST)
+    if mode == "auto" and (now.year != 2027 or now > expire):
+        print("kica annual earnings outside window; silent")
+        return
+    if state.get("annual_notified") and mode != "force":
+        print("kica annual earnings already notified; silent")
+        return
+    try:
+        a = annual(cfg)
+    except Exception as exc:
+        fail_once(state, cfg, now, f"연간 실적 조회 실패: {exc}", dry)
+        save(state, dry)
+        return
+    if a is None:
+        final_day = last_oneshot_day(cfg, "annual")
+        if mode == "auto" and now.strftime("%Y-%m-%d") < final_day:
+            print(f"kica annual earnings not published yet; silent until final candidate {final_day}")
+            return
+        if state.get("annual_empty_notified") and not dry:
+            print("kica annual earnings not published; already told")
+            return
+        body = "\n".join(
+            [
+                f"{stamp} | 053300",
+                "이게 뭐 알림: 한국정보인증 2026년 연간 실적을 확인하려 했는데 아직 게시되지 않았습니다.",
+                "지금 결과/상태: 네이버 연간 실적에 2026.12 확정치가 없습니다. 공시가 아직 없거나 반영이 늦은 것입니다.",
+                "지금 할 일: DART에서 한국정보인증 사업보고서가 올라왔는지 직접 확인하세요.",
+                "나중에: 2027년 3월 16일, 17일, 19일 후보일에도 확인되지 않았습니다. 이후 자동 재확인은 없습니다. 지연 공시나 정정 여부를 확인하세요.",
+                "익절/줄일 때: 실적 숫자를 확인하기 전에는 판단하지 마세요.",
+                "하지 말 것: 미게시를 호재나 악재로 해석.",
+            ]
+        )
+        send(cfg, "[KICA] 연간 실적 미게시 | 직접 확인", body, 3, dry)
+        if not dry:
+            state["annual_empty_notified"] = True
+        save(state, dry)
+        return
+    op, rev, ni = a["op"], a["rev"], a["ni"]
+    prev = float(ae["prev_annual_op_eok"])
+    yoy = (op - prev) / prev * 100.0
+    val_txt, dy = valuation(cfg)
+    dy_ok = dy is not None and dy >= 3.5
+    op_ok = yoy >= 5.0
+    logic = "유지" if (dy_ok and op_ok) else "재검토"
+    if yoy >= 10:
+        tone = "작년 연간보다 늘었습니다"
+    elif yoy <= -10:
+        tone = "작년 연간보다 줄었습니다"
+    else:
+        tone = "작년 연간과 비슷합니다"
+    title = f"[KICA] 연간 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
+    rev_txt = f"매출 {rev:,.0f}억, " if rev is not None else ""
+    ni_txt = f", 순이익 {ni:,.0f}억" if ni is not None else ""
+    dy_note = f"배당수익률 {dy:.1f}% (기준 3.5% {'충족' if dy_ok else '미달'})" if dy is not None else "배당수익률 조회 실패"
+    op_note = f"영업이익 YoY {yoy:+.1f}% (기준 5% {'충족' if op_ok else '미달'})"
+    body = "\n".join(
+        [
+            f"{stamp} | 053300",
+            "이게 뭐 알림: 한국정보인증 2026년 연간 실적(연결) 결과와 배당 중심 보유 논리 재평가입니다. 매매 신호가 아닙니다.",
+            f"지금 결과/상태: {rev_txt}영업이익 {op:,.0f}억{ni_txt}. 전년 연간 {prev:,.0f}억 대비 {yoy:+.0f}%. {tone}. {val_txt}.",
+            f"지금 할 일: 배당 중심 논리 {logic}. {dy_note}. {op_note}. 충족이면 기존 논리 유지, 미달이면 배당 지속과 본업 성장을 재점검하세요.",
+            "나중에: 배당 정책 확정액과 2027년 실적 추이를 지속 관찰합니다.",
+            "익절/줄일 때: 이 알림은 주문이 아닙니다. 실적이 좋아도 줄일 기준은 본인이 미리 정한 값으로 판단하세요.",
+            "하지 말 것: 한 해 숫자만 보고 추격매수. 신용/미수.",
+        ]
+    )
+    send(cfg, title, body, 4, dry)
+    if not dry:
+        state["annual_notified"] = True
+        state["last_sent"] = {"at": stamp, "hits": ["annual"], "op": op, "yoy": round(yoy, 1), "dy": dy}
+    save(state, dry)
+
+
 def install(cfg: dict) -> None:
     body = "\n".join(
         [
             "이게 뭐 알림: 한국정보인증(053300) 알림이 설치됐다는 확인입니다.",
-            "지금 결과/상태: 평일 15:40 종가 점검(하루 5% 이상 변동 또는 4,500~6,500원 이탈 때만 발송)과 11월 13일 18:00 3분기 실적 확인이 켜졌습니다. 실적 알림에 배당수익률 3.5% 이상, 영업이익 YoY 5% 이상 기준 재평가가 포함됩니다.",
+            "지금 결과/상태: 평일 15:40 종가 점검(하루 5% 이상 변동 또는 4,500~6,500원 이탈 때만 발송)과 11월 13일 18:00 3분기 실적 확인, 2027년 3월 연간 실적 확인이 켜졌습니다. 실적 알림에 배당수익률 3.5% 이상, 영업이익 성장 5% 이상 기준 재평가가 포함됩니다.",
             "지금 할 일: 없음. 매매 신호가 아닙니다.",
             "나중에: 조건에 걸리면 [KICA] 제목으로 옵니다. 평소엔 조용합니다.",
             "익절/줄일 때: 해당 없음.",
@@ -359,7 +453,10 @@ def main() -> int:
         return 0
     mode = "force" if "force" in args else ("dry" if dry else "auto")
     print(f"{now.isoformat()} mode={mode}")
-    earnings(cfg, state, now, mode, dry)
+    if now.year == 2027 and now.month == 3:
+        annual_earnings(cfg, state, now, mode, dry)
+    else:
+        earnings(cfg, state, now, mode, dry)
     if dry:
         print("--- daily preview (dry) ---")
         daily(cfg, state, now, True)
