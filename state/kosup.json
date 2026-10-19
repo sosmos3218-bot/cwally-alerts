@@ -1,6 +1,18 @@
 {
-  "updated_at": null,
-  "fired": {},
-  "last_sent": null,
-  "last_fail_day": null
+  "updated_at": "2026-10-19 15:40 KST",
+  "fired": {
+    "5750": true,
+    "6000": false
+  },
+  "last_sent": {
+    "at": "2026-10-19 15:40 KST",
+    "hits": [
+      5750.0
+    ]
+  },
+  "last_fail_day": null,
+  "last_bar": {
+    "day": "2026-10-19",
+    "close": 5768.01
+  }
 }

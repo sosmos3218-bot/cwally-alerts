@@ -1,6 +1,16 @@
 {
-  "updated_at": null,
-  "fired": {},
+  "updated_at": "2026-10-19 15:40 KST",
+  "fired": {
+    "5550": false,
+    "5450": false,
+    "5300": false,
+    "5200": false,
+    "5000": false
+  },
   "last_sent": null,
-  "last_fail_day": null
+  "last_fail_day": null,
+  "last_bar": {
+    "day": "2026-10-19",
+    "close": 5768.01
+  }
 }
