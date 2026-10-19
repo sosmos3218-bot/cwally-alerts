@@ -257,8 +257,9 @@ def digest_line(td: dict) -> str:
     r = td["rows"][-1]
     ma20 = td.get("ma20")
     pos = "" if not ma20 else (" | 20일선 위" if r["close"] >= ma20 else " | 20일선 아래")
-    fl = [x["f"] for x in td["rows"] if x["f"] is not None][-5:]
-    f5 = f" | 외인 5일 {eok(sum(fl))}" if len(fl) == 5 else ""
+    fr = [x for x in td["rows"] if x["f"] is not None][-5:]
+    upto = "" if not fr or fr[-1]["day"] == r["day"] else f"({md(fr[-1]['day'])}까지)"
+    f5 = f" | 외인 5일{upto} {eok(sum(x['f'] for x in fr))}" if len(fr) == 5 else ""
     flow = f" | 외인 {eok(r['f'])} 기관 {eok(r['o'])}" if r["f"] is not None else " | 수급 미게시"
     return f"{td['name']} {won(r['close'])} {r['chg']:+.2f}%{pos}{flow}{f5}"
 
@@ -622,7 +623,7 @@ def run_slot(cfg: dict, state: dict, now: datetime, mode: str) -> None:
     elif "earn" in kinds:
         action = "일정만 확인"
     else:
-        action = "주간 요약, 관망"
+        action = "관망"
     if not heads:
         heads = [f"주간 요약 {md(d0)}"]
     title = f"[DOOSAN] {', '.join(heads[:2])}" + (f" 외 {len(heads) - 2}건" if len(heads) > 2 else "") + f" | {action}"
