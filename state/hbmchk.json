@@ -3,12 +3,13 @@
   "kr_flow_active": {},
   "sol_below_line": true,
   "us_notified_tier": {
-    "SNDK": 10
+    "SNDK": 10,
+    "NVDA": 10
   },
   "notice_versions": [],
   "ops_daily": {
     "us-NVDA": "2026-10-16",
     "us-SNDK": "2026-10-16"
   },
-  "updated_at": "2026-10-16T09:01:11.145271+09:00"
+  "updated_at": "2026-10-19T09:01:11.152441+09:00"
 }

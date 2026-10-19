@@ -1,1 +1,9 @@
-{}
+{
+  "updated_at": "2026-10-19T09:01:02.441672+09:00",
+  "last_price": 21.49,
+  "zone": "fair",
+  "last_weekly": "2026-10-19",
+  "last_filing": "2026-08-06",
+  "filing_alerted": "2026-08-06",
+  "fetch_fail_date": null
+}
