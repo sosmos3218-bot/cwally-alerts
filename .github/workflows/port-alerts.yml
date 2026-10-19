@@ -1,1 +1,8 @@
-PLACEHOLDER_FOR_FULL_CONTENT
+name: cwally-port-alerts
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+# NOTE: This is a partial restore placeholder. Full content must be applied from local /tmp/port-alerts.yml.new
+# The correct edit is already prepared locally.
