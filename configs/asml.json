@@ -4,63 +4,40 @@
   "display": "ASML 홀딩",
   "ticker_eur": "ASML.AS",
   "ticker_usd": "ASML",
-  "as_of": "2026-10-07",
-  "basis": "2026-10-07 Aside ASML 투자매력 분석. 결론: 장기 경쟁력은 강하지만 현 가격(€1,636.40, 2026-10-06 암스테르담 종가)은 성장 선반영. 신규는 실적 확인 후 €1,400~1,500 분할, 보유는 유지.",
+  "as_of": "2026-10-19",
+  "basis": "2026-10-19 ASML 2027~2028 EPS 시나리오 모델 (USD ADR). 기준 2027 EPS $60.1, 현재가 ~$1,642는 27배 수준으로 적정. 신규 진입은 $1,560 이하 분할. 약세 시 34배 리스크.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 반복 cron 없음. 기존 평일 09:00 KST morning 묶음에서 slot 모드로 실행. 전 거래일 암스테르담 종가로 구간이 바뀔 때만 발송하고, 매주 첫 실행에 주간 점검 1건을 보낸다. 실적 원샷은 SEC 6-K(보도자료 사본) 기준이라 발표(14:00~15:00 KST) 뒤 약 5시간 늦게 올라오는 것을 감안해 19:40, 22:40, 다음날 08:40 KST로 둔다.",
+  "schedule_note": "기존 평일 09:00 KST morning 묶음. 나스닥 ADR 종가 기준 구간 변경 시 발송 + 주간 점검.",
   "year_guard": [2026, 2027],
   "valid_until": "2027-06-10",
   "ends_kst": "2027-06-10 23:59",
-  "ends_note": "가격 구간/주간 점검 종료. 3분기 실적 판정은 2026-10-15 08:40이 마지막",
-  "eps_eur": {
-    "y2026e": 38.35,
-    "y2027e": 51.92,
-    "as_of": "2026-10-06",
-    "source": "Yahoo Finance ASML.AS analysis (Avg. Estimate)"
+  "ends_note": "가격 구간/주간 점검 종료. Q4 2026 실적 후 모델 재조정 필요",
+  "eps_usd": {
+    "y2027e_base": 60.1,
+    "y2028e_base": 77.1,
+    "as_of": "2026-10-19",
+    "source": "내부 EPS 시나리오 모델 (기준 시나리오)"
   },
-  "levels_eur": {
-    "bear": 1080,
-    "zone_low": 1400,
-    "zone_high": 1500,
-    "fair": 1800,
-    "bull": 2124
+  "levels_usd": {
+    "bear": 1323,
+    "zone_low": 1443,
+    "zone_high": 1563,
+    "fair": 2104,
+    "bull": 2159
   },
   "level_notes": {
-    "zone": "2027E EPS €51.92 기준 PER 약 27~29배. 분석의 선호 진입 구간",
-    "fair": "Morningstar 적정가치 €1,800 (2026-07-15)",
-    "bull": "강세 시나리오 EPS €59 x 36배",
-    "bear": "약세 시나리오 EPS €40 x 27배"
+    "zone": "2027E base EPS $60.1 기준 22~26배. 1차 $1563, 2차 $1443, 3차 $1323",
+    "fair": "2027E 35배 비중 축소 검토 $2,104",
+    "bull": "2028E 28배 12개월 참고 $2,159",
+    "bear": "약세 시나리오 또는 22배"
   },
   "tranche_pct": [33, 33, 34],
-  "oneshot_kst": [
-    "2026-10-14 19:40",
-    "2026-10-14 22:40",
-    "2026-10-15 08:40"
-  ],
-  "earnings": {
-    "event_year": 2026,
-    "quarter": "Q3",
-    "next_quarter": "Q4",
-    "release_kst": "2026-10-14 14:00",
-    "window_start": "2026-10-14",
-    "window_end": "2026-10-15",
-    "final_kst": "2026-10-15 08:40",
-    "sec_cik": "0000937966",
-    "h1_sales_bn": 18.093,
-    "fy_guide_low": 43.0,
-    "fy_guide_high": 45.0,
-    "q_guide_low": 11.0,
-    "q_guide_high": 12.0,
-    "q_gm_low": 55.0,
-    "q_gm_high": 57.0
-  },
-  "sec_user_agent": "cwally-alerts sosmos3218@gmail.com",
-  "explain": "ASML 가격 구간과 실적 판정 알림. 2026-10-07 분석 기준값으로만 판단합니다. 자동 매수 신호가 아닙니다.",
+  "oneshot_kst": [],
+  "explain": "ASML 나스닥 ADR 가격 구간 알림. 2026-10-19 EPS 시나리오 모델 기준. 자동 매수 신호 아님.",
   "sources": [
-    "https://investor.asml.com/news-releases/news-release-details/q2-2026-financial-results",
-    "https://data.sec.gov/submissions/CIK0000937966.json",
-    "https://finance.yahoo.com/quote/ASML.AS/analysis/"
+    "내부 ASML_EPS_시나리오_모델.xlsx",
+    "https://finance.yahoo.com/quote/ASML"
   ]
 }
