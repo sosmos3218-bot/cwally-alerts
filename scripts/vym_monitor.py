@@ -142,7 +142,13 @@ def main() -> int:
     if yld and tsy:
         gap = tsy - yld
 
-    title = f"[VYM] {judgment} | 수익률 {yld:.2f}%" if yld else "[VYM] 조회 실패 | 직접 확인"
+    from_high = vym.get("from_high")
+    if yld and from_high is not None and from_high <= -10:
+        title = f"[VYM] 고점 대비 {from_high:.1f}%↓ | 수익률 {yld:.2f}%"
+    elif yld:
+        title = f"[VYM] {judgment} | 수익률 {yld:.2f}%"
+    else:
+        title = "[VYM] 조회 실패 | 직접 확인"
     from_high_s = f"{vym.get('from_high'):.1f}" if vym.get("from_high") is not None else "확인불가"
     yld_s = f"{yld:.2f}" if yld else "확인불가"
     gap_s = f"{gap:.2f}" if gap else "확인불가"
