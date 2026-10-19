@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RBLX watch: price zone, Q3 bookings guide, new filing. Silent unless change."""
+"""RBLX watch: price zone, Q3 bookings guide, new filing, post-earnings scenarios. Silent unless change."""
 from __future__ import annotations
 
 import json
@@ -18,9 +18,9 @@ KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "rblx.json"
 STATE_PATH = ROOT / "state" / "rblx.json"
 UA = {"User-Agent": "cwally-alerts rblx research monitor research@example.com"}
-WINDOW = {"2026-10-29"}
+WINDOW = {"2026-10-29", "2026-10-30"}
 Q3_JUDGE = "2026-10-30"
-
+ONESHOT_DATES = {"2026-10-30"}
 
 def load_json(path: Path, fallback: dict) -> dict:
     if not path.exists():
@@ -33,12 +33,10 @@ def load_json(path: Path, fallback: dict) -> dict:
     out.update(data)
     return out
 
-
 def fetch(url: str) -> str:
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=25) as resp:
         return resp.read().decode("utf-8", errors="ignore")
-
 
 def quote(url: str) -> tuple[float | None, str | None]:
     data = json.loads(fetch(url))
@@ -51,7 +49,6 @@ def quote(url: str) -> tuple[float | None, str | None]:
     except (TypeError, ValueError):
         return None, "price parse"
 
-
 def latest_sec_date(url: str) -> str | None:
     data = json.loads(fetch(url))
     recent = ((data.get("filings") or {}).get("recent") or {})
@@ -62,13 +59,11 @@ def latest_sec_date(url: str) -> str | None:
             return day
     return None
 
-
 def visible(html: str) -> str:
     text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", html)
     text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
     text = re.sub(r"<[^>]+>", " ", text)
     return re.sub(r"\s+", " ", text)
-
 
 def parse_bookings(blob: str) -> float | None:
     m = re.search(
@@ -81,7 +76,6 @@ def parse_bookings(blob: str) -> float | None:
     val = float(m.group(1))
     return val * (1000 if m.group(2).lower() == "billion" else 1)
 
-
 def zone_of(price: float, stop: float, review: float, high: float) -> str:
     if price <= stop:
         return "loss20"
@@ -91,8 +85,6 @@ def zone_of(price: float, stop: float, review: float, high: float) -> str:
         return "above_55"
     return "hold"
 
-
-
 def pnl_text(price: float | None, shares: float, cost: float) -> str:
     if price is None:
         return "평가손익 미확인"
@@ -100,50 +92,58 @@ def pnl_text(price: float | None, shares: float, cost: float) -> str:
     pct = (price / cost - 1) * 100
     return f"28주 평가 {pnl:+.2f}달러({pct:+.1f}%), 현재가 {price:.2f}달러, 평단 {cost:.4f}달러"
 
-
-def q3_judgment(bookings: float | None, lo: float, hi: float, price: float | None, shares: float, cost: float) -> tuple[str, str, str, int]:
+def q3_judgment(bookings: float | None, lo: float, hi: float, price: float | None, shares: float, cost: float, dau_note: str = "") -> tuple[str, str, str, int, str]:
     pnl = pnl_text(price, shares, cost)
+    scenarios = (
+        "상단: bookings 16.53억 초과 + DAU 순증 + 수익화 반등 → 단기 반등 가능.\n"
+        "중간: 가이드 안 (15.76~16.53억) + DAU 안정 → 관망 유지.\n"
+        "하단: 15.76억 미만 또는 DAU 추가 감소 → 비중 재검토."
+    )
     if bookings is None:
         return (
             "[RBLX] 10/30 실적 | bookings 확인 불가",
-            f"2026-10-30 판정. bookings를 읽지 못했습니다. 15.76억 미만이 아닙니다. {pnl}.",
-            "ir.roblox.com 원문에서 Q3 bookings를 직접 보세요. 비중을 바꾸지 마세요.",
+            f"2026-10-30 판정. bookings를 읽지 못했습니다. 15.76억 미만이 아닙니다. {pnl}. {dau_note}",
+            "ir.roblox.com 원문에서 Q3 bookings/DAU를 직접 보세요. 비중을 바꾸지 마세요.",
             4,
+            scenarios,
         )
     if bookings < lo:
         return (
             "[RBLX] 10/30 실적 | 가이드 하단 미달, 비중 재검토",
-            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 하단 {lo:.0f} 미만. {pnl}.",
+            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 하단 {lo:.0f} 미만. {pnl}. {dau_note}",
             "보유 28주 비중 재검토. 파싱값과 원문이 다르면 원문을 우선하세요. 매도 지시가 아닙니다.",
             5,
+            scenarios,
         )
     if bookings > hi:
         return (
             "[RBLX] 10/30 실적 | 가이드 상단 초과",
-            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 상단 {hi:.0f} 초과. 미국/캐나다 수익화는 미확인. {pnl}.",
+            f"파싱 bookings {bookings:.0f}백만 달러, 가이드 상단 {hi:.0f} 초과. 미국/캐나다 수익화는 미확인. {pnl}. {dau_note}",
             "보유 유지. 상단 초과만으로 추가하지 마세요.",
             4,
+            scenarios,
         )
     return (
         "[RBLX] 10/30 실적 | 가이드 안, 보유 유지",
-        f"파싱 bookings {bookings:.0f}백만 달러, 가이드 {lo:.0f}~{hi:.0f} 안. {pnl}.",
+        f"파싱 bookings {bookings:.0f}백만 달러, 가이드 {lo:.0f}~{hi:.0f} 안. {pnl}. {dau_note}",
         "보유 유지. 가이드 안은 추가 조건이 아닙니다.",
         3,
+        scenarios,
     )
 
-def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str) -> str:
-    return "\n".join(
-        [
-            f"{stamp} | RBLX | 관망 조건 점검",
-            "이게 뭐 알림: 보유 중인 로블록스 가격 구간과 Q3 bookings 조건만 보는 알림입니다. 추가매수 지시가 아닙니다.",
-            f"지금 결과/상태: {status}",
-            f"지금 할 일: {action}",
-            f"나중에: {later}",
-            f"익절/줄일 때: {trim}",
-            f"하지 말 것: {avoid}",
-        ]
-    )
-
+def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str, scenarios: str = "") -> str:
+    lines = [
+        f"{stamp} | RBLX | 관망 조건 점검",
+        "이게 뭐 알림: 보유 중인 로블록스 가격 구간과 Q3 bookings/DAU 조건만 보는 알림입니다. 추가매수 지시가 아닙니다.",
+        f"지금 결과/상태: {status}",
+        f"지금 할 일: {action}",
+        f"나중에: {later}",
+        f"익절/줄일 때: {trim}",
+        f"하지 말 것: {avoid}",
+    ]
+    if scenarios:
+        lines.append(f"시나리오: {scenarios}")
+    return "\n".join(lines)
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
@@ -158,9 +158,9 @@ def main() -> int:
             "[RBLX] 설치 확인 | 매매 신호 아님",
             body(
                 stamp,
-                "평일 09:00 KST morning 슬롯에 붙였습니다. 기준가 2026-10-06 45.56달러. Q3 bookings 가이던스 15.76~16.53억 달러.",
+                "평일 09:00 KST morning + 10/30 oneshot. 기준가 2026-10-16 49.55달러. Q3 bookings 가이던스 15.76~16.53억 달러.",
                 "설치 확인만 하세요. 사지 마세요.",
-                "월요 상태, 38/55달러 구간 변경, 10/29·10/30, 새 8-K/10-Q만 보냅니다.",
+                "월요 상태, 38/55달러 구간 변경, 10/30 oneshot, 새 8-K/10-Q만 보냅니다.",
                 "이번 알림으로 비중을 바꾸지 마세요.",
                 "설치 확인을 매수나 매도 신호로 읽기.",
             ),
@@ -241,7 +241,7 @@ def main() -> int:
                 action = "보유는 유지하세요. 55달러 위 추가는 금지입니다."
             else:
                 title = "[RBLX] -10%~55달러 | 보유 유지"
-                action = "보유 유지, 추가 없음. 10/29 실적 전 비중을 바꾸지 마세요."
+                action = "보유 유지, 추가 없음. 10/30 실적 확인 전 비중을 바꾸지 마세요."
             why = "구간 변경" if changed else "월요일 상태" if weekly else "실적 창"
             alerts.append(
                 (
@@ -270,8 +270,8 @@ def main() -> int:
             state["zone"] = zone
             print(f"price zone unchanged ({zone}); silent")
 
-
-    if today.isoformat() == Q3_JUDGE and (Q3_JUDGE not in (state.get("sent_dates") or []) or mode == "force"):
+    # Post-earnings oneshot / Q3 judge with scenarios
+    if today.isoformat() in ONESHOT_DATES and (today.isoformat() not in (state.get("sent_dates") or []) or mode == "force"):
         shares = float(cfg["position"]["shares"])
         cost = float(cfg["position"]["avg_cost"])
         ir_text = ""
@@ -282,7 +282,8 @@ def main() -> int:
         bookings = parse_bookings(ir_text) if ir_text else None
         lo = base["q3_bookings_lo_m"]
         hi = base["q3_bookings_hi_m"]
-        title, status, action, pri = q3_judgment(bookings, lo, hi, price, shares, cost)
+        dau_note = "DAU 추이는 IR 원문 확인 필요."
+        title, status, action, pri, scenarios = q3_judgment(bookings, lo, hi, price, shares, cost, dau_note)
         alerts.append(
             (
                 title,
@@ -290,16 +291,17 @@ def main() -> int:
                     stamp,
                     status,
                     action,
-                    "상향은 16.53억 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다.",
+                    "상향은 16.53억 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다. 독립 앱/오프라인은 2027 가시화 대기.",
                     "확인 불가와 가이드 안을 매도나 추가매수로 쓰지 마세요.",
                     "파싱 실패를 15.76억 미만으로 세기. 주가 반응으로 조건 충족 단정.",
+                    scenarios,
                 ),
                 pri,
             )
         )
         sent = list(state.get("sent_dates") or [])
-        if Q3_JUDGE not in sent:
-            sent.append(Q3_JUDGE)
+        if today.isoformat() not in sent:
+            sent.append(today.isoformat())
         state["sent_dates"] = sent
         state["q3_bookings_m"] = bookings
 
@@ -311,7 +313,7 @@ def main() -> int:
         ferr = str(exc)
         print(f"sec fail: {exc}")
     last_filing = state.get("last_filing") or base["last_known_filing"]
-    if today.isoformat() != Q3_JUDGE and filing and last_filing and filing > last_filing:
+    if today.isoformat() not in ONESHOT_DATES and filing and last_filing and filing > last_filing:
         ir_text = ""
         try:
             ir_text = visible(fetch(cfg["sources"]["ir"]))
@@ -389,7 +391,6 @@ def main() -> int:
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

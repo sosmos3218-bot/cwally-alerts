@@ -3,20 +3,26 @@
   "title_prefix": "[RBLX]",
   "ticker": "RBLX",
   "display": "로블록스",
-  "as_of": "2026-10-07",
+  "as_of": "2026-10-19",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 평일 09:00 KST morning. 10/30은 Q3 bookings 판정.",
-  "year_guard": null,
+  "schedule_note": "평일 09:00 KST morning. 실적 직후 oneshot 추가.",
+  "oneshot_kst": [
+    "2026-10-30 06:10",
+    "2026-10-30 08:10",
+    "2026-10-30 09:10"
+  ],
+  "oneshot_note": "10/29 장후 실적 직후 Bookings/DAU/시나리오 업데이트. GitHub fallback cron + cron-job.org oneshot dispatch.",
+  "year_guard": 2026,
   "valid_until": "2027-01-29",
   "alert_policy": "weekly_or_change",
   "cik": "0001315098",
-  "earnings_est_kst": "2026-10-29 21:30",
-  "earnings_note": "Q3 2026 실적 예정 2026-10-29 장전(8:30 ET 추정). 09:00 KST는 전일 종가와 공시 확인용.",
+  "earnings_est_kst": "2026-10-30 05:30",
+  "earnings_note": "Q3 2026 실적 2026-10-29 장 마감 후 (4:30 p.m. EST). 06:10 KST부터 공시/IR 확인.",
   "baseline": {
-    "price_date": "2026-10-06",
-    "price": 45.56,
+    "price_date": "2026-10-16",
+    "price": 49.55,
     "q2_bookings_m": 1557,
     "q2_dau_m": 123,
     "q3_bookings_lo_m": 1576,
@@ -42,12 +48,12 @@
   "ends_kst": "2027-01-29 09:00",
   "ends_note": "보유 28주 월요 -10/-20% 점검. 2027-01 광고 배분 시작 확인 후 종료",
   "holding": true,
-  "holding_note": "보유 28주, 평단 47.9164달러. 2026-10-07 확인.",
+  "holding_note": "보유 28주, 평단 47.9164달러. 2026-10-19 확인.",
   "position": {
     "shares": 28,
     "avg_cost": 47.9164,
     "currency": "USD"
   },
   "q3_judge_kst": "2026-10-30 09:00",
-  "q3_judge_note": "기존 morning 슬롯. 새 cron 없음. bookings 15.76억 미만이면 28주 평가손익과 비중 재검토, 가이드 안이면 보유 유지."
+  "q3_judge_note": "기존 morning + oneshot. bookings 15.76억 미만이면 비중 재검토, 가이드 안이면 보유 유지. 시나리오 포함."
 }
