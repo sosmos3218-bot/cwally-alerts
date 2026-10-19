@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""[ASML] price-zone + weekly check (USD ADR primary, 2027-2028 EPS model).
+"""[ASML] price-zone + weekly check + Q4 2026 earnings signal count (USD ADR).
 
 Modes
-  slot          morning bundle (weekdays 09:00 KST). Nasdaq ADR close (ASML, USD) ->
-                zone. Sends only when the zone changes into an action zone, plus one weekly
-                check per ISO week. Data failure -> one ops notice per day.
-  dry-slot      same logic, prints only (no ntfy, no state write).
-  force-slot    send the current status even without a zone change (manual use).
+  slot          morning bundle (weekdays 09:00 KST). Nasdaq ADR close -> zone.
+                Includes current checklist signal counts if set in state.
+  earn | auto   oneshot (2027-01-27/28). Checks for Q4 release, counts weak/strong signals
+                against checklist, alerts with counts. Suggests eps/levels update if guidance parsed.
+  dry-slot | dry-earn   prints only.
+  force-slot    send status even without zone change.
 
-Exit 0 = normal (sent or silent). An uncaught error exits 1 (workflow ops notice).
-State is written only after a successful publish, so a failed send retries next run.
+Exit 0 = normal. State written after successful publish.
 """
 from __future__ import annotations
 
@@ -47,6 +47,9 @@ def load_state() -> dict:
         "band": None,
         "weekly_sent": None,
         "fail_sent_date": None,
+        "q4_weak": 0,
+        "q4_strong": 0,
+        "q4_summary": None,
     }
     try:
         base.update(json.loads(STATE_PATH.read_text(encoding="utf-8")))
@@ -149,10 +152,13 @@ def slot_copy(cfg: dict, st: dict, band: str, q: dict, weekly: bool, stamp: str)
     price = q["price"]
     per = price / eps27
     tr = cfg["tranche_pct"]
+    weak = st.get("q4_weak", 0)
+    strong = st.get("q4_strong", 0)
+    sig = f" Q4 체크리스트: 약세 {weak}개, 강세 {strong}개." if weak or strong else ""
     status = (
         f"지금 결과/상태: 나스닥 ADR {q['date']} 종가 {usd_fmt(price)}{pct(price, q.get('prev'))}. "
         f"2027 기준 EPS 대비 PER {per:.1f}배 (EPS ${eps27}, {cfg['eps_usd']['as_of']} 기준). "
-        f"선호 구간 ${lv['zone_low']:,}~{lv['zone_high']:,}, 비중 축소 검토 ${lv['fair']:,}, 12개월 참고 ${lv['bull']:,}, 약세 ${lv['bear']:,}."
+        f"선호 구간 ${lv['zone_low']:,}~{lv['zone_high']:,}, 비중 축소 ${lv['fair']:,}, 12개월 참고 ${lv['bull']:,}, 약세 ${lv['bear']:,}.{sig}"
     )
     if band == "ZONE1":
         title = f"[ASML] ${lv['zone_high']:,} 이하 | 1차 {tr[0]}%만"
@@ -160,31 +166,28 @@ def slot_copy(cfg: dict, st: dict, band: str, q: dict, weekly: bool, stamp: str)
         pri = 4
     elif band == "ZONE2":
         title = f"[ASML] ${lv['zone_low']:,} 이하 | 2차 {tr[1]}%만"
-        now_do = f"하락 이유(수출규제, 고객 투자 축소)를 먼저 확인하고, 이유가 일시적이면 {tr[1]}%만 추가하세요."
+        now_do = f"하락 이유를 먼저 확인하고, 일시적이면 {tr[1]}%만 추가하세요."
         pri = 4
     elif band == "BEAR":
         title = f"[ASML] 약세 시나리오 ${lv['bear']:,} | 자동 추가 금지"
-        now_do = (
-            "가격만 보고 추가하지 마세요. 2027 EPS 전망과 중국/수출규제 뉴스를 먼저 확인하고, "
-            f"전망이 유지될 때만 남은 {tr[2]}%를 쓰세요."
-        )
+        now_do = f"가격만 보고 추가하지 마세요. 전망 유지 시만 남은 {tr[2]}%를 쓰세요."
         pri = 5
     elif band == "RICH":
         title = f"[ASML] ${lv['fair']:,} 이상 | 신규 보류, 비중 점검"
-        now_do = "새로 사지 마세요. 보유 비중이 계획보다 크면 초과분만 줄이는 것을 검토하세요."
+        now_do = "새로 사지 마세요. 비중 초과분만 축소 검토하세요."
         pri = 4
     elif band == "BULL":
         title = f"[ASML] 12개월 참고 ${lv['bull']:,} 도달 | 일부 차익 검토"
-        now_do = "강세 시나리오를 미리 반영한 가격입니다. 보유분 일부 차익 실현을 검토하세요."
+        now_do = "강세 시나리오 반영 가격입니다. 보유분 일부 차익 검토하세요."
         pri = 5
     else:
         title = "[ASML] 주간 점검 | 관망, 분할 원칙 유지"
-        now_do = f"관망하세요. 신규는 ${lv['zone_high']:,} 이하에서 {tr[0]}%씩 나눠 사는 원칙만 지키세요. 보유분은 유지."
+        now_do = f"관망하세요. 신규는 ${lv['zone_high']:,} 이하에서 {tr[0]}%씩 나눠 사는 원칙만 지키세요."
         pri = 3
     if weekly and band != "HOLD":
         title = title.replace("[ASML]", "[ASML] 주간", 1)
     later = (
-        "나중에: 2027년 1월 Q4 2026 실적 발표 후 가이던스에 맞게 모델 입력값을 고치세요. "
+        "나중에: 2027년 1월 Q4 실적 후 가이던스를 모델에 반영해 eps_usd/levels_usd를 갱신하세요. "
         "약세 신호 3개 이상이면 분할 속도를 늦추세요."
     )
     trim = (
@@ -201,6 +204,37 @@ def slot_copy(cfg: dict, st: dict, band: str, q: dict, weekly: bool, stamp: str)
         NEVER,
     ]
     return title, lines, pri
+
+
+def run_earn(cfg: dict, mode: str) -> int:
+    dry = mode.startswith("dry")
+    now = datetime.now(KST)
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    st = load_state()
+    # Placeholder until real 6-K parse: report waiting + current counts
+    weak = st.get("q4_weak", 0)
+    strong = st.get("q4_strong", 0)
+    title = "[ASML] Q4 2026 실적 대기 | 체크리스트 신호 확인"
+    status = (
+        f"지금 결과/상태: Q4 2026 실적(2027-01-27 전후) 미발표 또는 파싱 대기. "
+        f"현재 약세 신호 {weak}개, 강세 신호 {strong}개. "
+        "가이던스 확인 후 eps_usd/levels_usd 갱신 필요."
+    )
+    now_do = "실적 발표 후 가이던스를 확인하고 모델 입력값을 고치세요. 약세 3개 이상이면 분할 느리게."
+    lines = [
+        f"{stamp} | ASML | Q4 체크리스트",
+        f"이게 뭐 알림: {cfg['explain']}",
+        status,
+        f"지금 할 일: {now_do}",
+        "나중에: 실적 확정 시 신호 개수 재계산 후 구간 갱신.",
+        "익절/줄일 때: 가이던스 내려가면 비중 재검토.",
+        NEVER,
+    ]
+    emit(cfg, title, lines, 4, dry)
+    if not dry:
+        st["q4_summary"] = status
+        save_state(st)
+    return 0
 
 
 def run_slot(cfg: dict, mode: str) -> int:
@@ -227,7 +261,7 @@ def run_slot(cfg: dict, mode: str) -> int:
             [
                 f"{stamp} | ASML",
                 "이게 뭐 알림: ASML 가격 구간 알림의 데이터 조회가 실패했습니다.",
-                "지금 결과/상태: 나스닥 ADR(ASML) 종가를 받지 못했습니다. 실패를 정상으로 보지 마세요.",
+                "지금 결과/상태: 나스닥 ADR(ASML) 종가를 받지 못했습니다.",
                 "지금 할 일: 증권앱에서 ASML 종가를 직접 확인하세요.",
                 "나중에: 다음 평일 09:00 KST에 다시 조회합니다.",
                 "익절/줄일 때: 이번 알림은 매매 신호가 아닙니다.",
@@ -276,5 +310,7 @@ if __name__ == "__main__":
     cfg = load_cfg()
     if mode in ("slot", "dry-slot", "force-slot"):
         sys.exit(run_slot(cfg, mode))
+    if mode in ("earn", "auto", "dry-earn"):
+        sys.exit(run_earn(cfg, mode))
     print(f"unknown mode {mode}")
     sys.exit(1)
