@@ -551,6 +551,7 @@ jobs:
             python scripts/portlight_monitor.py auto
             python scripts/isareb_monitor.py auto
             python scripts/ghtrend_monitor.py auto
+            python scripts/poly_monitor.py auto || echo "::error::poly_monitor failed"
           fi
           if [ "$JOB" = "morning" ]; then
             python scripts/fig_monitor.py auto
