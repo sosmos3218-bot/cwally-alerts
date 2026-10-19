@@ -1,0 +1,13 @@
+{
+  "name": "gsai",
+  "title_prefix": "[GSAI]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "codes": ["005930", "000660"],
+  "threshold_won": 500000000000,
+  "consecutive_days": 2,
+  "year_guard": 2026,
+  "ends_kst": null,
+  "ends_note": "합산 기준 외국인 순매수 전환 시그널 (연속 2일 + 하루 합산 5천억 이상) 수동 해제 전까지"
+}
