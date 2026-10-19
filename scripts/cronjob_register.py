@@ -22,7 +22,15 @@ Checks (stop before any write):
   4. duplicate: an existing job with the same URL that already fires at that KST time, or the
      same title -> skip (exit 10)
 
-exit 0 = created (or dry run passed), 10 = already registered (skip),
+Delete mode (approved in chat 2026-10-19), CRONJOB_ACTION=delete:
+  CRONJOB_JOB_IDS      comma-separated cron-job.org job ids, e.g. "8675032,8675034"
+  CRONJOB_DRY_RUN      "1" = list what would be deleted, delete nothing
+  One GET /jobs, then every id must be a one-shot trigger made by this script: url is the
+  port-alerts.yml dispatch, POST, title "cwally oneshot HH:MM KST (Mon D) <name>", a single
+  fixed minute/hour/day/month with an expiry, and not the template job. If any id fails, nothing
+  is deleted (exit 3). Then DELETE /jobs/<id> one by one; each deleted id is logged.
+
+exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
 """
@@ -214,9 +222,89 @@ def build_job(template: dict, title: str, at: datetime, exp: datetime) -> dict:
     return job
 
 
+ONESHOT_TITLE = re.compile(r"cwally oneshot \d{2}:\d{2} KST \([A-Z][a-z]{2} \d{1,2}\) [A-Za-z0-9_-]+")
+
+
+def parse_job_ids() -> list[int]:
+    raw = env("CRONJOB_JOB_IDS")
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if not parts:
+        raise Stop(BAD_INPUT, "job_ids is empty (comma-separated cron-job.org job ids)")
+    if len(parts) > 30:
+        raise Stop(BAD_INPUT, "too many job ids (max 30 per run)")
+    if any(not re.fullmatch(r"\d{1,12}", p) for p in parts):
+        raise Stop(BAD_INPUT, f"job_ids must be digits separated by commas, got {raw!r}")
+    ids = list(dict.fromkeys(int(p) for p in parts))
+    if TEMPLATE_JOB_ID in ids:
+        raise Stop(BAD_INPUT, f"refusing: {TEMPLATE_JOB_ID} is the morning template job")
+    return ids
+
+
+def oneshot_problems(j: dict) -> list[str]:
+    problems = []
+    title = (j.get("title") or "").strip()
+    sched = j.get("schedule") or {}
+    if (j.get("url") or "").rstrip("/") != DISPATCH_URL:
+        problems.append("url is not the port-alerts.yml dispatch")
+    if j.get("requestMethod") != POST:
+        problems.append("method is not POST")
+    if not ONESHOT_TITLE.fullmatch(title):
+        problems.append("title is not 'cwally oneshot HH:MM KST (Mon D) <name>'")
+    for field in ("minutes", "hours", "mdays", "months"):
+        vals = sched.get(field) or []
+        if len(vals) != 1 or vals[0] < 0:
+            problems.append(f"schedule {field} is not one fixed value (recurring?)")
+    if not int(sched.get("expiresAt") or 0):
+        problems.append("schedule has no expiry (not a one-shot)")
+    return problems
+
+
+def run_delete() -> int:
+    ids = parse_job_ids()
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not deleting")
+    by_id = {int(j.get("jobId") or 0): j for j in res.get("jobs") or []}
+    refused = []
+    for jid in ids:
+        j = by_id.get(jid)
+        if j is None:
+            refused.append(f"{jid}: not found in this account")
+            continue
+        problems = oneshot_problems(j)
+        if problems:
+            refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
+    if refused:
+        for r in refused:
+            print(f"refuse: {r}")
+        raise Stop(BAD_TEMPLATE, f"{len(refused)} of {len(ids)} job ids are not one-shot triggers of this repo; nothing deleted")
+    dry = env("CRONJOB_DRY_RUN") == "1"
+    for jid in ids:
+        j = by_id[jid]
+        title = (j.get("title") or "").strip()
+        state = "enabled" if j.get("enabled") else "disabled"
+        exp = (j.get("schedule") or {}).get("expiresAt")
+        if dry:
+            print(f"would delete: job_id={jid} title={title!r} {state} expires={exp}")
+            continue
+        call("DELETE", f"/jobs/{jid}", key)
+        print(f"deleted: job_id={jid} title={title!r} {state} expires={exp}")
+        time.sleep(0.3)  # API limit 5 req/s
+    print(f"{'dry run ok: would delete' if dry else 'deleted'} {len(ids)} job(s)")
+    return 0
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
+        action = (env("CRONJOB_ACTION") or "register").lower()
+        if action == "delete":
+            return run_delete()
+        if action != "register":
+            raise Stop(BAD_INPUT, f"action must be register or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

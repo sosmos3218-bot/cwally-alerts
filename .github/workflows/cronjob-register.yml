@@ -1,6 +1,7 @@
 name: cwally-cronjob-register
 
 # Registers ONE one-shot time on cron-job.org (port-alerts.yml dispatch, {"job":"oneshot"}).
+# action=delete (approved in chat 2026-10-19) removes listed one-shot jobs of this repo only.
 # New workflow file approved in chat 2026-10-06. workflow_dispatch only: no schedule, no ntfy alert
 # except the ops notice on failure. See scripts/cronjob_register.py for the checks.
 
@@ -11,20 +12,30 @@ concurrency:
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: "register (default) = create one oneshot job | delete = remove the job_ids below"
+        type: choice
+        options: [register, delete]
+        default: register
+      job_ids:
+        description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"
+        required: false
+        type: string
+        default: ""
       title:
-        description: "cron-job.org job title, e.g. cwally oneshot 03:35 KST (Oct 8) fedodds"
-        required: true
+        description: "action=register: cron-job.org job title, e.g. cwally oneshot 03:35 KST (Oct 8) fedodds"
+        required: false
         type: string
       kst:
-        description: "YYYY-MM-DD HH:MM KST (must be an oneshot_kst entry)"
-        required: true
+        description: "action=register: YYYY-MM-DD HH:MM KST (must be an oneshot_kst entry)"
+        required: false
         type: string
       expires_kst:
-        description: "YYYY-MM-DD HH:MM:SS KST (same year, not before kst)"
-        required: true
+        description: "action=register: YYYY-MM-DD HH:MM:SS KST (same year, not before kst)"
+        required: false
         type: string
       dry_run:
-        description: "run every check but do not create the job"
+        description: "run every check but do not create/delete any job"
         type: boolean
         default: false
 
@@ -42,9 +53,11 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Register one oneshot
+      - name: Register (or delete) oneshot jobs
         env:
           CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+          CRONJOB_ACTION: ${{ inputs.action || 'register' }}
+          CRONJOB_JOB_IDS: ${{ inputs.job_ids }}
           CRONJOB_TITLE: ${{ inputs.title }}
           CRONJOB_KST: ${{ inputs.kst }}
           CRONJOB_EXPIRES_KST: ${{ inputs.expires_kst }}
