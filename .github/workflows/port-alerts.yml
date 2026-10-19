@@ -246,6 +246,9 @@ on:
     # rblx oneshot_kst (KST→UTC): 2026-10-30 06:10, 08:10. RBLX 3Q 실적 후 판정 (GitHub fallback; on-time = cron-job.org job=oneshot). 09:10은 lgiq3 cron과 겹쳐 생략
     - cron: "10 21 29 10 *"
     - cron: "10 23 29 10 *"
+    # sapq3 oneshot_kst (KST→UTC): 2026-10-22 07:10, 09:10. Q3 실적 후 조건부 매수 재평가 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "10 22 21 10 *"
+    - cron: "10 0 22 10 *"
   workflow_dispatch:
     inputs:
       job:
@@ -253,7 +256,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -418,6 +421,8 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 11 20 10 *" ]; then JOB=kos5500
             elif [ "${{ github.event.schedule }}" = "5 8 26 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 28 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "5 8 2 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 4 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 5 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 6 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 16 11 *" ]; then JOB=doosan
             elif [ "${{ github.event.schedule }}" = "10 21 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 23 29 10 *" ]; then JOB=oneshot
+
+            elif [ "${{ github.event.schedule }}" = "10 22 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 22 10 *" ]; then JOB=sapq3
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1018,6 +1023,13 @@ jobs:
           else
             python scripts/kos5500_monitor.py "$KOS5500_MODE"
           fi
+      - name: Run sapq3
+        if: steps.pick.outputs.job == 'sapq3'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/sapq3_monitor.py
+
       - name: Run due one-shots (dispatch job=oneshot)
         if: steps.pick.outputs.job == 'oneshot'
         env:
