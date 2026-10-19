@@ -201,12 +201,12 @@ def verdict(parts):
     misses = [x for x in core if x == "미달"]
     beats = [x for x in core if x == "상회"]
     if len(misses) >= 2 or parts["buy"] == "미달":
-        return "축소", "핵심 미달 2개 이상 또는 자사주 하향. 비중 축소."
+        return "추가 중단", "핵심 미달 2개 이상 또는 자사주 하향. 추가 중단."
     if len(misses) == 1:
-        return "추가 중단", "핵심 미달 1개. 추가 중단, 반등 시 일부 축소."
+        return "추가 중단 검토", "핵심 미달 1개. 소액 분할매수 유지하되 추가 중단 검토."
     if len(beats) >= 2 and parts["buy"] != "미달":
-        return "소폭 추가", "핵심 2개 이상 상회, 미달 없음. 신규는 작게."
-    return "보유", "핵심이 부합이거나 확인불가. 추가 없음."
+        return "소액 분할매수 유지", "핵심 2개 이상 상회, 미달 없음. 소액 분할매수 유지."
+    return "소액 분할매수 유지", "핵심이 부합이거나 확인불가. 소액 분할매수 유지, 추가 없음."
 
 
 def emit(cfg, title, lines, pri):
@@ -265,12 +265,12 @@ def main():
                 now.strftime("%Y-%m-%d %H:%M KST") + " | PYPL | 3분기 실적",
                 "이게 뭐 알림: " + cfg["explain"],
                 "지금 상태: 22:40 KST에도 3분기 원문 없음. 2분기 수치로 채점하지 않음.",
-                "지금 할 일: 보유 유지. IR을 직접 확인하고 이 알림으로 매매하지 마세요.",
+                "지금 할 일: 소액 분할매수 유지. IR을 직접 확인하고 이 알림으로 매매하지 마세요.",
                 "나중에: 이 일회 창은 2026-10-27에 끝남. 다음 자동 재실행 없음.",
                 "익절/줄일 때: 미발표로 비중 조정 금지.",
                 "하지 말 것: 미발표를 가이던스 하향으로 읽기. 신용, 미수, 추격매수.",
             ]
-            emit(cfg, "[PYPL] 원문 없음 | 보유 유지", lines, 3)
+            emit(cfg, "[PYPL] 원문 없음 | 소액 분할매수 유지", lines, 3)
             st["expire_notified"] = True
             st["empty_notified"] = True
             save_state(st, now)
@@ -283,12 +283,12 @@ def main():
             now.strftime("%Y-%m-%d %H:%M KST") + " | PYPL | 3분기 실적",
             "이게 뭐 알림: " + cfg["explain"],
             "지금 상태: 3분기 원문이 아직 아님. 2분기 수치로 채점하지 않음.",
-            "지금 할 일: 보유 유지. 발표 전 추가매수 금지.",
+            "지금 할 일: 소액 분할매수 유지. 발표 전 추가매수 금지.",
             "나중에: 21:40 KST에 원문만 다시 채점. 만료 2026-10-27.",
             "익절/줄일 때: 미발표 상태로 비중 조정 금지.",
             "하지 말 것: 2분기 브랜드 2%를 3분기 실적으로 확정하기. 신용, 미수, 추격매수.",
         ]
-        emit(cfg, "[PYPL] 원문 없음 | 보유 유지", lines, 3)
+        emit(cfg, "[PYPL] 원문 없음 | 소액 분할매수 유지", lines, 3)
         st["empty_notified"] = True
         save_state(st, now)
         return 0
@@ -309,7 +309,7 @@ def main():
         + ". 자사주 " + u_s + " / " + u_f + ".",
         "지금 할 일: " + action + ". 2027이 없으면 미달로 채우지 말 것.",
         "나중에: 콜에서 브랜드 환율중립, 연간 EPS 5.38, 자사주 60억달러만 보완. 이 알림은 2026-10-27 한 번.",
-        "익절/줄일 때: 핵심 미달 2개 또는 자사주 하향이면 축소. 1개면 추가 중단.",
+        "익절/줄일 때: 핵심 미달 2개 또는 자사주 하향이면 추가 중단. 1개면 추가 중단 검토.",
         "하지 말 것: 인수 루머로 비중 변경. 신용, 미수, 추격매수.",
         "출처: " + cfg["sources"]["news"],
     ]
@@ -319,7 +319,7 @@ def main():
         print("\n".join(lines))
         save_state(st, now)
         return 0
-    emit(cfg, title, lines, 4 if action != "보유" else 3)
+    emit(cfg, title, lines, 4 if action != "소액 분할매수 유지" else 3)
     st["final_notified"] = True
     st["score"] = action
     save_state(st, now)
