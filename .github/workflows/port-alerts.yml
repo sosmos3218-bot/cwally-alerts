@@ -1,1 +1,384 @@
-FROM_LOCAL_FILE
+name: cwally-port-alerts
+
+concurrency:
+  group: cwally-port-main
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: "0 0 * * 1-5"
+    - cron: "20 6 * * 1-5"
+    - cron: "40 6 * * 1-5"
+    - cron: "0 12 * * 0"
+    - cron: "45 18 16 9 *"
+    - cron: "15 7 18 9 *"
+    - cron: "15 7 28 10 *"
+    - cron: "15 7 30 10 *"
+    - cron: "15 7 18 12 *"
+    - cron: "0 12 27 10 *"
+    - cron: "40 6 28 10 *"
+    - cron: "40 6 29 10 *"
+    - cron: "45 13 14 10 *"
+    - cron: "10 0 15 10 *"
+    - cron: "0 13 14 10 *"
+    - cron: "0 13 29 10 *"
+    - cron: "20 18 7 10 *"
+    - cron: "10 0 8 10 *"
+    # tsmc1015 oneshot_kst (KST->UTC): 2026-10-15 16:30, 17:10. call end, guidance only. 15:40 removed
+    - cron: "30 7 15 10 *"
+    - cron: "10 8 15 10 *"
+    - cron: "0 23 4 11 *"
+    - cron: "0 9 5 11 *"
+    - cron: "10 20 9 10 *"
+    - cron: "10 20 26 10 *"
+    - cron: "10 20 3 11 *"
+    - cron: "10 20 17 11 *"
+    - cron: "10 20 8 12 *"
+    - cron: "20 23 10 11 *"
+    - cron: "20 23 11 11 *"
+    - cron: "20 23 12 11 *"
+    - cron: "30 22 2 12 *"
+    - cron: "30 22 3 12 *"
+    - cron: "10 0 5 12 *"
+    - cron: "40 20 20 10 *"
+    - cron: "10 22 20 10 *"
+    - cron: "0 23 20 10 *"
+    - cron: "5 0 13 10 *"
+    - cron: "5 0 20 10 *"
+    - cron: "5 0 27 10 *"
+    - cron: "5 0 3 11 *"
+    - cron: "5 0 10 11 *"
+    - cron: "5 0 17 11 *"
+    - cron: "5 0 24 11 *"
+    - cron: "12 23 24 11 *"
+    - cron: "12 0 25 11 *"
+    - cron: "5 0 1 12 *"
+    - cron: "12 23 1 12 *"
+    - cron: "12 23 2 12 *"
+    # ustsy10 oneshot_kst remaining (KST→UTC): 2026-10-07/08/09 02:15
+    - cron: "15 17 6 10 *"
+    - cron: "15 17 7 10 *"
+    - cron: "15 17 8 10 *"
+    # lgiq3 oneshot_kst (KST→UTC): 2026-10-28 16:10, 10-29 09:10, 10-30 09:10, 11-03 09:10
+    - cron: "10 7 28 10 *"
+    - cron: "10 0 29 10 *"
+    - cron: "10 0 30 10 *"
+    - cron: "10 0 3 11 *"
+    # lgcnsq3 oneshot_kst (KST→UTC): 2026-10-08 09:18, 10-27 09:10, 10-30 16:10, 11-12 09:10, 11-13 16:10, 11-16 09:10
+    # 09:10 KST Oct 8 is fomc1007 (10 0 8 10 *); 09:18 avoids that slot
+    - cron: "18 0 8 10 *"
+    - cron: "10 0 27 10 *"
+    - cron: "10 7 30 10 *"
+    - cron: "10 0 12 11 *"
+    - cron: "10 7 13 11 *"
+    - cron: "10 0 16 11 *"
+    # secq3 oneshot_kst (KST→UTC): 2026-10-29 08:10, 09:40, 11:10, 16:10, 10-30 09:16, 11-03 09:16
+    - cron: "10 23 28 10 *"
+    - cron: "40 0 29 10 *"
+    - cron: "10 2 29 10 *"
+    - cron: "10 7 29 10 *"
+    - cron: "16 0 30 10 *"
+    - cron: "16 0 3 11 *"
+    # q3flow oneshot_kst (KST→UTC): 2026-10-12 08:42, 10-29 16:42. 10/8 수급 판단 점검. 16:10은 secq3
+    - cron: "42 23 11 10 *"
+    - cron: "42 7 29 10 *"
+    # nvdaq3 oneshot_kst (KST→UTC): 2026-11-18/19/20/26/27 07:10
+    - cron: "10 22 17 11 *"
+    - cron: "10 22 18 11 *"
+    - cron: "10 22 19 11 *"
+    - cron: "10 22 25 11 *"
+    - cron: "10 22 26 11 *"
+    # fedodds oneshot_kst (KST→UTC): 2026-10-08 03:35, 10-08 09:25, 10-14 23:05, 10-15 09:25
+    - cron: "35 18 7 10 *"
+    - cron: "25 0 8 10 *"
+    - cron: "5 14 14 10 *"
+    - cron: "25 0 15 10 *"
+    # lges1103 oneshot_kst (KST→UTC): 2026-11-03 09:22, 16:32. 확정 실적 판정
+    - cron: "22 0 3 11 *"
+    - cron: "32 7 3 11 *"
+    # lgesq3 oneshot_kst (KST→UTC): 10-07 09:12/16:12, 10-08 09:12/16:12, 10-09 09:12, 10-13/16/23/30 09:12
+    - cron: "12 0 7 10 *"
+    - cron: "12 7 7 10 *"
+    - cron: "12 0 8 10 *"
+    - cron: "12 7 8 10 *"
+    - cron: "12 0 9 10 *"
+    - cron: "12 0 13 10 *"
+    - cron: "12 0 16 10 *"
+    - cron: "12 0 23 10 *"
+    - cron: "12 0 30 10 *"
+    # pyplq3 oneshot_kst (KST→UTC): 2026-10-27 20:40/21:40/22:40. 콜 08:00 ET = 21:00 KST
+    - cron: "40 11 27 10 *"
+    - cron: "40 12 27 10 *"
+    - cron: "40 13 27 10 *"
+    # usd240 oneshot_kst (KST→UTC): 2026-10-07/08/12/13 16:05. 10-09 한글날 휴장 제외
+    - cron: "5 7 7 10 *"
+    - cron: "5 7 8 10 *"
+    - cron: "5 7 12 10 *"
+    - cron: "5 7 13 10 *"
+    # sdichg oneshot_kst (KST→UTC): 2026-10-08 11:40 install, 10-27 08:40/16:20, 10-28 16:22, 11-04 16:22. 09:00은 morning 슬롯
+    - cron: "40 2 8 10 *"
+    - cron: "40 23 26 10 *"
+    - cron: "20 7 27 10 *"
+    - cron: "22 7 28 10 *"
+    - cron: "22 7 4 11 *"
+    # sdiq3 oneshot_kst (KST→UTC): 2026-10-28 09:14/16:14, 10-29 09:14, 10-30 09:14, 11-03 09:14, 11-04 09:14/16:14, 11-05 09:14
+    - cron: "14 0 28 10 *"
+    - cron: "14 7 28 10 *"
+    - cron: "14 0 29 10 *"
+    - cron: "14 0 30 10 *"
+    - cron: "14 0 3 11 *"
+    - cron: "14 0 4 11 *"
+    - cron: "14 7 4 11 *"
+    - cron: "14 0 5 11 *"
+    # ceg oneshot_kst (KST→UTC): 2026-11-06 22:40, 11-09 22:40, 11-10 09:10. 실적일 미확정 창
+    - cron: "40 13 6 11 *"
+    - cron: "40 13 9 11 *"
+    - cron: "10 0 10 11 *"
+    # 0144m0 oneshot_kst (KST→UTC): 2026-10-07 16:20. 분석 일회 전달
+    - cron: "20 7 7 10 *"
+    # asml oneshot_kst (KST→UTC): 2026-10-14 19:40, 22:40, 10-15 08:40 (= 10-14 23:40 UTC). 3Q26 실적 판정, SEC 6-K 기준
+    - cron: "40 10 14 10 *"
+    - cron: "40 13 14 10 *"
+    - cron: "40 23 14 10 *"
+    # asml Q4 2026 oneshot_kst (KST→UTC): 2027-01-27 21:40, 23:40, 01-28 09:40. Q4 실적 판정
+    - cron: "40 12 27 1 *"
+    - cron: "40 14 27 1 *"
+    - cron: "40 0 28 1 *"
+    # bankrate1014 oneshot_kst (KST→UTC): 2026-10-14 08:00 (= 10-13 23:00 UTC). 10/13 은행 실적 + 10년물 5.31% 시나리오 판정
+    - cron: "0 23 13 10 *"
+    # wbtnq3 oneshot_kst (KST→UTC): 2026-10-29/11-05 09:23 발표일 확인, 11-06/07/10/11/12/13/14 12:10 채점. 발표일 미공지 창
+    - cron: "23 0 29 10 *"
+    - cron: "23 0 5 11 *"
+    - cron: "10 3 6 11 *"
+    - cron: "10 3 7 11 *"
+    - cron: "10 3 10 11 *"
+    - cron: "10 3 11 11 *"
+    - cron: "10 3 12 11 *"
+    - cron: "10 3 13 11 *"
+    - cron: "10 3 14 11 *"
+    # dearq3 oneshot_kst (KST→UTC): 2026-11-02~13 16:26, 11-03~13/16 09:17. 3Q 잠정 창, 16:22는 sdichg와 겹쳐 16:26
+    - cron: "26 7 2 11 *"
+    - cron: "17 0 3 11 *"
+    - cron: "26 7 3 11 *"
+    - cron: "17 0 4 11 *"
+    - cron: "26 7 4 11 *"
+    - cron: "17 0 5 11 *"
+    - cron: "26 7 5 11 *"
+    - cron: "17 0 6 11 *"
+    - cron: "26 7 6 11 *"
+    - cron: "17 0 9 11 *"
+    - cron: "26 7 9 11 *"
+    - cron: "17 0 10 11 *"
+    - cron: "26 7 10 11 *"
+    - cron: "17 0 11 11 *"
+    - cron: "26 7 11 11 *"
+    - cron: "17 0 12 11 *"
+    - cron: "26 7 12 11 *"
+    - cron: "17 0 13 11 *"
+    - cron: "26 7 13 11 *"
+    - cron: "17 0 16 11 *"
+    # llyq3 oneshot_kst (KST→UTC): 2026-10-29 20:10, 23:40, 10-30 05:20. 공시 직후, 콜 후, 미국 확정 종가
+    - cron: "10 11 29 10 *"
+    - cron: "40 14 29 10 *"
+    - cron: "20 20 29 10 *"
+    # kzq3 oneshot_kst (KST→UTC): 2026-11-05 16:10, 11-06 09:10, 11-07 09:10. 고려아연 3분기 실적 창 (on-time = cron-job.org)
+    - cron: "10 7 5 11 *"
+    - cron: "10 0 6 11 *"
+    - cron: "10 0 7 11 *"
+    # kica oneshot_kst (KST→UTC): 2026-11-12 18:00, 11-13 18:00, 11-16 18:00. 한국정보인증 3분기 분기보고서 확인 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "0 9 12 11 *"
+    - cron: "0 9 13 11 *"
+    - cron: "0 9 16 11 *"
+    # crwvq3 oneshot_kst (KST->UTC): 2026-11-10/12/13/17/18/20 07:25. earnings date unconfirmed
+    - cron: "25 22 9 11 *"
+    - cron: "25 22 11 11 *"
+    - cron: "25 22 12 11 *"
+    - cron: "25 22 16 11 *"
+    - cron: "25 22 17 11 *"
+    - cron: "25 22 19 11 *"
+    # dearattr oneshot_kst (KST→UTC): 2026-10-13 09:30, 10-14 09:30 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "30 0 13 10 *"
+    - cron: "30 0 14 10 *"
+    # sena oneshot_kst (KST→UTC): 2026-10-21 09:05, moved off the 09:00 morning slot (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "5 0 21 10 *"
+    # manh oneshot_kst (KST→UTC): 2026-10-28 09:00 post-Q3 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "0 0 28 10 *"
+    # kosreb oneshot_kst (KST→UTC): 2026-10-14 23:10, 10-15 09:20. CPI 후 코스피 반등 재평가 (GitHub fallback)
+    - cron: "10 14 14 10 *"
+    - cron: "20 0 15 10 *"
+    # neeq3 oneshot_kst (KST→UTC): 2026-10-21 20:40, 22:40, 23:40. Q3 실적 판정
+    - cron: "40 11 21 10 *"
+    - cron: "40 13 21 10 *"
+    - cron: "40 14 21 10 *"
+    # memswing oneshot_kst (KST→UTC): 2026-10-19 18:30, 19:30. 10/19 확정 수급 스윙 진입 1회 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "30 9 19 10 *"
+    - cron: "30 10 19 10 *"
+    # hmcq3 oneshot_kst (KST→UTC): 10-22~10-28 16:26, 10-29/10-30 15:10, 17:10, 11-02 09:20. 현대차 3Q 실적+2우B 배당 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "26 7 22 10 *"
+    - cron: "26 7 23 10 *"
+    - cron: "26 7 26 10 *"
+    - cron: "26 7 27 10 *"
+    - cron: "26 7 28 10 *"
+    - cron: "10 6 29 10 *"
+    - cron: "10 8 29 10 *"
+    - cron: "10 6 30 10 *"
+    - cron: "10 8 30 10 *"
+    - cron: "20 0 2 11 *"
+    # kos5500 one-shot 2026-10-20 20:40 KST, late fallback
+    - cron: "40 11 20 10 *"
+    # doosan oneshot_kst (KST→UTC): 2026-10-26~11-16 평일 17:05. 두산 4종목 3분기 실적 결과 비교 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "5 8 26 10 *"
+    - cron: "5 8 27 10 *"
+    - cron: "5 8 28 10 *"
+    - cron: "5 8 29 10 *"
+    - cron: "5 8 30 10 *"
+    - cron: "5 8 2 11 *"
+    - cron: "5 8 3 11 *"
+    - cron: "5 8 4 11 *"
+    - cron: "5 8 5 11 *"
+    - cron: "5 8 6 11 *"
+    - cron: "5 8 9 11 *"
+    - cron: "5 8 10 11 *"
+    - cron: "5 8 11 11 *"
+    - cron: "5 8 12 11 *"
+    - cron: "5 8 13 11 *"
+    - cron: "5 8 16 11 *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | zs1006 | oklo | pffd | ceg | kzq3 | dearattr | sena | manh | truen417790 | bankrate1014 | cpi1014 | all
+        required: true
+        default: all
+        type: choice
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml]
+      steel_mode:
+        description: weekly | quarterly | event
+        default: weekly
+        type: choice
+        options: [weekly, quarterly, event]
+      alux_mode:
+        description: weekly | event
+        default: weekly
+        type: choice
+        options: [weekly, event]
+      hce_mode:
+        description: daily | event
+        default: daily
+        type: choice
+        options: [daily, event]
+      silicon2_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      cover0198_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      lg_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      wl_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      iren_mode:
+        description: event | weekly
+        default: event
+        type: choice
+        options: [event, weekly]
+      yencarry_mode:
+        description: auto | fed | weekly | event | boj_press
+        default: auto
+        type: choice
+        options: [auto, fed, weekly, event, boj_press]
+      krwfx_mode:
+        description: auto | weekly | force
+        default: auto
+        type: choice
+        options: [auto, weekly, force]
+      kzq3_mode:
+        description: "job=kzq3 only. dry = parse/score print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      oneoff_mode:
+        description: "job=dearattr or sena only. dry = print, no ntfy | auto"
+        default: dry
+        type: choice
+        options: [dry, auto]
+      kosreb_mode:
+        description: "job=kosreb only. dry = print, no ntfy, no state | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      kica_mode:
+        description: "job=kica only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      hmcq3_mode:
+        description: "job=hmcq3 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      kos5500_mode:
+        description: "job=kos5500 only. dry = no ntfy/state; auto = observations"
+        type: choice
+        default: dry
+        options: [dry, auto]
+      force_square:
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Decide jobs
+        id: pick
+        run: |
+          JOB="${{ github.event.inputs.job }}"
+          YC=auto
+          KX=auto
+          KZ=auto
+          KO=auto
+          KC=auto
+          HQ=auto
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 0 * * 1-5" ]; then JOB=morning
+            elif [ "${{ github.event.schedule }}" = "20 6 * * 1-5" ]; then JOB=afternoon
+            elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then JOB=portlight
+            elif [ "${{ github.event.schedule }}" = "45 18 16 9 *" ]; then JOB=yencarry; YC=fed
+            elif [ "${{ github.event.schedule }}" = "15 7 28 10 *" ]; then JOB=sec
+            elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
+            elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
+            elif [ "${{ github.event.schedule }}" = "45 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 15 10 *" ]; then JOB=cpi1014
+            elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
+            elif [ "${{ github.event.schedule }}" = "20 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 8 10 *" ]; then JOB=fomc1007
+            elif [ "${{ github.event.schedule }}" = "35 18 7 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "5 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "25 0 15 10 *" ]; then JOB=fedodds
+            elif [ "${{ github.event.schedule }}" = "30 7 15 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 15 10 *" ]; then JOB=tsmc1015
+            elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
+            elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
+            elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo
+            elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
+            elif [ "${{ github.event.schedule }}" = "40 20 20 10 *" ] || [ "${{ github.event.schedule }}" = "10 22 20 10 *" ] || [ "${{ github.event.schedule }}" = "0 23 20 10 *" ]; then JOB=isrgq3
+            elif [ "${{ github.event.schedule }}" = "5 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 20 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "5 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 10 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 17 11 *" ] || [ "${{ github.event.schedule }}" [+38504 bytes at .content[1].resource.text]
