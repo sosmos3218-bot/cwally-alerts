@@ -1,29 +1,39 @@
 {
   "name": "memswing",
   "title_prefix": "[MEMSWING]",
-  "display": "삼성전자, SK하이닉스 스윙 진입 조건 점검 (10/19 확정 수급)",
+  "display": "삼성전자, SK하이닉스 스윙 진입/보유 점검",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "2026-10-19 18:30, 19:30 (one-shot)",
-  "schedule_note": "10/19 KRX 확정 투자자 수급(보통 18:00 이후) 게시 후 1회 판정. 18:30에 10/19 수급이 없으면 침묵, 19:30에 결과 또는 미게시 안내를 1회 발송. 새 반복 cron 없음.",
-  "year_guard": 2026,
-  "fire_day": "2026-10-19",
-  "final_after_kst": "18:00",
-  "last_try_kst": "19:30",
-  "oneshot_kst": ["2026-10-19 18:30", "2026-10-19 19:30"],
-  "hold_days": "3-10 거래일",
-  "hold_until": "2026-11-02",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 슬롯. 직전 거래일 확정 수급으로 판정. 상태 변경 때만 cwally-port, 월요일(또는 그주 첫 거래일) 주간 요약 1회.",
+  "approved": "2026-10-19 23:49 KST chat (추천안대로 morning 슬롯에 붙여, 바뀔 때만 알림과 월요일 요약으로 구현해)",
+  "hold_min_days": 3,
+  "hold_max_days": 10,
   "stocks": {
-    "005930": {"display": "삼성전자", "short": "삼성", "threshold": 210000, "stop": 204500, "target": 232000, "target_note": "10/14 KRX 종가, 10/15 급락 직전"},
-    "000660": {"display": "SK하이닉스", "short": "하이닉스", "threshold": 1260000, "stop": 1238000, "target": 1400000, "target_note": "10/14 KRX 종가 1,419,000 아래 라운드 가격"}
+    "005930": {
+      "display": "삼성전자",
+      "short": "삼성",
+      "threshold": 210000,
+      "stop": 204500,
+      "target": 232000,
+      "target_note": "10/14 KRX 종가, 10/15 급락 직전"
+    },
+    "000660": {
+      "display": "SK하이닉스",
+      "short": "하이닉스",
+      "threshold": 1260000,
+      "stop": 1238000,
+      "target": 1400000,
+      "target_note": "10/14 KRX 종가 1,419,000 아래 라운드 가격"
+    }
   },
-  "rule": "외국인 순매수 2거래일 연속(10/16, 10/19, 확정) AND KRX 정규장 종가 > threshold. 손절은 종가 기준 stop 미만.",
+  "rule": "외국인 순매수 2거래일 연속 AND 최신 KRX 종가 > threshold 이면 진입(signal). 보유 3~10거래일. 종가 < stop 또는 10거래일 도달 시 청산(idle).",
   "sources": {
-    "trend": "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=10",
-    "investor_check": "https://finance.daum.net/api/investor/days?symbolCode=A{code}&page=1&perPage=10&pagination=true",
-    "krx_close": "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=1&perPage=10&pagination=true",
-    "krx_close_check": "https://polling.finance.naver.com/api/realtime/domestic/stock/{code}"
+    "investor": "https://finance.daum.net/api/investor/days?symbolCode=A{code}&page=1&perPage=5",
+    "krx_close": "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=1&perPage=5",
+    "trend": "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=5",
+    "referer": "https://finance.daum.net/quotes/A{code}"
   },
-  "ends_kst": "2026-10-19 23:59",
-  "ends_note": "10/19 확정 수급 1회 판정으로 끝, 늦은 GitHub 백업도 오늘까지만"
+  "ends_kst": null,
+  "ends_note": "종료일 없음 (수동 해제 전까지)"
 }

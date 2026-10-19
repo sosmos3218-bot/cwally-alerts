@@ -562,6 +562,7 @@ jobs:
             python scripts/fig_monitor.py auto
             python scripts/kos5500_monitor.py previous
             python scripts/vymi_monitor.py auto || echo "::error::vymi_monitor failed"
+            python scripts/memswing_monitor.py daily
           fi
           if [ "$JOB" = "morning" ]; then
             python scripts/vym_monitor.py auto || echo "::error::vym_monitor failed"
