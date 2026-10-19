@@ -1,0 +1,18 @@
+{
+  "name": "vym",
+  "title_prefix": "[VYM]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "매주 월요일 09:00 KST. 기존 morning 슬롯에 붙임. 새 cron 없음. 화~금은 스크립트가 침묵.",
+  "alert_policy": "weekly_monday",
+  "weekday_kst": 0,
+  "explain": "VYM 현재 배당수익률, 가격 위치, 10년 국채 대비 매력 변화를 주간 점검합니다. 순수 고배당 매력이 낮고 저비용 가치 분산 수단으로 볼 때 유용합니다.",
+  "thresholds": {
+    "yield_attractive": 2.7,
+    "yield_strong": 3.0,
+    "price_drop_pct": 10
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 매주 월요일 09:00"
+}

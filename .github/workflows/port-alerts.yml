@@ -253,7 +253,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -557,6 +557,9 @@ jobs:
             python scripts/fig_monitor.py auto
             python scripts/kos5500_monitor.py previous
             python scripts/vymi_monitor.py auto || echo "::error::vymi_monitor failed"
+          fi
+          if [ "$JOB" = "morning" ]; then
+            python scripts/vym_monitor.py auto || echo "::error::vym_monitor failed"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
