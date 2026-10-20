@@ -147,9 +147,10 @@ def hint_for(kind: str) -> str:
     return "공시 원문을 열어 확인하세요."
 
 
-def publish(title: str, message: str, priority: int, tags: str) -> None:
+def publish(title: str, message: str, priority: int, tags: str) -> bool:
     # ntfy_util.publish: same topic routing, tags, server and end line; skips after ends_kst + grace.
     ntfy_util.publish("cwally-port", title, message, priority, tags.split(","), "https://ntfy.sh", config_name="shinwon")
+    return bool(ntfy_util.LAST_PUBLISH.get("sent"))
 
 
 def main() -> int:
@@ -220,21 +221,6 @@ def main() -> int:
             lines.append(f"- [{d.get('kind')}] {d['date']} {d['title']}")
             lines.append(f"  → {hint_for(d.get('kind') or '')}")
 
-    STATE_PATH.write_text(
-        json.dumps(
-            {
-                "updated_at": stamp,
-                "zone": z,
-                "price": price,
-                "seen_ids": seen_ids,
-                "time_stop_sent": bool(prev.get("time_stop_sent") or z == "TIME"),
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
     title_bit = TITLE_BY_ZONE.get(z, z)
     if new_discs:
         kinds = "/".join(sorted({d.get("kind") or "DISC" for d in new_discs}))
@@ -247,10 +233,32 @@ def main() -> int:
         title = f"[SHINWON] {title_bit}"
     msg = "\n".join(lines)
     print(msg)
-    if send:
-        hot = z in {"STOP898", "STOP1000", "TIME"} or any(d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs)
-        pri = 5 if hot else (4 if z in {"SELL1", "SELL2"} or zone_changed else 3)
-        publish(title, msg, pri, "warning,chart_with_downwards_trend")
+    delivered = False
+    try:
+        if send:
+            hot = z in {"STOP898", "STOP1000", "TIME"} or any(d.get("kind") in {"EARN", "CB", "TS"} for d in new_discs)
+            pri = 5 if hot else (4 if z in {"SELL1", "SELL2"} or zone_changed else 3)
+            delivered = publish(title, msg, pri, "warning,chart_with_downwards_trend")
+    finally:
+        # Sent-state only after a real send: if publish skipped (alert ended) or failed, the new
+        # disclosures stay unseen, zone stays the last alerted one and the 11/13 time stop stays unsent.
+        ok = delivered or not send
+        new_ids = {d["id"] for d in new_discs}
+        STATE_PATH.write_text(
+            json.dumps(
+                {
+                    "updated_at": stamp,
+                    "zone": z if ok else prev.get("zone"),
+                    "price": price,
+                    "seen_ids": seen_ids if ok else (seen + [d["id"] for d in discs if d["id"] not in new_ids])[-80:],
+                    "time_stop_sent": bool(prev.get("time_stop_sent") or (z == "TIME" and ok)),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
     return 0
 
 

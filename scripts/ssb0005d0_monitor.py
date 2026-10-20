@@ -278,16 +278,17 @@ def main() -> int:
         lines.append(f"조회 부분 실패: 시세 {price_err or '없음'} | 공시 {notice_err or '없음'}")
     msg = "\n".join(lines)
     print(msg)
-    if not dry:
-        publish("cwally-port", title, msg, 4 if zone == "TREND" or delay else 3)
+    # publish skipped (alert ended) -> keep zone and the fresh notice ids unrecorded (dry run keeps old behavior)
+    ok = dry or publish("cwally-port", title, msg, 4 if zone == "TREND" or delay else 3)
+    fresh_ids = {row["id"] for row in fresh}
     write_state(
         prev,
         updated_at=stamp,
         price=price,
         value=value,
         avg_value=avg_value,
-        zone=zone if price is not None else prev_zone,
-        seen_ids=seen_ids,
+        zone=(zone if price is not None else prev_zone) if ok else prev_zone,
+        seen_ids=seen_ids if ok else (seen + [row["id"] for row in found if row["id"] not in fresh_ids])[-200:],
         baseline_done=True,
         last_fail_date=prev.get("last_fail_date"),
         last_action=title,

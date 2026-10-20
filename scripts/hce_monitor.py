@@ -132,8 +132,8 @@ def upcoming_events(cfg, today, days=21):
 
 
 def ntfy_publish(server, topic, title, message, priority, tags):
-    # ntfy_util.publish: same routing/payload; skips after ends_kst + grace. Body kept as before (no end line).
-    ntfy_util.publish(topic, title, message, priority, tags.split(","), server, config_name="hce", append_end=False)
+    # ntfy_util.publish: same routing/payload, appends the "꺼지는 때" end line; skips after ends_kst + grace.
+    ntfy_util.publish(topic, title, message, priority, tags.split(","), server, config_name="hce")
 
 
 def main() -> int:
