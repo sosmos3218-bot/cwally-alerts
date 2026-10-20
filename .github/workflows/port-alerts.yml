@@ -277,6 +277,12 @@ on:
     - cron: "40 12 5 11 *"
     - cron: "40 14 5 11 *"
     - cron: "20 21 5 11 *"
+
+    # lgchem oneshot_kst (KST→UTC): 2026-11-05 13:50, 16:12, 11-06 09:12, 11-16 16:40. LG화학 3Q 실적 판정 (GitHub fallback; on-time = cron-job.org job=oneshot). 16:10/09:10은 kzq3와 겹쳐 12분으로 조정
+    - cron: "50 4 5 11 *"
+    - cron: "12 7 5 11 *"
+    - cron: "12 0 6 11 *"
+    - cron: "40 7 16 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -284,7 +290,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -335,6 +341,12 @@ on:
         default: auto
         type: choice
         options: [auto, weekly, force]
+
+      lgchem_mode:
+        description: "job=lgchem only. dry = parse/score print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
       kzq3_mode:
         description: "job=kzq3 only. dry = parse/score print, no ntfy, no state write | auto | force"
         default: dry
@@ -471,6 +483,10 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
+            elif [ "${{ github.event.schedule }}" = "50 4 5 11 *" ]; then JOB=lgchem
+            elif [ "${{ github.event.schedule }}" = "12 7 5 11 *" ]; then JOB=lgchem
+            elif [ "${{ github.event.schedule }}" = "12 0 6 11 *" ]; then JOB=lgchem
+            elif [ "${{ github.event.schedule }}" = "40 7 16 11 *" ]; then JOB=lgchem
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1010,6 +1026,13 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/q3flow_monitor.py auto
+
+      - name: Run lgchem
+        if: steps.pick.outputs.job == 'lgchem'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/lgchem_monitor.py "${{ github.event.inputs.lgchem_mode || 'auto' }}"
       - name: Run kzq3
         if: steps.pick.outputs.job == 'kzq3'
         env:
