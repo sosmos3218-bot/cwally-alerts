@@ -196,8 +196,9 @@ def deliver(ev: dict, dry_run: bool, publisher, server: str) -> bool:
     if dry_run:
         print("dry-run proposed alert; publish skipped")
         return True
-    publisher(ev["topic"], ev["title"], ev["message"], ev["priority"], ["chart_with_upwards_trend"], server)
-    return True
+    publisher(ev["topic"], ev["title"], ev["message"], ev["priority"], ["chart_with_upwards_trend"], server, config_name="hbmchk")
+    status = getattr(sys.modules.get(getattr(publisher, "__module__", "") or ""), "LAST_PUBLISH", None)
+    return not (isinstance(status, dict) and status.get("sent") is False)  # False = skipped (alert ended)
 def fetch_yahoo(ticker: str) -> dict:
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range=3mo&interval=1d&includePrePost=false"
     req = urllib.request.Request(url, headers={"User-Agent": YAHOO_UA})
@@ -246,8 +247,8 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
             details + ["수동 체크: HBM4 확정 계약 vs 제안 / 실적 전망 상향 / 자사주 매입 종료는 알고리즘 미검증"]
         ))
         try:
-            deliver(ev, dry_run, ntfy.publish, server)
-            if not dry_run:
+            delivered = deliver(ev, dry_run, ntfy.publish, server)
+            if delivered and not dry_run:
                 for code, _, _ in flow_candidates:
                     work["kr_flow_active"][code] = True
                 changed = True
@@ -270,8 +271,8 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
                 "장중 가격, 25,000원과 같은 가격, 이 알림만으로 자동 매도하기."
             ))
             try:
-                deliver(ev, dry_run, ntfy.publish, server)
-                if not dry_run:
+                delivered = deliver(ev, dry_run, ntfy.publish, server)
+                if delivered and not dry_run:
                     work["sol_below_line"], changed = True, True
             except Exception as exc:
                 publish_failed = True
@@ -297,8 +298,8 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
                     "이 조정률을 선행 목표가, 자동 매수, 물타기 근거로 사용하기."
                 ))
                 try:
-                    deliver(ev, dry_run, ntfy.publish, server)
-                    if not dry_run:
+                    delivered = deliver(ev, dry_run, ntfy.publish, server)
+                    if delivered and not dry_run:
                         work["us_notified_tier"][ticker], changed = new_state, True
                 except Exception as exc:
                     publish_failed = True
@@ -334,8 +335,8 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
                     [f"출처: {item['url']}"]
                 ))
                 try:
-                    deliver(ev, dry_run, ntfy.publish, server)
-                    if not dry_run:
+                    delivered = deliver(ev, dry_run, ntfy.publish, server)
+                    if delivered and not dry_run:
                         work["notice_versions"].append(key)
                         seen.add(key)
                         work["notice_versions"] = work["notice_versions"][-500:]
@@ -358,8 +359,8 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
             "누락을 0, 장중값, 오래된 값으로 해석하기."
         ), "cwally-ops", 4)
         try:
-            deliver(ev, dry_run, ntfy.publish, server)
-            if not dry_run:
+            delivered = deliver(ev, dry_run, ntfy.publish, server)
+            if delivered and not dry_run:
                 work.setdefault("ops_daily", {})[key] = today
                 changed = True
         except Exception as exc:
@@ -424,7 +425,7 @@ def self_test() -> int:
     assert next_us_state(10, 5) == (False, 10)
     assert next_us_state(10, 0) == (False, 0)
     calls = []
-    fake = lambda *args: calls.append(args)
+    fake = lambda *args, **kw: calls.append(args)
     sample = event("[HBMCHK] test", "body")
     assert deliver(sample, True, fake, "x") and not calls
     assert deliver(sample, False, fake, "x") and len(calls) == 1

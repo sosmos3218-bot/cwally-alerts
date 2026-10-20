@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import append_ends, route_topic  # noqa: E402
+import ntfy_util  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -148,24 +148,8 @@ def hint_for(kind: str) -> str:
 
 
 def publish(title: str, message: str, priority: int, tags: str) -> None:
-    message = append_ends(message)  # AGENTS.md "Alert end line"
-    payload = json.dumps(
-        {
-            "topic": route_topic("cwally-port", title),
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": tags.split(","),
-        }
-    ).encode()
-    req = urllib.request.Request(
-        "https://ntfy.sh",
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
+    # ntfy_util.publish: same topic routing, tags, server and end line; skips after ends_kst + grace.
+    ntfy_util.publish("cwally-port", title, message, priority, tags.split(","), "https://ntfy.sh", config_name="shinwon")
 
 
 def main() -> int:

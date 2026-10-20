@@ -258,6 +258,7 @@ def publish(
     *,
     config_name: str | None = None,
     config: dict | None = None,
+    append_end: bool = True,
 ) -> None:
     topic = route_topic(topic, title)
     skip = ends_skip_reason(topic, title, config_name=config_name, config=config)
@@ -267,7 +268,8 @@ def publish(
         LAST_PUBLISH.update({"sent": False, "reason": skip, "title": title})
         return None
     ends_name = config_name if config_name and config is None and (CONFIGS_DIR / f"{config_name}.json").is_file() else None
-    message = append_ends(message, ends_name)
+    if append_end:  # False only for legacy callers whose body never had the end line (hce)
+        message = append_ends(message, ends_name)
     payload = json.dumps(
         {
             "topic": topic,
@@ -388,6 +390,8 @@ def _self_test() -> int:
             check("CWALLY_ALERT_NAME env resolves", run("[Q] x", "-c", env={"CWALLY_ALERT_NAME": "ended"})[0], False)
             check("_impl suffix resolves", run("[Q] x", "scripts/ended_impl.py")[0], False)
             check("NTFY_IGNORE_ENDS=1 override sends", run("[ENDED] x", "scripts/ended_monitor.py", env={"NTFY_IGNORE_ENDS": "1"})[0], True)
+            s, _, _ = run("[ACTIVE] x", "scripts/active_monitor.py", append_end=False)
+            check("append_end=False sends body unchanged", s and sent[0]["message"] == "본문", True)
     finally:
         CONFIGS_DIR, sys.argv = old_dir, old_argv
     print("SELF-TEST " + ("PASS" if not failures else f"FAIL ({failures})"))

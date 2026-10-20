@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import append_ends, route_topic  # noqa: E402
+import ntfy_util  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -108,27 +108,10 @@ def parse_notices(code: str) -> list[dict]:
     return items[:20]
 
 
-def publish(topic: str, title: str, message: str, priority: int) -> None:
-    message = append_ends(message)  # AGENTS.md "Alert end line"
-    if topic not in {"cwally-port", "cwally-ops"}:
-        topic = "cwally-port"
-    payload = json.dumps(
-        {
-            "topic": route_topic(topic, title),
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": ["chart_with_upwards_trend"],
-        }
-    ).encode()
-    req = urllib.request.Request(
-        "https://ntfy.sh",
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
+def publish(topic: str, title: str, message: str, priority: int) -> bool:
+    # ntfy_util.publish: same topic routing, tags, server and end line; skips after ends_kst + grace.
+    ntfy_util.publish(topic, title, message, priority, ["chart_with_upwards_trend"], "https://ntfy.sh", config_name="skc011790")
+    return bool(ntfy_util.LAST_PUBLISH.get("sent"))
 
 
 def zone_of(price: float | None, cfg: dict) -> str:
@@ -322,8 +305,8 @@ def main() -> int:
         lines.append(f"조회 부분 실패: 시세 {price_err or '없음'} | 공시 {notice_err or '없음'}")
     msg = "\n".join(lines)
     print(msg)
-    publish("cwally-port", title, msg, 4 if preview_new or earn_new or zone in {"LOW", "HIGH"} else 3)
-    if due:
+    published = publish("cwally-port", title, msg, 4 if preview_new or earn_new or zone in {"LOW", "HIGH"} else 3)
+    if due and published:  # ended -> checklist not recorded as sent
         sent.add(today)
     STATE_PATH.write_text(
         json.dumps(

@@ -8,7 +8,7 @@ import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from ntfy_util import append_ends, route_topic  # noqa: E402
+import ntfy_util  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
@@ -96,27 +96,10 @@ def is_lfp_start(title: str) -> bool:
     return start and place
 
 
-def publish(topic: str, title: str, message: str, priority: int) -> None:
-    message = append_ends(message)  # AGENTS.md "Alert end line"
-    if topic not in {"cwally-port", "cwally-ops"}:
-        topic = "cwally-port"
-    payload = json.dumps(
-        {
-            "topic": route_topic(topic, title),
-            "title": title,
-            "message": message,
-            "priority": priority,
-            "tags": ["chart_with_upwards_trend"],
-        }
-    ).encode()
-    req = urllib.request.Request(
-        "https://ntfy.sh",
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        print(resp.read().decode())
+def publish(topic: str, title: str, message: str, priority: int) -> bool:
+    # ntfy_util.publish: same topic routing, tags, server and end line; skips after ends_kst + grace.
+    ntfy_util.publish(topic, title, message, priority, ["chart_with_upwards_trend"], "https://ntfy.sh", config_name="d0chk")
+    return bool(ntfy_util.LAST_PUBLISH.get("sent"))
 
 
 def write_state(prev: dict, **updates) -> None:
@@ -230,11 +213,11 @@ def main() -> int:
             "17,000원 추격. 신용·미수. 전고체 MOU나 목표주가로 2차를 대체.",
         )
         print(msg)
-        if not dry:
-            publish("cwally-port", title, msg, 4)
-        prev["price_sent"] = True
-        prev["price_sent_at"] = stamp
-        sent.append("price")
+        skipped = not dry and not publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["price_sent"] = True
+            prev["price_sent_at"] = stamp
+            sent.append("price")
 
     if not prev.get("earn_sent") and today <= cfg.get("earn_until", "2026-11-15") and earn_rows:
         row = earn_rows[0]
@@ -249,12 +232,12 @@ def main() -> int:
             "공시 제목만 보고 통과 처리. MOU와 목표주가는 조건이 아님.",
         )
         print(msg)
-        if not dry:
-            publish("cwally-port", title, msg, 4)
-        prev["earn_sent"] = True
-        prev["earn_sent_at"] = stamp
-        prev["earn_title"] = row["title"]
-        sent.append("earn")
+        skipped = not dry and not publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["earn_sent"] = True
+            prev["earn_sent_at"] = stamp
+            prev["earn_title"] = row["title"]
+            sent.append("earn")
 
     if not prev.get("lfp_sent") and today <= cfg.get("lfp_until", "2026-10-31") and lfp_rows:
         row = lfp_rows[0]
@@ -269,12 +252,12 @@ def main() -> int:
             "UL 화재 시험, 원통형 LFP 공개, 전고체 MOU를 양산 개시로 보지 말 것.",
         )
         print(msg)
-        if not dry:
-            publish("cwally-port", title, msg, 4)
-        prev["lfp_sent"] = True
-        prev["lfp_sent_at"] = stamp
-        prev["lfp_title"] = row["title"]
-        sent.append("lfp")
+        skipped = not dry and not publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["lfp_sent"] = True
+            prev["lfp_sent_at"] = stamp
+            prev["lfp_title"] = row["title"]
+            sent.append("lfp")
 
     write_state(
         prev,
