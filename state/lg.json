@@ -1,9 +1,12 @@
 {
-  "updated_at": "2026-10-19 15:20 KST",
-  "zone": "BUY3",
-  "price": 104600.0,
+  "updated_at": "2026-10-20 09:00 KST",
+  "zone": "BUY2",
+  "price": 105100.0,
   "below_hits": 0,
   "stop_sent": false,
   "shock_sent": false,
-  "last_event_ids": []
+  "last_event_ids": [
+    "lge-3q26",
+    "lgchem-3q26"
+  ]
 }

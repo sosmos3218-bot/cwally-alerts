@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-10-19 09:00 KST",
+  "updated_at": "2026-10-20 09:00 KST",
   "zones": {
-    "POSCO": "BETWEEN",
-    "HYUNDAI": "BUY3",
+    "POSCO": "BUY2",
+    "HYUNDAI": "BETWEEN",
     "POONGSAN": "BUY3"
   },
   "prices": {
-    "POSCO": 296500.0,
-    "HYUNDAI": 28500.0,
-    "POONGSAN": 62100.0
+    "POSCO": 314500.0,
+    "HYUNDAI": 29100.0,
+    "POONGSAN": 64700.0
   }
 }

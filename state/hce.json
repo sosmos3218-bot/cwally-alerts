@@ -1,9 +1,16 @@
 {
-  "updated_at": "2026-10-19 09:00 KST",
+  "updated_at": "2026-10-20 09:00 KST",
   "zone": "KILL",
-  "price": 92100.0,
-  "last_event_ids": [],
-  "print_date": "2026-10-28",
-  "print_date_confirmed": false,
-  "notice": null
+  "price": 94100.0,
+  "last_event_ids": [
+    "3q26",
+    "gunsan"
+  ],
+  "print_date": "2026-10-27",
+  "print_date_confirmed": true,
+  "notice": {
+    "title": "에이치디건설기계(주) 기업설명회(IR) 개최(안내공시)",
+    "date": "2026-10-27",
+    "kind": "ir"
+  }
 }

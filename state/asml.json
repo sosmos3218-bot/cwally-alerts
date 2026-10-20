@@ -1,10 +1,14 @@
 {
-  "updated_at": "2026-10-19 09:06 KST",
-  "price_eur": 1477.2,
-  "price_date": "2026-10-16",
-  "band": "ZONE1",
+  "updated_at": "2026-10-20 09:06 KST",
+  "price_usd": 1647.12,
+  "price_date": "2026-10-19",
+  "band": "HOLD",
   "weekly_sent": "2026-W43",
   "fail_sent_date": null,
+  "q4_weak": 0,
+  "q4_strong": 0,
+  "q4_summary": null,
+  "price_eur": 1477.2,
   "earn_final": true,
   "earn_verdict": null,
   "earn_summary": null

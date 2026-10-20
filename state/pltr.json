@@ -1,10 +1,11 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-10-20T09:01:19.225918+09:00",
   "phase": "idle",
   "date_notified": false,
   "results_notified": false,
   "miss_notified": false,
   "source": null,
   "snippet": null,
-  "parsed": null
+  "parsed": null,
+  "fetch_fails": 0
 }
