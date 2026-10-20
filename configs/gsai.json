@@ -3,11 +3,43 @@
   "title_prefix": "[GSAI]",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "15:40",
-  "codes": ["005930", "000660"],
+  "schedule_kst": "20:30",
+  "codes": [
+    "005930",
+    "000660"
+  ],
   "threshold_won": 500000000000,
   "consecutive_days": 2,
-  "year_guard": 2026,
+  "year_guard": null,
   "ends_kst": null,
-  "ends_note": "합산 기준 외국인 순매수 전환 시그널 (연속 2일 + 하루 합산 5천억 이상) 수동 해제 전까지"
+  "ends_note": "동일 단일종목 외국인 합계 실제 순매수 거래대금 매일 5천억원 이상 2연속 거래일 첫 충족, 사용자가 해제할 때까지",
+  "cron_approved": "2026-10-20",
+  "cron_utc": "30 11 * * 1-5",
+  "trigger": "Aside routine browser relay; no new GitHub cron",
+  "source": "KRX_MDCSTAT02302",
+  "market": "KRX_REGULAR",
+  "investor": "FOREIGN_TOTAL",
+  "unit": "KRW",
+  "exact_amount_field": "TRDVAL4",
+  "payload_schema_version": 1,
+  "lookback_trading_days": 40,
+  "minimum_complete_trading_dates": 3,
+  "trading_dates_source": "Naver KOSPI daily dates, independently cross-checked by browser relay",
+  "krx_request": {
+    "method": "POST",
+    "path": "/comm/bldAttendant/getJsonData.cmd",
+    "params": {
+      "bld": "dbms/MDC/STAT/standard/MDCSTAT02302",
+      "inqTpCd": "2",
+      "trdVolVal": "2",
+      "askBid": "3",
+      "share": "1",
+      "money": "1"
+    }
+  },
+  "condition": "동일 종목 매일 실제 외국인 합계 순매수 거래대금 >= 500000000000 KRW, 2연속 거래일째만 발송; 합산/추정 금지",
+  "payload_env": "GSAI_PAYLOAD",
+  "max_observation_age_minutes": 90,
+  "cron_utc_role": "informational approved time only; not an active GitHub cron or fallback",
+  "schedule_driver": "Aside routine browser relay"
 }
