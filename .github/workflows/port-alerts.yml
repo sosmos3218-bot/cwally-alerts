@@ -224,6 +224,11 @@ on:
     - cron: "10 6 30 10 *"
     - cron: "10 8 30 10 *"
     - cron: "20 0 2 11 *"
+    # k227540 oneshot_kst (KST→UTC): 2026-10-21 16:40, 18:10, 10-22 15:52, 10-23 15:52. 삼바 3Q 실적 후 227540 1차 매수 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "40 7 21 10 *"
+    - cron: "10 9 21 10 *"
+    - cron: "52 6 22 10 *"
+    - cron: "52 6 23 10 *"
     # kos5500 one-shot 2026-10-20 20:40 KST, late fallback
     - cron: "40 11 20 10 *"
     # doosan oneshot_kst (KST→UTC): 2026-10-26~11-16 평일 17:05. 두산 4종목 3분기 실적 결과 비교 (GitHub fallback; on-time = cron-job.org job=oneshot)
@@ -272,7 +277,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -355,6 +360,11 @@ on:
         options: [dry, auto, force]
       soq3_mode:
         description: "job=soq3 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      k227540_mode:
+        description: "job=k227540 only. dry = print, no ntfy, no state write | auto | force"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -442,6 +452,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             elif [ "${{ github.event.schedule }}" = "30 9 19 10 *" ] || [ "${{ github.event.schedule }}" = "30 10 19 10 *" ]; then JOB=memswing
             elif [ "${{ github.event.schedule }}" = "26 7 22 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 23 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 26 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 2 11 *" ]; then JOB=hmcq3
+            elif [ "${{ github.event.schedule }}" = "40 7 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 9 21 10 *" ] || [ "${{ github.event.schedule }}" = "52 6 22 10 *" ] || [ "${{ github.event.schedule }}" = "52 6 23 10 *" ]; then JOB=k227540
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
             elif [ "${{ github.event.schedule }}" = "40 11 20 10 *" ]; then JOB=kos5500
@@ -506,6 +517,7 @@ jobs:
           if [ "$DOW" = "1" ]; then IR=weekly; fi
           NQ=auto
           SQ=auto
+          KM=auto
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
@@ -528,6 +540,7 @@ jobs:
             [ -z "$HQ" ] && HQ=dry
             if [ "$JOB" = "neeq3" ]; then NQ="${{ github.event.inputs.neeq3_mode }}"; [ -z "$NQ" ] && NQ=dry; fi
             if [ "$JOB" = "soq3" ]; then SQ="${{ github.event.inputs.soq3_mode }}"; [ -z "$SQ" ] && SQ=dry; fi
+            if [ "$JOB" = "k227540" ]; then KM="${{ github.event.inputs.k227540_mode }}"; [ -z "$KM" ] && KM=dry; fi
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -545,6 +558,7 @@ jobs:
           echo "hmcq3_mode=$HQ" >> "$GITHUB_OUTPUT"
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
+          echo "k227540_mode=$KM" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
@@ -1101,6 +1115,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/soq3_monitor.py "${{ steps.pick.outputs.soq3_mode }}"
+      - name: Run k227540
+        if: steps.pick.outputs.job == 'k227540'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/k227540_monitor.py "${{ steps.pick.outputs.k227540_mode }}"
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
