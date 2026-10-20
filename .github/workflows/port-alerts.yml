@@ -470,6 +470,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
+            elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -819,7 +820,7 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/cpi1014_monitor.py auto
       - name: ktb148070
-        if: steps.decide.outputs.job == 'ktb148070' || steps.decide.outputs.job == 'all'
+        if: steps.pick.outputs.job == 'ktb148070'
         run: python scripts/ktb148070_monitor.py auto
       - name: Run dram27
         if: steps.pick.outputs.job == 'dram27'
