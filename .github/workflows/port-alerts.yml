@@ -177,6 +177,13 @@ on:
     - cron: "17 0 13 11 *"
     - cron: "26 7 13 11 *"
     - cron: "17 0 16 11 *"
+    # truen417790 oneshot_kst (KST→UTC): 2026-11-09~13/16 16:31. 3Q 공시 장 마감 후 확인 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "31 7 9 11 *"
+    - cron: "31 7 10 11 *"
+    - cron: "31 7 11 11 *"
+    - cron: "31 7 12 11 *"
+    - cron: "31 7 13 11 *"
+    - cron: "31 7 16 11 *"
     # llyq3 oneshot_kst (KST→UTC): 2026-10-29 20:10, 23:40, 10-30 05:20. 공시 직후, 콜 후, 미국 확정 종가
     - cron: "10 11 29 10 *"
     - cron: "40 14 29 10 *"
@@ -462,6 +469,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 22 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 22 10 *" ]; then JOB=sapq3
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
+            elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
