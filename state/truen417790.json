@@ -1,4 +1,5 @@
 {
-  "updated_at": "2026-10-20 09:07 KST",
-  "last_sent": "2026-10-20 09:07 KST"
+  "result_notified": false,
+  "empty_notified": false,
+  "last_problem_key": null
 }

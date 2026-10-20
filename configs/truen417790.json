@@ -2,12 +2,24 @@
   "name": "truen417790",
   "title_prefix": "[TRUEN]",
   "ticker": "417790",
-  "display": "\ud2b8\ub8e8\uc5d4",
+  "display": "트루엔",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "09:00",
+  "schedule_kst": "weekdays 09:00 (morning slot)",
+  "schedule_note": "새 반복 cron 없음. 기존 morning 슬롯에서 조용히 확인하고, 3분기 공시를 찾으면 한 번만 보냄. 공시가 장중에 뜨면 다음 평일 09:00에 알림.",
   "oneshot_kst": [],
-  "explain": "\ud2b8\ub8e8\uc5d4(417790) \uc8fc\uae30\uc801 \uc810\uac80 \uc54c\ub9bc. 3\ubd84\uae30 \uc2e4\uc801 \ubc1c\ud45c \ud6c4 \ud574\uc678 \ub9e4\ucd9c\u00b7IoT \ube44\uc911 \ubcc0\ud654, \uc790\uc0ac\uc8fc \uc18c\uac01\u00b7\ubc30\ub2f9 \uc815\ucc45 \uc5c5\ub370\uc774\ud2b8, \uc21c\ud604\uae08 \ud65c\uc6a9 \uc2dc\ub098\ub9ac\uc624\ub97c \uc694\uc57d.",
-  "ends_kst": null,
-  "ends_note": "3\ubd84\uae30 \uc2e4\uc801 \ubc0f \ud574\uc678\u00b7\ud658\uc6d0 \uc815\ucc45 \ubaa8\ub2c8\ud130\ub9c1 \uc9c0\uc18d"
+  "year_guard": 2026,
+  "window_start": "2026-10-20",
+  "window_end": "2026-11-30",
+  "related_since": "2026-10-01",
+  "window_note": "과거 패턴상 3분기 공시는 11월 중순 전후로 보지만 확정 아님. 창을 11-30까지 넉넉히 둠. 창 끝까지 못 찾으면 cwally-ops로 미게시 안내 한 번.",
+  "baseline": {
+    "net_cash_eok": 700,
+    "buyback_done_eok": 60,
+    "dps_won": 200,
+    "note": "사용자 제공 메모 기준 참고값. 공시 원문으로 검증하지 않음. 3분기 공시와 대조용."
+  },
+  "explain": "트루엔(417790) 3분기 공시가 나오면 해외 매출 비중, 자사주 소각과 배당, 순현금 쓰임을 확인하라고 한 번 알려주는 점검 알림. 매매 신호 아님.",
+  "ends_kst": "2026-11-30 09:00",
+  "ends_note": "트루엔 3분기 공시 확인 알림. 결과 전송 또는 미게시 안내 후 종료"
 }
