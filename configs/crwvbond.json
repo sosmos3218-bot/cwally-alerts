@@ -1,0 +1,48 @@
+{
+  "name": "crwvbond",
+  "title_prefix": "[CRWVBOND]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 번들에만 붙임. 구간이 바뀔 때, 1주 급락 때, 월요일 주간 요약만 발송.",
+  "alert_policy": "transition_only",
+  "source_note": "2026-10-20 트레이딩뷰 프록시 검토. CDS는 개인이 실시간으로 못 보므로 코어위브 달러 회사채 가격을 CDS 대용으로 쓴다. 하이일드 OAS 경보는 burry가 이미 맡고 있어 여기서는 참고 표시만 한다.",
+  "sources": {
+    "tv_scan": "https://scanner.tradingview.com/global/scan",
+    "bonds": [
+      {"symbol": "FWB:USU2069EAB6", "label": "9.0% 2031-02"},
+      {"symbol": "FWB:USU2069EAC4", "label": "9.75% 2031-10"},
+      {"symbol": "FWB:USU2069EAE0", "label": "9.625% 2032-07"}
+    ],
+    "stock": "NASDAQ:CRWV",
+    "ust5_csv": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS5&cosd=2026-08-01",
+    "hy_oas_csv": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2&cosd=2026-08-01",
+    "ccc_oas_csv": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A3HYC&cosd=2026-08-01"
+  },
+  "rules": {
+    "recover_price": 88.0,
+    "distress_price": 80.0,
+    "severe_price": 75.0,
+    "hysteresis_pt": 1.0,
+    "shock_drop_pt": 3.0,
+    "shock_lookback_obs": 5,
+    "shock_cooldown_days": 5,
+    "stale_days": 4,
+    "min_bonds": 2,
+    "hy_market_widen_bp": 30,
+    "hy_lookback_days": 28
+  },
+  "baseline": {
+    "date": "2026-10-20",
+    "median_price": 82.2,
+    "median_ytm_pct": 14.69,
+    "ust5_pct": 4.89,
+    "hy_oas_pct": 3.31,
+    "ccc_oas_pct": 12.97,
+    "cds5y_record_bp": 1194.5,
+    "note": "2026-10-20 16:20 KST 트레이딩뷰 FWB 시세(15분 지연). 10/15 저점은 2031년물 78~80센트, 수익률 15.6~16.2%, 5년 CDS 사상 최고 1,194.5bp(6월 452bp). 80센트 아래는 통상 부실 신호."
+  },
+  "explain": "코어위브 달러 회사채 3종 가격의 중앙값으로 구간을 나눈다. 88 이상 회복, 80~88 경계, 80 미만 부실, 75 미만 심각. 구간을 되돌아 나올 때는 1포인트 여유를 둔다. 최근 5회 관측 대비 3포인트 이상 하락이면 급락 알림(5일에 한 번). 하이일드 OAS가 4주 +30bp 이상이면 시장 동반, 아니면 코어위브 단독으로 표시만 한다. 시세가 4일 넘게 멈추거나 2종 미만이면 조회 실패로 보고 cwally-ops로 보낸다.",
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 평일 09:00, 구간 변경, 급락, 월요일 요약만 발송"
+}
