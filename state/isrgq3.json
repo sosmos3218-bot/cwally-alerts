@@ -1,7 +1,33 @@
 {
   "final_notified": false,
-  "empty_notified": false,
+  "empty_notified": true,
   "fail_notified": false,
   "expire_notified": false,
-  "score": null
+  "score": null,
+  "parsed": {
+    "published": false,
+    "third": false,
+    "us": null,
+    "ous": null,
+    "dv": null,
+    "ion": null,
+    "placed": null,
+    "dv5": null,
+    "ion_placed": null,
+    "trade": null,
+    "china": null,
+    "guide_low": null,
+    "guide_high": null,
+    "closer_mid": false,
+    "closer_low": false,
+    "guide_cut": false,
+    "per_case_down": false,
+    "per_case_limited": false,
+    "uses_up": false,
+    "price_number": false,
+    "hugo": false,
+    "ottava": false,
+    "share_loss": false
+  },
+  "updated_at": "2026-10-21T05:40:30.087493+09:00"
 }
