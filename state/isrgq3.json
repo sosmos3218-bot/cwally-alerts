@@ -2,7 +2,7 @@
   "final_notified": false,
   "empty_notified": true,
   "fail_notified": false,
-  "expire_notified": false,
+  "expire_notified": true,
   "score": null,
   "parsed": {
     "published": false,
@@ -29,5 +29,5 @@
     "ottava": false,
     "share_loss": false
   },
-  "updated_at": "2026-10-21T05:40:30.087493+09:00"
+  "updated_at": "2026-10-21T07:10:29.807131+09:00"
 }
