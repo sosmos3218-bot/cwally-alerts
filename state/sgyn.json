@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-19 15:20 KST",
-  "last_sent_date": "2026-10-19",
+  "updated_at": "2026-10-20 14:43 KST",
+  "last_sent_date": "2026-10-20",
   "week_date": "2026-10-12",
   "file_seq": 4985,
   "hits": [],
@@ -32,11 +32,11 @@
   },
   "iros": {
     "month": "2026-10",
-    "total": 96629,
-    "series_a": 37255,
-    "series_b": 59374,
-    "prev_total": 234300,
-    "mom_pct": -58.75842936406317,
+    "total": 108855,
+    "series_a": 41862,
+    "series_b": 66993,
+    "prev_total": 234526,
+    "mom_pct": -53.58510357060624,
     "source": "등기정보광장 매매 소유권이전"
   }
 }
