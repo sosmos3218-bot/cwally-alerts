@@ -292,7 +292,12 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30]
+      samnix_mode:
+        description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
+        default: dry
+        type: choice
+        options: [dry, test, auto]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -730,9 +735,6 @@ jobs:
             python scripts/xlp_monitor.py auto
             python scripts/meras_monitor.py auto
           fi
-          if [ "$JOB" = "afternoon" ]; then
-            python scripts/samnix_monitor.py auto
-          fi
           python scripts/ntfy_archive.py
           exit $failed
       - name: Run square + silicon2 + cover0198 + 0220wl + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 + 464310 + 461490 (afternoon)
@@ -833,8 +835,16 @@ jobs:
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/473640_monitor.py auto
           fi
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/samnix_monitor.py auto
+          fi
           python scripts/ntfy_archive.py
           exit $failed
+      - name: Run SAMNIX standalone
+        if: steps.pick.outputs.job == 'samnix'
+        run: |
+          python scripts/samnix_monitor.py "${{ github.event.inputs.samnix_mode || 'dry' }}"
+          python scripts/ntfy_archive.py
       - name: Run cpi1014
         if: steps.pick.outputs.job == 'cpi1014'
         env:
