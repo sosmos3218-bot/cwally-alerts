@@ -1,0 +1,68 @@
+{
+  "name": "jyp",
+  "title_prefix": "[JYP]",
+  "display": "JYP Ent.(035900) 3분기 잠정실적 1회 알림",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "17:05 (one-shot 11/9~11/17 평일), 11/18 09:05 마지막 확인. 평일 morning 슬롯에서는 2027 컨센서스 기준값만 조용히 저장(발송 없음)",
+  "schedule_note": "새 반복 cron 없음. 11/9~11/17 평일 17:05 one-shot에서 DART/KRX 공시에 3분기 잠정실적이 있으면 1번만 보냄, 없으면 침묵. 11/18 09:05 마지막 실행에서 그때까지 미발표면 1번 알림. 09:00 morning 슬롯과 겹치지 않게 09:05. morning 슬롯 실행은 2027 컨센서스 기준값 저장 전용(발송 없음).",
+  "approved": "2026-10-20 10:44 KST 채팅 승인",
+  "year_guard": 2026,
+  "code": "035900",
+  "corp_name": "JYP Ent.",
+  "dart_name": "제이와이피엔터테인먼트",
+  "holding": null,
+  "holding_note": "보유 여부 미확인. 기존 판단 중립/관망.",
+  "prior_view": "중립/관망",
+  "earnings": {
+    "quarter": "3분기",
+    "period_start": "2026-07-01",
+    "period_end": "2026-09-30",
+    "since": "2026-10-01",
+    "op_range_eok": [378, 419],
+    "op_range_note": "채팅에서 정한 3분기 영업이익 예상 범위(억원)",
+    "far_pct": 10,
+    "one_off": {
+      "pretax_vs_op_ratio": 0.7,
+      "net_vs_op_ratio": 0.5,
+      "keywords": ["일회성", "손상", "손상차손", "대손", "충당금", "소송", "합의금", "평가손실", "처분손실", "위약금", "구조조정"]
+    },
+    "selfcheck": {"period_start": "2026-04-01", "period_end": "2026-06-30", "filed": "2026-08-12", "expect_op_eok": 310, "expect_rev_eok": 1831}
+  },
+  "consensus_2027": {
+    "year": "2027",
+    "baseline": null,
+    "baseline_note": "커밋 시점(2026-10-20) 박스에서는 wisereport/FnGuide 접속 불가라 비워 둠. GitHub runner의 첫 평일 09:00 morning 실행이 state/jyp.json cons.baseline 에 1회 저장하고, 이후 값이 바뀔 때만 cons.last 갱신.",
+    "reference_note": "참고(비교 기준 아님): 삼성증권 2026-08-13 2027E EPS 3,322원, 영업이익 1,510억. 상상인 2026-10-19 2027 영업이익 추정 20% 하향.",
+    "up_pct": 3,
+    "sources": [
+      "https://navercomp.wisereport.co.kr/v2/company/ajax/cF1001.aspx (FnGuide 컨센서스, 연간 2027/12(E))",
+      "https://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A035900 (Financial Highlight 연간)"
+    ]
+  },
+  "tour": {
+    "artists": ["스트레이 키즈", "스트레이키즈", "트와이스", "엔믹스", "있지", "ITZY", "NMIXX", "TWICE", "Stray Kids", "킥플립", "NEXZ", "넥스지"],
+    "queries": ["스트레이 키즈 2027 월드투어", "트와이스 2027 투어", "JYP 2027 투어 일정", "엔믹스 2027 투어"],
+    "pattern": "2027.{0,30}(월드투어|투어|콘서트|공연)|(월드투어|투어|콘서트|공연).{0,30}2027",
+    "confirm_words": ["확정", "발표", "개최", "공개", "일정", "개막"],
+    "since_days": 45
+  },
+  "oneshot_kst": [
+    "2026-11-09 17:05", "2026-11-10 17:05", "2026-11-11 17:05", "2026-11-12 17:05", "2026-11-13 17:05",
+    "2026-11-16 17:05", "2026-11-17 17:05", "2026-11-18 09:05"
+  ],
+  "final_kst": "2026-11-18 09:05",
+  "fallback_cron_utc": {
+    "note": "DOOSAN이 11/9~11/16 17:05 KST(5 8 D 11 *)를 이미 쓰고 Decide에서 JOB=doosan으로 먼저 잡으므로, 겹치는 6일은 17:12 KST(12 8 D 11 *)로 비켜 둠. 11/17 17:05, 11/18 09:05는 겹침 없어 원래 시각 그대로.",
+    "crons": ["12 8 9 11 *", "12 8 10 11 *", "12 8 11 11 *", "12 8 12 11 *", "12 8 13 11 *", "12 8 16 11 *", "5 8 17 11 *", "5 0 18 11 *"]
+  },
+  "sources": {
+    "dart_search": "https://dart.fss.or.kr/dsab007/detailSearch.ax (POST 조회 전용, DOOSAN과 같은 방식)",
+    "dart_viewer": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcp}",
+    "naver_notice": "https://stock.naver.com/api/domestic/detail/notice?itemCode=035900 (KRX 공시 본문)",
+    "naver_quarter": "https://m.stock.naver.com/api/stock/035900/finance/quarter",
+    "news": "https://news.google.com/rss/search (투어 일정 보도, 참고용)"
+  },
+  "ends_kst": "2026-11-18 12:00",
+  "ends_note": "11/18 09:05 마지막 확인 후 종료, 늦은 예비 실행 여유 포함"
+}

@@ -249,6 +249,15 @@ on:
     # sapq3 oneshot_kst (KST→UTC): 2026-10-22 07:10, 09:10. Q3 실적 후 조건부 매수 재평가 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "10 22 21 10 *"
     - cron: "10 0 22 10 *"
+    # jyp oneshot_kst (KST→UTC): 2026-11-09~11-17 평일 17:05, 11-18 09:05. JYP 3분기 잠정실적 1회 (GitHub fallback; on-time = cron-job.org job=oneshot). 11/9~11/16은 doosan 5 8 D 11 *과 겹쳐 17:12(12 8 D 11 *)로 비킴
+    - cron: "12 8 9 11 *"
+    - cron: "12 8 10 11 *"
+    - cron: "12 8 11 11 *"
+    - cron: "12 8 12 11 *"
+    - cron: "12 8 13 11 *"
+    - cron: "12 8 16 11 *"
+    - cron: "5 8 17 11 *"
+    - cron: "5 0 18 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -428,6 +437,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 21 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 23 29 10 *" ]; then JOB=oneshot
 
             elif [ "${{ github.event.schedule }}" = "10 22 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 22 10 *" ]; then JOB=sapq3
+            elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1059,6 +1069,13 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: |
           if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/doosan_monitor.py slot; else python scripts/doosan_monitor.py auto; fi
+      - name: Run jyp
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'jyp'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/jyp_monitor.py snap; else python scripts/jyp_monitor.py auto; fi
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
