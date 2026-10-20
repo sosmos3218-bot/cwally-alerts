@@ -57,8 +57,12 @@ def main() -> int:
             prev = json.loads(STATE_PATH.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             pass
-    seen = {str(x.get("id")) for x in prev.get("items") or []}
-    items = list(prev.get("items") or [])
+    # deleted_ids: tombstones written by cwally-dashboard when archive items are deleted.
+    # The 48h poll would re-add them otherwise, so they are skipped and kept as-is.
+    deleted = [str(x) for x in prev.get("deleted_ids") or [] if x]
+    tomb = set(deleted)
+    seen = {str(x.get("id")) for x in prev.get("items") or []} | tomb
+    items = [x for x in prev.get("items") or [] if str(x.get("id")) not in tomb]
     added = 0
     for topic in cfg.get("topics") or []:
         for msg in fetch_topic(cfg.get("ntfy_server") or "https://ntfy.sh", topic):
@@ -71,8 +75,11 @@ def main() -> int:
     cap = int(cfg.get("max_items") or 400)
     items = items[:cap]
     stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
+    out = {"updated_at": stamp, "items": items}
+    if deleted:
+        out["deleted_ids"] = deleted[-2000:]
     STATE_PATH.write_text(
-        json.dumps({"updated_at": stamp, "items": items}, ensure_ascii=False, indent=2) + "\n",
+        json.dumps(out, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print(f"archive updated {stamp} added={added} total={len(items)}")
