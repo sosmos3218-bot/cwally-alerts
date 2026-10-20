@@ -1,0 +1,23 @@
+{
+  "name": "ktb148070",
+  "title_prefix": "[KTB148070]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:30",
+  "oneshot_kst": [
+    "2026-10-22 15:30"
+  ],
+  "schedule_note": "10/22 금통위 발표(약 10:30-11:10) 후 15:30 KST 일회성. 공식 YTM/듀레이션 확인 후 매수 확대/유지/대기 판단. UTC 30 6 22 10 * fallback.",
+  "event_year": 2026,
+  "meeting_date": "2026-10-22",
+  "current_base_rate": 3.0,
+  "ytm_asof": "2026-10-14",
+  "ytm": 4.245,
+  "duration": 7.583,
+  "yield_10y_asof": "2026-10-19",
+  "yield_10y": 4.205,
+  "recommendation_pre": "소액 분할매수. 적극 매수 보류. 금통위 후 재평가.",
+  "explain": "10월 22일 금통위 후 KIWOOM 국고채10년(148070) 공식 YTM·듀레이션 기반 매수 확대/유지/대기 판단 일회 알림.",
+  "ends_kst": "2026-10-22 15:30",
+  "ends_note": "금통위 후 일회 분석 알림"
+}

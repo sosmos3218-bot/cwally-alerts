@@ -259,6 +259,9 @@ on:
     - cron: "5 8 17 11 *"
     - cron: "5 0 18 11 *"
     # soq3 oneshot_kst (KST→UTC): 2026-11-05 21:40, 23:40, 11-06 06:20. SO 3분기 실적 숫자 판정 + 콜 이후 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+# ktb148070 oneshot_kst (KST→UTC): 2026-10-22 15:30. 금통위 후 148070 재평가 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "30 6 22 10 *"
+
     - cron: "40 12 5 11 *"
     - cron: "40 14 5 11 *"
     - cron: "20 21 5 11 *"
@@ -269,7 +272,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -793,6 +796,9 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/cpi1014_monitor.py auto
+      - name: ktb148070
+        if: steps.decide.outputs.job == 'ktb148070' || steps.decide.outputs.job == 'all'
+        run: python scripts/ktb148070_monitor.py auto
       - name: Run dram27
         if: steps.pick.outputs.job == 'dram27'
         env:
