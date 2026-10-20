@@ -283,6 +283,8 @@ on:
     - cron: "12 7 5 11 *"
     - cron: "12 0 6 11 *"
     - cron: "40 7 16 11 *"
+    # cash30 oneshot_kst (KST→UTC): 2026-11-06 08:40. 남은 30% 현금 배분 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "40 23 5 11 *"
   workflow_dispatch:
     inputs:
       job:
@@ -290,7 +292,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -384,6 +386,11 @@ on:
         options: [dry, auto, force]
       k227540_mode:
         description: "job=k227540 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      cash30_mode:
+        description: "job=cash30 only. dry = print, no ntfy, no state write | auto | force"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -484,6 +491,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
             elif echo "50 4 5 11 * 12 7 5 11 * 12 0 6 11 * 40 7 16 11 *" | grep -q "${{ github.event.schedule }}"; then JOB=oneshot
+            elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1144,6 +1152,12 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/soq3_monitor.py "${{ steps.pick.outputs.soq3_mode }}"
+      - name: Run cash30
+        if: steps.pick.outputs.job == 'cash30'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/cash30_monitor.py "${{ github.event.inputs.cash30_mode || 'auto' }}"
       - name: Run k227540
         if: steps.pick.outputs.job == 'k227540'
         env:

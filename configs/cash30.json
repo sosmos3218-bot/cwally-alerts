@@ -1,0 +1,37 @@
+{
+  "name": "cash30",
+  "title_prefix": "[CASH30]",
+  "display": "남은 30% 현금 배분 (NEE 대기 vs SO vs DUK)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "08:40",
+  "oneshot_kst": ["2026-11-06 08:40"],
+  "window_start_kst": "2026-11-06 08:00",
+  "window_end_kst": "2026-11-06 12:00",
+  "event_year": 2026,
+  "baseline": {
+    "nee_zone": [73.0, 75.0],
+    "rate_stress": 5.6,
+    "edge_pp": 3.0,
+    "so_extra_cap_pp": 10,
+    "dividends": {"NEE": 2.49, "SO": 2.92, "DUK": 4.34},
+    "note": "배당은 10/19 분석 기준 연간 주당 배당(미검증). edge_pp = NEE 대기를 유지하려면 73-75 매수 시 기대수익이 대안보다 이만큼 높아야 함. so_extra_cap_pp = SO가 이미 50%+20%일 수 있어 30% 중 SO로 보낼 최대치(집중 위험)."
+  },
+  "inputs": {
+    "rate_targets_updated": null,
+    "rate_targets": {},
+    "nee_case_note": null,
+    "so_verdict": null,
+    "so_verdict_note": null,
+    "so_verdict_updated": null,
+    "how_to_fill": "10/22 06:10 예약 작업이 rate_targets를 {\"NEE\": {\"4.5\": 목표가, \"5.1\": 목표가, \"5.5\": 목표가}, \"SO\": {...}, \"DUK\": {...}}로 채운다(NEE는 합병 시나리오 확률 가중값). 11/6 07:10 예약 작업이 so_verdict를 실행/분할 일부만/보류 중 하나로 채운다. 비어 있으면 알림은 규칙 기반으로만 판정하고 그렇게 표시한다."
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=5d",
+    "rate": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=5d"
+  },
+  "schedule_note": "11/6 08:40 KST = UTC 40 23 5 11 *. 11/6 06:20 [SO] 콜 판정, 07:10 SO 검증 작업(so_verdict 기록) 뒤. 연도 가드 2026만.",
+  "explain": "남은 30% 현금을 NEE 73-75 대기로 둘지, SO나 DUK로 돌릴지 정하는 일회 알림입니다. NEE/SO 실적 알림 결과, 10/22 금리 시나리오 목표가, 11/6 SO 검증 결론, 현재 10년물과 세 종목 가격을 합쳐 판정합니다. 투자 권유가 아닙니다.",
+  "ends_kst": "2026-11-06 08:40",
+  "ends_note": "11/6 08:40 일회 판정, 이후 종료"
+}
