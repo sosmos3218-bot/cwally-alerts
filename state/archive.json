@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-20 11:44 KST",
+  "updated_at": "2026-10-20 13:38 KST",
   "items": [
+    {
+      "id": "deoXHntNoBc1",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 검사 실패 | workflow-lint 6388ba7",
+      "message": "2026-10-20 11:49 KST | OPS | workflow-lint / 6388ba7\n이게 뭐 알림: 워크플로 파일 검사(workflow-lint)가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 워크플로 파일이 깨졌을 수 있습니다. 알림 실행이 멈출 수 있습니다.\n지금 할 일: 로그에서 실패한 검사를 확인하고 마지막 정상 커밋으로 복원하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/39360955214",
+      "priority": 4,
+      "tags": [
+        "warning"
+      ],
+      "time": 1792464549
+    },
     {
       "id": "hAiIQejxiQ71",
       "topic": "cwally-ops",
@@ -4473,17 +4484,6 @@
         "ship"
       ],
       "time": 1790771804
-    },
-    {
-      "id": "GPRPP75ROg75",
-      "topic": "cwally-port",
-      "title": "[SQUARE] 주의 | 추가매수 보류",
-      "message": "이게 뭐 알림: SK스쾌어가 하이닉스보다 너무 약해지면 팔라는 점검입니다.\n지금 상태: 주의 관찰. 스쾌어 1,139,000원, 하이닉스 1,776,000원, 잠재 NAV 대비 할인 43.2%.\n지금 할 일: 지금 팔지는 말고, 내일 재검토만 하세요. 추가 매수는 말세요.\n나중에: 하이닉스 20일 6.1%, 60일 고점 대비 -26.8%. 스쾌어-하이닉스 20일 차이 3.7%p.\n익절/줄일 때: 조건1 하이닉스 사이클(하이닉스 조정 조짐), 조건2 상대약세(상대약세 평온). 둘 다 SELL이면 우선 줄입니다.\n하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.",
-      "priority": 4,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1790771798
     }
   ]
 }
