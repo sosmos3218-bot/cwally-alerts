@@ -483,10 +483,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
-            elif [ "${{ github.event.schedule }}" = "50 4 5 11 *" ]; then JOB=lgchem
-            elif [ "${{ github.event.schedule }}" = "12 7 5 11 *" ]; then JOB=lgchem
-            elif [ "${{ github.event.schedule }}" = "12 0 6 11 *" ]; then JOB=lgchem
-            elif [ "${{ github.event.schedule }}" = "40 7 16 11 *" ]; then JOB=lgchem
+            elif echo "50 4 5 11 * 12 7 5 11 * 12 0 6 11 * 40 7 16 11 *" | grep -q "${{ github.event.schedule }}"; then JOB=oneshot
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -1026,6 +1023,13 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/q3flow_monitor.py auto
+
+      - name: Run lgchem
+        if: steps.pick.outputs.job == 'lgchem'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/lgchem_monitor.py "${{ github.event.inputs.lgchem_mode || 'auto' }}"
       - name: Run kzq3
         if: steps.pick.outputs.job == 'kzq3'
         env:
