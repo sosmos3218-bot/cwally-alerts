@@ -256,7 +256,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3]
+        options: [all, morning, afternoon, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3]
       steel_mode:
         description: weekly | quarterly | event
         default: weekly
@@ -329,6 +329,11 @@ on:
         options: [dry, auto, force]
       hmcq3_mode:
         description: "job=hmcq3 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      neeq3_mode:
+        description: "job=neeq3 only. dry = print, no ntfy, no state write | auto | force"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -476,6 +481,7 @@ jobs:
           WL=event
           IR=event
           if [ "$DOW" = "1" ]; then IR=weekly; fi
+          NQ=auto
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
@@ -496,6 +502,7 @@ jobs:
             [ -z "$KC" ] && KC=dry
             HQ="${{ github.event.inputs.hmcq3_mode }}"
             [ -z "$HQ" ] && HQ=dry
+            if [ "$JOB" = "neeq3" ]; then NQ="${{ github.event.inputs.neeq3_mode }}"; [ -z "$NQ" ] && NQ=dry; fi
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -511,6 +518,7 @@ jobs:
           echo "kosreb_mode=$KO" >> "$GITHUB_OUTPUT"
           echo "kica_mode=$KC" >> "$GITHUB_OUTPUT"
           echo "hmcq3_mode=$HQ" >> "$GITHUB_OUTPUT"
+          echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
@@ -1043,7 +1051,7 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/neeq3_monitor.py auto
+        run: python scripts/neeq3_monitor.py "${{ steps.pick.outputs.neeq3_mode }}"
       - name: Run doosan
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'doosan'
         env:

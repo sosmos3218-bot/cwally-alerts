@@ -12,21 +12,33 @@
   "event_year": 2026,
   "release_at_kst": "2026-10-21 20:30",
   "call_at_kst": "2026-10-21 22:00",
+  "call_followup_kst": "2026-10-21 23:30",
   "cik": "0000753308",
   "baseline": {
     "guidance_low": 3.92,
     "guidance_high": 4.02,
+    "consensus_eps_low": 1.17,
+    "consensus_eps_high": 1.18,
+    "buy_zone": [73.0, 75.0],
     "analyst_target": 97.0,
-    "pre_price": 79.0,
-    "long_term_cagr": 8.0
+    "pre_price": 78.17,
+    "long_term_cagr": 8.0,
+    "implied_2027_eps": 4.33,
+    "note": "2026 가이던스 3.92-4.02는 2026 Q2 발표 기준. 2027 구간은 미확인이라 2025 조정 EPS 3.71에서 연 8% 경로(4.33)를 참고선으로만 씀. 컨센서스 1.17-1.18은 10/20 기준 시장 추정."
   },
   "sources": {
     "news": "https://www.investor.nexteraenergy.com/news-and-events/news-releases",
     "sec": "https://data.sec.gov/submissions/CIK0000753308.json",
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NEE?interval=1d&range=5d"
   },
-  "schedule_note": "NEE Q3 2026 BMO 2026-10-21, call 9am ET=22:00 KST. 1차 20:40=UTC 40 11 21 10 *. 2차 22:40=UTC 40 13 21 10 *. 3차 23:40=UTC 40 14 21 10 *. 연도 가드 2026만.",
-  "explain": "NEE 3분기 실적 직후 EPS/가이던스, 주가 반응, Dominion 합병 규제 진행, 현재가 vs 목표가 비교로 보유/관심/주의 중 하나로 갱신하는 일회 알림입니다. 투자 권유가 아닙니다.",
+  "sec_exhibit_guess": "neeq32026exhibit99.htm",
+  "news_queries": [
+    "NextEra rate freeze",
+    "NextEra Dominion Virginia",
+    "NextEra earnings call Dominion"
+  ],
+  "schedule_note": "NEE Q3 2026 BMO 2026-10-21 (보도자료 07:30 ET=20:30 KST), 웹캐스트 9am ET=22:00 KST. 1차 20:40=UTC 40 11 21 10 * 숫자 판정. 2차 22:40=UTC 40 13 21 10 * 숫자 재시도. 3차 23:40=UTC 40 14 21 10 * 콜 이후 요금동결 대응 판정. 연도 가드 2026만.",
+  "explain": "NEE 3분기 실적 당일 판정입니다. 20:40은 조정 EPS, 2026/2027 가이던스, 73-75달러 매수 구간을, 23:40은 버지니아 주지사 6년 요금동결 요구에 대한 경영진 입장(헤드라인/보도자료 기준)을 봅니다. 투자 권유가 아닙니다.",
   "ends_kst": "2026-10-21 23:40",
-  "ends_note": "실적일 일회 알림(10/21 20:40, 22:40, 23:40), 23:40이 마지막"
+  "ends_note": "실적일 일회 알림(20:40 숫자, 22:40 재시도, 23:40 콜 이후 요금동결 대응), 23:40이 마지막"
 }
