@@ -9,6 +9,20 @@ on:
     - cron: "40 6 * * 1-5"
   workflow_dispatch:
     inputs:
+      gsai_only:
+        description: "Only evaluate the 20:30 GSAI actual-value payload; leave daytime flow untouched"
+        type: boolean
+        default: false
+      gsai_payload:
+        description: "KRX actual foreign net-buy KRW snapshot JSON from the authenticated browser relay"
+        type: string
+        required: false
+        default: ""
+      gsai_mode:
+        description: "dry sends nothing and writes no state; auto evaluates the approved rule"
+        type: choice
+        options: [dry, auto]
+        default: dry
       force:
         description: "run even if the flow slot already ran today"
         type: boolean
@@ -34,6 +48,10 @@ jobs:
         id: guard
         run: |
           RUN=1
+          if [ "${{ inputs.gsai_only }}" = "true" ]; then
+            echo "run=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "${{ github.event.inputs.force }}" != "true" ]; then
             # once per KST day: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md)
             git fetch -q origin main && git show origin/main:state/slots/flow.json > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
@@ -79,8 +97,16 @@ jobs:
             echo "one or more flow scripts failed"
             exit 1
           fi
+      - name: Run GSAI actual-value relay
+        if: github.event_name == 'workflow_dispatch' && inputs.gsai_only
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          GSAI_PAYLOAD: ${{ inputs.gsai_payload }}
+          GSAI_MODE: ${{ inputs.gsai_mode }}
+        run: python scripts/gsai_monitor.py
       - name: Persist state
-        if: always()
+        if: always() && (steps.guard.outputs.run == '1' || (inputs.gsai_only && inputs.gsai_mode == 'auto'))
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
