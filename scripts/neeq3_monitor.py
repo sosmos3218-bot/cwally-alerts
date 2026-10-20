@@ -217,8 +217,10 @@ def judge(cfg: dict, p: dict, last: float | None, ref: float | None, merger: str
     if merger == "철회 언급":
         reasons.append("합병 철회 언급")
     elif merger.startswith("요금동결 수용"):
-        reasons.append("요금동결 양보, 이익 훼손 점검 필요")
-        level = max(level, 1)
+        # 6년 동결/크레딧 양보는 Dominion 수익 회수와 합병 EPS 기여를 직접 깎는다.
+        # 73-75 구간은 양보 전 가치 기준이라, 양보 규모가 숫자로 나오기 전엔 구간 도달도 매수 근거가 아니다.
+        reasons.append("요금동결 양보, 73-75 구간이어도 매수 보류")
+        level = 2
     if last is not None:
         lo, hi = b["buy_zone"]
         if last < lo:
@@ -362,13 +364,13 @@ def main() -> int:
               + "헤드라인과 보도자료 기준이며 어닝콜 전문 검증은 아님.")
     todo = {
         "철회 언급": "합병 철회 시나리오. 내일 장중 주가 반응 확인 전 신규 매수 금지.",
-        "요금동결 수용/추가 양보": "양보 규모가 2027 EPS에 미치는 영향 확인 전까지 1차 분할 이상 금지.",
+        "요금동결 수용/추가 양보": "73-75 구간이어도 매수 보류. 양보 규모와 2027 EPS 영향이 숫자로 나온 뒤 재판정.",
         "반박/거부": "규제 장기화 가능성. 관망 유지, 73-75 구간에서만 분할.",
         "검토/협상 중": "결론 미정. 관망 유지, SCC 청문 일정 확인.",
     }.get(merger, "입장 확인 불가. 관망 유지. 콜 다시보기나 전문으로 직접 확인.")
-    if level == 2:
+    if level == 2 and "보류" not in todo:
         todo = "신규 매수 보류. " + todo
-    title = f"[NEE] 요금동결 대응 {merger.split('/')[0].split(',')[0]} | {action.split('|')[-1].strip()}"
+    title = f"[NEE] 콜 판정 {merger.split('/')[0].split(',')[0]} | {action.split('|')[-1].strip()}"
     send(dry, title, body(cfg, now, "콜 이후 판정", status, todo, "일회 알림 종료. SCC 청문과 합병 결정은 별도 확인."), 4 if merger in {"철회 언급", "요금동결 수용/추가 양보"} or level == 2 else 3)
     st.update({"notified": True, "call_notified": True, "call_stance": merger, "score": action})
     save_state(st, now, dry)
