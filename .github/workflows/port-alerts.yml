@@ -718,6 +718,7 @@ jobs:
             python scripts/sivr_monitor.py auto
             python scripts/lghpref_monitor.py auto
             python scripts/skinc_monitor.py auto
+            python scripts/crwvbond_monitor.py auto || echo "::error::crwvbond_monitor failed"
             python scripts/kosown_monitor.py
             python scripts/005935_monitor.py
             python scripts/oilwatch_monitor.py auto
