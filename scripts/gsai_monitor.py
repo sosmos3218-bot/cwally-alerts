@@ -1,144 +1,213 @@
 #!/usr/bin/env python3
-"""GSAI: Samsung Electronics + SK Hynix foreign net-buy reversal signal.
+"""Exact KRX foreign-total net-buy signal, supplied by the browser relay only.
 
-Signal when combined foreign net buy is positive for 2 consecutive trading days
-and at least one of those days has combined net buy >= 500 billion KRW.
+The relay must obtain TRDVAL4 (KRW, not quantity * price), and independently
+cross-check trading_dates with Naver KOSPI daily dates. No network data fetch
+or local holiday/year table is used here. Prefer 20-40 trading dates; at least
+three complete dates are required to prove a newly started two-day streak.
+Legacy estimated history is never reused as evidence.
 """
 from __future__ import annotations
 
 import json
+import os
+import re
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+import ntfy_util
 
 KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "gsai.json"
 STATE_PATH = ROOT / "state" / "gsai.json"
-API = "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=5"
+CODES = ("005930", "000660")
+NAMES = {"005930": "삼성전자", "000660": "SK하이닉스"}
+THRESHOLD = 500_000_000_000
+META = {"schema_version": 1, "source": "KRX_MDCSTAT02302",
+        "market": "KRX_REGULAR", "investor": "FOREIGN_TOTAL", "unit": "KRW"}
 
 
-def to_int(s: str) -> int:
-    return int(str(s).replace(",", "").replace("+", "").strip() or 0)
+def no_duplicates(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
 
 
-def fetch(code: str, day: str) -> dict | None:
-    import requests
-
-    r = requests.get(API.format(code=code), headers={"User-Agent": "Mozilla/5.0 cwally-alerts"}, timeout=20)
-    r.raise_for_status()
-    for row in r.json():
-        if row.get("bizdate") == day:
-            close = to_int(row["closePrice"])
-            fq = to_int(row["foreignerPureBuyQuant"])
-            return {"close": close, "frgn_q": fq, "frgn_won": fq * close}
-    return None
+def parse_json(raw):
+    return json.loads(raw, object_pairs_hook=no_duplicates,
+                      parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
 
 
-def eok(won: float) -> str:
-    sign = "+" if won > 0 else ""
-    if abs(won) >= 1e12:
-        return f"{sign}{won / 1e12:.2f}조"
-    return f"{sign}{won / 1e8:,.0f}억"
+def iso_day(value):
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise ValueError("date must be YYYY-MM-DD")
+    return date.fromisoformat(value)
 
 
-def load_json(path: Path, fallback: dict) -> dict:
+def validate_payload(raw, now):
+    p = parse_json(raw)
+    if not isinstance(p, dict) or set(p) != set(META) | {"asof", "observed_at", "trading_dates", "series"}:
+        raise ValueError("invalid payload fields; estimated/legacy data not accepted")
+    if type(p["schema_version"]) is not int or any(p[k] != v for k, v in META.items()):
+        raise ValueError("invalid schema/source/market/investor/unit")
+    now = now.astimezone(KST)
+    asof = iso_day(p["asof"])
+    expected = now.date() - timedelta(days=1) if now.hour < 6 else now.date()
+    if asof != expected:
+        raise ValueError("asof is not the current session")
+    cutoff = datetime.combine(asof, time(20, 30), KST)
+    if now < cutoff:
+        raise ValueError("confirmation requires 20:30 KST or later")
+    stamp = p["observed_at"]
+    if not isinstance(stamp, str) or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?\+09:00", stamp):
+        raise ValueError("observed_at requires ISO timestamp with +09:00")
+    observed = datetime.fromisoformat(stamp)
+    if observed < cutoff or not timedelta(0) <= now - observed <= timedelta(minutes=90):
+        raise ValueError("observation is early, stale, or in the future")
+    days = p["trading_dates"]
+    if not isinstance(days, list) or not 3 <= len(days) <= 40:
+        raise ValueError("require 3-40 cross-checked trading dates (prefer 20-40)")
+    parsed = [iso_day(d) for d in days]
+    if len(set(days)) != len(days) or parsed != sorted(parsed, reverse=True):
+        raise ValueError("trading_dates must be unique descending dates")
+    if days[0] != p["asof"] or any(d.weekday() >= 5 for d in parsed):
+        raise ValueError("today's exact trading data missing or invalid weekday")
+    series = p["series"]
+    if not isinstance(series, dict) or set(series) != set(CODES):
+        raise ValueError("both exact stock codes required, no other codes")
+    for code in CODES:
+        rows = series[code]
+        if not isinstance(rows, list) or len(rows) != len(days):
+            raise ValueError(f"{code}: complete values for all expected dates required")
+        dates = []
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"date", "net_buy_won"}:
+                raise ValueError(f"{code}: exact net_buy_won only, no estimates")
+            iso_day(row["date"])
+            if type(row["net_buy_won"]) is not int:
+                raise ValueError(f"{code}: net_buy_won must be integer KRW")
+            dates.append(row["date"])
+        if len(set(dates)) != len(dates) or set(dates) != set(days):
+            raise ValueError(f"{code}: dates differ from expected trading_dates")
+        by_day = {row["date"]: row for row in rows}
+        series[code] = [by_day[d] for d in days]
+    return p
+
+
+def fresh_state():
+    return {"schema_version": 2,
+            "per_code": {code: {"last_notified_streak_start": None} for code in CODES},
+            "updated_at": None}
+
+
+def load_state(path):
     if not path.exists():
-        return dict(fallback)
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        out = dict(fallback)
-        out.update(data)
-        return out
-    except json.JSONDecodeError:
-        return dict(fallback)
+        return fresh_state()
+    old = parse_json(path.read_text(encoding="utf-8"))
+    if not isinstance(old, dict):
+        raise ValueError("invalid state")
+    version = old.get("schema_version")
+    if version is None or (type(version) is int and version == 1):
+        # Old combined/estimated amounts cannot seed exact per-stock markers.
+        # Migration is in memory only until a successful real publish.
+        return fresh_state()
+    if type(version) is not int or version != 2 or set(old.get("per_code", {})) != set(CODES):
+        raise ValueError("invalid/unsupported state schema")
+    for item in old["per_code"].values():
+        if not isinstance(item, dict) or "last_notified_streak_start" not in item:
+            raise ValueError("invalid state marker")
+        marker = item["last_notified_streak_start"]
+        if marker is not None:
+            iso_day(marker)
+    return old
 
 
-def save(state: dict) -> None:
-    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+def streak(rows):
+    length = 0
+    for row in rows:
+        if row["net_buy_won"] < THRESHOLD:
+            break
+        length += 1
+    # If all supplied rows qualify, the true start lies outside the snapshot.
+    start = rows[length - 1]["date"] if length and length < len(rows) else None
+    return length, start
 
 
-def main() -> int:
-    dry = "dry" in [a.lower() for a in sys.argv[1:]]
-    cfg = load_json(CFG_PATH, {})
-    now = datetime.now(KST)
-    stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    state = load_json(STATE_PATH, {"history": [], "last_signal_day": None, "updated_at": None})
-
-    if now.year != int(cfg.get("year_guard") or 2026):
-        print("gsai year-guard silent")
-        return 0
-
-    sys.path.insert(0, str(ROOT / "scripts"))
-    import kr_calendar
-
-    session = kr_calendar.session_day(now)
-    if not kr_calendar.is_trading_day(session):
-        print(f"{session} KRX 휴장/주말 skip")
-        return 0
-    if session == now.date() and now.strftime("%H:%M") < "15:35":
-        print("장중 수급(잠정치)이라 판정 안 함; silent")
-        return 0
-
-    day = session.strftime("%Y%m%d")
-    codes = cfg.get("codes") or ["005930", "000660"]
-    threshold = int(cfg.get("threshold_won") or 500_000_000_000)
-    need_days = int(cfg.get("consecutive_days") or 2)
-
-    try:
-        rows = {c: fetch(c, day) for c in codes}
-    except Exception as exc:
-        print(f"fetch fail: {exc}")
-        return 0
-
-    if any(v is None for v in rows.values()):
-        print(f"{day} data missing for one or more codes; silent")
-        return 0
-
-    combined = sum(r["frgn_won"] for r in rows.values())
-    history = list(state.get("history") or [])
-    history.append({"day": day, "combined": combined, "detail": {c: r["frgn_won"] for c, r in rows.items()}})
-    history = history[-10:]
-
-    recent = history[-need_days:]
-    consecutive = len(recent) == need_days and all(h["combined"] > 0 for h in recent)
-    big_day = any(h["combined"] >= threshold for h in recent)
-    signal = consecutive and big_day
-
-    state["history"] = history
-    state["updated_at"] = stamp
-    print(stamp, "combined", eok(combined), "signal", signal, "recent", [(h["day"], eok(h["combined"])) for h in recent])
-
-    if not signal or state.get("last_signal_day") == day:
-        save(state)
-        print("gsai silent")
-        return 0
-
-    detail_lines = []
-    for c, r in rows.items():
-        name = "삼성전자" if c == "005930" else "SK하이닉스"
-        detail_lines.append(f"- {name} 외국인 {eok(r['frgn_won'])}")
-
-    title = f"[GSAI] 합산 외국인 순매수 전환 | 연속 {need_days}일 + 하루 합산 {eok(threshold)} 이상"
+def build_message(payload, eligible):
+    details = []
+    for code in eligible:
+        rows = payload["series"][code]
+        amounts = ", ".join(f"{r['date']} {r['net_buy_won']:+,}원" for r in reversed(rows[:2]))
+        details.append(f"{NAMES[code]}({code}) {amounts}")
+    title = "[GSAI] 동일 종목 외국인 5천억원 이상 2거래일 | 추격매수 금지"
     body = "\n".join([
-        f"{stamp} | GSAI",
-        "이게 뭐 알림: 삼성전자+SK하이닉스 합산 외국인 순매수 전환 시그널입니다. 매수 주문이 아닙니다.",
-        f"지금 상태: 합산 {eok(combined)}. " + " / ".join(detail_lines),
-        f"지금 할 일: 연속 {need_days}일 순매수와 하루 합산 {eok(threshold)} 이상 조건 충족. 추가 확인 후 기존 계획 유지.",
-        "나중에: 조건 해제 시 신호 중단. 다음 슬롯에서 다시 확인.",
-        "익절/줄일 때: 이 알림은 매수 주문이 아닙니다. 보유 기준을 따르세요.",
-        "하지 말 것: 시그널만 보고 즉시 추격 매수. 신용/미수.",
+        "이게 뭐 알림: 정규시장 외국인 합계 순매수 거래대금, 동일 종목 매일 5천억원 이상 2거래일 첫 충족. 매수 주문 아님.",
+        "지금 상태: " + " / ".join(details),
+        f"지금 할 일: KRX_MDCSTAT02302 TRDVAL4 원 단위 실제금액 확인. 기준 {payload['asof']}, 관측 {payload['observed_at']}. 기존 투자계획 점검.",
+        "나중에: 3일째 이상 반복 발송 안 함. 미충족 거래일 뒤 새 2일 연속 충족 때 재알림.",
+        "익절/줄일 때: 별도 보유 기준을 따르세요. 이 신호는 매수 주문이 아닙니다.",
+        "하지 말 것: 두 종목 합산, 수량×종가 추정, 신호만 보고 추격매수 또는 신용/미수.",
     ])
-    print(body)
-    if not dry:
-        publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 4, ["rocket"], resolve_server(cfg.get("ntfy_server")))
-        state["last_signal_day"] = day
-    save(state)
-    return 0
+    return title, body
+
+
+def save_state(state):
+    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    tmp = STATE_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(STATE_PATH)
+
+
+def main(argv=None, environ=None, now=None):
+    args = sys.argv[1:] if argv is None else argv
+    env = os.environ if environ is None else environ
+    raw = env.get("GSAI_PAYLOAD")
+    if raw is None or raw == "":
+        return 0  # Existing 15:40 bundle: absolutely no payload, no side effects.
+    dry = "dry" in [a.lower() for a in args] or env.get("GSAI_MODE", "").lower() == "dry"
+    try:
+        p = validate_payload(raw, now or datetime.now(KST))
+        cfg = parse_json(CFG_PATH.read_text(encoding="utf-8"))
+        if (not isinstance(cfg, dict) or cfg.get("codes") != list(CODES)
+                or type(cfg.get("threshold_won")) is not int or cfg["threshold_won"] != THRESHOLD
+                or type(cfg.get("consecutive_days")) is not int or cfg["consecutive_days"] != 2):
+            raise ValueError("config must retain the exact per-stock two-day rule")
+        state = load_state(STATE_PATH)
+        eligible = {}
+        for code in CODES:
+            length, start = streak(p["series"][code])
+            marker = state["per_code"][code]["last_notified_streak_start"]
+            print(f"{code} asof={p['asof']} streak={length} start={start or 'unconfirmed'}")
+            if length == 2 and start is not None and (marker is None or start > marker):
+                eligible[code] = start
+        if not eligible:
+            print("DRY RUN: no signal; no writes" if dry else "gsai no new two-day signal")
+            return 0
+        title, body = build_message(p, eligible)
+        print(title + "\n" + body)
+        if dry:
+            print("DRY RUN: no publish, no state writes")
+            return 0
+        ntfy_util.LAST_PUBLISH.clear()  # A stale prior success is not this send's receipt.
+        ntfy_util.publish(ntfy_util.resolve_topic("port", cfg.get("ntfy_topic")), title, body,
+                          4, [], ntfy_util.resolve_server(cfg.get("ntfy_server")), config_name="gsai")
+        if ntfy_util.LAST_PUBLISH.get("sent") is not True:
+            raise ValueError("publish not confirmed; markers unchanged")
+        for code, start in eligible.items():
+            state["per_code"][code]["last_notified_streak_start"] = start
+        state["updated_at"] = p["observed_at"]
+        save_state(state)
+        return 0
+    except Exception as exc:
+        print(f"GSAI fail closed: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
