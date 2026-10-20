@@ -1,0 +1,44 @@
+{
+  "name": "soq3",
+  "title_prefix": "[SO]",
+  "ticker": "SO",
+  "display": "Southern Company",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "06:20",
+  "oneshot_kst": ["2026-11-05 21:40", "2026-11-05 23:40", "2026-11-06 06:20"],
+  "window_start_kst": "2026-11-05 21:00",
+  "window_end_kst": "2026-11-06 07:30",
+  "event_year": 2026,
+  "release_at_kst": "2026-11-05 21:30",
+  "call_at_kst": "2026-11-06 03:00",
+  "call_followup_kst": "2026-11-06 06:00",
+  "cik": "0000092122",
+  "baseline": {
+    "company_q3_eps": 1.65,
+    "prior_q3_adj_eps": 1.60,
+    "guidance_low": 4.50,
+    "guidance_high": 4.60,
+    "contracted_gw": 17,
+    "pipeline_gw": 75,
+    "equity_need_bn": 1.1,
+    "entry_ref": 89.30,
+    "chase_limit_pct": 5.0,
+    "stop_ref": 84.0,
+    "note": "2026 가이던스 4.50-4.60(상단 근처 또는 상단 예상), Q3 회사 추정 1.65, 대형부하 계약 17GW+/파이프라인 75GW+, 2030년까지 잔여 자기자본 필요 11억 달러는 2026 Q2 콜 기준. 1차 매수 기준가 89.30은 10/19 종가. 84는 1차 기준가 -6% 손절 참고선(사용자 지정 아님)."
+  },
+  "sources": {
+    "sec": "https://data.sec.gov/submissions/CIK0000092122.json",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/SO?interval=1d&range=5d"
+  },
+  "sec_exhibit_guess": "ex99-pressreleaseq32026.htm",
+  "news_queries": [
+    "Southern Company earnings guidance",
+    "Southern Company data center gigawatts",
+    "Southern Company earnings call"
+  ],
+  "schedule_note": "SO Q3 2026 2026-11-05 개장 전(07:30 ET 전, EST=UTC-5 → 21:30 KST), 콜 1pm ET=11/6 03:00 KST. 1차 21:40=UTC 40 12 5 11 * 숫자 판정. 2차 23:40=UTC 40 14 5 11 * 숫자 재시도. 3차 11/6 06:20=UTC 20 21 5 11 * 콜과 미국 종가 이후 가이던스/대형부하/증자 판정. 연도 가드 2026만.",
+  "explain": "SO 3분기 실적 당일 판정입니다. 21:40은 조정 EPS를 회사 추정 1.65와 비교하고, 다음 날 06:20은 콜 이후 2026 가이던스 상단 재확인, 대형부하 계약 GW, 증자 계획과 종가로 추가 20% 매수 여부를 봅니다(헤드라인/보도자료 기준). 투자 권유가 아닙니다.",
+  "ends_kst": "2026-11-06 06:20",
+  "ends_note": "실적일 일회 알림(11/5 21:40 숫자, 23:40 재시도, 11/6 06:20 콜 이후), 06:20이 마지막"
+}

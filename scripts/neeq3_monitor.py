@@ -128,7 +128,7 @@ def get_price(cfg: dict) -> tuple[float | None, float | None, str]:
 # ---------- parse ----------
 
 def sentences(text: str) -> list[str]:
-    return re.split(r"(?<=[a-z0-9%)\]])\.\s+(?=[A-Z(])", text)
+    return re.split(r"(?<=[A-Za-z0-9%)\]])\.\s+(?=[A-Z(])", text)
 
 
 def num(pattern: str, text: str) -> float | None:
