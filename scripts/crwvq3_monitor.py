@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CoreWeave Q3 2026 backlog/RPO + HBM 2027 LTA news one-shot. Existing dispatcher slots only.
+"""CoreWeave Q3 2026 backlog/RPO + OCF/debt/power/maturity + HBM 2027 LTA news one-shot. Existing dispatcher slots only.
 
 Silent until the Q3 earnings 8-K (item 2.02) shows up on SEC EDGAR, then sends one summary.
 The last slot (window_end) sends one summary even if results are still missing.
@@ -128,6 +128,50 @@ def parse_rpo(text: str) -> dict:
     }
 
 
+def parse_ocf_capex(text: str) -> dict:
+    """Rough extract of operating cash flow and capital expenditures mentions."""
+    ocf = None
+    capex = None
+    m_ocf = re.search(r"(?:operating cash flow|cash (?:from|provided by) operating activities)\s*(?:of|was|totaled)?\s*\$?\s*([0-9.,]+)\s*(billion|million)", text, re.I)
+    if m_ocf:
+        ocf = money_b(m_ocf.group(1), m_ocf.group(2))
+    m_capex = re.search(r"(?:capital expenditures|purchases of property|capex)\s*(?:of|was|totaled)?\s*\$?\s*([0-9.,]+)\s*(billion|million)", text, re.I)
+    if m_capex:
+        capex = money_b(m_capex.group(1), m_capex.group(2))
+    return {"ocf_b": ocf, "capex_b": capex}
+
+
+def parse_debt_power(text: str) -> dict:
+    """Extract mentions of new debt terms, power capacity, maturity notes."""
+    debt_mentions = []
+    for m in re.finditer(r"(?:issued|raised|priced|closed)\s*\$?\s*([0-9.,]+)\s*(billion|million)\s*(?:of\s*)?(?:convertible|senior|notes|bonds|loan|facility)", text, re.I):
+        debt_mentions.append(m.group(0)[:120])
+    power_live = None
+    m_p = re.search(r"(?:live|active|operational)\s*(?:power|capacity|MW|GW)\s*(?:of|was|reached)?\s*([0-9.,]+)\s*(MW|GW)", text, re.I)
+    if m_p:
+        power_live = float(m_p.group(1))
+        if m_p.group(2).upper() == "GW":
+            power_live *= 1000
+    maturity = []
+    for m in re.finditer(r"(?:maturity|due|repayment|principal).{0,40}(2027|2030|2031|2032).{0,60}", text, re.I):
+        maturity.append(m.group(0)[:100])
+    return {
+        "debt_mentions": debt_mentions[:3],
+        "power_live_mw": power_live,
+        "maturity_notes": maturity[:2],
+    }
+
+
+def simple_stress(ocf_b: float | None, near_rpo_b: float | None, debt_2027_b: float = 6.2) -> str:
+    """Very rough stress note if numbers available. Not a full model."""
+    if ocf_b is None and near_rpo_b is None:
+        return "스트레스 계산 불가 (OCF/근기 RPO 미확인)"
+    # Placeholder: assume near-term RPO converts over 2 years roughly evenly, ignore delays.
+    annual_from_rpo = (near_rpo_b / 2) if near_rpo_b else 0
+    cover = "커버 가능 추정" if (ocf_b or 0) + annual_from_rpo * 0.3 > debt_2027_b * 0.4 else "커버 타이트 또는 미확인"
+    return f"간단 스트레스(2027 상환 ~{debt_2027_b}B$ 기준): {cover}. 실제는 지연·금리·선급 조건에 따라 크게 다름."
+
+
 def hbm_lines(*texts: str) -> list[str]:
     out = []
     for t in texts:
@@ -202,7 +246,7 @@ def main() -> int:
         if mode != "dry" and not state.get("fail_notified") and (last or mode == "force"):
             emit(cfg, "[CRWVQ3] 코어위브 3Q SEC 조회 실패 | 판정 유보", [
                 f"{stamp} | CRWVQ3 | {cfg['event_label']}",
-                "이게 뭐 알림: 코어위브 3분기 백로그/RPO와 HBM 2027 장기계약 뉴스 요약입니다.",
+                "이게 뭐 알림: 코어위브 3분기 백로그/RPO·OCF·부채·전력·만기 요약입니다.",
                 f"지금 상태: SEC 조회 실패. {exc}. 숫자를 추정하지 않음.",
                 "지금 할 일: 코어위브 IR에서 실적 보도자료를 직접 확인하세요.",
                 "나중에: 이 알림은 끝납니다.",
@@ -221,15 +265,23 @@ def main() -> int:
         pr = parse_pr(pr_text)
     published = bool(pr.get("q3"))
     rpo = {}
+    cash = {}
+    debtp = {}
     if docs["tenq"]:
         try:
             tenq_text = strip_html(fetch(docs["tenq"], SEC_UA))
             rpo = parse_rpo(tenq_text)
+            cash = parse_ocf_capex(tenq_text)
+            debtp = parse_debt_power(tenq_text)
         except Exception as exc:
             print(f"10-Q fetch fail: {exc}")
     if not rpo and pr_text:
         rpo = parse_rpo(pr_text)
-    print("parsed pr", pr, "rpo", rpo)
+    if not cash and pr_text:
+        cash = parse_ocf_capex(pr_text)
+    if not debtp and pr_text:
+        debtp = parse_debt_power(pr_text)
+    print("parsed pr", pr, "rpo", rpo, "cash", cash, "debtp", debtp)
 
     if not published and not last and mode not in {"force", "dry"}:
         print("Q3 results not filed yet; silent")
@@ -254,23 +306,32 @@ def main() -> int:
         else:
             rpo_txt = "RPO/전환 일정 미확인 (10-Q 미제출 또는 문구 변경)"
         rev_txt = f"매출 {pr['revenue_m']:,.0f}M$" if pr.get("revenue_m") else "매출 미확인"
+        ocf_txt = f"OCF {cash.get('ocf_b'):.1f}B$ / Capex {cash.get('capex_b'):.1f}B$" if cash.get("ocf_b") or cash.get("capex_b") else "OCF/캐펙스 미확인"
+        debt_txt = "; ".join(debtp.get("debt_mentions") or []) or "신규 부채 조건 언급 없음"
+        power_txt = f"가동 전력 약 {debtp.get('power_live_mw'):.0f}MW" if debtp.get("power_live_mw") else "전력 가동률 미확인"
+        mat_txt = "; ".join(debtp.get("maturity_notes") or []) or "만기 스케줄 언급 없음"
+        near_rpo = (rpo.get("rpo_b") * rpo.get("near_pct") / 100) if rpo and rpo.get("rpo_b") and rpo.get("near_pct") else None
+        stress = simple_stress(cash.get("ocf_b"), near_rpo)
         near = rpo.get("near_pct") if rpo else None
         verdict = "전환 빨라짐" if near is not None and near > b["q2_rpo_24m_pct"] + 2 else ("전환 느려짐" if near is not None and near < b["q2_rpo_24m_pct"] - 2 else "전환 속도 비슷/미확인")
         title = f"[CRWVQ3] 코어위브 3Q 백로그 {bk:,.0f}B$ | {verdict} | 매매 신호 아님" if bk else f"[CRWVQ3] 코어위브 3Q 발표 | 백로그 미확인 | 매매 신호 아님"
-        status = f"{docs.get('pr_day')} 공시. {rev_txt}. {bk_txt}. {rpo_txt}."
+        status = f"{docs.get('pr_day')} 공시. {rev_txt}. {bk_txt}. {rpo_txt}. {ocf_txt}. {power_txt}."
+        extra = f"부채: {debt_txt}. 만기: {mat_txt}. {stress}"
     else:
         title = "[CRWVQ3] 코어위브 3Q 미발표 | HBM LTA 뉴스만 | 매매 신호 아님"
-        status = "11/20 07:25까지 SEC에 3분기 실적 8-K 없음. 백로그/RPO 판정 못 함."
+        status = "11/20 07:25까지 SEC에 3분기 실적 8-K 없음. 백로그/RPO/OCF/전력 판정 못 함."
+        extra = ""
     lines = [
         f"{stamp} | CRWVQ3 | {cfg['event_label']}",
-        "이게 뭐 알림: 코어위브 3분기 백로그·RPO·매출 전환 속도, HBM 언급, 삼성·하이닉스·마이크론 2027 HBM 장기계약(LTA) 뉴스 요약입니다.",
+        "이게 뭐 알림: 코어위브 3분기 백로그·RPO 전환 속도, OCF/캐펙스, 신규 부채·전력·만기 언급, HBM 2027 LTA 뉴스 요약입니다.",
         f"지금 결과/상태: {status}",
+        f"추가 파싱: {extra}" if extra else "추가 파싱: 공시 전이라 없음",
         "HBM 언급: " + (" / ".join(hbm) if hbm else "보도자료·10-Q에 HBM 직접 언급 없음"),
         "HBM 2027 LTA 뉴스: " + ("; ".join(news) if news else ("뉴스 조회 실패: " + news_err if news_err else "최근 30일 해당 제목 없음")),
-        "지금 할 일: 메모리 보유 비중 판단에 참고만. 원문(보도자료·콜) 확인 전 매매 없음.",
-        "나중에: 이 알림은 1회로 끝납니다. LTA 가격·물량 확정 기사는 원문으로 확인.",
+        "지금 할 일: 원문(보도자료·10-Q·콜) 확인 전 매매 없음. 채권 수익률은 [CRWVBOND] 참고.",
+        "나중에: 이 알림은 1회로 끝납니다. 상세 스트레스는 원문 숫자로 별도 계산.",
         "익절/줄일 때: 기존 종목별 규칙을 따르세요.",
-        "하지 말 것: 백로그 숫자만 보고 추격매수. 기사 제목을 공식 계약으로 취급. 신용/미수.",
+        "하지 말 것: 백로그·파싱 숫자만 보고 추격매수. 신용/미수.",
     ]
     emit(cfg, title, lines, 4 if published else 3)
     if mode != "dry":
