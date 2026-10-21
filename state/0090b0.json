@@ -2,14 +2,14 @@
   "last_zone": "BUY2",
   "last_sent_date": "2026-10-20",
   "last_fail_date": null,
-  "updated_at": "2026-10-20 15:41 KST",
-  "session": "2026-10-20",
-  "price": 6305.0,
-  "premium": 0.28,
-  "kospi_close": 5552.74,
+  "updated_at": "2026-10-21 15:41 KST",
+  "session": "2026-10-21",
+  "price": 6285.0,
+  "premium": 0.11,
+  "kospi_close": 5735.66,
   "kospi_gate": "OFF",
-  "volume": 163355.0,
-  "volume_avg": 239151,
-  "volume_ratio": 0.68,
-  "last_status": "sent"
+  "volume": 39666.0,
+  "volume_avg": 249953,
+  "volume_ratio": 0.16,
+  "last_status": "same_zone"
 }
