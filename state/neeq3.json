@@ -1,6 +1,7 @@
 {
-  "notified": false,
+  "notified": true,
   "call_notified": false,
   "fail_notified": false,
-  "updated_at": "2026-10-21T20:40:34.293770+09:00"
+  "updated_at": "2026-10-21T22:40:30.229865+09:00",
+  "score": "관망 유지 | 신규 매수 보류"
 }
