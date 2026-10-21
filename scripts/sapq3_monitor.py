@@ -180,11 +180,22 @@ def main() -> None:
     opinion, zone_note, reasons = evaluate(metrics)
 
     title = f"{prefix} Q3 실적 후 {opinion} | 매매 신호 아님"
+    # Relative comparison (static baselines; update if needed post-results)
+    oracle_note = "Oracle Fusion Cloud ERP: 최근 클라우드 ERP 성장 ~15-18% (NetSuite 포함, AI/에이전트 가속). 전체 클라우드 성장은 인프라 비중 높음."
+    ms_note = "Microsoft Dynamics 365: 클라우드 ERP/CRM 성장 중상위, Azure·Copilot·MCP 통합 강점. 미드마켓·워크로드 확장 우위, 엔터프라이즈 대형 딜은 SAP·Oracle과 경쟁."
+    relative = (
+        "상대 매력: SAP는 CCB·마진 안정성 + 엔터프라이즈 전환(RISE) 강점. "
+        "Oracle은 AI/에이전트·클라우드 성장 속도, Microsoft는 에코시스템·미드마켓 침투에서 우위. "
+        "SAP CCB 고정환율 24%+ 유지 시 상대 매력 유지, 22% 미만 시 Oracle/MS 상대 우위 확대 가능."
+    )
+
     body_lines = [
-        "이게 뭐 알림: SAP Q3 2026 실적 발표 후 실제 CCB·마진·가이던스 수치로 조건부 매수 의견과 매수 구간을 재평가하는 일회성 알림입니다.",
+        "이게 뭐 알림: SAP Q3 2026 실적 발표 후 실제 CCB·마진·가이던스 수치로 조건부 매수 의견과 매수 구간을 재평가하고, Oracle·Microsoft Dynamics와의 성장 비교로 상대 투자 매력을 업데이트하는 일회성 알림입니다.",
         f"지금 결과/상태: 출처 {source}. " + " / ".join(reasons) + f". 추출 수치: {json.dumps(metrics, ensure_ascii=False)}",
+        f"성장 비교: {oracle_note} {ms_note}",
+        f"상대 재평가: {relative}",
         f"지금 할 일: {opinion}. {zone_note}.",
-        "나중에: 2027년 성장 가속 코멘트와 AI 수익화 지표를 추가 확인합니다.",
+        "나중에: 2027년 성장 가속 코멘트와 AI 수익화 지표, Oracle/MS 실적과의 직접 비교를 추가 확인합니다.",
         "익절/줄일 때: 기준 가치 260달러 근접 시 신규 매수 비중 축소. 270달러 이상이면 확대 중단.",
         "하지 말 것: 실적 직후 추격매수, 단일 지표만 보고 의견 전면 변경, 레버리지 사용.",
     ]
