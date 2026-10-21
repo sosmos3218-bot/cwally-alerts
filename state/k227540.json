@@ -1,1 +1,14 @@
-{"earn_notified": false, "wait_notified": false, "verdict_notified": false, "last_problem_key": null}
+{
+  "earn_notified": true,
+  "wait_notified": false,
+  "verdict_notified": false,
+  "last_problem_key": null,
+  "earn_id": "162312760",
+  "op_eok": 6401,
+  "consensus_eok": 6114,
+  "base": {
+    "date": "2026-10-21",
+    "close": 18485.0
+  },
+  "updated_at": "2026-10-21T16:40:20+09:00"
+}
