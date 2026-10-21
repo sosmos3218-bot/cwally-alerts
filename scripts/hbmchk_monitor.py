@@ -157,7 +157,11 @@ def completed_us(payload: dict, now: datetime, need: int = 30) -> list[dict]:
         raise ValueError(f"Yahoo 완료 일봉 {len(rows)}개, 최소 {need}개 필요")
     expected_dates = list(reversed(previous_days(expected, need, is_us_day)))
     if [r["day"] for r in rows[-need:]] != expected_dates:
-        raise ValueError(f"Yahoo 최근 거래일 불완전, 최신 기대 {expected}")
+        # Yahoo can lag the newest US bar (09:00 KST = 20:00 ET): accept the prior completed day only if that is the sole gap.
+        fallback = previous_days(expected, 2, is_us_day)[1]
+        if expected in by_day or [r["day"] for r in rows[-need:]] != list(reversed(previous_days(fallback, need, is_us_day))):
+            raise ValueError(f"Yahoo 최근 거래일 불완전, 최신 기대 {expected}")
+        print(f"Yahoo {expected} 일봉 미완료, 직전 완료 거래일 {fallback} 사용")
     return rows
 def drawdown_result(rows: list[dict], lookback: int = 30) -> dict:
     window = rows[-lookback:]
@@ -412,6 +416,20 @@ def self_test() -> int:
     payload = {"chart": {"result": [{"timestamp": stamps, "indicators": {"quote": [{"close": [100.0] * 31 + [1.0]}]}}]}}
     usrows = completed_us(payload, ny_now, 30)
     assert usrows[-1]["day"] == date(2026, 10, 6)
+    lag_now = datetime(2026, 10, 19, 20, 1, tzinfo=NY)  # 2026-10-20 09:01 KST; 10/19 bar not yet in Yahoo
+    lagdays = list(reversed(previous_days(date(2026, 10, 19), 31, is_us_day)))
+    lag_stamps = [int(datetime.combine(d, time(9, 30), NY).timestamp()) for d in lagdays]
+    lag_payload = {"chart": {"result": [{"timestamp": lag_stamps, "indicators": {"quote": [{"close": [100.0] * 30 + [None]}]}}]}}
+    assert completed_us(lag_payload, lag_now, 30)[-1]["day"] == date(2026, 10, 16)  # newest bar close=None -> prior day
+    absent = copy.deepcopy(lag_payload); r0 = absent["chart"]["result"][0]
+    r0["timestamp"], r0["indicators"]["quote"][0]["close"] = r0["timestamp"][:-1], r0["indicators"]["quote"][0]["close"][:-1]
+    assert drawdown_result(completed_us(absent, lag_now, 30))["latest"]["day"] == date(2026, 10, 16)  # newest bar absent -> 데이터일 = used day
+    full = copy.deepcopy(lag_payload); full["chart"]["result"][0]["indicators"]["quote"][0]["close"][-1] = 99.0
+    assert completed_us(full, lag_now, 30)[-1]["day"] == date(2026, 10, 19)  # bar present -> no fallback
+    oldgap = copy.deepcopy(lag_payload); oldgap["chart"]["result"][0]["indicators"]["quote"][0]["close"][-6] = None
+    assert_raises(lambda: completed_us(oldgap, lag_now, 30))  # newest missing plus an older gap -> still raises
+    midgap = copy.deepcopy(full); midgap["chart"]["result"][0]["indicators"]["quote"][0]["close"][-3] = None
+    assert_raises(lambda: completed_us(midgap, lag_now, 30))  # only an older day missing -> still raises
     invalid_us = copy.deepcopy(payload); invalid_us["chart"]["result"][0]["indicators"]["quote"][0]["close"][-2] = float("nan")
     assert_raises(lambda: completed_us(invalid_us, ny_now, 30))
     base = [{"day": date(2026, 1, 1) + timedelta(days=i), "close": 100.0} for i in range(30)]
@@ -429,7 +447,7 @@ def self_test() -> int:
     sample = event("[HBMCHK] test", "body")
     assert deliver(sample, True, fake, "x") and not calls
     assert deliver(sample, False, fake, "x") and len(calls) == 1
-    print("SELF-TEST PASS: freshness trading-dates foreign-None notice-filter old-notice amendment intraday-US drawdown-5-10 strict-25000 dedup-rearm dry-run-no-publish mocked-publish")
+    print("SELF-TEST PASS: freshness trading-dates foreign-None notice-filter old-notice amendment intraday-US us-lag-fallback drawdown-5-10 strict-25000 dedup-rearm dry-run-no-publish mocked-publish")
     return 0
 def main() -> int:
     parser = argparse.ArgumentParser()
