@@ -14,6 +14,8 @@
   "latest_actual_key": null,
   "notices_seeded": true,
   "seen_notice_ids": [
+    "161127781",
+    "161127780",
     "119474054",
     "119450965",
     "119437990",
@@ -68,17 +70,17 @@
   "weekly_sent": {
     "2026-W41": "2026-10-07",
     "2026-W42": "2026-10-08",
-    "2026-W43": "2026-10-16"
+    "2026-W43": "2026-10-20"
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-10-19",
+    "session": "2026-10-20",
     "pref_close": 96100.0,
-    "common_close": 275000.0,
-    "discount_pct": 65.05,
-    "liq_median_value_eok": 8.08,
-    "avg5_volume": 11485,
+    "common_close": 272000.0,
+    "discount_pct": 64.67,
+    "liq_median_value_eok": 7.63,
+    "avg5_volume": 10918,
     "dps": 2973.0
   },
-  "updated_at": "2026-10-20T14:42:35+09:00"
+  "updated_at": "2026-10-21T09:06:52+09:00"
 }

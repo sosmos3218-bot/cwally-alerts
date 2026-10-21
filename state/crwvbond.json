@@ -1,9 +1,16 @@
 {
-  "zone": null,
-  "history": [],
+  "zone": "WATCH",
+  "history": [
+    {
+      "date": "2026-10-21",
+      "price": 82.21,
+      "ytm": 14.73,
+      "spread_bp": null
+    }
+  ],
   "last_kind": null,
   "shock_sent_date": null,
   "weekly_sent_date": null,
   "fail_active": false,
-  "updated_at": null
+  "updated_at": "2026-10-21T09:06:55.687385+09:00"
 }

@@ -1,6 +1,6 @@
 {
-  "dgs10": 5.136,
-  "dgs10_date": "2026-10-19",
+  "dgs10": 5.117,
+  "dgs10_date": "2026-10-20",
   "mortgage": 7.4,
   "mortgage_date": "2026-10-15",
   "status": "WATCH",
@@ -8,5 +8,5 @@
   "last_kind": "WEEKLY",
   "fail_sent_date": null,
   "weekly_sent_date": "2026-10-19",
-  "updated_at": "2026-10-20T14:37:07.368277+09:00"
+  "updated_at": "2026-10-21T09:01:26.542379+09:00"
 }

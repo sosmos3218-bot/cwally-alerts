@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-20 14:44 KST",
-  "price": 17.18,
-  "tnx": 5.136,
+  "updated_at": "2026-10-21 09:08 KST",
+  "price": 17.19,
+  "tnx": 5.117,
   "tnx_baseline": 5.269,
   "price_alerted": false,
-  "yield_alerted": false,
+  "yield_alerted": true,
   "fail_sent_date": null
 }

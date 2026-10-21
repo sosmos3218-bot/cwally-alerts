@@ -1,13 +1,11 @@
 {
-  "updated_at": "2026-10-20 14:36 KST",
-  "price": 27.73,
+  "updated_at": "2026-10-21 09:00 KST",
+  "price": 26.62,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://finance.yahoo.com/technology/ai/articles/nvidia-makes-bold-move-expand-182542229.html?.tsrc=rss",
-    "https://beincrypto.com/iren-stock-falls-ai-execution-doubts/?.tsrc=rss",
     "https://247wallst.com/investing/2026/09/11/terawulf-rallies-7-as-miner-selloff-reverses-applied-digital-gains-4-iren-sits-out-the-rally/?.tsrc=rss",
     "https://www.thestreet.com/crypto/markets/legendary-short-seller-who-bet-against-enron-sends-new-warning?.tsrc=rss",
     "https://stocktwits.com/news-articles/markets/equity/iren-mara-jpmorgan-ai-data-center-bitcoin-miners/cZtmTp8RBRn?.tsrc=rss",
@@ -117,6 +115,16 @@
     "https://247wallst.com/investing/2026/10/19/ai-infrastructure-stocks-rally-as-selloff-reverses-applied-digital-jumps-8-terawulf-and-iren-rise-6/?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/nebius-iren-rally-dip-buyers-132138311.html?.tsrc=rss",
     "https://www.tikr.com/blog/applied-digital-soars-10-iren-up-5-coreweave-up-2-as-ai-infrastructure-selloff-reverses?ref=yahoofinance&.tsrc=rss",
-    "https://www.fool.com/coverage/stock-market-today/2026/10/19/stock-market-today-oct-19-iren-rallies-on-ai-infrastructure-sentiment-rebound/?.tsrc=rss"
+    "https://www.fool.com/coverage/stock-market-today/2026/10/19/stock-market-today-oct-19-iren-rallies-on-ai-infrastructure-sentiment-rebound/?.tsrc=rss",
+    "https://www.ibtimes.com/sp-500-more-10-this-year-nearly-40-sp-500-stocks-are-down-20-their-highs-3808683?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/ai-trade-rotation-favors-mag-7-over-neoclouds-analysts-say-ahead-of-spcx-meta-nflx-results/cZxqt1KRBu8?.tsrc=rss",
+    "https://www.trefis.com/articles/619450/microsoft-pays-cash-for-ai-coreweave-borrows/2026-10-20?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/3-ai-stocks-revenue-growth-161024425.html?.tsrc=rss",
+    "https://finance.yahoo.com/m/141e2ad6-95bc-3e0c-9567-dff77bb4d64f/spacex%2C-ge-aerospace%2C-micron%2C.html?.tsrc=rss",
+    "https://www.marketbeat.com/articles/mr-wonderfuls-test-for-ai-data-center-stocks-power-permits-and-tenants/?utm_source=yahoofinance&utm_medium=yahoofinance&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-co-ceo-daniel-roberts-says-firm-s-data-centers-carry-no-debt-as-funding-worries-hit-stock/cZxqtl2RBuo?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/analyst-upgrade-optimism-impact-iren-121139548.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/10/20/iren-sinks-6-then-recovers-after-co-ceos-no-debt-reassurance-as-neocloud-worries-persist-terawulf-and-applied-digital-rise-3/?.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/10/20/stock-market-today-oct-20-iren-slides-on-funding-worries-and-rate-fears/?.tsrc=rss"
   ]
 }

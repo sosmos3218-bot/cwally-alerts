@@ -1,6 +1,6 @@
 {
   "zone": "BUY1",
-  "price": 210500.0,
+  "price": 211500.0,
   "action": "진입",
   "last_alert_date": "2026-10-19",
   "warn": [],
@@ -8,5 +8,5 @@
   "earn_pending_notified": false,
   "earn_fail_notified": false,
   "earn_status": null,
-  "updated_at": "2026-10-20 14:36 KST"
+  "updated_at": "2026-10-21 09:01 KST"
 }
