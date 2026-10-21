@@ -3,13 +3,13 @@
   "date_notified": "2026-10-30",
   "result_notified": false,
   "consensus_live": {
-    "sales": 16381.0,
-    "op": 1362.0,
-    "fy_op": 5859.0,
-    "fy_sales": 65771.0,
-    "as_of": "2026-10-20"
+    "sales": 16374.0,
+    "op": 1367.0,
+    "fy_op": 5884.0,
+    "fy_sales": 65643.0,
+    "as_of": "2026-10-21"
   },
   "ops_sent": {},
   "last_key": null,
-  "updated_at": "2026-10-20T15:20:31+09:00"
+  "updated_at": "2026-10-21T15:20:34+09:00"
 }
