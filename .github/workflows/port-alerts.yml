@@ -292,7 +292,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -396,6 +396,11 @@ on:
         options: [dry, auto, force]
       cash30_mode:
         description: "job=cash30 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
+      crwvq3_mode:
+        description: "job=crwvq3 only. dry = parse print, no ntfy, no state write | auto | force"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -577,6 +582,7 @@ jobs:
             if [ "$JOB" = "neeq3" ]; then NQ="${{ github.event.inputs.neeq3_mode }}"; [ -z "$NQ" ] && NQ=dry; fi
             if [ "$JOB" = "soq3" ]; then SQ="${{ github.event.inputs.soq3_mode }}"; [ -z "$SQ" ] && SQ=dry; fi
             if [ "$JOB" = "k227540" ]; then KM="${{ github.event.inputs.k227540_mode }}"; [ -z "$KM" ] && KM=dry; fi
+            if [ "$JOB" = "crwvq3" ]; then CQ="${{ github.event.inputs.crwvq3_mode }}"; [ -z "$CQ" ] && CQ=dry; fi
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -595,6 +601,7 @@ jobs:
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "k227540_mode=$KM" >> "$GITHUB_OUTPUT"
+          echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
         env:
@@ -1103,7 +1110,7 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/crwvq3_monitor.py auto
+        run: python scripts/crwvq3_monitor.py "${{ steps.pick.outputs.crwvq3_mode || 'auto' }}"
       - name: Run memswing
         if: steps.pick.outputs.job == 'memswing'
         env:
@@ -1201,3 +1208,4 @@ jobs:
         env:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/ops_notify.py port-alerts "${{ steps.pick.outputs.job }}"
+
