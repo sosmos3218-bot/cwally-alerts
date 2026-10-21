@@ -18,9 +18,9 @@
     "note": "배당은 10/19 분석 기준 연간 주당 배당(미검증). edge_pp = NEE 대기를 유지하려면 73-75 매수 시 기대수익이 대안보다 이만큼 높아야 함. so_extra_cap_pp = SO가 이미 50%+20%일 수 있어 30% 중 SO로 보낼 최대치(집중 위험)."
   },
   "inputs": {
-    "rate_targets_updated": null,
-    "rate_targets": {},
-    "nee_case_note": null,
+    "rate_targets_updated": "2026-10-22",
+    "rate_targets": {"NEE": {"4.5": 81.28, "5.1": 77.41, "5.5": 74.83}, "SO": {"4.5": 94.97, "5.1": 90.54, "5.5": 87.58}, "DUK": {"4.5": 127.32, "5.1": 120.88, "5.5": 116.59}},
+    "nee_case_note": "승인(원안) 25% EPS27 4.35 PER+1, 조건부 승인(요금동결 반영) 45% EPS27 4.25 PER-1, 무산 30% EPS27 4.33 PER+0.3. 근거: 10/19 SCC 직원 반대 권고, 주지사 6년 동결/크레딧 3배 요구, 10/21 콜에서 Ketchum '특정 쟁점 타협 여지' 언급, 최종 명령 2027-01 예정",
     "so_verdict": null,
     "so_verdict_note": null,
     "so_verdict_updated": null,

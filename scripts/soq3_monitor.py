@@ -127,6 +127,19 @@ def sentences(text: str) -> list[str]:
     return re.split(r"(?<=[A-Za-z0-9%)\]])\.\s+(?=[A-Z(\"])", text)
 
 
+# Forward-looking/cautionary boilerplate lists risks ("additional equity", "reduce ... outlook");
+# it is never a guidance or equity signal. Same root cause as the 10/21 NEE false "철회 언급".
+BOILER_CUT = r"(Cautionary Note Regarding Forward.Looking|Cautionary Statements? (and|Regarding)|forward-looking statements? (are|include|involve|within the meaning))"
+BOILER_SENT = r"(forward.looking|risks? and uncertaint|could cause|may cause|cautionary|risk factors|no assurance|could give rise|subject to conditions that are not anticipated)"
+
+
+def drop_boilerplate(text: str) -> str:
+    m = re.search(BOILER_CUT, text, re.I)
+    if m and m.start() > len(text) * 0.3:
+        text = text[:m.start()]
+    return " ".join(s + "." for s in sentences(text) if not re.search(BOILER_SENT, s, re.I))
+
+
 def num(pattern: str, text: str) -> float | None:
     m = re.search(pattern, text, re.I)
     return float(m.group(1).replace(",", "")) if m else None
@@ -146,7 +159,7 @@ def parse(text: str) -> dict:
 
 def call_signals(release: str, heads: list[dict], b: dict) -> dict:
     corpus = [(h["title"], f"헤드라인 {h['pub']:%m/%d %H:%M}") for h in heads]
-    corpus += [(s, "보도자료") for s in sentences(release)
+    corpus += [(s, "보도자료") for s in sentences(drop_boilerplate(release))
                if re.search(r"guidance|outlook|top end|upper end|gigawatt|\bGW\b|large.load|data center|equity", s, re.I)]
     sig = {"guide": "미확인", "gw": None, "equity": "미확인", "evidence": []}
 

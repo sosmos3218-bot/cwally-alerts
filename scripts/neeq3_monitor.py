@@ -131,6 +131,19 @@ def sentences(text: str) -> list[str]:
     return re.split(r"(?<=[A-Za-z0-9%)\]])\.\s+(?=[A-Z(])", text)
 
 
+# Forward-looking/cautionary boilerplate lists "termination of the merger agreement", "lower" outlook etc.
+# as risks; it is never management's stance or a guidance change (10/21 false "철회 언급").
+BOILER_CUT = r"(Cautionary Statements? (and|Regarding)|forward-looking statements? (are|include|involve|within the meaning))"
+BOILER_SENT = r"(forward.looking|risks? and uncertaint|could cause|may cause|cautionary|risk factors|no assurance|could give rise|subject to conditions that are not anticipated)"
+
+
+def drop_boilerplate(text: str) -> str:
+    m = re.search(BOILER_CUT, text, re.I)
+    if m and m.start() > len(text) * 0.3:
+        text = text[:m.start()]
+    return " ".join(s + "." for s in sentences(text) if not re.search(BOILER_SENT, s, re.I))
+
+
 def num(pattern: str, text: str) -> float | None:
     m = re.search(pattern, text, re.I)
     return float(m.group(1).replace(",", "")) if m else None
@@ -141,7 +154,9 @@ def parse_guidance(text: str) -> dict[int, tuple[float, float]]:
     for s in sentences(text):
         if not re.search(r"adjusted earnings per share", s, re.I) or not re.search(r"range", s, re.I):
             continue
-        head = re.split(r"expect", s, maxsplit=1, flags=re.I)[0]
+        # year sits before the first $ range ("continues to expect 2026 adjusted earnings per share
+        # to be in the range of $3.92 to $4.02"); splitting on "expect" dropped it (10/21 "2026 미기재").
+        head = s.split("$", 1)[0]
         years = [int(y) for y in re.findall(r"\b(20[2-4]\d)\b", head)]
         ranges = [(float(a), float(b)) for a, b in re.findall(r"\$(\d+\.\d+) to \$(\d+\.\d+)", s)]
         for y, r in zip(years, ranges):
@@ -150,13 +165,14 @@ def parse_guidance(text: str) -> dict[int, tuple[float, float]]:
 
 
 def parse(text: str) -> dict:
+    text = drop_boilerplate(text)
     adj = num(r"adjusted basis,[^$]{0,120}third.quarter earnings were \$[\d.,]+ (?:billion|million),? or \$(\d+\.\d+) per share", text)
     if adj is None:
         adj = num(r"third.quarter[^.$]{0,60}adjusted earnings[^$]{0,40}\$[\d.,]+ (?:billion|million),? or \$(\d+\.\d+) per share", text)
     gaap = num(r"GAAP basis of \$[\d.,]+ (?:billion|million),? or \$(\d+\.\d+) per share", text)
     growth = []
     for s in sentences(text):
-        if re.search(r"per share", s, re.I) and re.search(r"grow|growth|compound", s, re.I):
+        if re.search(r"per share", s, re.I) and re.search(r"grow|growth|compound", s, re.I) and not re.search(r"dividend|regulatory capital", s, re.I):
             growth += [int(p) for p in re.findall(r"(\d{1,2})%", s)]
     return {
         "published": bool(adj or gaap) and bool(re.search(r"third.quarter", text, re.I)),
@@ -169,21 +185,28 @@ def parse(text: str) -> dict:
 
 
 STANCE_RULES = [
-    ("철회 언급", r"(terminat|walk(s|ed)? away|abandon|call(s|ed)? off|scrap)"),
-    ("요금동결 수용/추가 양보", r"(accept|agree|offer|sweeten|enhanc|additional|increas|new) [^.]{0,60}(freeze|credit|commitment|concession)|(freeze|credit|concession)[^.]{0,40}(accept|agree|offer)"),
+    ("철회 언급", r"(terminat(es|ed|ing)|walk(s|ed|ing)? away|abandon(s|ed|ing)|call(s|ed|ing)? off|scrap(s|ped|ping)?|withdr[ae]w(s|n|ing)?)[^.]{0,40}(merger|deal|combination|application|agreement|bid)"),
+    ("요금동결 수용/추가 양보", r"(accept|agree|offer|sweeten|enhanc|additional|increas|new)\w* [^.]{0,60}(freeze|credit|commitment|concession)|(freeze|credit|concession)[^.]{0,40}(accept|agree|offer)"),
     ("반박/거부", r"(reject|oppos|disagree|push(es|ed)? back|unreasonable|not (be )?(feasible|workable|acceptable))[^.]{0,60}(freeze|governor|spanberger|staff|condition)|(freeze|condition)[^.]{0,60}(reject|unworkable|unreasonable)"),
-    ("검토/협상 중", r"(review|evaluat|consider|discuss|work(ing)? with|engag|negotiat|settle|confident)[^.]{0,60}(freeze|governor|spanberger|scc|commission|condition|virginia|approval)"),
+    ("검토/협상 중", r"compromise|(review|evaluat|consider|discuss|work(ing)? with|engag|negotiat|settle|confident)[^.]{0,60}(freeze|governor|spanberger|scc|commission|condition|virginia|approval)"),
 ]
+
+
+# Headlines whose subject is the governor, SCC staff, lawmakers etc. describe THEIR position
+# ("Spanberger will oppose ... if there's no rate freeze"), not management's; they count as a mention only.
+THIRD_PARTY = r"^\W*(va\.?\s+|virginia\s+)?(gov\b|gov\.|governor|spanberger|scc|state corporation|staff|lawmakers?|legislators?|regulators?|attorney general|consumer|critics?|opponents?|advocates?|commentary|opinion)"
 
 
 def stance(release: str, heads: list[dict]) -> tuple[str, list[str]]:
     corpus = [(h["title"], f"헤드라인 {h['pub']:%H:%M}") for h in heads]
-    for s in sentences(release):
+    for s in sentences(drop_boilerplate(release)):
         if re.search(r"virginia|dominion|spanberger|rate freeze|scc|commission", s, re.I):
             corpus.append((s, "보도자료"))
     hits: list[tuple[int, str, str]] = []
     for text, src in corpus:
         if not re.search(r"freeze|spanberger|governor|virginia|dominion|scc|merger", text, re.I):
+            continue
+        if src != "보도자료" and re.search(THIRD_PARTY, text, re.I):
             continue
         for rank, (label, pat) in enumerate(STANCE_RULES):
             if re.search(pat, text, re.I):
