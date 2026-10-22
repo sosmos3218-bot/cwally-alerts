@@ -85,12 +85,21 @@ def mirae_nav(isin: str, day: date) -> dict[str, dict]:
     start = (day - timedelta(days=10)).strftime("%Y%m%d")
     end = day.strftime("%Y%m%d")
     body = urllib.parse.urlencode({"ksdFund": isin, "period": "", "startDate": start, "endDate": end}).encode()
+    detail = f"https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund={isin}"
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
+    try:  # 상품 페이지를 먼저 열어 세션 쿠키를 받는다 (브라우저와 같은 순서)
+        get(detail, headers={"User-Agent": BROWSER_UA, "Accept": "text/html,application/xhtml+xml",
+                             "Accept-Language": "ko-KR,ko;q=0.9"}, opener=opener)
+    except Exception as exc:  # noqa: BLE001
+        print(f"mirae detail page: {exc}", file=sys.stderr)
     page = get(
         "https://investments.miraeasset.com/tigeretf/ko/product/search/detail/price.ajax",
         headers={"User-Agent": BROWSER_UA, "X-Requested-With": "XMLHttpRequest",
+                 "Accept": "text/html, */*; q=0.01", "Accept-Language": "ko-KR,ko;q=0.9",
+                 "Origin": "https://investments.miraeasset.com",
                  "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                 "Referer": f"https://investments.miraeasset.com/tigeretf/ko/product/search/detail/index.do?ksdFund={isin}"},
-        data=body,
+                 "Referer": detail},
+        data=body, opener=opener,
     )
     out: dict[str, dict] = {}
     for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", page, flags=re.S | re.I):
@@ -103,6 +112,26 @@ def mirae_nav(isin: str, day: date) -> dict[str, dict]:
         if nav:
             out[cells[0].replace(".", "-")] = {"close": num(clean[1]), "nav": nav}
     return out
+
+
+def naver_nav(code: str, close: float, prev_close: float | None, known_prev_nav: float | None) -> float:
+    """미래에셋 직접 조회가 막혔을 때만 쓰는 대체 경로. 네이버 etfKeyIndicator 의 nav 는 운용사 일별 NAV 지만
+    날짜가 없다. 같이 오는 괴리율(deviationRate)로 역산한 종가가 요약 거래일 종가와 맞고, 직전 거래일 종가와는
+    구별되고, 직전 거래일에 쓴 NAV 와 다를 때만 그 거래일 NAV 로 인정한다. 아니면 예외 (= 확인 불가)."""
+    k = json.loads(get(f"https://m.stock.naver.com/api/stock/{code}/integration")).get("etfKeyIndicator") or {}
+    nav, dev = num(k.get("nav")), num(k.get("deviationRate"))
+    if not nav or dev is None:
+        raise RuntimeError("네이버 nav 없음")
+    dev = -abs(dev) if str(k.get("deviationSign") or "").strip() == "-" else abs(dev)
+    implied = nav * (1 + dev / 100)
+    tol = nav * 0.00005 + 0.6  # 괴리율이 소수 둘째 자리로 반올림된 만큼
+    if abs(implied - close) > tol:
+        raise RuntimeError(f"네이버 nav {nav:,.2f} 는 이 거래일 것이 아님(역산 종가 {implied:,.1f})")
+    if prev_close is not None and abs(implied - prev_close) <= tol:
+        raise RuntimeError("전일 종가와 같아 NAV 날짜 구분 불가")
+    if known_prev_nav is not None and abs(nav - known_prev_nav) < 0.005:
+        raise RuntimeError("직전 거래일 NAV 와 같음(아직 갱신 전)")
+    return nav
 
 
 # ---------- 3) 원/달러 (네이버 시장지표, 하나은행 고시) ----------
@@ -274,20 +303,37 @@ def main() -> int:
         return 0
 
     close = px["close"]
-    # 1) NAV + 괴리율
-    nav_txt = f"운용사 NAV {NA}, 괴리율 {NA}"
+    # 1) NAV + 괴리율 (미래에셋 기준가격 표 -> 막히면 날짜 검증한 네이버 nav)
+    nav_val: float | None = None
+    nav_src = "미래에셋"
+    nav_note = ""
     try:
         navs = mirae_nav(cfg["isin"], sess)
         row = navs.get(skey)
         if row:
-            prem = (close / row["nav"] - 1) * 100
-            nav_txt = f"운용사 NAV {row['nav']:,.2f}원, 괴리율 {fmt_pct(prem)} (참고 지표, 매매 신호 아님)"
+            nav_val = row["nav"]
         else:
-            have = max(navs) if navs else "없음"
-            nav_txt = f"운용사 NAV {NA} (미래에셋에 {skey} 기준가 아직 없음, 최근 {have}), 괴리율 {NA}"
+            nav_note = f"미래에셋에 {skey} 기준가 아직 없음, 최근 {max(navs) if navs else '없음'}"
     except Exception as exc:  # noqa: BLE001
         errs.append(f"미래에셋 NAV: {exc}")
-        nav_txt = f"운용사 NAV {NA} (미래에셋 조회 실패), 괴리율 {NA}"
+        nav_note = "미래에셋 조회 실패"
+    if nav_val is None:
+        prev_keys = sorted(d for d in daily if d < skey)
+        prev_close = daily[prev_keys[-1]]["close"] if prev_keys else None
+        nav_hist = state.get("nav_by_session") or {}
+        prev_nav = nav_hist.get(prev_keys[-1]) if prev_keys else None
+        try:
+            nav_val = naver_nav(cfg["symbol"], close, prev_close, prev_nav)
+            nav_src = "네이버 표시값, 미래에셋 직접 조회 안 됨"
+        except Exception as exc:  # noqa: BLE001
+            errs.append(f"네이버 NAV: {exc}")
+            nav_note += f", 네이버 대체값도 날짜 확인 안 됨"
+    if nav_val is not None:
+        prem = (close / nav_val - 1) * 100
+        src_txt = f" ({nav_src})" if nav_src != "미래에셋" else ""
+        nav_txt = f"운용사 NAV {nav_val:,.2f}원{src_txt}, 괴리율 {fmt_pct(prem)} (참고 지표, 매매 신호 아님)"
+    else:
+        nav_txt = f"운용사 NAV {NA} ({nav_note}), 괴리율 {NA}"
     item1 = f"1) {sess:%m/%d} 종가 {close:,.0f}원, {nav_txt}"
 
     # 2) 등락률
@@ -405,6 +451,10 @@ def main() -> int:
     if mode == "install":
         print("install confirmation sent (state not written)")
         return 0
+    hist = dict(state.get("nav_by_session") or {})
+    if nav_val is not None:
+        hist[skey] = nav_val
+    state["nav_by_session"] = {k: hist[k] for k in sorted(hist)[-10:]}
     state.update(last_sent_session=skey, fetch_fail_session=None, updated_at=now.isoformat())
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0

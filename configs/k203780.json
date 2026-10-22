@@ -31,7 +31,7 @@
   },
   "sources": {
     "price": "네이버 증권 m.stock.naver.com/api/stock/203780/price (일별 종가, 전일 대비 %)",
-    "nav": "미래에셋 TIGER 상품 페이지 기준가격 표 investments.miraeasset.com/tigeretf/ko/product/search/detail/price.ajax (운용사 일별 NAV)",
+    "nav": "미래에셋 TIGER 상품 페이지 기준가격 표 investments.miraeasset.com/tigeretf/ko/product/search/detail/price.ajax (운용사 일별 NAV). GitHub runner에서 403이면 네이버 integration etfKeyIndicator.nav를 쓰되, 괴리율로 역산한 종가가 그 거래일 종가와 맞고 전일과 구별될 때만 인정(아니면 확인 불가)",
     "fx": "네이버 시장지표 FX_USDKRW (하나은행 고시 매매기준율, 일별 마지막 고시와 전일 대비)",
     "us_prices": "Yahoo Finance chart v8 완료 일봉 (실패 시 Nasdaq quote info)",
     "earnings": "Yahoo quoteSummary calendarEvents (실패 시 Nasdaq analyst earnings-date)"
