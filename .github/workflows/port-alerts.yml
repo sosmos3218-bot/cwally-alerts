@@ -146,7 +146,11 @@ on:
     - cron: "40 0 28 1 *"
     # bankrate1014 oneshot_kst (KST→UTC): 2026-10-14 08:00 (= 10-13 23:00 UTC). 10/13 은행 실적 + 10년물 5.31% 시나리오 판정
     - cron: "0 23 13 10 *"
-    # wbtnq3 oneshot_kst (KST→UTC): 2026-10-29/11-05 09:23 발표일 확인, 11-06/07/10/11/12/13/14 12:10 채점. 발표일 미공지 창
+    # optq3 oneshot_kst (KST→UTC): 2026-11-17/18/19 09:10. 3Q 실적 대조
+    - cron: "10 0 17 11 *"
+    - cron: "10 0 18 11 *"
+    - cron: "10 0 19 11 *"
+# wbtnq3 oneshot_kst (KST→UTC): 2026-10-29/11-05 09:23 발표일 확인, 11-06/07/10/11/12/13/14 12:10 채점. 발표일 미공지 창
     - cron: "23 0 29 10 *"
     - cron: "23 0 5 11 *"
     - cron: "10 3 6 11 *"
@@ -292,7 +296,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -497,6 +501,8 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 21 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 23 29 10 *" ]; then JOB=oneshot
 
             elif [ "${{ github.event.schedule }}" = "10 22 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 22 10 *" ]; then JOB=sapq3
+            elif [ "${{ github.event.schedule }}" = "10 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 19 11 *" ]; then JOB=optq3
+
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
@@ -1143,6 +1149,11 @@ jobs:
           else
             python scripts/kos5500_monitor.py "$KOS5500_MODE"
           fi
+
+      - name: Run optq3
+        if: steps.pick.outputs.job == 'optq3'
+        run: python scripts/optq3_monitor.py
+
       - name: Run sapq3
         if: steps.pick.outputs.job == 'sapq3'
         env:
