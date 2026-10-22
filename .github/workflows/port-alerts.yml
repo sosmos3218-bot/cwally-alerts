@@ -501,7 +501,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 21 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 23 29 10 *" ]; then JOB=oneshot
 
             elif [ "${{ github.event.schedule }}" = "10 22 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 22 10 *" ]; then JOB=sapq3
-            elif [ "${{ github.event.schedule }}" = "10 0 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 19 11 *" ]; then JOB=optq3
+            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "10 0 17 11 *" ] || [ "$S" = "10 0 18 11 *" ] || [ "$S" = "10 0 19 11 *" ]; then JOB=optq3
 
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
