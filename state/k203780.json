@@ -1,1 +1,6 @@
-{"updated_at": null, "last_sent_session": null, "fetch_fail_session": null}
+{
+  "updated_at": "2026-10-22T19:00:39.727515+09:00",
+  "last_sent_session": "2026-10-22",
+  "fetch_fail_session": null,
+  "nav_by_session": {}
+}
