@@ -1,22 +1,15 @@
 {
-  "updated_at": "2026-10-21 09:00 KST",
+  "updated_at": "2026-10-22 09:00 KST",
   "zone": "EVENT:DCA_WAIT",
   "last_alert_key": "EVENT:DCA_WAIT",
   "last_sent_key": "EVENT:DCA_WAIT",
-  "last_sent_date": "2026-10-21",
+  "last_sent_date": "2026-10-22",
   "last_skip_reason": null,
-  "fx": 1324.38,
-  "wti": 98.39,
-  "ktb3": 3.84,
-  "ktb10": 4.176,
+  "fx": 1327.48,
+  "wti": 97.98,
+  "ktb3": 3.822,
+  "ktb10": 4.16,
   "history": [
-    {
-      "date": "2026-10-09",
-      "fx": 1342.87,
-      "wti": 91.16,
-      "ktb3": 3.983,
-      "ktb10": 4.395
-    },
     {
       "date": "2026-10-12",
       "fx": 1340.38,
@@ -65,6 +58,13 @@
       "wti": 98.39,
       "ktb3": 3.84,
       "ktb10": 4.176
+    },
+    {
+      "date": "2026-10-22",
+      "fx": 1327.48,
+      "wti": 97.98,
+      "ktb3": 3.822,
+      "ktb10": 4.16
     }
   ]
 }

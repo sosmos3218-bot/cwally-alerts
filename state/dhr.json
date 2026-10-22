@@ -1,13 +1,24 @@
 {
-  "price": 224.24,
+  "price": 233.86,
   "band": "HOLD",
   "buy2_sent": false,
   "buy3_sent": false,
   "trim_sent": false,
   "stretch_sent": false,
   "q3_pre_sent": true,
-  "q3_post_sent": false,
+  "q3_post_sent": true,
   "fail_sent_date": null,
-  "last_kind": "Q3_PRE",
-  "updated_at": "2026-10-21T09:06:33.718492+09:00"
+  "last_kind": "Q3_POST",
+  "updated_at": "2026-10-22T09:06:42.872047+09:00",
+  "last_metrics": {
+    "found": true,
+    "source": "https://investors.danaher.com/",
+    "fails": 0,
+    "core": null,
+    "exresp": null,
+    "adj_eps": null,
+    "guide_lo": null,
+    "guide_cut": false,
+    "guide_raise": false
+  }
 }

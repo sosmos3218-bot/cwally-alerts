@@ -9,11 +9,11 @@
     "below_twice": false,
     "above_twice": false,
     "low_rising": true,
-    "foreign_3d": 266300000000,
-    "semi_buy": null,
+    "foreign_3d": 252500000000,
+    "semi_buy": true,
     "recovery_published": false,
-    "foreign": 660000000000,
-    "institution": -72200000000,
+    "foreign": 646200000000,
+    "institution": -78100000000,
     "krx_final_confirmed": false
   },
   "review_notified": true,
@@ -60,13 +60,13 @@
       "below_twice": false,
       "above_twice": false,
       "low_rising": true,
-      "foreign_3d": 266300000000,
-      "semi_buy": null,
+      "foreign_3d": 252500000000,
+      "semi_buy": true,
       "recovery_published": false,
-      "foreign": 660000000000,
-      "institution": -72200000000,
+      "foreign": 646200000000,
+      "institution": -78100000000,
       "krx_final_confirmed": false
     }
   },
-  "updated_at": "2026-10-21T15:40:54.579546+09:00"
+  "updated_at": "2026-10-22T09:01:03.920033+09:00"
 }
