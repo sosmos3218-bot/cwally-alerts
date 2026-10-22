@@ -298,7 +298,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -366,7 +366,7 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "job=dearattr, sena, mktpulse or k203780 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state)"
+        description: "job=dearattr, sena, mktpulse, k203780 or k079900 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state; k079900: same as dry)"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -1222,6 +1222,18 @@ jobs:
           MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=install
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then MODE=auto; fi
           python scripts/k203780_monitor.py "$MODE"
+      - name: Run k079900 (morning 09:00, afternoon 15:20, k203780 18:00 slots)
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k079900') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$PICK_JOB" = "k079900" ]; then MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ]; then MODE=dry; fi
+          python scripts/k079900_monitor.py "$MODE"
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py

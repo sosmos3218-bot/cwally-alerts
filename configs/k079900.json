@@ -1,0 +1,38 @@
+{
+  "name": "k079900",
+  "title_prefix": "[079900]",
+  "code": "079900",
+  "name_kr": "전진건설로봇",
+  "display": "전진건설로봇 (KRX 079900) 가격 구간 + 정기보고서 영업이익률",
+  "created_at": "2026-10-22T17:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "k079900",
+  "schedule_kst": "09:00, 15:20, 18:00",
+  "schedule_note": "새 cron 없음. 기존 반복 슬롯 3개에 부착: port-alerts morning 평일 09:00, afternoon 평일 15:20(장중, 외부 cron 정시 dispatch), k203780 슬롯 평일 18:00(장 마감 뒤, GitHub schedule만이라 늦게 도착). 이벤트가 새로 켜질 때만 발송. 가격은 마지막으로 본 날부터의 일별 장중 저가를 순서대로 다시 보므로 늦거나 빠진 실행에도 터치를 놓치지 않음.",
+  "alert_policy": "event_only",
+  "approval": "사용자 채팅 승인(설계와 스케줄), 2026-10-22 17:08 KST 요청",
+  "market_close_kst": "15:30",
+  "price": {
+    "zone_max": 35000,
+    "zone_rearm": 35700,
+    "break_below": 33000,
+    "break_rearm": 33700,
+    "note": "장중 저가 35,000원 이하 = 33,000~35,000원 분할매수 검토 구간 진입(1회). 장중 저가 33,000원 미만 = 구간 이탈(따로 1회). 울린 날 이후 종가가 재무장 가격(기준 +2%) 위로 올라가야 다시 무장. 차트 지지선 아님, 밸류에이션 기준 구간."
+  },
+  "dart": {
+    "recover_min_pct": 18.0,
+    "hold_below_pct": 15.0,
+    "lookback_days": 400,
+    "note": "분기/반기/사업보고서(정정 포함) 새 제출 시 1회. KIND 접수번호로 중복 방지. 분기 단독 영업이익률(가능하면) 18% 이상 회복 지속, 15% 미만 매수 보류 검토, 사이 중립. 2026-10-22 기준 이미 제출된 보고서는 state 에 시드(알림 없음)."
+  },
+  "sources": {
+    "price": "네이버 m.stock.naver.com/api/stock/079900/price (일별 시가/고가/저가/종가, 오늘 행은 장중 실시간)",
+    "reports": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별 공시 목록) + disclsviewer 원문(연결/별도 포괄손익계산서)",
+    "dart_link": "DART dart.fss.or.kr/dsab007/detailSearch.ax (같은 보고서 rcpNo 찾기, 실패 시 KIND 뷰어 링크)"
+  },
+  "year_guard": null,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지. 35,000/33,000원 구간은 2026-10-22 밸류에이션 기준이라 실적 추정치가 바뀌면 다시 설정"
+}
