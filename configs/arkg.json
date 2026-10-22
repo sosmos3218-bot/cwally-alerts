@@ -1,0 +1,52 @@
+{
+  "name": "arkg",
+  "title_prefix": "[ARKG]",
+  "symbol": "ARKG",
+  "display": "ARK Genomic Revolution ETF",
+  "created_at": "2026-10-22T12:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 조건이 새로 켜질 때만 발송.",
+  "alert_policy": "change_only",
+  "basis": "2026-10-22 ARKG 팩트체크 결론: 핵심 말고 위성 배분용. 10/21 종가 49.85달러, 52주 고점 58.83달러(장중), 10/5 56.77달러에서 10/16 46.70달러까지 2주 -18%. YTD 약 +71%, XBI는 약 +19%(10/16). 아래 조건은 그 분석의 '판단을 바꿀 조건'을 숫자로 옮긴 것.",
+  "account": "미국 주식 해외 계좌 가정. 자동 주문 아님",
+  "recover": {
+    "close_min": 56.0,
+    "rearm_close": 53.0,
+    "note": "ARKG 완료 종가 56달러 이상 = 10월 고점대(10/5 종가 56.77) 회복. 종가 53달러 아래로 내려가면 다시 무장"
+  },
+  "breakdown": {
+    "close_max": 46.7,
+    "rearm_close": 48.5,
+    "note": "ARKG 완료 종가 46.70달러 미만 = 10/16 저점 이탈. 종가 48.5달러 위로 올라가면 다시 무장"
+  },
+  "new_high": {
+    "min_bars": 150,
+    "rearm_drop_pct": 5.0,
+    "note": "ARKG 완료 종가가 직전 1년 종가 고점을 넘으면 발송. 그 고점 대비 5% 이상 내려가면 다시 무장"
+  },
+  "rel_strength": {
+    "peer": "XBI",
+    "lookback_bars": 20,
+    "lead_pct": 5.0,
+    "lag_pct": -5.0,
+    "reset_band_pct": 2.0,
+    "note": "ARKG 20거래일 수익률 - XBI 20거래일 수익률(%p). +5%p 이상이면 강세, -5%p 이하면 약세 구간 진입 시 발송. ±2%p 안으로 돌아오면 중립으로 리셋. 첫 실행은 기준만 기록"
+  },
+  "holdings": {
+    "as_of": "2026-10-21 (StockAnalysis 집계, 기준일 미표기)",
+    "weights_pct": {"TXG": 8.65, "TWST": 8.14, "TEM": 8.11},
+    "names": {"TXG": "10x Genomics", "TWST": "Twist Bioscience", "TEM": "Tempus AI"},
+    "day_move_pct": 12.0,
+    "note": "상위 3종목(합계 약 25%) 중 하나라도 완료 종가 기준 하루 ±12% 이상이면 발송. 같은 봉 날짜는 한 번만"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "Yahoo Finance chart v8 ARKG, XBI, TXG, TWST, TEM 1d 1y (미국 동부시간 기준 완료 일봉만 사용, 당일 진행 봉 제외)"
+  },
+  "year_guard": null,
+  "ends_kst": "2027-01-22 23:59",
+  "ends_note": "3분기 실적 시즌 이후 56/46.70달러 기준, 상위 종목 비중을 다시 확인해 재설계"
+}
