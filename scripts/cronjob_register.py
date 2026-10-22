@@ -30,6 +30,14 @@ Delete mode (approved in chat 2026-10-19), CRONJOB_ACTION=delete:
   fixed minute/hour/day/month with an expiry, and not the template job. If any id fails, nothing
   is deleted (exit 3). Then DELETE /jobs/<id> one by one; each deleted id is logged.
 
+Slot mode (approved in chat 2026-10-22 18:07 KST), CRONJOB_ACTION=register_slot:
+  Registers the ONE fixed recurring after-close job (SLOT_* constants below): title
+  "cwally port after-close (18:00 KST)", Asia/Seoul, minute 0, hour 18, Mon-Fri, no expiry, body
+  {"ref":"main","inputs":{"job":"k203780","oneoff_mode":"auto"}}, headers copied from the template job
+  (same as one-shots). No other recurring job can be made with this mode. Skips (exit 10) if an enabled
+  job with the same title, or any enabled port-alerts.yml dispatch job firing at the next weekday 18:00
+  KST, already exists. CRONJOB_DRY_RUN=1 runs every check without creating.
+
 exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
@@ -55,6 +63,10 @@ DISPATCH_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/action
 ONESHOT_BODY = {"ref": "main", "inputs": {"job": "oneshot"}}
 TEMPLATE_BODY = {"ref": "main", "inputs": {"job": "morning"}}
 POST = 1  # cron-job.org RequestMethod
+SLOT_TITLE = "cwally port after-close (18:00 KST)"
+SLOT_BODY = {"ref": "main", "inputs": {"job": "k203780", "oneoff_mode": "auto"}}
+SLOT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [18],
+                 "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TIMEZONE = "Asia/Seoul"
 
 SKIP = 10
@@ -297,14 +309,68 @@ def run_delete() -> int:
     return 0
 
 
+def next_weekday_1800(now: datetime) -> datetime:
+    d = now.replace(hour=18, minute=0, second=0, microsecond=0)
+    if d <= now:
+        d += timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
+def run_register_slot(now: datetime) -> int:
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    template = load_template(key)
+    nxt = next_weekday_1800(now)
+    dup = find_duplicate(key, SLOT_TITLE, nxt)
+    if dup is not None:
+        print(f"skip: job {dup} already fires at {nxt:%Y-%m-%d %H:%M} KST or has title {SLOT_TITLE!r}")
+        return SKIP
+    job = {
+        "enabled": True,
+        "title": SLOT_TITLE,
+        "saveResponses": True,
+        "url": DISPATCH_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(SLOT_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(SLOT_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {SLOT_TITLE!r} Mon-Fri 18:00 Asia/Seoul, body {json.dumps(SLOT_BODY)}, first {nxt:%Y-%m-%d %H:%M} KST")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{job_id}", key).get("jobDetails") or {}
+    sc = got.get("schedule") or {}
+    nx = got.get("nextExecution")
+    nx_txt = datetime.fromtimestamp(int(nx), KST).strftime("%Y-%m-%d %H:%M KST") if nx else "n/a"
+    print(f"job_id={job_id} title={got.get('title')!r} enabled={got.get('enabled')} tz={sc.get('timezone')} "
+          f"hours={sc.get('hours')} minutes={sc.get('minutes')} wdays={sc.get('wdays')} expiresAt={sc.get('expiresAt')} "
+          f"next_execution={nx_txt} body_ok={json.loads((got.get('extendedData') or {}).get('body') or 'null') == SLOT_BODY}")
+    return 0
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
         action = (env("CRONJOB_ACTION") or "register").lower()
         if action == "delete":
             return run_delete()
+        if action == "register_slot":
+            return run_register_slot(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

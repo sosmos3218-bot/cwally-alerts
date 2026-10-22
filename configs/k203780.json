@@ -10,13 +10,16 @@
   "ntfy_server": "https://ntfy.sh",
   "job_id": "k203780",
   "schedule_kst": "KRX 거래일 18:00",
-  "schedule_note": "장 마감 뒤 미래에셋 일별 기준가(NAV)가 나온 다음 하루 1번. GitHub schedule cron 0 9 * * 1-5 (UTC) = 평일 18:00 KST. GitHub cron은 보통 몇 시간 늦게 도착하므로 실제 도착은 18:00 이후, 새벽 6시 전 도착분은 전날 거래일로 처리. 휴장일(kr_calendar 또는 네이버에 그날 시세 없음)이면 보내지 않음. 같은 거래일은 한 번만(state last_sent_session).",
+  "schedule_note": "장 마감 뒤 미래에셋 일별 기준가(NAV)가 나온 다음 하루 1번. GitHub schedule cron 0 9 * * 1-5 (UTC) = 평일 18:00 KST. 정시 실행은 cron-job.org 반복 잡이 dispatch(2026-10-22 18:07 승인), GitHub cron은 늦게 오는 백업. 새벽 6시 전 도착분은 전날 거래일로 처리. 휴장일(kr_calendar 또는 네이버에 그날 시세 없음)이면 보내지 않음. 같은 거래일은 한 번만(state last_sent_session).",
   "alert_policy": "daily_summary",
   "cron_approved": "2026-10-22",
   "cron_approval_text": "Schedule: weekdays (Korean trading days) after Korean market close, once the operator's daily NAV is available, around 18:00 KST (cron in UTC: 0 9 * * 1-5)",
   "cron_approval_kst": "2026-10-22 14:51",
   "cron_utc": "0 9 * * 1-5",
-  "cron_where": "port-alerts.yml GitHub schedule only (on-time cron-job.org 잡은 등록 안 함)",
+  "cron_where": "port-alerts.yml GitHub schedule 0 9 * * 1-5 (백업) + cron-job.org 반복 잡 \"cwally port after-close (18:00 KST)\" (정시, body {\"job\":\"k203780\",\"oneoff_mode\":\"auto\"})",
+  "ontime_approved": "2026-10-22",
+  "ontime_approval_kst": "2026-10-22 18:07",
+  "ontime_approval_text": "cron-job.org job so the 18:00 KST after-close run starts on time, same way as 09:00 / 15:20",
   "market_close_kst": "15:40",
   "thresholds": {
     "etf_day_pct": 3.0,
@@ -26,8 +29,20 @@
   },
   "holdings": {
     "as_of": "2026-10-22 사용자 지정 상위 5종목",
-    "symbols": ["GILD", "AMGN", "VRTX", "MRNA", "REGN"],
-    "names": {"GILD": "Gilead", "AMGN": "Amgen", "VRTX": "Vertex", "MRNA": "Moderna", "REGN": "Regeneron"}
+    "symbols": [
+      "GILD",
+      "AMGN",
+      "VRTX",
+      "MRNA",
+      "REGN"
+    ],
+    "names": {
+      "GILD": "Gilead",
+      "AMGN": "Amgen",
+      "VRTX": "Vertex",
+      "MRNA": "Moderna",
+      "REGN": "Regeneron"
+    }
   },
   "sources": {
     "price": "네이버 증권 m.stock.naver.com/api/stock/203780/price (일별 종가, 전일 대비 %)",

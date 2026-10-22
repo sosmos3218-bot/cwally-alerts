@@ -357,7 +357,7 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "job=dearattr, sena, mktpulse, k203780 or k079900 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state; k079900: same as dry)"
+        description: "job=dearattr, sena, mktpulse, k203780 or k079900 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state; k079900: same as dry; job=k203780 + auto = on-time 18:00 slot from cron-job.org)"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -1223,7 +1223,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "k079900" ]; then MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/k079900_monitor.py "$MODE"
       - name: Archive ntfy
         if: always()

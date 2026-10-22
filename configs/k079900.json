@@ -10,7 +10,7 @@
   "ntfy_server": "https://ntfy.sh",
   "job_id": "k079900",
   "schedule_kst": "09:00, 15:20, 18:00",
-  "schedule_note": "새 cron 없음. 기존 반복 슬롯 3개에 부착: port-alerts morning 평일 09:00, afternoon 평일 15:20(장중, 외부 cron 정시 dispatch), k203780 슬롯 평일 18:00(장 마감 뒤, GitHub schedule만이라 늦게 도착). 이벤트가 새로 켜질 때만 발송. 가격은 마지막으로 본 날부터의 일별 장중 저가를 순서대로 다시 보므로 늦거나 빠진 실행에도 터치를 놓치지 않음.",
+  "schedule_note": "새 cron 없음. 기존 반복 슬롯 3개에 부착: port-alerts morning 평일 09:00, afternoon 평일 15:20(장중, 외부 cron 정시 dispatch), k203780 슬롯 평일 18:00(장 마감 뒤, cron-job.org 정시 dispatch + GitHub cron 백업, 2026-10-22 18:07 승인). 이벤트가 새로 켜질 때만 발송. 가격은 마지막으로 본 날부터의 일별 장중 저가를 순서대로 다시 보므로 늦거나 빠진 실행에도 터치를 놓치지 않음.",
   "alert_policy": "event_only",
   "approval": "사용자 채팅 승인(설계와 스케줄), 2026-10-22 17:08 KST 요청",
   "market_close_kst": "15:30",
