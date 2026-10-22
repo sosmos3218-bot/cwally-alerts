@@ -753,6 +753,7 @@ jobs:
             python scripts/xlp_monitor.py auto
             python scripts/meras_monitor.py auto
             python scripts/arkg_monitor.py auto
+            python scripts/mchi_monitor.py auto
           fi
           python scripts/ntfy_archive.py
           exit $failed

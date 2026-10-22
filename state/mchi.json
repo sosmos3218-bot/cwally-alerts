@@ -1,0 +1,13 @@
+{
+  "updated_at": null,
+  "breakdown_armed": true,
+  "reclaim_armed": true,
+  "above_ma": null,
+  "rs_regime": null,
+  "holding_alerted": {},
+  "last_bar_date": null,
+  "last_close": null,
+  "last_ma": null,
+  "last_rs_pct": null,
+  "fetch_fail_date": null
+}

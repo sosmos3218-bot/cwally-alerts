@@ -1,0 +1,48 @@
+{
+  "name": "mchi",
+  "title_prefix": "[MCHI]",
+  "symbol": "MCHI",
+  "display": "iShares MSCI China ETF",
+  "created_at": "2026-10-22T15:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 조건이 새로 켜질 때만 발송.",
+  "alert_policy": "change_only",
+  "basis": "2026-10-22 MCHI 분석 결론: 큰 비중 말고 1~3년 소액 분할매수(전체 금융자산 2~3% 위성). 10/21 종가 50.05달러, 52주 저가 49.84달러 근접, 50일 및 200일 이동평균 아래. 추가 매수는 가격 하락이 아니라 실적(내수, 텐센트와 알리바바 FCF) 개선을 보고 판단. 아래 조건은 그 분석의 '판단을 바꿀 조건' 중 가격으로 볼 수 있는 부분만 숫자로 옮긴 것. 실적, 소비, FCF는 알림이 못 보니 직접 확인.",
+  "account": "미국 주식 해외 계좌 가정. 자동 주문 아님",
+  "breakdown": {
+    "close_max": 49.84,
+    "rearm_close": 52.0,
+    "note": "MCHI 완료 종가 49.84달러 미만 = 52주 저가 이탈. 종가 52달러 위로 올라가면 다시 무장"
+  },
+  "ma_reclaim": {
+    "window": 200,
+    "min_bars": 200,
+    "rearm_below_pct": 3.0,
+    "note": "MCHI 완료 종가가 200일 이동평균 위로 새로 올라서면 발송(추세 반전 1차 확인). 평균 대비 3% 이상 아래로 내려가면 다시 무장. 첫 실행은 기준만 기록"
+  },
+  "rel_strength": {
+    "peer": "SPY",
+    "lookback_bars": 20,
+    "lead_pct": 5.0,
+    "lag_pct": -5.0,
+    "reset_band_pct": 2.0,
+    "note": "MCHI 20거래일 수익률 - SPY 20거래일 수익률(%p). +5%p 이상이면 강세, -5%p 이하면 약세 구간 진입 시 발송. ±2%p 안으로 돌아오면 중립으로 리셋. 첫 실행은 기준만 기록"
+  },
+  "holdings": {
+    "as_of": "2026-09-30 (iShares 팩트시트)",
+    "weights_pct": {"TCEHY": 13.79, "BABA": 9.33},
+    "names": {"TCEHY": "텐센트(미국 OTC)", "BABA": "알리바바(미국 ADR)"},
+    "day_move_pct": 7.0,
+    "note": "상위 2종목(합계 약 23.1%) 중 하나라도 완료 종가 기준 하루 ±7% 이상이면 발송. 같은 봉 날짜는 한 번만"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "Yahoo Finance chart v8 MCHI, SPY, TCEHY, BABA 1d 1y (미국 동부시간 기준 완료 일봉만 사용, 당일 진행 봉 제외)"
+  },
+  "year_guard": null,
+  "ends_kst": "2027-04-30 23:59",
+  "ends_note": "텐센트와 알리바바 다음 두 분기 실적 확인 뒤 기준 재설계"
+}
