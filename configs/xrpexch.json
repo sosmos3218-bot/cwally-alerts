@@ -1,0 +1,1777 @@
+{
+  "name": "xrpexch",
+  "title_prefix": "[XRP-EXCH]",
+  "display": "주요 거래소 XRP 보유량 (공개 라벨 지갑 합계, 대리 지표)",
+  "created_at": "2026-10-22T23:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "approval": "사용자 채팅 승인 2026-10-22 22:09 KST 요청(XRP 지표 3개, 조건 알림, GitHub schedule만, cron-job.org 등록 없음, 테스트 발송 없음).",
+  "schedule_kst": "일요일 21:00 (portlight 슬롯) + 평일 09:00 (morning 슬롯, 아직 계산 안 된 주만 따라잡기)",
+  "schedule_note": "새 cron 없음. 주간 스냅숏 시각은 일요일 00:00 UTC(한국 일요일 09:00) 원장으로 고정해 실행이 늦어도 같은 값. 일요일 21:00 portlight 슬롯에서 계산, 빠지면 평일 09:00 morning 슬롯이 채움. 비교 기준 스냅숏이 없으면 원장 과거값으로 다시 계산.",
+  "alert_policy": "condition_only",
+  "wow_increase_pct": 2.0,
+  "decrease_streak": 4,
+  "snapshot_utc": "일요일 00:00",
+  "proxy": true,
+  "proxy_note": "CryptoQuant/Glassnode 거래소 보유량은 유료 API라 안 씀. 대신 XRPScan 공개 라벨(well-known names)에서 거래소 이름이 붙은 지갑 중 2026-10-22 잔고 1백만 XRP 이상인 349개(라벨 지갑 전체 220억 XRP의 99%)를 고정 목록으로 두고 XRPL 원장에서 잔고를 합산. 라벨 없는 새 지갑으로 옮기면 감소로 보이고, Coinbase 라벨에는 수탁(ETF 보관 포함) 지갑이 섞여 있을 수 있음.",
+  "sources": {
+    "labels": "https://api.xrpscan.com/api/v1/names/well-known (2026-10-22 스냅숏, 목록은 이 파일 addresses)",
+    "xrpl": [
+      "https://xrplcluster.com/",
+      "https://xrpl.ws/",
+      "https://s1.ripple.com:51234/",
+      "https://s2.ripple.com:51234/"
+    ],
+    "method": "XRPL 공개 JSON-RPC account_info(ledger_index = 스냅숏 시각 첫 원장). 계정 없음(actNotFound)은 0."
+  },
+  "addresses": [
+    {
+      "exchange": "Binance",
+      "label": "5",
+      "account": "rs8ZPbYqgecRcDzQpJYAMhSxSi5htsjnza"
+    },
+    {
+      "exchange": "Binance",
+      "label": "XRP-BF2 Reserve",
+      "account": "rJpj1Mv21gJzsbsVnkp1U4nqchZbmZ9pM5"
+    },
+    {
+      "exchange": "Binance",
+      "label": "17",
+      "account": "rP3mUZyCDzZkTSd1VHoBbFt8HGm8fyq8qV"
+    },
+    {
+      "exchange": "Binance",
+      "label": "6",
+      "account": "rDAE53VfMvftPB4ogpWGWvzkQxfht6JPxr"
+    },
+    {
+      "exchange": "Binance",
+      "label": "22",
+      "account": "rEbXa31msPbPDZgmLMKH7CaKaf7VipoLBo"
+    },
+    {
+      "exchange": "Binance",
+      "label": "16",
+      "account": "rDecw8UhrZZUiaWc91e571b3TL41MUioh7"
+    },
+    {
+      "exchange": "Binance",
+      "label": "25",
+      "account": "rpVu7CQHTGqWDvBzm3TB2drmZBmh6jGNz4"
+    },
+    {
+      "exchange": "Binance",
+      "label": "12",
+      "account": "rPJ5GFpyDLv7gqeB1uZVUBwDwi41kaXN5A"
+    },
+    {
+      "exchange": "Binance",
+      "label": "27",
+      "account": "rKuP5k67YtHzsCmSQp7votF7u4afp4uNcm"
+    },
+    {
+      "exchange": "Binance",
+      "label": "10",
+      "account": "rNU4eAowPuixS5ZCWaRL72UUeKgxcKExpK"
+    },
+    {
+      "exchange": "Binance",
+      "label": "15",
+      "account": "rarG6FaeYhnzSKSS5EEPofo4gFsPn2bZKk"
+    },
+    {
+      "exchange": "Binance",
+      "label": "23",
+      "account": "rDNuKeiwTHWRCyBrh1aQUthLPkCUTxhz2W"
+    },
+    {
+      "exchange": "Binance",
+      "label": "13",
+      "account": "rPz2qA93PeRCyHyFCqyNggnyycJR1N4iNf"
+    },
+    {
+      "exchange": "Binance",
+      "label": "9",
+      "account": "rBtttd61FExHC68vsZ8dqmS3DfjFEceA1A"
+    },
+    {
+      "exchange": "Binance",
+      "label": "14",
+      "account": "rhWj9gaovwu2hZxYW7p388P8GRbuXFLQkK"
+    },
+    {
+      "exchange": "Binance",
+      "label": "18",
+      "account": "rfQ9EcLkU6WnNmkS3EwUkFeXeN47Rk8Cvi"
+    },
+    {
+      "exchange": "Binance",
+      "label": "24",
+      "account": "rwkbXMJQLQhVhcjZnnHV4zu39N7WcQXQKX"
+    },
+    {
+      "exchange": "Binance",
+      "label": "30",
+      "account": "r3YhVLeX5CN6TmdV6vbkWK3sbS8bQu56cs"
+    },
+    {
+      "exchange": "Binance",
+      "label": "31",
+      "account": "r95zSRLFvvPCoBxavzwHXS3xzT5cPFzb57"
+    },
+    {
+      "exchange": "Binance",
+      "label": "32",
+      "account": "r5ogVa6AntkMNz74D4H9ytTt4KRV5gHCu"
+    },
+    {
+      "exchange": "Binance",
+      "label": "106",
+      "account": "r3exzmQbSmYHym9WZev6cP7difwiFNAyyt"
+    },
+    {
+      "exchange": "Binance",
+      "label": "34",
+      "account": "r3PHCt7TjpUh2krW6KnXWKA2U8Y1Lw4WQx"
+    },
+    {
+      "exchange": "Binance",
+      "label": "35",
+      "account": "rHY4i9K1Cadfy8ST3Wn61xnGocFAu4X8SP"
+    },
+    {
+      "exchange": "Binance",
+      "label": "107",
+      "account": "rnsTDCVgEuB4dQU6W77PGSentvMx6ZzojP"
+    },
+    {
+      "exchange": "Binance",
+      "label": "108",
+      "account": "rHZT5i5h4M3Kvty6a1jYPaV2eRHn9MxXge"
+    },
+    {
+      "exchange": "Binance",
+      "label": "36",
+      "account": "rMxz89q9XfEH5j1cjkwjX15qQoQNnnTBU4"
+    },
+    {
+      "exchange": "Binance",
+      "label": "37",
+      "account": "rHD52LTMwCcEkGzcp2JqGufF64bdnYWNPw"
+    },
+    {
+      "exchange": "Binance",
+      "label": "38",
+      "account": "rh5msksJYA6Z27pHtVknLvb5WzQPujGU6e"
+    },
+    {
+      "exchange": "Binance",
+      "label": "109",
+      "account": "rNbKbnxwUctCHMdsopXfQbgSB4DqpXmHTU"
+    },
+    {
+      "exchange": "Binance",
+      "label": "39",
+      "account": "rHtUtV4AtK7feKraQmRdA9RBMWUiVQiT1B"
+    },
+    {
+      "exchange": "Binance",
+      "label": "40",
+      "account": "radCSacS59EEzcJ7sYCTTpNRYnD7UvGAYc"
+    },
+    {
+      "exchange": "Binance",
+      "label": "110",
+      "account": "rBotYkdKCLZEPCWMunRZrs8tvapZqVgHUX"
+    },
+    {
+      "exchange": "Binance",
+      "label": "111",
+      "account": "r447CKorBpa8BBVVSKLBHmsUd6QHWSvQW9"
+    },
+    {
+      "exchange": "Binance",
+      "label": "41",
+      "account": "rMoQAaftCSuNVouRdMfKrAiLjurqy2FxGi"
+    },
+    {
+      "exchange": "Binance",
+      "label": "42",
+      "account": "rUuPKjCki75jua6xVndTapohCFZZgqv84m"
+    },
+    {
+      "exchange": "Binance",
+      "label": "43",
+      "account": "rKTA2ZCPcjGT1fHzQhZTTt7qH9rDB9ehna"
+    },
+    {
+      "exchange": "Binance",
+      "label": "44",
+      "account": "rnu5sgjGMetYjGK3Dh4Yo2TZrgFRPY3RAK"
+    },
+    {
+      "exchange": "Binance",
+      "label": "45",
+      "account": "rpY2R1uys4eWB1o2rxS2aRsc7ts6ZhmwM7"
+    },
+    {
+      "exchange": "Binance",
+      "label": "112",
+      "account": "rDpjWRPHhQ4k3kQAGaUZHCPGAuKUnxHgTH"
+    },
+    {
+      "exchange": "Binance",
+      "label": "46",
+      "account": "raHSQtJ6UyFptAybadtWW8kpsQ7ywGwfrq"
+    },
+    {
+      "exchange": "Binance",
+      "label": "47",
+      "account": "rnVfJYFTWevbSjXEmBaKKhYufw8jhyaQE7"
+    },
+    {
+      "exchange": "Binance",
+      "label": "48",
+      "account": "rhXepyYVp6cFhWnfVYkjwAPciou17d6w9F"
+    },
+    {
+      "exchange": "Binance",
+      "label": "113",
+      "account": "rQUyCu8MmrKpGDfcKhFFrjNrNSnwrCrGsM"
+    },
+    {
+      "exchange": "Binance",
+      "label": "114",
+      "account": "rMKz2SAYkWX2Px72oKeroiHNXc5SfZo3Rz"
+    },
+    {
+      "exchange": "Binance US",
+      "label": "3",
+      "account": "r3ZVNKgkkT3A7hbEZ8HxnNnLDCCmZiZECV"
+    },
+    {
+      "exchange": "Bitfinex",
+      "label": "2",
+      "account": "rE3hWEGquaixF2XwirNbA1ds4m55LxNZPk"
+    },
+    {
+      "exchange": "Bitget",
+      "label": "1",
+      "account": "rGDreBvnHrX1get7na3J4oowN19ny4GzFn"
+    },
+    {
+      "exchange": "Bithumb",
+      "label": "12",
+      "account": "rPyCQm8E5j78PDbrfKF24fRC7qUAk1kDMZ"
+    },
+    {
+      "exchange": "Bithumb",
+      "label": "13",
+      "account": "rw3fRcmn5PJyPKuvtAwHDSpEqoW2JKmKbu"
+    },
+    {
+      "exchange": "Bitso",
+      "label": "3",
+      "account": "rLSn6Z3T8uCxbcd1oxwfGQN1Fdn5CyGujK"
+    },
+    {
+      "exchange": "Bitstamp",
+      "label": "1",
+      "account": "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv"
+    },
+    {
+      "exchange": "Bybit",
+      "label": "6",
+      "account": "raQxZLtqurEXvH5sgijrif7yXMNwvFRkJN"
+    },
+    {
+      "exchange": "Bybit",
+      "label": "4",
+      "account": "rMvCasZ9cohYrSZRNYPTZfoaaSUQMfgQ8G"
+    },
+    {
+      "exchange": "CoinDCX",
+      "label": "2",
+      "account": "rLUpiBeLhUyEzVtBkYE4S9t4zhdybSSARw"
+    },
+    {
+      "exchange": "CoinDCX",
+      "label": "7",
+      "account": "rQUmgHMWTXGpFqcVEo2qtHY7xvhk4V4Bua"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 530",
+      "account": "rN4GiawFXbgMNtW12mVH4p7CWQDzXsRB5k"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 531",
+      "account": "rBWEYyxPZkDPgBZEj73vgxi8xrNY22pnM7"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 532",
+      "account": "raLybBkX8HMsFG4EJGnTsBiNhnJS1Lqwmn"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 533",
+      "account": "rG71mF18FKc6sWfCyfYiPHax1GwBNfqGFQ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 573",
+      "account": "rsyDbFZwxUqXEzwknqzCvYxk2davoQCUDC"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 534",
+      "account": "rE84wNj2fKZtiH3KCF77mZeUg5fypjPasw"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 535",
+      "account": "rLGbi542GmWboteyBAdBaRj65wBLkmDis9"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 536",
+      "account": "rsnnbMctkVJiXdV6aPMRPeaEu2uAnq3rEK"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 537",
+      "account": "rLjYpsikc5dPhGCt5f5FiUeKyCobX8eRSe"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 538",
+      "account": "rH1dGoeLbKbf2HNv22Ryhx9ATf87M1hQKA"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 539",
+      "account": "rQUwf3NHvHAahqgNqFuUs1gmk3zMUZ7U36"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 540",
+      "account": "rH4P2rGgpMnAGz7Ci98aBrwAyEAidcVrzx"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 541",
+      "account": "r3J6NonjpTE3ZNVhuP9TWAmATCWU6Z4Zc"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 542",
+      "account": "r9VAmxasm7sgmkkKWSDuZzjh6ZUPCF8JnX"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 543",
+      "account": "rQLrus89AvwQWBVWbCL1KAKc49qBEyUnLJ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 544",
+      "account": "rUTk3earuCTw24JqVrJjTd5aPK45wgt1ry"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 545",
+      "account": "rKFWtu25sHeEYQWSHApJTQh8pjwoQFcPNA"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 546",
+      "account": "rGDAzndtkBL7pwEGg8kenL82z2byRku7Hn"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 547",
+      "account": "rpczK8ftBERTkgfYh71DLhWgLU5nBCCQka"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 548",
+      "account": "rJabfXnmrZHHnhkzJMHa1uDcvyRFHWX4Fd"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 549",
+      "account": "rKd89FtuE6xJwtuMWe7NUidKJWsfeccewK"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 529",
+      "account": "rU5ACGLKbhPQB92GZhT5UV22NHeVrEGuU6"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 550",
+      "account": "rJcDCNYobPpKNyJJ32FEbFXJtLEovJCSax"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 551",
+      "account": "r4pu2jfzMNqhHtPx7Gs6T8bQCYaNZYxHv8"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 552",
+      "account": "rEZrgsrA2G1WAEyDnBbHAU5ZtPUCEFCZU4"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 553",
+      "account": "rHgHtuQDiiwK7DRghB8roHGrwNecrUtEPY"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 554",
+      "account": "r4eGNMvLNUpVJMFRmZA2cRzmEpgEazw4kL"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 555",
+      "account": "r9fQP6rrMgPWBNZFDdcTaChTxyGypWUwnY"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 556",
+      "account": "rGeZPkEcXCifUWwcQYgpFzUDrY5b2MhsUU"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 557",
+      "account": "rankLDbZMf3mMUHtxdkPRr6CJsJedQAVXk"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 558",
+      "account": "rhS2K5aykbhHLjrRbQonQKnN4rjq3JB5Su"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 559",
+      "account": "rhzfzXnpMMRrFnjijtXFgyP5oCFch2J8A5"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 560",
+      "account": "rnX6deDJnvaSRmFNBiX6FkF23wLnPKoWuc"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 561",
+      "account": "rsCVdskXPa5gRcUQ3Tpw4NUBaPxGKPBmMK"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 562",
+      "account": "rwzv9qfTd4ZsW1kivYaXeHcnMJRHjRPZo5"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 563",
+      "account": "r4hmnzJwi1g5aA8dWhzjkcCuMdq8HirBkh"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 564",
+      "account": "rfVgUoTmpSn5eUQAQ3y81sVY2z8VF9shTy"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 565",
+      "account": "rLFGi5uMWjJZx2BesfEKmgwctykQThbe9a"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 566",
+      "account": "rJHNyEr5LDEqbs3cupSPGK9gQbH96xPZZh"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 567",
+      "account": "r3wAUGAV8nZnfCCCBZvxRXx4otajUJU37D"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 568",
+      "account": "rpC7sUNeRVLvXRJ4LeFQeyVXbcjLLfa3Xm"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 569",
+      "account": "rLrQoXmcaUSdSrzcBzWy741pQyr661M4eM"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 570",
+      "account": "rnShU789gYzMAV91YnLGW3coR2nWX95pBn"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 571",
+      "account": "r9BkS92kmSkseH8axTh8puDFZf2GKJsqyK"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 572",
+      "account": "rHcfTosfoXnRkCtEGxqafRLETPXimyUZWd"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 677",
+      "account": "rapCF1VDQP7aRUUKoLfaU9Supcp3cTcG2L"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 574",
+      "account": "r3ZWSK6S3nmneLTzmB9NUSnbuaGBg465VY"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 575",
+      "account": "rLWW7qJgJomDVo83vAAP1a77bmnfxcQsjC"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 576",
+      "account": "rNU99AEpAwyYPn8WTNqCgMskYror7LZ6dZ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 577",
+      "account": "rNm4qH6xpdfMwsLr1rJUB59LbeF2unfR3v"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 578",
+      "account": "r3LdQ2sxTww6MrGN2CN5NDv29F3iPv531G"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 579",
+      "account": "rBR4DRhAZtG9CfPpFmzVJ79aNLDnzR7dQP"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 580",
+      "account": "rEyVPcUeXJ32VzKk5oqPC6XjrbDN6SFbxf"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 581",
+      "account": "rKsF3FN7iqABkYs985BgPYBb6qQCK9iEdU"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 582",
+      "account": "rarYE2CBjESHGDAg9pH2MYyopKLBacJPtL"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 583",
+      "account": "rpx772KKeXg56jRLNByS9DEtpKmcZ1C95o"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 584",
+      "account": "rBvUD2nFdaLskYkd9YekHy5rNrNfTHL2U9"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 585",
+      "account": "rrhdRLMo2ZjGQDqMP5NNxu2eRgbfrRd47i"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 586",
+      "account": "rwEhsCF9McDb57LbURfkFDJ467VW4BXKd5"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 587",
+      "account": "r3CzRxiHRmctUeku8imYMB2415v3u4w1CE"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 588",
+      "account": "r4gVQgbktcm5TAghS74V9w8F9cDNCscSAY"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 589",
+      "account": "rHZiqa4tUf2eHyntrKnNBE6AWJeqB2Zs6s"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 590",
+      "account": "rJPNmDVF8cXT3UC2GL7X3pvmUxmCjMWVLQ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 591",
+      "account": "rLmQQmHRQR4uTcdj8xQd6XziYkpqMdixhP"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 592",
+      "account": "rMasCuSTVncegPrdnJusDWCiUFzqTnCD6K"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 593",
+      "account": "rPMtNyZrPJct8r4zpVENwaZNeFtxpoCqiu"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 594",
+      "account": "rPewAsKthZvhKHSvqt5sPxeXjL2CSgjRDH"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 595",
+      "account": "ra7QTgrEVBDx6jZShbriEnzRB2AL7VAi9k"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 596",
+      "account": "ranQuxfxqEiCz1ALXCLaXLWerKGYXgoY4N"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 597",
+      "account": "rGbYrekqKKk62uUcWbU57y5pMvMb8syhNJ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 598",
+      "account": "rhvGY1ZKF12pAz3ujt2f9kQdVVimjJKNDn"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 599",
+      "account": "rPuV1j3R2Gp14H35H4cfb9LZKGo7z9nNH9"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 600",
+      "account": "r9vV1SnRQ5Yui5Fzh1Dhc8c7wszLtPV9MS"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 678",
+      "account": "rpRhAjjvRKrLv7kZfy9YCFK35A6SNQrjF8"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 679",
+      "account": "rDJzqDnscv359mEeQGHWuFQNZqHUFiJhA"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 601",
+      "account": "rLk11c22pV6SZ97yRRGChVvzDtNS5QEHhi"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 602",
+      "account": "rfcZ3KdqXG4UeW3fx4MwnToGoyutcQTMA2"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 603",
+      "account": "rHfb43x7Z5HG9KHYoyKJBUwZudVFyMv6FX"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 604",
+      "account": "rwLTBhzE9kVtvXhuE4RYQ6HMXjXqSnuVfC"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 605",
+      "account": "rsBQyWkaVRiGTvSKfLQSE5agW4WuQ3hNEL"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 606",
+      "account": "rM6uUdKiVNCNpo52NnhcyH1CMySUBD9SRp"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 607",
+      "account": "rNX1c9e1eHJFx26FhLZzW3xiVYDcq9zLVm"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 608",
+      "account": "rUQjHzSUYDzesAV3Git8sJDzwkgWLhMroS"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 609",
+      "account": "rGuL4US8gKTMYQMMwDR3XZ6Kd2eMGusoWo"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 610",
+      "account": "rwBbeWM9Hxs4xPjEnxu1yaq4xwXBmjBPeL"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 611",
+      "account": "rPadEZZRUtktv5dYkj13cXCfPV938avWbv"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 612",
+      "account": "r9EvzNyqNuq3CXXa22yowJ9CiS6g4Vvx6v"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 613",
+      "account": "rBMtKU1sSb3fZuuwybNe2TUy4iHj8QAGWV"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 614",
+      "account": "rHJrbJZTDapeaEuQqDwxDRvR7hmHyNtKoW"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 615",
+      "account": "rBJRfP7Huiix9naiNjoeht8XmxpfHPiDwj"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 616",
+      "account": "rf8ypYMBsh5UQkFatkX17QoQxspsLrSzeX"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 617",
+      "account": "rUdXSk3NyX1ZkTuXrm9M6VAehY2QEFzgVZ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 618",
+      "account": "r3hiF7zqMPeHB33Q99oqD3PU1uapGHR5Qe"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 619",
+      "account": "r3pvkvdbELVkMw1jxwoXfumWE22V8wA5bV"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 620",
+      "account": "rPkWHmKXAX6QPEkmwGVojA6DRdi7wqKps"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 621",
+      "account": "rHm5upPnpa3uh4mWwHDqTa5sUzJoUiznHF"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 623",
+      "account": "rU7N8Xzf9EJWXUG6sjAy5ZWMJcUjdyiUma"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 624",
+      "account": "rKif7H93DSSCn8gKEdjRWHUeJDM4b6vurN"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 625",
+      "account": "rKCoXM19TiWLaqGAsri3bDFWc94iHtaJpD"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 626",
+      "account": "rKPDtetbuPAPbDyyaVht9MBQPCrFN65Qo5"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 627",
+      "account": "rhYmSnmT5XLNWZzXZAfD1ZNDXeggnDMHuR"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 628",
+      "account": "r3YxGciPmY3HyobVEN8gfmMHDxqHFmU3wU"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 629",
+      "account": "r41Jx7vxzTaXH7nK3P53zUjm4owTdPE2CR"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 630",
+      "account": "rGpqh1aMFFhuB6fsUuvPXjmgvthFtaM8fQ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 631",
+      "account": "rLRDoTHU6sAdXR7HA1iYdBAvWYcHXn4GBW"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 632",
+      "account": "rpqziPCuAHQ6taD1qghQqgZWv9K513iRnX"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 633",
+      "account": "rajKGWBnMMPMVWFEeA8KJXWbha9YCBQsG2"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 634",
+      "account": "rK67ipQVbZ5EUywDa4BDE7bVnkxBiVYXu"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 637",
+      "account": "rwBkBmv1RbgsWLXhWM8uEoVwY974iWshv4"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 635",
+      "account": "rDHyd2wTXnoT1MTvCigLGpm8o7WdhE5mGi"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 652",
+      "account": "rUq1Qrz91ehnhCTyoAi4kQTcxh5eSNSWpg"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 638",
+      "account": "rJ17fkxMmvdJMtCLL4bZcGAxNnA9hsDsSv"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 636",
+      "account": "rLmyyyCcB75ZW8jUaSuz4mFk9odDkva7bP"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 640",
+      "account": "rBAuFZLxcLwjdoiZFMV9EibwLsGf3QwmwA"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 639",
+      "account": "r9MiwNf8DaFbDPdqdSanKELSZU4DZjKBN6"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 644",
+      "account": "rJGCm8m3RjFhnrcLatZ9m3HvmcJ6SimnCc"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 658",
+      "account": "rapHGGXKVWqtwiXgHv5u6em3atCJ4JK71i"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 642",
+      "account": "ra3Nb8s1g5hWrDnfvHMJMpVvUEVwXSTNQV"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 641",
+      "account": "rKfeoSaC18Mti2PvaSejUkhxpzc5EJueuY"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 643",
+      "account": "rrngzZr6XeX5sFRqtUiaJzcXBc6TT5dKsT"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 645",
+      "account": "rwQDD3kfvvcewaDgbhgaQPnB5dMvfocYFi"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 646",
+      "account": "rDYLgqiTLGMNPwLWRkaZ9APdRpYd352e6a"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 647",
+      "account": "r3j8BHPhWpxH9s4SAmW8uNoi1aQLucE3d7"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 680",
+      "account": "rMF5SyKdPJM7iqhB6VVsUWTiBAEzTpDnDL"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 648",
+      "account": "rLZgExgdeU8YharR9hjtucGFZqZu72mjsB"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 649",
+      "account": "rLEP9tuJFWQh6ULATA5WpEN71Xkzo93BEG"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 650",
+      "account": "rPxBwncpxtezhYVL9JhytjriFkUqsiLGUq"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 651",
+      "account": "ratDM9Dhg4JnCh24oJra6fZ1r1btsiAz1v"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 653",
+      "account": "rETHHhKbA45aLZ8fK6xJ21JGA2deo3i3wn"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 654",
+      "account": "rEECyW3ExCYyT2H1dhqBVAE7mXawFGstgp"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 655",
+      "account": "rHpketbD5JiGQZvJGBExeFhWuWZNcbpGMQ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 656",
+      "account": "rMU29jjsg2M18Z6BTspH35P2CMTDTkNfw1"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 657",
+      "account": "rwQnZzwCAn2p8CZxncrE6H4X9cvCwJtYki"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 670",
+      "account": "rBMrva7oDqKjew5AuopSMdiajBjzZHKYvF"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 659",
+      "account": "rPf9cgRUsQ67hNLy4w77gGncdeQsHUdQnc"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "7",
+      "account": "rUjfTQpvBr6wsGGxMw6sRmRQGG76nvp8Ln"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 661",
+      "account": "rUs5yX4PffwZgBRQZNKRnixyv9hofVL62s"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 663",
+      "account": "rfaU1CRppX7p6gwE6YC7Y9Y2HVWBTT5iCZ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 662",
+      "account": "rsqAM7fmzVVBPBAWz4Akry6QpNKqvqtb1D"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 664",
+      "account": "rPh7aQDVE7c6cxbi4RTDfnAhWKzmcdgtFU"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 665",
+      "account": "rhtt7cnMkuNygzp9GHHTVDuSfNsR3SzkJK"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 666",
+      "account": "r313hfrzpNkUX1N7UdgtpjsANLDuaSgqjZ"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 667",
+      "account": "rKHtYvpBsW2GC3xMGKstDPHE1xQxQLzibs"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 668",
+      "account": "rQJqD2xJghqirr3CHfkV6yqG8jXAMV8Q4P"
+    },
+    {
+      "exchange": "Coinbase",
+      "label": "Cold 669",
+      "account": "rDbaa45mP2coagNtHCPyAPHBmYYE4eqDA"
+    },
+    {
+      "exchange": "Coincheck",
+      "label": "3",
+      "account": "r99QSej32nAcjQAri65vE5ZXjw6xpUQ2Eh"
+    },
+    {
+      "exchange": "Coinone",
+      "label": "5",
+      "account": "rDKw32dPXHfoeGoD3kVtm76ia1WbxYtU7D"
+    },
+    {
+      "exchange": "Coinone",
+      "label": "3",
+      "account": "rhuCPEoLFYbpbwyhXioSumPKrnfCi3AXJZ"
+    },
+    {
+      "exchange": "Crypto.com",
+      "label": "4",
+      "account": "rKNwXQh9GMjaU8uTqKLECsqyib47g5dMvo"
+    },
+    {
+      "exchange": "Crypto.com",
+      "label": "1",
+      "account": "r4DymtkgUAh2wqRxVfdd3Xtswzim6eC6c5"
+    },
+    {
+      "exchange": "Gate.io",
+      "label": "1",
+      "account": "rHcFoo6a9qT5NHiVn1THQRhsEGcxtYCV4d"
+    },
+    {
+      "exchange": "Gate.io",
+      "label": "4",
+      "account": "rNu9U5sSouNoFunHp9e9trsLV6pvsSf54z"
+    },
+    {
+      "exchange": "Gate.io",
+      "label": "3",
+      "account": "rNnWmrc1EtNRe5SEQEs9pFibcjhpvAiVKF"
+    },
+    {
+      "exchange": "Gate.io",
+      "label": "2",
+      "account": "rLzxZuZuAHM7k3FzfmhGkXVwScM4QSxoY7"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "18",
+      "account": "rwshjBngGqMRJgGYvEJXGMkg5DS2GX3U3q"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "8",
+      "account": "rE5LDXksLZHsRgGUgqu7NiTSDd5zFz7rsW"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "6",
+      "account": "rnJrjec2vrTJAAQUTMTjj7U6xdXrk9N4mT"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "19",
+      "account": "rLuQnupL8NQJX9Ywc59cxNrNPHsCHU1XK6"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "5",
+      "account": "rEvuKRoEbZSbM5k5Qe5eTD9BixZXsfkxHf"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "9",
+      "account": "rJvB5ubc1JjATSmfrY4RKvRhDv7xyvrcYJ"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "10",
+      "account": "rQGP8N7cziiG9RpX2wqKj3pETNb9VWZxwp"
+    },
+    {
+      "exchange": "Kraken",
+      "label": "11",
+      "account": "rNEwmkNNbZ6xAfr4EpPxRwbEwz3Cz8nGQL"
+    },
+    {
+      "exchange": "KuCoin",
+      "label": "11",
+      "account": "rLpvuHZFE46NUyZH5XaMvmYRJZF7aory7t"
+    },
+    {
+      "exchange": "Luno",
+      "label": "2",
+      "account": "rsbfd5ZYWqy6XXf6hndPbRjDAzfmWc1CeQ"
+    },
+    {
+      "exchange": "MEXC",
+      "label": "1",
+      "account": "rs2dgzYeqYqsk8bvkQR5YPyqsXYcA24MP2"
+    },
+    {
+      "exchange": "SBI VC Trade",
+      "label": "4",
+      "account": "rNRc2S2GSefSkTkAiyjE6LDzMonpeHp6jS"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "22",
+      "account": "rDxJNbV23mu9xsWoQHoBqZQvc77YcbJXwb"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "12",
+      "account": "rfL1mn4VTCoHdhHhHMwqpShCFUaDBRk6Z5"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "13",
+      "account": "rwa7YXssGVAL9yPKw6QJtCen2UqZbRQqpM"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "14",
+      "account": "rNcAdhSLXBrJ3aZUq22HaNtNEPpB5fR8Ri"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "21",
+      "account": "r4G689g4KePYLKkyyumM1iUppTP4nhZwVC"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "19",
+      "account": "rJo4m69u9Wd1F8fN2RbgAsJEF6a4hW1nSi"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "20",
+      "account": "rLgn612WAgRoZ285YmsQ4t7kb8Ui3csdoU"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "18",
+      "account": "rs48xReB6gjKtTnTfii93iwUhjhTJsW78B"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "17",
+      "account": "rJWbw1u3oDDRcYLFqiWFjhGWRKVcBAWdgp"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "16",
+      "account": "rMNUAfSz2spLEbaBwPnGtxTzZCajJifnzH"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "15",
+      "account": "r38a3PtqW3M7LRESgaR4dyHjg3AxAmiZCt"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "1",
+      "account": "raQwCVAJVqjrVm1Nj5SFRcX8i22BhdC9WA"
+    },
+    {
+      "exchange": "UPbit",
+      "label": "27",
+      "account": "rsrimBKa6DKAgkyTHAQjjKnCm4PPxU3X76"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "32",
+      "account": "rHJgQ4Cbg7vACGVuGusaKfmr2nheCRefBS"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "20",
+      "account": "rwUVTve5HBJc6n9zFpwjiV7TeyQGCNSqm6"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "19",
+      "account": "rpXzLHyzzYFm8hMxwxsEmvwo18C5JExJrb"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "18",
+      "account": "rJc9UiWRn3sCseQNkbz9o2wRwvZCvDacmb"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "17",
+      "account": "rHYCaboAppq24UjHRqQddCPDtNus6idGxK"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "16",
+      "account": "rMy2wJbmynqvKKCdnZ16ZqEhPbc9dk9aKp"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "14",
+      "account": "r3Mbwdryx6EZNzVFe2hJn1kPoLuAUx61Dk"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "31",
+      "account": "r4SZcNFQ1u3xfQp5WG9WUHUSPyRgdsZaZq"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "15",
+      "account": "rhQRZdvzgk2B6TFLHgdXYskyTiw9HDTwbF"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "22",
+      "account": "rsAjBadfFYnAwk1Qr2Yny4f43CeuDREUSF"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "21",
+      "account": "rp5t4u3Kz5dJcyYk7m9tmh2XmUXuC7FGrf"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "23",
+      "account": "rDTMtAjJCLyA6BpU1yEs814mcdXE8C1qqC"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "24",
+      "account": "r9nuyqYcRUCL7XW6KT43Rzv4NLwRNkrcWy"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "25",
+      "account": "rh9dKssqezabzyYtnX3QQFxdENgTXxNVMc"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "27",
+      "account": "rPDhSK8Y9pst6CqYeegov9sHM3q32hErpX"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "28",
+      "account": "ra2SaHLdcJx5euHLXXQD892nkwMoc696kG"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "29",
+      "account": "raDsWi7wfWwNJSenA2aK2xLQEqne4zhXu3"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "12",
+      "account": "rsXT3AQqhHDusFs3nQQuwcA1yXRLZJAXKw"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "26",
+      "account": "raKVM4iTJeoEnhK64xXYpHvZtRBxFtpqHD"
+    },
+    {
+      "exchange": "Uphold",
+      "label": "30",
+      "account": "rKa2YAZEghwB4nz3bPfV2URmDjrxWfzneA"
+    },
+    {
+      "exchange": "WhiteBIT",
+      "label": "Hot",
+      "account": "rnBKit9uv2L3pH8HQwPKpDJhhwACKct3ro"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "4",
+      "account": "rhWVCsCXrkwTeLBg6DyDr7abDaHz3zAKmn"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "5",
+      "account": "r4ioJbMj8nirgJvk6p2cnWxrXTVzgmNKZR"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "6",
+      "account": "rCqe9kZJvUcQv4VN4pGLBbkLXksgcxtco"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "7",
+      "account": "rKyQvmNav4AKQsHF6JaRBLwYXooaxhaFrw"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "8",
+      "account": "rHrsgTEC4PGHeYbAvTnCrdqN8XRwwNdXtA"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "9",
+      "account": "rfvyfAMEPcDgXfQaybyPjHNQsHDfN11w2d"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "10",
+      "account": "rh95aURGn6AtuFT6gaQx4z6JVyVATiuecu"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "11",
+      "account": "rLnxFJneCKwJ9tye2xdFdW45JLFrpGkT9m"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "12",
+      "account": "rMfX38RdCCHGRUZ5u97YNJqoW7Pay6hfoe"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "13",
+      "account": "r5WKqzsVRSbw9goiR7p7z5bGSrZffmALd"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "14",
+      "account": "rDYU1VVzoFgpbERRozvBPmjMBLn1Bhnnt9"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "15",
+      "account": "rQKrJKKKpKnpJujtGKnXaCSuZ1bJR9dQvd"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "16",
+      "account": "rG9AarzAZTD8bZHrKSoNnsniroteDrmt6u"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "17",
+      "account": "rHmNtAPWN5A3QRhgqtJoU4xAZzYv8KfdJk"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "18",
+      "account": "rKN55tLzJ2BrLh8o344cdzvDngYx999uft"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "19",
+      "account": "rBRtFJJEX5TimQxZK732MjsDnvwSM92pKW"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "20",
+      "account": "ra4Jfz4Ei1JaDnHyRHq92WU1KZWm8MZbuJ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "21",
+      "account": "rJoYThWLoGM2PQV9vtxaymCmTSMxN6ggWf"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "22",
+      "account": "rQwvnQ3ub44ncfd6pDAKWn8QUcAMdWunbY"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "23",
+      "account": "rh8LkVkbeVj2tWFcjiPXEGDGPJkasPvqFC"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "24",
+      "account": "rKoqfXHngCJeeHAYTeHcMa7ZVnSxMzdnqq"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "25",
+      "account": "rsUeRhbxDuxT1zq5UXcrvgugxKJrKA8dEc"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "26",
+      "account": "rEYCB6oPE5BpbAWiYP4cxAQyUsAStmYmUj"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "27",
+      "account": "ra9AirmDAA32Jhjm4Q2sc8QSYxFynfUg7z"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "28",
+      "account": "rf6JtCnMvaucQcahxDPbomdZD4YicCqGco"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "29",
+      "account": "rHHrHMTUcuqSWrsd7ptucsEtSKVW3dmg4o"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "30",
+      "account": "r38jHxqpcTZ3W45qrRfBD8pUh584SVTPFQ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "31",
+      "account": "rU7SQTv46KT1zrMNv6YVawZWwAmo4gZLuB"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "32",
+      "account": "rwQusXXMjsUn622L3ZEpne7ZegSCF1C9fi"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "33",
+      "account": "rfP3GmGjrmjzRME2JSmge6HZXXcfYJMu5L"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "34",
+      "account": "r3zJ7yDcKbDedRC61nSiSem1xaFESMxkfp"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "35",
+      "account": "r4KHFfT8LNpu3p9yWEAPifHTB1vxYb8Prh"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "36",
+      "account": "rJrcX6iwrJuZ4ZaWwyHEQVupyVVbGVMwQP"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "37",
+      "account": "rF6ZjrrRekxJJ6b9EtD6FTskbGKNHLo4E"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "38",
+      "account": "rpXehUUG1y4nPcavV74CX5XzFouhYEuEBG"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "39",
+      "account": "rEMVuhGieNS5fw2wy9o8zWKZGCd7SDPGNp"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "40",
+      "account": "rK9knTdMPo2L3vuPwTSiTGCMXhCX8GvLtD"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "41",
+      "account": "rnBorAVkQWBJRByKfrwtRQEfNvbsoM7MQA"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "42",
+      "account": "rLyDB3T5hQWV9apJuuUn23m7zRhSs4gwrU"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "43",
+      "account": "rNb78Jpo2NrrvXB95Mu5r327oNQcyKCFBM"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "44",
+      "account": "rf6AAkcG6Qk1JMP114BVr4pivgM8QH7eTJ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "45",
+      "account": "rD34s5crbKvcf8PfPun3cTrnAkQrm1UnqT"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "46",
+      "account": "rf7vQBbnngHYFh7J4h2WpyoXhMhs3S5ks1"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "47",
+      "account": "rBZYzNvdPqS1ywL5uRZBrZamy6CwEgqpF7"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "48",
+      "account": "rUCisgEAzRJ6SZW5iUGbUd22cDLLE3XHYb"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "49",
+      "account": "rEAjiUJkfcYhvD14ZhLW8wUpfux5Yi2wg5"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "50",
+      "account": "rEuHoFLxa54BR83B7rJudvQG1sWjK2idDt"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "51",
+      "account": "refwKK9QnRfAchRsRrABStHA1wv8Q3kzZ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "52",
+      "account": "r3rWg3hEpicGT2h3i7aDHZ4kzfiYYWbXNQ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "53",
+      "account": "rUwXPwnRjXwrxHQ6e49iy9ZxwFumHporQe"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "54",
+      "account": "rwTi9r6M8AKqQJFEQWLFABp62EstTUbet8"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "55",
+      "account": "r4FXuSk8BhbtjHeQnFVzaheREc4jRnyy2Q"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "56",
+      "account": "rEoePAacBgKHAZUyscGfABJrTib8i5pMNm"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "57",
+      "account": "rDXEEuAojAgXXPxTnoBRRGFVGreqzne6ai"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "58",
+      "account": "r9cwq1qsLsgEA2E5nzW1NtcxnNGLd9winv"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "59",
+      "account": "rp4bUBhQ3NTDarnXXqxruDVxu5nED8i1DD"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "60",
+      "account": "rn9iNBjC5EpZPuRaQHLRzyWSvpupzLfbci"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "61",
+      "account": "r4e7BQJJqJsT7bh22xpnZKpZ8HPgJKauDa"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "62",
+      "account": "rE4JqNB9nALkVx9oueQCruacmFvcQLJgHe"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "63",
+      "account": "rD9fQGQLffEdpYtxYS8WfRX6qwGXrCcrfN"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "64",
+      "account": "rBEjXcaWyWWVApD2KRabPLqEtdSU9sRqdy"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "65",
+      "account": "rnMf2652PqzCrnweGratdUHpRdyJpgk8KT"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "66",
+      "account": "raFXfCJv2vHbXtFhyarhovm2nFe8LofaM1"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "67",
+      "account": "r4V2XA3pD89znBVbAJ13mNj4gpJQzC9qPJ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "68",
+      "account": "raMu8SXhKgcZua5Dnpjv5vNxPLRDcgB3Ug"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "69",
+      "account": "r5R26y7uNNKbTZJLomoooXEma7LpKcNjV"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "70",
+      "account": "rLmpSNYQUAh37EoXVP9yLb4YGvPZmZCf6P"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "71",
+      "account": "rNcbEeLL4VXnwNWvn6h6UZwevntkj58WC"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "72",
+      "account": "rEDwhwsoqYnakNLXnPqyVUwN1pGvWhe9xf"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "73",
+      "account": "rNvA52EvnR96pxp4rMEG81cgqUs3sFZ8qt"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "74",
+      "account": "rLjD7foqEfqqRS1hvj2AeW9yVEbrWf3xR5"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "75",
+      "account": "rHHzSu3XQW1GU7wHQse44fpMojw3VNzky2"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "76",
+      "account": "rN7jH3yQor92AXCeEzkqsweNisptPacQP6"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "77",
+      "account": "raNQWPpXPKpm9VEKQEeHM6bgdTLMcYWptc"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "78",
+      "account": "rUh7XnUtaZKgm4MCXtDb9hgoQFopvVS54N"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "79",
+      "account": "rLmg7KqVHrT198gyywy1WfdfkUkiPA7Gr7"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "80",
+      "account": "rnU7RWiJ9ov7M35xDGAbqYPGX5DoPXv4py"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "81",
+      "account": "rBDHJBMUmPDWNJs7CLoCVz8XyNXugBzbGc"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "82",
+      "account": "rGTtGv2rcQj4gvpQER3vWFh4ytzaY1fWkB"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "83",
+      "account": "rDqKUhYB7wDqUuRsqGtkCrrCLatjR5A9RJ"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "84",
+      "account": "rGybuUgDnwnX95jqhYb4Ab8aWrqNE1Gs4J"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "85",
+      "account": "rs3eYdL11TQoMiGefKVSow9b9xLfeKXk9v"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "86",
+      "account": "rhfTic22GATFMi31RoCuE3w8svEQAJgC8i"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "87",
+      "account": "rUYwHaN5QfpwaPjTpFrC9Vde9dSvCKbETe"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "88",
+      "account": "rEKoEZqrowAYQ8sF9jP2mnHyjwD2LMzg76"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "89",
+      "account": "rNw5R7KTTM5WaCsvLoAf8CgHALF6xLmHS"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "90",
+      "account": "rDxRRKJ39WBE3CV8qBxP7iPUScEmicZMRg"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "91",
+      "account": "rDxSQYR1QS7LtAPQMunu8hQWsND8Caurnk"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "92",
+      "account": "rnSjoZrAyPNtujPgFiei4BRRHHTSFqYaXM"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "93",
+      "account": "ra6cccaZsb4Q5u9irgoaY9xbmYicYEJeBi"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "94",
+      "account": "rHCoU7zAPr5babtG7J3fiL67xjdjH93r3L"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "95",
+      "account": "rn6v3NMLDE2KdHb2t4E23kBuRiGvfDEaq6"
+    },
+    {
+      "exchange": "bitFlyer",
+      "label": "96",
+      "account": "rG94GLDbtti5FZSWoHKUDKTcpGDdiipCT8"
+    },
+    {
+      "exchange": "bitbank",
+      "label": "2",
+      "account": "rw7m3CtVHwGSdhFjV4MyJozmZJv3DYQnsA"
+    }
+  ],
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지. 거래소 지갑 목록은 2026-10-22 라벨 기준이라 분기마다 다시 확인"
+}

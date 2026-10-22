@@ -1,0 +1,327 @@
+{
+  "weeks": {
+    "2025-12-01": {
+      "judged": true,
+      "net_usd": 122196137,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2025-12-08": {
+      "judged": true,
+      "net_usd": 72276538,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2025-12-15": {
+      "judged": true,
+      "net_usd": 80744372,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2025-12-22": {
+      "judged": true,
+      "net_usd": 53415008,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2025-12-29": {
+      "judged": true,
+      "net_usd": 40086542,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-01-05": {
+      "judged": true,
+      "net_usd": 9152865,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-01-12": {
+      "judged": true,
+      "net_usd": 31589273,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-01-19": {
+      "judged": true,
+      "net_usd": 14964414,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-01-26": {
+      "judged": true,
+      "net_usd": 39019254,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-02-02": {
+      "judged": true,
+      "net_usd": 49054572,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-02-09": {
+      "judged": true,
+      "net_usd": 11210608,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-02-16": {
+      "judged": true,
+      "net_usd": 4028411,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-02-23": {
+      "judged": true,
+      "net_usd": 9494688,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03-02": {
+      "judged": true,
+      "net_usd": -1990560,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03-09": {
+      "judged": true,
+      "net_usd": -22355670,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03-16": {
+      "judged": true,
+      "net_usd": 470778,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03-23": {
+      "judged": true,
+      "net_usd": 2676582,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03-30": {
+      "judged": true,
+      "net_usd": -4552103,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-04-06": {
+      "judged": true,
+      "net_usd": 26908100,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-04-13": {
+      "judged": true,
+      "net_usd": 30190974,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-04-20": {
+      "judged": true,
+      "net_usd": 7476884,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-04-27": {
+      "judged": true,
+      "net_usd": 11142463,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-05-04": {
+      "judged": true,
+      "net_usd": 32608353,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-05-11": {
+      "judged": true,
+      "net_usd": 52361004,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-05-18": {
+      "judged": true,
+      "net_usd": 22708400,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-05-25": {
+      "judged": true,
+      "net_usd": 18416463,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06-01": {
+      "judged": true,
+      "net_usd": -2243131,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06-08": {
+      "judged": true,
+      "net_usd": 11315971,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06-15": {
+      "judged": true,
+      "net_usd": 9410388,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06-22": {
+      "judged": true,
+      "net_usd": 24431632,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06-29": {
+      "judged": true,
+      "net_usd": 13028946,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-07-06": {
+      "judged": true,
+      "net_usd": -7040188,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-07-13": {
+      "judged": true,
+      "net_usd": 6959488,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-07-20": {
+      "judged": true,
+      "net_usd": 7402710,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-07-27": {
+      "judged": true,
+      "net_usd": 16469115,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08-03": {
+      "judged": true,
+      "net_usd": 73497,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08-10": {
+      "judged": true,
+      "net_usd": 2061005,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08-17": {
+      "judged": true,
+      "net_usd": 41252868,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08-24": {
+      "judged": true,
+      "net_usd": 110169429,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08-31": {
+      "judged": true,
+      "net_usd": 5619049,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-09-07": {
+      "judged": true,
+      "net_usd": 16064043,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-09-14": {
+      "judged": true,
+      "net_usd": 8636990,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-09-21": {
+      "judged": true,
+      "net_usd": 78733825,
+      "met": true,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-09-28": {
+      "judged": true,
+      "net_usd": 787513,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-10-05": {
+      "judged": true,
+      "net_usd": 11274450,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-10-12": {
+      "judged": true,
+      "net_usd": -2334570,
+      "met": false,
+      "sent": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    }
+  },
+  "updated_at": "2026-10-22T22:41:13.375456+09:00"
+}

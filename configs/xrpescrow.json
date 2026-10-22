@@ -1,0 +1,42 @@
+{
+  "name": "xrpescrow",
+  "title_prefix": "[XRP-ESCROW]",
+  "display": "리플 에스크로 월간 재잠금률 (재잠금 XRP / 그 달 에스크로 해제 XRP)",
+  "created_at": "2026-10-22T23:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "approval": "사용자 채팅 승인 2026-10-22 22:09 KST 요청(XRP 지표 3개, 조건 알림, GitHub schedule만, cron-job.org 등록 없음, 테스트 발송 없음).",
+  "schedule_kst": "평일 09:00 (morning 슬롯). 확정 판정: 다음 달 첫 평일 09:00에 지난달 전체. 중간 판정: 매달 3일 이후 평일 09:00에 이번 달 누적(80% 이상일 때만 미리 알림)",
+  "schedule_note": "새 cron 없음. 해제는 매달 1일 00:00 UTC(한국 09:00)에 풀리고 재잠금은 보통 같은 날, 늦으면 그 달 안에 들어옴. 재잠금 합계는 달이 갈수록 늘기만 하므로 월중 80% 이상은 미리 알려도 뒤집히지 않음. 70% 미만은 달이 끝나야 확정이라 다음 달 첫 평일 09:00에만 판정. 달 경계는 UTC 기준(원장 close_time).",
+  "alert_policy": "condition_only",
+  "relock_high_pct": 80.0,
+  "relock_low_pct": 70.0,
+  "interim_from_day": 3,
+  "trace_min_xrp": 10000000,
+  "ripple_accounts": {
+    "r9UUEXn3cx2seufBkDa8F86usfjWM6HiYp": "Ripple 에스크로 보유(2026-10 해제)",
+    "rB3WNZc45gxzW31zxfXdkx8HusAhoqscPn": "Ripple 에스크로 보유(2026-10 해제)",
+    "r9NpyVfLfUG8hatuCCHKzosyDtKnBdsEN3": "Ripple 에스크로 보유/재잠금 자금 이동(2026-07~09 해제)",
+    "rMhkqz3DeU7GUUJKGZofusbrTwZe6bDyb1": "Ripple 에스크로 보유/재잠금 자금 이동(2026-09 해제)",
+    "rBg2FuZT91C52Nny68houguJ4vt5x1o91m": "Ripple 운영 지갑(해제분 일부 수령)",
+    "rDdXiA3M4mYTQ4cFpWkVXfc2UaAXCFWeCK": "Ripple 에스크로 보유(2027-08~)",
+    "rKDvgGUsNPZxsgmoemfrgXPS2Not4co2op": "Ripple 에스크로 보유(2027-08~)",
+    "rKwJaGmB5Hz24Qs2iyCaTdUuL1WsEXUWy5": "Ripple 재잠금 계정(2025~2026)",
+    "rNASJdZjY9dToHnNURi3HAUku3duPwbtD1": "Ripple 재잠금 계정(2026)",
+    "rU9qmGM4Y6WWDhiNzkwVKBwwatcoE7YL1T": "Ripple 재잠금 계정(2026)",
+    "rN8pqRwLYuuvY7pUHurybPC8P6rLqVsu6o": "Ripple 재잠금 계정(2026-01~06, seed 때 자동 발견)"
+  },
+  "accounts_note": "2026-10-22 원장에서 확인: 2026-10-01 해제 4건(r9UUEX, rB3WNZ 각 5억)과 재잠금 2건(rNASJ 3억, rU9qmG 4억)이 xrp-insights 표와 일치. 이 목록 계정이 그 달 1천만 XRP 이상 보낸 상대가 같은 달 자기 앞 에스크로를 만들면 재잠금으로 세고 state learned_accounts 에 추가.",
+  "sources": {
+    "xrpl": [
+      "https://xrplcluster.com/",
+      "https://xrpl.ws/",
+      "https://s1.ripple.com:51234/",
+      "https://s2.ripple.com:51234/"
+    ],
+    "method": "XRPL 공개 JSON-RPC: ledger(달 경계 원장 찾기), account_tx(계정별 그 달 거래). 해제 = 목록 계정 소유 Escrow 가 EscrowFinish(tesSUCCESS)로 지워진 양. 재잠금 = 목록 계정(또는 그 달 목록 계정에서 1천만 XRP 이상 받은 계정)의 자기 앞 EscrowCreate(tesSUCCESS) 양."
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지. Ripple 이 완전히 새 계정 묶음으로 바꾸면 계정 목록을 다시 확인"
+}

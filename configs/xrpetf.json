@@ -1,0 +1,25 @@
+{
+  "name": "xrpetf",
+  "title_prefix": "[XRP-ETF]",
+  "display": "미국 현물 XRP ETF 주간 순유입 합계",
+  "created_at": "2026-10-22T23:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "approval": "사용자 채팅 승인 2026-10-22 22:09 KST 요청(XRP 지표 3개, 조건 알림, GitHub schedule만, cron-job.org 등록 없음, 테스트 발송 없음).",
+  "schedule_kst": "일요일 21:00 (portlight 슬롯) + 평일 09:00 (morning 슬롯, 아직 판정 안 된 주만 따라잡기)",
+  "schedule_note": "새 cron 없음. 미국 금요일 장 마감(한국 토요일 05:00~06:00) 뒤 발행사 보유량이 갱신되고 XRP Insights 행이 확정되므로 일요일 21:00 portlight 슬롯에서 직전 주(월~금)를 판정. 일요일 실행이 늦거나 빠지거나 금요일 행이 아직 없으면 월요일 09:00 morning 슬롯이 다시 봄. 같은 주는 1번만 판정(state weeks). 화~금 morning 실행은 이미 판정한 주라 아무것도 안 함.",
+  "alert_policy": "condition_only",
+  "threshold_usd": 40000000,
+  "exclude_tickers": [
+    "BITW"
+  ],
+  "exclude_note": "BITW(Bitwise 10 Crypto Index Fund)는 현물 XRP ETF가 아니라서 합계에서 뺌.",
+  "sources": {
+    "flows": "https://xrp-insights.com/data/xrp-etf-flows.csv (XRP Insights 무료 데이터셋, 발행사 웹사이트 보유량 기준 펀드별 일별 순유입 USD, 출처 표기 조건)",
+    "flows_note": "flow_status=computed 행만 합산. excluded(예: GXRP 그레이스케일, 출처가 흐름을 계산하지 않음) 또는 빈 칸은 0으로 넣지 않고 본문에 '제외'로 표시하고 그 펀드의 주간 보유량 변화를 같이 적음.",
+    "not_used": "SoSoValue(서버에서 403, API는 키 필요), Farside(XRP 페이지 없음), ByKaranteli(프로그램 접근은 API 키 필요) 사용 안 함"
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지. 기준 4천만 달러는 2026-10-22 사용자 지정"
+}

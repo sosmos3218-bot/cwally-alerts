@@ -1,0 +1,239 @@
+{
+  "months": {
+    "2026-01": {
+      "start": "2026-01-01 00:00 UTC",
+      "end": "2026-02-01 00:00 UTC",
+      "ledgers": [
+        101257403,
+        101942228
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 500백만",
+        "rMhkqz 300백만",
+        "rMhkqz 200백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 100백만(~2028-11)",
+        "rN8pqR 500백만(~2028-11)",
+        "rN8pqR 100백만(~2028-12)"
+      ],
+      "learned": [
+        "rN8pqRwLYuuvY7pUHurybPC8P6rLqVsu6o"
+      ],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-02": {
+      "start": "2026-02-01 00:00 UTC",
+      "end": "2026-03-01 00:00 UTC",
+      "ledgers": [
+        101942229,
+        102562361
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 400백만",
+        "r9NpyV 100백만",
+        "rMhkqz 400백만",
+        "rMhkqz 100백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 300백만(~2028-12)",
+        "rN8pqR 400백만(~2028-12)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-03": {
+      "start": "2026-03-01 00:00 UTC",
+      "end": "2026-04-01 00:00 UTC",
+      "ledgers": [
+        102562362,
+        103252852
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 200백만",
+        "r9NpyV 300백만",
+        "rMhkqz 500백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 200백만(~2028-12)",
+        "rN8pqR 500백만(~2029-01)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-04": {
+      "start": "2026-04-01 00:00 UTC",
+      "end": "2026-05-01 00:00 UTC",
+      "ledgers": [
+        103252853,
+        103922910
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 500백만",
+        "rMhkqz 500백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 500백만(~2029-01)",
+        "rN8pqR 200백만(~2029-02)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-05": {
+      "start": "2026-05-01 00:00 UTC",
+      "end": "2026-06-01 00:00 UTC",
+      "ledgers": [
+        103922911,
+        104615295
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 100백만",
+        "r9NpyV 400백만",
+        "rMhkqz 200백만",
+        "rMhkqz 300백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 400백만(~2029-02)",
+        "rN8pqR 300백만(~2029-02)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-06": {
+      "start": "2026-06-01 00:00 UTC",
+      "end": "2026-07-01 00:00 UTC",
+      "ledgers": [
+        104615296,
+        105288795
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 400백만",
+        "r9NpyV 100백만",
+        "rMhkqz 500백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 100백만(~2029-02)",
+        "rKwJaG 100백만(~2029-03)",
+        "rN8pqR 500백만(~2029-03)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-07": {
+      "start": "2026-07-01 00:00 UTC",
+      "end": "2026-08-01 00:00 UTC",
+      "ledgers": [
+        105288796,
+        105986703
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 500백만",
+        "rMhkqz 200백만",
+        "rMhkqz 300백만"
+      ],
+      "relocked_rows": [
+        "rKwJaG 400백만(~2029-03)",
+        "rNASJd 300백만(~2029-04)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-08": {
+      "start": "2026-08-01 00:00 UTC",
+      "end": "2026-09-01 00:00 UTC",
+      "ledgers": [
+        105986704,
+        106677545
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 500백만",
+        "rMhkqz 300백만",
+        "rMhkqz 200백만"
+      ],
+      "relocked_rows": [
+        "rNASJd 200백만(~2029-04)",
+        "rU9qmG 500백만(~2029-04)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    },
+    "2026-09": {
+      "start": "2026-09-01 00:00 UTC",
+      "end": "2026-10-01 00:00 UTC",
+      "ledgers": [
+        106677546,
+        107347788
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9NpyV 500백만",
+        "rMhkqz 100백만",
+        "rMhkqz 400백만"
+      ],
+      "relocked_rows": [
+        "rNASJd 200백만(~2029-05)",
+        "rU9qmG 500백만(~2029-05)"
+      ],
+      "learned": [],
+      "final": true,
+      "sent_hi": false,
+      "sent_lo": false,
+      "note": "seed 2026-10-22 (발송 없음)"
+    }
+  },
+  "learned_accounts": [
+    "rN8pqRwLYuuvY7pUHurybPC8P6rLqVsu6o"
+  ],
+  "updated_at": "2026-10-22T22:33:44.754998+09:00",
+  "seed_note": "2026-10-22 seed: 2026-01~09 온체인 계산(모두 70.0%, xrp-insights 월별 표와 일치). 2025-10~12 는 그때 쓰던 계정이 목록에 없어 해제/재잠금이 덜 잡혀 기록에서 뺌. 발송 없음."
+}
