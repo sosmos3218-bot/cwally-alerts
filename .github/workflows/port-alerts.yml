@@ -224,17 +224,8 @@ on:
     # memswing oneshot_kst (KST→UTC): 2026-10-19 18:30, 19:30. 10/19 확정 수급 스윙 진입 1회 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "30 9 19 10 *"
     - cron: "30 10 19 10 *"
-    # hmcq3 oneshot_kst (KST→UTC): 10-22~10-28 16:26, 10-29/10-30 15:10, 17:10, 11-02 09:20. 현대차 3Q 실적+2우B 배당 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
-    - cron: "26 7 22 10 *"
-    - cron: "26 7 23 10 *"
-    - cron: "26 7 26 10 *"
-    - cron: "26 7 27 10 *"
-    - cron: "26 7 28 10 *"
-    - cron: "10 6 29 10 *"
-    - cron: "10 8 29 10 *"
-    - cron: "10 6 30 10 *"
-    - cron: "10 8 30 10 *"
-    - cron: "20 0 2 11 *"
+    # hmcq3 oneshot_kst (KST→UTC): 2026-10-29 14:25 (IR 컨퍼런스콜 14:10 + 15분). 현대차 3Q 실적+2우B 배당 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "25 5 29 10 *"
     # k227540 oneshot_kst (KST→UTC): 2026-10-21 16:40, 18:10, 10-22 15:52, 10-23 15:52. 삼바 3Q 실적 후 227540 1차 매수 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "40 7 21 10 *"
     - cron: "10 9 21 10 *"
@@ -494,7 +485,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 14 14 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 15 10 *" ]; then JOB=kosreb
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             elif [ "${{ github.event.schedule }}" = "30 9 19 10 *" ] || [ "${{ github.event.schedule }}" = "30 10 19 10 *" ]; then JOB=memswing
-            elif [ "${{ github.event.schedule }}" = "26 7 22 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 23 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 26 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "26 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 6 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 8 30 10 *" ] || [ "${{ github.event.schedule }}" = "20 0 2 11 *" ]; then JOB=hmcq3
+            elif [ "${{ github.event.schedule }}" = "25 5 29 10 *" ]; then JOB=hmcq3
             elif [ "${{ github.event.schedule }}" = "40 7 21 10 *" ] || [ "${{ github.event.schedule }}" = "10 9 21 10 *" ] || [ "${{ github.event.schedule }}" = "52 6 22 10 *" ] || [ "${{ github.event.schedule }}" = "52 6 23 10 *" ]; then JOB=k227540
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
             elif [ "${{ github.event.schedule }}" = "25 22 9 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 11 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 12 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 16 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "25 22 19 11 *" ]; then JOB=crwvq3
