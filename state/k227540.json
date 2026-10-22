@@ -1,14 +1,26 @@
 {
   "earn_notified": true,
   "wait_notified": false,
-  "verdict_notified": false,
+  "verdict_notified": true,
   "last_problem_key": null,
   "earn_id": "162312760",
   "op_eok": 6401,
   "consensus_eok": 6114,
   "base": {
-    "date": "2026-10-21",
-    "close": 18485.0
+    "date": "2026-10-20",
+    "close": 18395.0
   },
-  "updated_at": "2026-10-21T16:40:20+09:00"
+  "updated_at": "2026-10-22T15:52:13+09:00",
+  "post": [
+    {
+      "date": "2026-10-21",
+      "close": 18485.0
+    },
+    {
+      "date": "2026-10-22",
+      "close": 18080.0
+    }
+  ],
+  "premium": -0.05,
+  "verdict": "execute"
 }
