@@ -292,7 +292,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -360,10 +360,10 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "job=dearattr or sena only. dry = print, no ntfy | auto"
+        description: "job=dearattr, sena or mktpulse only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot)"
         default: dry
         type: choice
-        options: [dry, auto]
+        options: [dry, auto, force]
       kosreb_mode:
         description: "job=kosreb only. dry = print, no ntfy, no state | auto | force"
         default: dry
@@ -1081,6 +1081,13 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: python scripts/sena_monitor.py "${ONEOFF_MODE:-auto}"
+      - name: Run mktpulse
+        if: steps.pick.outputs.job == 'mktpulse'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: python scripts/mktpulse_monitor.py "${ONEOFF_MODE:-auto}"
       - name: Run manh
         if: steps.pick.outputs.job == 'manh'
         env:

@@ -26,6 +26,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon"}` |
 | flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
 | 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
+| mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
 
 ```
 POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches
@@ -38,6 +39,15 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 성공 응답은 `204 No Content`. `gh`가 있으면 `gh workflow run cwally-port-alerts -R sosmos3218-bot/cwally-alerts -f job=morning`과 같다.
 
 토큰: fine-grained PAT, 저장소 `cwally-alerts`만, **Actions: Read and write** (Metadata read는 자동). 다른 권한은 주지 않는다.
+
+## 반복 원샷 트리거 (mktpulse, 2026-10-22 승인)
+
+- cron-job.org 반복 잡 1개: 시간대 Asia/Seoul, 분 0, 시 10, 11, 13, 15, 월~금, 만료 2026-11-05 15:59:59.
+  URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"oneshot"}}`.
+- 무엇을 보낼지는 picker가 정한다. `oneshot_kst`에 없는 시각(휴장일, 11/05 이후)이면 `job=skip`.
+- 같은 시각의 다른 원샷도 이 잡 하나로 같이 돈다. `cronjob_register.py`는 같은 시각에 같은 URL 잡이 있으면 새 원샷을 만들지 않는다(skip).
+- GitHub schedule 백업 cron은 두지 않는다(장중 알림이라 2~8시간 늦은 실행은 의미가 없다). 늦게 온 실행은 스크립트 stale guard(45분)로 조용히 끝난다.
+- 이 반복 잡은 `cronjob-register.yml` delete 모드로 지워지지 않는다(원샷 검사에 걸림). 콘솔에서 직접 끄거나 지운다.
 
 ## 원샷 (`job=oneshot`)
 

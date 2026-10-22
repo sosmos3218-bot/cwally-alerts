@@ -1,0 +1,162 @@
+{
+  "name": "mktpulse",
+  "title_prefix": "[MARKET]",
+  "display": "장중 반도체, 전력기기 수급 + 주요 종목 가격 + 메타 뮤즈 코멘트",
+  "title_note": "거래일 장중 4회(10:00, 11:00, 13:00, 15:00 KST) 시장 점검. 코스피, 코스닥 잠정 투자자 수급, 반도체(네이버 업종 278)와 전기장비(306) 등락과 상승/하락 종목 수, 바스켓 종목 현재가, 바스켓 외국인/기관 순매수(직전 확정일, 오늘 잠정 행이 있으면 그것), 메타 뮤즈 관련 새 증권사 리포트와 뉴스. 매매 신호가 아니다.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "mktpulse",
+  "schedule_kst": "거래일 10:00, 11:00, 13:00, 15:00 (2026-10-22 ~ 2026-11-05)",
+  "schedule_note": "정시 실행은 cron-job.org 반복 잡(평일 10, 11, 13, 15시 Asia/Seoul, body {\"job\":\"oneshot\"})이 port-alerts.yml을 dispatch하고 oneshot_pick이 아래 oneshot_kst 중 due인 것을 고른다. GitHub schedule cron은 2~8시간 늦어 장중 알림에 쓸모가 없으므로 넣지 않았다(사용자 지시 2026-10-22). 늦게 온 실행은 stale guard로 조용히 끝난다.",
+  "cron_approved": "2026-10-22",
+  "cron_approval_text": "반복 cron-job.org 잡 4슬롯과 oneoff_mode 공유를 승인할게, 진행해 줘",
+  "cron_approval_kst": "2026-10-22 09:43",
+  "cron_utc": "0 1,2,4,6 * * 1-5",
+  "cron_where": "cron-job.org 반복 잡(Asia/Seoul 기준 분 0, 시 10,11,13,15, 월~금). GitHub schedule 없음.",
+  "year_guard": 2026,
+  "stale_min": 45,
+  "market_close_kst": "15:30",
+  "oneshot_kst": [
+    "2026-10-22 10:00",
+    "2026-10-22 11:00",
+    "2026-10-22 13:00",
+    "2026-10-22 15:00",
+    "2026-10-23 10:00",
+    "2026-10-23 11:00",
+    "2026-10-23 13:00",
+    "2026-10-23 15:00",
+    "2026-10-26 10:00",
+    "2026-10-26 11:00",
+    "2026-10-26 13:00",
+    "2026-10-26 15:00",
+    "2026-10-27 10:00",
+    "2026-10-27 11:00",
+    "2026-10-27 13:00",
+    "2026-10-27 15:00",
+    "2026-10-28 10:00",
+    "2026-10-28 11:00",
+    "2026-10-28 13:00",
+    "2026-10-28 15:00",
+    "2026-10-29 10:00",
+    "2026-10-29 11:00",
+    "2026-10-29 13:00",
+    "2026-10-29 15:00",
+    "2026-10-30 10:00",
+    "2026-10-30 11:00",
+    "2026-10-30 13:00",
+    "2026-10-30 15:00",
+    "2026-11-02 10:00",
+    "2026-11-02 11:00",
+    "2026-11-02 13:00",
+    "2026-11-02 15:00",
+    "2026-11-03 10:00",
+    "2026-11-03 11:00",
+    "2026-11-03 13:00",
+    "2026-11-03 15:00",
+    "2026-11-04 10:00",
+    "2026-11-04 11:00",
+    "2026-11-04 13:00",
+    "2026-11-04 15:00",
+    "2026-11-05 10:00",
+    "2026-11-05 11:00",
+    "2026-11-05 13:00",
+    "2026-11-05 15:00"
+  ],
+  "markets": [
+    "KOSPI",
+    "KOSDAQ"
+  ],
+  "sectors": [
+    {
+      "no": 278,
+      "name": "반도체"
+    },
+    {
+      "no": 306,
+      "name": "전기장비"
+    }
+  ],
+  "baskets": {
+    "반도체": [
+      {
+        "code": "005930",
+        "name": "삼성전자"
+      },
+      {
+        "code": "000660",
+        "name": "SK하이닉스"
+      },
+      {
+        "code": "042700",
+        "name": "한미반도체"
+      }
+    ],
+    "전력기기": [
+      {
+        "code": "010120",
+        "name": "LS ELECTRIC"
+      },
+      {
+        "code": "267260",
+        "name": "HD현대일렉트릭"
+      },
+      {
+        "code": "298040",
+        "name": "효성중공업"
+      }
+    ]
+  },
+  "muse": {
+    "research_categories": [
+      "반도체",
+      "IT",
+      "전기전자",
+      "기타",
+      "인터넷포탈",
+      "디스플레이",
+      "통신",
+      "휴대폰",
+      "전기장비"
+    ],
+    "research_pages": 2,
+    "research_days": 3,
+    "news_queries": [
+      {
+        "q": "(\"메타 뮤즈\" OR \"Meta Muse\" OR \"뮤즈 스파크\") (증권 OR 연구원 OR 애널리스트 OR 리포트 OR 목표주가 OR D램 OR 메모리 OR HBM OR 하이닉스 OR 삼성전자) when:2d",
+        "hl": "ko",
+        "gl": "KR",
+        "ceid": "KR:ko"
+      },
+      {
+        "q": "\"Meta Muse\" (analyst OR memory OR DRAM OR HBM OR \"SK hynix\" OR Samsung) when:2d",
+        "hl": "en-US",
+        "gl": "US",
+        "ceid": "US:en"
+      }
+    ],
+    "muse_re": "뮤즈|\\bMuse\\b",
+    "meta_re": "메타|\\bMeta\\b",
+    "topic_re": "증권|연구원|애널리스트|리포트|목표주가|목표가|투자의견|D램|디램|DRAM|메모리|HBM|반도체|하이닉스|삼성전자|SK hynix|Samsung|analyst|memory|chip|semiconductor|월가",
+    "block_sources": [
+      "Calgary Roughnecks"
+    ],
+    "block_re": "토토|카지노|마작|베트맨|슬롯머신|바카라|게임 설명|게임 소개",
+    "max_items": 4,
+    "keep_days": 14
+  },
+  "sources": [
+    "https://m.stock.naver.com/api/index/{KOSPI|KOSDAQ}/trend?bizdate=YYYYMMDD (억원, 장중 잠정)",
+    "https://m.stock.naver.com/api/stocks/industry/{278|306}?page=1&pageSize=1 (groupInfo)",
+    "https://polling.finance.naver.com/api/realtime/domestic/stock/{codes}",
+    "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=3 (순매수 주식 수)",
+    "https://m.stock.naver.com/api/research/{industry|company}?page=N&pageSize=50 + /api/research/{kind}/{id}",
+    "https://news.google.com/rss/search"
+  ],
+  "not_auto": [
+    "업종 단위 장중 투자자 수급은 무료 공개 소스가 없다(KRX는 로그인 필요). 업종은 등락률과 상승/하락 종목 수, 수급은 바스켓 종목 합으로 대신한다",
+    "바스켓 금액은 순매수 주식 수 x 종가(또는 현재가) 추정치다",
+    "뮤즈 코멘트는 제목, 요약 키워드로만 고른다. 원문 확인 필요"
+  ],
+  "ends_kst": "2026-11-05 15:30",
+  "ends_note": "장중 시장 점검 2주 운영, 11/5 15:00 슬롯이 마지막"
+}
