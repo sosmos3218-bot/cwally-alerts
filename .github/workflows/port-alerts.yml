@@ -289,6 +289,8 @@ on:
     - cron: "40 7 16 11 *"
     # cash30 oneshot_kst (KST→UTC): 2026-11-06 08:40. 남은 30% 현금 배분 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "40 23 5 11 *"
+    # k203780 daily KRX trading days 18:00 KST (after Mirae daily NAV). repeating cron approved 2026-10-22 (configs/k203780.json cron_approved)
+    - cron: "0 9 * * 1-5"
   workflow_dispatch:
     inputs:
       job:
@@ -296,7 +298,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -364,7 +366,7 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "job=dearattr, sena or mktpulse only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot)"
+        description: "job=dearattr, sena, mktpulse or k203780 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state)"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -509,6 +511,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
             elif printf '%s\n' "50 4 5 11 *" "12 7 5 11 *" "12 0 6 11 *" "40 7 16 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=oneshot
             elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
+            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 9 * * 1-5" ]; then JOB=k203780
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -524,7 +527,7 @@ jobs:
           }
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "$JOB" in
-              morning|afternoon|portlight|0090b0) ;;
+              morning|afternoon|portlight|0090b0|k203780) ;;
               *)
                 # late GitHub one-shot cron = fallback; skip if the on-time dispatch already ran it
                 sync_oneshot_marks
@@ -1207,6 +1210,16 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/k227540_monitor.py "${{ steps.pick.outputs.k227540_mode }}"
+      - name: Run k203780
+        if: steps.pick.outputs.job == 'k203780'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=install
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then MODE=auto; fi
+          python scripts/k203780_monitor.py "$MODE"
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
