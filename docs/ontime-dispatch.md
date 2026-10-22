@@ -26,7 +26,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon"}` |
 | flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
 | 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
-| k203780 (장 마감 뒤, k079900 같이) | 18:00 | 09:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 "cwally port after-close (18:00 KST)", 2026-10-22 18:07 승인) |
+| k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
 
 ```
@@ -50,13 +50,14 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 - GitHub schedule 백업 cron은 두지 않는다(장중 알림이라 2~8시간 늦은 실행은 의미가 없다). 늦게 온 실행은 스크립트 stale guard(45분)로 조용히 끝난다.
 - 이 반복 잡은 `cronjob-register.yml` delete 모드로 지워지지 않는다(원샷 검사에 걸림). 콘솔에서 직접 끄거나 지운다.
 
-## 장 마감 뒤 18:00 반복 잡 (k203780, 2026-10-22 18:07 승인)
+## 장 마감 뒤 19:00 반복 잡 (k203780, 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동)
 
-- cron-job.org 반복 잡 1개 "cwally port after-close (18:00 KST)": 시간대 Asia/Seoul, 분 0, 시 18, 월~금, 만료 없음.
+- cron-job.org 반복 잡 1개 8698629 "cwally port after-close (19:00 KST)": 시간대 Asia/Seoul, 분 0, 시 19, 월~금, 만료 없음.
+  처음엔 18:00이었지만 18:00에는 그날 기준가(NAV)가 아직 없어 19:00으로 옮김(`action=update_slot`, 이 잡의 제목과 시간만 바꿈).
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"k203780","oneoff_mode":"auto"}}`.
   `oneoff_mode=auto`가 없으면 기본값 `dry`로 돌아 발송이 안 되므로 꼭 넣는다.
 - 만든 방법: `cronjob-register.yml` `action=register_slot` (이 잡 하나만 만들 수 있음, 같은 제목이나 같은 시각 잡이 있으면 skip).
-- GitHub cron `0 9 * * 1-5`는 백업으로 남긴다. 늦게 온 백업은 k203780 state `last_sent_session`(같은 거래일 1번)과
+- GitHub cron `0 10 * * 1-5`(19:00 KST)는 백업으로 남긴다. 늦게 온 백업은 k203780 state `last_sent_session`(같은 거래일 1번)과
   k079900 state(`armed`/`fired_day`, `seen_acptno`)로 아무것도 다시 보내지 않는다. 두 실행은 concurrency 그룹으로 순서대로 돌고,
   뒤 실행은 앞 실행이 push한 state를 checkout한다. 휴장일 평일에도 잡은 돌지만 스크립트가 조용히 끝난다.
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).

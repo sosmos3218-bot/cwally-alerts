@@ -9,17 +9,19 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "job_id": "k203780",
-  "schedule_kst": "KRX 거래일 18:00",
-  "schedule_note": "장 마감 뒤 미래에셋 일별 기준가(NAV)가 나온 다음 하루 1번. GitHub schedule cron 0 9 * * 1-5 (UTC) = 평일 18:00 KST. 정시 실행은 cron-job.org 반복 잡이 dispatch(2026-10-22 18:07 승인), GitHub cron은 늦게 오는 백업. 새벽 6시 전 도착분은 전날 거래일로 처리. 휴장일(kr_calendar 또는 네이버에 그날 시세 없음)이면 보내지 않음. 같은 거래일은 한 번만(state last_sent_session).",
+  "schedule_kst": "KRX 거래일 19:00",
+  "schedule_note": "장 마감 뒤 미래에셋 일별 기준가(NAV)가 나온 다음 하루 1번. 평일 19:00 KST(18:00에는 NAV가 아직 없어 2026-10-22 18:29 승인으로 19:00 이동). 정시 실행은 cron-job.org 반복 잡 8698629가 dispatch, GitHub schedule cron 0 10 * * 1-5 (UTC)는 늦게 오는 백업. 새벽 6시 전 도착분은 전날 거래일로 처리. 휴장일(kr_calendar 또는 네이버에 그날 시세 없음)이면 보내지 않음. 같은 거래일은 한 번만(state last_sent_session).",
   "alert_policy": "daily_summary",
   "cron_approved": "2026-10-22",
   "cron_approval_text": "Schedule: weekdays (Korean trading days) after Korean market close, once the operator's daily NAV is available, around 18:00 KST (cron in UTC: 0 9 * * 1-5)",
   "cron_approval_kst": "2026-10-22 14:51",
-  "cron_utc": "0 9 * * 1-5",
-  "cron_where": "port-alerts.yml GitHub schedule 0 9 * * 1-5 (백업) + cron-job.org 반복 잡 \"cwally port after-close (18:00 KST)\" (정시, body {\"job\":\"k203780\",\"oneoff_mode\":\"auto\"})",
+  "cron_utc": "0 10 * * 1-5",
+  "cron_where": "port-alerts.yml GitHub schedule 0 10 * * 1-5 (백업) + cron-job.org 반복 잡 8698629 \"cwally port after-close (19:00 KST)\" (정시, body {\"job\":\"k203780\",\"oneoff_mode\":\"auto\"})",
   "ontime_approved": "2026-10-22",
   "ontime_approval_kst": "2026-10-22 18:07",
   "ontime_approval_text": "cron-job.org job so the 18:00 KST after-close run starts on time, same way as 09:00 / 15:20",
+  "time_change_approved_kst": "2026-10-22 18:29",
+  "time_change": "18:00 KST (cron 0 9 * * 1-5) -> 19:00 KST (cron 0 10 * * 1-5), cron-job.org 잡 8698629 이름 변경 포함",
   "market_close_kst": "15:40",
   "thresholds": {
     "etf_day_pct": 3.0,
@@ -53,5 +55,5 @@
   },
   "year_guard": null,
   "ends_kst": null,
-  "ends_note": "수동 해제 전까지 KRX 거래일 18:00. 상위 5종목 목록은 2026-10-22 기준이라 분기 리밸런싱(3, 6, 9, 12월) 뒤 다시 확인"
+  "ends_note": "수동 해제 전까지 KRX 거래일 19:00. 상위 5종목 목록은 2026-10-22 기준이라 분기 리밸런싱(3, 6, 9, 12월) 뒤 다시 확인"
 }

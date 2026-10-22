@@ -19,8 +19,8 @@
 | port afternoon | 평일 15:20 | square + silicon2 + … (afternoon 번들) |
 | flow | 평일 15:40 | KOSPI 수급 + secu_flow + kosbrk + … |
 | portlight | 일요일 21:00 | portlight |
-| k203780 | KRX 거래일 18:00 (cron-job.org 정시 + GitHub 백업) | TIGER 미국나스닥바이오 일일 요약 `[203780]` (+ k079900 장 마감 뒤 점검) |
-| k079900 | 평일 09:00 / 15:20 / 18:00 (기존 슬롯에 부착) | 전진건설로봇 가격 구간 + 정기보고서 영업이익률, 이벤트만 `[079900]` |
+| k203780 | KRX 거래일 19:00 (cron-job.org 정시 + GitHub 백업) | TIGER 미국나스닥바이오 일일 요약 `[203780]` (+ k079900 장 마감 뒤 점검) |
+| k079900 | 평일 09:00 / 15:20 / 19:00 (기존 슬롯에 부착) | 전진건설로봇 가격 구간 + 정기보고서 영업이익률, 이벤트만 `[079900]` |
 
 옮긴 레포 워크플로 중지: `steel-portfolio-ntfy`, `square-sell-alert`, `alux-q3-ntfy`, `grok-workspace` KOSPI flow.
 
