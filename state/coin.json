@@ -1,0 +1,11 @@
+{
+  "updated_at": null,
+  "buy_armed": true,
+  "break_armed": true,
+  "top_armed": true,
+  "pre_sent": false,
+  "post_sent": false,
+  "last_bar_date": null,
+  "last_close": null,
+  "fetch_fail_date": null
+}
