@@ -1,0 +1,43 @@
+{
+  "name": "spcx10q",
+  "title_prefix": "[SPCX10Q]",
+  "title_note": "SPCX 2026년 3분기 10-Q에서 고객 집중도와 취소 불가 투자 약정만 2분기 10-Q와 비교해 시사점을 한 번 보내는 알림. 가격 구간 판단은 [SPCX](spcxq3.json)가 담당한다.",
+  "display": "SPCX 3분기 10-Q 고객 집중도 + 투자 약정 점검",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "ticker": "SPCX",
+  "cik": "0001181412",
+  "schedule_kst": "09:00",
+  "schedule_note": "기존 morning 슬롯(평일 09:00 KST)에 붙임. 새 cron 없음. 10-Q가 안 보이면 침묵. 보이면 1회만 발송. 3분기 실적 8-K는 2026-10-20 제출, 10-Q는 2026-10-22 기준 미제출. 신규 상장사 45일 기준 마감은 11/16(월)로 추정.",
+  "year_guard": 2026,
+  "window_start": "2026-10-22",
+  "window_end": "2026-11-20",
+  "final_kst": "2026-11-17 09:00",
+  "period_end": "2026-09-30",
+  "period_label": "September 30, 2026",
+  "q2": {
+    "source": "https://www.sec.gov/Archives/edgar/data/1181412/000162828026052535/spcx-20260630.htm",
+    "customer_q": {"A": 18.3, "B": 19.5},
+    "customer_ytd": {"A": 17.9, "B": 12.2},
+    "customer_note": "A는 3개 사업부 전체, B는 AI 사업부 고객. 이름 비공개.",
+    "termination_days": 90,
+    "commit_total_musd": 27955,
+    "commit_next_year_musd": 22244,
+    "commit_note": "Note 16 Unconditional Obligations. AI 인프라, 외부 클라우드 용량, Spectrum 거래 약정. 2026년 잔여 2,728 / 2027년 22,244 / 2028년 2,172 / 2029년 809 / 2030년 2 (백만 달러)."
+  },
+  "q3_cash_and_securities_musd": 89855,
+  "q4_capex_guide": "4분기 캡엑스 350억~400억 달러 (10/20 실적 콜, 보도 기준)",
+  "rules": {
+    "conc_warn_pct": 25.0,
+    "conc_step_pp": 3.0,
+    "commit_surge_ratio": 1.5,
+    "commit_up_ratio": 1.15,
+    "commit_down_ratio": 0.85,
+    "commit_cash_warn_pct": 50.0
+  },
+  "sources": [
+    "https://data.sec.gov/submissions/CIK0001181412.json"
+  ],
+  "ends_kst": "2026-11-20 09:00",
+  "ends_note": "10-Q 확인 1회 발송 후 침묵, 늦어도 11/20 09:00 마지막 확인"
+}

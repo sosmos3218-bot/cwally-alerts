@@ -693,6 +693,7 @@ jobs:
             python scripts/hbmchk_monitor.py
             python scripts/hbmasp_monitor.py
             python scripts/sdichg_monitor.py auto
+            python scripts/spcx10q_monitor.py auto
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/ratesbell_monitor.py auto
