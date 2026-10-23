@@ -1,0 +1,23 @@
+{
+  "name": "brief",
+  "title_prefix": "[BRIEF] [EARN]",
+  "display": "일회성 브리프 발송기: outbox/<YYYYMMDD>-<slug>.json 을 job=brief 수동 dispatch 때만 ntfy 로 보냄 (예약 비서의 실적 요약 등)",
+  "created_at": "2026-10-23T20:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "brief",
+  "schedule_kst": "없음 (job=brief workflow_dispatch 때만, oneoff_mode=auto 일 때만 실제 발송)",
+  "alert_policy": "manual_dispatch_only",
+  "approval": "사용자 채팅 요청 2026-10-23 20:08 KST",
+  "outbox_dir": "outbox",
+  "allowed_topics": ["cwally-port", "cwally-ops"],
+  "default_priority": 3,
+  "default_tags": ["memo"],
+  "default_title_prefix": "[BRIEF]",
+  "message_max_bytes": 3900,
+  "message_max_bytes_note": "ntfy.sh 메시지 한도 4096 바이트(넘으면 첨부파일로 바뀜)보다 여유를 둔 한 조각 크기. 끝줄(꺼지는 때) 포함. 넘으면 (1/n) 조각으로 나눠 보냄, 자르지 않음.",
+  "state_keep": 500,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지. 이 값을 지금으로 바꾸면 브리프 발송이 막힘"
+}
