@@ -7,12 +7,22 @@
   - 전주 대비 +2% 이상 증가 -> 1회
   - 주간 순감소 4주 연속(이번 주 포함) -> 연속이 4주가 된 주에 1회. 증가 주가 나오면 다시 셈.
 유료 거래소 보유량 지표(CryptoQuant/Glassnode)를 대신하는 대리값이라 본문에 항상 '대리 지표'로 밝힌다.
-modes: auto | dry(발송 없음, state 안 씀) | seed N(지난 N주 스냅숏을 원장 과거값으로 채움, 발송 없음)
+분기 지갑 목록 갱신 (2026-10-23 09:58 KST 승인):
+  - 분기(KST 1/4/7/10월)마다 1번. 그 분기 첫 일요일 21:00 portlight 실행에서, 빠지면 분기 8일째 이후 평일 09:00 실행에서 따라잡기.
+  - XRPScan 공개 라벨(well-known names)에서 config refresh.exchanges 이름이 붙은 지갑 중 그 주 스냅숏 원장 잔고
+    1백만 XRP 이상인 지갑 = 새 목록. state wallets 에 버전(YYYY-MM-DD)과 함께 저장(봇의 state 커밋).
+  - 안전장치: 라벨 조회 실패, 지갑 수 20% 넘게 변동, 같은 원장 기준 합계 20% 넘게 변동, 라벨 거래소 지갑 전체 대비
+    커버리지 95% 미만이면 옛 목록 유지 + cwally-ops 1번 안내(분기당). 성공하면 바뀐 내용 요약을 cwally-ops 로 1번.
+  - 연속성: 스냅숏마다 list_version 을 기록. 판정에 쓰는 최근 5주 스냅숏 중 현재 목록 버전과 다른 것은 같은 원장
+    과거 잔고로 새 목록 기준 다시 계산(rebased_from 에 옛 값 보관). 그래서 전주 대비 %와 4주 연속 감소는 항상 같은 지갑 묶음 비교.
+modes: auto | dry(발송 없음, state 안 씀. job=xrpwatch 수동 실행이나 'dry refresh'면 목록 갱신도 모의 실행) |
+       seed N(지난 N주 스냅숏을 원장 과거값으로 채움, 발송 없음)
 매매 신호가 아니다.
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -98,9 +108,104 @@ def last_snapshot(now_utc: datetime) -> datetime:
     return d
 
 
-def snapshot(x: Xrpl, cfg: dict, at: datetime) -> dict:
+def quarter_of(d) -> str:
+    return f"{d.year}-Q{(d.month - 1) // 3 + 1}"
+
+
+def quarter_start(d):
+    return d.replace(month=(d.month - 1) // 3 * 3 + 1, day=1)
+
+
+def active_list(cfg: dict, state: dict) -> dict:
+    w = state.get("wallets")
+    if isinstance(w, dict) and w.get("addresses"):
+        return w
+    return {"version": cfg.get("addresses_version", "2026-10-22"), "quarter": cfg.get("addresses_quarter", "2026-Q4"),
+            "source": "configs/xrpexch.json addresses", "addresses": cfg["addresses"]}
+
+
+def fetch_labels(url: str) -> list[dict]:
+    last: Exception | None = None
+    for _ in range(3):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.load(resp)
+            if not isinstance(data, list):
+                raise ValueError("라벨 응답이 목록이 아님")
+            return data
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            time.sleep(3)
+    raise RuntimeError(f"XRPScan 라벨 조회 실패: {last}")
+
+
+def balances(x: Xrpl, accts: list[str], ledger: int) -> tuple[dict[str, float], list[str]]:
+    def one(a: str):
+        try:
+            return a, x.balance(a, ledger), None
+        except Exception as exc:  # noqa: BLE001
+            return a, None, str(exc)[:80]
+
+    with ThreadPoolExecutor(6) as ex:
+        res = list(ex.map(one, accts))
+    return {a: b for a, b, e in res if e is None}, [f"{a[:8]}: {e}" for a, _, e in res if e]
+
+
+def refresh_list(x: Xrpl, cfg: dict, old: dict, at: datetime, now: datetime) -> tuple[dict | None, dict]:
+    """새 목록을 만들고 안전장치를 검사한다. (새 목록 또는 None, 요약/사유)."""
+    rc = cfg["refresh"]
+    labels = fetch_labels(rc["label_url"])
+    names = set(rc["exchanges"])
+    cand: dict[str, dict] = {}
+    for it in labels:
+        acct = it.get("account")
+        if isinstance(it, dict) and it.get("name") in names and isinstance(acct, str) and acct.startswith("r"):
+            cand.setdefault(acct, {"exchange": it["name"], "label": it.get("desc"), "account": acct})
+    if len(labels) < int(rc["min_label_rows"]) or len(cand) < int(rc["min_exchange_labels"]):
+        return None, {"reason": f"라벨 행 {len(labels)}개, 거래소 라벨 지갑 {len(cand)}개로 너무 적음(깨진 응답 의심)"}
     ledger = x.first_ledger_at(int(at.timestamp()) - RIPPLE_EPOCH)
-    addrs = cfg["addresses"]
+    old_accts = [a["account"] for a in old["addresses"]]
+    bal, fails = balances(x, sorted(set(cand) | set(old_accts)), ledger)
+    if fails:
+        return None, {"reason": f"원장 잔고 조회 실패 {len(fails)}개: {'; '.join(fails[:3])}"}
+    min_xrp = float(rc["min_xrp"])
+    new_addrs = sorted((cand[a] for a in cand if bal.get(a, 0.0) >= min_xrp), key=lambda r: (r["exchange"], -bal[r["account"]]))
+    all_lab = sum(bal.get(a, 0.0) for a in cand)
+    new_tot = sum(bal[r["account"]] for r in new_addrs)
+    old_tot = sum(bal.get(a, 0.0) for a in old_accts)
+    new_set, old_set = {r["account"] for r in new_addrs}, set(old_accts)
+    added, removed = new_set - old_set, old_set - new_set
+    info = {
+        "ledger": ledger, "at_utc": at.strftime("%Y-%m-%d %H:%M"), "label_rows": len(labels), "exchange_labels": len(cand),
+        "old_count": len(old_set), "new_count": len(new_set), "added": len(added), "removed": len(removed),
+        "added_xrp": round(sum(bal.get(a, 0.0) for a in added)), "removed_xrp": round(sum(bal.get(a, 0.0) for a in removed)),
+        "old_total": round(old_tot), "new_total": round(new_tot), "all_labelled_total": round(all_lab),
+        "coverage_pct": round(new_tot / all_lab * 100, 2) if all_lab else None,
+        "count_change_pct": round((len(new_set) / len(old_set) - 1) * 100, 2) if old_set else None,
+        "total_change_pct": round((new_tot / old_tot - 1) * 100, 2) if old_tot else None,
+        "added_by_exchange": dict(sorted({e: sum(1 for a in added if cand[a]["exchange"] == e) for e in {cand[a]["exchange"] for a in added}}.items())),
+        "removed_list": sorted(removed)[:20],
+    }
+    bad = []
+    if info["count_change_pct"] is None or abs(info["count_change_pct"]) > float(rc["max_count_change_pct"]):
+        bad.append(f"지갑 수 변동 {info['count_change_pct']}%")
+    if info["total_change_pct"] is None or abs(info["total_change_pct"]) > float(rc["max_total_change_pct"]):
+        bad.append(f"같은 원장 합계 변동 {info['total_change_pct']}%")
+    if info["coverage_pct"] is None or info["coverage_pct"] < float(rc["min_coverage_pct"]):
+        bad.append(f"커버리지 {info['coverage_pct']}%")
+    if bad:
+        info["reason"] = ", ".join(bad) + " (기준 넘음)"
+        return None, info
+    new = {"version": now.strftime("%Y-%m-%d"), "quarter": quarter_of(now.date()), "source": rc["label_url"],
+           "refreshed_at": now.isoformat(), "filter": f"exchanges in config refresh.exchanges, balance >= {min_xrp:,.0f} XRP at ledger {ledger}",
+           "prev_version": old.get("version"), "addresses": new_addrs}
+    return new, info
+
+
+def snapshot(x: Xrpl, cfg: dict, at: datetime, wl: dict) -> dict:
+    ledger = x.first_ledger_at(int(at.timestamp()) - RIPPLE_EPOCH)
+    addrs = wl["addresses"]
 
     def one(a: dict):
         try:
@@ -117,7 +222,7 @@ def snapshot(x: Xrpl, cfg: dict, at: datetime) -> dict:
             by_ex[a["exchange"]] += b
     return {"at_utc": at.strftime("%Y-%m-%d %H:%M"), "ledger": ledger, "total": round(sum(by_ex.values()), 2),
             "by_exchange": {k: round(v, 2) for k, v in sorted(by_ex.items())}, "accounts": len(addrs),
-            "fails": fails}
+            "list_version": wl["version"], "fails": fails}
 
 
 def body(stamp: str, what: str, status: str, action: str, later: str, trim: str, avoid: str, tilt: str | None = None) -> str:
@@ -140,6 +245,8 @@ def streak_down(snaps: dict, key: str) -> int:
         cur, prev = snaps.get(d.strftime("%Y-%m-%d")), snaps.get((d - timedelta(days=7)).strftime("%Y-%m-%d"))
         if not cur or not prev or cur["total"] >= prev["total"]:
             return n
+        if cur.get("list_version", "2026-10-22") != prev.get("list_version", "2026-10-22"):
+            return n  # 다른 지갑 목록끼리는 비교하지 않는다 (판정 4주는 항상 같은 버전으로 다시 계산됨)
         n += 1
         d -= timedelta(days=7)
 
@@ -167,7 +274,8 @@ def signal_msg(cfg: dict, snaps: dict, key: str, kind: str, streak: int, stamp: 
         f" 전주 대비 {cur['total'] - prev['total']:+,.0f} XRP ({pct:+.2f}%)."
         f" {'4주 연속 순감소' if kind == 'down' else '전주 대비 2% 이상 증가'}. 주별 합계: {' <- '.join(chain)}."
         f" 많이 변한 거래소: {movers(cur, prev)}."
-        f" 대리 지표: XRPScan 공개 라벨 지갑(1백만 XRP 이상, 2026-10-22 목록 고정) 원장 잔고 합계라 실제 거래소 보유량과 다를 수 있음"
+        f" 비교한 두 주 모두 같은 지갑 목록(버전 {cur.get('list_version', '2026-10-22')}) 기준."
+        f" 대리 지표: XRPScan 공개 라벨 지갑(1백만 XRP 이상, 분기마다 목록 갱신) 원장 잔고 합계라 실제 거래소 보유량과 다를 수 있음"
         f" (새 지갑 이동, 수탁 지갑 섞임). 출처: XRPL 원장(xrplcluster 등 공개 JSON-RPC)."
     )
     if kind == "down":
@@ -204,19 +312,69 @@ def main() -> int:
     at = last_snapshot(now.astimezone(UTC))
     key = at.strftime("%Y-%m-%d")
     out: list[tuple[str, str, int, list[str]]] = []
-    print(f"target snapshot {key} 00:00 UTC (judged: {key in judged})")
+    ops: list[tuple[str, str, int, list[str]]] = []
+    wl = active_list(cfg, state)
+    q = quarter_of(now.date())
+    pick = os.environ.get("PICK_JOB", "")
+    sim = mode == "dry" and (pick == "xrpwatch" or "refresh" in sys.argv[2:])
+    due = wl.get("quarter") != q and (pick == "portlight" or (now.date() - quarter_start(now.date())).days >= 7)
+    print(f"wallet list version {wl.get('version')} ({wl.get('quarter')}, {len(wl['addresses'])} wallets); quarter {q};"
+          f" refresh due={due} simulate={sim}")
+    if mode in {"auto", "dry"} and (due or sim):
+        try:
+            new, info = refresh_list(x, cfg, wl, at, now)
+            print("refresh:", json.dumps({k: v for k, v in info.items() if k != "removed_list"}, ensure_ascii=False))
+            if new:
+                ops.append(("[XRP-EXCH] 거래소 지갑 목록 분기 갱신 | 운영 안내", body(
+                    stamp, "거래소 XRP 보유량 알림이 쓰는 라벨 지갑 목록을 분기마다 새로 만든 결과입니다(매매 신호 아님).",
+                    f"목록 {wl.get('version')} -> {new['version']}: 지갑 {info['old_count']}개 -> {info['new_count']}개"
+                    f" (추가 {info['added']}개 {info['added_xrp']:,} XRP, 제외 {info['removed']}개 {info['removed_xrp']:,} XRP)."
+                    f" 같은 원장({info['ledger']}, {info['at_utc']} UTC) 기준 합계 {info['old_total']:,} -> {info['new_total']:,} XRP"
+                    f" ({info['total_change_pct']:+.2f}%), 라벨 거래소 지갑 전체 대비 커버리지 {info['coverage_pct']}%."
+                    f" 출처: XRPScan 공개 라벨 + XRPL 원장.",
+                    "할 일 없음. 다음 주간 판정부터 새 목록을 씁니다.",
+                    "비교용 최근 5주 스냅숏은 새 목록으로 과거 잔고를 다시 계산해서 연속성이 유지됩니다.",
+                    "해당 없음.", "목록 갱신으로 생긴 합계 차이를 거래소 유입이나 유출로 읽기."), 2, ["card_index"]))
+                if mode == "auto":
+                    state["wallets"] = new
+                    state.setdefault("refresh_log", []).append({k: v for k, v in info.items() if k != "removed_list"} | {"version": new["version"], "ok": True})
+                wl = new
+            else:
+                raise RuntimeError(info.get("reason") or "알 수 없는 사유")
+        except Exception as exc:  # noqa: BLE001
+            print(f"wallet list refresh rejected: {exc}", file=sys.stderr)
+            fn = state.setdefault("fail_notice", {})
+            if fn.get("refresh") != q or mode == "dry":
+                ops.append(("[XRP-EXCH] 거래소 지갑 목록 갱신 확인 불가 | 옛 목록 유지", body(
+                    stamp, "거래소 XRP 보유량 알림의 분기 지갑 목록 갱신이 안전장치에 걸린 안내입니다(매매 신호 아님).",
+                    f"새 목록 {NA} ({str(exc)[:200]}). 옛 목록 {wl.get('version')} ({len(wl['addresses'])}개) 그대로 씁니다.",
+                    "필요하면 XRPScan 라벨 목록을 직접 확인. 같은 분기 안에서는 다음 실행 때 조용히 다시 시도합니다.",
+                    "다음 분기에 다시 갱신합니다.", "해당 없음.", "이 안내를 거래소 보유량 변화로 읽기."), 3, ["warning"]))
+                fn["refresh"] = q
     if mode == "auto" and key in judged:
         print("week already judged; nothing to do")
+        for title, msg, pri, tags in ops:
+            print(f"TITLE: {title}\nPRIORITY: {pri} TOPIC: cwally-ops\n{msg}\n")
+            publish(resolve_topic("ops"), title, msg, pri, tags, server)
+        if ops:
+            state["updated_at"] = now.isoformat()
+            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 0
+    print(f"target snapshot {key} 00:00 UTC (judged: {key in judged})")
     need = int(sys.argv[2]) if mode == "seed" and len(sys.argv) > 2 else int(cfg["decrease_streak"]) + 1
     try:
         for k in range(need - 1, -1, -1):
             d = at - timedelta(days=7 * k)
             dk = d.strftime("%Y-%m-%d")
-            if dk in snaps and mode != "dry":
+            old = snaps.get(dk)
+            if old and old.get("list_version", "2026-10-22") == wl["version"] and mode != "dry":
                 continue
-            s = snapshot(x, cfg, d)
-            print(f"snapshot {dk}: total {s['total']:,.0f} ledger {s['ledger']} fails {len(s['fails'])}")
+            s = snapshot(x, cfg, d, wl)
+            if old and old.get("list_version", "2026-10-22") != wl["version"]:
+                s["rebased_from"] = {"list_version": old.get("list_version", "2026-10-22"), "total": old.get("total"),
+                                     "accounts": old.get("accounts")}
+            print(f"snapshot {dk} (list {wl['version']}): total {s['total']:,.0f} ledger {s['ledger']} fails {len(s['fails'])}"
+                  + (f" rebased from {s['rebased_from']['list_version']} total {s['rebased_from']['total']:,.0f}" if s.get("rebased_from") else ""))
             if len(s["fails"]) > MAX_FAIL:
                 raise RuntimeError(f"{dk} 잔고 조회 실패 {len(s['fails'])}개: {'; '.join(s['fails'][:3])}")
             snaps[dk] = s
@@ -253,6 +411,10 @@ def main() -> int:
         print(f"TITLE: {title}\nPRIORITY: {pri} TOPIC: {route_topic(topic, title)}\n{msg}\n")
         if mode == "auto":
             publish(topic, title, msg, pri, tags, server)
+    for title, msg, pri, tags in ops:  # 목록 갱신 안내는 항상 cwally-ops
+        print(f"TITLE: {title}\nPRIORITY: {pri} TOPIC: cwally-ops\n{msg}\n")
+        if mode == "auto":
+            publish(resolve_topic("ops"), title, msg, pri, tags, server)
     if mode == "dry":
         print("DRY RUN: no publish, state not written")
         return 0
