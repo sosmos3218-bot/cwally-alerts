@@ -36,6 +36,7 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CFG_PATH = ROOT / "configs" / "mktpulse.json"
 STATE_PATH = ROOT / "state" / "mktpulse.json"
+SKIPS_KEEP = 30
 PREFIX = "[MARKET]"
 UA = {"User-Agent": "Mozilla/5.0 (cwally-alerts; +mailto:sosmos3218@gmail.com)"}
 
@@ -490,7 +491,12 @@ def main() -> int:
     state = load_state()
     if mode == "auto":
         if not slot:
-            print(f"silent skip: {why}")
+            # still silent on ntfy; leave a visible notice and a bounded skip record (last SKIPS_KEEP)
+            print(f"::notice::mktpulse skip: {why}")
+            skips = dict(state.get("skips") or {})
+            skips[now.strftime("%Y-%m-%d %H:%M:%S")] = why
+            state["skips"] = dict(sorted(skips.items())[-SKIPS_KEEP:])
+            save_state(state, now, int(cfg["muse"]["keep_days"]))
             return 0
         if slot in (state.get("slots_sent") or {}):
             print(f"slot {slot} already sent; skip")

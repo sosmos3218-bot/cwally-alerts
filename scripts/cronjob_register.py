@@ -44,6 +44,18 @@ Slot update, CRONJOB_ACTION=update_slot (approved in chat 2026-10-22 18:29 KST):
   are left as they are. Refuses unless that job still dispatches port-alerts.yml with SLOT_BODY and has
   the old or new slot title. Skips (exit 10) if it is already at the target. CRONJOB_DRY_RUN=1 checks only.
 
+List mode, CRONJOB_ACTION=list (read-only, approved in chat 2026-10-23):
+  One GET /jobs. Prints jobId, title, enabled, schedule (timezone, hours, minutes, wdays, mdays,
+  months, expiresAt), url, lastStatus, lastExecution, nextExecution. Never prints headers, bodies or keys.
+
+Pulse mode, CRONJOB_ACTION=register_pulse (mktpulse recurring job, approved in chat 2026-10-22 09:43,
+  configs/mktpulse.json cron_approved; implemented 2026-10-23):
+  Creates the ONE recurring job PULSE_TITLE: Asia/Seoul, minute 0, hours 10, 11, 13, 15, Mon-Fri,
+  expiresAt PULSE_EXPIRES, body {"ref":"main","inputs":{"job":"oneshot"}}, headers copied from the
+  template job. Skips (exit 10) if a job with PULSE_TITLE exists, or a port-alerts.yml dispatch job
+  with the same hours (10, 11, 13, 15 weekdays) already exists. Its title does not match the one-shot
+  title pattern, and delete refuses it explicitly. CRONJOB_DRY_RUN=1 checks only.
+
 exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
@@ -77,6 +89,11 @@ SLOT_BODY = {"ref": "main", "inputs": {"job": "k203780", "oneoff_mode": "auto"}}
 SLOT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [SLOT_HOUR],
                  "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TIMEZONE = "Asia/Seoul"
+PULSE_TITLE = "cwally mktpulse 10/11/13/15 KST weekdays"
+PULSE_HOURS = [10, 11, 13, 15]
+PULSE_EXPIRES = 20261105155959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 15:00)
+PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
+                  "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 
 SKIP = 10
 BAD_INPUT = 2
@@ -296,6 +313,8 @@ def run_delete() -> int:
             refused.append(f"{jid}: not found in this account")
             continue
         problems = oneshot_problems(j)
+        if (j.get("title") or "").strip() == PULSE_TITLE or jid == SLOT_JOB_ID:
+            problems.append("recurring job (mktpulse pulse or after-close slot); never deleted here")
         if problems:
             refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
     if refused:
@@ -417,6 +436,98 @@ def run_update_slot(now: datetime) -> int:
     return 0
 
 
+def fmt_ts(v) -> str:
+    try:
+        v = int(v or 0)
+    except (TypeError, ValueError):
+        return "n/a"
+    return datetime.fromtimestamp(v, KST).strftime("%Y-%m-%d %H:%M:%S KST") if v > 0 else "n/a"
+
+
+def list_jobs(key: str) -> list[dict]:
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        print("::warning::cron-job.org job list is incomplete (someFailed)")
+    return res.get("jobs") or []
+
+
+def print_job(j: dict) -> None:
+    sc = j.get("schedule") or {}
+    print(f"job_id={j.get('jobId')} title={(j.get('title') or '').strip()!r} enabled={j.get('enabled')} "
+          f"tz={sc.get('timezone')} hours={sc.get('hours')} minutes={sc.get('minutes')} wdays={sc.get('wdays')} "
+          f"mdays={sc.get('mdays')} months={sc.get('months')} expiresAt={sc.get('expiresAt')} "
+          f"url={(j.get('url') or '').strip()} lastStatus={j.get('lastStatus')} "
+          f"lastExecution={fmt_ts(j.get('lastExecution'))} nextExecution={fmt_ts(j.get('nextExecution'))}")
+
+
+def run_list() -> int:
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    jobs = list_jobs(key)
+    for j in sorted(jobs, key=lambda x: int(x.get("jobId") or 0)):
+        print_job(j)
+    pulse = [j for j in jobs if (j.get("title") or "").strip() == PULSE_TITLE or is_pulse_like(j)]
+    print(f"total={len(jobs)} mktpulse_jobs={[j.get('jobId') for j in pulse]}")
+    return 0
+
+
+def is_pulse_like(j: dict) -> bool:
+    sc = j.get("schedule") or {}
+    return ((j.get("url") or "").rstrip("/") == DISPATCH_URL
+            and sorted(int(h) for h in (sc.get("hours") or [])) == PULSE_HOURS)
+
+
+def run_register_pulse(now: datetime) -> int:
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    if now >= datetime.strptime(str(PULSE_EXPIRES), "%Y%m%d%H%M%S").replace(tzinfo=KST):
+        raise Stop(BAD_INPUT, "pulse expiry is in the past; nothing to register")
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
+    for j in res.get("jobs") or []:
+        if (j.get("title") or "").strip() == PULSE_TITLE or is_pulse_like(j):
+            print("skip: mktpulse job already exists:")
+            print_job(j)
+            return SKIP
+    template = load_template(key)
+    job = {
+        "enabled": True,
+        "title": PULSE_TITLE,
+        "saveResponses": True,
+        "url": DISPATCH_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(PULSE_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(ONESHOT_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {PULSE_TITLE!r} Mon-Fri {PULSE_HOURS}:00 Asia/Seoul, "
+              f"body {json.dumps(ONESHOT_BODY)}, expiresAt {PULSE_EXPIRES}")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
+    try:
+        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == ONESHOT_BODY
+    except ValueError:
+        body_ok = False
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok}")
+    return 0
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
@@ -427,8 +538,12 @@ def main() -> int:
             return run_register_slot(now)
         if action == "update_slot":
             return run_update_slot(now)
+        if action == "list":
+            return run_list()
+        if action == "register_pulse":
+            return run_register_pulse(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

@@ -6,6 +6,9 @@ name: cwally-cronjob-register
 # after-close job (k203780 slot); nothing else.
 # action=update_slot (approved in chat 2026-10-22 18:29 KST) moves only that job (id 8698629) to
 # "cwally port after-close (19:00 KST)", weekdays 19:00 Asia/Seoul; URL, body and auth unchanged.
+# action=list (2026-10-23) is read-only: one GET /jobs, prints schedule and last/next execution, no headers.
+# action=register_pulse (mktpulse recurring job approved in chat 2026-10-22 09:43, configs/mktpulse.json
+# cron_approved) creates only "cwally mktpulse 10/11/13/15 KST weekdays"; skips if it already exists.
 # New workflow file approved in chat 2026-10-06. workflow_dispatch only: no schedule, no ntfy alert
 # except the ops notice on failure. See scripts/cronjob_register.py for the checks.
 
@@ -17,9 +20,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 10/11/13/15 KST weekday job"
         type: choice
-        options: [register, register_slot, update_slot, delete]
+        options: [register, register_slot, update_slot, delete, list, register_pulse]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"

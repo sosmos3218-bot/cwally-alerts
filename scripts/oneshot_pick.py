@@ -38,6 +38,7 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = ROOT / "configs"
 MARKS = ROOT / "state" / "slots" / "oneshot.json"
+WORKFLOW = ROOT / ".github" / "workflows" / "port-alerts.yml"
 
 # Port slot times whose bundle already runs these alerts (morning 09:00, afternoon 15:20).
 # An occurrence at one of these times, for an alert whose schedule_kst lists that time, is run by
@@ -113,6 +114,20 @@ def save_marks(done: dict, now: datetime) -> None:
     MARKS.write_text(json.dumps({"done": dict(sorted(done.items()))}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
+def fallback_crons() -> set[str] | None:
+    """UTC cron strings under port-alerts.yml `on.schedule` (None if the file cannot be read)."""
+    try:
+        text = WORKFLOW.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    return set(re.findall(r'^\s*-\s*cron:\s*"([^"]+)"', text, flags=re.M))
+
+
+def utc_cron(at: datetime) -> str:
+    u = at.astimezone(timezone.utc)
+    return f"{u.minute} {u.hour} {u.day} {u.month} *"
+
+
 def opt(argv: list[str], flag: str, default=None):
     if flag in argv:
         i = argv.index(flag)
@@ -136,9 +151,13 @@ def cmd_pick(argv: list[str]) -> int:
                 return 2
             due.append(o)
         elif at + grace <= now and at.date() == now.date():
-            missed.append(o["key"])
-    for k in missed:
-        print(f"past grace, left to GitHub fallback cron: {k}")
+            missed.append(o)
+    crons = fallback_crons() if missed else None
+    for o in missed:
+        if crons is None or utc_cron(parse_at(o["at"])) in crons:
+            print(f"past grace, left to GitHub fallback cron: {o['key']}")
+        else:
+            print(f"::warning::missed, no fallback cron: {o['key']}")
     print(f"now={now.strftime('%Y-%m-%d %H:%M')} KST due={[o['key'] for o in due]}")
     out = opt(argv, "--out")
     if out:
@@ -155,12 +174,13 @@ def cmd_run(argv: list[str]) -> int:
     save_marks(done, now)
     failed = 0
     for o in plan:
-        print(f"::group::{o['key']} -> {' '.join(o['cmd'])}")
+        # flush first: stdout is a pipe on the runner, so unflushed headers land after the child's output
+        print(f"::group::{o['key']} -> {' '.join(o['cmd'])}", flush=True)
         rc = subprocess.call(o["cmd"], cwd=ROOT)
         if rc != 0:
-            print(f"::error::{o['key']} failed (exit {rc})")
+            print(f"::error::{o['key']} failed (exit {rc})", flush=True)
             failed = 1
-        print("::endgroup::")
+        print("::endgroup::", flush=True)
     return failed
 
 
