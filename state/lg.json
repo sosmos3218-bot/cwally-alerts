@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-23 09:00 KST",
-  "zone": "BUY3",
-  "price": 100900.0,
-  "below_hits": 0,
+  "updated_at": "2026-10-23 15:20 KST",
+  "zone": "STOP",
+  "price": 98300.0,
+  "below_hits": 1,
   "stop_sent": false,
   "shock_sent": false,
   "last_event_ids": [
