@@ -3,6 +3,8 @@
 
 KRX 거래일 장 마감 뒤(평일 19:00 KST, cron-job.org 정시 dispatch + GitHub cron 0 10 * * 1-5 백업) 하루 1번, 메시지 하나에 4가지:
   1) 종가, 운용사(미래에셋) 일별 NAV, 괴리율 = (종가/NAV - 1) x 100  (참고 지표, 매매 신호 아님)
+     그날 공식 NAV 는 다음 날 아침에 나오므로 19:00 엔 보통 전일(날짜 확인한) 공식 NAV 와 전일 괴리율,
+     오늘 장 마감 iNAV 추정(네이버 totalInfos nav)과 추정 괴리율을 같이 적는다. GitHub 실행에선 미래에셋(403)을 건너뛴다.
   2) 하루 등락률 (|등락| >= 3% 강조)
   3) 원/달러 환율과 전일 대비 (|변동| >= 1% 강조)
   4) 상위 5종목 GILD, AMGN, VRTX, MRNA, REGN 최근 완료 일봉 등락 (|등락| >= 5% 강조) + 7일 안 실적 발표일
@@ -16,6 +18,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -114,10 +117,12 @@ def mirae_nav(isin: str, day: date) -> dict[str, dict]:
     return out
 
 
-def naver_nav(code: str, close: float, prev_close: float | None, known_prev_nav: float | None) -> float:
-    """미래에셋 직접 조회가 막혔을 때만 쓰는 대체 경로. 네이버 etfKeyIndicator 의 nav 는 운용사 일별 NAV 지만
-    날짜가 없다. 같이 오는 괴리율(deviationRate)로 역산한 종가가 요약 거래일 종가와 맞고, 직전 거래일 종가와는
-    구별되고, 직전 거래일에 쓴 NAV 와 다를 때만 그 거래일 NAV 로 인정한다. 아니면 예외 (= 확인 불가)."""
+def naver_nav_dated(code: str, close: float, prev_close: float | None, known_prev_nav: float | None) -> tuple[float, str]:
+    """네이버 etfKeyIndicator 의 nav 는 운용사 일별 NAV 지만 날짜가 없다. 같이 오는 괴리율(deviationRate)로
+    역산한 종가로 날짜를 정한다. 반환 (nav, "today" | "prev"):
+      today = 역산 종가가 요약 거래일 종가와 맞고, 직전 거래일 종가와 구별되고, 직전 거래일 NAV 와 다름
+      prev  = 역산 종가가 직전 거래일 종가와 맞음 (해외 ETF 는 그날 NAV 가 다음 날 아침에 나와 19:00 엔 보통 이 경우)
+    둘 다 아니면 예외 (= 확인 불가)."""
     k = json.loads(get(f"https://m.stock.naver.com/api/stock/{code}/integration")).get("etfKeyIndicator") or {}
     nav, dev = num(k.get("nav")), num(k.get("deviationRate"))
     if not nav or dev is None:
@@ -125,13 +130,38 @@ def naver_nav(code: str, close: float, prev_close: float | None, known_prev_nav:
     dev = -abs(dev) if str(k.get("deviationSign") or "").strip() == "-" else abs(dev)
     implied = nav * (1 + dev / 100)
     tol = nav * 0.00005 + 0.6  # 괴리율이 소수 둘째 자리로 반올림된 만큼
-    if abs(implied - close) > tol:
-        raise RuntimeError(f"네이버 nav {nav:,.2f} 는 이 거래일 것이 아님(역산 종가 {implied:,.1f})")
-    if prev_close is not None and abs(implied - prev_close) <= tol:
+    hit_today = abs(implied - close) <= tol
+    hit_prev = prev_close is not None and abs(implied - prev_close) <= tol
+    if hit_today and hit_prev:
         raise RuntimeError("전일 종가와 같아 NAV 날짜 구분 불가")
+    if hit_prev:
+        return nav, "prev"
+    if not hit_today:
+        raise RuntimeError(f"네이버 nav {nav:,.2f} 는 이 거래일이나 전 거래일 것이 아님(역산 종가 {implied:,.1f})")
     if known_prev_nav is not None and abs(nav - known_prev_nav) < 0.005:
         raise RuntimeError("직전 거래일 NAV 와 같음(아직 갱신 전)")
+    return nav, "today"
+
+
+def naver_nav(code: str, close: float, prev_close: float | None, known_prev_nav: float | None) -> float:
+    """미래에셋 직접 조회가 막혔을 때만 쓰는 대체 경로 (krhc_monitor 도 이 계약으로 씀).
+    그 거래일 NAV 로 확인될 때만 값을 돌려주고, 전일 NAV 이거나 날짜를 모르면 예외 (= 확인 불가)."""
+    nav, which = naver_nav_dated(code, close, prev_close, known_prev_nav)
+    if which != "today":
+        implied_note = f"네이버 nav {nav:,.2f} 는 이 거래일 것이 아님(전 거래일 NAV)"
+        raise RuntimeError(implied_note)
     return nav
+
+
+def naver_inav(code: str) -> float:
+    """네이버 integration totalInfos 의 code=='nav' (장중 실시간 추정 NAV, iNAV). 장 마감 뒤엔 마감 시점 추정값."""
+    rows = json.loads(get(f"https://m.stock.naver.com/api/stock/{code}/integration")).get("totalInfos") or []
+    for r in rows:
+        if r.get("code") == "nav":
+            v = num(r.get("value"))
+            if v:
+                return v
+    raise RuntimeError("네이버 iNAV 없음")
 
 
 # ---------- 3) 원/달러 (네이버 시장지표, 하나은행 고시) ----------
@@ -303,37 +333,62 @@ def main() -> int:
         return 0
 
     close = px["close"]
-    # 1) NAV + 괴리율 (미래에셋 기준가격 표 -> 막히면 날짜 검증한 네이버 nav)
-    nav_val: float | None = None
+    # 1) NAV + 괴리율. 해외 ETF 라 그날 공식 NAV 는 다음 날 아침에 나온다. 19:00 엔 보통
+    #    전일 공식 NAV(날짜 확인한 값) + 오늘 장 마감 iNAV 추정을 같이 보여 준다.
+    prev_keys = sorted(d for d in daily if d < skey)
+    pkey = prev_keys[-1] if prev_keys else None
+    prev_close = daily[pkey]["close"] if pkey else None
+    nav_hist = state.get("nav_by_session") or {}
+    nav_val: float | None = None  # 그 거래일(skey) 공식 NAV
     nav_src = "미래에셋"
+    prev_nav: float | None = None  # 직전 거래일(pkey) 공식 NAV
     nav_note = ""
-    try:
-        navs = mirae_nav(cfg["isin"], sess)
-        row = navs.get(skey)
-        if row:
-            nav_val = row["nav"]
-        else:
-            nav_note = f"미래에셋에 {skey} 기준가 아직 없음, 최근 {max(navs) if navs else '없음'}"
-    except Exception as exc:  # noqa: BLE001
-        errs.append(f"미래에셋 NAV: {exc}")
-        nav_note = "미래에셋 조회 실패"
-    if nav_val is None:
-        prev_keys = sorted(d for d in daily if d < skey)
-        prev_close = daily[prev_keys[-1]]["close"] if prev_keys else None
-        nav_hist = state.get("nav_by_session") or {}
-        prev_nav = nav_hist.get(prev_keys[-1]) if prev_keys else None
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print("미래에셋 건너뜀: GitHub runner IP 는 403 이라 네이버로 바로 감")
+        nav_note = "미래에셋은 GitHub 실행에서 막힘"
+    else:
         try:
-            nav_val = naver_nav(cfg["symbol"], close, prev_close, prev_nav)
-            nav_src = "네이버 표시값, 미래에셋 직접 조회 안 됨"
+            navs = mirae_nav(cfg["isin"], sess)
+            if skey in navs:
+                nav_val = navs[skey]["nav"]
+            if pkey and pkey in navs:
+                prev_nav = navs[pkey]["nav"]
+            if nav_val is None:
+                nav_note = f"미래에셋에 {skey} 기준가 아직 없음"
+        except Exception as exc:  # noqa: BLE001  403 등은 예상된 대체 경로, 오류로 세지 않음
+            print(f"미래에셋 NAV 조회 안 됨({exc}); 네이버로 대체")
+            nav_note = "미래에셋 조회 안 됨"
+    if nav_val is None:
+        try:
+            n, which = naver_nav_dated(cfg["symbol"], close, prev_close, nav_hist.get(pkey) if pkey else None)
+            if which == "today":
+                nav_val, nav_src = n, "네이버 표시값"
+            elif prev_nav is None:
+                prev_nav = n
         except Exception as exc:  # noqa: BLE001
             errs.append(f"네이버 NAV: {exc}")
-            nav_note += f", 네이버 대체값도 날짜 확인 안 됨"
+            nav_note += ", 네이버 대체값도 날짜 확인 안 됨"
+    inav: float | None = None
+    try:
+        inav = naver_inav(cfg["symbol"])
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"네이버 iNAV: {exc}")
+    parts: list[str] = []
     if nav_val is not None:
         prem = (close / nav_val - 1) * 100
         src_txt = f" ({nav_src})" if nav_src != "미래에셋" else ""
-        nav_txt = f"운용사 NAV {nav_val:,.2f}원{src_txt}, 괴리율 {fmt_pct(prem)} (참고 지표, 매매 신호 아님)"
+        parts.append(f"운용사 NAV {nav_val:,.2f}원{src_txt}, 괴리율 {fmt_pct(prem)} (참고 지표, 매매 신호 아님)")
     else:
-        nav_txt = f"운용사 NAV {NA} ({nav_note}), 괴리율 {NA}"
+        if prev_nav is not None and pkey and prev_close:
+            parts.append(f"전일({date.fromisoformat(pkey):%m/%d}) 운용사 NAV {prev_nav:,.2f}원, 전일 괴리율 {fmt_pct((prev_close / prev_nav - 1) * 100)}")
+        else:
+            parts.append(f"운용사 NAV {NA} ({nav_note.lstrip(', ')}), 괴리율 {NA}")
+        if inav is not None:
+            parts.append(f"오늘 장 마감 iNAV 추정 {inav:,.2f}원, 추정 괴리율 {fmt_pct((close / inav - 1) * 100)} (추정, 참고 지표)")
+        else:
+            parts.append(f"오늘 iNAV {NA}")
+        parts.append(f"{sess:%m/%d} 공식 NAV는 다음 날 아침에 나옴")
+    nav_txt = ", ".join(parts)
     item1 = f"1) {sess:%m/%d} 종가 {close:,.0f}원, {nav_txt}"
 
     # 2) 등락률
@@ -454,6 +509,8 @@ def main() -> int:
     hist = dict(state.get("nav_by_session") or {})
     if nav_val is not None:
         hist[skey] = nav_val
+    if prev_nav is not None and pkey:
+        hist[pkey] = prev_nav  # 공식 NAV 는 그 값의 실제 날짜로 저장
     state["nav_by_session"] = {k: hist[k] for k in sorted(hist)[-10:]}
     state.update(last_sent_session=skey, fetch_fail_session=None, updated_at=now.isoformat())
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
