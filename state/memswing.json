@@ -5,7 +5,7 @@
       "signal_date": "2026-10-19",
       "entry_close": 223500,
       "entry_foreign_shares": 1243370,
-      "day3_sent": false,
+      "day3_sent": true,
       "ntfy_entry_id": "uRtD3iy64xtc"
     },
     "000660": {
@@ -19,8 +19,8 @@
   "last_weekly_iso": null,
   "missing_streak": 0,
   "last_missing_notice_day": null,
-  "last_data_day": "2026-10-19",
-  "last_title": "[MEMSWING] 삼성 진입 조건 충족 | 내일 분할 진입 검토",
-  "updated_at": "2026-10-19T23:46:00+09:00",
+  "last_data_day": "2026-10-22",
+  "last_title": "[MEMSWING] 삼성 3거래일 도달 | 조기 청산창 열림",
+  "updated_at": "2026-10-23T09:01:09+09:00",
   "note": "초기신호: 삼성 10/19 외인 +1,243,370주 종가 223,500 (ntfy uRtD3iy64xtc). 하이닉스 idle (10/16 -63,914, 10/19 -140,212, 종가 1,304,000)."
 }

@@ -1,11 +1,11 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-10-23T09:09:02.258886+09:00",
   "buy_armed": true,
   "break_armed": true,
   "top_armed": true,
   "pre_sent": false,
   "post_sent": false,
-  "last_bar_date": null,
-  "last_close": null,
+  "last_bar_date": "2026-10-22",
+  "last_close": 169.09,
   "fetch_fail_date": null
 }

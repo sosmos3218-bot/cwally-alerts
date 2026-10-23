@@ -1,19 +1,11 @@
 {
-  "updated_at": "2026-10-22 09:00 KST",
-  "price": 27.84,
+  "updated_at": "2026-10-23 09:00 KST",
+  "price": 25.51,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://247wallst.com/investing/2026/09/15/terawulf-falls-5-as-ai-infrastructure-names-extend-a-month-long-slide-iren-drops-4-applied-digital-declines-3/?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/bitcoin-mining-shakeout-as-corz-keel-iren-cifr-exit-coin-shares/cZtnLkIRBcj?.tsrc=rss",
-    "https://www.thestreet.com/investing/stocks/jpmorgan-double-upgrades-iren-stock?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126028014/0001140361-26-028014-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126028871/0001140361-26-028871-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000397/0000070858-26-000397-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126031053/0001140361-26-031053-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126031055/0001140361-26-031055-index.htm",
     "https://www.sec.gov/Archives/edgar/data/1878848/000088698226000449/0000886982-26-000449-index.htm",
     "https://www.sec.gov/Archives/edgar/data/1878848/000114036126032638/0001140361-26-032638-index.htm",
     "https://www.sec.gov/Archives/edgar/data/1878848/000114036126033473/0001140361-26-033473-index.htm",
@@ -125,6 +117,14 @@
     "https://247wallst.com/investing/2026/10/21/iren-limted-crashed-40-this-month-three-wall-street-analysts-agree-its-going-to-quadruple/?.tsrc=rss",
     "https://stocktwits.com/news-articles/markets/equity/iren-stock-spain-ai-campus-launch-2028/cZxMTrDRBva?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/21/data-center-stocks-rise-as-iren-plans-300mw-ai-campus-in-spain-iren-and-cipher-digital-gain-4-core-scientific-climbs-3/?.tsrc=rss",
-    "https://blockspace.media/insight/iren-secures-badajoz-campus-license/?.tsrc=rss"
+    "https://blockspace.media/insight/iren-secures-badajoz-campus-license/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/short-sellers-gain-6bn-amid-135501347.html?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-sinks-10-as-bernstein-slashes-target-to-51-the-fundamentals-are-probably-stuck?ref=yahoofinance&.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/10/22/stock-market-today-oct-22-coreweave-slides-on-bernstein-downgrade-and-financing-worries/?.tsrc=rss",
+    "https://blockspace.media/podcast/spacex-q3-earnings-solunas-50-mw-applied-digital-jv-irens-300-mw-spain-site/?.tsrc=rss",
+    "https://blockspace.media/short/irens-300-mw-data-center-in-spain-would-be-on-of-europes-largest/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-iren-lands-300-mw-101556877.html?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-vs-terawulf-ai-infrastructure-133000461.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/10/22/the-neocloud-bloodbath-nbis-iren-and-crwv-selloff-continues/?.tsrc=rss"
   ]
 }

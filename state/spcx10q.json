@@ -1,1 +1,19 @@
-{"result_notified": false, "last_problem_key": null, "accession": null}
+{
+  "result_notified": true,
+  "last_problem_key": null,
+  "accession": "0001628280-26-066880",
+  "filed": "2026-10-22",
+  "customer_q": {
+    "A": 16.6,
+    "B": 34.5
+  },
+  "customer_ytd": {
+    "A": 17.3,
+    "B": 24.2
+  },
+  "termination_days": null,
+  "commit_total_musd": 37840.0,
+  "concentration": "심화",
+  "commitments": "증가",
+  "updated_at": "2026-10-23T09:01:37+09:00"
+}
