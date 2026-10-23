@@ -1,0 +1,30 @@
+{
+  "name": "krhcfile",
+  "title_prefix": "[KR-HC-RPT]",
+  "display": "셀트리온 (068270) / 삼성바이오로직스 (207940) 정기보고서 영업이익률 비교",
+  "created_at": "2026-10-23T11:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "krhcfile",
+  "schedule_kst": "09:00, 15:20, 19:00",
+  "schedule_note": "새 cron 없음. k079900 과 같은 기존 반복 슬롯 3개에 부착: port-alerts morning 평일 09:00, afternoon 평일 15:20, k203780 슬롯 평일 19:00. 새 보고서가 나올 때만 발송.",
+  "alert_policy": "event_only",
+  "approval": "사용자 채팅 승인(설계와 스케줄), 2026-10-23 10:28 KST 요청",
+  "companies": [
+    {"code": "068270", "name_kr": "셀트리온"},
+    {"code": "207940", "name_kr": "삼성바이오로직스"}
+  ],
+  "reports": {
+    "lookback_days": 1000,
+    "match_tol_pct": 0.5,
+    "note": "분기/반기/사업보고서(정정 포함) 새 제출 시 회사별 1회. KIND 접수번호로 중복 방지. 분기 단독 매출, 영업이익, 영업이익률을 전년 같은 분기와 직전 분기에 비교(영업이익률 차이는 %p). 판정 라벨 없음. 비교 분기 수치가 다른 기준(재작성 등)일 수 있으면 확인 불가. 2026-10-23 기준 이미 제출된 보고서는 state 에 시드(알림 없음)."
+  },
+  "sources": {
+    "reports": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별, 보고서 종류별 목록) + disclsviewer 원문(연결, 없으면 별도 포괄손익계산서). k079900_monitor 의 함수 재사용",
+    "dart_link": "DART dart.fss.or.kr/dsab007/detailSearch.ax (같은 보고서 rcpNo, 실패 시 KIND 뷰어 링크)"
+  },
+  "year_guard": null,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지"
+}
