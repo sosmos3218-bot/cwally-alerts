@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""KRX trading-day calendar (2026). Update KR_HOLIDAYS each December."""
+"""KRX trading-day calendar (2026, 2027 provisional). Update KR_HOLIDAYS each December."""
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
@@ -20,6 +20,25 @@ KR_HOLIDAYS = {
     "2026-10-09",                              # 한글날
     "2026-12-25",                              # 성탄절
     "2026-12-31",                              # 연말 휴장
+    # 2027: PROVISIONAL (added 2026-10-23). Not yet formally announced by KRX (open.krx.co.kr year
+    # selector stops at 2026; KRX confirms next-year holidays in December). Source: 2027 월력요항
+    # (우주항공청 관보 2026-06-29, 노동절/제헌절 공휴일 지정 2026-04 반영) + KASI 2027 달력자료, and
+    # the same 16 dates already returned by KRX's own holiday data (open.krx.co.kr mkd01100305_01,
+    # search_bas_yy=2027) on 2026-10-23. No national election in 2027.
+    # TODO(2026-12): reconcile with the official KRX 2027 휴장일 list and drop this PROVISIONAL note.
+    "2027-01-01",                              # 신정
+    "2027-02-08", "2027-02-09",                # 설날 (2/7 일) + 설날 대체 (2/6 토, 2/7 일 겹침)
+    "2027-03-01",                              # 삼일절
+    "2027-05-03",                              # 노동절 대체 (5/1 토)
+    "2027-05-05",                              # 어린이날
+    "2027-05-13",                              # 부처님오신날
+    "2027-07-19",                              # 제헌절 대체 (7/17 토)
+    "2027-08-16",                              # 광복절 대체 (8/15 일)
+    "2027-09-14", "2027-09-15", "2027-09-16",  # 추석
+    "2027-10-04",                              # 개천절 대체 (10/3 일)
+    "2027-10-11",                              # 한글날 대체 (10/9 토)
+    "2027-12-27",                              # 성탄절 대체 (12/25 토)
+    "2027-12-31",                              # 연말 휴장
 }
 
 
