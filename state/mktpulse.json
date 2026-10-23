@@ -1,1 +1,10 @@
-{}
+{
+ "last_flow": {},
+ "research_checked": {},
+ "seen": {},
+ "skips": {
+  "2026-10-23 15:52:17": "after 15:30 KST market close"
+ },
+ "slots_sent": {},
+ "updated_at": "2026-10-23T15:52:17+09:00"
+}
