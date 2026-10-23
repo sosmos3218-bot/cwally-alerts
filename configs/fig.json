@@ -10,7 +10,7 @@
   "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. Q3 실적 창(11/4) 전후 가격 구간 점검.",
   "valid_until": "2026-11-15",
   "alert_policy": "weekly_or_change",
-  "cik": "0001846576",
+  "cik": "0001579878",
   "holding": false,
   "holding_note": "보유 여부 미확인. 가격 구간 알림이지 보유 손절 신호가 아님.",
   "baseline": {
@@ -36,7 +36,7 @@
   },
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/FIG?interval=1d&range=5d",
-    "sec": "https://data.sec.gov/submissions/CIK0001846576.json",
+    "sec": "https://data.sec.gov/submissions/CIK0001579878.json",
     "ir": "https://investor.figma.com/"
   },
   "ends_kst": "2026-11-15 09:00",
