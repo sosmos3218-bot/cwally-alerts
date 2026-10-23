@@ -1,0 +1,59 @@
+{
+  "name": "476760",
+  "title_prefix": "[476760]",
+  "code": "476760",
+  "display": "ACE 미국30년국채액티브 (KRX 476760, 환노출, 월배당)",
+  "as_of": "2026-10-23",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 반복 슬롯(KRX 거래일 19:00 KST, cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 부착. 장 마감 뒤 종가 기준. 휴장일은 조용히 끝남. 하루 두 번 돌아도 armed 상태로 중복 발송 없음.",
+  "alert_policy": "event_only",
+  "market_close_kst": "15:30",
+  "price": {
+    "add_max": 8300,
+    "add_rearm": 8466,
+    "note": "종가 8,300원 이하 = 분할 추가 신호(1회). 울린 날 이후 종가가 8,466원(기준 +2%, k079900 관례) 위로 올라가야 다시 무장."
+  },
+  "yield": {
+    "ticker": "^TYX",
+    "raise_min": 5.4,
+    "raise_rearm": 5.3,
+    "review_over": 5.5,
+    "review_rearm": 5.4,
+    "note": "미국 30년물 금리(%) 5.4 이상 재상승 = 비중 확대 신호(1회, 5.3 아래로 내려와야 재무장). 5.5 초과 = 판단 재검토(1회, 5.4 아래로 내려와야 재무장)."
+  },
+  "fx": {
+    "ticker": "USDKRW=X",
+    "level_max": 1300,
+    "level_rearm": 1313,
+    "move_sessions": 5,
+    "move_pct": -2.0,
+    "move_rearm_pct": -1.0,
+    "note": "원화 강세 경고(판단 재검토). 원달러 1,300 이하(ustsy TREND_1300 구간과 같은 선, 1,313 위로 돌아와야 재무장) 또는 1주(5거래일, krwfx 1w 창) 원달러 -2.0% 이하(원화 2% 이상 강세, -1.0% 위로 돌아와야 재무장)."
+  },
+  "stance": "적극 매수보다 소액 분할 매수 또는 관망. 포트폴리오 5~10% 이내, 1~3년 보유 전제, 절세 계좌 우선.",
+  "ref": {
+    "as_of": "2026-10-23 14:33 KST",
+    "price": 8545,
+    "prev_close": 8430,
+    "high_52w": 10680,
+    "high_52w_adjusted": 10541,
+    "low_52w": 8075,
+    "nav": 8544.19,
+    "aum_100m_krw": 4317,
+    "market_cap_100m_krw": 4392,
+    "dividend_yield_ttm": 4.72,
+    "total_fee_pct": 0.05,
+    "us30y_1022": 5.287,
+    "usdkrw": 1325.88
+  },
+  "sources": {
+    "price": "https://m.stock.naver.com/api/stock/476760/price?pageSize=20&page=1",
+    "yahoo": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1mo"
+  },
+  "explain": "ACE 미국30년국채액티브(476760, 환노출) 조건 알림. 종가 8,300원 이하 분할 추가, 미국 30년물 5.4% 이상 재상승 비중 확대, 5.5% 초과나 원화 강세(원달러 1,300 이하 또는 1주 -2%) 판단 재검토. 각 조건은 넘을 때 1번만. 매수 지시가 아님.",
+  "year_guard": null,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 KRX 거래일 19:00. 기준선은 2026-10-23 판단 기준이라 금리나 환율 국면이 바뀌면 다시 설정"
+}

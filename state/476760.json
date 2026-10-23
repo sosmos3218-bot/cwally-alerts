@@ -1,0 +1,32 @@
+{
+  "updated_at": "2026-10-23T14:35:53.050585+09:00",
+  "last_day": "2026-10-22",
+  "seeded": true,
+  "last_fail_day": null,
+  "last": {
+    "y30": 5.287,
+    "fx": 1325.49,
+    "fx_move": -0.5954608334228229
+  },
+  "add": {
+    "armed": true,
+    "fired_day": null
+  },
+  "raise": {
+    "armed": true,
+    "fired_day": null
+  },
+  "review_y": {
+    "armed": true,
+    "fired_day": null
+  },
+  "fx_level": {
+    "armed": true,
+    "fired_day": null
+  },
+  "fx_move": {
+    "armed": true,
+    "fired_day": null
+  },
+  "seed_note": "2026-10-23 14:35 KST 시드. 그때 이미 켜진 조건: 없음"
+}
