@@ -468,13 +468,13 @@ def main() -> int:
         # 가격 전부 실패: 매매 신호가 아니므로 cwally-ops (route_topic 이 '조회 실패' 제목을 ops로 보냄).
         # 분기당 1번만 알리고, 발송 분기는 기록하지 않아 다음 평일에 다시 시도한다.
         if state.get("fail_notice_quarter") != quarter:
-            publish(topic, f"[VYMI] 가격 조회 실패 | 분기 점검 {quarter} 다음 평일 재시도", out["body"], 3, ["warning"], server)
+            publish(topic, f"[VYMI] 가격 조회 실패 | 분기 점검 {quarter} 다음 평일 재시도", out["body"], 3, ["warning"], server, config_name="vymi")
             state["fail_notice_quarter"] = quarter
             save_state(state)
         print("vymi price fetch failed; will retry next weekday")
         return 1
 
-    publish(topic, out["title"], out["body"], out["priority"], ["moneybag"], server)
+    publish(topic, out["title"], out["body"], out["priority"], ["moneybag"], server, config_name="vymi")
     state.update({"sent_quarter": quarter, "sent_at": now.strftime("%Y-%m-%d %H:%M KST"), "last_title": out["title"]})
     save_state(state)
     print(out["title"])
