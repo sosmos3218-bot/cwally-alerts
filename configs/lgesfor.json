@@ -1,0 +1,23 @@
+{
+  "name": "lgesfor",
+  "title_prefix": "[LGESFOR]",
+  "display": "LG에너지솔루션 외국인 지분율",
+  "ticker": "373220",
+  "schedule_kst": "19:00",
+  "slot": "k203780 (KRX 거래일 19:00, cron-job.org 정시 + GitHub 0 10 * * 1-5 백업)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "approval": "사용자 채팅 승인 2026-10-24 (허브 정식 알림 lgesfor, 19:00 슬롯 부착). 2026-10-26~11-06 평일 08:40 예약 루틴(outbox 브리프)을 대신하는 상시 알림",
+  "purpose": "LG에너지솔루션 외국인 지분율(네이버 일별 외국인 보유율)이 경고선 5.50% 아래로 내려가면 알림, 5.45% 아래면 추가 알림, 이탈 뒤 5.55% 이상 회복하면 해제 알림. 상태가 바뀔 때만 발송. 매매 신호 아님.",
+  "source": "네이버 증권 모바일 API m.stock.naver.com/api/stock/373220/trend (bizdate, foreignerHoldRatio, foreignerPureBuyQuant)",
+  "levels": {
+    "warn_below_pct": 5.50,
+    "extra_below_pct": 5.45,
+    "release_at_or_above_pct": 5.55
+  },
+  "priority": {"warn": 4, "extra": 5, "release": 3},
+  "timing_note": "지분율은 장 마감 직후 반영되지 않을 수 있음(2026-10-16 19:47 미반영 관찰). 데이터 자체의 거래일(bizdate)로 중복을 막고, 같은 날짜 값이 나중에 바뀌면 그 정정값만 다시 판정. 반영이 늦으면 판정이 다음 19:00 으로 하루 밀림.",
+  "context": "실측(네이버 일별): 10/19 5.54%, 10/20 5.53%(저점), 10/21 5.54%, 10/22 5.55%, 10/23 5.56%",
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 KRX 거래일 19:00 외국인 지분율 감시"
+}
