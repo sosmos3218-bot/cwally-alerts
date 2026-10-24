@@ -103,10 +103,19 @@ def band_of(close: float, cfg: dict) -> str:
 
 def band_cross(prev: str | None, close: float | None, cfg: dict) -> tuple[str | None, str | None]:
     """Return (new_band, crossing). crossing is UP, DOWN or None. Pushes only on a change of band
-    into ABOVE or BELOW. Returning INSIDE re-arms silently. prev None means first run: init, no push."""
+    into ABOVE or BELOW. prev None means first run: init, no push. Re-arm needs the buffer:
+    ABOVE goes back to INSIDE only at close <= up - buffer, BELOW only at close >= down + buffer;
+    inside the buffer the previous band is kept. Direct jumps across still fire."""
     if close is None:
         return prev, None
+    close = round(float(close), 4)
+    buf = float(cfg.get("ten_break_buffer", 0.0))
     new = band_of(close, cfg)
+    if new == "INSIDE":
+        if prev == "ABOVE" and close > round(float(cfg["ten_break_up"]) - buf, 4):
+            new = "ABOVE"
+        elif prev == "BELOW" and close < round(float(cfg["ten_break_down"]) + buf, 4):
+            new = "BELOW"
     if prev is None or new == prev:
         return new, None
     if new == "ABOVE":
@@ -119,6 +128,7 @@ def band_cross(prev: str | None, close: float | None, cfg: dict) -> tuple[str | 
 def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
     up = float(cfg["ten_break_up"])
     down = float(cfg["ten_break_down"])
+    buf = float(cfg.get("ten_break_buffer", 0.0))
     day = ten_day or "날짜없음"
     if cross == "UP":
         title = f"[RATES] 10년물 종가 {up:.2f}% 상향 돌파 | 추격 금지"
@@ -126,7 +136,7 @@ def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
             f"레벨 돌파: 10년물 종가 {up:.2f}% 상향 돌파 (전 미국장 종가 {ten:.2f}%, {day}).",
             f"의미: {up:.2f}%는 10월 하순 박스 상단입니다. FOMC 뒤 재돌파면 '금리 정점 통과' 논리가 약해지고 한국 반도체 비중 확대 근거도 약해집니다.",
             "할 일: 반도체 추가 매수 보류, 비중 점검. 하루 종가로 전량 매도하지 마세요.",
-            f"재무장: 종가가 {down:.2f}~{up:.2f}% 안으로 돌아오면 조용히 다시 감시합니다.",
+            f"재무장: 종가가 {up - buf:.2f}% 이하로 내려오면 조용히 다시 감시합니다. {up - buf:.2f}~{up:.2f}% 사이에서는 다시 보내지 않습니다.",
         ]
         return title, lines, 4
     title = f"[RATES] 10년물 종가 {down:.2f}% 하향 이탈 | 추가 하락"
@@ -134,7 +144,7 @@ def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
         f"레벨 이탈: 10년물 종가 {down:.2f}% 하향 이탈 (전 미국장 종가 {ten:.2f}%, {day}).",
         f"의미: 10월 하순 박스({down:.2f}~{up:.2f}%) 아래로 추가 하락입니다. '금리 정점 통과' 논리에는 우호적입니다.",
         "할 일: 하루 수치로 전량 전환하지 마세요. 레버리지 복구는 금지.",
-        f"재무장: 종가가 {down:.2f}~{up:.2f}% 안으로 돌아오면 조용히 다시 감시합니다.",
+        f"재무장: 종가가 {down + buf:.2f}% 이상으로 올라오면 조용히 다시 감시합니다. {down:.2f}~{down + buf:.2f}% 사이에서는 다시 보내지 않습니다.",
     ]
     return title, lines, 3
 
@@ -194,6 +204,12 @@ def selftest() -> int:
         ("ABOVE", 5.30, "ABOVE", None), ("ABOVE", 5.10, "INSIDE", None), ("INSIDE", 4.85, "INSIDE", None),
         ("INSIDE", 4.80, "BELOW", "DOWN"), ("BELOW", 4.70, "BELOW", None), ("BELOW", 5.20, "ABOVE", "UP"),
         ("ABOVE", 4.80, "BELOW", "DOWN"), (None, 5.20, "ABOVE", None), ("INSIDE", None, "INSIDE", None),
+        # 0.03%p re-arm buffer
+        ("ABOVE", 5.15, "ABOVE", None), ("ABOVE", 5.13, "ABOVE", None), ("ABOVE", 5.1201, "ABOVE", None),
+        ("ABOVE", 5.12, "INSIDE", None), ("ABOVE", 5.119999771118164, "INSIDE", None),
+        ("BELOW", 4.85, "BELOW", None), ("BELOW", 4.87, "BELOW", None), ("BELOW", 4.8799, "BELOW", None),
+        ("BELOW", 4.88, "INSIDE", None), ("BELOW", 4.880000114, "INSIDE", None),
+        ("BELOW", 5.14, "INSIDE", None), ("ABOVE", 4.86, "INSIDE", None),
     ]
     for prev, close, want_band, want_cross in cases:
         got = band_cross(prev, close, cfg)
@@ -212,6 +228,14 @@ def selftest() -> int:
         ("2026-10-29", 5.10, None), ("2026-10-30", 5.12, None), ("2026-11-02", 4.80, "DOWN"),
         ("2026-11-03", 4.75, None), ("2026-11-03", 4.75, None), ("2026-11-04", 4.90, None),
         ("2026-11-05", 5.16, "UP"),
+        # buffer walk, up side: 5.13 keeps ABOVE, 5.16 no re-fire, 5.12 re-arms, 5.16 fires again
+        ("2026-11-06", 5.13, None), ("2026-11-09", 5.16, None), ("2026-11-10", 5.12, None),
+        ("2026-11-11", 5.16, "UP"), ("2026-11-12", 5.12, None),
+        # down side: 4.80 fires, 4.87 keeps BELOW, 4.84 no re-fire, 4.88 re-arms, 4.84 fires again
+        ("2026-11-13", 4.80, "DOWN"), ("2026-11-16", 4.87, None), ("2026-11-17", 4.84, None),
+        ("2026-11-18", 4.88, None), ("2026-11-19", 4.84, "DOWN"),
+        # direct jump across from BELOW still fires
+        ("2026-11-20", 5.20, "UP"),
     ]
     cur = {}
     yahoo_tnx = lambda: (cur["ten"], cur["day"])
