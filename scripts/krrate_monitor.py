@@ -10,7 +10,9 @@
 데이터: 한국은행 ECOS (KOFIA 최종호가, 기존 ECOS_API_KEY secret, 없으면 sample 키), 네이버 시장지표(대체, 출처 표시),
 한국은행 금통위 일정/보도자료/기준금리 표(ktb148070_monitor 함수 재사용, 읽기 전용).
 값의 날짜가 판정 거래일과 같을 때만 쓴다. 없으면 '확인 불가', 조회 실패는 cwally-ops.
-modes: auto | dry(발송 없음, state 안 씀, --as-of "YYYY-MM-DD HH:MM" 가능) | selftest(가짜 값으로 조건 검사, 네트워크 없음)
+금통위 요약 보강(2026-10-24 승인, 본문만): 결정과 새 기준금리(ECOS 722Y001 교차확인), 소수의견 수와 방향(결정문, 없으면 기사 제목),
+연속 인상 여부(기준금리 변경 이력으로 계산), 다음 회의 신호 문구(결정문 인용), 판단 변경 조건(재동결 + 근원 CPI 둔화 또는 성장 둔화).
+modes: auto | dry(발송 없음, state 안 씀, --as-of "YYYY-MM-DD HH:MM", --mpc-date YYYY-MM-DD 가능) | selftest(가짜 값으로 조건 검사, 네트워크 없음)
 """
 from __future__ import annotations
 
@@ -191,6 +193,317 @@ def mpc_decision(cfg: dict, d: str) -> dict:
     return dec
 
 
+
+# ---------------- 금통위 요약 보강 (2026-10-24 12:44 KST 승인: 본문만) ----------------
+MPC_MAX_BYTES = 3900
+DISSENT_ALL_RE = re.compile(r"금융통화위원\s*(\d)\s*명\s*(?:모두|전원)\s*찬성|만장일치")
+DISSENT_SEG_RE = re.compile(r"금번\s*기준금리\s*\S+\s*결정에\s*대해서?는?.{0,600}?(?:다\s*\.|$)")
+DISSENT_NAME_RE = re.compile(r"([가-힣]{2,4})\s*위원(?:은|이|과|,)")
+DISSENT_RATE_RE = re.compile(r"([가-힣]{2,4})\s*위원은\s*기준금리를\s*(\d\.\d{1,2})\s*%\s*로")
+GUIDE_KEYS = ("추가 인상", "추가 인하", "인상의 시기", "인하의 시기", "긴축 기조", "완화 기조", "긴축기조", "완화기조",
+              "파급영향", "파급 영향", "향후 통화정책", "금리인상", "금리인하", "인상 여부", "인하 여부")
+EN_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "a": 1, "single": 1}
+
+
+def ko_clean(s: str) -> str:
+    """원문 인용용: 가운뎃점류와 줄표를 쉼표/하이픈으로, ' .' 공백 정리."""
+    s = re.sub(r"\s*[\u00b7\u2027\u30fb\u2219]\s*", ", ", s)
+    s = s.replace("\u2014", "-").replace("\u2013", "-")
+    s = re.sub(r"\s+([.,)])", r"\1", s)
+    s = re.sub(r"([(])\s+", r"\1", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def release_text(url: str | None) -> str | None:
+    if not url:
+        return None
+    t = ktb.text_of(ktb.fetch(url, 25))
+    i = t.find("금융통화위원회는")
+    j = t.find("목록 연관자료")
+    return re.sub(r"\s+", " ", t[i if i >= 0 else 0: j if j > 0 else len(t)])
+
+
+def dissent_from_text(t: str, rate: float, prev: float | None = None) -> dict | None:
+    """결정문의 '금번 기준금리 ... 결정에 대해서는 ...' 문단. {'count', 'dir', 'text'} 또는 None(문단 없음)."""
+    if not t:
+        return None
+    m = DISSENT_ALL_RE.search(t)
+    seg_m = DISSENT_SEG_RE.search(t)
+    seg = seg_m.group(0) if seg_m else ""
+    if m and (not seg or m.start() >= (seg_m.start() if seg_m else 0)) and not DISSENT_RATE_RE.search(seg):
+        n = m.group(1) if m.lastindex else None
+        return {"count": 0, "dir": None, "text": f"소수의견 0명(금통위원 {n}명 모두 찬성)" if n else "소수의견 0명(만장일치)"}
+    if not seg:
+        return None
+    hits = DISSENT_RATE_RE.findall(seg)
+    if hits:
+        dirs = []
+        base = prev if prev is not None else rate  # 직전 금리 대비: 같으면 동결 주장
+        for _, r in hits:
+            r = float(r)
+            dirs.append("인상" if r > base else ("인하" if r < base else "동결"))
+        names = ", ".join(f"{n} 위원 {float(r):.2f}%" for n, r in hits)
+        d = sorted(set(dirs))
+        return {"count": len(hits), "dir": "/".join(d), "text": f"소수의견 {len(hits)}명({'/'.join(d)} 주장: {names})"}
+    names = [n for n in DISSENT_NAME_RE.findall(seg) if n not in ("금융통화", "통화")]
+    if names and "소수의견" in seg:
+        return {"count": len(set(names)), "dir": None, "text": f"소수의견 {len(set(names))}명(방향은 결정문에 없음)"}
+    return None
+
+
+def dissent_from_titles(items: list[tuple[str, str]]) -> dict | None:
+    """기사 제목 [(제목, 언론사)] 에서 소수의견 수와 방향."""
+    for title, src in items:
+        t = title
+        if "만장일치" in t or re.search(r"\bunanimous", t, re.I):
+            return {"count": 0, "dir": None, "text": f"소수의견 0명(만장일치, 기사: {src})"}
+        m = re.search(r"(인상|인하|동결)\s*소수의견\s*(\d)\s*명|소수의견\s*(\d)\s*명[^,.]{0,12}?(인상|인하|동결)?", t)
+        if m:
+            n = int(m.group(2) or m.group(3))
+            dr = m.group(1) or m.group(4)
+            return {"count": n, "dir": dr, "text": f"소수의견 {n}명" + (f"({dr} 주장)" if dr else "(방향은 기사 제목에 없음)") + f", 기사: {src}"}
+        m = re.search(r"(\d)\s*명\s*(?:이|은)?\s*[\"“']?\s*(인상|인하|동결)\s*(?:주장|소수의견|의견)", t)
+        if m:
+            return {"count": int(m.group(1)), "dir": m.group(2), "text": f"소수의견 {m.group(1)}명({m.group(2)} 주장), 기사: {src}"}
+        m = re.search(r"\b(one|two|three|four|a|single)\s+(?:board member\s+)?dissent", t, re.I)
+        if m:
+            n = EN_NUM[m.group(1).lower()]
+            dr = "인하" if re.search(r"\bcut", t, re.I) else ("인상" if re.search(r"\bhike|raise", t, re.I) else None)
+            return {"count": n, "dir": dr, "text": f"소수의견 {n}명" + (f"({dr} 주장)" if dr else "(방향 확인 안 됨)") + f", 기사: {src}"}
+    return None
+
+
+def news_titles(query: str, lang: str = "ko") -> list[tuple[str, str]]:
+    gl = "hl=ko&gl=KR&ceid=KR:ko" if lang == "ko" else "hl=en-US&gl=US&ceid=US:en"
+    xml = ktb.fetch(f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&{gl}", 20)
+    out = []
+    for it in ktb.parse_rss(xml):
+        t = it.get("title") or ""
+        src = (it.get("source") or (t.rsplit(" - ", 1)[1] if " - " in t else "")).strip() or "언론사 미상"
+        out.append((re.sub(r"\s+-\s+[^-]+$", "", t), src))
+    return out
+
+
+def guidance_quote(t: str | None, limit: int = 200) -> str | None:
+    if not t:
+        return None
+    sents = [x.strip() for x in re.split(r"(?<=다)\s*\.\s*", t) if x.strip()]
+    picks = [x for x in sents if any(k in x for k in GUIDE_KEYS) and "통화정책" in x and "앞으로" not in x[:5] or
+             ("향후 통화정책" in x)]
+    picks += [x for x in sents if x not in picks and any(k in x for k in GUIDE_KEYS)]
+    if not picks:
+        return None
+    q = ko_clean(picks[0]) + "."
+    if len(q) < limit and len(picks) > 1:
+        extra = ko_clean(picks[1]) + "."
+        if len(q) + 1 + len(extra) <= limit:
+            q = q + " " + extra
+    return q if len(q) <= limit else q[: limit - 3].rstrip() + "..."
+
+
+def meeting_dates(cfg: dict, years: list[int]) -> list[str]:
+    days = set(cfg["mpc"]["schedule"])
+    for y in years:
+        try:
+            html = get(cfg["sources"]["bok_meeting_page"].format(year=y))
+            days |= {f"{y}-{mo}-{d}" for mo, d in re.findall(r'<th scope="row">\s*(\d{2})월\s*(\d{2})일', html)}
+        except Exception:  # noqa: BLE001
+            pass
+    return sorted(days)
+
+
+def meeting_path(meetings: list[str], changes: list[tuple[str, float]], upto: str) -> list[tuple[str, str, float | None]]:
+    """회의별 (날짜, hike|cut|hold, 결정 뒤 금리). changes = 기준금리 변경 [(날짜, 새 금리)] (아무 순서)."""
+    ch = sorted(changes)
+    out = []
+    for d in [m for m in sorted(meetings) if m < upto]:
+        before = [r for x, r in ch if x < d]
+        at = [r for x, r in ch if x == d]
+        prev = before[-1] if before else None
+        if at and prev is not None:
+            out.append((d, "hike" if at[0] > prev else ("cut" if at[0] < prev else "hold"), at[0]))
+        else:
+            out.append((d, "hold", prev))
+    return out
+
+
+def path_text(past: list[tuple[str, str, float | None]], cur: str, d: str) -> str:
+    """연속 인상 여부 등 결정 흐름 한 줄 (과거 회의 + 이번 결정)."""
+    seq = past + [(d, cur, None)]
+    yr = d[:4]
+    n_hike = sum(1 for x, k, _ in seq if x.startswith(yr) and k == "hike")
+    n_cut = sum(1 for x, k, _ in seq if x.startswith(yr) and k == "cut")
+    run = 0
+    for _, k, _ in reversed(seq):
+        if k != cur:
+            break
+        run += 1
+    prior = seq[: len(seq) - run]
+    last_move = next(((x, k, r) for x, k, r in reversed(prior if cur == "hold" else past) if k != "hold"), None)
+    if cur in ("hike", "cut"):
+        word = DEC_KO[cur]
+        if run >= 2:
+            s = f"{run}회 연속 {word}"
+        else:
+            holds = 0
+            for _, k, _ in reversed(past):
+                if k != "hold":
+                    break
+                holds += 1
+            before = past[len(past) - holds - 1][1] if len(past) > holds else None
+            if holds and before == cur:
+                s = f"동결 {holds}회 후 재{word}"
+            elif holds and before:
+                s = f"동결 {holds}회 후 {word} 전환({DEC_KO[before]} 뒤)"
+            elif before and before != cur:
+                s = f"{DEC_KO[before]} 직후 {word} 전환"
+            elif holds:
+                s = f"동결 {holds}회 후 {word}"
+            else:
+                s = f"{word}"
+        cnt = n_hike if cur == "hike" else n_cut
+        return f"{s}, 올해 {cnt}번째 {word}"
+    s = f"{run}회 연속 동결 (재동결)" if run >= 2 else (f"첫 동결(직전 회의 {DEC_KO[prior[-1][1]]})" if prior else "동결")
+    if last_move:
+        s += f", 마지막 변경 {last_move[0]} {DEC_KO[last_move[1]]}" + (f"({last_move[2]:.2f}%)" if last_move[2] is not None else "")
+    return s + f", 올해 인상 {n_hike}회, 인하 {n_cut}회"
+
+
+def gdp_qq() -> dict:
+    """한은 실질 GDP 계절조정 전기비 (ECOS 200Y102/10111) 최근 2분기."""
+    y = date.today().year
+    raw = ecos("200Y102", "Q", f"{y - 2}Q1", f"{y}Q4", "10111")
+    ks = sorted(raw)
+    if not ks:
+        raise RuntimeError("ECOS 200Y102 비어 있음")
+    return {"q": ks[-1], "v": raw[ks[-1]], "q_prev": ks[-2] if len(ks) > 1 else None, "v_prev": raw[ks[-2]] if len(ks) > 1 else None}
+
+
+def judge_line(cur: str, path: list[tuple[str, str, float | None]], cpi: dict | None, gdp: dict | None) -> str:
+    """판단 변경 조건 = 재동결 + (근원 CPI 둔화 또는 성장 둔화)."""
+    prev = path[-1][1] if path else None
+    re_hold = cur == "hold" and prev == "hold"
+    rh = "예" if re_hold else ("아니오(첫 동결)" if cur == "hold" else f"아니오({DEC_KO.get(cur, cur)})")
+    if cpi and cpi.get("qb") is not None and cpi.get("qb_prev") is not None:
+        cd = cpi["qb"] < cpi["qb_prev"]
+        y, m = cpi["month"].split("-")
+        ct = f"근원 CPI(농산물및석유류제외) {int(m)}월 {cpi['qb']:.1f}% (전월 {cpi['qb_prev']:.1f}%) {'둔화' if cd else '둔화 아님'}"
+    else:
+        cd, ct = None, f"근원 CPI {NA}"
+    if gdp and gdp.get("v") is not None and gdp.get("v_prev") is not None:
+        gd = gdp["v"] < gdp["v_prev"]
+        gt = f"실질 GDP 전기비 {gdp['q']} {gdp['v']:.1f}% ({gdp['q_prev']} {gdp['v_prev']:.1f}%) {'둔화' if gd else '둔화 아님'}"
+    else:
+        gd, gt = None, f"실질 GDP 전기비 {NA}"
+    if not re_hold:
+        verdict = "미충족(재동결 아님)"
+    elif cd or gd:
+        verdict = "충족: 채권 ETF 판단 변경 검토"
+    elif cd is None and gd is None:
+        verdict = "판정 보류(물가, 성장 둘 다 확인 불가)"
+    elif cd is None or gd is None:
+        verdict = "판정 보류(하나 확인 불가, 나머지는 둔화 아님)"
+    else:
+        verdict = "미충족(물가, 성장 둔화 없음)"
+    return f"판단 변경 조건(재동결 + 근원 CPI 둔화 또는 성장 둔화): 재동결 {rh}, {ct}, {gt} -> {verdict}"
+
+
+def ecos_base_rate(start: date, end: date) -> dict[str, float]:
+    raw = ecos("722Y001", "D", start.strftime("%Y%m%d"), end.strftime("%Y%m%d"), "0101000")
+    return {f"{k[:4]}-{k[4:6]}-{k[6:8]}": v for k, v in raw.items()}
+
+
+def changes_from_daily(series: dict[str, float]) -> list[tuple[str, float]]:
+    out, prev = [], None
+    for d in sorted(series):
+        if prev is not None and series[d] != prev:
+            out.append((d, series[d]))
+        if prev is None:
+            out.append((d, series[d]))  # 시작 수준(변경일 아님, 이전 금리 기준용)
+        prev = series[d]
+    return out
+
+
+def mpc_extras(cfg: dict, d: str, dec: dict) -> dict:
+    """결정 확인(ECOS), 소수의견, 결정 흐름, 다음 회의 신호, 판단 변경 조건. 실패한 항목은 '확인 불가'."""
+    ex: dict = {"src_ok": [], "src_fail": []}
+    md = date.fromisoformat(d)
+    # 1) ECOS 기준금리 (결정일 값과 전날 값)
+    eser: dict[str, float] = {}
+    try:
+        eser = ecos_base_rate(md - timedelta(days=380), md)
+        ex["src_ok"].append("ECOS 722Y001")
+    except Exception as exc:  # noqa: BLE001
+        ex["src_fail"].append(f"ECOS 722Y001 {type(exc).__name__}")
+    if d in eser:
+        before = [eser[k] for k in sorted(eser) if k < d]
+        p = before[-1] if before else None
+        er = eser[d]
+        edec = "hold" if p is None or er == p else ("hike" if er > p else "cut")
+        same = abs(er - dec["rate"]) < 0.001 and edec == dec["decision"]
+        ex["ecos"] = f"ECOS 기준금리 {d} {er:.2f}% {'일치' if same else '불일치, 원문 확인'}"
+    elif eser:
+        ex["ecos"] = f"ECOS 기준금리 {d} 값 아직 없음"
+    else:
+        ex["ecos"] = f"ECOS 기준금리 {NA}"
+    # 2) 소수의견: 결정문 -> 기사(연합뉴스 우선)
+    rtext = None
+    try:
+        rtext = release_text(dec.get("url"))
+        if rtext:
+            ex["src_ok"].append("한은 통화정책방향 결정문")
+    except Exception as exc:  # noqa: BLE001
+        ex["src_fail"].append(f"한은 결정문 {type(exc).__name__}")
+    dis = dissent_from_text(rtext or "", dec["rate"], dec.get("prev"))
+    if dis:
+        dis["text"] += ", 출처 한은 통화정책방향 결정문"
+    else:
+        items: list[tuple[str, str]] = []
+        for q, lang in ((f"한국은행 기준금리 소수의견 after:{(md - timedelta(days=1)):%Y-%m-%d} before:{(md + timedelta(days=2)):%Y-%m-%d}", "ko"),
+                        (f"Bank of Korea rate dissent Yonhap after:{(md - timedelta(days=1)):%Y-%m-%d} before:{(md + timedelta(days=2)):%Y-%m-%d}", "en")):
+            try:
+                items += news_titles(q, lang)
+            except Exception as exc:  # noqa: BLE001
+                ex["src_fail"].append(f"뉴스 RSS({lang}) {type(exc).__name__}")
+        items.sort(key=lambda x: 0 if re.search(r"연합|Yonhap", x[1], re.I) else 1)
+        dis = dissent_from_titles(items)
+        if items:
+            ex["src_ok"].append(f"뉴스 RSS {len(items)}건")
+    ex["dissent"] = dis["text"] if dis else f"소수의견 {NA}(결정문과 기사 제목에 없음, 총재 기자간담회 기사 확인)"
+    ex["dissent_n"] = dis["count"] if dis else None
+    # 3) 결정 흐름: 한은 기준금리 표(변경 이력) -> ECOS 일별
+    changes: list[tuple[str, float]] = []
+    try:
+        changes = ktb.parse_base_table(ktb.fetch(cfg["sources"]["bok_base_rate_table"], 25))
+        ex["src_ok"].append("한은 기준금리 표")
+        hsrc = "한은 기준금리 변경 이력"
+    except Exception as exc:  # noqa: BLE001
+        ex["src_fail"].append(f"한은 기준금리 표 {type(exc).__name__}")
+        changes = changes_from_daily(eser) if eser else []
+        hsrc = "ECOS 기준금리 일별"
+    meets = meeting_dates(cfg, [md.year - 1, md.year])
+    past = meeting_path(meets, changes, d) if changes else []
+    ex["past"] = past
+    ex["path"] = (path_text(past, dec["decision"], d) + f" (출처 {hsrc})") if past else f"결정 흐름 {NA}"
+    # 4) 다음 회의 신호
+    gq = guidance_quote(rtext)
+    ex["guidance"] = f"\"{gq}\" (결정문)" if gq else NA
+    # 5) 판단 변경 조건
+    cpi = gdp = None
+    try:
+        cpi = cpi_yoy(md.strftime("%Y-%m"))
+        ex["src_ok"].append("ECOS 901Y010")
+    except Exception as exc:  # noqa: BLE001
+        ex["src_fail"].append(f"ECOS 901Y010 {type(exc).__name__}")
+    try:
+        gdp = gdp_qq()
+        ex["src_ok"].append("ECOS 200Y102")
+    except Exception as exc:  # noqa: BLE001
+        ex["src_fail"].append(f"ECOS 200Y102 {type(exc).__name__}")
+    ex["judge"] = judge_line(dec["decision"], past, cpi, gdp) if past else judge_line(dec["decision"], [], cpi, gdp).replace("재동결 아니오", f"재동결 {NA}")
+    return ex
+
+
 # ---------------- 판정 (순수 함수, selftest 대상) ----------------
 def eval_y10(st: dict, v: float, cfg: dict) -> str | None:
     """'fire' | 'rearm' | None. st 를 바꾼다."""
@@ -265,7 +578,7 @@ def spread_msg(cfg, stamp, d, aa, y3, sp, w, b, bsp):
     return title, msg, 4, ["rotating_light"]
 
 
-def mpc_msg(stamp, d, dec, y, nxt):
+def mpc_msg(stamp, d, dec, y, nxt, ex: dict | None = None):
     dk = DEC_KO.get(dec["decision"], dec["decision"])
     prev = f"{dec['prev']:.2f}% → " if dec.get("prev") is not None else ""
     ylines = []
@@ -282,13 +595,31 @@ def mpc_msg(stamp, d, dec, y, nxt):
         cross = f" 네이버 기준금리 {nv[1]:.2f}% ({nv[0]} 발표) {'일치' if abs(nv[1] - dec['rate']) < 0.001 and nv[0] == d else '불일치, 원문 확인'}."
     y10 = y.get("y10", (None,))[0]
     title = f"[KR-RATE] {d[5:7]}/{d[8:]} 금통위 기준금리 {dk} {dec['rate']:.2f}%" + (f" | 국고10년 {y10:.3f}%" if y10 is not None else "")
-    msg = body(stamp, "금통위(한국은행 금융통화위원회) 기준금리 결정일 저녁 사실 요약. 판단 없음. 매매 신호 아님.",
-               f"기준금리 {prev}{dec['rate']:.2f}% ({dk}), 출처 {dec.get('source')}. {dec.get('dissent') or ''}.{cross} "
-               + " / ".join(ylines) + f". 다음 금통위 {nxt}.",
-               "결정과 금리 숫자만 확인. 148070 분할매수 조건(10년 종가 기준)은 따로 알림이 옵니다.",
-               f"다음 금통위({nxt}) 저녁에 다시 옵니다.",
-               "이 요약만으로 비중을 바꾸지 않기.",
-               "결정 하나로 금리 방향 단정하기(인상 종료 같은 판단 포함), 확인 불가 값을 정상으로 읽기.")
+    def build(guide: str) -> str:
+        if ex is None:
+            status = (f"기준금리 {prev}{dec['rate']:.2f}% ({dk}), 출처 {dec.get('source')}. {dec.get('dissent') or ''}.{cross} "
+                      + " / ".join(ylines) + f". 다음 금통위 {nxt}.")
+        else:
+            status = (f"결정: {dk}, 기준금리 {prev}{dec['rate']:.2f}% (출처 {dec.get('source')}; {ex['ecos']}).{cross} "
+                      f"소수의견 수: {ex['dissent'].removeprefix('소수의견 ')}. 연속 인상 여부: {ex['path']}. 다음 회의 신호 문구: {guide}. "
+                      + " / ".join(ylines) + f". 다음 금통위 {nxt}. {ex['judge']}.")
+        what = ("금통위(한국은행 금융통화위원회) 기준금리 결정일 저녁 사실 요약. 판단 없음. 매매 신호 아님." if ex is None else
+                "금통위(한국은행 금융통화위원회) 기준금리 결정일 저녁 사실 요약과 채권 ETF 판단 변경 조건 점검. 매매 신호 아님.")
+        return body(stamp, what,
+                    status,
+                    "결정과 금리 숫자만 확인. 148070 분할매수 조건(10년 종가 기준)은 따로 알림이 옵니다.",
+                    f"다음 금통위({nxt}) 저녁에 다시 옵니다.",
+                    "이 요약만으로 비중을 바꾸지 않기.",
+                    "결정 하나로 금리 방향 단정하기(인상 종료 같은 판단 포함), 확인 불가 값을 정상으로 읽기.")
+
+    guide = ex["guidance"] if ex else ""
+    msg = build(guide)
+    # ntfy 끝 줄("꺼지는 때: ...") 여유 150바이트를 두고 3,900바이트 아래로: 인용문부터 줄인다
+    q = re.match(r'^"(.*)" \(결정문\)$', guide)
+    inner = q.group(1) if q else None
+    while ex is not None and len(msg.encode("utf-8")) > MPC_MAX_BYTES - 150 and inner and len(inner) > 30:
+        inner = inner[: int(len(inner) * 0.8)].rstrip() + "..."
+        msg = build(f'"{inner}" (결정문)')
     return title, msg, 3, ["bank"]
 
 
@@ -334,6 +665,15 @@ def main() -> int:
     if mode not in {"auto", "dry"}:
         print(f"unknown mode {mode}")
         return 2
+    mpc_override = None
+    if "--mpc-date" in args:  # dry 전용: 지난 금통위 날짜로 결정일 요약을 다시 만들어 봄 (mpc_done 무시)
+        if mode != "dry":
+            print("--mpc-date 는 dry 에서만")
+            return 2
+        mpc_override = args[args.index("--mpc-date") + 1]
+        if mpc_override == "last":  # 오늘 이전 마지막 금통위, 그날 19:00 으로
+            mpc_override = max(x for x in cfg["mpc"]["schedule"] if x <= datetime.now(KST).strftime("%Y-%m-%d"))
+            now = datetime.strptime(mpc_override + " 19:00", "%Y-%m-%d %H:%M").replace(tzinfo=KST)
     dry = mode == "dry"
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     today = now.strftime("%Y-%m-%d")
@@ -466,9 +806,12 @@ def main() -> int:
 
     # --- 2a) 금통위 결정일 ---
     done = set(state.get("mpc_done") or [])
-    for d in [x for x in sched if x <= sess.isoformat() and x not in done]:
+    cands = [x for x in sched if x <= sess.isoformat() and x not in done]
+    if mpc_override:  # dry 전용: 지난 회의 하나를 요약 경로 그대로 다시 만들어 본다
+        cands = [mpc_override]
+    for d in cands:
         age = (sess - date.fromisoformat(d)).days
-        if seeding or age > int(cfg["mpc"]["retry_days"]):
+        if not mpc_override and (seeding or age > int(cfg["mpc"]["retry_days"])):
             done.add(d)
             continue
         if not is_trading_day(date.fromisoformat(d)):
@@ -485,7 +828,13 @@ def main() -> int:
         for k in ("y3", "y10"):
             v, src = close(k, d)
             y[k] = (v, close(k, pd)[0], src)
-        out.append(mpc_msg(stamp, d, dec, y, nxt))
+        try:
+            ex = mpc_extras(cfg, d, dec)
+            print(f"mpc extras ok={ex['src_ok']} fail={ex['src_fail']}")
+        except Exception as exc:  # noqa: BLE001  보강 실패는 기존 요약으로
+            print(f"mpc extras failed: {type(exc).__name__} {exc}", file=sys.stderr)
+            ex = None
+        out.append(mpc_msg(stamp, d, dec, y, nxt, ex))
         done.add(d)
     state["mpc_done"] = sorted(done)[-24:]
 
@@ -522,6 +871,70 @@ def main() -> int:
     state["updated_at"] = now.isoformat()
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
+
+
+def mpc_selftest(cfg: dict) -> list:
+    """금통위 요약 보강: 가짜 인상(11/26 3.25%)과 가짜 동결(11/26 3.00%)."""
+    meets = ["2025-10-23", "2025-11-27", "2026-01-15", "2026-02-26", "2026-04-10", "2026-05-28", "2026-07-16", "2026-08-27",
+             "2026-10-22", "2026-11-26"]
+    changes = [("2026-08-27", 3.0), ("2026-07-16", 2.75), ("2025-05-29", 2.5), ("2025-02-25", 2.75)]
+    past = meeting_path(meets, changes, "2026-11-26")
+    assert [k for _, k, _ in past[-3:]] == ["hike", "hike", "hold"], past
+    assert path_text(past, "hike", "2026-11-26") == "동결 1회 후 재인상, 올해 3번째 인상", path_text(past, "hike", "2026-11-26")
+    hold_t = path_text(past, "hold", "2026-11-26")
+    assert hold_t.startswith("2회 연속 동결 (재동결), 마지막 변경 2026-08-27 인상(3.00%)") and "올해 인상 2회" in hold_t, hold_t
+    assert path_text(past[:-1], "hike", "2026-10-22") == "3회 연속 인상, 올해 3번째 인상"
+    p2 = meeting_path(meets[:5], [("2025-02-25", 2.75), ("2025-05-29", 2.5)], "2026-02-26")
+    assert path_text(p2, "cut", "2026-02-26").startswith("동결 ") and "인하" in path_text(p2, "cut", "2026-02-26")
+    real = ("금융통화위원회는 다음 통화정책방향 결정시까지 한국은행 기준금리를 현재의 3.00% 수준에서 유지하여 통화정책을 운용하기로 하였다 . "
+            "기준금리를 현 수준에서 유지하면서 대내외 위험요인의 전개상황과 두 차례 인상의 파급영향을 점검할 필요가 있다고 판단하였다 . "
+            "따라서 향후 통화정책은 물가 · 경기 흐름 및 금융안정 상황을 면밀히 점검하면서 추가 인상의 시기와 속도 등을 결정해 나갈 것이다 . "
+            "□ 금번 기준금리 동결 결정에 대해서는 금융통화위원 7 명 모두 찬성하였다 .")
+    d0 = dissent_from_text(real, 3.0)
+    assert d0 and d0["count"] == 0 and "7명 모두 찬성" in d0["text"], d0
+    hk = ("금융통화위원회는 한국은행 기준금리를 현재의 3.00%에서 3.25%로 상향 조정하여 통화정책을 운용하기로 하였다. "
+          "□ 금번 기준금리 인상 결정에 대해서는 홍길동 위원은 기준금리를 3.00%로 유지하자는 소수의견을 개진하였다.")
+    d1 = dissent_from_text(hk, 3.25, 3.0)
+    assert d1 and d1["count"] == 1 and d1["dir"] == "동결", d1
+    assert dissent_from_text("금융통화위원회는 기준금리를 3.00% 수준에서 유지하기로 하였다.", 3.0) is None
+    t1 = dissent_from_titles([("한은 기준금리 3.25%로 인상…동결 소수의견 1명", "연합뉴스")])
+    assert t1 and t1["count"] == 1 and t1["dir"] == "동결", t1
+    t2 = dissent_from_titles([("Bank of Korea raises rate to 3.25% with one dissent", "Yonhap News Agency")])
+    assert t2 and t2["count"] == 1, t2
+    assert dissent_from_titles([("한은 기준금리 동결", "연합뉴스")]) is None
+    gq = guidance_quote(real)
+    assert gq and gq.startswith("따라서 향후 통화정책은 물가, 경기 흐름") and len(gq) <= 200 and "\u00b7" not in gq, gq
+    assert guidance_quote("국내경제는 성장세를 이어갔다.") is None
+    cpi = {"month": "2026-10", "qb": 2.5, "qb_prev": 2.7, "db": 2.6}
+    gdp = {"q": "2026Q3", "v": 1.1, "q_prev": "2026Q2", "v_prev": 1.3}
+    j_hold = judge_line("hold", past, cpi, gdp)
+    assert "재동결 예" in j_hold and "충족: 채권 ETF 판단 변경 검토" in j_hold, j_hold
+    j_hike = judge_line("hike", past, cpi, gdp)
+    assert "미충족(재동결 아님)" in j_hike, j_hike
+    j_na = judge_line("hold", past, None, None)
+    assert "판정 보류" in j_na and NA in j_na
+    j_no = judge_line("hold", past, {"month": "2026-10", "qb": 2.8, "qb_prev": 2.7}, {"q": "2026Q3", "v": 1.5, "q_prev": "2026Q2", "v_prev": 1.3})
+    assert "미충족(물가, 성장 둔화 없음)" in j_no
+    y = {"y3": (3.40, 3.32, "KOFIA 최종호가(한국은행 ECOS)"), "y10": (4.10, 4.05, "KOFIA 최종호가(한국은행 ECOS)")}
+    base = {"src_ok": [], "src_fail": [], "ecos": "ECOS 기준금리 2026-11-26 값 아직 없음"}
+    ex_hike = dict(base, dissent=d1["text"] + ", 출처 한은 통화정책방향 결정문", dissent_n=1, past=past,
+                   path=path_text(past, "hike", "2026-11-26") + " (출처 한은 기준금리 변경 이력)",
+                   guidance=f'"{guidance_quote(real)}" (결정문)', judge=j_hike)
+    ex_hold = dict(base, dissent=d0["text"] + ", 출처 한은 통화정책방향 결정문", dissent_n=0, past=past,
+                   path=hold_t + " (출처 한은 기준금리 변경 이력)", guidance=f'"{"가" * 1200}" (결정문)', judge=j_hold)
+    out = []
+    for dec, ex in ((({"decision": "hike", "rate": 3.25, "prev": 3.0, "source": "한은 통화정책방향 보도자료",
+                       "naver": ("2026-11-26", 3.25)}), ex_hike),
+                    (({"decision": "hold", "rate": 3.0, "prev": 3.0, "source": "한은 통화정책방향 보도자료", "naver": None}), ex_hold)):
+        t, m, p, tg = mpc_msg("2026-11-26 19:00 KST", "2026-11-26", dec, y, "2027 일정 미발표", ex)
+        assert len(m.encode("utf-8")) <= MPC_MAX_BYTES - 150, len(m.encode("utf-8"))
+        for need in ("결정:", "소수의견 수:", "연속 인상 여부:", "다음 회의 신호 문구:", "판단 변경 조건"):
+            assert need in m, need
+        out.append((t, m, p, tg))
+    assert "동결 1회 후 재인상, 올해 3번째 인상" in out[0][1] and "1명(동결 주장" in out[0][1]
+    assert "재동결 예" in out[1][1] and "..." in out[1][1]
+    print(f"mpc extras ok: hike {len(out[0][1].encode())}B, hold {len(out[1][1].encode())}B")
+    return out
 
 
 def selftest(cfg: dict) -> int:
@@ -562,6 +975,7 @@ def selftest(cfg: dict) -> int:
                                             "dissent": "만장일치", "naver": ("2026-11-26", 3.0)},
                        {"y3": (3.85, 3.87, "KOFIA 최종호가(한국은행 ECOS)"), "y10": (4.20, None, "로이터 시장 종가(네이버), ECOS 미반영")}, "2027 일정 미발표"),
                (t, m, p, tg)]
+    samples += mpc_selftest(cfg)
     for t, m, p, tg in samples:
         assert "\u00b7" not in t + m and "\u2014" not in t + m
         assert route_topic("cwally-port", t) == "cwally-port", t
