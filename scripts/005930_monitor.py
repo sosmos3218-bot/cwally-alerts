@@ -15,7 +15,12 @@ Events
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
             not found or feed failed -> "공시 확인 필요".
-Data: Yahoo chart <code>.KS daily closes, Naver daily price rows as fallback (476760 pattern). No new secret.
+Data: judgment uses only the KRX regular-session close from Yahoo chart <code>.KS (chart close +
+regularMarketPrice stamped at/after 15:30 KST). Hold on failure: if Yahoo fails or has no regular close for
+the session, nothing is judged from any other source; a 조회 실패 notice goes to cwally-ops (once a day) and
+the session stays unprocessed (state last_day) so the next run catches it up. Naver's daily price is the NXT
+after-market price (approved 2026-10-24 21:48 KST): it is only printed as a reference line in sent messages
+("참고: NXT 애프터마켓 ..."), never judged. No new secret.
 
 Modes: auto (slot) | force (ignore holiday) | dry (print, no ntfy, no state) | selftest (offline checks) |
        install (one install-confirmation send to cwally-port, no state) | seed (write state from live data, no ntfy)
@@ -46,6 +51,8 @@ def scrub(text: str) -> str:
     for ch in FORBIDDEN:
         text = text.replace(ch, ", " if ch != "\u2014" else " ")
     return text
+REGULAR_CLOSE_HM = (15, 30)
+NXT_END_HM = (20, 0)
 SEVERITY = ["stop", "trim2", "trim1", "buy3", "buy2", "buy1"]
 
 
@@ -65,7 +72,7 @@ def num(v) -> float | None:
         return None
 
 
-def yahoo_rows(cfg: dict, symbol: str) -> list[dict]:
+def yahoo_rows(cfg: dict, symbol: str, regular_only: bool = False) -> list[dict]:
     res = get_json(cfg["sources"]["yahoo"].format(symbol=urllib.parse.quote(symbol)))["chart"]["result"][0]
     ts = res.get("timestamp") or []
     closes = res["indicators"]["quote"][0]["close"]
@@ -75,8 +82,12 @@ def yahoo_rows(cfg: dict, symbol: str) -> list[dict]:
             rows[datetime.fromtimestamp(t, KST).date().isoformat()] = float(c)
     meta = res.get("meta") or {}
     if meta.get("regularMarketPrice") is not None and meta.get("regularMarketTime"):
-        d = datetime.fromtimestamp(meta["regularMarketTime"], KST).date().isoformat()
-        if d in rows or not rows or d > max(rows):
+        mt = datetime.fromtimestamp(meta["regularMarketTime"], KST)
+        d = mt.date().isoformat()
+        if regular_only and (mt.hour, mt.minute) < REGULAR_CLOSE_HM:
+            # session not closed in Yahoo yet: today's candle is intraday, not a regular close
+            rows = {k: v for k, v in rows.items() if k < d}
+        elif d in rows or not rows or d > max(rows):
             rows[d] = float(meta["regularMarketPrice"])
     out = [{"day": d, "close": c} for d, c in sorted(rows.items())]
     if not out:
@@ -123,23 +134,63 @@ def find_filing(cfg: dict, day: str) -> dict | None:
     return None
 
 
-def collect(cfg: dict) -> tuple[dict, list[str]]:
+def regular_gap(rows: list[dict], now: datetime) -> str | None:
+    """Session day whose regular close should exist by now but is missing from rows (hold), else None."""
+    sday = session_day(now)
+    closed = now.date() > sday or (now.hour, now.minute) >= REGULAR_CLOSE_HM
+    if is_trading_day(sday) and closed and (not rows or rows[-1]["day"] < sday.isoformat()):
+        return sday.isoformat()
+    return None
+
+
+def collect(cfg: dict, now: datetime | None = None) -> tuple[dict, list[str]]:
+    """Rows come only from Yahoo regular closes. No other price source is ever judged (hold on failure)."""
+    now = now or datetime.now(KST)
     data: dict = {"src": None}
     fails: list[str] = []
     try:
-        data["rows"], data["src"] = yahoo_rows(cfg, cfg["yahoo_symbol"]), "Yahoo"
+        data["rows"], data["src"] = yahoo_rows(cfg, cfg["yahoo_symbol"], regular_only=True), "Yahoo 정규장"
     except Exception as exc:
-        try:
-            data["rows"], data["src"] = naver_rows(cfg), "네이버"
-            print(f"yahoo failed ({exc}); using naver")
-        except Exception as exc2:
-            fails.append(f"{cfg['code']} 시세 (Yahoo {exc}, 네이버 {exc2})")
+        data["rows"] = []
+        fails.append(f"{cfg['code']} 정규장 종가 (Yahoo {str(exc)[:80]}; 판단 보류, 다음 실행에서 따라잡음)")
+    else:
+        gap = regular_gap(data["rows"], now)
+        if gap:
+            fails.append(f"{cfg['code']} {gap} 정규장 종가 없음 (Yahoo; 판단 보류, 다음 실행에서 따라잡음)")
     if cfg.get("us10y"):
         try:
             data["us10y"] = tnx(cfg)
         except Exception as exc:
             fails.append(f"미국 10년물 ({exc})")
     return data, fails
+
+
+def nxt_line(name: str, regular: float | None, nxt: float | None, now: datetime) -> str:
+    """Reference only (never judged). 진행 중 before 20:00 KST of the session day, 마감 at/after."""
+    if regular is None or nxt is None or abs(nxt - regular) < 0.5:
+        return f"{name} NXT 정보 없음"
+    sday = session_day(now)
+    done = now.date() > sday or (now.hour, now.minute) >= NXT_END_HM
+    label = "마감" if done else "진행 중"
+    return f"{name} NXT 애프터마켓 ({now.strftime('%H:%M')} 기준, {label}) {fmt(nxt)}, 정규장 대비 {dist(nxt, regular):+.1f}%"
+
+
+def nxt_ref(cfg: dict, rows: list[dict] | None, now: datetime) -> str:
+    """Naver daily price for the session day = NXT after-market price; compared with the Yahoo regular close."""
+    sday = session_day(now).isoformat()
+    try:
+        regular = next((r["close"] for r in (rows or []) if r["day"] == sday), None)
+        if rows is None:
+            regular = next((r["close"] for r in yahoo_rows(cfg, cfg["yahoo_symbol"], regular_only=True) if r["day"] == sday), None)
+        nxt = next((r["close"] for r in naver_rows(cfg) if r["day"] == sday), None)
+    except Exception as exc:
+        print(f"nxt_ref {cfg['code']} skipped: {exc}")
+        regular = nxt = None
+    return nxt_line(cfg["short"], regular, nxt, now)
+
+
+def ref_text(parts: list[str]) -> str:
+    return "참고: " + "; ".join(parts) + ". 판단에는 정규장 종가만 씁니다."
 
 
 # ---------- state ----------
@@ -268,7 +319,7 @@ def trim_text(cfg: dict) -> str:
     return ", ".join(f"{fmt(ln['level'])} 이상 {ln['title'].split()[-1]}" for ln in t)
 
 
-def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str) -> tuple[str, str, int]:
+def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     events = sorted(events, key=lambda e: SEVERITY.index(e["key"]) if e["key"] in SEVERITY else 99)
     top = events[0]
     ln = top["line"]
@@ -287,16 +338,16 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str) -> tuple[
     msg = "\n".join([
         head(cfg, stamp),
         f"이게 뭐 알림: {cfg['short']} 종가가 계획한 매수, 축소, 손절 선을 새로 넘을 때만 오는 알림입니다. 매수 지시가 아닙니다.",
-        "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (시세: {data.get('src') or '-'})",
+        "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})",
         "지금 할 일: " + " ".join(e["line"]["action"] for e in events),
         f"나중에: {later}",
         f"익절/줄일 때: {trim_text(cfg)} 비중 축소. 미국 10년물 5.30% 이상이면 분할 매수 중단.",
         "하지 말 것: 한 번에 전액 매수, 신용 및 미수, 손절선 이탈 뒤 물타기, 조회 실패를 신호로 읽기.",
-    ])
+    ] + ([ref] if ref else []))
     return title, msg, pri
 
 
-def build_us10y(cfg: dict, ev: dict, stamp: str) -> tuple[str, str, int]:
+def build_us10y(cfg: dict, ev: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     z = cfg["us10y"]
     title = f"{cfg['title_prefix']} 미국 10년물 {z['warn_min']:.2f}% 이상 | 분할 매수 중단"
     msg = "\n".join([
@@ -307,11 +358,11 @@ def build_us10y(cfg: dict, ev: dict, stamp: str) -> tuple[str, str, int]:
         f"나중에: {z['rearm_below']:.2f}% 아래로 내려와야 이 경고가 다시 무장됩니다.",
         "익절/줄일 때: 축소선에 아직 못 미쳐도 현금 비중을 먼저 늘리는 쪽을 검토하세요.",
         "하지 말 것: 금리 경고 중 매수선 알림만 보고 기계적으로 추가 매수하기, 신용 및 미수.",
-    ])
+    ] + ([ref] if ref else []))
     return title, msg, 4
 
 
-def build_earnings(cfg: dict, d: str, filing: dict | None, ffail: str | None, stamp: str) -> tuple[str, str, int]:
+def build_earnings(cfg: dict, d: str, filing: dict | None, ffail: str | None, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     e = cfg["earnings"]
     page = cfg["sources"]["notice_page"].format(code=cfg["code"])
     if filing:
@@ -330,7 +381,7 @@ def build_earnings(cfg: dict, d: str, filing: dict | None, ffail: str | None, st
         f"나중에: {cfg['plan_rule']} 모두 문제없으면 기존 매수선과 축소선 계획 유지.",
         f"익절/줄일 때: 하나라도 부정적이면 축소선({trim_text(cfg)})을 기다리지 말고 비중 축소 전환을 검토.",
         "하지 말 것: 발표 당일 급등락에 추격 매매, 체크 없이 매수선 알림만 따라가기, 신용 및 미수.",
-    ])
+    ] + ([ref] if ref else []))
     return title, msg, 4
 
 
@@ -359,10 +410,19 @@ def load_cfg(name: str) -> dict:
     return json.loads((ROOT / "configs" / f"{name}.json").read_text(encoding="utf-8"))
 
 
-def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None) -> list[tuple]:
-    """Mutates st; returns [(title, msg, pri, tags)]."""
+def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None) -> list[tuple]:
+    """Mutates st; returns [(title, msg, pri, tags)]. Only data['rows'] (Yahoo regular closes) can fire a line;
+    ref_fn(cfg, rows, now) only formats the NXT reference line of a message that is already being sent."""
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     today = session_day(now).isoformat()
+    ref_fn = ref_fn or nxt_ref
+    cache: dict = {}
+
+    def ref(c: dict, rows) -> str:
+        if c["code"] not in cache:
+            cache[c["code"]] = ref_fn(c, rows, now)
+        return cache[c["code"]]
+
     sends = []
     d = earnings_due(cfg, st, today)
     if d:
@@ -371,13 +431,19 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
             filing = (filing_fn or find_filing)(cfg, d)
         except Exception as exc:
             ffail = str(exc)[:80]
-        sends.append(build_earnings(cfg, d, filing, ffail, stamp) + (["clipboard"],))
+        sends.append(build_earnings(cfg, d, filing, ffail, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["clipboard"],))
         st.setdefault("earn_done", {})[d] = stamp
     ev = eval_lines(cfg, st, data.get("rows") or [], today, now)
     if ev:
-        sends.append(build_lines(cfg, ev, data, stamp) + (["chart_with_downwards_trend"],))
+        sends.append(build_lines(cfg, ev, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["chart_with_downwards_trend"],))
     for e in eval_us10y(cfg, st, data.get("us10y"), today):
-        sends.append(build_us10y(cfg, e, stamp) + (["warning"],))
+        parts = [ref(cfg, data.get("rows"))]
+        for other in cfg.get("us10y", {}).get("ref_also", []):
+            try:
+                parts.append(ref(load_cfg(other), None))
+            except Exception as exc:
+                print(f"ref {other} skipped: {exc}")
+        sends.append(build_us10y(cfg, e, stamp, ref_text(parts)) + (["warning"],))
     if fails and st.get("last_fail_day") != today:
         sends.append(build_fail(cfg, fails, stamp) + (["warning"],))
         st["last_fail_day"] = today
@@ -425,7 +491,7 @@ def run(name: str, argv: list[str]) -> int:
     st = load_state(cfg)
 
     if mode == "install":
-        data, fails = collect(cfg)
+        data, fails = collect(cfg, now)
         title, msg = install_msg(cfg, st, data, fails, stamp)
         print(title)
         print(msg)
@@ -436,7 +502,7 @@ def run(name: str, argv: list[str]) -> int:
         print(f"{day} KRX holiday; silent")
         return 0
 
-    data, fails = collect(cfg)
+    data, fails = collect(cfg, now)
     print(f"data src={data.get('src')} rows={(data.get('rows') or [])[-3:]} us10y={data.get('us10y')} fails={fails}")
 
     if mode == "seed" or not st.get("seeded"):
@@ -472,6 +538,21 @@ def run(name: str, argv: list[str]) -> int:
 
 # ---------- offline self-test ----------
 def selftest(name: str) -> int:
+    g = globals()
+    orig = {k: g[k] for k in ("nxt_ref", "yahoo_rows", "naver_rows", "get_json")}
+
+    def no_net(*a, **k):
+        raise RuntimeError("offline selftest")
+    g["nxt_ref"] = lambda c, rows, now: f"{c['short']} NXT 정보 없음"
+    g["yahoo_rows"] = g["naver_rows"] = g["get_json"] = no_net
+    try:
+        return _selftest(name, orig)
+    finally:
+        g.update(orig)
+
+
+def _selftest(name: str, orig: dict) -> int:
+    g = globals()
     cfg = load_cfg(name)
     ok = True
 
@@ -590,6 +671,82 @@ def selftest(name: str) -> int:
     check("fail notice -> cwally-ops", route_topic("cwally-port", build_fail(cfg, ["x"], stamp)[0]), "cwally-ops")
     check("earnings 확인 필요 stays on cwally-port", route_topic("cwally-port", build_earnings(cfg, str(ed), None, None, stamp)[0]), "cwally-port")
     check("stop title", all_msgs[0][0], f"{cfg['title_prefix']} 종가 {fmt(sp)} 미만 | 손절선 이탈")
+    # ---- hold on failure: Yahoo down, Naver (NXT) has a price below buy1 -> nothing judged, ops notice, catch-up next run
+    b1v = lv["buy1"]
+    def yahoo_down(*a, **k):
+        raise RuntimeError("HTTP 503")
+    g["yahoo_rows"] = yahoo_down
+    g["naver_rows"] = lambda c: [{"day": "2026-10-26", "close": b1v - 1000}]
+    d1, f1 = collect(cfg, at("2026-10-26"))
+    check("yahoo fail: no rows from naver", d1.get("rows"), [])
+    s = copy.deepcopy(seed)
+    sends = plan_sends(cfg, s, d1, f1, at("2026-10-26"), lambda c, d: None, lambda c, rows, now: "x")
+    check("yahoo fail: only the failure notice", [t for t, *_ in sends], [f"{cfg['title_prefix']} 조회 실패 | 조건 판단 보류"])
+    check("yahoo fail: notice routed to cwally-ops", route_topic("cwally-port", sends[0][0]), "cwally-ops")
+    check("yahoo fail: session left unprocessed", s["last_day"], cfg["seed"]["day"])
+    check("yahoo fail: buy1 still armed", s["lines"]["buy1"]["armed"], True)
+    def yrows(rows):  # stock rows from Yahoo; ^TNX stays quiet at 4.9%
+        return lambda c, sym, regular_only=False: [{"day": rows[-1]["day"], "close": 4.9}] if sym.startswith("^") else rows
+    g["yahoo_rows"] = yrows([{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]},
+                             {"day": "2026-10-26", "close": b1v - 1000}, {"day": "2026-10-27", "close": b1v - 500}])
+    d2, f2 = collect(cfg, at("2026-10-27"))
+    sends = plan_sends(cfg, s, d2, f2, at("2026-10-27"), lambda c, d: None, lambda c, rows, now: "x")
+    check("next run catches up 10-26 once, no fail notice", [(t, "2026-10-26" in m) for t, m, *_ in sends],
+          [(f"{cfg['title_prefix']} 종가 {fmt(b1v)} 이하 | 1차 매수 30%", True)])
+    check("catch-up last_day", s["last_day"], "2026-10-27")
+    # Yahoo up but missing the session's regular close -> hold
+    g["yahoo_rows"] = yrows([{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}])
+    d3, f3 = collect(cfg, at("2026-10-26"))
+    check("missing regular close -> hold notice", any("2026-10-26 정규장 종가 없음" in f for f in f3), True)
+    s = copy.deepcopy(seed)
+    plan_sends(cfg, s, d3, f3, at("2026-10-26"), lambda c, d: None, lambda c, rows, now: "x")
+    check("missing regular close: session unprocessed", s["last_day"], cfg["seed"]["day"])
+    check("before 15:30 no hold notice", collect(cfg, at("2026-10-26", 14))[1], [])
+    check("holiday (Sat) no hold notice", collect(cfg, at("2026-10-24"))[1], [])
+    # Yahoo meta stamped before 15:30 -> today's candle dropped (intraday is not a regular close)
+    g["get_json"] = lambda url: {"chart": {"result": [{"timestamp": [int(at("2026-10-23", 9).timestamp()), int(at("2026-10-26", 9).timestamp())],
+                                                       "indicators": {"quote": [{"close": [215500.0, 200000.0]}]},
+                                                       "meta": {"regularMarketPrice": 200000.0, "regularMarketTime": int(at("2026-10-26", 14).timestamp())}}]}}
+    check("intraday Yahoo candle dropped", [r["day"] for r in orig["yahoo_rows"](cfg, cfg["yahoo_symbol"], regular_only=True)], ["2026-10-23"])
+    g["get_json"] = lambda url: {"chart": {"result": [{"timestamp": [int(at("2026-10-26", 9).timestamp())], "indicators": {"quote": [{"close": [201000.0]}]},
+                                                       "meta": {"regularMarketPrice": 200500.0, "regularMarketTime": int(at("2026-10-26", 15).replace(minute=30).timestamp())}}]}}
+    check("regular close after 15:30 kept", orig["yahoo_rows"](cfg, cfg["yahoo_symbol"], regular_only=True), [{"day": "2026-10-26", "close": 200500.0}])
+
+    # ---- NXT reference line: format, label, never fires
+    reg = cfg["seed"]["close"]
+    nx = round(reg * 0.989 / 500) * 500
+    pct = f"{(nx / reg - 1) * 100:+.1f}%"
+    check("ref 진행 중 (19:00)", nxt_line(cfg["short"], reg, nx, at("2026-10-26")),
+          f"{cfg['short']} NXT 애프터마켓 (19:00 기준, 진행 중) {fmt(nx)}, 정규장 대비 {pct}")
+    check("ref 마감 (20:00)", nxt_line(cfg["short"], reg, nx, at("2026-10-26", 20)),
+          f"{cfg['short']} NXT 애프터마켓 (20:00 기준, 마감) {fmt(nx)}, 정규장 대비 {pct}")
+    check("ref 마감 (late run 01:10 next day)", "마감" in nxt_line(cfg["short"], reg, nx, at("2026-10-27", 1)), True)
+    check("ref equal -> NXT 정보 없음", nxt_line(cfg["short"], reg, reg, at("2026-10-26")), f"{cfg['short']} NXT 정보 없음")
+    check("ref unavailable -> NXT 정보 없음", nxt_line(cfg["short"], reg, None, at("2026-10-26")), f"{cfg['short']} NXT 정보 없음")
+    g["naver_rows"] = lambda c: [{"day": "2026-10-26", "close": float(nx)}]
+    check("nxt_ref uses session row", orig["nxt_ref"](cfg, [{"day": "2026-10-26", "close": float(reg)}], at("2026-10-26")),
+          f"{cfg['short']} NXT 애프터마켓 (19:00 기준, 진행 중) {fmt(nx)}, 정규장 대비 {pct}")
+    g["naver_rows"] = yahoo_down
+    check("nxt_ref naver down -> 정보 없음", orig["nxt_ref"](cfg, [{"day": "2026-10-26", "close": float(reg)}], at("2026-10-26")), f"{cfg['short']} NXT 정보 없음")
+    s = copy.deepcopy(seed)
+    low_ref = lambda c, rows, now: nxt_line(c["short"], reg, lv["stop"] - 1, now)  # noqa: E731
+    check("NXT below every buy/stop line alone never fires",
+          plan_sends(cfg, s, {"rows": [{"day": "2026-10-26", "close": float(reg)}], "src": "Yahoo 정규장"}, [], at("2026-10-26"), lambda c, d: None, low_ref), [])
+    s = copy.deepcopy(seed)
+    sends = plan_sends(cfg, s, {"rows": [{"day": "2026-10-26", "close": float(b1v)}], "src": "Yahoo 정규장"}, [], at("2026-10-26"),
+                       lambda c, d: None, lambda c, rows, now: nxt_line(c["short"], float(b1v), float(b1v) * 0.99, now))
+    last = sends[0][1].split("\n")[-1]
+    check("price message ends with the 참고 line", last.startswith("참고: ") and "진행 중" in last and "정규장 대비 -1.0%" in last, True)
+    check("참고 line has no middle dot / em-dash", any(ch in last for ch in FORBIDDEN), False)
+    if cfg.get("us10y"):
+        s = copy.deepcopy(seed)
+        sends = plan_sends(cfg, s, {"rows": [], "us10y": 5.31}, [], at("2026-10-26"), lambda c, d: None,
+                           lambda c, rows, now: f"{c['short']} NXT 정보 없음")
+        check("10Y message ref covers both stocks", sends[0][1].split("\n")[-1], "참고: 삼성전자 NXT 정보 없음; SK하이닉스 NXT 정보 없음. 판단에는 정규장 종가만 씁니다.")
+    s = copy.deepcopy(seed)
+    sends = plan_sends(cfg, s, {"rows": []}, [], at(cfg["earnings"]["date"]), lambda c, d: None, lambda c, rows, now: f"{c['short']} NXT 정보 없음")
+    check("earnings message has 참고 line", sends[0][1].split("\n")[-1].startswith("참고: "), True)
+    print("SAMPLE:", last)
     print("SAMPLE:", all_msgs[-4 if cfg.get("us10y") else -3][0])
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
