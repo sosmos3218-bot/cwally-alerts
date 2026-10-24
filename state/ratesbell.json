@@ -8,5 +8,8 @@
   "last_kind": "CHANGE",
   "fail_sent_date": null,
   "weekly_sent_date": "2026-10-19",
-  "updated_at": "2026-10-23T09:01:38.708902+09:00"
+  "updated_at": "2026-10-23T09:01:38.708902+09:00",
+  "ten_band": "INSIDE",
+  "ten_band_date": "2026-10-23",
+  "ten_band_close": 4.988
 }

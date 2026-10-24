@@ -55,6 +55,9 @@ def yahoo_tnx() -> tuple[float | None, str | None]:
     ts = meta.get("regularMarketTime")
     if price is None:
         return None, None
+    price = float(price)
+    if price > 20:  # ^TNX quoted x10 on some feeds (same guard as cash30_monitor)
+        price /= 10
     day = datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%d") if ts else None
     return float(price), day
 
@@ -87,6 +90,53 @@ def status_of(ten: float | None, mtg: float | None, streak: int, cfg: dict) -> s
     if ten < lo and mtg < mtg_hi:
         return "RELIEF"
     return "WATCH"
+
+
+def band_of(close: float, cfg: dict) -> str:
+    """5.15/4.85 band: ABOVE (> up), BELOW (< down), INSIDE (down <= close <= up)."""
+    if close > float(cfg["ten_break_up"]):
+        return "ABOVE"
+    if close < float(cfg["ten_break_down"]):
+        return "BELOW"
+    return "INSIDE"
+
+
+def band_cross(prev: str | None, close: float | None, cfg: dict) -> tuple[str | None, str | None]:
+    """Return (new_band, crossing). crossing is UP, DOWN or None. Pushes only on a change of band
+    into ABOVE or BELOW. Returning INSIDE re-arms silently. prev None means first run: init, no push."""
+    if close is None:
+        return prev, None
+    new = band_of(close, cfg)
+    if prev is None or new == prev:
+        return new, None
+    if new == "ABOVE":
+        return new, "UP"
+    if new == "BELOW":
+        return new, "DOWN"
+    return new, None
+
+
+def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
+    up = float(cfg["ten_break_up"])
+    down = float(cfg["ten_break_down"])
+    day = ten_day or "날짜없음"
+    if cross == "UP":
+        title = f"[RATES] 10년물 종가 {up:.2f}% 상향 돌파 | 추격 금지"
+        lines = [
+            f"레벨 돌파: 10년물 종가 {up:.2f}% 상향 돌파 (전 미국장 종가 {ten:.2f}%, {day}).",
+            f"의미: {up:.2f}%는 10월 하순 박스 상단입니다. FOMC 뒤 재돌파면 '금리 정점 통과' 논리가 약해지고 한국 반도체 비중 확대 근거도 약해집니다.",
+            "할 일: 반도체 추가 매수 보류, 비중 점검. 하루 종가로 전량 매도하지 마세요.",
+            f"재무장: 종가가 {down:.2f}~{up:.2f}% 안으로 돌아오면 조용히 다시 감시합니다.",
+        ]
+        return title, lines, 4
+    title = f"[RATES] 10년물 종가 {down:.2f}% 하향 이탈 | 추가 하락"
+    lines = [
+        f"레벨 이탈: 10년물 종가 {down:.2f}% 하향 이탈 (전 미국장 종가 {ten:.2f}%, {day}).",
+        f"의미: 10월 하순 박스({down:.2f}~{up:.2f}%) 아래로 추가 하락입니다. '금리 정점 통과' 논리에는 우호적입니다.",
+        "할 일: 하루 수치로 전량 전환하지 마세요. 레버리지 복구는 금지.",
+        f"재무장: 종가가 {down:.2f}~{up:.2f}% 안으로 돌아오면 조용히 다시 감시합니다.",
+    ]
+    return title, lines, 3
 
 
 def body(stamp: str, cfg: dict, ten, ten_day, mtg, mtg_day, streak: int, status: str, kind: str):
@@ -132,6 +182,70 @@ def body(stamp: str, cfg: dict, ten, ten_day, mtg, mtg_day, streak: int, status:
     return title, lines, pri
 
 
+def selftest() -> int:
+    """Offline check of the 5.15/4.85 band: fake closes, no network, no state file, no ntfy."""
+    global yahoo_tnx, freddie_weeks, publish, save_state, load_json
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    ok = True
+
+    # 1) pure band logic
+    cases = [
+        (None, 5.00, "INSIDE", None), ("INSIDE", 5.15, "INSIDE", None), ("INSIDE", 5.18, "ABOVE", "UP"),
+        ("ABOVE", 5.30, "ABOVE", None), ("ABOVE", 5.10, "INSIDE", None), ("INSIDE", 4.85, "INSIDE", None),
+        ("INSIDE", 4.80, "BELOW", "DOWN"), ("BELOW", 4.70, "BELOW", None), ("BELOW", 5.20, "ABOVE", "UP"),
+        ("ABOVE", 4.80, "BELOW", "DOWN"), (None, 5.20, "ABOVE", None), ("INSIDE", None, "INSIDE", None),
+    ]
+    for prev, close, want_band, want_cross in cases:
+        got = band_cross(prev, close, cfg)
+        good = got == (want_band, want_cross)
+        ok &= good
+        print(f"{'OK ' if good else 'BAD'} band_cross({prev}, {close}) -> {got}")
+
+    # 2) end-to-end through main() with fake closes in auto mode
+    mem = {"state": {"dgs10": 4.988, "dgs10_date": "2026-10-23", "mortgage": 7.32,
+                     "mortgage_date": "2026-10-22", "status": "RELIEF", "mtg_streak": 0,
+                     "weekly_sent_date": "2026-10-26", "ten_band": "INSIDE",
+                     "ten_band_date": "2026-10-23", "ten_band_close": 4.988}}
+    sent = []
+    seq = [
+        ("2026-10-26", 5.00, None), ("2026-10-27", 5.18, "UP"), ("2026-10-28", 5.25, None),
+        ("2026-10-29", 5.10, None), ("2026-10-30", 5.12, None), ("2026-11-02", 4.80, "DOWN"),
+        ("2026-11-03", 4.75, None), ("2026-11-03", 4.75, None), ("2026-11-04", 4.90, None),
+        ("2026-11-05", 5.16, "UP"),
+    ]
+    cur = {}
+    yahoo_tnx = lambda: (cur["ten"], cur["day"])
+    freddie_weeks = lambda: [("2026-10-22", 7.32)]
+    publish = lambda topic, title, msg, pri, tags, server: sent.append((title, msg, pri))
+    save_state = lambda state, now: mem.__setitem__("state", dict(state))
+    load_json = lambda path, fallback: {**fallback, **mem["state"]}
+    argv = sys.argv
+    sys.argv = [argv[0], "auto"]
+    try:
+        for day, ten, want in seq:
+            cur.update(ten=ten, day=day)
+            before = len(sent)
+            main()
+            new = sent[before:]
+            breaks = [t for t, _, _ in new if "돌파" in t or "이탈" in t]
+            got = None
+            if breaks:
+                got = "UP" if "상향" in breaks[0] else "DOWN"
+            good = got == want and len(breaks) <= 1
+            ok &= good
+            print(f"{'OK ' if good else 'BAD'} {day} close={ten:.2f} band={mem['state'].get('ten_band')} "
+                  f"pushes={len(new)} break={got} want={want} titles={[t for t, _, _ in new]}")
+    finally:
+        sys.argv = argv
+    for title, msg, _ in sent:
+        for ch in ("\u00b7", "\u2014"):
+            if ch in title or ch in msg:
+                ok = False
+                print(f"BAD forbidden char in: {title}")
+    print("SELFTEST", "PASS" if ok else "FAIL")
+    return 0 if ok else 1
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     dry = mode in {"test", "dry", "dry-run"}
@@ -146,6 +260,9 @@ def main() -> int:
         "last_kind": None,
         "fail_sent_date": None,
         "weekly_sent_date": None,
+        "ten_band": None,
+        "ten_band_date": None,
+        "ten_band_close": None,
         "updated_at": None,
     })
     now = datetime.now(KST)
@@ -184,6 +301,12 @@ def main() -> int:
     status = status_of(ten, mtg, streak, cfg)
     print(f"ten={ten} {ten_day} mtg={mtg} {mtg_day} streak={streak} status={status} fails={fails}")
 
+    new_band, cross = band_cross(state.get("ten_band"), ten, cfg)
+    print(f"band prev={state.get('ten_band')} new={new_band} cross={cross}")
+    band_upd = {}
+    if ten is not None:
+        band_upd = {"ten_band": new_band, "ten_band_date": ten_day, "ten_band_close": ten}
+
     kind = None
     monday = now.weekday() == 0
     if status == "FAIL":
@@ -193,6 +316,8 @@ def main() -> int:
         kind = "CHANGE"
     elif monday and state.get("weekly_sent_date") != today:
         kind = "WEEKLY"
+    elif cross:
+        kind = "BREAK"
 
     if kind is None:
         print("no ratesbell trigger; silent")
@@ -200,11 +325,28 @@ def main() -> int:
             "dgs10": ten, "dgs10_date": ten_day, "mortgage": mtg,
             "mortgage_date": mtg_day, "status": status, "mtg_streak": streak,
         })
+        state.update(band_upd)
         if not dry:
             save_state(state, now)
         return 0
 
-    title, lines, pri = body(stamp, cfg, ten, ten_day, mtg, mtg_day, streak, status, kind)
+    if kind == "BREAK":
+        title, lines, pri = break_text(cross, cfg, ten, ten_day)
+        lines = [
+            f"{stamp} | FLOW | 미국 10년물 종가 레벨",
+            "이게 뭐 알림: 2026-10-24 점검에서 정한 10년물 종가 레벨을 넘을 때만 1번 보내는 알림입니다.",
+        ] + lines
+    else:
+        title, lines, pri = body(stamp, cfg, ten, ten_day, mtg, mtg_day, streak, status, kind)
+        if cross:
+            # Same push carries the crossing so one crossing never produces two pushes.
+            b_title, b_lines, b_pri = break_text(cross, cfg, ten, ten_day)
+            if cross == "UP":
+                title += f" | {float(cfg['ten_break_up']):.2f}% 상향 돌파"
+            else:
+                title += f" | {float(cfg['ten_break_down']):.2f}% 하향 이탈"
+            lines = lines + b_lines
+            pri = max(pri, b_pri)
     msg = "\n".join(lines)
     print(title)
     print(msg)
@@ -231,10 +373,13 @@ def main() -> int:
         "mortgage_date": mtg_day, "status": status, "mtg_streak": streak,
         "last_kind": kind,
     })
+    state.update(band_upd)
     if not dry:
         save_state(state, now)
     return 0
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "selftest":
+        raise SystemExit(selftest())
     raise SystemExit(main())
