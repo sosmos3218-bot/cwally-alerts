@@ -1266,6 +1266,21 @@ jobs:
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/476760_monitor.py "$MODE"
+      - name: Run 005930 / 000660 (Samsung Electronics, SK hynix close-based plan lines, US 10Y 5.30% shared warning, earnings check; k203780 19:00 slot)
+        # attached to the existing k203780 slot, no new cron. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/005930_monitor.py selftest >/dev/null || rc=1; python scripts/000660_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/005930_monitor.py "$MODE" || rc=1
+          python scripts/000660_monitor.py "$MODE" || rc=1
+          exit "$rc"
       - name: Run KR-RATE (KTB 10y trigger, credit spread, MPC evening summary, core CPI; k203780 19:00 slot on KRX trading days)
         # approved in chat 2026-10-23 14:25 KST. job=krrate dispatch is always dry: no ntfy, no state.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'krrate') }}
