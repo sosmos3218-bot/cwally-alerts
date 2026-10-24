@@ -9,11 +9,15 @@
   - 선거 태그 이벤트는 election_allow_keywords (미 의회 다수당, 대선 승자, 셧다운) 만 남김
   - categories: 제목 키워드 먼저, 없으면 Gamma 태그로 분류. 분류 안 되면 제외
   - 1주 거래대금 < min_event_volume_1wk, 시장 유동성 < min_market_liquidity, 마감까지 < min_days_to_end 일 제외
-  - 확률 0~3% / 97~100% 는 이번 주 5%p 이상 움직이지 않았으면 제외
-  - 여러 결과가 있는 이벤트: negRisk(상호배타)면 가장 높은 확률 결과, 아니면 가장 크게 움직인 시장(동률은 유동성)
+  - 확률 drop_low(3%) 이하 / drop_high(97%) 이상 시장은 움직임과 상관없이 제외 (사실상 결정됨)
+  - 여러 결과가 있는 이벤트: negRisk(상호배타)면 1위 결과가 drop_high 이상일 때 이벤트 전체 제외,
+    아니면 남은 결과 중 가장 높은 확률 결과. 상호배타 아니면 가장 크게 움직인 시장(동률은 유동성)
+  - 연준 고정(fed_pin): 금리 분류 중 미국 연준/FOMC 이벤트는 맨 위 고정(최대 3개, 전체 10개 안).
+    97% 규칙은 적용하되, 남는 연준 시장이 없으면 가장 가까운 FOMC 결정 이벤트를 97% 이상이어도 표시.
+    다른 중앙은행(BoC, ECB, BOJ, BOK)은 일반 순위.
 주간 변화: state markets[<market id>] = {p, at}. 기준값 나이가 5~10일이면 그 값 대비,
   아니면 Gamma oneWeekPriceChange(폴리마켓 7일 변화, * 표시), 그것도 없으면 더 짧은 기준값(MM/DD 대비), 없으면 신규.
-정렬: |변화| 큰 순, 같으면 1주 거래대금. 최대 max_items 개, 분류당 max_per_category 개.
+정렬: 연준 고정 먼저, 나머지는 |변화| 큰 순, 같으면 1주 거래대금. 최대 max_items 개, 분류당 max_per_category 개(고정 항목은 분류 한도에 안 셈).
 
 Modes: auto (일요일 20:00 이후 또는 월요일 12:00 KST 전, 주 1회) | force (요일 무시, state 기록) |
        dry (출력만, ntfy 없음, state 안 씀) | seed (현재 확률을 state 에 기준값으로 저장, ntfy 없음) |
@@ -214,7 +218,7 @@ def weekly_change(mid: str, p: float, m: dict, state: dict, now: datetime, th: d
     return None, "new"
 
 
-def open_markets(ev: dict, th: dict, now: datetime) -> list[dict]:
+def open_markets(ev: dict, th: dict, now: datetime, min_days: float | None = None) -> list[dict]:
     out = []
     for m in ev.get("markets") or []:
         if m.get("closed") or m.get("active") is False or m.get("acceptingOrders") is False:
@@ -225,62 +229,99 @@ def open_markets(ev: dict, th: dict, now: datetime) -> list[dict]:
         if (fnum(m.get("liquidityNum")) or fnum(m.get("liquidity")) or 0) < th["min_market_liquidity"]:
             continue
         end = parse_iso(m.get("endDate")) or parse_iso(ev.get("endDate"))
-        if end and (end - now).total_seconds() < th["min_days_to_end"] * 86400:
+        if end and (end - now).total_seconds() < (th["min_days_to_end"] if min_days is None else min_days) * 86400:
             continue
         out.append(dict(m, _p=p, _end=end))
     return out
 
 
+def is_fed_event(ev: dict, cat: dict, cfg: dict) -> bool:
+    pin = cfg.get("fed_pin") or {}
+    if not pin or cat.get("key") != pin.get("category", "rates"):
+        return False
+    title = (ev.get("title") or "").lower()
+    return any(has_kw(title, k) for k in pin.get("keywords", []))
+
+
 def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tuple[list[dict], dict]:
     th = cfg["thresholds"]
-    items, snapshot = [], {}
+    pin = cfg.get("fed_pin") or {}
+    lo, hi = float(th["drop_low"]), float(th["drop_high"])
+    items, fed_ok, fed_settled, snapshot = [], [], [], {}
     for ev in events:
         if (fnum(ev.get("volume1wk")) or 0) < th["min_event_volume_1wk"]:
             continue
         cat = classify(ev, cfg)
         if not cat:
             continue
-        cands = []
-        for m in open_markets(ev, th, now):
+        fed = is_fed_event(ev, cat, cfg)
+        allm = []
+        for m in open_markets(ev, th, now, 0 if fed else None):
             mid = str(m.get("id"))
             p = m["_p"]
             snapshot[mid] = {"p": round(p, 4), "at": now.isoformat(timespec="minutes")}
             ch, basis = weekly_change(mid, p, m, state, now, th)
-            stuck = p < th["stuck_low"] or p > th["stuck_high"]
-            if stuck and not (ch is not None and abs(ch) >= th["stuck_override_pp"]):
-                continue
-            cands.append({"m": m, "p": p, "ch": ch, "basis": basis})
-        if not cands:
+            allm.append({"m": m, "p": p, "ch": ch, "basis": basis})
+        if not allm:
             continue
-        if ev.get("negRisk") or ev.get("enableNegRisk"):
-            lead = max(cands, key=lambda c: (c["p"], fnum(c["m"].get("liquidityNum")) or 0))
+        liq = lambda c: fnum(c["m"].get("liquidityNum")) or 0  # noqa: E731
+        neg = bool(ev.get("negRisk") or ev.get("enableNegRisk"))
+        top = max(allm, key=lambda c: (c["p"], liq(c)))
+        settled = None
+        if neg and top["p"] >= hi:
+            settled, cands = top, []            # mutually exclusive leader >= 97%: whole event dropped
         else:
-            lead = max(cands, key=lambda c: (abs(c["ch"] or 0), fnum(c["m"].get("liquidityNum")) or 0))
-        m = lead["m"]
+            cands = [c for c in allm if lo < c["p"] < hi]
+            if not cands:
+                settled = top
+        if cands:
+            lead = max(cands, key=lambda c: (c["p"], liq(c))) if neg else \
+                max(cands, key=lambda c: (abs(c["ch"] or 0), liq(c)))
+        m = (lead if cands else settled)["m"]
+        chosen = lead if cands else settled
         multi = len(ev.get("markets") or []) > 1
-        items.append({
+        it = {
             "cat": cat, "title_ko": ko_title(ev.get("title") or m.get("question") or "?", cfg, cat),
             "outcome": ko_outcome(m.get("groupItemTitle") or "", cfg) if multi else "",
-            "p": lead["p"], "ch": lead["ch"], "basis": lead["basis"],
-            "vol": fnum(ev.get("volume1wk")) or 0, "end": lead["m"]["_end"],
+            "p": chosen["p"], "ch": chosen["ch"], "basis": chosen["basis"],
+            "vol": fnum(ev.get("volume1wk")) or 0, "end": m["_end"],
             "link": cfg["source"]["event_link"] + str(ev.get("slug") or ""),
             "event_id": str(ev.get("id")), "market_id": str(m.get("id")),
-        })
+            "title_en": ev.get("title") or "", "pinned": False, "settled_shown": False,
+            "decision": any(has_kw((ev.get("title") or "").lower(), k) for k in pin.get("decision_keywords", [])),
+        }
+        if fed:
+            (fed_ok if cands else fed_settled).append(it)
+        elif cands:
+            items.append(it)
+    far = datetime.max.replace(tzinfo=KST)
+    pinned = sorted(fed_ok, key=lambda it: (0 if it["decision"] else 1, it["end"] or far if it["decision"] else far,
+                                           -abs(it["ch"] or 0), -it["vol"]))[: int(pin.get("max_items", 3))]
+    if pin and not pinned and fed_settled:
+        nxt = sorted(fed_settled, key=lambda it: (0 if it["decision"] else 1, it["end"] or far, -it["vol"]))[0]
+        nxt["settled_shown"] = True
+        pinned = [nxt]
+    for it in pinned:
+        it["pinned"] = True
     items.sort(key=lambda it: (-(abs(it["ch"]) if it["ch"] is not None else -1), -it["vol"]))
-    picked, per_cat = [], {}
+    picked, per_cat = list(pinned), {}
     for it in items:
+        if len(picked) >= th["max_items"]:
+            break
         k = it["cat"]["key"]
         if per_cat.get(k, 0) >= th["max_per_category"]:
             continue
         per_cat[k] = per_cat.get(k, 0) + 1
         picked.append(it)
-        if len(picked) >= th["max_items"]:
-            break
     return picked, snapshot
 
 
 def item_lines(i: int, it: dict) -> list[str]:
     name = it["title_ko"] + (f" [{it['outcome']}]" if it["outcome"] else "")
+    if it.get("pinned"):
+        name += " " + str(it.get("pin_label") or "(고정 표시)")
+        if it.get("settled_shown"):
+            name += ", 97% 이상이지만 다른 연준 시장이 없어 표시"
     if it["ch"] is None:
         chs = "신규"
     elif it["basis"] == "state":
@@ -300,8 +341,12 @@ def item_lines(i: int, it: dict) -> list[str]:
 
 def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]:
     th = cfg["thresholds"]
+    pin_label = (cfg.get("fed_pin") or {}).get("label", "(고정 표시)")
+    for it in items:
+        it["pin_label"] = pin_label
+    ranked = [it for it in items if not it.get("pinned")] or items
     if items:
-        top = items[0]
+        top = max(ranked, key=lambda it: abs(it["ch"]) if it["ch"] is not None else -1)
         hl = f"{top['title_ko'][:22]} {fmt_pp(top['ch'])}" if top["ch"] is not None else f"{len(items)}개"
         title = f"{PREFIX} 주간 확률 변화 {len(items)}개 | 가장 큰 변화: {hl} | 참고 지표"
     else:
@@ -309,7 +354,8 @@ def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]
     head = [
         f"{now.strftime('%Y-%m-%d %H:%M')} KST | 투자자용 폴리마켓 주간",
         "1) 이게 뭐 알림: 금리, 물가, 경기, 관세, 지정학, 미국 정치/재정, 가상자산, 빅테크 관련 폴리마켓 확률의 1주 변화. 확률은 참고 지표, 매매 신호 아님.",
-        "2) 지금 결과 (|변화| 큰 순):" if items else "2) 지금 결과: 거래대금/유동성 기준을 넘고 의미 있게 움직인 투자 관련 이벤트가 없음.",
+        ("2) 지금 결과 (연준 고정 표시 먼저, 나머지는 |변화| 큰 순):" if any(it.get("pinned") for it in items)
+         else "2) 지금 결과 (|변화| 큰 순):") if items else "2) 지금 결과: 거래대금/유동성 기준을 넘고 의미 있게 움직인 투자 관련 이벤트가 없음.",
     ]
     body_items = [ln for i, it in enumerate(items, start=1) for ln in item_lines(i, it)]
     foot = []
@@ -319,7 +365,8 @@ def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]
         "3) 지금 할 일: 크게 움직인 항목의 관련 자산 뉴스만 확인. 포지션 변경 없음.",
         "4) 나중에: 다음 일요일 21:00 KST 에 다시 비교. 같은 방향으로 2주 연속 움직이면 그때 관련 알림을 다시 봄.",
         "5) 익절/줄일 때: 적용 없음.",
-        f"6) 하지 말 것: 확률만 보고 사거나 팔지 말 것. 거래 적은 시장(1주 {fmt_vol(th['min_event_volume_1wk'])} 미만)은 아예 뺐음.",
+        f"6) 하지 말 것: 확률만 보고 사거나 팔지 말 것. 거래 적은 시장(1주 {fmt_vol(th['min_event_volume_1wk'])} 미만)과 "
+        f"{th['drop_low']*100:.0f}% 이하 또는 {th['drop_high']*100:.0f}% 이상(사실상 결정)은 뺐음.",
     ]
     return title, split_parts(head, body_items, foot, int(th["message_max_bytes"]))
 

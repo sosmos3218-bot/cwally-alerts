@@ -21,12 +21,20 @@
     "min_event_volume_1wk": 100000,
     "min_market_liquidity": 5000,
     "min_days_to_end": 3,
-    "stuck_low": 0.03,
-    "stuck_high": 0.97,
-    "stuck_override_pp": 5.0,
+    "drop_low": 0.03,
+    "drop_high": 0.97,
+    "drop_note": "주도 결과 확률이 drop_low 이하 또는 drop_high 이상이면 이번 주 움직임과 상관없이 뺌 (사실상 결정된 시장). 상호배타 다중 결과 이벤트는 1위 결과가 drop_high 이상이면 이벤트 전체를 뺌.",
     "baseline_min_days": 5,
     "baseline_max_days": 10,
     "message_max_bytes": 3600
+  },
+  "fed_pin": {
+    "max_items": 3,
+    "label": "(고정 표시)",
+    "category": "rates",
+    "keywords": ["fed decision", "fed rate", "fed rates", "fed interest", "fomc", "fed chair", "federal reserve", "powell", "warsh", "fed rate cut", "fed rate cuts", "fed rate hike", "fed rate hikes"],
+    "decision_keywords": ["fed decision", "fomc"],
+    "note": "금리 분류 중 제목이 keywords 에 걸리는 미국 연준 이벤트는 거래대금/유동성 기준만 넘으면 맨 위에 고정(최대 max_items 개, 전체 max_items 안에 포함). 다음 FOMC 결정 이벤트를 먼저, 그다음 |변화| 큰 순. 97% 규칙은 그대로 적용하고, 걸러져서 남는 연준 시장이 하나도 없을 때만 가장 가까운 FOMC 결정 이벤트를 97% 이상이어도 표시. 고정 항목은 마감까지 남은 날 기준(min_days_to_end)을 적용하지 않음(마감 전이면 표시). 다른 중앙은행(BoC, ECB, BOJ, BOK)은 일반 순위."
   },
   "deny_tags": ["sports", "games", "soccer", "esports", "pop-culture", "movies", "tv", "music", "awards", "weather", "daily-temperature", "highest-temperature", "cfb", "cfb-gameday", "nfl", "nba", "mlb", "nhl", "ufc", "tennis", "golf", "f1", "basketball", "EPL", "premier-league", "la-liga", "ballon-dor", "celebrities", "culture", "mentions", "tweet-markets", "airdrops", "token-launch", "pre-market", "fdv", "public-sales", "epstein"],
   "deny_keywords": ["temperature", "tweets", "# of", "stranger things", "album", "oscar", "grammy", "eurovision", "mayor", "press secretary", "pending", "up or down", "airdrop", "fdv", "launch a token", "election winner", "house election", "margin of victory", "1st place in", "released by", "released on"],
