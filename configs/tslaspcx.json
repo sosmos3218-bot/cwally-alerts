@@ -1,0 +1,159 @@
+{
+  "name": "tslaspcx",
+  "title_prefix": "[TSLA-SPCX]",
+  "display": "Tesla SpaceX 합병: SEC 공시(확정 신호) + 예측시장 급변 + 특별위원회 무산 신호",
+  "created_at": "2026-10-24T12:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "tslaspcx",
+  "schedule_kst": "매일 07:30",
+  "schedule_note": "cron-job.org 반복 잡(매일 07:30 Asia/Seoul, port-alerts.yml dispatch {job:tslaspcx, oneoff_mode:auto}, cronjob-register.yml action=register_tslaspcx 로 생성) + GitHub cron 30 22 * * * (UTC, 07:30 KST) 백업. 미국 공시가 한국 밤사이 올라오므로 매일(주말 포함). 두 실행이 다 와도 state(본 접수번호, 예측시장 무장 상태)로 한 번만 보냄. workflow_dispatch 에서 oneoff_mode 가 auto 가 아니면 dry.",
+  "cron_job_org": {
+    "job_id": null,
+    "title": "cwally tslaspcx daily (07:30 KST)",
+    "note": "생성 후 job_id 기록"
+  },
+  "alert_policy": "event_only",
+  "approval": "사용자 채팅 요청 2026-10-24 12:28 KST (새 cron-job.org 정시 잡 승인 포함)",
+  "context": "Tesla 와 SpaceX 가 2026-10-20~22 무렵 합병 검토용 특별위원회를 만들었다는 보도. 합의된 것 없음(교환비율, 프리미엄 없음). 확정 신호(합병 계약, S-4, 425 등)를 기다림. 매매 신호 아님, 자동 주문 아님.",
+  "sec": {
+    "user_agent": "cwally-alerts sosmos3218@gmail.com",
+    "companies": [
+      {
+        "key": "tesla",
+        "name": "Tesla, Inc.",
+        "cik": "0001318605",
+        "counterpart_re": "SpaceX|Space Exploration Technologies"
+      },
+      {
+        "key": "spacex",
+        "name": "Space Exploration Technologies Corp. (SPCX)",
+        "cik": "0001181412",
+        "counterpart_re": "Tesla"
+      }
+    ],
+    "spacex_cik_note": "SpaceX 는 EDGAR CIK 0001181412 (SPACE EXPLORATION TECHNOLOGIES CORP, Nasdaq SPCX). 2026-10-24 data.sec.gov submissions 로 확인.",
+    "forms": [
+      "8-K",
+      "8-K/A",
+      "425",
+      "S-4",
+      "S-4/A",
+      "DEFM14A",
+      "PREM14A",
+      "SC TO-T",
+      "SC TO-I",
+      "SC TO-C",
+      "SC TO-T/A",
+      "SC TO-I/A",
+      "SCHEDULE TO-T",
+      "SCHEDULE TO-I",
+      "SCHEDULE TO-C",
+      "DEFA14A"
+    ],
+    "forms_note": "요청 목록(8-K, 425, S-4, S-4/A, DEFM14A, PREM14A, SC TO, DEFA14A). SC TO 는 EDGAR 실제 양식명(SC TO-T/-I/-C, 개정 /A, 2025 이후 SCHEDULE TO-*)으로 풀어 씀. 8-K/A 포함.",
+    "definitive_forms": [
+      "425",
+      "S-4",
+      "S-4/A",
+      "DEFM14A",
+      "PREM14A",
+      "SC TO-T",
+      "SC TO-I",
+      "SC TO-C",
+      "SC TO-T/A",
+      "SC TO-I/A",
+      "SCHEDULE TO-T",
+      "SCHEDULE TO-I",
+      "SCHEDULE TO-C"
+    ],
+    "relevance_note": "상대 회사 이름(Tesla 공시는 SpaceX/Space Exploration Technologies, SpaceX 공시는 Tesla)이 거래 단어(merger, combination, special committee, acquisition, exchange ratio 등) 앞뒤 300자 안에 같이 있어야 알림. definitive_forms(425, S-4, 합병 위임장, 공개매수)는 상대 회사 이름만 있어도 알림. 이유: 2026-10-21 Tesla 3분기 실적 8-K 는 'SpaceX equity investment' 를, 10-20 SpaceX 실적 8-K 는 'Cursor Merger' 를 담고 있어 단어 하나만으로는 오탐.",
+    "snippet_terms": [
+      "exchange ratio",
+      "premium",
+      "per share",
+      "merger agreement",
+      "special committee"
+    ],
+    "snippet_chars": 170,
+    "max_docs_per_filing": 6,
+    "max_doc_bytes": 4000000,
+    "priority_default": 4,
+    "priority_definitive": 5,
+    "priority_definitive_rule": "definitive_forms 이거나, 본문에 merger agreement 와 (exchange ratio 또는 per share) 가 같이 있으면 5",
+    "seen_keep": 300,
+    "deal_terms_re": "merger|merge|business combination|combination|special committee|acquisition|acquire|exchange ratio",
+    "proximity_chars": 300
+  },
+  "termination": {
+    "priority": 4,
+    "patterns": [
+      "special committee[^.]{0,80}\\b(dissolv|disband)",
+      "(dissolv|disband)\\w*[^.]{0,40}special committee",
+      "terminat\\w*[^.]{0,60}\\b(discussions|negotiations|talks|evaluation|review|process)",
+      "(discussions|negotiations|talks)[^.]{0,60}\\b(terminated|ended|ceased|concluded without|broke down|discontinued)",
+      "(no longer|not to|will not|decided not to|determined not to)[^.]{0,40}\\b(pursue|pursuing|proceed|consider|considering|explore|exploring)[^.]{0,60}\\b(merger|combination|transaction|SpaceX|Tesla)",
+      "(withdr[ae]w\\w*|rescind\\w*)[^.]{0,40}\\b(proposal|offer)"
+    ],
+    "note": "같은 공시(Tesla, SpaceX) 본문에서 특별위원회 해산, 협상 종료, 합병 추진 안 함 문구. 관련성(상대 회사 이름 또는 merger)이 있는 공시에서만 보고, 맞으면 공시 알림 대신 무산 알림(우선순위 4) 1건."
+  },
+  "markets": {
+    "polymarket_event_slug": "tesla-and-spacex-merger-officially-announced-by-june-30",
+    "polymarket_event_title": "Tesla and SpaceX merger officially announced by...?",
+    "polymarket_primary": "tesla-and-spacex-merger-officially-announced-by-december-31-2027",
+    "polymarket_show": [
+      {
+        "slug": "tesla-and-spacex-merger-officially-announced-by-december-31",
+        "label": "2026년 말"
+      },
+      {
+        "slug": "tesla-and-spacex-merger-officially-announced-by-january-31-2027",
+        "label": "2027-01-31"
+      },
+      {
+        "slug": "tesla-and-spacex-merger-officially-announced-by-february-28-2027",
+        "label": "2027-02-28"
+      },
+      {
+        "slug": "tesla-and-spacex-merger-officially-announced-by-june-30-2027",
+        "label": "2027 상반기"
+      },
+      {
+        "slug": "tesla-and-spacex-merger-officially-announced-by-december-31-2027",
+        "label": "2027년 말"
+      }
+    ],
+    "polymarket_value": "Gamma API outcomePrices 의 Yes 값. 7일 전 값은 CLOB prices-history(Yes 토큰, 12시간 간격)에서 지금 - 7일 이전 마지막 점, 없으면 state hist.",
+    "kalshi_event": "KXCOMPANYACTIONMERGER-27",
+    "kalshi_event_title": "When will Tesla and SpaceX merge? (definitive, binding agreement 발표 기준)",
+    "kalshi_show": [
+      {
+        "ticker": "KXCOMPANYACTIONMERGER-27-27MAR01",
+        "label": "2027-03-01 전"
+      },
+      {
+        "ticker": "KXCOMPANYACTIONMERGER-27-28JAN01",
+        "label": "2028 전(2027년 말까지)"
+      }
+    ],
+    "kalshi_value": "공개 API(api.elections.kalshi.com trade-api v2) yes bid/ask 중간값, 없으면 마지막 체결가. 참고 표시만, 판정에는 안 씀.",
+    "move_pp": 10,
+    "move_rearm_pp": 7,
+    "levels_pct": [
+      50,
+      80
+    ],
+    "hysteresis_pp": 3,
+    "rule": "Polymarket 2027년 말 시장: 7일 전 대비 10%p 이상 변하면 1회(변화폭이 7%p 아래로 줄면 다시 무장). 50%, 80% 를 위아래로 넘으면 1회. 넘은 뒤 반대쪽 알림은 그 선에서 3%p 넘게 멀어진 적이 있거나 반대쪽으로 3%p 넘게 넘어갔을 때만(작은 출렁임 무시).",
+    "priority_move": 4,
+    "priority_level": 4
+  },
+  "analysis_values_not_verified": "붙여넣은 분석 값(Polymarket 20%/57%/68%, Kalshi 2027-03-01 전 42%)은 참고만. state 에는 빌드 때 실제로 받은 값을 기록.",
+  "not_used": "검증 안 된 주장(머스크 의결권 82% 대 85%, 운영 목표 면제)은 조건이나 문구에 쓰지 않음.",
+  "failure_policy": "조회 실패한 값은 본문 '확인 불가'. 한 출처가 3번 연속 실행 실패하면 cwally-ops 하루 1회. 공시 원문을 못 받으면 그 공시는 본 것으로 표시하지 않고 다음 실행에서 다시 시도. 스크립트 오류는 cwally-ops.",
+  "ops_fail_after_runs": 3,
+  "year_guard": null,
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지(합병 확정이나 무산 뒤 끄기). 10%p, 50/80%, 3%p 기준은 이 파일에서 조정"
+}

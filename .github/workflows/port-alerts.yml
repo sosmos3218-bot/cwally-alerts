@@ -285,6 +285,8 @@ on:
     - cron: "40 23 5 11 *"
     # k203780 daily KRX trading days 19:00 KST (after Mirae daily NAV). repeating cron approved 2026-10-22, moved from 0 9 to 0 10 (approved 2026-10-22 18:29 KST). GitHub backup; on-time = cron-job.org job 8698629
     - cron: "0 10 * * 1-5"
+    # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
+    - cron: "30 22 * * *"
   workflow_dispatch:
     inputs:
       job:
@@ -292,7 +294,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, tslaspcx]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -507,6 +509,7 @@ jobs:
             elif printf '%s\n' "50 4 5 11 *" "12 7 5 11 *" "12 0 6 11 *" "40 7 16 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=oneshot
             elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
+            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -522,7 +525,7 @@ jobs:
           }
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "$JOB" in
-              morning|afternoon|portlight|0090b0|k203780) ;;
+              morning|afternoon|portlight|0090b0|k203780|tslaspcx) ;;
               *)
                 # late GitHub one-shot cron = fallback; skip if the on-time dispatch already ran it
                 sync_oneshot_marks
@@ -1305,6 +1308,19 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/usbond_monitor.py selftest; fi
           python scripts/usbond_monitor.py "$MODE"
+      - name: Run TSLA-SPCX (Tesla SpaceX merger - SEC filings, prediction markets, committee termination; daily 07:30 KST)
+        # approved in chat 2026-10-24 12:28 KST. Scheduled backup 30 22 * * * and cron-job.org dispatch (oneoff_mode=auto) send;
+        # any other dispatch is dry (selftest + dry: no ntfy, no state). Dedupe: state/tslaspcx.json seen accessions + market arm state.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'tslaspcx' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/tslaspcx_monitor.py selftest; fi
+          python scripts/tslaspcx_monitor.py "$MODE"
       - name: Run BRIEF (one-off outbox briefs; only on dispatch job=brief, never on scheduled slots)
         # approved in chat 2026-10-23 20:08 KST. job=brief + oneoff_mode=auto sends outbox/*.json not yet in state/brief.json; any other mode is dry (selftest + print, no ntfy, no state).
         if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && steps.pick.outputs.job == 'brief' }}

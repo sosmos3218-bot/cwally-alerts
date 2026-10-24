@@ -56,6 +56,12 @@ Pulse mode, CRONJOB_ACTION=register_pulse (mktpulse recurring job, approved in c
   with the same hours (10, 11, 13, 15 weekdays) already exists. Its title does not match the one-shot
   title pattern, and delete refuses it explicitly. CRONJOB_DRY_RUN=1 checks only.
 
+TSLA-SPCX mode, CRONJOB_ACTION=register_tslaspcx (approved in chat 2026-10-24 12:28 KST, configs/tslaspcx.json):
+  Creates the ONE recurring job TSLASPCX_TITLE: Asia/Seoul, minute 30, hour 7, every day, no expiry, body
+  {"ref":"main","inputs":{"job":"tslaspcx","oneoff_mode":"auto"}}, headers copied from the template job.
+  Skips (exit 10) if a job with TSLASPCX_TITLE exists, or an enabled port-alerts.yml dispatch job already
+  fires at the next 07:30 KST. Delete mode refuses it (not a one-shot title). CRONJOB_DRY_RUN=1 checks only.
+
 exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
@@ -94,6 +100,10 @@ PULSE_HOURS = [10, 11, 13, 15]
 PULSE_EXPIRES = 20261105155959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 15:00)
 PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
+TSLASPCX_TITLE = "cwally tslaspcx daily (07:30 KST)"
+TSLASPCX_BODY = {"ref": "main", "inputs": {"job": "tslaspcx", "oneoff_mode": "auto"}}
+TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], "hours": [7],
+                     "mdays": [-1], "months": [-1], "wdays": [-1]}
 
 SKIP = 10
 BAD_INPUT = 2
@@ -528,6 +538,52 @@ def run_register_pulse(now: datetime) -> int:
     return 0
 
 
+def run_register_tslaspcx(now: datetime) -> int:
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    template = load_template(key)
+    nxt = now.replace(hour=7, minute=30, second=0, microsecond=0)
+    if nxt <= now:
+        nxt += timedelta(days=1)
+    dup = find_duplicate(key, TSLASPCX_TITLE, nxt)
+    if dup is not None:
+        print(f"skip: job {dup} already fires at {nxt:%Y-%m-%d %H:%M} KST or has title {TSLASPCX_TITLE!r}")
+        return SKIP
+    job = {
+        "enabled": True,
+        "title": TSLASPCX_TITLE,
+        "saveResponses": True,
+        "url": DISPATCH_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(TSLASPCX_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(TSLASPCX_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {TSLASPCX_TITLE!r} every day 07:30 Asia/Seoul, body {json.dumps(TSLASPCX_BODY)}, first {nxt:%Y-%m-%d %H:%M} KST")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
+    try:
+        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == TSLASPCX_BODY
+    except ValueError:
+        body_ok = False
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok}")
+    return 0
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
@@ -542,8 +598,10 @@ def main() -> int:
             return run_list()
         if action == "register_pulse":
             return run_register_pulse(now)
+        if action == "register_tslaspcx":
+            return run_register_tslaspcx(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, register_tslaspcx or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")
