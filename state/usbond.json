@@ -1,0 +1,25 @@
+{
+  "updated_at": "2026-10-24T11:40:00+09:00",
+  "seeded": true,
+  "seed_note": "빌드 시점(2026-10-24 KST) 실제 값으로 기준과 커서를 기록. 2026-10-23 까지의 과거 데이터로는 울리지 않음. FRED 는 빌드 박스에서 연결 실패라 같은 원자료인 Treasury.gov par yield 10 Yr 값을 기준으로 씀. 원/달러는 ECOS 731Y001 매매기준율.",
+  "base": {
+    "y10": 5.0,
+    "y10_date": "2026-10-23",
+    "y10_src": "Treasury.gov Daily Treasury Par Yield Curve 10 Yr (DGS10 원자료, FRED 는 빌드 박스에서 연결 실패)",
+    "ief": 91.05,
+    "ief_date": "2026-10-23",
+    "ief_src": "Yahoo chart (Stooq 는 확인 페이지로 차단)",
+    "fx": 1324.6,
+    "fx_date": "2026-10-23",
+    "fx_src": "ECOS 731Y001 원/미국달러 매매기준율"
+  },
+  "add2": {"armed": true, "last_day": "2026-10-23", "fired_day": null},
+  "fx": {"level": 0, "last_day": "2026-10-23", "fired_day": null},
+  "regime": {"armed": true, "last_day": "2026-10-23", "fired_day": null, "streak_true": 0, "streak_false": 0},
+  "fomc_done": ["2026-01-28", "2026-03-18", "2026-04-29", "2026-06-17", "2026-07-29", "2026-09-16"],
+  "hist": {
+    "2026-10-23": {"y10": 4.96, "y10_date": "2026-10-22", "ief": 91.2, "ief_date": "2026-10-22", "fx": 1324.6, "fx_src": "ECOS 매매기준율"}
+  },
+  "fail_runs": {},
+  "fail_notice": {}
+}

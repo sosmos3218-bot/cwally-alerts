@@ -292,7 +292,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, zs1006, oklo, pffd, ceg, kzq3, dearattr, sena, manh, truen417790, kosreb, kos5500, bankrate1014, cpi1014, kica, hmcq3, asml, vym, sapq3, neeq3, soq3, ktb148070, k227540, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1289,6 +1289,21 @@ jobs:
           if [ "$PICK_JOB" = "usdiv" ]; then MODE=dry; fi
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/usdiv_monitor.py "$MODE"
+      - name: Run US-BOND (IEF 2nd-tranche price, break-even USD/KRW, rate/FX regime, FOMC next-day summary; k203780 19:00 slot)
+        # approved in chat 2026-10-24 11:04 KST. job=usbond dispatch is always dry: no ntfy, no state.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'usbond') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$PICK_JOB" = "usbond" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/usbond_monitor.py selftest; fi
+          python scripts/usbond_monitor.py "$MODE"
       - name: Run BRIEF (one-off outbox briefs; only on dispatch job=brief, never on scheduled slots)
         # approved in chat 2026-10-23 20:08 KST. job=brief + oneoff_mode=auto sends outbox/*.json not yet in state/brief.json; any other mode is dry (selftest + print, no ntfy, no state).
         if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && steps.pick.outputs.job == 'brief' }}
