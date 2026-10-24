@@ -28,7 +28,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 10/11/13/15 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
-| tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 JOBID_TBD "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
+| tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
 
 ```
 POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches
@@ -68,7 +68,7 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 
 ## Tesla SpaceX 합병 매일 07:30 반복 잡 (tslaspcx, 2026-10-24 12:28 승인)
 
-- cron-job.org 반복 잡 1개 JOBID_TBD "cwally tslaspcx daily (07:30 KST)": 시간대 Asia/Seoul, 분 30, 시 7, 매일(주말 포함), 만료 없음.
+- cron-job.org 반복 잡 1개 8711128 "cwally tslaspcx daily (07:30 KST)": 시간대 Asia/Seoul, 분 30, 시 7, 매일(주말 포함), 만료 없음.
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"tslaspcx","oneoff_mode":"auto"}}`.
 - 만든 방법: `cronjob-register.yml` `action=register_tslaspcx` (이 잡 하나만, 같은 제목이나 같은 07:30 dispatch 잡이 있으면 skip).
 - GitHub cron `30 22 * * *`(07:30 KST)는 백업. 늦게 온 백업은 `state/tslaspcx.json`의 `seen` 접수번호와 예측시장 무장 상태(`pm.move_armed`, `pm.levels`)로

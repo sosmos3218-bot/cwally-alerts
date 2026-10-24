@@ -10,9 +10,11 @@
   "schedule_kst": "매일 07:30",
   "schedule_note": "cron-job.org 반복 잡(매일 07:30 Asia/Seoul, port-alerts.yml dispatch {job:tslaspcx, oneoff_mode:auto}, cronjob-register.yml action=register_tslaspcx 로 생성) + GitHub cron 30 22 * * * (UTC, 07:30 KST) 백업. 미국 공시가 한국 밤사이 올라오므로 매일(주말 포함). 두 실행이 다 와도 state(본 접수번호, 예측시장 무장 상태)로 한 번만 보냄. workflow_dispatch 에서 oneoff_mode 가 auto 가 아니면 dry.",
   "cron_job_org": {
-    "job_id": null,
+    "job_id": 8711128,
     "title": "cwally tslaspcx daily (07:30 KST)",
-    "note": "생성 후 job_id 기록"
+    "created_kst": "2026-10-24 12:38",
+    "created_by": "cronjob-register.yml action=register_tslaspcx (run 40059041951)",
+    "first_run_kst": "2026-10-25 07:30"
   },
   "alert_policy": "event_only",
   "approval": "사용자 채팅 요청 2026-10-24 12:28 KST (새 cron-job.org 정시 잡 승인 포함)",

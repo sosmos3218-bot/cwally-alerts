@@ -100,6 +100,7 @@ PULSE_HOURS = [10, 11, 13, 15]
 PULSE_EXPIRES = 20261105155959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 15:00)
 PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
+TSLASPCX_JOB_ID = 8711128  # created 2026-10-24 12:38 KST by register_tslaspcx
 TSLASPCX_TITLE = "cwally tslaspcx daily (07:30 KST)"
 TSLASPCX_BODY = {"ref": "main", "inputs": {"job": "tslaspcx", "oneoff_mode": "auto"}}
 TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], "hours": [7],
