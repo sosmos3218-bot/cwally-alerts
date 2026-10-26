@@ -38,7 +38,7 @@ def fetch_top_events(limit: int = 8) -> list[dict]:
     params = urllib.parse.urlencode({
         "active": "true",
         "closed": "false",
-        "order": "volume_24hr",
+        "order": "volume24hr",  # gamma API rejects volume_24hr (422 "order fields are not valid")
         "ascending": "false",
         "limit": str(limit),
     })

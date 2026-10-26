@@ -40,7 +40,8 @@ def fetch_trending(top_n: int) -> list[dict]:
     with urllib.request.urlopen(req, timeout=30) as resp:
         html = resp.read().decode("utf-8", errors="replace")
     # Extract owner/repo from article or Box-row links
-    pattern = re.compile(r'href="/([^/]+/[^/"]+)"[^>]*class="[^"]*text-bold[^"]*"')
+    # repo name heading of each Box-row (GitHub 2026 markup: <h2 class="h3 lh-condensed"><a ... href="/owner/repo">)
+    pattern = re.compile(r'<h2 class="h3 lh-condensed">\s*<a[^>]*?href="/([^/"]+/[^/"]+)"', re.S)
     matches = pattern.findall(html)
     seen = []
     for m in matches:
@@ -52,7 +53,7 @@ def fetch_trending(top_n: int) -> list[dict]:
         # fallback: any /owner/repo in trending context
         alt = re.findall(r'href="/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)"', html)
         for m in alt:
-            if m not in seen and not m.startswith("topics/") and "/" in m:
+            if m not in seen and m.split("/")[0] not in {"topics", "sponsors", "trending", "apps", "login", "features", "orgs", "settings", "marketplace", "collections", "site", "about"} and "/" in m:
                 seen.append(m)
             if len(seen) >= top_n:
                 break
