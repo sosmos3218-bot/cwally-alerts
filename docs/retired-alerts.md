@@ -62,3 +62,19 @@ and README.md. No crons were removed (both rode on shared slots).
 | name | prefix | added | oneshot window (KST) | what it did |
 |---|---|---|---|---|
 | pcor (shell) | `[PCOR]` | 2026-10-05 | none (moved to pcorq3) | c5635aa 에서 pcorq3 로 통합된 뒤 남은 disabled config, script, state 삭제. 기능은 pcorq3 에 있음 |
+
+## 2026-10-26 audit: lges and lgeshold shells (approved in chat 2026-10-26 18:15 KST, "기타 현 시점 비효율적이거나 쓸데없는 알림 있는지 체크해서 통합하거나 삭제해 줘")
+
+Both were folded into `[LGES]` lgeswatch earlier the same day (commit 0431f79) and left as config-flag-off shells that
+exited at once on every 15:20 afternoon run. Nothing else read their config or state. Deleted: config, script, state,
+the two afternoon Run lines, the dry check in the LGES step, and the `[LGESH]` title prefix (`[LG]` stays: lg, lgcnsq3,
+lgesq3 still use it). No schedule cron, Decide branch, dispatch option or cron-job.org job pointed at them.
+Same pattern as the pcor shell (PR #15). To restore: `git show <this PR merge>^:configs/<name>.json`.
+
+| name | prefix | added | what it did | now in |
+|---|---|---|---|---|
+| lges | `[LG]` | 2026-10-06 | 373220 new exchange disclosures (실적, 공급계약, ESS/GM/AMPC) on the 15:20 slot; `disclosure_alerts=false` since 2026-10-26 | lgeswatch KIND filing watch (19:00) |
+| lgeshold | `[LGESH]` | 2026-10-14 | 373220 zones: stop 300,000 / add 360,000~400,000 / targets 500,000, 550,000; `zone_alerts=false` since 2026-10-26 | lgeswatch levels (19:00) |
+
+Also removed from the title-prefix registry (AGENTS.md, README.md): `[SMH]` and `[ZS]`, used by no config, script or
+outbox file (their alerts were removed earlier).
