@@ -63,8 +63,62 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     )
 
 
+LOSS30_TODO = "낙폭 허용 구간 도달. 추가매수 보류, 테마 유지 여부부터 재확인(지정학 리스크, 중국 반도체 자립 진전)해 투자 논리 점검."
+BUY_WORDS = ("추가 신중", "분할", "추가매수 검토", "나눠서", "물타기 검토", "저가 매수")
+
+
+def zone_message(zone: str, prev: str, price: float, pct: float, stamp: str) -> tuple[str, str, int]:
+    """One zone per message (normal / loss30 / loss40); there is no buy line in this alert."""
+    if zone == "loss40":
+        title = "[396520] 기준 대비 -40% | 테마 재점검"
+        action = "비중 재검토. 지정학·자립 진전 확인. 추가 금지."
+    elif zone == "loss30":
+        title = "[396520] 기준 대비 -30% | 점검"
+        action = LOSS30_TODO
+    else:
+        title = "[396520] 기준 대비 정상 | 보유 유지"
+        action = "현재 구간 유지. 추가 없음."
+    msg = body(
+        stamp,
+        f"현재 {price:.0f}원. 기준 11,345원 대비 {pct:+.1f}%. 구간 {prev} -> {zone}.",
+        action,
+        "1~3년 테마. 지정학 뉴스와 자립 진전 지속 확인.",
+        "-30% 이하 추가매수 보류, -40% 이하 비중 재검토. 매도 지시 아님.",
+        "낙폭 터치를 즉시 매도나 추가매수 신호로 쓰기.",
+    )
+    return title, msg, 5 if zone == "loss40" else 4 if zone == "loss30" else 3
+
+
+def selftest() -> int:
+    fails = 0
+
+    def check(label, got, want):
+        nonlocal fails
+        ok = got == want
+        fails += not ok
+        print(("ok  " if ok else "FAIL"), label, got, "" if ok else f"want {want}")
+
+    stamp = "2026-10-27 09:00 KST"
+    t, m, p = zone_message("loss30", "normal", 7900.0, -30.4, stamp)
+    lines = m.split("\n")
+    todo = next(x for x in lines if x.startswith("지금 할 일:"))
+    check("-30% todo", todo, "지금 할 일: " + LOSS30_TODO)
+    check("-30% todo starts with hold-off", todo.startswith("지금 할 일: 낙폭 허용 구간 도달. 추가매수 보류, 테마 유지 여부부터 재확인"), True)
+    check("-30% no buy advice anywhere", [w for w in BUY_WORDS if w in m], [])
+    check("-30% no middle dot / em-dash", any(ch in t + m for ch in "\u00b7\u2014"), False)
+    check("-30% priority unchanged", p, 4)
+    check("-30% title unchanged", t, "[396520] 기준 대비 -30% | 점검")
+    check("six-part body", [x.split(":")[0] for x in lines[1:7]], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    check("-40% priority unchanged", zone_message("loss40", "loss30", 6800.0, -40.1, stamp)[2], 5)
+    check("normal priority unchanged", zone_message("normal", "loss30", 9000.0, -20.7, stamp)[2], 3)
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -141,29 +195,8 @@ def main() -> int:
         prev = state.get("zone") or "normal"
         changed = zone != prev
         if changed or mode == "force":
-            if zone == "loss40":
-                title = "[396520] 기준 대비 -40% | 테마 재점검"
-                action = "비중 재검토. 지정학·자립 진전 확인. 추가 금지."
-            elif zone == "loss30":
-                title = "[396520] 기준 대비 -30% | 점검"
-                action = "낙폭 허용 구간 도달. 테마 유지 여부 재확인. 추가 신중."
-            else:
-                title = "[396520] 기준 대비 정상 | 보유 유지"
-                action = "현재 구간 유지. 추가 없음."
-            alerts.append(
-                (
-                    title,
-                    body(
-                        stamp,
-                        f"현재 {price:.0f}원. 기준 11,345원 대비 {pct:+.1f}%. 구간 {prev} -> {zone}.",
-                        action,
-                        "1~3년 테마. 지정학 뉴스·자립 진전 지속 확인.",
-                        "-30% 이하 추가 신중, -40% 이하 비중 재검토. 매도 지시 아님.",
-                        "낙폭 터치를 즉시 매도나 추가매수 신호로 쓰기.",
-                    ),
-                    5 if zone == "loss40" else 4 if zone == "loss30" else 3,
-                )
-            )
+            title, msg, pri = zone_message(zone, prev, price, pct, stamp)
+            alerts.append((title, msg, pri))
             state["zone"] = zone
             state["last_price"] = price
             state["last_alert_date"] = today
