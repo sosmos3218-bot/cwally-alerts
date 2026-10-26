@@ -247,11 +247,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | k091160 | skc011790 | oklo | pffd | ceg | kzq3 | manh | truen417790 | all
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | kship | shinwon | protec | 2ub | pltr | addstop | sec | k091160 | skc011790 | oklo | pffd | ceg | kzq3 | manh | truen417790 | all
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch, iefa, secdiv, macroir]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -539,8 +539,8 @@ jobs:
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
+      - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + shinwon + protec + 2ub + pltr + addstop + sec
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -592,7 +592,6 @@ jobs:
             python scripts/council_monitor.py auto
           fi
           if [ "$JOB" = "morning" ]; then
-            python scripts/fig_monitor.py auto
             python scripts/kos5500_monitor.py previous
             python scripts/vymi_monitor.py auto
             python scripts/memswing_monitor.py daily
@@ -606,9 +605,7 @@ jobs:
             python scripts/396520_monitor.py auto
             python scripts/gunr_monitor.py auto
           fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
-            python scripts/ccrev_monitor.py
-          fi
+          # ccrev and fig retired 2026-10-26 (docs/retired-alerts.md)
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "shinwon" ]; then
             MODE=event
             [ "$JOB" = "shinwon" ] && MODE=force
@@ -1372,14 +1369,6 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/iefa_monitor.py selftest >/dev/null; fi
           python scripts/iefa_monitor.py "$MODE"
-      - name: Run FIG dry check (job=fig dispatch only, always dry)
-        # approved in chat 2026-10-26: verify [FIG] with price_zone_alerts off. Never sends, never writes state.
-        # Scheduled [FIG] still runs only in the morning bundle (fig_monitor.py auto).
-        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && steps.pick.outputs.job == 'fig' }}
-        run: |
-          python scripts/fig_monitor.py dry
-          echo "--- Monday status preview (force + FIG_DRY=1: no ntfy, no state) ---"
-          FIG_DRY=1 python scripts/fig_monitor.py force
       - name: Run SEC-DIV (Samsung Electronics Q3 2026 dividend decision filing, once; morning 09:00, afternoon 15:20, k203780 19:00 slots)
         # approved in chat 2026-10-26. Attached to existing slots, no new cron. Dedupe/end: state/secdiv.json fired, followup_sent, final_done;
         # config ends_kst 2026-11-13 23:59. job=secdiv (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
