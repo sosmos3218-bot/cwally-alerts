@@ -29,7 +29,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 10/11/13/15 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
-| portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인) |
+| portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인, 11:59 확인, configs/portlight.json `cron_approved`) |
 
 ```
 POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches
@@ -78,6 +78,8 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
 ## 일요일 21:00 portlight 반복 잡 (2026-10-26 10:48 승인)
+
+승인 기록: configs/portlight.json `cron_approved` 2026-10-26, `cron_approval_text` (11:59 KST 채팅 확인 문구), `cronjob_id` 8723329.
 
 - cron-job.org 반복 잡 1개 8723329 "cwally port portlight (Sun 21:00 KST)": 시간대 Asia/Seoul, 분 0, 시 21, 일요일(wdays [0]), 만료 없음.
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"portlight"}}`.
