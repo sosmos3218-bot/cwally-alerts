@@ -1,0 +1,466 @@
+#!/usr/bin/env python3
+"""[PCOR-Q3] Procore Q3 2026 earnings verdict (approved in chat 2026-10-26). One push only.
+
+Source: the Q3 8-K EX-99.1 on SEC EDGAR (filed 2026-11-03 after the US close = 11/4 ~06:05 KST).
+Parsed: Q3 revenue + YoY, Q3 non-GAAP operating margin, FY27 revenue guidance growth, whether the
+25% FY27 non-GAAP operating margin target is reaffirmed, and NEW financing news.
+
+Verdict (configs/pcorq3.json rules):
+  증액     FY27 revenue growth >= 13% AND 25% target reaffirmed
+  보류     11% <= growth < 13% AND target kept (add only below $46)
+  청산     growth < 10% OR 25% target cut OR NEW large convertible/dilutive financing.
+           The $950M 0.00% notes due 2031 issued 2026-08-06 are existing, never a trigger.
+  확인 필요 10% <= growth < 11%, or a number not parseable (raw numbers in the body).
+
+Forward-looking/cautionary boilerplate is dropped before any stance or financing parse
+(same filter as soq3/neeq3, commit 454c322), so risk-factor text never fires.
+
+Runs on the existing morning 09:00 KST slot inside the window (11/4-11/6, year 2026). No new cron.
+Modes: auto | force (ignore window/state) | dry (print only, no ntfy, no state) | selftest.
+Local parser test: PCORQ3_TEST_TEXT=<file> python scripts/pcorq3_monitor.py dry
+Not investment advice.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+from html import unescape
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ntfy_util import publish, resolve_topic  # noqa: E402
+
+KST = timezone(timedelta(hours=9))
+CFG = ROOT / "configs" / "pcorq3.json"
+STATE = ROOT / "state" / "pcorq3.json"
+UA = {"User-Agent": "cwally-alerts sosmos3218@gmail.com", "Accept-Encoding": "identity"}
+CIK_INT = 1611052
+NUM = r"(\d+(?:\.\d+)?)"
+
+
+# ---------- fetch ----------
+
+def fetch(url: str) -> str:
+    with urlopen(Request(url, headers=UA), timeout=25) as resp:
+        return resp.read().decode("utf-8", errors="ignore")
+
+
+def textify(html: str) -> str:
+    t = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", html)
+    t = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", t)
+    t = re.sub(r"<[^>]+>", " ", t)
+    t = unescape(t).replace("\xa0", " ").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
+    return re.sub(r"\s+", " ", t)
+
+
+def recent_filings(cfg: dict) -> list[dict]:
+    data = json.loads(fetch(cfg["sources"]["sec"]))
+    r = data.get("filings", {}).get("recent", {})
+    keys = ["form", "filingDate", "accessionNumber", "primaryDocument", "items"]
+    return [dict(zip(keys, row)) for row in zip(*(r.get(k, []) for k in keys))]
+
+
+def exhibit_names(acc: str) -> tuple[str, list[str]]:
+    base = f"https://www.sec.gov/Archives/edgar/data/{CIK_INT}/{acc.replace('-', '')}"
+    try:
+        idx = json.loads(fetch(base + "/index.json"))
+        return base, [i.get("name", "") for i in idx.get("directory", {}).get("item", [])]
+    except Exception:
+        return base, []
+
+
+def sec_release(cfg: dict, filings: list[dict]) -> tuple[str, str]:
+    day = cfg["release_filing_date_et"]
+    for f in filings:
+        if f["form"] != "8-K" or f["filingDate"] < day:
+            continue
+        base, names = exhibit_names(f["accessionNumber"])
+        ex = [n for n in names if re.search(r"ex-?99|xexx99|exx99", n, re.I) and n.lower().endswith((".htm", ".html"))]
+        for name in ex:
+            try:
+                body = textify(fetch(f"{base}/{name}"))
+            except Exception:
+                continue
+            if re.search(r"third quarter 2026", body, re.I) and re.search(r"Revenue", body):
+                return body, f"{base}/{name}"
+    return "", ""
+
+
+def new_financing_filings(cfg: dict, filings: list[dict]) -> list[str]:
+    """Financing 8-K / prospectus filings after the seed cursor. Existing 2031 notes excluded."""
+    ex = cfg["existing_financing"]
+    seen_to, since = ex["seen_accessions_through"], ex["filings_since"]
+    out = []
+    for f in filings:  # newest first
+        if f["accessionNumber"] == seen_to or f["filingDate"] < since:
+            break
+        form, items = f["form"], f.get("items") or ""
+        prospectus = form.startswith("424B") or form in {"S-3", "S-3ASR", "S-1"}
+        fin8k = form == "8-K" and re.search(r"\b(1\.01|2\.03|3\.02)\b", items)
+        if not (prospectus or fin8k):
+            continue
+        base = f"https://www.sec.gov/Archives/edgar/data/{CIK_INT}/{f['accessionNumber'].replace('-', '')}"
+        try:
+            text = drop_boilerplate(textify(fetch(f"{base}/{f['primaryDocument']}")))
+        except Exception as exc:
+            out.append(f"{f['filingDate']} {form} {f['accessionNumber']} (본문 조회 실패: {exc})")
+            continue
+        for s in financing_sentences(text, ex["exclude_regex"]):
+            out.append(f"{f['filingDate']} {form}: {s[:140]}")
+            break
+    return out
+
+
+def last_close(cfg: dict) -> tuple[float | None, str]:
+    try:
+        res = json.loads(fetch(cfg["sources"]["quote"]))["chart"]["result"][0]
+        ts, cl = res.get("timestamp") or [], res["indicators"]["quote"][0].get("close") or []
+        pts = [(t, c) for t, c in zip(ts, cl) if c is not None]
+        if not pts:
+            return None, ""
+        t, c = pts[-1]
+        return float(c), datetime.fromtimestamp(t, timezone(timedelta(hours=-5))).strftime("%m/%d")
+    except Exception:
+        return None, ""
+
+
+# ---------- parse ----------
+
+def sentences(text: str) -> list[str]:
+    return re.split(r"(?<=[A-Za-z0-9%)\]])\.\s+(?=[A-Z(\"])", text)
+
+
+BOILER_CUT = r"(Cautionary Note Regarding Forward.Looking|Forward-Looking Statements This|Cautionary Statements? (and|Regarding)|forward-looking statements? (are|include|involve|within the meaning))"
+BOILER_SENT = r"(forward.looking|risks? and uncertaint|could cause|may cause|cautionary|risk factors|no assurance|could give rise|subject to conditions that are not anticipated|actual results)"
+
+
+def drop_boilerplate(text: str) -> str:
+    m = re.search(BOILER_CUT, text, re.I)
+    if m and m.start() > len(text) * 0.3:
+        text = text[:m.start()]
+    return " ".join(s + "." for s in sentences(text) if not re.search(BOILER_SENT, s, re.I))
+
+
+FIN_RE = (r"\b(announc\w*|pric(ed|ing)|complet\w*|closed|clos(es|ing) of|entered into|launch\w*|commenc\w*|issu(ed|es|ance of))\b"
+          r"[^.]{0,140}\b(convertible|offering of[^.]{0,60}(common stock|shares)|private placement|at-the-market|equity offering|registered direct)")
+
+
+def financing_sentences(clean: str, exclude: str) -> list[str]:
+    return [s.strip() for s in sentences(clean) if re.search(FIN_RE, s, re.I) and not re.search(exclude, s, re.I)]
+
+
+def money_m(s: str) -> float | None:
+    vals = []
+    for v, unit in re.findall(r"\$([\d,]+(?:\.\d+)?)\s*(million|billion)", s, re.I):
+        x = float(v.replace(",", ""))
+        vals.append(x * 1000 if unit.lower() == "billion" else x)
+    return max(vals) if vals else None
+
+
+def section(clean: str, heads: list[str], n: int = 700) -> str:
+    """Text after the first heading match whose body actually holds an 'expected to be' figure.
+    The combined banner ("Fourth Quarter, Full Year, and FY '27 Outlook:") is skipped that way."""
+    for head in heads:
+        for m in re.finditer(head, clean, re.I):
+            s = clean[m.end():m.end() + n]
+            stop = re.search(r"(Full Year 20\d\d|(First|Second|Third|Fourth) Quarter 20\d\d|FY ?'? ?\d\d) Outlook|A reconciliation|Conference Call|About Procore", s, re.I)
+            s = s[:stop.start()] if stop else s
+            if re.search(r"expected to be", s, re.I):
+                return s
+    return ""
+
+
+FY27_HEADS = [r"Full Year 2027( Preliminary)? Outlook:?", r"Fiscal (Year )?2027( Preliminary)? Outlook:?", r"FY ?'? ?27( Preliminary)? Outlook:?"]
+
+
+def parse(raw: str, cfg: dict) -> dict:
+    clean = drop_boilerplate(raw)
+    p: dict = {"published": bool(re.search(r"third quarter 2026", raw, re.I))}
+    m = re.search(r"Revenue was \$([\d.,]+) (million|billion), an increase of " + NUM + r"% year-over-year", clean, re.I)
+    p["rev_m"] = float(m.group(1).replace(",", "")) * (1000 if m and m.group(2).lower() == "billion" else 1) if m else None
+    p["rev_yoy"] = float(m.group(3)) if m else None
+    t = re.search(r"Revenue \$ ?([\d,]{6,}) \$ ?([\d,]{6,})", raw)
+    if t:
+        a, b = float(t.group(1).replace(",", "")), float(t.group(2).replace(",", ""))
+        if b > 0 and 0.5 < a / b < 2:
+            p["rev_yoy_exact"] = round((a / b - 1) * 100, 2)
+            p["rev_k"] = a
+            p["rev_m"] = p["rev_m"] or round(a / 1000, 1)
+            p["rev_yoy"] = p["rev_yoy"] if p["rev_yoy"] is not None else p["rev_yoy_exact"]
+    m = re.search(r"non-GAAP operating margin was " + NUM + "%", clean, re.I)
+    p["q3_om"] = float(m.group(1)) if m else None
+    t = re.search(r"Non-GAAP income from operations \$ ?([\d,]{5,})", raw)
+    rk = p.get("rev_k") or (p["rev_m"] * 1000 if p.get("rev_m") else None)
+    if t and rk:
+        p["q3_om_exact"] = round(float(t.group(1).replace(",", "")) / rk * 100, 2)
+    # FY27 outlook
+    fy27 = section(clean, FY27_HEADS)
+    p["fy27_text"] = fy27[:300]
+    g = re.search(r"Revenue[^.]{0,160}?growth of (?:approximately |about |at least )?" + NUM + r"%(?: to " + NUM + "%)?", fy27, re.I)
+    p["fy27_growth"] = float(g.group(1)) if g else None
+    p["fy27_growth_hi"] = float(g.group(2)) if g and g.group(2) else None
+    p["fy27_growth_calc"] = False
+    rng = re.search(r"Revenue is expected to be (?:in the range of )?\$([\d,]+(?:\.\d+)?) (million|billion)(?: to \$([\d,]+(?:\.\d+)?) (million|billion))?", fy27, re.I)
+    p["fy27_rev"] = rng.group(0)[len("Revenue is expected to be "):] if rng else None
+    if p["fy27_growth"] is None and rng:
+        fy26 = section(clean, [r"Full Year 2026 Outlook:?"])
+        r26 = re.search(r"Revenue is expected to be (?:in the range of )?\$([\d,]+(?:\.\d+)?) (million|billion)(?: to \$([\d,]+(?:\.\d+)?))?", fy26, re.I)
+        if r26:
+            lo27 = float(rng.group(1).replace(",", ""))
+            hi26 = float((r26.group(3) or r26.group(1)).replace(",", ""))
+            if hi26 > 0:
+                p["fy27_growth"] = round((lo27 / hi26 - 1) * 100, 1)
+                p["fy27_growth_calc"] = True
+    o = re.search(r"Non-GAAP operating margin is expected to be (?:at least |approximately |about )?" + NUM + r"%(?: to " + NUM + "%)?", fy27, re.I)
+    p["fy27_om"] = float(o.group(1)) if o else None
+    target = float(cfg["rules"]["om_target"])
+    cut_re = r"(lower\w*|reduc\w*|cut|withdr\w*|no longer|revis\w* (down|lower)|below)[^.]{0,80}(2027|FY ?'? ?27)[^.]{0,80}25%|25%[^.]{0,80}(2027|FY ?'? ?27)[^.]{0,80}(lower\w*|reduc\w*|withdr\w*|no longer|delay\w*|push\w* out)"
+    keep_re = r"(reaffirm\w*|reiterat\w*|on track|remain\w* committed|confiden\w*)[^.]{0,120}25%|25%[^.]{0,80}(2027|FY ?'? ?27)[^.]{0,60}(reaffirm\w*|on track|unchanged)"
+    if p["fy27_om"] is not None:
+        p["om_target"] = "유지" if p["fy27_om"] >= target else "하향"
+    elif re.search(cut_re, clean, re.I):
+        p["om_target"] = "하향"
+    elif re.search(keep_re, clean, re.I):
+        p["om_target"] = "유지"
+    else:
+        p["om_target"] = "미확인"
+    fin = financing_sentences(clean, cfg["existing_financing"]["exclude_regex"])
+    p["financing"] = [s[:160] for s in fin]
+    return p
+
+
+# ---------- decide ----------
+
+def judge(p: dict, fin_filings: list[str], cfg: dict) -> tuple[str, list[str]]:
+    r = cfg["rules"]
+    why = []
+    g, om = p.get("fy27_growth"), p.get("om_target")
+    fin_all = p.get("financing", []) + fin_filings
+    big = [s for s in fin_all if (money_m(s) or 0) >= r["financing_min_m"]]
+    unknown_size = [s for s in fin_all if money_m(s) is None]
+    if g is not None and g < r["cut_below"]:
+        why.append(f"FY27 매출 성장 {g:g}% < {r['cut_below']:g}%")
+    if om == "하향":
+        why.append("25% 영업이익률 목표 하향" + (f"(FY27 {p['fy27_om']:g}%)" if p.get("fy27_om") is not None else "(문구 기준)"))
+    if big:
+        why.append("새 대규모 조달: " + big[0][:100])
+    if why:
+        return "청산", why
+    if g is None or om != "유지" or unknown_size:
+        if g is None:
+            why.append("FY27 매출 가이던스 성장률 못 읽음")
+        if om != "유지":
+            why.append(f"25% 목표 {om}")
+        if unknown_size:
+            why.append("규모 미상 새 조달 문구: " + unknown_size[0][:100])
+        return "확인 필요", why
+    if g < r["hold_low"]:
+        return "확인 필요", [f"FY27 매출 성장 {g:g}% (10~11% 경계 구간)"]
+    if g >= r["grow_up"]:
+        return "증액", [f"FY27 매출 성장 {g:g}% >= {r['grow_up']:g}%", "25% 목표 유지"]
+    return "보류", [f"FY27 매출 성장 {g:g}% (11~13%)", "25% 목표 유지"]
+
+
+def fmt(v, unit="%") -> str:
+    return "미확인" if v is None else f"{v:g}{unit}"
+
+
+def compose(cfg: dict, verdict: str, why: list[str], p: dict, fin_filings: list[str], src: str, px: float | None, pxd: str) -> tuple[str, str, int]:
+    r, b = cfg["rules"], cfg["baseline"]
+    g = p.get("fy27_growth")
+    gtxt = fmt(g) + (" 계산값(FY27 하단/FY26 가이던스 상단)" if p.get("fy27_growth_calc") else "")
+    if p.get("fy27_growth_hi") is not None:
+        gtxt += f"~{p['fy27_growth_hi']:g}%(하단 기준 판정)"
+    head = {"증액": "계획대로 증액 검토", "보류": f"보유 유지 | 추가는 {r['hold_add_below']:g}달러 아래만",
+            "청산": "청산 검토 | 추가 매수 금지", "확인 필요": "원문 숫자 직접 확인"}[verdict]
+    title = f"[PCOR-Q3] {verdict} | {head}"
+    todo = {
+        "증액": "증액은 콜(11/4 22:30 KST) 뒤 분할로. 갭 상승 첫 30분 추격은 하지 않기.",
+        "보류": f"보유 유지. 추가 매수는 종가 {r['hold_add_below']:g}달러 아래에서만.",
+        "청산": "청산 계획 실행 검토(분할 매도). 추가 매수 중단.",
+        "확인 필요": "위 원문 숫자를 직접 보고 증액/보류/청산 중 고르기. 자동 판정 없음.",
+    }[verdict]
+    fin_all = p.get("financing", []) + fin_filings
+    nums = (f"3분기 매출 {fmt(p.get('rev_m'), '백만달러')}, 전년비 {fmt(p.get('rev_yoy'))}"
+            + (f"(표 계산 {p['rev_yoy_exact']:g}%)" if p.get("rev_yoy_exact") is not None else "")
+            + f", non-GAAP 영업이익률 {fmt(p.get('q3_om'))}"
+            + (f"(표 계산 {p['q3_om_exact']:g}%)" if p.get("q3_om_exact") is not None else "")
+            + f" [가이던스 {b['q3_guide_low_m']}~{b['q3_guide_high_m']}백만달러, {b['q3_guide_om']}]."
+            + f" FY27 매출 가이던스 {p.get('fy27_rev') or '미기재'}, 성장 {gtxt}. FY27 non-GAAP 영업이익률 {fmt(p.get('fy27_om'))}, 25% 목표 {p.get('om_target')}."
+            + f" 새 조달: {' / '.join(s[:90] for s in fin_all) if fin_all else '없음(기존 2031 만기 9.5억 달러 전환사채는 제외)'}.")
+    pxt = f"현재 종가 {px:.2f}달러({pxd})." if px else "종가 조회 안 됨."
+    lines = [
+        f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | PCOR | 3분기 판정",
+        "이게 뭐 알림: " + cfg["explain"],
+        f"지금 결과/상태: {verdict}. 근거: {'; '.join(why)}. {nums} {pxt} 원문 {src}",
+        "지금 할 일: " + todo,
+        "나중에: 콜 요약에서 DroneDeploy 기여 매출과 2027 가이던스 문구 다시 확인. 일회 알림이라 다시 오지 않음.",
+        "익절/줄일 때: FY27 성장 10% 미만, 25% 목표 하향, 새 대규모 전환사채/증자 중 하나라도 확인되면 비중 축소.",
+        "하지 말 것: 실적 직후 갭 추격, 계획 초과 매수, 위험요인 문구만 보고 단정, 신용/미수. 투자 권유 아님.",
+    ]
+    prio = {"증액": 4, "보류": 3, "청산": 5, "확인 필요": 4}[verdict]
+    return title, "\n".join(lines), prio
+
+
+# ---------- state / send ----------
+
+def load_state() -> dict:
+    st = {"final_notified": False, "missing_notified": False, "verdict": None}
+    if STATE.exists():
+        try:
+            st.update(json.loads(STATE.read_text(encoding="utf-8")))
+        except json.JSONDecodeError:
+            pass
+    return st
+
+
+def save_state(st: dict, now: datetime, dry: bool) -> None:
+    if dry:
+        return
+    st["updated_at"] = now.isoformat(timespec="seconds")
+    STATE.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def send(dry: bool, title: str, msg: str, prio: int, kind: str = "port") -> None:
+    if dry:
+        print(f"DRY RUN would send (p{prio}): {title}\n{msg}\n")
+        return
+    publish(resolve_topic(kind), title, msg, prio)
+
+
+# ---------- selftest ----------
+
+def synth(growth: str | None = "growth of 14%", om27: str | None = "25%", extra: str = "", fy27_rev: bool = True) -> str:
+    fy27 = ""
+    if growth is not None or om27 is not None:
+        fy27 = "• Full Year 2027 Outlook: "
+        if growth is not None:
+            fy27 += ("◦ Revenue is expected to be in the range of $1,720 million to $1,730 million, representing year-over-year " + growth + ". ") if fy27_rev else ""
+        if om27 is not None:
+            fy27 += f"◦ Non-GAAP operating margin is expected to be {om27}. "
+    return (
+        "Procore Announces Third Quarter 2026 Financial Results CARPINTERIA, CA - November 3, 2026 - Procore today announced results. "
+        "Third Quarter 2026 Financial Highlights: • Revenue was $386 million, an increase of 14% year-over-year. "
+        "• GAAP operating margin was 2% and non-GAAP operating margin was 20%. "
+        "Fourth Quarter, Full Year, and FY '27 Outlook: • Fourth Quarter 2026 Outlook: ◦ Revenue is expected to be in the range of $400 million to $402 million. "
+        "• Full Year 2026 Outlook: ◦ Revenue is expected to be in the range of $1,520 million to $1,522 million, representing year-over-year growth of 15%. "
+        + fy27 + "A reconciliation of non-GAAP guidance measures is not available. " + extra +
+        " Forward-Looking Statements This press release contains forward-looking statements within the meaning of the Securities Act, including our ability to"
+        " service our convertible senior notes, and we announced that we may issue additional convertible notes or equity offerings of common stock which could dilute stockholders and"
+        " may cause actual results to differ; our 25% FY27 target may be lowered. Revenue $ 386,100 $ 338,900 Non-GAAP income from operations $ 77,500"
+    )
+
+
+def selftest() -> int:
+    cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    fails = 0
+
+    def case(label, text, want, fin_filings=None):
+        nonlocal fails
+        p = parse(text, cfg)
+        v, why = judge(p, fin_filings or [], cfg)
+        ok = v == want
+        fails += not ok
+        print(("ok  " if ok else "FAIL"), f"{label}: {v} ({'; '.join(why)})" + ("" if ok else f" want {want} | {json.dumps(p, ensure_ascii=False)[:400]}"))
+        return p
+
+    p = case("growth 14 + 25% -> 증액", synth(), "증액")
+    ok = p["rev_yoy"] == 14 and p["q3_om"] == 20 and p.get("rev_yoy_exact") == 13.93 and p.get("q3_om_exact") == 20.07
+    fails += not ok
+    print("ok  " if ok else "FAIL", "q3 numbers", p["rev_yoy"], p["q3_om"], p.get("rev_yoy_exact"), p.get("q3_om_exact"))
+    case("growth 13 exactly -> 증액", synth("growth of 13%"), "증액")
+    case("growth 12 -> 보류", synth("growth of 12%"), "보류")
+    case("growth 11 -> 보류", synth("growth of 11%"), "보류")
+    case("growth 10.5 -> 확인 필요", synth("growth of 10.5%"), "확인 필요")
+    case("growth 9 -> 청산", synth("growth of 9%"), "청산")
+    case("om 23% -> 청산", synth("growth of 14%", "23%"), "청산")
+    case("om at least 25% -> 증액", synth("growth of 14%", "at least 25%"), "증액")
+    case("range 12% to 14% uses low -> 보류", synth("growth of 12% to 14%"), "보류")
+    case("no FY27 section -> 확인 필요", synth(None, None), "확인 필요")
+    case("no FY27 section but growth<10 impossible; om only -> 확인 필요", synth(None, "25%"), "확인 필요")
+    case("FY27 range w/o growth -> computed 13.0 -> 증액", synth("", "25%").replace("representing year-over-year . ", ""), "증액")
+    case("boilerplate dilution/convertible text never fires", synth(), "증액")
+    case("existing 2031 notes mentioned -> not new", synth(extra="In August, we completed the offering of $950 million of 0.00% Convertible Senior Notes due 2031 and closed the DroneDeploy acquisition."), "증액")
+    case("new $600M convertible in release -> 청산", synth(extra="On November 3, 2026, Procore announced a proposed private offering of $600 million of Convertible Senior Notes due 2032."), "청산")
+    case("new financing filing -> 청산", synth(), "청산", ["2026-11-05 8-K: Procore priced $500 million of convertible senior notes due 2032"])
+    case("new financing unknown size -> 확인 필요", synth(), "확인 필요", ["2026-11-05 424B5: Procore commenced an at-the-market offering of common stock"])
+    case("explicit cut sentence w/o outlook -> 청산", synth(None, None, extra="We are lowering our FY27 non-GAAP operating margin target of 25% to reflect DroneDeploy."), "청산")
+    case("reaffirm sentence w/o outlook om, growth 14 -> 증액", synth("growth of 14%", None, extra="We reaffirm our FY27 non-GAAP operating margin target of 25%."), "증액")
+    t, body, pr = compose(cfg, "보류", ["x"], parse(synth("growth of 12%"), cfg), [], "test", 55.0, "11/03")
+    bad = any(ch in t + body for ch in "\u00b7\u2014")
+    fails += bad
+    print("ok  " if not bad else "FAIL", "no middle dot / em-dash;", t)
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
+
+
+# ---------- main ----------
+
+def main() -> int:
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
+    dry = mode == "dry"
+    cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    now = datetime.now(KST)
+    st = load_state()
+    start = datetime.fromisoformat(cfg["window_start_kst"]).replace(tzinfo=KST)
+    end = datetime.fromisoformat(cfg["window_end_kst"]).replace(tzinfo=KST)
+    in_win = start <= now <= end and now.year == int(cfg["event_year"])
+    print(f"{now.isoformat(timespec='seconds')} pcorq3 mode={mode} window={in_win}")
+    if dry:
+        print("DRY RUN (no ntfy, no state write)")
+    if mode == "auto" and not in_win:
+        print("outside window; silent")
+        return 0
+    if mode == "auto" and st.get("final_notified"):
+        print("verdict already sent; silent")
+        return 0
+    test = os.environ.get("PCORQ3_TEST_TEXT") if dry else None
+    err: list[str] = []
+    filings: list[dict] = []
+    if test:
+        raw, src = Path(test).read_text(encoding="utf-8"), "테스트 텍스트"
+    else:
+        try:
+            filings = recent_filings(cfg)
+            raw, src = sec_release(cfg, filings)
+        except Exception as exc:
+            raw, src = "", ""
+            err.append(f"sec: {exc}")
+    fin_filings: list[str] = []
+    if filings:
+        try:
+            fin_filings = new_financing_filings(cfg, filings)
+        except Exception as exc:
+            err.append(f"financing scan: {exc}")
+    print("src:", src or "-", "| new financing filings:", fin_filings or "none", "| err:", err)
+    if not raw:
+        last_try = now.date() >= end.date()
+        if mode == "auto" and last_try and not st.get("missing_notified"):
+            msg = f"Procore 3분기 8-K EX-99.1 을 {now:%m/%d %H:%M} KST 까지 못 찾음. {'; '.join(err)} 회사 IR 직접 확인. 이 알림으로 매매 금지."
+            send(dry, "[PCOR-Q3] 원문 미게시 | 판정 보류", msg, 3)  # route_topic -> cwally-ops
+            st["missing_notified"] = True
+        else:
+            print("Q3 release not found yet; retry at next 09:00 run" if not dry else "no Q3 release yet (expected 2026-11-03 after US close)")
+        save_state(st, now, dry)
+        return 0
+    p = parse(raw, cfg)
+    print("parse:", json.dumps({k: v for k, v in p.items() if k != "fy27_text"}, ensure_ascii=False))
+    verdict, why = judge(p, fin_filings, cfg)
+    px, pxd = (None, "") if test else last_close(cfg)
+    title, msg, prio = compose(cfg, verdict, why, p, fin_filings, src, px, pxd)
+    send(dry, title, msg, prio)
+    st.update({"final_notified": True, "verdict": verdict, "why": why, "src": src,
+               "fy27_growth": p.get("fy27_growth"), "om_target": p.get("om_target")})
+    save_state(st, now, dry)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,53 @@
+{
+  "name": "pcorq3",
+  "title_prefix": "[PCOR-Q3]",
+  "ticker": "PCOR",
+  "display": "Procore 3분기 판정",
+  "created_at": "2026-10-26T11:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "cik": "0001611052",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 3Q26 실적은 2026-11-03(화) 미국장 마감 후(회사 10/13 발표, EST 16:05 = 11/4 06:05 KST 전후), 콜 11/4 08:30 ET = 11/4 22:30 KST. 첫 판정 11/4(수) 09:00 KST, 원문이 없으면 11/5, 11/6 09:00 재시도. 연도 가드 2026만. 판정은 1번만 발송.",
+  "event_year": 2026,
+  "release_at_kst": "2026-11-04 06:05",
+  "release_filing_date_et": "2026-11-03",
+  "window_start_kst": "2026-11-04 05:00",
+  "window_end_kst": "2026-11-06 23:59",
+  "valid_until": "2026-11-06",
+  "baseline": {
+    "q2_revenue_m": 375.2,
+    "q2_yoy": 15.8,
+    "q2_nongaap_om": 21.5,
+    "q3_guide_low_m": 382,
+    "q3_guide_high_m": 384,
+    "q3_guide_yoy": 13.3,
+    "q3_guide_om": "19% to 19.5%",
+    "fy26_guide_high_m": 1514,
+    "fy27_om_target": 25.0,
+    "source": "8-K 2026-07-29 EX-99.1 (Q2 2026 results)"
+  },
+  "rules": {
+    "grow_up": 13.0,
+    "hold_low": 11.0,
+    "cut_below": 10.0,
+    "om_target": 25.0,
+    "hold_add_below": 46.0,
+    "financing_min_m": 250,
+    "text": "증액: FY27 매출 가이던스 성장률 13% 이상 + 25% non-GAAP 영업이익률 목표 유지. 보류: 11% 이상 13% 미만 + 목표 유지(추가는 46달러 아래에서만). 청산: 10% 미만, 25% 목표 하향, 또는 새 대규모 전환사채/증자. 10% 이상 11% 미만이나 숫자를 못 읽으면 확인 필요(원문 숫자 그대로)."
+  },
+  "existing_financing": {
+    "note": "2026-08-06 발행 완료된 0.00% Convertible Senior Notes due 2031 $950M(기본 $825M + 옵션 $125M), 전환가 약 82.89달러, 캡드콜. 이건 이미 반영된 기존 조달이라 청산 조건이 아님. 청산은 이 뒤 새로 나온 추가 희석성 조달만.",
+    "exclude_regex": "due 2031|2031 Notes|0\\.00% Convertible|\\$950|\\$825|\\$926|\\bAugust\\b|previously (issued|announced|completed)|capped call",
+    "filings_since": "2026-10-26",
+    "seen_accessions_through": "0001628280-26-065924"
+  },
+  "sources": {
+    "sec": "https://data.sec.gov/submissions/CIK0001611052.json",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/PCOR?interval=1d&range=5d",
+    "timing": "https://www.procore.com/press/procore-announces-timing-of-third-quarter-fiscal-year-2026-earnings-call"
+  },
+  "explain": "Procore 3분기 실적 원문(8-K EX-99.1)으로 2027 매출 가이던스 성장률, 25% non-GAAP 영업이익률 목표 유지 여부, 새 조달 여부를 읽어 증액/보류/청산/확인 필요 중 하나를 1번 보내는 알림입니다. 투자 권유 아님.",
+  "ends_kst": "2026-11-06 23:59",
+  "ends_note": "Procore 3분기 판정 일회 알림, 11/6 09:00 재시도가 마지막"
+}

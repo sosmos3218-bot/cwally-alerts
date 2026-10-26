@@ -1,0 +1,51 @@
+{
+  "name": "pcorpx",
+  "title_prefix": "[PCOR-PX]",
+  "symbol": "PCOR",
+  "display": "Procore 종가 구간",
+  "created_at": "2026-10-26T11:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤). 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. job=pcorpx 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "alert_policy": "change_only",
+  "levels": [
+    {
+      "key": "buy3",
+      "op": "le",
+      "price": 48.0,
+      "priority": 3,
+      "label": "3차 분할 구간 진입",
+      "note": "종가 48달러 이하 = 3차 분할 매수 구간. 한 번 켜지면 종가 48.48달러(48 x 1.01) 위로 회복해야 다시 무장"
+    },
+    {
+      "key": "break46",
+      "op": "lt",
+      "price": 46.0,
+      "priority": 4,
+      "label": "46달러 지지선 이탈",
+      "note": "종가 46달러 미만. 사용자 계획의 '52주 저점 46달러' 선이지만 2026-10-26 확인 결과 실제 52주 저점은 38.03달러(2026-06-25 장중, Yahoo)라 제목은 '46달러 지지선'으로 씀. 숫자 46은 승인값 그대로. 종가 46.46달러 위로 회복해야 다시 무장"
+    }
+  ],
+  "rearm_buffer_pct": 1.0,
+  "rearm_note": "ratesbell ten_break_buffer(8593079) 방식. 선을 넘으면 1번만 보내고, 종가가 선 x (1 + 1%) 위로 올라와야 조용히 재무장. 그 사이에서는 직전 상태 유지. 첫 실행은 현재 종가로 상태만 초기화하고 보내지 않음.",
+  "reference": {
+    "as_of": "2026-10-26",
+    "last_close": 63.0,
+    "last_close_date": "2026-10-23",
+    "w52_low": 38.03,
+    "w52_low_date": "2026-06-25",
+    "w52_high": 82.315,
+    "w52_high_date": "2025-11-06",
+    "source": "Yahoo Finance chart v8 PCOR 1d 1y"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "https://query1.finance.yahoo.com/v8/finance/chart/PCOR?range=1y&interval=1d"
+  },
+  "valid_until": "2026-12-31",
+  "explain": "Procore(PCOR) 미국 종가가 48달러 이하(3차 분할 구간)나 46달러 미만으로 새로 들어갈 때만 오는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": "2026-12-31 23:59",
+  "ends_note": "PCOR 종가 구간 알림, 2026년 말 종료(연장은 채팅 승인)"
+}

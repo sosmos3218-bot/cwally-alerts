@@ -1,0 +1,12 @@
+{
+  "initialized": true,
+  "armed": {
+    "buy3": true,
+    "break46": true
+  },
+  "last_date": "2026-10-23",
+  "last_close": 63.0,
+  "init_note": "initialized from 2026-10-23 close 63.00 (Yahoo), no send. Both lines armed.",
+  "fail_notified": false,
+  "updated_at": "2026-10-26T10:40:00+09:00"
+}
