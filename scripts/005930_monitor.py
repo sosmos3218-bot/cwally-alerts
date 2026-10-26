@@ -319,6 +319,13 @@ def trim_text(cfg: dict) -> str:
     return ", ".join(f"{fmt(ln['level'])} 이상 {ln['title'].split()[-1]}" for ln in t)
 
 
+def act_events(events: list[dict]) -> list[dict]:
+    """Stop in the same message: drop buy-line actions so the 할 일 line has no buy advice next to the stop."""
+    if any(e["key"] == "stop" for e in events):
+        return [e for e in events if not e["key"].startswith("buy")]
+    return events
+
+
 def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     events = sorted(events, key=lambda e: SEVERITY.index(e["key"]) if e["key"] in SEVERITY else 99)
     top = events[0]
@@ -339,7 +346,7 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
         head(cfg, stamp),
         f"이게 뭐 알림: {cfg['short']} 종가가 계획한 매수, 축소, 손절 선을 새로 넘을 때만 오는 알림입니다. 매수 지시가 아닙니다.",
         "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})",
-        "지금 할 일: " + " ".join(e["line"]["action"] for e in events),
+        "지금 할 일: " + " ".join(e["line"]["action"] for e in act_events(events)),
         f"나중에: {later}",
         f"익절/줄일 때: {trim_text(cfg)} 비중 축소.{cfg.get('trim_extra', ' 미국 10년물 5.30% 이상이면 분할 매수 중단.')}",
         "하지 말 것: 한 번에 전액 매수, 신용 및 미수, 손절선 이탈 뒤 물타기, 조회 실패를 신호로 읽기.",
@@ -707,6 +714,14 @@ def _selftest_rest(name, cfg, seed, check, at, orig, tk, b1v, tl, lv, sp) -> Non
     check("fail notice -> cwally-ops", route_topic("cwally-port", build_fail(cfg, ["x"], stamp)[0]), "cwally-ops")
     check("earnings 확인 필요 stays on cwally-port", route_topic("cwally-port", build_earnings(cfg, str(ed), None, None, stamp)[0]), "cwally-port")
     check("stop title", all_msgs[0][0], f"{cfg['title_prefix']} 종가 {fmt(sp)} 미만 | 손절선 이탈")
+    # stop together with buy lines (gap or catch-up): 할 일 has only the stop action, no buy advice
+    evs = [{"kind": "line", "key": ln["key"], "line": ln, "day": "2026-10-26", "close": sp - 1} for ln in cfg["lines"] if ln["key"].startswith("buy") or ln["key"] == "stop"]
+    _t, _m, _p = build_lines(cfg, evs, {"rows": [{"day": "2026-10-26", "close": sp - 1}], "src": "Yahoo"}, stamp)
+    todo = next(x for x in _m.split("\n") if x.startswith("지금 할 일:"))
+    stop_act = next(x["action"] for x in cfg["lines"] if x["key"] == "stop")
+    check("stop+buy combined: 할 일 = stop action only", todo, "지금 할 일: " + stop_act)
+    check("stop+buy combined: no buy advice", [w for w in ("분할 매수", "분할 매수만", "실행.", "사세요") if w in todo.replace(stop_act, "")], [])
+    check("stop+buy combined: p5", _p, 5)
     # ---- hold on failure: Yahoo down, Naver (NXT) has a price below buy1 -> nothing judged, ops notice, catch-up next run
     def yahoo_down(*a, **k):
         raise RuntimeError("HTTP 503")

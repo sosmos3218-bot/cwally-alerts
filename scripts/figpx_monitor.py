@@ -109,13 +109,18 @@ def lines_text(cfg: dict) -> str:
     return "매수 검토 22달러 이하, 약세 시나리오 16.6달러 이하, 기본 시나리오 가치 28.4달러 이상"
 
 
+STOP_TODO = ("추가매수 보류, NDR(순달러유지율), 매출총이익률, SBC(주식보상비용)부터 재확인해 투자 논리 점검. "
+             "약세 시나리오 값($16.6)까지 내려왔습니다. 오늘 일괄 매수 금지.")
+BUY_WORDS = ("분할매수", "나눠서", "추가 매수 전에", "분할매수 검토")
+
+
 def message(cfg: dict, fired: list[str], close: float, day: str, prev_close: float | None) -> tuple[str, str, int]:
     lv = {x["key"]: x for x in cfg["levels"]}
     top = max((lv[k] for k in fired), key=lambda x: x["priority"])
     labels = " + ".join(lv[k]["label"] for k in fired)
     if "bear166" in fired:
         act = "매수 논리 재점검"
-        todo = "약세 시나리오 값($16.6)까지 내려왔습니다. 추가 매수 전에 매수 논리부터 재점검(NDR 125% 미만 여부, 매출 가이던스 하향 여부 등). 오늘 일괄 매수 금지."
+        todo = STOP_TODO
     elif "buy22" in fired:
         act = "분할매수 검토"
         todo = "$20~22 분할매수 검토 구간 (사업 전망 유지 전제). 실적 악화로 인한 하락이면 기준 재계산 필요. 계획 금액을 나눠서만 검토."
@@ -124,7 +129,7 @@ def message(cfg: dict, fired: list[str], close: float, day: str, prev_close: flo
         todo = "기본 시나리오 12개월 가치 $28.4에 도달했습니다. 추가 매수보다 비중과 목표 재점검."
     title = f"[FIG-PX] 종가 {close:.2f}달러 {top['label']} | {act}"
     chg = f", 전 거래일 대비 {(close / prev_close - 1) * 100:+.1f}%" if prev_close else ""
-    notes = " ".join(lv[k]["note"] for k in fired)
+    notes = " ".join(lv[k]["note"] for k in fired if not ("bear166" in fired and k == "buy22"))  # no buy note next to the bear line
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | FIG | 피그마",
         "이게 뭐 알림: " + cfg["explain"],
@@ -187,6 +192,14 @@ def selftest() -> int:
         print(p, t)
     t, body = confirm_message(cfg, 24.64, "2026-10-23")
     check("confirm no middle dot / em-dash", any(ch in t + body for ch in "\u00b7\u2014"), False)
+    for fired in (["bear166"], ["buy22", "bear166"]):
+        body = message(cfg, fired, 16.5, "2026-11-05", 23.0)[1]
+        todo = next(x for x in body.split("\n") if x.startswith("지금 할 일:"))
+        state_ln = next(x for x in body.split("\n") if x.startswith("지금 결과/상태:"))
+        check(f"bear {fired}: hold-off todo", todo, "지금 할 일: " + STOP_TODO)
+        check(f"bear {fired}: no buy advice in todo/status", [w for w in BUY_WORDS if w in todo + state_ln], [])
+    body = message(cfg, ["buy22"], 21.0, "2026-11-05", 23.0)[1]
+    check("pure buy22 todo unchanged", "지금 할 일: $20~22 분할매수 검토 구간 (사업 전망 유지 전제)." in body, True)
     check("priorities", message(cfg, ["buy22", "bear166"], 16.5, "d", None)[2], 5)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0

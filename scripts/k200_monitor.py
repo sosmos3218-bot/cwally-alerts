@@ -166,6 +166,18 @@ def index_value_info(cfg: dict, day: str) -> str:
 
 # ---------- message ----------
 
+STOP_TODO = ("추가매수 보류, 819 이탈 이유(코스피200 이익 추정치 하향 여부, 외국인 순매도 지속 여부)부터 재확인해 투자 논리 점검. "
+             "1차 포함 이번 분할은 진행하지 않음. 다음 지지는 750 안팎으로 봄.")
+BUY_WORDS = ("분할로 검토", "나눠서 검토", "1차 20%만")
+
+
+def todo_text(fired: list[str], fl: list[dict]) -> str:
+    """819 stop together with a buy line (gap day): stop wording only, no buy todo next to it."""
+    if "l819" in fired and len(fired) > 1:
+        return STOP_TODO
+    return " ".join(ln["todo"] for ln in fl)
+
+
 def message(cfg: dict, fired: list[str], day: str, close: float, prev: float | None, info: list[str], stamp: str) -> tuple[str, str, int]:
     by = {ln["key"]: ln for ln in cfg["lines"]}
     fl = [by[k] for k in fired]
@@ -179,7 +191,7 @@ def message(cfg: dict, fired: list[str], day: str, close: float, prev: float | N
         f"{stamp} | K200 | 코스피200",
         "이게 뭐 알림: " + cfg["explain"],
         f"지금 결과/상태: {day} 코스피200 종가 {close:,.2f}{chg}. 새로 켜진 선: " + ", ".join(ln["label"] for ln in fl) + "." + (f" 참고: {info_txt}." if info_txt else ""),
-        "지금 할 일: " + " ".join(ln["todo"] for ln in fl),
+        "지금 할 일: " + todo_text(fired, fl),
         "나중에: " + rearm + (" 819 이탈 중에는 2차 접근 알림을 보내지 않습니다." if "l819" in fired else ""),
         "익절/줄일 때: 905 초과 뒤 다시 900.48 아래로 밀리면 추세 확인을 취소로 보고 3차 보류.",
         "하지 말 것: 장중 가격으로 미리 매수, 한 번에 계획 금액 전부, 신용/미수, 이 알림만 보고 주문. 매매 권유 아님.",
@@ -218,6 +230,18 @@ def selftest() -> int:
     ok = p == 4 and "1차 20% 구간 + 2차 이후 중단" in t and not any(ch in t + b for ch in "\u00b7\u2014")
     fails += not ok
     print("ok  " if ok else "FAIL", "combined message p4, no middle dot/em-dash:", t)
+    todo = next(x for x in b.split("\n") if x.startswith("지금 할 일:"))
+    ok = todo == "지금 할 일: " + STOP_TODO and not any(w in todo for w in BUY_WORDS)
+    fails += not ok
+    print("ok  " if ok else "FAIL", "combined 1차+819 stop: hold-off todo, no buy todo:", todo)
+    _t, b1, _p = message(cfg, ["l819"], "2026-10-26", 818.0, 830.0, [], "2026-10-26 15:40 KST")
+    ok = "지금 할 일: 2차 이후 분할은 멈추고 재평가. 다음 지지는 750 안팎으로 봄." in b1
+    fails += not ok
+    print("ok  " if ok else "FAIL", "819 alone keeps its own todo")
+    _t, b2, _p = message(cfg, ["l855"], "2026-10-26", 850.0, 862.77, [], "2026-10-26 15:40 KST")
+    ok = "지금 할 일: 계획한 1차 20%만 분할로 검토." in b2
+    fails += not ok
+    print("ok  " if ok else "FAIL", "pure 1차 buy todo unchanged")
     # confirmed bars + dedupe
     now = datetime(2026, 10, 26, 15, 40, tzinfo=KST)
     rows = [{"localTradedAt": "2026-10-26", "closePrice": "850.17"}, {"localTradedAt": "2026-10-23", "closePrice": "862.77"}, {"localTradedAt": "2026-10-22", "closePrice": "858.02"}]
