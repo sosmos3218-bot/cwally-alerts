@@ -80,9 +80,16 @@ jobs:
           }
           run_one flow_monitor python scripts/flow_monitor.py
           run_one secu_flow python scripts/secu_flow_monitor.py
+          # [KOSPI] ladder (2026-10-26): the 4 components below spool their signal sends (KOSPI_LADDER=1, scripts/kospi_spool.py),
+          # then kospi send publishes ONE [KOSPI] message (component states restored if that publish fails)
+          run_one kospi_begin python scripts/kospi_monitor.py begin
+          export KOSPI_LADDER=1
           run_one kosbrk python scripts/kosbrk_monitor.py
           run_one kosdown python scripts/kosdown_monitor.py
           run_one kosup python scripts/kosup_monitor.py
+          run_one kos5500 python scripts/kos5500_monitor.py afterclose
+          unset KOSPI_LADDER
+          run_one kospi python scripts/kospi_monitor.py send
           run_one k200 python scripts/k200_monitor.py
           # samup and hynixup moved to the 005930/000660 engine extra_lines on 2026-10-26 (19:00 k203780 slot)
           run_one k278240 python scripts/k278240_monitor.py
@@ -90,7 +97,6 @@ jobs:
           run_one ethhl python scripts/ethhl_monitor.py
           run_one kica python scripts/kica_monitor.py
           run_one dssotp python scripts/dssotp_monitor.py
-          run_one kos5500 python scripts/kos5500_monitor.py afterclose
           run_one gsai python scripts/gsai_monitor.py
           if [ "$failed" -ne 0 ]; then
             echo "one or more flow scripts failed"
@@ -109,7 +115,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/k200.json state/k278240.json state/377990.json state/ethhl.json state/kica.json state/dssotp.json state/kos5500.json state/gsai.json
+          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/k200.json state/k278240.json state/377990.json state/ethhl.json state/kica.json state/dssotp.json state/kos5500.json state/kospi.json state/gsai.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main

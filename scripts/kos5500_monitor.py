@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kr_calendar
 from naver_api import get_json
-from ntfy_util import publish, resolve_server
+from ntfy_util import resolve_server
+from kospi_spool import publish  # [KOSPI] ladder spool (2026-10-26)
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs/kos5500.json"

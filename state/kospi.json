@@ -1,0 +1,5 @@
+{
+  "kos5500_last_label": "5500 이탈 첫날",
+  "kos5500_last_day": "2026-10-26",
+  "seed_note": "2026-10-26 ladder migration. kos5500 sent '5500 이탈 첫날' at 2026-10-26 15:40 (state/kos5500.json last_report); the same label is not re-sent. kosdown/kosup/kosbrk keep their own fired state."
+}
