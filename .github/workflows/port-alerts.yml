@@ -248,7 +248,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch, iefa]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1353,6 +1353,20 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/vnqi_monitor.py selftest >/dev/null; fi
           python scripts/vnqi_monitor.py "$MODE"
+      - name: Run IEFA (iShares Core MSCI EAFE ETF new-buy watch - 200-day line recover/break +-0.5%, P/E <= 17 once; morning 09:00)
+        # approved in chat 2026-10-26. Not held, reference only. Attached to the existing morning slot, no new cron. Dedupe: state/iefa.json
+        # last_date + band (BELOW/ABOVE), pe_last_asof + pe_armed (re-arm at P/E >= 17.5). job=iefa dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'iefa') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/iefa_monitor.py selftest >/dev/null; fi
+          python scripts/iefa_monitor.py "$MODE"
       - name: Run FIG dry check (job=fig dispatch only, always dry)
         # approved in chat 2026-10-26: verify [FIG] with price_zone_alerts off. Never sends, never writes state.
         # Scheduled [FIG] still runs only in the morning bundle (fig_monitor.py auto).

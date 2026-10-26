@@ -1,0 +1,51 @@
+{
+  "name": "iefa",
+  "title_prefix": "[IEFA]",
+  "symbol": "IEFA",
+  "display": "아이셰어즈 코어 MSCI EAFE ETF (IEFA)",
+  "created_at": "2026-10-26T17:10:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤, 월요일은 금요일 종가). 미국 동부 기준 완료 일봉 종가만 사용(장중 미완성 봉 제외), last_date 로 한 봉은 한 번만 판정, 놓친 봉은 날짜 순서대로 따라잡고 봉마다 200일선을 새로 계산. job=iefa 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "holding": "미보유. 신규 매수 감시용 참고 알림.",
+  "approved": "2026-10-26 chat (200일선 회복/이탈 0.5% 밴드 + PER 17배 이하 1번, 17.5배 이상에서 재무장)",
+  "year_guard": 2026,
+  "expire_date": "2026-12-31",
+  "valid_until": "2026-12-31",
+  "ends_kst": "2026-12-31 09:00",
+  "ends_note": "평일 09:00 점검, 2026년 말 종료",
+  "sma_len": 200,
+  "sma_short_len": 50,
+  "w52_len": 252,
+  "band_pct": 0.5,
+  "band_note": "200일선 x 1.005 초과 종가에서 BELOW -> ABOVE (200일선 회복, 매수 검토), 200일선 x 0.995 미만 종가에서 ABOVE -> BELOW (200일선 이탈, 매수 보류). 그 사이(±0.5%)는 상태 그대로, 알림 없음. 200일선은 매 봉마다 그 봉까지의 최근 확정 종가 200개 평균으로 새로 계산.",
+  "lines": {
+    "recover": {"label": "200일선 회복", "action": "매수 검토", "priority": 3},
+    "break": {"label": "200일선 이탈", "action": "매수 보류", "priority": 3},
+    "pe": {"label": "PER 17배 이하", "action": "저평가 구간", "priority": 3}
+  },
+  "pe_fire_le": 17.0,
+  "pe_rearm_ge": 17.5,
+  "pe_note": "아이셰어즈 상품 페이지 P/E Ratio(보유 종목 가중, 직전 회계연도 이익 기준)를 기준일(as of)과 함께 읽음. 새 기준일마다 1번만 판정. 17.0배 이하면 1번 알림 후 해제, 17.5배 이상인 새 기준일이 나와야 다시 무장. 17.0 초과 17.5 미만은 상태 그대로.",
+  "stale_days": 6,
+  "sources": {
+    "bars": "https://query1.finance.yahoo.com/v8/finance/chart/IEFA?range=1y&interval=1d",
+    "bars_fallback": "https://query2.finance.yahoo.com/v8/finance/chart/IEFA?range=1y&interval=1d",
+    "pe": "https://www.ishares.com/us/products/244049/ishares-core-msci-eafe-etf",
+    "note": "가격: 야후 query1, 실패하면 query2. PER: 아이셰어즈 페이지 내장 JSON(fundamentalsAndRisk.priceEarnings value/asOfDate), 실패하면 화면 문구 'P/E Ratio 18.42 as of Oct 23, 2026' 형태. 가격과 PER 은 서로 실패해도 막지 않음."
+  },
+  "reference": {
+    "as_of": "2026-10-23",
+    "close": 95.68,
+    "sma200": 96.21,
+    "sma50": 98.46,
+    "w52_high": 101.41,
+    "w52_high_date": "2026-08-25",
+    "pe": 18.42,
+    "pb": 2.17,
+    "source": "Yahoo chart v8 종가 기준 계산, iShares 상품 페이지"
+  },
+  "explain": "IEFA(선진국 해외 주식 ETF, 미보유) 신규 매수 감시입니다. 미국 종가가 200일선 위 0.5%를 넘어 회복하거나 아래 0.5% 밑으로 이탈할 때, 그리고 PER 이 17배 이하로 내려올 때만 옵니다. 참고용, 투자 권유 아님."
+}

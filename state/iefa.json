@@ -1,0 +1,14 @@
+{
+  "initialized": true,
+  "band": "BELOW",
+  "last_date": "2026-10-23",
+  "last_close": 95.68,
+  "last_sma200": 96.21,
+  "pe_armed": true,
+  "pe_last_asof": "2026-10-23",
+  "pe_last_value": 18.42,
+  "fail_day": null,
+  "pe_fail_day": null,
+  "seed_note": "2026-10-26 사용자 요청: 10/23 종가 95.68 < 200일선 96.21 이라 band=BELOW, PER 18.42(10/23 기준) 라 PER 선 무장. 첫 실행은 실제로 선을 넘을 때만 보냄.",
+  "updated_at": "2026-10-26T17:10:00+09:00"
+}
