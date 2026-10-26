@@ -78,3 +78,16 @@ Same pattern as the pcor shell (PR #15). To restore: `git show <this PR merge>^:
 
 Also removed from the title-prefix registry (AGENTS.md, README.md): `[SMH]` and `[ZS]`, used by no config, script or
 outbox file (their alerts were removed earlier).
+
+## 2026-10-26 audit: fig and ccrev (approved in chat 2026-10-26 18:22 KST, "네 소신껏 진행", audit item 2)
+
+Both ran in the morning 09:00 bundle with no own cron, no Decide branch, no `oneshot_kst` and no cron-job.org job, so
+no cron was removed. Deleted: config, script, state, the morning Run lines, the `job=fig` dry-check step, the `fig` and
+`ccrev` dispatch options (and `ccrev` from the step name/if), and the `[FIG]` `[CCREV]` title prefixes. `[FIG-PX]`,
+`[FIG-EARN]`, `[FIG-Q3]` stay and keep the FIG price zones and the Q3 earnings coverage. The dashboard `planRemoval`
+plan for both keys matched this diff. To restore: `git show <this PR merge>^:configs/<name>.json`.
+
+| name | prefix | added | what it did | why retired |
+|---|---|---|---|---|
+| fig | `[FIG]` | 2026-10-16 | Figma Monday status and new SEC filings (price zones 20/27 off since 2026-10-26); ends 2026-11-15 | covered by `[FIG-PX]` 22 / 16.6 / 28.4 zones, `[FIG-EARN]` 11/4 reminder and 11/5 checklist, `[FIG-Q3]` 11/5 summary |
+| ccrev | `[CCREV]` | 2026-09-17 | 091160 55→40% cut + covered call review when KOSPI held a 60-day box (range under 18%) for 45 days and 005930/000660 estimates fell 3%; no end date | condition far off (60-day range 29% on 2026-10-26), never sent in the 9/21~10/26 archive; 091160 levels stay in `[091160]` |

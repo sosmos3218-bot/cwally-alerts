@@ -196,7 +196,7 @@ def body(cfg: dict, now: datetime, p: dict, j: dict, source: str) -> str:
         f"FCF(잉여현금흐름) 마진 {f(p.get('fcf_margin'), '%')}, FCF {f(p.get('fcf_m'), '백만달러')} (2분기 {b['q2_fcf_margin']}%): {lab(j['fcf'])}.",
         f"연간 매출 가이던스: {fy_txt}.{op_txt}",
         f"지금 할 일: {action}",
-        "나중에: 이 알림은 다시 오지 않습니다. 평일 09:00 [FIG] 가격 구간 알림은 11/15까지 계속됩니다. 다음 분기 NDR과 AI 크레딧 매출 공개 여부를 보세요.",
+        "나중에: 이 알림은 다시 오지 않습니다. 평일 09:00 [FIG-PX] 가격 구간 알림은 계속됩니다. 다음 분기 NDR과 AI 크레딧 매출 공개 여부를 보세요.",
         f"익절/줄일 때: {trim}",
         "하지 말 것: 원문 확인 칸을 충족이나 미달로 읽기, 신용 및 미수, 실적 직후 시초가 일괄 매수.",
         f"출처: {source or '없음'}",
