@@ -15,6 +15,9 @@
   - 연준 고정(fed_pin): 금리 분류 중 미국 연준/FOMC 이벤트는 맨 위 고정(최대 3개, 전체 10개 안).
     97% 규칙은 적용하되, 남는 연준 시장이 없으면 가장 가까운 FOMC 결정 이벤트를 97% 이상이어도 표시.
     다른 중앙은행(BoC, ECB, BOJ, BOK)은 일반 순위.
+  - 거시 고정(macro_pin, 2026-10-26 승인): 작은 미국 거시 시장(경기침체, CPI, 물가, PCE, 실업률, GDP) 1개를
+    움직임과 상관없이 연준 고정 바로 뒤에 표시(전체 10개 안). 3% 초과 97% 미만, 마감 3일 이상, 유동성 $5K 이상
+    (후보가 없을 때만 유동성 기준을 빼고 줄에 적음), 미국 먼저, 1주 거래대금 최대. 없으면 한 줄로 "거시 고정 항목 없음".
 주간 변화: state markets[<market id>] = {p, at}. 기준값 나이가 5~10일이면 그 값 대비,
   아니면 Gamma oneWeekPriceChange(폴리마켓 7일 변화, * 표시), 그것도 없으면 더 짧은 기준값(MM/DD 대비), 없으면 신규.
 정렬: 연준 고정 먼저, 나머지는 |변화| 큰 순, 같으면 1주 거래대금. 최대 max_items 개, 분류당 max_per_category 개(고정 항목은 분류 한도에 안 셈).
@@ -43,6 +46,7 @@ CFG_PATH = ROOT / "configs" / "polyinv.json"
 STATE_PATH = ROOT / "state" / "polyinv.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts polyinv"}
 PREFIX = "[POLYINV]"
+MACRO_NONE = "   거시 고정 항목 없음 (조건 충족 시장 없음)"
 
 
 # ---------- io ----------
@@ -86,7 +90,9 @@ def fetch_events(cfg: dict) -> list[dict]:
         if len(data) < int(src.get("page_size", 100)):
             break
     # 거래대금 상위 500 밖의 작은 거시 시장(CPI, 경기침체, 관세, 일본/한국)을 태그로 따로 가져옴
-    for slug in src.get("extra_tag_slugs") or []:
+    slugs = list(src.get("extra_tag_slugs") or [])
+    slugs += [t for t in (cfg.get("macro_pin") or {}).get("tag_slugs", []) if t not in slugs]
+    for slug in slugs:
         q = urllib.parse.urlencode({
             "active": "true", "closed": "false", "order": src.get("order", "volume1wk"),
             "ascending": "false", "limit": str(src.get("extra_limit", 30)), "tag_slug": slug,
@@ -259,6 +265,74 @@ def is_fed_event(ev: dict, cat: dict, cfg: dict) -> bool:
     return any(has_kw(title, k) for k in pin.get("keywords", []))
 
 
+def macro_ko_title(ev: dict, cfg: dict, cat: dict, us: bool) -> str:
+    """거시 고정 항목의 한글 제목. ko_titles 에 없으면 키워드로 짧은 한글 제목을 만듦."""
+    title = ev.get("title") or ""
+    ko = ko_title(title, cfg, cat)
+    if not ko.startswith(f"{cat['label']}: "):
+        return ko
+    low = title.lower()
+    word = next((k for kw, k in (cfg.get("macro_pin") or {}).get("generic_ko", []) if has_kw(low, kw)), "거시 지표")
+    year = re.search(r"(20\d\d)", low)
+    return ("미국 " if us else "") + word + (f" {year.group(1)}년" if year else "")
+
+
+def pick_macro_pin(events: list[dict], cfg: dict, state: dict, now: datetime) -> dict | None:
+    """작은 거시 시장 1개 (macro_pin). 조건 충족 후보가 없으면 None."""
+    mp = cfg.get("macro_pin") or {}
+    if not mp:
+        return None
+    th = cfg["thresholds"]
+    lo, hi = float(th["drop_low"]), float(th["drop_high"])
+    min_liq = float(mp.get("min_market_liquidity", th["min_market_liquidity"]))
+    loose = dict(th, min_market_liquidity=0)
+    cands = []
+    for ev in events:
+        cat = classify(ev, cfg)
+        title = (ev.get("title") or "").lower()
+        if not cat or cat["key"] not in mp.get("categories", ["inflation", "macro"]):
+            continue
+        if not any(has_kw(title, k) for k in mp.get("keywords", [])):
+            continue
+        us = not any(has_kw(title, k) for k in mp.get("non_us_keywords", []))
+        allm = open_markets(ev, loose, now, float(mp.get("min_days_to_end", th["min_days_to_end"])))
+        if not allm:
+            continue
+        neg = bool(ev.get("negRisk") or ev.get("enableNegRisk"))
+        liq = lambda m: fnum(m.get("liquidityNum")) or fnum(m.get("liquidity")) or 0  # noqa: E731
+        if neg and max(m["_p"] for m in allm) >= hi:
+            continue                                  # 상호배타 1위가 97% 이상: 사실상 결정
+        for relaxed in (False, True):
+            ok = [m for m in allm if lo < m["_p"] < hi and (relaxed or liq(m) >= min_liq)]
+            if not ok:
+                continue
+            rows = []
+            for m in ok:
+                ch, basis = weekly_change(str(m.get("id")), m["_p"], m, state, now, th)
+                rows.append({"m": m, "ch": ch, "basis": basis})
+            lead = max(rows, key=lambda r: (r["m"]["_p"], liq(r["m"]))) if neg else \
+                max(rows, key=lambda r: (abs(r["ch"] or 0), liq(r["m"])))
+            cands.append({"ev": ev, "cat": cat, "us": us, "relaxed": relaxed, "lead": lead,
+                          "vol": fnum(ev.get("volume1wk")) or 0})
+            break
+    if not cands:
+        return None
+    best = sorted(cands, key=lambda c: (c["relaxed"], not c["us"], -c["vol"]))[0]
+    ev, cat, m = best["ev"], best["cat"], best["lead"]["m"]
+    title_ko = macro_ko_title(ev, cfg, cat, best["us"])
+    return {
+        "cat": cat, "title_ko": title_ko,
+        "outcome": ko_outcome(m.get("groupItemTitle") or "", cfg) if len(ev.get("markets") or []) > 1 else "",
+        "p": m["_p"], "ch": best["lead"]["ch"], "basis": best["lead"]["basis"],
+        "vol": best["vol"], "end": m["_end"],
+        "link": cfg["source"]["event_link"] + str(ev.get("slug") or ""),
+        "event_id": str(ev.get("id")), "market_id": str(m.get("id")),
+        "title_en": ev.get("title") or "", "pinned": True, "macro_pin": True, "settled_shown": False,
+        "relaxed_liquidity": best["relaxed"], "liq": fnum(m.get("liquidityNum")) or fnum(m.get("liquidity")) or 0,
+        "group": dedupe_key(ev.get("title") or "", title_ko, cfg), "decision": False,
+    }
+
+
 def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tuple[list[dict], dict]:
     th = cfg["thresholds"]
     pin = cfg.get("fed_pin") or {}
@@ -320,6 +394,11 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
         pinned = [nxt]
     for it in pinned:
         it["pinned"] = True
+    macro = pick_macro_pin(events, cfg, state, now)
+    if macro:
+        snapshot[macro["market_id"]] = {"p": round(macro["p"], 4), "at": now.isoformat(timespec="minutes")}
+        pinned = pinned + [macro]
+        items = [it for it in items if it["event_id"] != macro["event_id"] and it["group"] != macro["group"]]
     items = dedupe_items(items)
     items.sort(key=lambda it: (-(abs(it["ch"]) if it["ch"] is not None else -1), -it["vol"]))
     picked, per_cat = list(pinned), {}
@@ -360,6 +439,8 @@ def item_lines(i: int, it: dict) -> list[str]:
         name += " " + str(it.get("pin_label") or "(고정 표시)")
         if it.get("settled_shown"):
             name += ", 97% 이상이지만 다른 연준 시장이 없어 표시"
+        if it.get("relaxed_liquidity"):
+            name += f", 유동성 {fmt_vol(it.get('liq'))}로 기준 $5K 미만이지만 조건 맞는 거시 시장이 없어 표시"
     if it["ch"] is None:
         chs = "신규"
     elif it["basis"] == "state":
@@ -392,11 +473,13 @@ def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]
     head = [
         f"{now.strftime('%Y-%m-%d %H:%M')} KST | 투자자용 폴리마켓 주간",
         "1) 이게 뭐 알림: 금리, 물가, 경기, 관세, 지정학, 미국 정치/재정, 가상자산, 빅테크 관련 폴리마켓 확률의 1주 변화. 확률은 참고 지표, 매매 신호 아님.",
-        ("2) 지금 결과 (연준 고정 표시 먼저, 나머지는 |변화| 큰 순):" if any(it.get("pinned") for it in items)
+        ("2) 지금 결과 (고정 표시 먼저: 연준, 거시 1개. 나머지는 |변화| 큰 순):" if any(it.get("pinned") for it in items)
          else "2) 지금 결과 (|변화| 큰 순):") if items else "2) 지금 결과: 거래대금/유동성 기준을 넘고 의미 있게 움직인 투자 관련 이벤트가 없음.",
     ]
     body_items = [ln for i, it in enumerate(items, start=1) for ln in item_lines(i, it)]
     foot = []
+    if cfg.get("macro_pin") and not any(it.get("macro_pin") for it in items):
+        foot.append(MACRO_NONE)
     if any(it["basis"] == "gamma" for it in items):
         foot.append("   * = 폴리마켓이 계산한 7일 변화 (이 알림의 지난주 기록이 아직 없는 시장)")
     foot += [
@@ -513,6 +596,44 @@ def selftest(cfg: dict) -> int:
     check("dedupe btc ladders", k5 == k6, True)
     items = [{"group": "a", "vol": 1}, {"group": "a", "vol": 5}, {"group": "b", "vol": 2}]
     check("dedupe keeps biggest", [it["vol"] for it in dedupe_items(items)], [5, 2])
+    # 거시 고정(macro_pin)
+    now = datetime(2026, 10, 25, 21, 0, tzinfo=KST)
+
+    def mev(eid, title, p, liq, vol, days, tags=("economy",), neg=False, mid=None, extra=None):
+        mk = [{"id": mid or f"m{eid}", "outcomePrices": json.dumps([str(p), str(1 - p)]), "liquidityNum": liq,
+               "endDate": (now + timedelta(days=days)).isoformat(), "oneWeekPriceChange": 0.012}]
+        return {"id": eid, "title": title, "slug": f"s{eid}", "tags": [{"slug": t} for t in tags],
+                "volume1wk": vol, "negRisk": neg, "markets": mk + (extra or [])}
+
+    rec = mev("1", "US recession by end of 2026?", 0.085, 69000, 46000, 96)
+    une = mev("2", "How high will US unemployment go in 2026?", 0.106, 5100, 13000, 98, ("unemployment",))
+    chn = mev("3", "China GDP growth (Y/Y) in Q4 2026?", 0.30, 9000, 90000, 98, ("gdp",))
+    hot = mev("4", "Core PCE MoM - September 2026", 0.40, 9000, 99000, 2, ("inflation",))
+    dead = mev("5", "Negative GDP growth in 2026?", 0.99, 9000, 98000, 94, ("gdp",))
+    thin = mev("6", "October Inflation US - Monthly", 0.39, 2700, 900, 16, ("cpi",))
+    fed = mev("7", "Fed Decision in December?", 0.765, 170000, 735000, 44, ("fed",))
+    pin = pick_macro_pin([une, chn, hot, dead, rec, thin], cfg, {}, now)
+    check("macro pick us recession", pin and pin["event_id"], "1")
+    check("macro ko title", pin and pin["title_ko"], "미국 경기침체 2026년")
+    check("macro strict liquidity", pin and pin["relaxed_liquidity"], False)
+    check("macro weekly change shown", pin and (pin["basis"], round(pin["ch"], 1)), ("gamma", 1.2))
+    check("macro skip settled/short", pick_macro_pin([hot, dead], cfg, {}, now), None)
+    relax = pick_macro_pin([thin, hot], cfg, {}, now)
+    check("macro relaxed liquidity", relax and (relax["event_id"], relax["relaxed_liquidity"]), ("6", True))
+    check("macro relaxed ko title", relax and relax["title_ko"], "미국 CPI 전월비 (10월)")
+    lines = item_lines(1, dict(relax, pin_label="(고정 표시)")) if relax else []
+    check("macro relaxed note", bool(lines) and "기준 $5K 미만" in lines[0], True)
+    check("macro us first", pick_macro_pin([chn, une], cfg, {}, now)["event_id"], "2")
+    picked, snap = build_items([fed, rec, une, chn], cfg, {}, now)
+    check("fed pin stays first", [it["event_id"] for it in picked][:2], ["7", "1"])
+    check("macro not duplicated", [it["event_id"] for it in picked].count("1"), 1)
+    check("macro in snapshot", "m1" in snap, True)
+    check("cap", len(picked) <= cfg["thresholds"]["max_items"], True)
+    _, parts = render(picked, now, cfg)
+    check("macro label", "미국 경기침체 2026년 (고정 표시)" in parts[0], True)
+    check("macro none line absent", MACRO_NONE in "\n".join(parts), False)
+    _, parts = render([], now, cfg)
+    check("macro none line", MACRO_NONE in "\n".join(parts), True)
     blob = json.dumps(cfg, ensure_ascii=False) + Path(__file__).read_text(encoding="utf-8")
     for ch in ("\u00b7", "\u2014"):
         check(f"no forbidden char U+{ord(ch):04X}", ch in blob, False)
