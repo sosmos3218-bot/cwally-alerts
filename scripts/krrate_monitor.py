@@ -2,7 +2,9 @@
 """[KR-RATE] 국고채 금리 조건 알림 (148070 국고10년 ETF 판단 보조). 매매 신호 아님, 자동 주문 아님.
 
 기존 k203780 19:00 슬롯(cron-job.org 정시 dispatch + GitHub cron 백업)에 붙어 KRX 거래일에만 판정한다.
-1) 국고채 10년 종가 >= yield10.trigger_pct -> '148070 분할매수 시작 검토' 1회. 종가 < rearm_below_pct 면 다시 무장.
+1) 국고채 10년 종가 >= yield10.trigger_pct -> '148070 금리 피크아웃 확인 후 검토(상승 중에는 추가매수 보류)' 1회.
+   종가 < rearm_below_pct 면 다시 무장. 10년 종가 >= hold_ceiling_pct(4.50%) 이거나 [MACRO-IR] 148070 <= 104,000원 경고가
+   켜져 있으면 추가매수 보류 문구만 쓴다(2026-10-26 사용자 요청, [MACRO-IR] 와 충돌 방지).
 2) 금통위 결정일: 기준금리 결정(동결/인상/인하, 새 수준)과 국고3년/10년 종가, 하루 변화만 요약 (판단 없음).
    근원물가(농산물및석유류제외 전년동월비): 새 달 수치가 처음 보이는 실행에서 1회, 2.5% 미만이면 강조.
 3) 신용 스프레드(회사채 AA- 3년 - 국고채 3년)가 20거래일 전보다 widen_trigger_bp 넘게 확대 -> 1회.
@@ -552,17 +554,60 @@ def fmt(v: float | None, n: int = 3) -> str:
     return f"{v:.{n}f}%" if v is not None else NA
 
 
-def y10_msg(cfg, stamp, d, v, src, prev, y3, nxt):
+def macroir_ktb_hold(cfg: dict, d: str | None = None) -> str | None:
+    """[MACRO-IR] 148070 <= 104,000원 경고가 켜져 있으면 이유 문자열. 읽기 실패는 None(금리 상한 판단은 따로 계속)."""
     g = cfg["yield10"]
-    chg = f", 직전 거래일 {fmt(prev[1])} 대비 {(v - prev[1]) * 100:+.1f}bp" if prev and prev[1] is not None else ""
-    title = f"[KR-RATE] 국고10년 {v:.3f}% ({d[5:7]}/{d[8:]} 종가) | 148070 분할매수 시작 검토"
-    msg = body(stamp, f"국고채 10년 종가가 {g['trigger_pct']:.2f}% 이상이 되면 1번 오는 알림(148070 국고10년 ETF 분할매수 조건). 매매 신호 아님.",
-               f"{d} 국고채 10년 종가 {v:.3f}% ({src}){chg}. 기준 {g['trigger_pct']:.2f}% 이상. 국고3년 {fmt(y3)}. 다음 금통위 {nxt}.",
-               "148070 분할매수 시작을 검토. 머니마켓 ETF 에서 옮길 금액과 분할 횟수를 먼저 정하고 1회분만.",
-               f"10년 종가가 {g['rearm_below_pct']:.2f}% 아래로 내려갔다가 다시 {g['trigger_pct']:.2f}% 이상이 되면 다시 옵니다.",
-               "금리가 더 오르면(가격 하락) 정한 분할 간격대로만 추가. 목표 비중을 넘기지 않기.",
-               "한 번에 전액 매수, 금리 고점 단정, 확인 불가 값을 0이나 정상으로 읽기.")
-    return title, msg, 4, ["rotating_light"]
+    lvl = float(g.get("macroir_ktb_level", 104000))
+    try:
+        ms = json.loads((ROOT / g.get("macroir_state", "state/macroir.json")).read_text(encoding="utf-8"))
+        px = (ms.get("last_values") or {}).get("ktb148070")
+        if (ms.get("armed") or {}).get("ktb104k") is False or (px is not None and float(px) <= lvl):
+            return f"[MACRO-IR] 148070 {lvl:,.0f}원 이하 경고 켜짐"
+    except Exception as exc:  # noqa: BLE001
+        print(f"macroir state read skipped: {exc}", file=sys.stderr)
+    if d:
+        try:
+            rows = json.loads(get("https://m.stock.naver.com/api/stock/148070/price?pageSize=5&page=1"))
+            for r in rows:
+                if str(r.get("localTradedAt") or "")[:10] == d:
+                    c = num(r.get("closePrice"))
+                    if c is not None and c <= lvl:
+                        return f"148070 {d} 종가 {c:,.0f}원, [MACRO-IR] {lvl:,.0f}원 경고 구간"
+                    break
+        except Exception as exc:  # noqa: BLE001
+            print(f"148070 close check skipped: {exc}", file=sys.stderr)
+    return None
+
+
+def y10_hold_reason(cfg: dict, v: float, macro: str | None) -> str | None:
+    ceil = cfg["yield10"].get("hold_ceiling_pct")
+    if ceil is not None and v >= float(ceil):
+        return f"10년 종가가 {float(ceil):.2f}% 이상(148070 약 104,000원 수준, [MACRO-IR] 경고와 같은 구간)"
+    return macro
+
+
+def y10_msg(cfg, stamp, d, v, src, prev, y3, nxt, hold: str | None = None):
+    g = cfg["yield10"]
+    bp = (v - prev[1]) * 100 if prev and prev[1] is not None else None
+    chg = f", 직전 거래일 {fmt(prev[1])} 대비 {bp:+.1f}bp" if bp is not None else ""
+    what = (f"국고채 10년 종가가 {g['trigger_pct']:.2f}% 이상이 되면 1번 오는 알림(148070 국고10년 ETF 판단 보조). "
+            "148070 가격 경고(104,000원 이하)는 [MACRO-IR]가 따로 봅니다. 매매 신호 아님.")
+    status = f"{d} 국고채 10년 종가 {v:.3f}% ({src}){chg}. 기준 {g['trigger_pct']:.2f}% 이상. 국고3년 {fmt(y3)}. 다음 금통위 {nxt}."
+    later = f"10년 종가가 {g['rearm_below_pct']:.2f}% 아래로 내려갔다가 다시 {g['trigger_pct']:.2f}% 이상이 되면 다시 옵니다."
+    if hold:
+        title = f"[KR-RATE] 국고10년 {v:.3f}% ({d[5:7]}/{d[8:]} 종가) | 148070 추가매수 보류"
+        status += f" 보류 이유: {hold}."
+        action = "장기금리 급등 구간. 148070 추가매수 보류, 금리 피크아웃 확인 후 재판단(금리 고점 통과 신호: 2~3거래일 연속 하락 등)."
+        trim = "보유분은 목표 비중 안에서 유지. 경고가 풀리기 전에는 비중을 늘리지 않기."
+        avoid = "물타기, 금리 고점 단정, 신용/미수, 확인 불가 값을 0이나 정상으로 읽기."
+        return title, body(stamp, what, status, action, later, trim, avoid), 4, ["warning"]
+    title = f"[KR-RATE] 국고10년 {v:.3f}% ({d[5:7]}/{d[8:]} 종가) | 148070 금리 피크아웃 확인 후 검토"
+    action = "148070 금리 피크아웃 확인 후 검토(금리 고점 통과 신호: 2~3거래일 연속 하락 등). 상승 중에는 추가매수 보류."
+    if bp is not None and bp > 0:
+        action += f" 오늘은 직전 대비 {bp:+.1f}bp 상승 중이라 보류 구간입니다."
+    trim = f"보유분은 목표 비중 안에서 유지. 10년 종가 {float(g.get('hold_ceiling_pct', 4.5)):.2f}% 이상이면 추가매수 보류 알림으로 바뀝니다."
+    avoid = "상승 중 추격 편입, 한 번에 전액 편입, 금리 고점 단정, 확인 불가 값을 0이나 정상으로 읽기."
+    return title, body(stamp, what, status, action, later, trim, avoid), 4, ["rotating_light"]
 
 
 def spread_msg(cfg, stamp, d, aa, y3, sp, w, b, bsp):
@@ -607,7 +652,7 @@ def mpc_msg(stamp, d, dec, y, nxt, ex: dict | None = None):
                 "금통위(한국은행 금융통화위원회) 기준금리 결정일 저녁 사실 요약과 채권 ETF 판단 변경 조건 점검. 매매 신호 아님.")
         return body(stamp, what,
                     status,
-                    "결정과 금리 숫자만 확인. 148070 분할매수 조건(10년 종가 기준)은 따로 알림이 옵니다.",
+                    "결정과 금리 숫자만 확인. 148070 판단(10년 종가 기준, 금리 피크아웃 확인 후 검토)은 따로 알림이 옵니다.",
                     f"다음 금통위({nxt}) 저녁에 다시 옵니다.",
                     "이 요약만으로 비중을 바꾸지 않기.",
                     "결정 하나로 금리 방향 단정하기(인상 종료 같은 판단 포함), 확인 불가 값을 정상으로 읽기.")
@@ -754,7 +799,7 @@ def main() -> int:
         if v is None:
             if d == sess.isoformat() and late:
                 ops_once("y10", "[KR-RATE] 국고10년 조회 실패 | 조건 판정 못 함",
-                         ops_body("국고채 10년 매수 조건 알림의 데이터 조회 실패 안내.",
+                         ops_body("국고채 10년 금리 조건 알림의 데이터 조회 실패 안내.",
                                   f"{d} 국고채 10년 종가 {NA} (ECOS, 네이버 모두 그날 값 없음. {' | '.join(errors)[:200]})."))
             break
         res = eval_y10(st, v, cfg)
@@ -763,7 +808,8 @@ def main() -> int:
             st["fired_day"] = d
             if not seeding:
                 pd = prev_trading_day(date.fromisoformat(d)).isoformat()
-                out.append(y10_msg(cfg, stamp, d, v, src, (pd, close("y10", pd)[0]), close("y3", d)[0], nxt))
+                hold = y10_hold_reason(cfg, v, macroir_ktb_hold(cfg, d))
+                out.append(y10_msg(cfg, stamp, d, v, src, (pd, close("y10", pd)[0]), close("y3", d)[0], nxt, hold))
         st["last_day"] = d
 
     # --- 3) 신용 스프레드 (ECOS 만, 같은 출처) ---
@@ -976,6 +1022,59 @@ def selftest(cfg: dict) -> int:
                        {"y3": (3.85, 3.87, "KOFIA 최종호가(한국은행 ECOS)"), "y10": (4.20, None, "로이터 시장 종가(네이버), ECOS 미반영")}, "2027 일정 미발표"),
                (t, m, p, tg)]
     samples += mpc_selftest(cfg)
+
+    # 148070 문구: 매수 권유 없음, 피크아웃 문구, [MACRO-IR] 경고와 충돌 방지 (2026-10-26)
+    def act(m):
+        return next(x for x in m.split("\n") if x.startswith("지금 할 일:"))
+
+    def buy_words(text):
+        t = text.replace("추가매수 보류", "")
+        return [w for w in ("매수", "분할 진입", "비중 확대", "투입", "시작 검토") if w in t]
+
+    src = "KOFIA 최종호가(한국은행 ECOS)"
+    t1, m1, p1, _ = y10_msg(cfg, stamp, "2026-11-02", 4.35, src, ("2026-10-30", 4.31), 3.95, "2026-11-26",
+                            y10_hold_reason(cfg, 4.35, None))
+    assert buy_words(t1 + m1) == [], buy_words(t1 + m1)
+    assert "148070 금리 피크아웃 확인 후 검토(금리 고점 통과 신호: 2~3거래일 연속 하락 등). 상승 중에는 추가매수 보류." in act(m1), act(m1)
+    assert "+4.0bp 상승 중이라 보류" in act(m1) and "피크아웃 확인 후 검토" in t1 and p1 == 4
+    print("y10 4.35% rising: peak-out wording, no buy wording ok")
+    t2, m2, p2, _ = y10_msg(cfg, stamp, "2026-11-02", 4.60, src, ("2026-10-30", 4.40), 3.95, "2026-11-26",
+                            y10_hold_reason(cfg, 4.60, None))
+    assert buy_words(t2 + m2) == [] and "추가매수 보류" in t2 and "피크아웃 확인 후 검토" not in act(m2) and "4.50% 이상" in m2 and p2 == 4
+    t3, m3, _, _ = y10_msg(cfg, stamp, "2026-11-02", 4.50, src, ("2026-10-30", 4.40), 3.95, "2026-11-26",
+                           y10_hold_reason(cfg, 4.50, None))
+    assert "추가매수 보류" in t3 and buy_words(t3 + m3) == []
+    print("y10 4.60% / 4.50% ceiling: only 추가매수 보류 ok")
+    import tempfile
+    from unittest import mock
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "state").mkdir()
+        cases = [({"armed": {"ktb104k": False}, "last_values": {"ktb148070": 104500}}, True),
+                 ({"armed": {"ktb104k": True}, "last_values": {"ktb148070": 103900}}, True),
+                 ({"armed": {"ktb104k": True}, "last_values": {"ktb148070": 107420}}, False)]
+        for ms, want in cases:
+            (root / "state" / "macroir.json").write_text(json.dumps(ms), encoding="utf-8")
+            with mock.patch(f"{__name__}.ROOT", root):
+                got = macroir_ktb_hold(cfg)
+            assert bool(got) == want, (ms, got)
+        with mock.patch(f"{__name__}.ROOT", root / "missing"):
+            assert macroir_ktb_hold(cfg) is None
+        (root / "state" / "macroir.json").write_text(json.dumps(cases[0][0]), encoding="utf-8")
+        with mock.patch(f"{__name__}.ROOT", root):
+            r = y10_hold_reason(cfg, 4.36, macroir_ktb_hold(cfg))
+        t4, m4, _, _ = y10_msg(cfg, stamp, "2026-11-02", 4.36, src, ("2026-10-30", 4.30), 3.95, "2026-11-26", r)
+        assert r and "추가매수 보류" in t4 and buy_words(t4 + m4) == [] and "[MACRO-IR]" in m4
+        # Naver same-day close check (mocked): 148070 <= 104,000 -> hold even when the macroir state is clean
+        (root / "state" / "macroir.json").write_text(json.dumps(cases[2][0]), encoding="utf-8")
+        fake = json.dumps([{"localTradedAt": "2026-11-02", "closePrice": "103,950"}])
+        with mock.patch(f"{__name__}.ROOT", root), mock.patch(f"{__name__}.get", return_value=fake):
+            assert macroir_ktb_hold(cfg, "2026-11-02")
+        fake_ok = json.dumps([{"localTradedAt": "2026-11-02", "closePrice": "107,000"}])
+        with mock.patch(f"{__name__}.ROOT", root), mock.patch(f"{__name__}.get", return_value=fake_ok):
+            assert macroir_ktb_hold(cfg, "2026-11-02") is None
+    print("macroir zone active -> only 추가매수 보류 ok; missing state ignored ok")
+    samples += [(t1, m1, p1, []), (t2, m2, p2, []), (t4, m4, 4, [])]
     for t, m, p, tg in samples:
         assert "\u00b7" not in t + m and "\u2014" not in t + m
         assert route_topic("cwally-port", t) == "cwally-port", t

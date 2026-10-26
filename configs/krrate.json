@@ -1,7 +1,7 @@
 {
   "name": "krrate",
   "title_prefix": "[KR-RATE]",
-  "display": "국고채 10년 매수 조건 + 금통위 결정일 요약 + 근원물가 + 회사채 신용 스프레드 (148070 판단 보조)",
+  "display": "국고채 10년 금리 조건(148070 금리 피크아웃 확인 후 검토) + 금통위 결정일 요약 + 근원물가 + 회사채 신용 스프레드 (148070 판단 보조)",
   "created_at": "2026-10-23T15:00:00+09:00",
   "ntfy_topic": "cwally-port",
   "ntfy_ops_topic": "cwally-ops",
@@ -11,13 +11,17 @@
   "schedule_note": "새 cron 없음. 기존 k203780 슬롯(평일 19:00, cron-job.org 잡 8698629 정시 dispatch {job:k203780, oneoff_mode:auto} + GitHub cron 0 10 * * 1-5 백업)에 부착. KRX 거래일(kr_calendar)만 판정. 새벽 6시 전 도착분은 전날로 처리. 거래일마다 한 번만 판정(state 커서), 빠진 날은 다음 실행에서 순서대로 판정(최근 catchup_trading_days 거래일까지).",
   "alert_policy": "event_only",
   "approval": "사용자 채팅 요청 2026-10-23 14:25 KST",
-  "context": "현재 MMF/머니마켓 ETF 보유. KODEX/148070 국고10년 ETF 는 조건이 맞을 때만 분할매수 검토.",
+  "context": "현재 MMF/머니마켓 ETF 보유. KODEX/148070 국고10년 ETF 는 금리 피크아웃 확인 후 검토(상승 중에는 추가매수 보류).",
   "etf_code": "148070",
   "catchup_trading_days": 5,
   "yield10": {
     "trigger_pct": 4.35,
     "rearm_below_pct": 4.3,
-    "note": "국고채 10년 종가 수익률이 trigger_pct 이상이면 '148070 분할매수 시작 검토' 1회. 종가가 rearm_below_pct 미만으로 내려가야 다시 무장."
+    "note": "국고채 10년 종가 수익률이 trigger_pct 이상이면 '148070 금리 피크아웃 확인 후 검토(상승 중에는 추가매수 보류)' 1회. 종가가 rearm_below_pct 미만으로 내려가야 다시 무장.",
+    "hold_ceiling_pct": 4.5,
+    "macroir_state": "state/macroir.json",
+    "macroir_ktb_level": 104000,
+    "hold_note": "2026-10-26 사용자 요청([MACRO-IR] 148070 104,000원 경고와 충돌 방지). 판정 날 10년 종가가 hold_ceiling_pct(4.50%, 148070 약 104,000원에 해당하는 수준) 이상이거나, [MACRO-IR] 148070 경고 구간이 켜져 있으면(state/macroir.json armed.ktb104k=false 또는 last_values.ktb148070 <= 104,000, 또는 그날 네이버 148070 종가 <= 104,000) 이 알림은 추가매수 보류 문구만 쓴다. 읽기 실패는 무시(보류 판단은 금리 상한으로 계속)."
   },
   "spread": {
     "widen_trigger_bp": 20,

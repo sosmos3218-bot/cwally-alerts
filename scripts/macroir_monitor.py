@@ -277,7 +277,7 @@ def build_message(cfg: dict, fired: list[str], vals: dict, dates: dict, armed: d
         else:
             todos.append("격화 초기 경고. 추가매수 보류, 현금 버퍼(파킹형 ETF) 20% 점검.")
     if "ktb104k" in fired:
-        todos.append("장기금리 급등 구간. 148070 추가매수 보류, 금리 피크아웃 확인 후 재판단.")
+        todos.append("장기금리 급등 구간. 148070 추가매수 보류, 금리 피크아웃 확인 후 재판단. 국고10년 금리 수준 판단은 [KR-RATE]가 따로 봅니다(4.50% 이상이면 보류 문구만).")
     if "deal90" in fired:
         if warn:
             todos.append(f"판단 변경 조건 도달(타결 시나리오). 국고채 10년물 일부 익절 검토. {hold_reason}어서 추가매수 보류, 경고 해제 확인 후 재판단.")
