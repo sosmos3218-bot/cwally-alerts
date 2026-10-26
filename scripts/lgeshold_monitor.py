@@ -52,6 +52,10 @@ def main() -> int:
     if mode not in {"auto", "dry"}:
         raise SystemExit(f"unknown mode: {mode}")
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    if not cfg.get("zone_alerts", True):
+        # 2026-10-26: these zones moved to [LGES] lgeswatch_monitor.py (KRX close, 19:00). No fetch, no ntfy, no state.
+        print(f"lgeshold disabled (zone_alerts=false): {cfg.get('zone_alerts_note', '')}")
+        return 0
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {"last_zone": "neutral"}
     now = datetime.now(KST)
     try:

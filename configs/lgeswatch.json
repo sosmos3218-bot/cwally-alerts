@@ -11,15 +11,55 @@
   "schedule_kst": "19:00",
   "schedule_note": "새 cron 없음. 기존 k203780 슬롯(KRX 거래일 19:00 KST, cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 부착. KRX 장 마감(15:30) 뒤 완료 종가만 사용, 데이터 거래일로 중복 방지. 공시는 실행마다 KIND 회사별 공시 목록을 보고 접수번호로 중복 방지. job=lgeswatch 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
   "market_close_kst": "15:40",
-  "price": {
-    "key": "buy330",
-    "op": "le",
-    "price": 330000,
-    "priority": 4,
-    "label": "매수 매력 구간 진입",
-    "note": "분석의 비중 확대(업그레이드) 가격 33만원대. 투자 논리가 그대로일 때만 유효: AMPC 제외 영업이익(3분기 3,391억원) 흑자 유지, 연간 ESS 수주 90GWh 근접 여부부터 확인."
-  },
-  "rearm_note": "구간에 들어갈 때 1번만 보냄. 종가가 330,000원 위로 올라오면 조용히 재무장(완충 없음). 첫 실행은 현재 종가로 상태만 초기화. [FIG-PX] 와 같은 방식.",
+  "levels": [
+    {
+      "key": "buy330",
+      "op": "le",
+      "price": 330000,
+      "priority": 4,
+      "label": "매수 매력 구간 진입",
+      "note": "분석의 비중 확대(업그레이드) 가격 33만원대. 투자 논리가 그대로일 때만 유효: AMPC 제외 영업이익(3분기 3,391억원) 흑자 유지, 연간 ESS 수주 90GWh 근접 여부부터 확인."
+    },
+    {
+      "key": "stop300",
+      "op": "le",
+      "price": 300000,
+      "priority": 4,
+      "label": "손절/재검토 구간 진입",
+      "note": "중장기 계획의 손절선 30만원 이하(옛 [LGESH] 에서 옮김). 비중 재평가, 투자 논리 재점검.",
+      "from": "lgeshold stop"
+    },
+    {
+      "key": "add360",
+      "op": "between",
+      "low": 360000,
+      "high": 400000,
+      "priority": 4,
+      "label": "추가매수 구간 진입",
+      "note": "중장기 계획의 추가매수 구간 36만~40만원(옛 [LGESH] 에서 옮김). 공시와 ESS 수주 동향을 함께 보고 분할로만.",
+      "from": "lgeshold buy_low/buy_high"
+    },
+    {
+      "key": "tgt500",
+      "op": "ge",
+      "price": 500000,
+      "priority": 4,
+      "label": "1년 목표 구간 진입",
+      "note": "1년 목표 50만원 이상(옛 [LGESH] 에서 옮김). 일부 익절 검토.",
+      "from": "lgeshold target1"
+    },
+    {
+      "key": "tgt550",
+      "op": "ge",
+      "price": 550000,
+      "priority": 4,
+      "label": "2년 목표 구간 진입",
+      "note": "2년 목표 55만원 이상(옛 [LGESH] 에서 옮김). 추가 익절 검토.",
+      "from": "lgeshold target2"
+    }
+  ],
+  "levels_note": "2026-10-26 채팅 승인(LG 알림 정리): 옛 [LGESH] lgeshold 의 손절 30만, 추가매수 36만~40만, 목표 50만/55만 구간을 여기로 합침. lgeshold 는 zone_alerts=false 로 꺼짐.",
+  "rearm_note": "선마다 구간에 들어갈 때 1번만 보냄. 종가가 구간을 벗어나면 조용히 재무장(완충 없음). 첫 실행은 현재 종가로 상태만 초기화. [FIG-PX] 와 같은 방식.",
   "filings": {
     "source": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별 전체 공시 목록, 키 없음). DART OpenAPI 키(OPENDART) secret 은 이 저장소에 없음.",
     "lookback_days": 14,
@@ -29,9 +69,10 @@
       {"key": "embezzle", "re": "횡령|배임", "label": "횡령/배임", "priority": 5},
       {"key": "contract", "re": "단일판매|공급계약", "label": "단일판매/공급계약 체결", "priority": 3},
       {"key": "major", "re": "주요사항보고서", "label": "주요사항보고서", "priority": 4},
+      {"key": "invest", "re": "투자판단관련주요경영사항", "label": "투자판단 관련 주요경영사항", "priority": 4, "from": "lges [LG] LG엔솔 사업 관련 해명/주요경영사항"},
       {"key": "periodic", "re": "분기보고서|반기보고서|사업보고서", "label": "분기/반기/사업보고서", "priority": 3}
     ],
-    "note": "첫 실행은 그때까지 올라온 공시를 state 에 시드(알림 없음). 그 뒤 새 접수번호만 1번씩."
+    "note": "첫 실행은 그때까지 올라온 공시를 state 에 시드(알림 없음). 그 뒤 새 접수번호만 1번씩. 2026-10-26 옛 [LG] lges(네이버 공시 15:20) 공시 감시를 여기로 합침: 공급계약/계약해지(단일판매/공급계약 정규식), 잠정실적, 해명은 이미 포함, 투자판단관련주요경영사항 추가."
   },
   "q4": {
     "window_start": "2027-01-01",
@@ -58,7 +99,7 @@
     "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}"
   },
   "valid_until": "2027-10-31",
-  "explain": "LG에너지솔루션(373220) 종가가 330,000원 이하로 새로 들어갈 때, 중요한 새 공시(조회공시, 잠정실적, 횡령/배임, 공급계약, 주요사항보고서, 정기보고서)가 올라올 때, 4분기 잠정실적이 나올 때 체크리스트를 보내는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "explain": "LG에너지솔루션(373220) 종가가 가격 구간(33만원 이하 매수 매력, 30만원 이하 손절/재검토, 36만~40만원 추가매수, 50만원/55만원 이상 목표)에 새로 들어갈 때, 중요한 새 공시(조회공시, 잠정실적, 횡령/배임, 공급계약, 주요사항, 정기보고서)가 올라올 때, 4분기 잠정실적이 나올 때 체크리스트를 보내는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
   "ends_kst": "2027-10-31 23:59",
   "ends_note": "LGES 가격 구간과 공시 감시, 12개월(연장은 채팅 승인)"
 }

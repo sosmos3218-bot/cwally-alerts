@@ -61,6 +61,10 @@ def main() -> int:
     if mode not in {"auto", "dry"}:
         raise SystemExit(f"unknown mode: {mode}")
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    if not cfg.get("disclosure_alerts", True):
+        # 2026-10-26: 373220 disclosures moved to [LGES] lgeswatch_monitor.py (KIND). No fetch, no ntfy, no state.
+        print(f"lges disabled (disclosure_alerts=false): {cfg.get('disclosure_alerts_note', '')}")
+        return 0
     state = json.loads(STATE.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     try:

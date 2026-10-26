@@ -1187,6 +1187,8 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/lgeswatch_monitor.py selftest >/dev/null || rc=1; fi
+          # 2026-10-26 LG consolidation: lges (disclosures) and lgeshold (zones) are off by config flag; dry check that they exit without sending
+          if [ "$MODE" = "dry" ]; then python scripts/lges_monitor.py dry || rc=1; python scripts/lgeshold_monitor.py dry || rc=1; fi
           python scripts/lgeswatch_monitor.py "$MODE" || rc=1
           exit "$rc"
       - name: Run KR-RATE (KTB 10y trigger, credit spread, MPC evening summary, core CPI; k203780 19:00 slot on KRX trading days)

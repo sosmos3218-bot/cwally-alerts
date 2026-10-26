@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """[LGES] LG에너지솔루션 (KRX 373220) watch (approved in chat 2026-10-26).
 
-1. Price zone: completed KRX close <= 330,000 KRW -> '매수 매력 구간 진입' (priority 4).
-   Fires once when the close ENTERS the zone, quietly re-arms when a close is back above 330,000.
+1. Price zones (configs levels): close <= 330,000 '매수 매력 구간 진입', and (moved from [LGESH] lgeshold
+   2026-10-26) <= 300,000 손절/재검토, 360,000~400,000 추가매수, >= 500,000 / >= 550,000 목표. Priority 4.
+   Each line fires once when the close ENTERS its zone, quietly re-arms when a close leaves it.
    First run (no state) only records the current close. Dedupe by trading date (state last_date).
    Same pattern as figpx_monitor.py. Prices: Naver mobile daily prices (same source as lgesfor/k079900).
 2. Filing watch: KIND company disclosure list (kind.krx.co.kr, no API key; same request as k079900).
@@ -143,11 +144,15 @@ def kind_list(cfg: dict, since: str, until: str) -> list[dict]:
 # ---------- core (pure) ----------
 
 def hit(level: dict, close: float) -> bool:
-    return close <= float(level["price"]) if level["op"] == "le" else close < float(level["price"])
+    op = level["op"]
+    if op == "between":
+        return float(level["low"]) <= close <= float(level["high"])
+    p = float(level["price"])
+    return close <= p if op == "le" else close >= p if op == "ge" else close < p
 
 
 def step(level: dict, armed: bool | None, close: float) -> tuple[bool, bool]:
-    """(new armed, fired). armed None = first run: init only."""
+    """One line: (new armed, fired). armed None = first run: init only."""
     inside = hit(level, round(float(close), 2))
     if armed is None:
         return (not inside), False
@@ -156,6 +161,24 @@ def step(level: dict, armed: bool | None, close: float) -> tuple[bool, bool]:
     if not armed and not inside:
         return True, False
     return armed, False
+
+
+def step_all(levels: list[dict], armed: dict | None, close: float) -> tuple[dict, list[str]]:
+    new, fired = {}, []
+    for lv in levels:
+        a, f = step(lv, None if armed is None else armed.get(lv["key"]), close)
+        if armed is not None and lv["key"] not in armed:
+            a, f = step(lv, None, close)  # line added later: init quietly
+        new[lv["key"]] = a
+        if f:
+            fired.append(lv["key"])
+    return new, fired
+
+
+def line_text(lv: dict) -> str:
+    if lv["op"] == "between":
+        return f"{won(lv['low'])}~{won(lv['high'])}"
+    return f"{won(lv['price'])} {'이상' if lv['op'] == 'ge' else '이하' if lv['op'] == 'le' else '미만'}"
 
 
 def classify(cfg: dict, title: str) -> dict | None:
@@ -174,21 +197,27 @@ def won(v: float) -> str:
     return f"{v:,.0f}원"
 
 
-def price_msg(cfg: dict, close: float, day: str, prev: float | None) -> tuple[str, str, int]:
-    lv = cfg["price"]
+ACTION = {"buy330": "논리 확인 뒤 분할", "stop300": "비중 재평가", "add360": "분할만, 추격 금지", "tgt500": "일부 익절 검토", "tgt550": "추가 익절 검토"}
+
+
+def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float | None) -> tuple[str, str, int]:
+    lvs = {x["key"]: x for x in cfg["levels"]}
+    top = max((lvs[k] for k in fired), key=lambda x: (x["priority"], x["key"] == "stop300"))  # stop wins a tie
     ref = cfg["reference"]
     chg = f", 전 거래일 대비 {(close / prev - 1) * 100:+.1f}%" if prev else ""
-    title = f"[LGES] 종가 {won(close)} {lv['label']} | 논리 확인 뒤 분할"
+    labels = " + ".join(lvs[k]["label"] for k in fired)
+    title = f"[LGES] 종가 {won(close)} {top['label']} | {ACTION.get(top['key'], '확인')}"
+    all_lines = ", ".join(f"{x['label'].replace(' 구간 진입', '')} {line_text(x)}" for x in cfg["levels"])
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {lv['label']}. KRX 종가 {won(close)}({day}{chg}). 기준선 {won(lv['price'])} 이하. 52주 최고 {won(ref['high_52w'])}.",
-        "지금 할 일: " + lv["note"] + " 논리가 그대로면 계획 금액을 나눠서만 검토.",
-        "나중에: 종가가 330,000원 위로 올라간 뒤 다시 들어올 때만 또 울립니다. 4분기 잠정실적(2027년 1월 초)에서 AMPC 제외 영업이익 3,000억원 이상인지 확인.",
+        f"지금 결과/상태: {labels}. KRX 종가 {won(close)}({day}{chg}). 선: {all_lines}. 52주 최고 {won(ref['high_52w'])}.",
+        "지금 할 일: " + " ".join(lvs[k]["note"] for k in fired) + " 논리가 그대로면 계획 금액을 나눠서만 검토.",
+        "나중에: 같은 선은 종가가 그 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. 4분기 잠정실적(2027년 1월 초)에서 AMPC 제외 영업이익 3,000억원 이상인지 확인.",
         "익절/줄일 때: AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달이면 비중 축소 검토.",
         "하지 말 것: 실적 악화로 빠진 하락을 싼 가격으로 읽기, 일괄 매수, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님.",
     ]
-    return title, "\n".join(lines), int(lv["priority"])
+    return title, "\n".join(lines), int(top["priority"])
 
 
 def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
@@ -235,9 +264,9 @@ def confirm_msg(cfg: dict, close: float | None, day: str | None) -> tuple[str, s
     lines = [
         "[테스트] LGES 알림 설정 완료",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: 373220 최근 종가 {px}. 기준선: 종가 330,000원 이하 매수 매력 구간(우선순위 4). 공시 감시: KIND 목록, 키 없이 동작.",
+        f"지금 결과/상태: 373220 최근 종가 {px}. 선: " + ", ".join(f"{x['label'].replace(' 구간 진입', '')} {line_text(x)}" for x in cfg["levels"]) + ". 공시 감시: KIND 목록, 키 없이 동작.",
         "지금 할 일: 없음. KRX 거래일 19:00 KST 에 판정하고, 구간에 새로 들어가거나 새 중요 공시가 있을 때만 보냅니다. 4분기 잠정실적 공시가 나오면 체크리스트를 1번 보냅니다.",
-        "나중에: 같은 구간은 종가가 330,000원 위로 올라간 뒤 다시 들어올 때만 또 울립니다.",
+        "나중에: 같은 선은 종가가 그 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다.",
         "익절/줄일 때: AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달이면 비중 축소 검토.",
         "하지 말 것: 이 설치 확인을 매수/매도 신호로 읽기.",
     ]
@@ -248,7 +277,8 @@ def confirm_msg(cfg: dict, close: float | None, day: str | None) -> tuple[str, s
 
 def selftest() -> int:
     cfg = load_cfg()
-    lv = cfg["price"]
+    lv = next(x for x in cfg["levels"] if x["key"] == "buy330")
+    L = cfg["levels"]
     fails = 0
 
     def check(label, got, want):
@@ -266,11 +296,21 @@ def selftest() -> int:
     for i, (c, want) in enumerate(walk):
         a, f = step(lv, a, c)
         check(f"walk{i} {c}", f, want)
+    A0 = {"buy330": True, "stop300": True, "add360": False, "tgt500": True, "tgt550": True}
+    check("all init 374000 (inside 36~40 band, no send)", step_all(L, None, 374000), (A0, []))
+    check("401000 leaves band, nothing fires", step_all(L, A0, 401000)[1], [])
+    a1, _ = step_all(L, A0, 401000)
+    check("back to 399000 -> add360", step_all(L, a1, 399000)[1], ["add360"])
+    check("gap to 295000 -> buy330 + stop300", step_all(L, A0, 295000)[1], ["buy330", "stop300"])
+    check("560000 -> tgt500 + tgt550", step_all(L, A0, 560000)[1], ["tgt500", "tgt550"])
+    check("legacy state key missing inits quietly", step_all(L, {"buy330": True}, 374000)[1], [])
+    check("band edges", (hit(L[2], 360000), hit(L[2], 400000), hit(L[2], 359999)), (True, True, False))
     cases = {
         "조회공시 요구(풍문 또는 보도)": "inquiry", "조회공시요구(풍문또는보도)에대한답변(미확정)": "inquiry",
         "풍문 또는 보도에 대한 해명(미확정)": "inquiry", "연결재무제표기준영업(잠정)실적(공정공시)": "prelim",
         "횡령\u318d배임혐의발생": "embezzle", "[정정] 단일판매\u318d공급계약체결": "contract",
-        "주요사항보고서(유상증자결정)": "major", "반기보고서(일반법인) (2026.06)": "periodic",
+        "주요사항보고서(유상증자결정)": "major", "투자판단관련주요경영사항": "invest",
+        "단일판매\u318d공급계약해지": "contract", "반기보고서(일반법인) (2026.06)": "periodic",
         "임원\u318d주요주주특정증권등소유상황보고서": None, "기업설명회(IR) 개최(안내공시)": None,
         "주식선물\u318d주식옵션 2단계 가격제한폭 확대요건 도달(상승)": None,
     }
@@ -280,7 +320,8 @@ def selftest() -> int:
     check("q4 window in", in_q4(cfg, "2027-01-08 08:30"), True)
     check("q4 window out", in_q4(cfg, "2026-10-08 08:34"), False)
     f = {"acptno": "20270108000055", "filed": "2027-01-08 08:30", "title": "연결재무제표기준영업(잠정)실적(공정공시)"}
-    msgs = [price_msg(cfg, 329000, "2026-11-02", 335000), filing_msg(cfg, {**f, "title": "횡령\u318d배임혐의발생"}, classify(cfg, "횡령배임")),
+    msgs = [price_msg(cfg, ["buy330"], 329000, "2026-11-02", 335000), price_msg(cfg, ["buy330", "stop300"], 295000, "2026-11-02", 335000),
+            price_msg(cfg, ["tgt500"], 505000, "2026-11-02", 495000), filing_msg(cfg, {**f, "title": "횡령\u318d배임혐의발생"}, classify(cfg, "횡령배임")),
             q4_msg(cfg, f), confirm_msg(cfg, 374000, "2026-10-26") + (3,)]
     for t, b, p in msgs:
         check(f"no middle dot / em-dash: {t[:30]}", any(ch in t + b for ch in "\u00b7\u2014\u318d"), False)
@@ -327,7 +368,7 @@ def main() -> int:
     port, ops = resolve_topic("port"), resolve_topic("ops")
 
     # 1. price zone
-    lv = cfg["price"]
+    L = cfg["levels"]
     try:
         bars = fetch_bars(cfg, now)
         st["price_fail_notified"] = False
@@ -342,7 +383,7 @@ def main() -> int:
         if (now.date() - date.fromisoformat(last_d)).days > int(cfg.get("stale_days", 6)):
             print(f"stale bar {last_d}; price skip")
         elif not st.get("initialized"):
-            armed, _ = step(lv, None, last_c)
+            armed, _ = step_all(L, None, last_c)
             st.update({"initialized": True, "armed": armed, "last_date": last_d, "last_close": last_c,
                        "init_note": f"initialized from {last_d} close {last_c:,.0f}, no send"})
             print(f"init from {last_d} close {last_c:,.0f}: armed={armed} (no send)")
@@ -351,24 +392,29 @@ def main() -> int:
             new = [(d, c) for d, c in bars if prev_date is None or d > prev_date]
             if mode == "force" and not new:
                 new = bars[-1:]
-            armed, fired_any, prev_close = st.get("armed", True), False, st.get("last_close")
+            armed = st.get("armed")
+            if not isinstance(armed, dict):  # legacy single-line state (buy330 only)
+                armed = {"buy330": True if armed is None else bool(armed)}
+            fired_all, prev_close = [], st.get("last_close")
             for d, c in new:
-                armed, fired = step(lv, armed, c)
+                armed, fired = step_all(L, armed, c)
                 print(f"bar {d} close {c:,.0f} -> fired={fired} armed={armed}")
-                fired_any = fired_any or fired
+                fired_all += [k for k in fired if k not in fired_all]
             if new:
                 d, c = new[-1]
                 if len(new) > 1:
                     prev_close = new[-2][1]
-                print(f"  line {lv['price']:,.0f}: {'armed' if armed else 'inside zone'}, distance {(c / lv['price'] - 1) * 100:+.1f}%")
-                if fired_any:
-                    t, m, p = price_msg(cfg, c, d, prev_close)
+                for lv in L:
+                    print(f"  line {line_text(lv)} ({lv['label']}): {'armed' if armed[lv['key']] else 'inside zone'}")
+                if fired_all:
+                    t, m, p = price_msg(cfg, fired_all, c, d, prev_close)
                     send(dry, port, t, m, p, ["chart_with_downwards_trend"])
                 else:
                     print("no zone entry; silent")
                 st.update({"armed": armed, "last_date": d, "last_close": c})
             else:
                 print(f"no new bar after {prev_date}; armed={armed}")
+            st["armed"] = armed
 
     # 2. filings (+ 3. Q4 checklist)
     since = (now - timedelta(days=int(cfg["filings"]["lookback_days"]))).strftime("%Y-%m-%d")
