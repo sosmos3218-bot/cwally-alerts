@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-10 05:10 KST",
+  "updated_at": "2026-10-27 05:10 KST",
   "sent": {
     "2026-10-10": {
       "at": "2026-10-10 05:10 KST",
@@ -10,12 +10,22 @@
       "verify": "wait",
       "verify_match": null,
       "url": ""
+    },
+    "2026-10-27": {
+      "at": "2026-10-27 05:10 KST",
+      "kind": "unlock2",
+      "price": 146.9,
+      "avg5": 149555633.2,
+      "earnings": "absent",
+      "verify": "wait",
+      "verify_match": null,
+      "url": ""
     }
   },
-  "last_price": 162.57,
-  "last_verdict": "160달러 위. 보유. 추격 매수 금지.",
+  "last_price": 146.9,
+  "last_verdict": "145~160달러. 보유. 신규 보류.",
   "check": {
-    "at": "2026-10-10 05:10 KST",
+    "at": "2026-10-27 05:10 KST",
     "url": "",
     "status": "wait",
     "match": null,
