@@ -718,7 +718,6 @@ jobs:
           fi
           if [ "$JOB" = "afternoon" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
-            python scripts/lges_monitor.py auto
             python scripts/lgcnsq3_monitor.py slot
             python scripts/lgcns_monitor.py slot
             python scripts/cnsds_monitor.py slot
@@ -726,7 +725,6 @@ jobs:
           if [ "$JOB" = "afternoon" ]; then
             # revived 2026-10-26 (approved in chat): configs say afternoon 15:20 slot, Run lines were never added. no new cron
             python scripts/a487230_monitor.py auto
-            python scripts/lgeshold_monitor.py auto
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
             python scripts/ustsy_monitor.py event
@@ -1191,8 +1189,6 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/lgeswatch_monitor.py selftest >/dev/null || rc=1; fi
-          # 2026-10-26 LG consolidation: lges (disclosures) and lgeshold (zones) are off by config flag; dry check that they exit without sending
-          if [ "$MODE" = "dry" ]; then python scripts/lges_monitor.py dry || rc=1; python scripts/lgeshold_monitor.py dry || rc=1; fi
           python scripts/lgeswatch_monitor.py "$MODE" || rc=1
           exit "$rc"
       - name: Run KR-RATE (KTB 10y trigger, credit spread, MPC evening summary, core CPI; k203780 19:00 slot on KRX trading days)
