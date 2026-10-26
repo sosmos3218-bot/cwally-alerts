@@ -1,0 +1,54 @@
+{
+  "name": "figpx",
+  "title_prefix": "[FIG-PX]",
+  "symbol": "FIG",
+  "display": "피그마 종가 구간",
+  "created_at": "2026-10-26T11:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤, GitHub 백업 0 0 * * 1-5, 정시는 cron-job.org morning 잡). 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. job=figpx 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "alert_policy": "change_only",
+  "levels": [
+    {
+      "key": "buy22",
+      "op": "le",
+      "price": 22.0,
+      "priority": 4,
+      "label": "매수 검토 구간 진입",
+      "note": "$20~22 분할매수 검토 구간 (사업 전망 유지 전제). 실적 악화로 인한 하락이면 기준 재계산 필요."
+    },
+    {
+      "key": "bear166",
+      "op": "le",
+      "price": 16.6,
+      "priority": 5,
+      "label": "약세 시나리오 가치 도달",
+      "note": "약세 시나리오 가치 $16.6 도달. 매수 논리 재점검 필요 (NDR 125% 미만 여부, 매출 가이던스 하향 여부 등)."
+    },
+    {
+      "key": "base284",
+      "op": "ge",
+      "price": 28.4,
+      "priority": 3,
+      "label": "기본 시나리오 가치 도달",
+      "note": "기본 시나리오 12개월 가치 $28.4 도달. 추가 매수보다 비중과 목표 재점검."
+    }
+  ],
+  "rearm_note": "구간에 들어갈 때 1번만 보냄. 종가가 구간을 벗어나면 조용히 재무장(le: 선 위 종가, ge: 선 아래 종가). 완충 없음. 첫 실행은 현재 종가로 상태만 초기화하고 보내지 않음.",
+  "reference": {
+    "as_of": "2026-10-26",
+    "last_close": 24.64,
+    "last_close_date": "2026-10-23",
+    "source": "Yahoo Finance chart v8 FIG 1d"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "https://query1.finance.yahoo.com/v8/finance/chart/FIG?range=1mo&interval=1d"
+  },
+  "valid_until": "2027-10-31",
+  "explain": "피그마(FIG, NYSE) 미국 종가가 22달러 이하(매수 검토), 16.6달러 이하(약세 시나리오), 28.4달러 이상(기본 시나리오 가치)에 새로 들어갈 때만 오는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "FIG 종가 구간 알림, 12개월 시나리오 기간(연장은 채팅 승인)"
+}

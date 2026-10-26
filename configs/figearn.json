@@ -1,0 +1,36 @@
+{
+  "name": "figearn",
+  "title_prefix": "[FIG-EARN]",
+  "ticker": "FIG",
+  "display": "피그마 3분기 실적 체크리스트",
+  "created_at": "2026-10-26T11:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 08:00",
+  "oneshot_kst": [
+    "2026-11-04 09:00",
+    "2026-11-05 08:00"
+  ],
+  "schedule_note": "11/4(수) 09:00 KST 는 morning 슬롯이 실행(새 cron 없음): 실적 전날 알림. 11/5(목) 08:00 KST 는 기존 cron-job.org 원샷(job=oneshot, pcorq3 와 같은 시각, picker 가 같이 실행): 실적 체크리스트. 11/5 09:00 morning 은 08:00 이 빠졌을 때 따라잡기. GitHub 백업 0 23 4 11 * 은 pcorq3 몫이라 쓰지 않음. 연도 가드 2026, 날짜 가드 11/4, 11/5 만. 각 알림 1번만(state).",
+  "event_year": 2026,
+  "event_note": "Figma 3분기 실적 발표 2026-11-04 미국 장 마감 후(11/5 아침 KST).",
+  "reminder_date": "2026-11-04",
+  "checklist_date": "2026-11-05",
+  "checklist_not_before": "08:00",
+  "checklist": [
+    "매출 가이던스 373~375백만달러 부합 여부",
+    "연간 가이던스 유지/상향 여부",
+    "NDR(순달러유지율) 135% 이상 유지",
+    "GAAP 매출총이익률 85% 안팎",
+    "SBC(주식보상비용)/매출 30% 이하 경로",
+    "NDR 125% 미만이면 매수 논리 재검토"
+  ],
+  "sources": {
+    "ir": "https://investor.figma.com/",
+    "sec": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001579878&type=8-K"
+  },
+  "valid_until": "2026-11-05",
+  "explain": "피그마 3분기 실적 전날 알림 1번과 실적 다음 날 아침 확인 체크리스트 1번입니다. 숫자는 자동 채점하지 않습니다(자동 요약은 [FIG-Q3] 09:05). 투자 권유 아님.",
+  "ends_kst": "2026-11-05 12:00",
+  "ends_note": "피그마 3분기 실적 전날 알림(11/4)과 체크리스트(11/5) 두 번으로 끝"
+}

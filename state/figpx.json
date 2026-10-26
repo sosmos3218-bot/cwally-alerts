@@ -1,0 +1,13 @@
+{
+  "initialized": true,
+  "armed": {
+    "buy22": true,
+    "bear166": true,
+    "base284": true
+  },
+  "last_date": "2026-10-23",
+  "last_close": 24.64,
+  "init_note": "initialized from 2026-10-23 close 24.64 (Yahoo), no send. All three zones armed.",
+  "fail_notified": false,
+  "updated_at": "2026-10-26T10:52:00+09:00"
+}
