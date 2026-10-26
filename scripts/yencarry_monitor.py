@@ -232,8 +232,10 @@ def event_key(keys: list[str], extra: str = "") -> str:
 
 def level_sig(key: str | None) -> str:
     """Event key without the live quote: "원달러 1,323원 → 1,340 이탈" -> "원달러 → 1,340 이탈".
-    The raw key changed with every quote, so the same broken level was re-sent on every run."""
-    return "|".join(re.sub(r"\s+[-+]?[\d,.]+(?:원|%)?\s*→", " →", k).strip() for k in (key or "").split("|") if k)
+    The raw key changed with every quote, so the same broken level was re-sent on every run. The "fed-<date>" tag
+    added by the FOMC message is ignored, so the level message is not re-sent right after a FOMC message."""
+    return "|".join(re.sub(r"\s+[-+]?[\d,.]+(?:원|%)?\s*→", " →", k).strip() for k in (key or "").split("|")
+                    if k and not re.match(r"(fed|boj)[-_]", k))
 
 
 def send(cfg: dict, title: str, lines: list[str], priority: int = 4) -> None:

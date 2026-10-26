@@ -411,7 +411,7 @@ def iso_week(day: str | None) -> str | None:
 def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool,
                   sig: str | None = None) -> tuple[bool, str]:
     """weekly_or_change: HALT/DUAL/DCA_CANCEL always; otherwise only when the signature (verdict key plus the set
-    of live event ids) differs from the last sent one, plus one send in the first run of each ISO week.
+    of live event ids: a new verdict key or a newly live event) differs from the last sent one, plus one send in the first run of each ISO week.
     Before 2026-10-26 EVENT:* keys and live event days sent on every run, so the same verdict repeated daily."""
     force = os.environ.get("FORCE_ALERT") == "1" or (len(sys.argv) > 1 and sys.argv[1].lower() == "force")
     if force:
@@ -423,7 +423,10 @@ def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, 
     last_date = prev.get("last_sent_date")
     if halt or key in ALWAYS_SEND_KEYS:
         return True, "action"
-    if last_sig != sig:
+    # a changed verdict key, or an event id that was not live at the last send; an event window ending is not news
+    last_key, _, last_ids = (last_sig or "").partition("|")
+    cur_key, _, cur_ids = sig.partition("|")
+    if last_key != cur_key or set(cur_ids.split(",")) - set(last_ids.split(",")) - {""}:
         return True, "zone_change"
     if iso_week(last_date) != now.strftime("%G-W%V"):
         return True, "monday"
