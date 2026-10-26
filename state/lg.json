@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-23 15:20 KST",
+  "updated_at": "2026-10-26 09:00 KST",
   "zone": "STOP",
-  "price": 98300.0,
-  "below_hits": 1,
-  "stop_sent": false,
+  "price": 99000.0,
+  "below_hits": 2,
+  "stop_sent": true,
   "shock_sent": false,
   "last_event_ids": [
     "lge-3q26",

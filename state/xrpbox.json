@@ -1,9 +1,9 @@
 {
-  "verdict": "BREAK_145",
+  "verdict": "BREAK_130",
   "baseline_sent": true,
   "fail_notified": false,
   "missing_notified": 0,
-  "updated_at": "2026-10-23T09:02:05.183096+09:00",
-  "close": 1.3076,
-  "close_note": "coinbase UTC 일봉 2026-10-22 종가 1.3076"
+  "updated_at": "2026-10-26T09:01:54.860508+09:00",
+  "close": 1.2946,
+  "close_note": "coinbase UTC 일봉 2026-10-25 종가 1.2946"
 }

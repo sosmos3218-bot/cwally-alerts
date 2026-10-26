@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-10-23T09:06:51.058391+09:00",
+  "updated_at": "2026-10-26T09:06:42.383743+09:00",
   "yield_band": "mid",
   "vtr_zone": "base",
   "spg_zone": "base",
   "earnings_sent": [],
   "fetch_fail_date": null,
-  "last_yield": 4.953,
-  "last_vtr": 86.99,
-  "last_spg": 212.04,
-  "last_vtr_mult": 22.42,
-  "last_spg_mult": 16.0
+  "last_yield": 4.988,
+  "last_vtr": 86.8,
+  "last_spg": 211.63,
+  "last_vtr_mult": 22.37,
+  "last_spg_mult": 15.97
 }

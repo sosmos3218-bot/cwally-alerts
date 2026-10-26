@@ -1,5 +1,5 @@
 {
-  "price": 229.75,
+  "price": 230.5,
   "band": "HOLD",
   "buy2_sent": false,
   "buy3_sent": false,
@@ -9,7 +9,7 @@
   "q3_post_sent": true,
   "fail_sent_date": null,
   "last_kind": "Q3_POST",
-  "updated_at": "2026-10-23T09:06:43.011539+09:00",
+  "updated_at": "2026-10-26T09:06:33.522550+09:00",
   "last_metrics": {
     "found": true,
     "source": "https://investors.danaher.com/",
