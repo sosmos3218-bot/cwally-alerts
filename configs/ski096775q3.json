@@ -6,12 +6,11 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "일회성 oneshot",
-  "schedule_note": "2026년 3분기 실적 발표(10/29 전후) 후 재평가. 새 반복 cron 없음. year-guard 2026.",
+  "schedule_note": "2026년 3분기 실적 발표(10/29 전후) 후 재평가. 새 반복 cron 없음. year-guard 2026. 10-31(토) 슬롯은 2026-10-26 제거 (주말, 트리거 없음).",
   "year_guard": 2026,
   "oneshot_kst": [
     "2026-10-29 16:15",
     "2026-10-30 09:05",
-    "2026-10-31 09:05",
     "2026-11-03 09:05"
   ],
   "ends_kst": "2026-11-03 09:05",
