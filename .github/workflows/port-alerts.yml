@@ -588,6 +588,12 @@ jobs:
           if [ "$JOB" = "morning" ]; then
             python scripts/vym_monitor.py auto
           fi
+          if [ "$JOB" = "morning" ]; then
+            # revived 2026-10-26 (approved in chat): configs say morning 09:00 slot, Run lines were never added. no new cron
+            python scripts/096775_monitor.py auto
+            python scripts/396520_monitor.py auto
+            python scripts/gunr_monitor.py auto
+          fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ccrev" ]; then
             python scripts/ccrev_monitor.py
           fi
@@ -711,6 +717,11 @@ jobs:
             python scripts/lgcnsq3_monitor.py slot
             python scripts/lgcns_monitor.py slot
             python scripts/cnsds_monitor.py slot
+          fi
+          if [ "$JOB" = "afternoon" ]; then
+            # revived 2026-10-26 (approved in chat): configs say afternoon 15:20 slot, Run lines were never added. no new cron
+            python scripts/a487230_monitor.py auto
+            python scripts/lgeshold_monitor.py auto
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "ustsy" ]; then
             python scripts/ustsy_monitor.py event
