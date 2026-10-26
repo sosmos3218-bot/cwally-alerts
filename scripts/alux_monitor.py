@@ -3,7 +3,7 @@
 
 Runs inside the weekday morning slot (no new cron). Modes:
   event   change-only (weekdays except Monday)
-  weekly  event checks plus one status message (Monday)
+  weekly  event checks plus one status message (Monday; at most once per ISO week, state weekly_sent_week)
   dry     print what would be sent, never publish, never write state
 Anything else is treated like event.
 """
@@ -418,7 +418,10 @@ def main() -> int:
                 b["sent_day"] = last["day"]
 
     # 4) Monday status line
-    if mode == "weekly":
+    week = now.strftime("%G-W%V")
+    if mode == "weekly" and state.get("weekly_sent_week") == week:
+        print(f"weekly already sent {week}; skip status")
+    elif mode == "weekly":
         v = state["q3"].get("verdict")
         gap = "" if close is None else f" (7,600까지 {bo['close'] - close:+,.0f}원)"
         q3txt = f"판정 {v}" if v else "3분기 실적 발표 전"
@@ -431,7 +434,8 @@ def main() -> int:
             "이미 들고 있다면 종가 5,600원 이탈 때 정리합니다.",
             "추격매수, 신용과 미수.",
         )
-        out.send(TOPIC, "[ALUX] 주간 체크 | 관망 유지" if not v else f"[ALUX] 주간 체크 | 3Q {v}", msg, 3, ["calendar"])
+        if out.send(TOPIC, "[ALUX] 주간 체크 | 관망 유지" if not v else f"[ALUX] 주간 체크 | 3Q {v}", msg, 3, ["calendar"]):
+            state["weekly_sent_week"] = week
 
     if close is not None:
         state["price"] = close

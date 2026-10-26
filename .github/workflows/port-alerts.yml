@@ -498,6 +498,9 @@ jobs:
           NQ=auto
           SQ=auto
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Slot dispatches from cron-job.org ({"job":"morning"} etc.) carry no *_mode inputs, so the input
+            # defaults (steel/alux weekly, hce daily) used to run every weekday. Slot jobs keep the day-based modes above.
+            case "$JOB" in morning|afternoon|0090b0|skip) ;; *)
             SM="${{ github.event.inputs.steel_mode }}"
             AM="${{ github.event.inputs.alux_mode }}"
             HM="${{ github.event.inputs.hce_mode }}"
@@ -507,6 +510,7 @@ jobs:
             WL="${{ github.event.inputs.wl_mode }}"
             IR="${{ github.event.inputs.iren_mode }}"
             YC="${{ github.event.inputs.yencarry_mode }}"
+            ;; esac
             KX="${{ github.event.inputs.krwfx_mode }}"
             [ -z "$KX" ] && KX=auto
             KZ="${{ github.event.inputs.kzq3_mode }}"
