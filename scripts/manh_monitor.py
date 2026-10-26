@@ -17,12 +17,15 @@ CFG_PATH = ROOT / "configs" / "manh.json"
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    now = datetime.now(KST)
+    if now.year != int(cfg.get("year_guard") or 2026):
+        print("manh year-guard silent")
+        return 0
     if mode == "dry":
         print("DRY RUN")
         return 0
 
-    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
 
     # Only send after earnings window (script is oneshot, but guard anyway)

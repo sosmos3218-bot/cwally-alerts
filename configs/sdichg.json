@@ -6,7 +6,7 @@
   "ntfy_server": "https://ntfy.sh",
   "job_id": "sdichg",
   "schedule_kst": "09:00",
-  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 슬롯. 09:00 원샷은 슬롯이 처리.",
+  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 슬롯. 09:00 원샷은 슬롯이 처리. 연도 가드 2026-2027만(ends_kst 2027-01-15까지 수명), 그 밖의 해는 발송과 state 기록 없이 종료.",
   "oneshot_kst": [
     "2026-10-08 11:40",
     "2026-10-27 08:40",
@@ -24,7 +24,7 @@
     "22 7 28 10 *",
     "22 7 4 11 *"
   ],
-  "year_guard": 2026,
+  "year_guard": [2026, 2027],
   "ticker": "006400",
   "display": "삼성SDI",
   "baseline_date": "2026-10-07",

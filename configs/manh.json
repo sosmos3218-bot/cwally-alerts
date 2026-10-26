@@ -4,7 +4,8 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "oneshot_kst": ["2026-10-28 09:00"],
-  "schedule_note": "Q3 2026 실적(10/27 장후) 후 재평가. 2026-10-28 09:00 KST (UTC 00:00 28). 클라우드 성장, RPO, 부킹, AI 코멘트, 가이던스 변화 기준.",
+  "year_guard": 2026,
+  "schedule_note": "Q3 2026 실적(10/27 장후) 후 재평가. 2026-10-28 09:00 KST (UTC 00:00 28). 클라우드 성장, RPO, 부킹, AI 코멘트, 가이던스 변화 기준. 연도 가드 2026만(GitHub cron 0 0 28 10 * 가 내년에 다시 울려도 침묵).",
   "earnings_date": "2026-10-27",
   "earnings_note": "Q3 2026 실적 발표 10/27 장후, 컨퍼런스콜 4:30 PM ET.",
   "baseline_from_analysis": {

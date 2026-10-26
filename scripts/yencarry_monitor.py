@@ -354,6 +354,11 @@ def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
+    # Year guard only for the dated one-off modes (fed / boj_press): their GitHub crons have no year.
+    # Weekly check and level watch are recurring and stay on every year.
+    if mode in {"fed", "boj_press"} and now.year != int(cfg.get("year_guard") or 2026):
+        print(f"yencarry {mode} year-guard silent")
+        return 0
     state = load_state()
     usdjpy, usdkrw, j30 = quotes()
     keys = breaks(cfg, usdjpy, usdkrw, j30)

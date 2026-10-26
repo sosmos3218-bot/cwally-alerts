@@ -214,6 +214,10 @@ def main() -> int:
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     dry = mode == "dry"
+    years = cfg.get("year_guard") or [now.year]
+    if mode != "force" and now.year not in years:
+        print("sdichg year-guard silent")
+        return 0
     if mode == "install":
         send(
             cfg,
