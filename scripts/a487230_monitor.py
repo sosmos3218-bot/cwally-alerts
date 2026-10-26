@@ -138,8 +138,11 @@ def main() -> int:
                 state["last_fail_date"] = fail_day
                 state["last_title"] = title
         state["updated_at"] = now.isoformat()
-        STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if dry:
+            print("dry: no state write")
+        else:
+            STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 0
     flags = {}
     if price < float(levels["settle"]):
@@ -185,8 +188,11 @@ def main() -> int:
     state["updated_at"] = now.isoformat()
     if not turned_on and not turned_off and not force:
         print("no condition change; silent")
-        STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if dry:
+            print("dry: no state write")
+        else:
+            STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return 0
     if "settle_break" in turned_on or "value_weak" in turned_on:
         title = "[487230] 2만원 안착 약화 | 반등 해석 보류"
@@ -230,8 +236,11 @@ def main() -> int:
     if not dry:
         publish(topic, title, msg, 4 if turned_on else 3, ["warning"], server)
         state["last_title"] = title
-    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if dry:
+        print("dry: no state write")
+    else:
+        STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
