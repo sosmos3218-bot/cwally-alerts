@@ -83,6 +83,7 @@ jobs:
           run_one kosbrk python scripts/kosbrk_monitor.py
           run_one kosdown python scripts/kosdown_monitor.py
           run_one kosup python scripts/kosup_monitor.py
+          run_one k200 python scripts/k200_monitor.py
           run_one samup python scripts/samup_monitor.py
           run_one hynixup python scripts/hynixup_monitor.py
           run_one k278240 python scripts/k278240_monitor.py
@@ -109,7 +110,7 @@ jobs:
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/samup.json state/hynixup.json state/k278240.json state/377990.json state/ethhl.json state/kica.json state/dssotp.json state/kos5500.json state/gsai.json
+          git add state/slots/flow.json state/flow_seen.json state/secu_flow.json state/kosbrk.json state/kosdown.json state/kosup.json state/k200.json state/samup.json state/hynixup.json state/k278240.json state/377990.json state/ethhl.json state/kica.json state/dssotp.json state/kos5500.json state/gsai.json
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update flow state"
           git pull --rebase origin main
