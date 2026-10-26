@@ -67,6 +67,6 @@
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/LRCX?interval=1d&range=10d",
     "sec": "https://data.sec.gov/submissions/CIK0000707549.json"
   },
-  "ends_kst": "2027-01-31 23:59",
-  "ends_note": "평일 09:00 분할 매수 구간과 12월 분기 실적 무효화 점검. 2027-01-31 까지 (마지막 평일 실행 2027-01-29 09:00)"
+  "ends_kst": "2027-02-12 23:59",
+  "ends_note": "평일 09:00 분할 매수 구간과 12월 분기 실적 무효화 점검. 2027-02-12 까지 (마지막 평일 실행 2027-02-12 09:00)"
 }
