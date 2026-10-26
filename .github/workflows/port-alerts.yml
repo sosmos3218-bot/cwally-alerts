@@ -535,6 +535,9 @@ jobs:
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: |
@@ -578,6 +581,7 @@ jobs:
             python scripts/ghtrend_monitor.py auto
             python scripts/poly_monitor.py auto || echo "::error::poly_monitor failed"
             python scripts/polyinv_monitor.py auto || echo "::error::polyinv_monitor failed"
+            python scripts/council_monitor.py auto
           fi
           if [ "$JOB" = "morning" ]; then
             python scripts/fig_monitor.py auto
