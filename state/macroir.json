@@ -1,0 +1,27 @@
+{
+  "initialized": true,
+  "armed": {
+    "combo130": true,
+    "brent125": true,
+    "fx1360": true,
+    "deal90": true,
+    "deal95": true,
+    "kospi5300": true,
+    "ktb104k": true
+  },
+  "init_note": "2026-10-26 18:08 KST 설치 때 실제 값으로 초기화. 이미 구간 안인 선 없음, 모두 무장.",
+  "install_check": {
+    "checked_at": "2026-10-26 18:08 KST",
+    "brent": {"real": 116.72, "date": "2026-10-23 (BZ=F 완료 종가, 10/26 진행 중 109.63)", "paste": 116.72},
+    "wti": {"real": 103.27, "date": "2026-10-23 (CL=F 완료 종가, 10/26 진행 중 100.81)", "paste": null},
+    "usdkrw": {"real": 1323.48, "date": "2026-10-26 18:08 KST (KRW=X)", "paste": 1324.41},
+    "kospi": {"real": 5469.47, "date": "2026-10-26 종가", "paste": 5500},
+    "ktb148070": {"real": 107420, "date": "2026-10-26 종가", "paste": 106695, "paste_note": "붙여넣은 106,695원은 10/22 종가"},
+    "ktb365780": {"real": 84740, "date": "2026-10-26 종가", "paste": null}
+  },
+  "last_values": {"brent": 116.72, "wti": 103.27, "usdkrw": 1323.48, "kospi": 5469.47, "ktb148070": 107420.0, "ktb365780": 84740.0},
+  "fail_day": null,
+  "pre_sent": null,
+  "post_sent": null,
+  "updated_at": "2026-10-26T18:08:30+09:00"
+}

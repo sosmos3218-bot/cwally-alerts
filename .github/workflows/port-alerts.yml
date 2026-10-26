@@ -251,7 +251,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch, iefa, secdiv]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch, iefa, secdiv, macroir]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1393,6 +1393,24 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/secdiv_monitor.py selftest >/dev/null; fi
           python scripts/secdiv_monitor.py "$MODE"
+      - name: Run MACRO-IR (US-Iran macro lines Brent/USD-KRW/KOSPI/148070 on k203780 19:00 slot; 11/3 and 11/4 election checklists on morning 09:00)
+        # approved in chat 2026-10-26. Attached to existing slots, no new cron. Dedupe: state/macroir.json armed (fire on zone entry,
+        # re-arm on exit), pre_sent/post_sent. job=macroir or a manual job=k203780 dispatch is dry (selftest + dry: no ntfy, no state)
+        # unless oneoff_mode=auto. The cron-job.org 19:00 dispatch (job 8698629, oneoff_mode=auto) and the GitHub schedules run auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'macroir') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/macroir_monitor.py selftest >/dev/null || rc=1; fi
+          if [ "$PICK_JOB" = "morning" ] || [ "$PICK_JOB" = "macroir" ]; then python scripts/macroir_monitor.py event "$MODE" || rc=1; fi
+          if [ "$PICK_JOB" = "k203780" ] || [ "$PICK_JOB" = "macroir" ]; then python scripts/macroir_monitor.py price "$MODE" || rc=1; fi
+          exit "$rc"
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py

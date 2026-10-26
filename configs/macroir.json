@@ -1,0 +1,68 @@
+{
+  "name": "macroir",
+  "title_prefix": "[MACRO-IR]",
+  "display": "미-이란 전쟁 거시 시나리오 감시선 (브렌트, 원/달러, 코스피, 국고채 10년 ETF 148070) + 11/3, 11/4 미 중간선거 체크리스트",
+  "created_at": "2026-10-26T18:30:00+09:00",
+  "approval": "사용자 채팅 요청 2026-10-26 (붙여넣은 거시 분석을 가격/이벤트 알림으로). 기존 슬롯에만 부착, 새 cron/워크플로/저장소 없음",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00 (가격선, k203780 슬롯) / 09:00 (이벤트, morning 슬롯)",
+  "schedule_note": "새 cron 없음. 가격선은 기존 k203780 슬롯(평일 19:00 KST, KRX 장 마감 뒤; cron-job.org 잡 8698629 정시 dispatch {job:k203780, oneoff_mode:auto} + GitHub 0 10 * * 1-5 백업). 이벤트(11/3 선거 전, 11/4 선거 뒤 체크리스트)는 기존 morning 슬롯(평일 09:00 KST, 0 0 * * 1-5). job=macroir 또는 job=k203780 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry(ntfy 없음, state 저장 없음).",
+  "alert_policy": "zone_entry_once_rearm_on_exit",
+  "rearm_note": "선마다 구간에 새로 들어갈 때 1번만. 값이 구간을 벗어나면 조용히 재무장(완충 없음, figpx/lgeswatch 와 같은 방식). 같은 날 여러 선은 한 메시지, 우선순위는 가장 높은 값. 경고선(combo130, brent125, ktb104k)이 켜져 있으면 메시지 전체에서 매수 권유 문구를 빼고 추가매수 보류로 바꾼다.",
+  "source_note": "기준값은 붙여넣은 외부 분석(2026-10-26)에서 온 것이며 검증된 전망이 아님. 분석의 10/26 수치(브렌트 116.72, 원/달러 1,324.41, 코스피 약 5,500, 148070 106,695원)는 설치 때 실제 값과 대조함(state/macroir.json install_check).",
+  "lines": [
+    {"key": "combo130", "series": ["brent", "usdkrw"], "op": "ge_and", "level": [130.0, 1380.0], "priority": 5, "kind": "warning", "standalone": true,
+     "label": "격화 확인(브렌트 130달러 이상 + 원/달러 1,380원 이상)"},
+    {"key": "brent125", "series": "brent", "op": "ge", "level": 125.0, "priority": 4, "kind": "warning", "standalone": true,
+     "label": "격화 초기 경고(브렌트 125달러 이상)"},
+    {"key": "fx1360", "series": "usdkrw", "op": "ge", "level": 1360.0, "priority": 3, "kind": "info", "standalone": false,
+     "label": "원/달러 1,360원 이상",
+     "overlap": "[USTSY](ustsy, 평일 15:20)가 원/달러 1,360원 이상(BASE 구간) 진입을 이미 알림. 중복 방지로 단독 발송 안 함. 다른 선과 같이 울릴 때 메시지에 함께 적음. 단독 발송을 원하면 standalone 을 true 로."},
+    {"key": "deal90", "series": "brent", "op": "le", "level": 90.0, "priority": 4, "kind": "deal", "standalone": true,
+     "label": "타결 시나리오 판단 변경(브렌트 90달러 이하)"},
+    {"key": "deal95", "series": "brent", "op": "le", "level": 95.0, "priority": 3, "kind": "deal_early", "standalone": true,
+     "label": "타결 조기 신호(브렌트 95달러 이하)"},
+    {"key": "kospi5300", "series": "kospi", "op": "le", "level": 5300.0, "priority": 3, "kind": "contrarian", "standalone": false,
+     "label": "코스피 5,300 이하",
+     "overlap": "[KOSDOWN](kosdown, 평일 15:40)이 코스피 종가 5,300 이탈을 이미 알림. 중복 방지로 단독 발송 안 함. 다른 선과 같이 울릴 때 ISA 현금 투입 검토 또는 추가매수 보류(경고선 켜짐) 문구를 함께 적음. 단독 발송을 원하면 standalone 을 true 로."},
+    {"key": "ktb104k", "series": "ktb148070", "op": "le", "level": 104000.0, "priority": 4, "kind": "warning", "standalone": true,
+     "label": "장기금리 급등 구간(148070 104,000원 이하)"}
+  ],
+  "events": {
+    "pre": {"date": "2026-11-03", "catchup_until": "2026-11-03", "slot": "morning 09:00"},
+    "post": {"date": "2026-11-04", "catchup_until": "2026-11-06", "slot": "morning 09:00",
+             "timing_note": "11/4 09:00 KST 는 미국 동부 11/3 19:00 로 개표 진행 중일 수 있음. 본문에 결과 확정 전일 수 있다고 적음."},
+    "scenarios": [
+      {"key": "deal", "name": "타결", "prob": "15%", "brent": [80, 90], "usdkrw": [1280, 1310], "kospi": [6200, null], "kospi_text": "6,200 이상"},
+      {"key": "stalemate", "name": "교착", "prob": "55%", "brent": [105, 120], "usdkrw": [1320, 1360], "kospi": [5300, 5800], "kospi_text": "5,300~5,800"},
+      {"key": "escalation", "name": "격화", "prob": "30%", "brent": [125, 140], "usdkrw": [1400, 1450], "kospi": [4900, 5200], "kospi_text": "4,900~5,200"}
+    ]
+  },
+  "related_alerts": {
+    "[OIL] oilwatch": "브렌트 120달러 이상(115 재무장), 85달러 미만(88 재무장), 평일 09:00. 레벨이 달라 중복 아님. 125/130/95/90 은 여기서만 봄.",
+    "[KR-RATE] krrate": "국고채 10년 수익률 4.35% 이상이면 148070 분할매수 검토(매수 쪽). 이 알림의 148070 104,000원 이하는 경고(추가매수 보류)라 방향이 반대일 수 있음. 지금 기준 104,000원은 수익률 약 4.5% 근처로 추정되어 [KR-RATE] 4.35% 가 먼저 울릴 수 있음.",
+    "[KOSDOWN] kosdown": "코스피 5,300 이탈 단독 알림 담당",
+    "[USTSY] ustsy": "원/달러 1,360원(BASE) 진입 단독 알림 담당",
+    "[K200] k200": "코스피200 855/830/819/905, 지수가 달라 중복 아님",
+    "[NOV3] nov3": "선거 감시선(S&P, 코스피 6,560, SOX, 미 10년물). 체크리스트는 없음, 중복 아님"
+  },
+  "market_close_kst": "15:40",
+  "stale_days": 6,
+  "sources": {
+    "brent": "https://query1.finance.yahoo.com/v8/finance/chart/BZ%3DF?interval=1d&range=1mo",
+    "wti": "https://query1.finance.yahoo.com/v8/finance/chart/CL%3DF?interval=1d&range=1mo",
+    "usdkrw": "https://query1.finance.yahoo.com/v8/finance/chart/KRW%3DX?interval=1d&range=5d",
+    "kospi": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=5&page=1",
+    "kospi_fallback": "https://query1.finance.yahoo.com/v8/finance/chart/%5EKS11?interval=1d&range=5d",
+    "ktb148070": "https://m.stock.naver.com/api/stock/148070/price?pageSize=5&page=1",
+    "ktb365780": "https://m.stock.naver.com/api/stock/365780/price?pageSize=5&page=1"
+  },
+  "data_note": "브렌트/WTI 는 미국 동부 날짜 기준 완료 일봉 종가(진행 중 봉 제외). 원/달러는 실행 시각 Yahoo KRW=X 현재값. 코스피/148070/365780 은 네이버 일별 종가(15:40 전이면 오늘 봉 제외). 365780 은 참고값만, 판정에 안 씀.",
+  "year_guard": [2026, 2027],
+  "valid_until": "2027-01-31",
+  "explain": "붙여넣은 미-이란 전쟁 거시 분석의 판단 변경 조건(브렌트, 원/달러, 코스피, 국고채 10년 ETF 148070)에 새로 들어갈 때만 오는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": "2027-01-31 23:59",
+  "ends_note": "평일 19:00 가격선, 11/3과 11/4 09:00 선거 체크리스트, 2027-01-31 종료"
+}
