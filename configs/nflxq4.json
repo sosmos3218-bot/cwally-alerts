@@ -1,0 +1,44 @@
+{
+  "name": "nflxq4",
+  "title_prefix": "[NFLX-Q4]",
+  "ticker": "NFLX",
+  "display": "Netflix 4분기 실적 조건 판정",
+  "created_at": "2026-10-26T12:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "cik": "0001065280",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 4분기 실적일은 미확정(2027-01-19 화 미국장 마감 후 추정, 2025년 4분기는 2026-01-20). 실적 서한은 미국 장 마감 직후(약 06:01 KST) EDGAR 8-K EX-99.1 로 올라오므로 그날 09:00 실행이 잡음. 창 2027-01-12 ~ 2027-02-05, 연도 가드 2027. 판정은 1번만 발송. 마지막 날까지 원문이 없으면 미게시 1번(cwally-ops).",
+  "event_year": 2027,
+  "release_filing_from_et": "2027-01-12",
+  "window_start_kst": "2027-01-12 05:00",
+  "window_end_kst": "2027-02-05 23:59",
+  "valid_until": "2027-02-05",
+  "basis": "2026-10-22 NFLX 분석 보정본(10/21 종가 65.04달러). 반복 FCF(WBD 위약금 세후 약 15억 달러 제외) 2026년 약 105억 달러, 주당 약 2.50달러, 주가/FCF 약 26배. 3차 40%는 4분기 실적에서 2027 가이던스 확인 시. 아래 규칙은 그 문서의 '판단을 바꿀 조건'을 숫자로 옮긴 것.",
+  "rules": {
+    "grow_min": 10.0,
+    "om_base": 31.5,
+    "fcf_stall_below_b": 11.0,
+    "trim_px": 85.0,
+    "text": "강화: 2027 매출 가이던스 하단 성장률 10% 이상 + 2027 영업이익률 목표가 2026 실제(못 읽으면 31.5%)보다 높음 + 광고 15개국 확대(2027년 3월 첫 출시) 지연 언급 없음과 정상 진행 언급. 중단: 2027 매출 가이던스 중간값 성장률 10% 미만 + 2027 FCF 전망 110억 달러 미만(반복 FCF 105억 달러 수준 정체). 둘 다 아니면 중간(3차 보류, 보유 유지). 핵심 숫자를 못 읽거나 광고만 미확인이면 확인 필요. 축소 검토 표시: 종가 85달러 이상인데 2027 FCF 전망이 110억 달러 미만이거나 없음(판정과 별도 줄)."
+  },
+  "baseline": {
+    "fy26_rev_guide_b": 51.1,
+    "fy26_om_guide": 31.5,
+    "fy26_fcf_guide_b": 12.0,
+    "fy26_fcf_recurring_b": 10.5,
+    "fy26_ad_rev_guide_b": 2.7,
+    "q4_rev_guide_b": 13.44,
+    "q4_om_guide": 26.0,
+    "ref_close": 65.04,
+    "source": "8-K 2026-10-20 EX-99.1 (Q3 2026 letter); Q1 2026 letter (FCF guide 110억 -> 125억 달러, WBD 위약금 세후 효과)"
+  },
+  "sources": {
+    "sec": "https://data.sec.gov/submissions/CIK0001065280.json",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NFLX?interval=1d&range=5d",
+    "ir": "https://ir.netflix.net/financials/quarterly-earnings/default.aspx"
+  },
+  "explain": "Netflix 4분기 서한(8-K EX-99.1)에서 2027 매출 가이던스 성장률, 2027 영업이익률 목표, 2027 FCF 전망, 광고 확대 진행을 읽어 10/22 분석의 강화/중단 조건을 1번 판정합니다. 투자 권유 아님.",
+  "ends_kst": "2027-02-05 23:59",
+  "ends_note": "Netflix 4분기 실적 판정 일회 알림, 2/5 09:00 실행이 마지막"
+}
