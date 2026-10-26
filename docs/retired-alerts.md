@@ -127,3 +127,22 @@ has not fired although the price is under 15,300; fixing that would send once at
 | name | prefix | added | old slots | now in |
 |---|---|---|---|---|
 | d0chk | `[0005D0]` | 2026-10-06 | 09:00 morning + 15:20 afternoon | ssb0005d0 `checklist()` (15:20) |
+
+## 2026-10-26 audit: KOSPI ladder (approved in chat 2026-10-26 18:22 KST, audit item 7)
+
+kosdown `[KOSDOWN]`, kosup `[KOSUP]`, kosbrk `[KOSBRK]` and kos5500 `[KOS5500]` could each send a separate message
+on the same 15:40 flow run, and kos5500 repeated its report every trading day plus again at the next 09:00. They now
+send one `[KOSPI]` message. Nothing was deleted: each component keeps its script, `configs/<name>.json`,
+`state/<name>.json`, thresholds and re-arm logic, and still runs on its own `run_one` line in `flow-alerts.yml`. With
+`KOSPI_LADDER=1` their signal sends are spooled by `scripts/kospi_spool.py` and `scripts/kospi_monitor.py send`
+publishes the combined message; `begin` snapshots the component states and a failed publish restores them. State
+migration: none needed for the components (fired flags unchanged); `state/kospi.json` was seeded with
+`kos5500_last_label = "5500 이탈 첫날"` (sent 2026-10-26 15:40), so that label is not re-sent. Old vs new were run on
+throwaway copies (ntfy blocked, faketime 10/26 15:41, 10/27 15:40, 10/28 15:40): same silence, identical component
+states. Retired: the kos5500 09:00 morning repeat (`kos5500_monitor.py previous` in the morning bundle). k200,
+kosown and macroir are unchanged.
+
+| name | prefix | old slots | now |
+|---|---|---|---|
+| kosdown, kosup, kosbrk | `[KOSDOWN]` `[KOSUP]` `[KOSBRK]` | flow 15:40, one message each | flow 15:40, a section of `[KOSPI]` |
+| kos5500 | `[KOS5500]` | flow 15:40 daily + 09:00 morning repeat | flow 15:40, a `[KOSPI]` section only when the scenario label changes |

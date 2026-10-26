@@ -592,7 +592,7 @@ jobs:
             python scripts/council_monitor.py auto
           fi
           if [ "$JOB" = "morning" ]; then
-            python scripts/kos5500_monitor.py previous
+            # kos5500 09:00 revision repeat dropped 2026-10-26; its 15:40 report is part of the [KOSPI] ladder (flow slot)
             python scripts/vymi_monitor.py auto
             python scripts/memswing_monitor.py daily
           fi

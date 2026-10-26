@@ -9,7 +9,7 @@
 | 보유/매매/수급 | `cwally-port` | https://ntfy.sh/cwally-port |
 | 운영/시스템 (워크플로 실패, 데이터 조회 실패) | `cwally-ops` | https://ntfy.sh/cwally-ops |
 
-제목 prefix: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]` `[0005D0]` `[0192T0]` `[091160]` `[278240]` `[2UB]` `[377990]` `[489000]` `[ADDSTOP]` `[AEO]` `[BRK10]` `[BTC90]` `[BTCOCT]` `[CL]` `[CPI]` `[DHR]` `[DRAM27]` `[GENPACT]` `[GOOGL]` `[ISRG]` `[KOSBRK]` `[NKE]` `[NOV3]` `[OKLO]` `[PATH]` `[PFFD]` `[PLTR]` `[PROTEC]` `[SEMREV]` `[SHINWON]` `[SKC]` `[0090B0]` `[BTCBOX]` `[XRPBOX]` `[DKQ3]` `[SNDK]` `[SPCX]` `[TSMC]` `[232140]` `[PORTLIGHT]` `[BURRY]` `[ETH]` `[RATES]` `[FOMC]` `[LGIT]` `[NVDA]` `[OPS]` `[PCOR-Q3]` `[PCOR-PX]` `[FIG-PX]` `[FIG-EARN]` `[VNQI]` `[LGES]` `[IEFA]` `[SEC-DIV]`.
+제목 prefix: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]` `[0005D0]` `[0192T0]` `[091160]` `[278240]` `[2UB]` `[377990]` `[489000]` `[ADDSTOP]` `[AEO]` `[BRK10]` `[BTC90]` `[BTCOCT]` `[CL]` `[CPI]` `[DHR]` `[DRAM27]` `[GENPACT]` `[GOOGL]` `[ISRG]` `[KOSBRK]` `[KOSPI]` `[NKE]` `[NOV3]` `[OKLO]` `[PATH]` `[PFFD]` `[PLTR]` `[PROTEC]` `[SEMREV]` `[SHINWON]` `[SKC]` `[0090B0]` `[BTCBOX]` `[XRPBOX]` `[DKQ3]` `[SNDK]` `[SPCX]` `[TSMC]` `[232140]` `[PORTLIGHT]` `[BURRY]` `[ETH]` `[RATES]` `[FOMC]` `[LGIT]` `[NVDA]` `[OPS]` `[PCOR-Q3]` `[PCOR-PX]` `[FIG-PX]` `[FIG-EARN]` `[VNQI]` `[LGES]` `[IEFA]` `[SEC-DIV]`.
 
 반복 정책 (2026-10-26): `[SQUARE]` `[YENCARRY]` `[ALUX]` `[0220WL]` `[HCE]` `[SGYN]` `[STEEL]` `[455850]` `[PORT]` `[MERAS]` 는 판정/상태/구간이 직전 발송과 다를 때만 보내고, 주 첫 실행(보통 월요일)에 주간 체크 1번. 새로 걸린 손절/이탈은 바로 발송, 같은 상태 반복은 주간 체크에서만. `[PORT]` HALT, DCA 취소는 매번 발송 (DUAL 은 진입 시 1번, 이후 주간 체크).
 
@@ -22,6 +22,7 @@
 | port morning | 평일 09:00 | steel + alux + hce + … (morning 번들) |
 | port afternoon | 평일 15:20 | square + silicon2 + … (afternoon 번들) |
 | flow | 평일 15:40 | KOSPI 수급 + secu_flow + kosbrk + … |
+| kospi | 평일 15:40 (flow 슬롯, 2026-10-26 통합) | 코스피 사다리 `[KOSPI]`: kosdown(5550/5450/5300/5200/5000 하방), kosup(5750/6000 상방), kosbrk(7/29 종가 5663.24, 장중 저가 5262.77, 외국인 매도 재확대, 가이던스 키워드), kos5500(5500 유지/이탈, 5800 회복 시나리오)이 각자 config, 레벨, 재무장, state 그대로 돌고 새로 걸린 조건만 한 메시지로 묶어 보냄. kos5500 은 시나리오 이름이 바뀔 때만 포함(10/26 15:40 `5500 이탈 첫날` 발송분으로 초기화), 09:00 재확인 반복은 없앰. 조회 실패는 따로 `cwally-ops` |
 | portlight | 일요일 21:00 | portlight |
 | k203780 | KRX 거래일 19:00 (cron-job.org 정시 + GitHub 백업) | TIGER 미국나스닥바이오 일일 요약 `[203780]` (+ k079900 장 마감 뒤 점검) |
 | mktpulse | KRX 거래일 11:00 하루 1회 (cron-job.org 반복 잡 8705009, 2026-11-05 11:00 이 마지막, 2026-10-26 에 10:00/13:00/15:00 제거) | 장중 시장 점검 `[MARKET]`: 코스피, 코스닥 잠정 수급, 반도체/전기장비 업종 등락, 삼성전자, SK하이닉스, 한미반도체, LS ELECTRIC, HD현대일렉트릭, 효성중공업 가격과 바스켓 수급, 메타 뮤즈 관련 새 증권사 코멘트. 확정 수급은 15:40 `[FLOW]` |

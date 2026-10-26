@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+from ntfy_util import resolve_server, resolve_topic  # noqa: E402
+from kospi_spool import publish  # noqa: E402  [KOSPI] ladder spool (2026-10-26)
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "kosup.json"
