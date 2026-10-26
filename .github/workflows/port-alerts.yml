@@ -244,11 +244,11 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | krbank | k091160 | skc011790 | oklo | pffd | ceg | kzq3 | manh | truen417790 | all
+        description: oneshot (due one-shots from configs/*.json oneshot_kst) | steel | alux | square | hce | silicon2 | cover0198 | lg | 0220wl | iren | ustsy | sgyn | yencarry | krwfx | port | portlight | ccrev | kship | shinwon | protec | 2ub | pltr | addstop | sec | k091160 | skc011790 | oklo | pffd | ceg | kzq3 | manh | truen417790 | all
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
+        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -531,8 +531,8 @@ jobs:
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
-      - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec + krbank
-        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec' || steps.pick.outputs.job == 'krbank'
+      - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + ccrev + shinwon + protec + 2ub + pltr + addstop + sec
+        if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'ccrev' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           NTFY_TOPIC: cwally-port
@@ -618,11 +618,6 @@ jobs:
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "sec" ]; then
             python scripts/sec_monitor.py auto
-          fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krbank" ]; then
-            MODE=auto
-            [ "$JOB" = "krbank" ] && MODE=force
-            python scripts/krbank_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ]; then
             python scripts/uamcert_monitor.py auto
