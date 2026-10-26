@@ -224,8 +224,6 @@ on:
     - cron: "12 8 16 11 *"
     - cron: "5 8 17 11 *"
     - cron: "5 0 18 11 *"
-    # ktb148070 oneshot_kst (KST→UTC): 2026-10-22 15:30. 금통위 후 148070 재평가 (GitHub fallback; on-time = cron-job.org job=oneshot)
-    - cron: "30 6 22 10 *"
     # soq3 oneshot_kst (KST→UTC): 2026-11-05 21:40, 23:40, 11-06 06:20. SO 3분기 실적 숫자 판정 + 콜 이후 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "40 12 5 11 *"
     - cron: "40 14 5 11 *"
@@ -249,7 +247,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, ktb148070, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx]
+        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -435,7 +433,6 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
             elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
-            elif [ "${{ github.event.schedule }}" = "30 6 22 10 *" ]; then JOB=ktb148070
             elif printf '%s\n' "50 4 5 11 *" "12 7 5 11 *" "12 0 6 11 *" "40 7 16 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=oneshot
             elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
@@ -789,13 +786,6 @@ jobs:
         run: |
           python scripts/samnix_monitor.py "${{ github.event.inputs.samnix_mode || 'dry' }}"
           python scripts/ntfy_archive.py
-      - name: ktb148070
-        if: steps.pick.outputs.job == 'ktb148070'
-        env:
-          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/ktb148070_monitor.py auto
       - name: Run dram27
         if: steps.pick.outputs.job == 'dram27'
         env:

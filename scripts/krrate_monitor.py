@@ -8,7 +8,7 @@
 3) 신용 스프레드(회사채 AA- 3년 - 국고채 3년)가 20거래일 전보다 widen_trigger_bp 넘게 확대 -> 1회.
    확대폭 < rearm_below_bp 면 다시 무장. 일별 값은 state hist 에 저장.
 데이터: 한국은행 ECOS (KOFIA 최종호가, 기존 ECOS_API_KEY secret, 없으면 sample 키), 네이버 시장지표(대체, 출처 표시),
-한국은행 금통위 일정/보도자료/기준금리 표(ktb148070_monitor 함수 재사용, 읽기 전용).
+한국은행 금통위 일정/보도자료/기준금리 표(scripts/bok_mpc.py 함수 재사용, 읽기 전용. 2026-10-26 ktb148070_monitor 에서 이동).
 값의 날짜가 판정 거래일과 같을 때만 쓴다. 없으면 '확인 불가', 조회 실패는 cwally-ops.
 금통위 요약 보강(2026-10-24 승인, 본문만): 결정과 새 기준금리(ECOS 722Y001 교차확인), 소수의견 수와 방향(결정문, 없으면 기사 제목),
 연속 인상 여부(기준금리 변경 이력으로 계산), 다음 회의 신호 문구(결정문 인용), 판단 변경 조건(재동결 + 근원 CPI 둔화 또는 성장 둔화).
@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 from kr_calendar import KST, is_trading_day, prev_trading_day, session_day  # noqa: E402
-import ktb148070_monitor as ktb  # noqa: E402  (읽기 전용 재사용: 한은 결정문/기준금리 표/회의 페이지/뉴스)
+import bok_mpc as ktb  # noqa: E402  (읽기 전용: 한은 결정문/기준금리 표/회의 페이지/뉴스, scripts/bok_mpc.py)
 
 NAME = "krrate"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
@@ -162,7 +162,7 @@ def mpc_schedule(cfg: dict, year: int) -> tuple[list[str], list[str]]:
 
 
 def mpc_decision(cfg: dict, d: str) -> dict:
-    """ktb148070 의 결정 판정 함수를 이 회의 날짜로 다시 쓴다."""
+    """bok_mpc 의 결정 판정 함수(원래 ktb148070)를 이 회의 날짜로 다시 쓴다."""
     y, mo, dd = d.split("-")
     md = datetime.strptime(d, "%Y-%m-%d")
     kcfg = {
