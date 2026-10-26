@@ -24,7 +24,7 @@
       "key": "stop300",
       "op": "le",
       "price": 300000,
-      "priority": 4,
+      "priority": 5,
       "label": "손절/재검토 구간 진입",
       "note": "중장기 계획의 손절선 30만원 이하(옛 [LGESH] 에서 옮김). 비중 재평가, 투자 논리 재점검.",
       "from": "lgeshold stop"

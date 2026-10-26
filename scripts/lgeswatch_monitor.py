@@ -304,6 +304,9 @@ def selftest() -> int:
     check("gap to 295000 -> buy330 + stop300", step_all(L, A0, 295000)[1], ["buy330", "stop300"])
     check("560000 -> tgt500 + tgt550", step_all(L, A0, 560000)[1], ["tgt500", "tgt550"])
     check("legacy state key missing inits quietly", step_all(L, {"buy330": True}, 374000)[1], [])
+    check("priority buy330 alone 4", price_msg(cfg, ["buy330"], 329000, "d", None)[2], 4)
+    check("priority stop300 combined 5", price_msg(cfg, ["buy330", "stop300"], 299000, "d", None)[2], 5)
+    check("priority stop300 title", "손절/재검토" in price_msg(cfg, ["buy330", "stop300"], 299000, "d", None)[0], True)
     check("band edges", (hit(L[2], 360000), hit(L[2], 400000), hit(L[2], 359999)), (True, True, False))
     cases = {
         "조회공시 요구(풍문 또는 보도)": "inquiry", "조회공시요구(풍문또는보도)에대한답변(미확정)": "inquiry",
