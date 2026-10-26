@@ -105,6 +105,10 @@ TSLASPCX_TITLE = "cwally tslaspcx daily (07:30 KST)"
 TSLASPCX_BODY = {"ref": "main", "inputs": {"job": "tslaspcx", "oneoff_mode": "auto"}}
 TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], "hours": [7],
                      "mdays": [-1], "months": [-1], "wdays": [-1]}
+PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
+PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight"}}
+PORTLIGHT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [21],
+                      "mdays": [-1], "months": [-1], "wdays": [0]}
 
 SKIP = 10
 BAD_INPUT = 2
@@ -585,6 +589,53 @@ def run_register_tslaspcx(now: datetime) -> int:
     return 0
 
 
+def run_register_portlight(now: datetime) -> int:
+    """Existing portlight slot (AGENTS.md Repeating slots, Sunday 21:00 KST, GitHub cron 0 12 * * 0)."""
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    template = load_template(key)
+    nxt = now.replace(hour=21, minute=0, second=0, microsecond=0) + timedelta(days=(6 - now.weekday()) % 7)
+    if nxt <= now:
+        nxt += timedelta(days=7)
+    dup = find_duplicate(key, PORTLIGHT_TITLE, nxt)
+    if dup is not None:
+        print(f"skip: job {dup} already fires at {nxt:%Y-%m-%d %H:%M} KST or has title {PORTLIGHT_TITLE!r}")
+        return SKIP
+    job = {
+        "enabled": True,
+        "title": PORTLIGHT_TITLE,
+        "saveResponses": True,
+        "url": DISPATCH_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(PORTLIGHT_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(PORTLIGHT_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {PORTLIGHT_TITLE!r} Sunday 21:00 Asia/Seoul, body {json.dumps(PORTLIGHT_BODY)}, first {nxt:%Y-%m-%d %H:%M} KST")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
+    try:
+        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == PORTLIGHT_BODY
+    except ValueError:
+        body_ok = False
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok}")
+    return 0
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
@@ -601,8 +652,10 @@ def main() -> int:
             return run_register_pulse(now)
         if action == "register_tslaspcx":
             return run_register_tslaspcx(now)
+        if action == "register_portlight":
+            return run_register_portlight(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, register_tslaspcx or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, register_tslaspcx, register_portlight or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

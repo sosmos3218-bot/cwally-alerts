@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 10/11/13/15 KST weekday job | register_tslaspcx = create the daily 07:30 KST tslaspcx job"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 10/11/13/15 KST weekday job | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job"
         type: choice
-        options: [register, register_slot, update_slot, delete, list, register_pulse, register_tslaspcx]
+        options: [register, register_slot, update_slot, delete, list, register_pulse, register_tslaspcx, register_portlight]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"
