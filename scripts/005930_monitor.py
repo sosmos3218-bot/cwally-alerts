@@ -11,6 +11,12 @@ Events
             state last_day is judged once, in order, so a late or double run never re-sends.
   us10y     only in configs/005930.json: Yahoo ^TNX >= warn_min (5.30%) -> one shared warning for
             005930 and 000660, re-arms below rearm_below (5.20%). 000660 never sends it.
+  extra     configs "extra_lines" (2026-10-26, levels folded in from samup/hynixup/hynixlad/lgcns): notify-only
+            levels in the same wording, never buy/trim/stop plan lines. Same op/fire-once rule, own state
+            st["extra"][key]; per line: rearm_pct (default cfg rearm_pct; 0 = re-arm as soon as the close is back
+            across), optional rearm_title/rearm_action (also send on re-arm, e.g. 회복), until (last session day),
+            priority, buy_advice (action dropped when the close is under the stop line). Sent as their own
+            message, so a plan-line message is unchanged.
   earnings  on configs earnings.date (KST session day), one 실적 체크 message, flag earn_done[date];
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
@@ -203,6 +209,8 @@ def default_state(cfg: dict) -> dict:
           "lines": {ln["key"]: {"armed": True, "fired_day": None} for ln in cfg["lines"]}, "earn_done": {}}
     if cfg.get("us10y"):
         st["us10y"] = {"armed": True, "fired_day": None, "last": None}
+    if cfg.get("extra_lines"):
+        st["extra"] = {ln["key"]: {"armed": True, "fired_day": None} for ln in cfg["extra_lines"]}
     return st
 
 
@@ -213,8 +221,8 @@ def load_state(cfg: dict) -> dict:
         try:
             got = json.loads(p.read_text(encoding="utf-8"))
             for k, v in got.items():
-                if k == "lines" and isinstance(v, dict):
-                    st["lines"].update(v)
+                if k in ("lines", "extra") and isinstance(v, dict):
+                    st.setdefault(k, {}).update(v)
                 else:
                     st[k] = v
         except json.JSONDecodeError:
@@ -234,6 +242,8 @@ def hit(ln: dict, close: float) -> bool:
 
 
 def rearm(ln: dict, close: float, pct: float) -> bool:
+    if pct <= 0:
+        return not hit(ln, close)
     f = pct / 100.0
     return close < ln["level"] * (1 - f) if ln["op"] == "ge" else close > ln["level"] * (1 + f)
 
@@ -259,6 +269,18 @@ def eval_lines(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
             elif not s.get("armed", True) and rearm(ln, r["close"], float(cfg.get("rearm_pct", 1.0))):
                 s["armed"] = True
                 print(f"{cfg['name']} {ln['key']} re-armed on {r['day']} close {r['close']:,.0f}")
+        for ln in cfg.get("extra_lines") or []:
+            if ln.get("until") and r["day"] > ln["until"]:
+                continue
+            s = st.setdefault("extra", {}).setdefault(ln["key"], {"armed": True, "fired_day": None})
+            if s.get("armed", True) and hit(ln, r["close"]):
+                s.update(armed=False, fired_day=r["day"])
+                events.append({"kind": "extra", "key": ln["key"], "line": ln, "day": r["day"], "close": r["close"]})
+            elif not s.get("armed", True) and rearm(ln, r["close"], float(ln.get("rearm_pct", cfg.get("rearm_pct", 1.0)))):
+                s["armed"] = True
+                print(f"{cfg['name']} extra {ln['key']} re-armed on {r['day']} close {r['close']:,.0f}")
+                if ln.get("rearm_title"):
+                    events.append({"kind": "extra_rearm", "key": ln["key"], "line": ln, "day": r["day"], "close": r["close"]})
         st["last_day"], st["last_close"] = r["day"], r["close"]
     return events
 
@@ -354,6 +376,45 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
     return title, msg, pri
 
 
+def build_extra(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    """Notify-only levels (configs extra_lines): same 7-line wording as build_lines, no plan-line action."""
+    sign = {"le": "이하", "ge": "이상", "lt": "미만"}
+
+    def pri(e):
+        return int(e["line"].get("rearm_priority", 3) if e["kind"] == "extra_rearm" else e["line"].get("priority", 4))
+    events = sorted(events, key=lambda e: (-pri(e), e["line"]["level"]))
+    top = events[0]
+    ln = top["line"]
+    if top["kind"] == "extra_rearm":
+        title = f"{cfg['title_prefix']} 종가 {fmt(ln['level'])} 위 회복 | {ln['rearm_title']}"
+    else:
+        title = f"{cfg['title_prefix']} 종가 {fmt(ln['level'])} {sign[ln['op']]} | {ln['title']}"
+    hits = [(f"{e['line']['label']} 회복: " if e["kind"] == "extra_rearm" else f"{e['line']['label']}: ")
+            + f"종가 {fmt(e['close'])}({e['day']}), 기준 {fmt(e['line']['level'])}, 기준 대비 {dist(e['close'], e['line']['level']):+.2f}%."
+            for e in events]
+    last_close = (data.get("rows") or [{}])[-1].get("close") if data.get("rows") else events[-1]["close"]
+    stop = next((x for x in cfg["lines"] if x["key"] == "stop"), None)
+    under_stop = stop is not None and last_close is not None and last_close < stop["level"]
+    acts = []
+    for e in events:
+        if under_stop and e["line"].get("buy_advice"):
+            continue  # no buy advice under the stop line (same rule as act_events, eebf60d)
+        acts.append(e["line"]["rearm_action"] if e["kind"] == "extra_rearm" else e["line"]["action"])
+    if under_stop:
+        acts.append(f"종가가 손절선 {fmt(stop['level'])} 아래입니다. 매수 조언 없음, 계획대로 손절 기준.")
+    later = ln.get("later") or "같은 레벨은 종가가 반대로 돌아갔다 와야 다시 울립니다."
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {ln.get('what') or cfg['short'] + ' 참고 레벨 알림'}. 계획 선(매수, 축소, 손절)과 별개인 알림 전용 레벨입니다. 매수 지시가 아닙니다.",
+        "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})",
+        "지금 할 일: " + " ".join(dict.fromkeys(acts)),
+        f"나중에: {later}",
+        f"익절/줄일 때: {trim_text(cfg)} 비중 축소.",
+        "하지 말 것: " + (ln.get("dont") or "레벨 돌파만 보고 추격 매수, 신용 및 미수, 조회 실패를 신호로 읽기."),
+    ] + ([ref] if ref else []))
+    return title, msg, pri(top)
+
+
 def build_us10y(cfg: dict, ev: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     z = cfg["us10y"]
     title = f"{cfg['title_prefix']} 미국 10년물 {z['warn_min']:.2f}% 이상 | 분할 매수 중단"
@@ -440,9 +501,13 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
             ffail = str(exc)[:80]
         sends.append(build_earnings(cfg, d, filing, ffail, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["clipboard"],))
         st.setdefault("earn_done", {})[d] = stamp
-    ev = eval_lines(cfg, st, data.get("rows") or [], today, now)
+    ev_all = eval_lines(cfg, st, data.get("rows") or [], today, now)
+    ev = [e for e in ev_all if e["kind"] == "line"]
+    extra = [e for e in ev_all if e["kind"] != "line"]
     if ev:
         sends.append(build_lines(cfg, ev, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["chart_with_downwards_trend"],))
+    if extra:
+        sends.append(build_extra(cfg, extra, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["bell"],))
     for e in eval_us10y(cfg, st, data.get("us10y"), today):
         parts = [ref(cfg, data.get("rows"))]
         for other in cfg.get("us10y", {}).get("ref_also", []):
@@ -518,6 +583,8 @@ def run(name: str, argv: list[str]) -> int:
         ev = eval_lines(cfg, tmp, data.get("rows") or [], day.isoformat(), now)
         y = eval_us10y(cfg, tmp, data.get("us10y"), day.isoformat())
         st.update({k: tmp[k] for k in ("lines", "last_day", "last_close")})
+        if "extra" in tmp:
+            st["extra"] = tmp["extra"]
         if "us10y" in tmp:
             st["us10y"] = tmp["us10y"]
         st["seeded"] = True
@@ -561,6 +628,7 @@ def selftest(name: str) -> int:
 def _selftest(name: str, orig: dict) -> int:
     g = globals()
     cfg = load_cfg(name)
+    extras = cfg.pop("extra_lines", None)  # plan-line checks run on the plan lines only; extras checked below
     ok = True
 
     def check(label, got, want):
@@ -576,6 +644,11 @@ def _selftest(name: str, orig: dict) -> int:
     st = copy.deepcopy(seed)
     rows = [{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}]
     check("seed close re-run silent", [s[0] for s in plan_sends(cfg, st, {"rows": rows}, [], at(cfg["seed"]["day"]), lambda c, d: None)], [])
+    # The checks below are written against the config seed day (sessions after cfg seed.day). The committed state
+    # moves on with every 19:00 run, so use a fresh state pinned to the config seed (fixed 2026-10-26: after the
+    # 10-26 run committed last_day 2026-10-26 these checks failed on main).
+    seed = default_state(cfg)
+    seed.update(seeded=True, last_day=cfg["seed"]["day"], last_close=cfg["seed"]["close"])
 
     lv = {ln["key"]: ln["level"] for ln in cfg["lines"]}
     st = default_state(cfg)
@@ -634,8 +707,49 @@ def _selftest(name: str, orig: dict) -> int:
     check(f"first run close <= {tk} fires once",
           [e["key"] for e in eval_lines(cfg, st4, [{"day": "2026-10-26", "close": b1}], "2026-10-26", at("2026-10-26"))], [tk])
     _selftest_rest(name, cfg, seed, check, at, orig, tk, b1, tl, lv, sp)
+    if extras:
+        _selftest_extra(name, check, at)
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
+
+
+def _selftest_extra(name, check, at) -> None:
+    full = load_cfg(name)
+    seed = load_state(full)
+    nxt = (date.fromisoformat(seed["last_day"]) + timedelta(days=1)).isoformat()
+    st = copy.deepcopy(seed)
+    ev = eval_lines(full, st, [{"day": nxt, "close": seed["last_close"]}], nxt, at(nxt))
+    check("extra: committed state, same close next day is silent", [e["key"] for e in ev], [])
+    for ln in full["extra_lines"]:
+        if hit(ln, seed["last_close"]):
+            check(f"extra {ln['key']}: already across at migration, disarmed", seed["extra"][ln["key"]]["armed"], False)
+        f = float(ln.get("rearm_pct", full.get("rearm_pct", 1.0))) / 100
+        lvl = ln["level"]
+        on = lvl if ln["op"] in ("le", "ge") else lvl - 1
+        off = (lvl * (1 - f) - 1) if ln["op"] == "ge" else (lvl * (1 + f) + 1)
+        mid = (lvl - 1) if ln["op"] == "ge" else (lvl + 1)  # back across but inside the re-arm buffer
+        s = default_state(full)
+        s["last_day"] = "2026-11-01"
+        days = iter(f"2026-11-{i:02d}" for i in range(2, 31))
+        plan = {x["key"]: x for x in full["lines"]}
+
+        def feed(c):
+            d = next(days)
+            return [(e["kind"], e["key"]) for e in eval_lines({**full, "lines": [], "extra_lines": [ln]}, s, [{"day": d, "close": c}], d, at(d))]
+        check(f"extra {ln['key']} {ln['op']} {lvl}: fires", feed(on), [("extra", ln["key"])])
+        check(f"extra {ln['key']}: no repeat", feed(on), [])
+        if f > 0:
+            check(f"extra {ln['key']}: inside buffer stays disarmed", feed(mid), [])
+        check(f"extra {ln['key']}: re-arm", feed(off), [("extra_rearm", ln["key"])] if ln.get("rearm_title") else [])
+        check(f"extra {ln['key']}: fires again", feed(on), [("extra", ln["key"])])
+        e = {"kind": "extra", "key": ln["key"], "line": ln, "day": "2026-11-20", "close": on}
+        title, msg, _ = build_extra(full, [e], {"rows": [{"day": "2026-11-20", "close": on}]}, "2026-11-20 19:00 KST")
+        clean(title, msg)
+        check(f"extra {ln['key']}: title prefix", title.startswith(full["title_prefix"]), True)
+        if ln.get("buy_advice") and "stop" in plan:
+            low = plan["stop"]["level"] - 1
+            _, m2, _ = build_extra(full, [dict(e, close=low)], {"rows": [{"day": "2026-11-20", "close": low}]}, "x")
+            check(f"extra {ln['key']}: no buy advice under stop", ln["action"] in m2, False)
 
 
 def _selftest_ladder(check, feed, lv) -> None:

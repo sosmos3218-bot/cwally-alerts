@@ -681,7 +681,7 @@ jobs:
             python scripts/soilq3_monitor.py auto
             python scripts/jpfy27_monitor.py auto
             python scripts/446770_monitor.py auto
-            python scripts/hynixlad_monitor.py auto
+            # hynixlad moved to 000660 extra_lines (19:00 k203780 slot) on 2026-10-26
             python scripts/xlp_monitor.py auto
             python scripts/meras_monitor.py auto
             python scripts/arkg_monitor.py auto
@@ -721,7 +721,7 @@ jobs:
           if [ "$JOB" = "afternoon" ]; then
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
             python scripts/lgcnsq3_monitor.py slot
-            python scripts/lgcns_monitor.py slot
+            # lgcns price zones moved to 064400 extra_lines (19:00 k203780 slot) on 2026-10-26; lgcnsq3 stays
             python scripts/cnsds_monitor.py slot
           fi
           if [ "$JOB" = "afternoon" ]; then
