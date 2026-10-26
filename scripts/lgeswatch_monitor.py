@@ -197,6 +197,8 @@ def won(v: float) -> str:
     return f"{v:,.0f}원"
 
 
+BUY_LEAN = "논리가 그대로면 계획 금액을 나눠서만 검토"
+STOP_TODO = "추가매수 보류, AMPC 제외 영업이익과 ESS 수주부터 재확인해 투자 논리 점검."
 ACTION = {"buy330": "논리 확인 뒤 분할", "stop300": "비중 재평가", "add360": "분할만, 추격 금지", "tgt500": "일부 익절 검토", "tgt550": "추가 익절 검토"}
 
 
@@ -212,7 +214,7 @@ def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float |
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
         f"지금 결과/상태: {labels}. KRX 종가 {won(close)}({day}{chg}). 선: {all_lines}. 52주 최고 {won(ref['high_52w'])}.",
-        "지금 할 일: " + " ".join(lvs[k]["note"] for k in fired) + " 논리가 그대로면 계획 금액을 나눠서만 검토.",
+        "지금 할 일: " + (STOP_TODO if "stop300" in fired else " ".join(lvs[k]["note"] for k in fired) + " 논리가 그대로면 계획 금액을 나눠서만 검토."),
         "나중에: 같은 선은 종가가 그 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. 4분기 잠정실적(2027년 1월 초)에서 AMPC 제외 영업이익 3,000억원 이상인지 확인.",
         "익절/줄일 때: AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달이면 비중 축소 검토.",
         "하지 말 것: 실적 악화로 빠진 하락을 싼 가격으로 읽기, 일괄 매수, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님.",
@@ -307,6 +309,12 @@ def selftest() -> int:
     check("priority buy330 alone 4", price_msg(cfg, ["buy330"], 329000, "d", None)[2], 4)
     check("priority stop300 combined 5", price_msg(cfg, ["buy330", "stop300"], 299000, "d", None)[2], 5)
     check("priority stop300 title", "손절/재검토" in price_msg(cfg, ["buy330", "stop300"], 299000, "d", None)[0], True)
+    for fired_set, px in ((["stop300"], 299000), (["buy330", "stop300"], 299000)):
+        t, b, p = price_msg(cfg, fired_set, px, "d", 335000)
+        check(f"stop {fired_set} no buy-leaning line", BUY_LEAN in b, False)
+        check(f"stop {fired_set} stop todo", "지금 할 일: " + STOP_TODO in b, True)
+        check(f"stop {fired_set} six-part body", [ln.split(":")[0] for ln in b.split("\n")[1:]], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    check("buy330 only keeps buy line", BUY_LEAN in price_msg(cfg, ["buy330"], 329000, "d", None)[1], True)
     check("band edges", (hit(L[2], 360000), hit(L[2], 400000), hit(L[2], 359999)), (True, True, False))
     cases = {
         "조회공시 요구(풍문 또는 보도)": "inquiry", "조회공시요구(풍문또는보도)에대한답변(미확정)": "inquiry",
