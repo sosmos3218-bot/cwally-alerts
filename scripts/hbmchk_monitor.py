@@ -93,10 +93,20 @@ def expected_us_day(now: datetime) -> date:
     while not is_us_day(d):
         d -= timedelta(days=1)
     return d
+KR_FINAL_KST = time(18, 0)
+
+
 def completed_kr(rows: list[dict], now: datetime, kr_calendar, need_close: int = 20) -> list[dict]:
     if not isinstance(rows, list) or not rows:
         raise ValueError("Naver 일봉 응답이 비었음")
-    expected = kr_calendar.prev_trading_day(now.astimezone(KST).date())
+    local = now.astimezone(KST)
+    # Today's bar counts once Naver's daily close and foreign net are final (KR_FINAL_KST, 2026-10-26); before that
+    # (the 09:00 morning slot) the latest completed bar is the previous KRX trading day, as before.
+    expected = kr_calendar.prev_trading_day(local.date())
+    if local.time() >= KR_FINAL_KST and kr_calendar.is_trading_day(local.date()):
+        today_row = next((r for r in rows if isinstance(r, dict) and str(r.get("day") or "").replace("-", "")[:8] == local.strftime("%Y%m%d")), None)
+        if today_row and today_row.get("close") is not None and today_row.get("foreign") is not None:
+            expected = local.date()  # otherwise today's row is not final yet: previous trading day, as before
     done, seen = [], set()
     for row in rows:
         if not isinstance(row, dict):
@@ -396,6 +406,13 @@ def self_test() -> int:
     rows = [{"day": d.strftime("%Y%m%d"), "close": 100 + i, "foreign": 1} for i, d in enumerate(krdays)]
     done = completed_kr(rows, now, KRCal, 20)
     assert [r["day"] for r in done[:3]] == [date(2026, 10, 6), date(2026, 10, 2), date(2026, 10, 1)]
+    # after KR_FINAL_KST on a trading day, today's final bar is the latest; before it, or without today's foreign, not
+    today_rows = [{"day": "20261007", "close": 99, "foreign": 5}] + rows
+    eve = datetime(2026, 10, 7, 18, 30, tzinfo=KST)
+    assert completed_kr(today_rows, eve, KRCal, 20)[0]["day"] == date(2026, 10, 7)
+    assert completed_kr(today_rows, now, KRCal, 20)[0]["day"] == date(2026, 10, 6)
+    assert completed_kr([{"day": "20261007", "close": 99, "foreign": None}] + rows, eve, KRCal, 20)[0]["day"] == date(2026, 10, 6)
+    assert completed_kr(rows, eve, KRCal, 20)[0]["day"] == date(2026, 10, 6)
     stale = copy.deepcopy(rows); stale.pop(0)
     assert_raises(lambda: completed_kr(stale, now, KRCal, 20))
     missing = copy.deepcopy(done); missing[1]["foreign"] = None
@@ -447,7 +464,7 @@ def self_test() -> int:
     sample = event("[HBMCHK] test", "body")
     assert deliver(sample, True, fake, "x") and not calls
     assert deliver(sample, False, fake, "x") and len(calls) == 1
-    print("SELF-TEST PASS: freshness trading-dates foreign-None notice-filter old-notice amendment intraday-US us-lag-fallback drawdown-5-10 strict-25000 dedup-rearm dry-run-no-publish mocked-publish")
+    print("SELF-TEST PASS: freshness after-close-today trading-dates foreign-None notice-filter old-notice amendment intraday-US us-lag-fallback drawdown-5-10 strict-25000 dedup-rearm dry-run-no-publish mocked-publish")
     return 0
 def main() -> int:
     parser = argparse.ArgumentParser()
