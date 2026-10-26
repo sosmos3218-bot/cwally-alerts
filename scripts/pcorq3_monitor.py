@@ -214,6 +214,7 @@ def parse(raw: str, cfg: dict) -> dict:
         if b > 0 and 0.5 < a / b < 2:
             p["rev_yoy_exact"] = round((a / b - 1) * 100, 2)
             p["rev_k"] = a
+            p["rev_prior_k"] = b
             p["rev_m"] = p["rev_m"] or round(a / 1000, 1)
             p["rev_yoy"] = p["rev_yoy"] if p["rev_yoy"] is not None else p["rev_yoy_exact"]
     m = re.search(r"non-GAAP operating margin was " + NUM + "%", clean, re.I)
@@ -279,6 +280,8 @@ def reference_metrics(raw: str, clean: str) -> dict:
     }
     if r["dd_rev"] is None:
         r["dd_rev"] = first(r"\$\s*" + NUM + r"\s*million[^.]{0,60}?(?:from|attributable to|contributed by)\s*(?:the\s*)?DroneDeploy", clean)
+    if r["dd_rev"] is not None and r["dd_rev"] >= 100:
+        r["dd_rev"] = None  # a quarterly contribution of $100M+ is not plausible (purchase price, ARR...); not a disclosure
     w = "미확인"
     if re.search(r"(lower\w*|reduc\w*|cut|below prior)[^.]{0,60}(2027|FY ?'? ?27)|(2027|FY ?'? ?27)[^.]{0,60}(lower\w*|reduc\w*|below prior)", clean, re.I):
         w = "하향 표현"
@@ -326,7 +329,41 @@ def reference_line(p: dict, cfg: dict) -> str:
 
 # ---------- decide ----------
 
+def dd_basis(p: dict) -> tuple[str | None, float | None]:
+    """Growth basis for the 13% test once DroneDeploy is disclosed (cap rule, approved 2026-10-26).
+    Priority: FY27 ex-DroneDeploy growth > stated Q3 ex-DroneDeploy/organic growth > Q3 organic computed
+    from the disclosed DroneDeploy revenue. (None, None) = not disclosed. Only boilerplate-free text is
+    parsed (reference_metrics uses `clean`), so a risk-factor mention of DroneDeploy never counts."""
+    if p.get("g27_organic") is not None:
+        return "FY27 DroneDeploy 제외 성장", p["g27_organic"]
+    if p.get("organic_yoy") is not None:
+        return "3분기 DroneDeploy 제외 성장", p["organic_yoy"]
+    if p.get("dd_rev") is not None and p.get("rev_k") and p.get("rev_prior_k"):
+        return f"3분기 DroneDeploy 제외 계산(기여 {p['dd_rev']:g}백만달러 차감)", round(((p["rev_k"] / 1000 - p["dd_rev"]) / (p["rev_prior_k"] / 1000) - 1) * 100, 1)
+    if p.get("dd_rev") is not None:
+        return "보고 기준(DroneDeploy 기여 매출 공시, 전년 매출 표 없음)", p.get("fy27_growth")
+    return None, None
+
+
 def judge(p: dict, fin_filings: list[str], cfg: dict) -> tuple[str, list[str]]:
+    """Base verdict, then the DroneDeploy cap: only 증액 can move (to 보류); 청산/확인 필요/보류 untouched."""
+    v, why = judge_base(p, fin_filings, cfg)
+    p["dd_cap"] = None
+    if v != "증액":
+        return v, why
+    r = cfg["rules"]
+    label, val = dd_basis(p)
+    g = p.get("fy27_growth")
+    if label is None:
+        p["dd_cap"] = "capped"
+        return "보류", [f"DroneDeploy 기여분 미공시라 최대 보류(보고 기준 FY27 성장 {g:g}%, 인수 효과 포함 가능)", "25% 목표 유지"]
+    p["dd_cap"] = f"{label} {fmt(val)}"
+    if val is not None and val >= r["grow_up"]:
+        return "증액", why + [f"판정 기준 {label} {val:g}% >= {r['grow_up']:g}%"]
+    return "보류", [f"보고 기준 FY27 성장 {g:g}% 이지만 {label} {fmt(val)} < {r['grow_up']:g}%라 보류", "25% 목표 유지"]
+
+
+def judge_base(p: dict, fin_filings: list[str], cfg: dict) -> tuple[str, list[str]]:
     r = cfg["rules"]
     why = []
     g, om = p.get("fy27_growth"), p.get("om_target")
@@ -382,6 +419,7 @@ def compose(cfg: dict, verdict: str, why: list[str], p: dict, fin_filings: list[
             + (f"(표 계산 {p['q3_om_exact']:g}%)" if p.get("q3_om_exact") is not None else "")
             + f" [가이던스 {b['q3_guide_low_m']}~{b['q3_guide_high_m']}백만달러, {b['q3_guide_om']}]."
             + f" FY27 매출 가이던스 {p.get('fy27_rev') or '미기재'}, 성장 {gtxt}. FY27 non-GAAP 영업이익률 {fmt(p.get('fy27_om'))}, 25% 목표 {p.get('om_target')}."
+            + (f" 판정 기준: {p['dd_cap']}." if p.get("dd_cap") and p["dd_cap"] != "capped" else (" 판정 기준: 보고 기준(DroneDeploy 기여분 미공시로 최대 보류)." if p.get("dd_cap") == "capped" else ""))
             + f" 새 조달: {' / '.join(s[:90] for s in fin_all) if fin_all else '없음(기존 2031 만기 9.5억 달러 전환사채는 제외)'}.")
     pxt = f"현재 종가 {px:.2f}달러({pxd})." if px else "종가 조회 안 됨."
     lines = [
@@ -426,7 +464,10 @@ def send(dry: bool, title: str, msg: str, prio: int, kind: str = "port") -> None
 
 # ---------- selftest ----------
 
-def synth(growth: str | None = "growth of 14%", om27: str | None = "25%", extra: str = "", fy27_rev: bool = True) -> str:
+DD_ORG14 = "Excluding DroneDeploy, revenue grew 14% year-over-year. "
+
+
+def synth(growth: str | None = "growth of 14%", om27: str | None = "25%", extra: str = "", fy27_rev: bool = True, dd: str = DD_ORG14) -> str:
     fy27 = ""
     if growth is not None or om27 is not None:
         fy27 = "• Full Year 2027 Outlook: "
@@ -437,7 +478,7 @@ def synth(growth: str | None = "growth of 14%", om27: str | None = "25%", extra:
     return (
         "Procore Announces Third Quarter 2026 Financial Results CARPINTERIA, CA - November 3, 2026 - Procore today announced results. "
         "Third Quarter 2026 Financial Highlights: • Revenue was $386 million, an increase of 14% year-over-year. "
-        "• GAAP operating margin was 2% and non-GAAP operating margin was 20%. "
+        "• GAAP operating margin was 2% and non-GAAP operating margin was 20%. " + dd +
         "Fourth Quarter, Full Year, and FY '27 Outlook: • Fourth Quarter 2026 Outlook: ◦ Revenue is expected to be in the range of $400 million to $402 million. "
         "• Full Year 2026 Outlook: ◦ Revenue is expected to be in the range of $1,520 million to $1,522 million, representing year-over-year growth of 15%. "
         + fy27 + "A reconciliation of non-GAAP guidance measures is not available. " + extra +
@@ -515,6 +556,33 @@ def selftest() -> int:
     ok = bool(re.search(r"third-quarter-(fiscal-year-)?2026.*result|q3-2026.*result", "/press/procore-announces-third-quarter-2026-financial-results", re.I)) and not re.search(r"third-quarter-(fiscal-year-)?2026.*result|q3-2026.*result", "/press/procore-announces-timing-of-third-quarter-fiscal-year-2026-earnings-call", re.I)
     fails += not ok
     print("ok  " if ok else "FAIL", "press fallback link: results page yes, timing page no")
+    # DroneDeploy cap (approved 2026-10-26): undisclosed -> 증액 capped to 보류; disclosed -> 13% test on ex-DroneDeploy basis
+    p = case("cap: no DroneDeploy disclosure, FY27 14% -> 보류", synth(dd=""), "보류")
+    ok = p.get("dd_cap") == "capped"
+    fails += not ok
+    print("ok  " if ok else "FAIL", "cap flag", p.get("dd_cap"))
+    t, body, _ = compose(cfg, "보류", judge(p, [], cfg)[1], p, [], "test", 60.0, "11/03")
+    ok = "DroneDeploy 기여분 미공시라 최대 보류(보고 기준 FY27 성장 14%" in body
+    fails += not ok
+    print("ok  " if ok else "FAIL", "cap text in push:", body.split("근거: ")[1][:90])
+    p = case("disclosed FY27 ex-DroneDeploy 13.5% -> 증액", synth(dd="", extra="The FY27 outlook implies 2027 revenue growth excluding DroneDeploy of 13.5%."), "증액")
+    print("     basis:", p.get("dd_cap"))
+    case("disclosed Q3 organic 12% (FY27 reported 14%) -> 보류", synth(dd="Organic revenue growth was 12% year-over-year. "), "보류")
+    p = case("disclosed DroneDeploy revenue $9M -> computed organic 11.3% -> 보류", synth(dd="DroneDeploy contributed approximately $9 million of revenue in the quarter. "), "보류")
+    print("     basis:", p.get("dd_cap"))
+    case("disclosed DroneDeploy revenue $2M -> computed organic 13.3% -> 증액", synth(dd="DroneDeploy contributed approximately $2 million of revenue in the quarter. "), "증액")
+    case("청산 unaffected by cap (FY27 9%, no disclosure)", synth("growth of 9%", dd=""), "청산")
+    case("청산 unaffected by cap (new $600M convertible, organic 14%)", synth(extra="On November 3, 2026, Procore announced a proposed private offering of $600 million of Convertible Senior Notes due 2032."), "청산")
+    case("확인 필요 unaffected by cap (10.5%, no disclosure)", synth("growth of 10.5%", dd=""), "확인 필요")
+    case("확인 필요 unaffected by cap (no FY27 section)", synth(None, None, dd=""), "확인 필요")
+    case("보류 stays 보류 (12%, no disclosure)", synth("growth of 12%", dd=""), "보류")
+    case("purchase price sentence is not a contribution -> capped 보류", synth(dd="", extra="DroneDeploy added $845 million of goodwill and intangibles."), "보류")
+    bp = synth(dd="", extra="DroneDeploy is now part of Procore.")
+    bp = bp.replace("may cause actual results to differ;", "may cause actual results to differ; DroneDeploy contributed approximately $40 million of revenue and organic revenue growth was 20%, which could cause results to differ;")
+    p = case("boilerplate DroneDeploy figures are not disclosure -> capped 보류", bp, "보류")
+    ok = p.get("dd_rev") is None and p.get("organic_yoy") is None and p.get("dd_mentioned")
+    fails += not ok
+    print("ok  " if ok else "FAIL", "boilerplate: dd_rev", p.get("dd_rev"), "organic", p.get("organic_yoy"), "mentioned", p.get("dd_mentioned"))
     t, body, pr = compose(cfg, "보류", ["x"], parse(synth("growth of 12%"), cfg), [], "test", 55.0, "11/03")
     bad = any(ch in t + body for ch in "\u00b7\u2014")
     fails += bad
