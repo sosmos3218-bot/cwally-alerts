@@ -91,3 +91,24 @@ plan for both keys matched this diff. To restore: `git show <this PR merge>^:con
 |---|---|---|---|---|
 | fig | `[FIG]` | 2026-10-16 | Figma Monday status and new SEC filings (price zones 20/27 off since 2026-10-26); ends 2026-11-15 | covered by `[FIG-PX]` 22 / 16.6 / 28.4 zones, `[FIG-EARN]` 11/4 reminder and 11/5 checklist, `[FIG-Q3]` 11/5 summary |
 | ccrev | `[CCREV]` | 2026-09-17 | 091160 55→40% cut + covered call review when KOSPI held a 60-day box (range under 18%) for 45 days and 005930/000660 estimates fell 3%; no end date | condition far off (60-day range 29% on 2026-10-26), never sent in the 9/21~10/26 archive; 091160 levels stay in `[091160]` |
+
+## 2026-10-26 audit: samup, hynixup, hynixlad, lgcns folded into the plan-line engine (approved in chat 2026-10-26 18:22 KST, audit item 4)
+
+Every level moved into `extra_lines` of the 005930 engine configs (notify-only, own message in the engine wording,
+state in `state/<name>.json` `extra`, fired/armed state migrated so nothing re-fires). The plan `lines`
+(buy/trim/stop) stay authoritative; zone wording that suggests buying is dropped when the close is under the stop line.
+All four now run on the 19:00 k203780 slot from the Yahoo regular close (slot change noted below). Deleted: config,
+script, state, Run lines (`flow-alerts.yml` run_one + git add paths, `port-alerts.yml` morning/afternoon lines) and
+the `[SAMUP]` `[HYNIXUP]` `[HYNIXLAD]` `[LGCNS]` prefixes. No cron or cron-job.org job pointed at them.
+To restore: `git show <this PR merge>^:configs/<name>.json`.
+
+| name | prefix | old slot | levels | now in |
+|---|---|---|---|---|
+| samup | `[SAMUP]` | flow 15:40, Naver current price | 220,000 / 230,000 up, re-arm on any close below | 005930 `up220k` `up230k` (rearm_pct 0) |
+| hynixup | `[HYNIXUP]` | flow 15:40, Naver current price | 1,300,000 / 1,400,000 up, re-arm on any close below | 000660 `up1300k` `up1400k` (rearm_pct 0) |
+| hynixlad | `[HYNIXLAD]` | morning 09:00, previous Naver close | 1,450,000 ladder exhausted, 1,322,000 July low, +3% recovery messages; ends 2026-12-30 | 000660 `lad_exhaust` `lad_july` (rearm_pct 3, rearm_title, until 2026-12-30) |
+| lgcns | `[LGCNS]` | afternoon 15:20, Naver price | zones 60,000 / 80,000 / 90,000 (DEEP, SPLIT, NONEW, STOP), sends on zone change + Monday weekly; ends 2026-12-31 | 064400 `z60_*` `z80_*` `z90_*` (one pair per boundary, rearm_pct 0). The Monday weekly is dropped. |
+
+lgcnsq3 (`[LG]`, 3Q judgment until 11/16) is unchanged. d0chk was NOT folded into ssb0005d0 (see the PR): its price
+trigger needs Naver volume, which the `basic` endpoint no longer returns, so it never fired although the price is
+under 15,300, and it conflicts with ssb0005d0 BELOW_NOV. Left for a decision.
