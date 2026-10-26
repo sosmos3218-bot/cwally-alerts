@@ -19,7 +19,8 @@
   아니면 Gamma oneWeekPriceChange(폴리마켓 7일 변화, * 표시), 그것도 없으면 더 짧은 기준값(MM/DD 대비), 없으면 신규.
 정렬: 연준 고정 먼저, 나머지는 |변화| 큰 순, 같으면 1주 거래대금. 최대 max_items 개, 분류당 max_per_category 개(고정 항목은 분류 한도에 안 셈).
 
-Modes: auto (일요일 20:00 이후 또는 월요일 12:00 KST 전, 주 1회) | force (요일 무시, state 기록) |
+중복 묶음(dedupe_groups): 같은 사건의 다른 기한/창은 1주 거래대금이 가장 큰 이벤트 하나만. 분류별 max_items, min_event_volume_1wk 로 한도/거래대금 기준 개별 조정.
+Modes: auto (일요일 20:00 이후 또는 월요일 12:00 KST 전, 주 1회) | force (요일 무시, state 기록) | selftest (오프라인 점검) |
        dry (출력만, ntfy 없음, state 안 씀) | seed (현재 확률을 state 에 기준값으로 저장, ntfy 없음) |
        install (설치 확인 1회, cwally-port, state 안 씀)
 """
@@ -84,6 +85,21 @@ def fetch_events(cfg: dict) -> list[dict]:
                 out.append(ev)
         if len(data) < int(src.get("page_size", 100)):
             break
+    # 거래대금 상위 500 밖의 작은 거시 시장(CPI, 경기침체, 관세, 일본/한국)을 태그로 따로 가져옴
+    for slug in src.get("extra_tag_slugs") or []:
+        q = urllib.parse.urlencode({
+            "active": "true", "closed": "false", "order": src.get("order", "volume1wk"),
+            "ascending": "false", "limit": str(src.get("extra_limit", 30)), "tag_slug": slug,
+        })
+        try:
+            data = get_json(f"{src['gamma_events']}?{q}")
+        except Exception as exc:  # 보조 조회 실패는 본 목록에 영향 없음
+            print(f"polyinv extra tag {slug} fail: {type(exc).__name__}", file=sys.stderr)
+            continue
+        for ev in data if isinstance(data, list) else []:
+            if ev.get("id") not in seen:
+                seen.add(ev.get("id"))
+                out.append(ev)
     if not out:
         raise ValueError("events 0건")
     return out
@@ -249,10 +265,10 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
     lo, hi = float(th["drop_low"]), float(th["drop_high"])
     items, fed_ok, fed_settled, snapshot = [], [], [], {}
     for ev in events:
-        if (fnum(ev.get("volume1wk")) or 0) < th["min_event_volume_1wk"]:
-            continue
         cat = classify(ev, cfg)
         if not cat:
+            continue
+        if (fnum(ev.get("volume1wk")) or 0) < cat.get("min_event_volume_1wk", th["min_event_volume_1wk"]):
             continue
         fed = is_fed_event(ev, cat, cfg)
         allm = []
@@ -288,6 +304,7 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
             "link": cfg["source"]["event_link"] + str(ev.get("slug") or ""),
             "event_id": str(ev.get("id")), "market_id": str(m.get("id")),
             "title_en": ev.get("title") or "", "pinned": False, "settled_shown": False,
+            "group": dedupe_key(ev.get("title") or "", ko_title(ev.get("title") or "", cfg, cat), cfg),
             "decision": any(has_kw((ev.get("title") or "").lower(), k) for k in pin.get("decision_keywords", [])),
         }
         if fed:
@@ -303,17 +320,38 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
         pinned = [nxt]
     for it in pinned:
         it["pinned"] = True
+    items = dedupe_items(items)
     items.sort(key=lambda it: (-(abs(it["ch"]) if it["ch"] is not None else -1), -it["vol"]))
     picked, per_cat = list(pinned), {}
     for it in items:
         if len(picked) >= th["max_items"]:
             break
         k = it["cat"]["key"]
-        if per_cat.get(k, 0) >= th["max_per_category"]:
+        if per_cat.get(k, 0) >= int(it["cat"].get("max_items", th["max_per_category"])):
             continue
         per_cat[k] = per_cat.get(k, 0) + 1
         picked.append(it)
     return picked, snapshot
+
+
+def dedupe_key(title_en: str, title_ko: str, cfg: dict) -> str:
+    """같은 사건의 다른 기한/창(by Oct 31, by Dec 31 등)을 한 묶음으로. config dedupe_groups 먼저, 없으면 한글 제목에서 괄호 기한을 뺀 값."""
+    low = (title_en or "").lower()
+    for pat, key in cfg.get("dedupe_groups") or []:
+        if re.search(pat, low):
+            return key
+    return re.sub(r"\s*\([^)]*\)\s*$", "", title_ko).strip()
+
+
+def dedupe_items(items: list[dict]) -> list[dict]:
+    """묶음마다 1주 거래대금이 가장 큰 이벤트 하나만 남김 (얇은 기한 시장의 시간 감소를 변화로 보지 않게)."""
+    best: dict[str, dict] = {}
+    for it in items:
+        cur = best.get(it["group"])
+        if cur is None or it["vol"] > cur["vol"]:
+            best[it["group"]] = it
+    keep = {id(v) for v in best.values()}
+    return [it for it in items if id(it) in keep]
 
 
 def item_lines(i: int, it: dict) -> list[str]:
@@ -365,10 +403,17 @@ def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]
         "3) 지금 할 일: 크게 움직인 항목의 관련 자산 뉴스만 확인. 포지션 변경 없음.",
         "4) 나중에: 다음 일요일 21:00 KST 에 다시 비교. 같은 방향으로 2주 연속 움직이면 그때 관련 알림을 다시 봄.",
         "5) 익절/줄일 때: 적용 없음.",
-        f"6) 하지 말 것: 확률만 보고 사거나 팔지 말 것. 거래 적은 시장(1주 {fmt_vol(th['min_event_volume_1wk'])} 미만)과 "
+        f"6) 하지 말 것: 확률만 보고 사거나 팔지 말 것. 거래 적은 시장(1주 {fmt_vol(th['min_event_volume_1wk'])} 미만{low_floor_note(cfg)})과 "
         f"{th['drop_low']*100:.0f}% 이하 또는 {th['drop_high']*100:.0f}% 이상(사실상 결정)은 뺐음.",
     ]
     return title, split_parts(head, body_items, foot, int(th["message_max_bytes"]))
+
+
+def low_floor_note(cfg: dict) -> str:
+    low = [c for c in cfg["categories"] if "min_event_volume_1wk" in c]
+    if not low:
+        return ""
+    return f", {'/'.join(c['label'] for c in low)} 분류는 {fmt_vol(min(c['min_event_volume_1wk'] for c in low))} 미만"
 
 
 def split_parts(head: list[str], items: list[str], foot: list[str], limit: int) -> list[str]:
@@ -420,6 +465,61 @@ def install_body() -> str:
     ])
 
 
+def selftest(cfg: dict) -> int:
+    """오프라인 점검: 한글 제목, 분류, 차단, 중복 묶음, 분류 한도, 금지 문장부호."""
+    ok = True
+
+    def check(name, got, want):
+        nonlocal ok
+        if got != want:
+            ok = False
+            print(f"FAIL {name}: got {got!r} want {want!r}")
+
+    cat = {c["key"]: c for c in cfg["categories"]}
+
+    def ev(title, tags=()):
+        return {"title": title, "tags": [{"slug": t} for t in tags]}
+
+    def ck(e):
+        c = classify(e, cfg)
+        return c["key"] if c else None
+
+    check("ko xrp", ko_title("What price will XRP hit in October?", cfg, cat["crypto"]), "XRP 10월 도달 가격")
+    check("ko btc year", ko_title("What price will Bitcoin hit in 2026?", cfg, cat["crypto"]), "비트코인 2026년 도달 가격")
+    check("ko boj", ko_title("Bank of Japan Decision in October?", cfg, cat["asia"]), "일본은행 10월 금리 결정")
+    check("ko usdkrw", ko_title("Will USD/KRW hit __ in 2026?", cfg, cat["asia"]), "2026 원달러 환율 도달 구간")
+    check("ko fed", ko_title("Fed Decision in December?", cfg, cat["rates"]), "연준 12월 금리 결정")
+    check("deny diesel", ck(ev("US imports Russian diesel by...?", ["oil"])), None)
+    check("deny yemen daily", ck(ev("Saudi Arabia military action against Yemen on...?", ["geopolitics"])), None)
+    check("deny ukraine map", ck(ev("Will Russia capture all of Kupiansk by...?", ["russia-capture", "russia"])), None)
+    check("deny crypto weekly", ck(ev("Bitcoin above ___ on October 26?", ["bitcoin", "weekly"])), None)
+    check("deny foreign cpi", ck(ev("Argentina Monthly Inflation - October", ["inflation"])), None)
+    check("keep usdkrw", ck(ev("Will USD/KRW hit __ in 2026?", ["south-korea"])), "asia")
+    check("keep boj", ck(ev("Bank of Japan Decision in October?", ["japan", "boj"])), "asia")
+    check("keep core pce", ck(ev("Core PCE MoM - September 2026", ["inflation"])), "inflation")
+    check("keep hormuz", ck(ev("Strait of Hormuz traffic returns to normal by December 31?", ["hormuz"])), "commod")
+    check("cap crypto", int(cat["crypto"].get("max_items", 99)) <= 2, True)
+    k1 = dedupe_key("Strait of Hormuz traffic returns to normal by October 31?",
+                    ko_title("Strait of Hormuz traffic returns to normal by October 31?", cfg, cat["commod"]), cfg)
+    k2 = dedupe_key("Strait of Hormuz traffic returns to normal by December 31?",
+                    ko_title("Strait of Hormuz traffic returns to normal by December 31?", cfg, cat["commod"]), cfg)
+    check("dedupe hormuz windows", k1 == k2, True)
+    k3 = dedupe_key("Russia x Ukraine peace talks by...?", ko_title("Russia x Ukraine peace talks by...?", cfg, cat["geo"]), cfg)
+    k4 = dedupe_key("Russia x Ukraine any diplomatic meeting by...?",
+                    ko_title("Russia x Ukraine any diplomatic meeting by...?", cfg, cat["geo"]), cfg)
+    check("dedupe ru-ua talks", k3 == k4, True)
+    k5 = dedupe_key("What price will Bitcoin hit in October?", "", cfg)
+    k6 = dedupe_key("What price will Bitcoin hit in 2026?", "", cfg)
+    check("dedupe btc ladders", k5 == k6, True)
+    items = [{"group": "a", "vol": 1}, {"group": "a", "vol": 5}, {"group": "b", "vol": 2}]
+    check("dedupe keeps biggest", [it["vol"] for it in dedupe_items(items)], [5, 2])
+    blob = json.dumps(cfg, ensure_ascii=False) + Path(__file__).read_text(encoding="utf-8")
+    for ch in ("\u00b7", "\u2014"):
+        check(f"no forbidden char U+{ord(ch):04X}", ch in blob, False)
+    print("polyinv selftest " + ("OK" if ok else "FAILED"))
+    return 0 if ok else 1
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
@@ -439,6 +539,8 @@ def main() -> int:
         if state.get("weekly_sent") == wk:
             print(f"polyinv already sent for week {wk}")
             return 0
+    elif mode == "selftest":
+        return selftest(cfg)
     elif mode not in {"force", "dry", "seed"}:
         print(f"unknown mode {mode}")
         return 2
