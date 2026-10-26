@@ -1,0 +1,64 @@
+{
+  "name": "lgeswatch",
+  "title_prefix": "[LGES]",
+  "code": "373220",
+  "name_kr": "LG에너지솔루션",
+  "display": "LG에너지솔루션 가격 구간, 공시, 4분기 체크리스트",
+  "created_at": "2026-10-26T16:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 슬롯(KRX 거래일 19:00 KST, cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 부착. KRX 장 마감(15:30) 뒤 완료 종가만 사용, 데이터 거래일로 중복 방지. 공시는 실행마다 KIND 회사별 공시 목록을 보고 접수번호로 중복 방지. job=lgeswatch 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "market_close_kst": "15:40",
+  "price": {
+    "key": "buy330",
+    "op": "le",
+    "price": 330000,
+    "priority": 4,
+    "label": "매수 매력 구간 진입",
+    "note": "분석의 비중 확대(업그레이드) 가격 33만원대. 투자 논리가 그대로일 때만 유효: AMPC 제외 영업이익(3분기 3,391억원) 흑자 유지, 연간 ESS 수주 90GWh 근접 여부부터 확인."
+  },
+  "rearm_note": "구간에 들어갈 때 1번만 보냄. 종가가 330,000원 위로 올라오면 조용히 재무장(완충 없음). 첫 실행은 현재 종가로 상태만 초기화. [FIG-PX] 와 같은 방식.",
+  "filings": {
+    "source": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별 전체 공시 목록, 키 없음). DART OpenAPI 키(OPENDART) secret 은 이 저장소에 없음.",
+    "lookback_days": 14,
+    "rules": [
+      {"key": "inquiry", "re": "조회공시|풍문|해명|불성실공시", "label": "조회공시/불성실공시", "priority": 4},
+      {"key": "prelim", "re": "영업\\(잠정\\)실적", "label": "영업(잠정)실적", "priority": 4},
+      {"key": "embezzle", "re": "횡령|배임", "label": "횡령/배임", "priority": 5},
+      {"key": "contract", "re": "단일판매|공급계약", "label": "단일판매/공급계약 체결", "priority": 3},
+      {"key": "major", "re": "주요사항보고서", "label": "주요사항보고서", "priority": 4},
+      {"key": "periodic", "re": "분기보고서|반기보고서|사업보고서", "label": "분기/반기/사업보고서", "priority": 3}
+    ],
+    "note": "첫 실행은 그때까지 올라온 공시를 state 에 시드(알림 없음). 그 뒤 새 접수번호만 1번씩."
+  },
+  "q4": {
+    "window_start": "2027-01-01",
+    "window_end": "2027-02-28",
+    "checklist": "4분기 잠정실적 확인: AMPC 제외 영업이익 3,000억원 이상 유지 여부, 연간 ESS 수주 90GWh 근접 여부, AMPC 비중(3분기 약 55%) 변화, FEOC/AMPC 정책 변화. 충족 시 비중 확대 검토, 미달 시 비중 축소 검토.",
+    "note": "2027-01-01~02-28 에 영업(잠정)실적 공시가 새로 잡히면 체크리스트 1번(state q4_checklist_sent)."
+  },
+  "reference": {
+    "as_of": "2026-10-26",
+    "price_intraday": 376500,
+    "pbr": 3.94,
+    "q3_op_b": 7560,
+    "q3_ampc_b": 4169,
+    "q3_ex_ampc_op_b": 3391,
+    "high_52w": 527000,
+    "risk": "2026-10-13 거래소 조회공시 요구(전직 임원 횡령 의혹)",
+    "upgrade": "4분기 AMPC 제외 영업이익 3,000억원 이상 + 연간 ESS 수주 90GWh 근접, 또는 주가 33만원대",
+    "downgrade": "AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "https://m.stock.naver.com/api/stock/373220/price?pageSize=20&page=1",
+    "kind": "https://kind.krx.co.kr/disclosure/details.do",
+    "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}"
+  },
+  "valid_until": "2027-10-31",
+  "explain": "LG에너지솔루션(373220) 종가가 330,000원 이하로 새로 들어갈 때, 중요한 새 공시(조회공시, 잠정실적, 횡령/배임, 공급계약, 주요사항보고서, 정기보고서)가 올라올 때, 4분기 잠정실적이 나올 때 체크리스트를 보내는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "LGES 가격 구간과 공시 감시, 12개월(연장은 채팅 승인)"
+}

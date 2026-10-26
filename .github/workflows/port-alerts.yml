@@ -248,7 +248,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi, lgeswatch]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1172,6 +1172,22 @@ jobs:
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/064400_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/064400_monitor.py "$MODE" || rc=1
+          exit "$rc"
+      - name: Run LGES (lgeswatch 373220 close <= 330,000 zone, KIND filing watch, Q4 2026 prelim checklist; k203780 19:00 slot)
+        # approved in chat 2026-10-26. attached to the existing k203780 slot, no new cron. Dedupe: state/lgeswatch.json last_date + armed
+        # (re-arm when the close is back above 330,000), seen_acptno (KIND receipt numbers), q4_checklist_sent.
+        # job=k203780/lgeswatch dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'lgeswatch') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/lgeswatch_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/lgeswatch_monitor.py "$MODE" || rc=1
           exit "$rc"
       - name: Run KR-RATE (KTB 10y trigger, credit spread, MPC evening summary, core CPI; k203780 19:00 slot on KRX trading days)
         # approved in chat 2026-10-23 14:25 KST. job=krrate dispatch is always dry: no ntfy, no state.

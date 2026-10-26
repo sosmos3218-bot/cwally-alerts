@@ -1,0 +1,16 @@
+{
+  "price_fail_notified": false,
+  "initialized": true,
+  "armed": true,
+  "last_date": "2026-10-26",
+  "last_close": 374000.0,
+  "init_note": "initialized from 2026-10-26 close 374,000, no send",
+  "kind_fail_notified": false,
+  "seen_acptno": [
+    "20261014000003",
+    "20261014000616",
+    "20261016000820"
+  ],
+  "filings_seeded": true,
+  "updated_at": "2026-10-26T16:14:49+09:00"
+}
