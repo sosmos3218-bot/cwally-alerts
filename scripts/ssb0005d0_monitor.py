@@ -141,6 +141,9 @@ def zone_of(price: float | None, value: float | None, avg_value: float | None, c
 
 def write_state(prev: dict, **updates) -> None:
     prev.update(updates)
+    if "--dry-run" in sys.argv:  # 2026-10-26: a dry run never writes state
+        print("DRY RUN: state not written")
+        return
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(prev, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -282,7 +285,7 @@ def watch() -> tuple[int, str | None]:
         lines.append(f"조회 부분 실패: 시세 {price_err or '없음'} | 공시 {notice_err or '없음'}")
     msg = "\n".join(lines)
     print(msg)
-    # publish skipped (alert ended) -> keep zone and the fresh notice ids unrecorded (dry run keeps old behavior)
+    # publish skipped (alert ended) -> keep zone and the fresh notice ids unrecorded (dry run writes no state)
     ok = dry or publish("cwally-port", title, msg, 4 if zone == "TREND" or delay else 3)
     fresh_ids = {row["id"] for row in fresh}
     write_state(
@@ -315,6 +318,9 @@ def ck_publish(topic: str, title: str, message: str, priority: int) -> bool:
 
 def ck_write(whole: dict, prev: dict, **updates) -> None:
     prev.update(updates)
+    if "--dry-run" in sys.argv:  # 2026-10-26: a dry run never writes state (price_sent etc. stay as they were)
+        print("DRY RUN: checklist state not written")
+        return
     cur = load_json(STATE_PATH, {})  # the watch stage may have written the file in this run
     cur["checklist"] = prev
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -326,11 +332,42 @@ def ck_excluded(title: str, terms: list[str]) -> bool:
     return any(ck_compact(term) in text for term in terms)
 
 
-def is_q3_earn(title: str) -> bool:
-    text = ck_compact(title)
+def ck_quote(code: str, today: str) -> dict | None:
+    """Price and today's volume. Naver `basic` no longer returns volume (2026-10), so the polling endpoint
+    (accumulatedTradingVolumeRaw) is read first; `basic` stays the fallback. traded_today is used only when
+    no volume field exists at all: localTradedAt is today and trading is not halted."""
+    try:
+        raw = json.loads(http_get(f"https://polling.finance.naver.com/api/realtime/domestic/stock/{code}"))
+        row = (raw.get("datas") or [None])[0] or {}
+        price = num(row.get("closePriceRaw") or row.get("closePrice"))
+        if price is not None:
+            vol = num(row.get("accumulatedTradingVolumeRaw") or row.get("accumulatedTradingVolume"))
+            traded = str(row.get("localTradedAt") or "")[:10] == today and (row.get("tradeStopType") or {}).get("name", "TRADING") == "TRADING"
+            return {"price": price, "volume": vol, "traded_today": traded, "src": "polling"}
+    except Exception as exc:
+        print(f"polling quote failed, basic fallback: {exc}", file=sys.stderr)
+    row = quote(code)
+    if row is None:
+        return None
+    payload = json.loads(http_get(f"https://m.stock.naver.com/api/stock/{code}/basic"))
+    traded = str(payload.get("localTradedAt") or "")[:10] == today and (payload.get("tradeStopType") or {}).get("name", "TRADING") == "TRADING"
+    return {"price": row["price"], "volume": row.get("volume"), "traded_today": traded, "src": "basic"}
+
+
+def is_q3_earn(title: str, date: str = "", earn_from: str = "2026-10-01") -> bool:
+    """Q3 provisional earnings filing. The standard KRX title "연결재무제표 기준 영업(잠정)실적(공정공시)" names no quarter
+    (2026-10-26 fix: parentheses are ignored), so a title without a quarter token counts only when filed on or after
+    earn_from; the Q2 filing (2026-07-31, same title) and older ones never match. Another quarter named -> no."""
+    text = ck_compact(title).replace("(", "").replace(")", "")
     if "잠정실적" not in text and "영업실적" not in text:
         return False
-    return any(token in text for token in ("3분기", "7월", "8월", "9월", "2026.07", "2026.08", "2026.09"))
+    if "예고" in text:
+        return False
+    if any(token in text for token in ("3분기", "3Q", "2026.07", "2026.08", "2026.09")):
+        return True
+    if any(token in text for token in ("1분기", "2분기", "4분기", "반기", "1Q", "2Q", "4Q")):
+        return False
+    return bool(date) and date[:10] >= earn_from
 
 
 def is_lfp_start(title: str) -> bool:
@@ -376,8 +413,7 @@ def checklist(zone: str | None, dry: bool) -> int:
     price_err = None
     quote_row = None
     try:
-        quote_row = quote(cfg["code"])
-        quote_row = {"price": quote_row["price"], "volume": quote_row.get("volume") or 0} if quote_row else None
+        quote_row = ck_quote(cfg["code"], today)
     except Exception as exc:
         price_err = str(exc)
         print(f"price fetch failed: {exc}", file=sys.stderr)
@@ -390,7 +426,7 @@ def checklist(zone: str | None, dry: bool) -> int:
         for row in notices(cfg["earn_code"], 20):
             if ck_excluded(row["title"], terms):
                 continue
-            if is_q3_earn(row["title"]):
+            if is_q3_earn(row["title"], row.get("date") or "", cfg.get("earn_from", "2026-10-01")):
                 earn_rows.append(row)
         for row in notices(cfg["lfp_code"], 20):
             if ck_excluded(row["title"], terms):
@@ -422,19 +458,21 @@ def checklist(zone: str | None, dry: bool) -> int:
 
     sent = []
     price = quote_row["price"] if quote_row else None
-    volume = quote_row["volume"] if quote_row else 0
+    volume = quote_row["volume"] if quote_row else None
+    # traded today: volume > 0, or (no volume field at all) a quote stamped today while trading
+    traded = bool(quote_row) and ((volume is not None and volume > 0) or (volume is None and quote_row.get("traded_today")))
     if (
         not prev.get("price_sent")
         and today <= cfg.get("price_until", "2026-12-31")
         and price is not None
-        and volume > 0
+        and traded
         and price <= float(cfg["price_trigger"])
     ):
         title = "[0005D0] 15300 도달 | 주식 1% 매수"
         msg = ck_body(
             stamp,
             "0005D0 정규장 1차 매수 조건입니다. 전고체 뉴스가 아닙니다.",
-            f"체결가 {price:,.0f}원, 당일 거래량 있음. 기준 15,300원 이하.",
+            f"체결가 {price:,.0f}원, " + (f"당일 거래량 {volume:,.0f}주" if volume else "당일 체결 확인") + ". 기준 15,300원 이하.",
             "주식 포트폴리오의 1%만 매수. 갭으로 더 낮으면 그 가격에 1%.",
             "2차 1%는 에코프로비엠 3분기 영업이익 180억 원 이상과 삼성SDI 미국 각형 LFP 10월 양산 개시가 둘 다 확인되고 가격이 15,800원 이하일 때만.",
             "14,500원이 거래량과 깨이면 2차를 열지 말 것.",
@@ -503,7 +541,7 @@ def checklist(zone: str | None, dry: bool) -> int:
         notice_err=notice_err,
     )
     if not sent:
-        print(f"no checklist hit; silent price={price} volume={volume} earn={len(earn_rows)} lfp={len(lfp_rows)}")
+        print(f"no checklist hit; silent price={price} volume={volume} traded={traded} earn={len(earn_rows)} lfp={len(lfp_rows)}")
     return 0
 
 

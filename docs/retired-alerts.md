@@ -128,6 +128,13 @@ has not fired although the price is under 15,300; fixing that would send once at
 |---|---|---|---|---|
 | d0chk | `[0005D0]` | 2026-10-06 | 09:00 morning + 15:20 afternoon | ssb0005d0 `checklist()` (15:20) |
 
+Follow-up 2026-10-26 22:40 KST (approved in chat): the price item reads volume from Naver's polling endpoint
+(`accumulatedTradingVolumeRaw`, `basic` stays the fallback; with no volume field at all, a quote stamped today while
+trading counts), so it can fire; expected once at the 10/27 15:20 slot (price 14,180, zone BELOW_NOV, so the title is
+"1.5만 미만이라 1% 매수 보류"), then `price_sent` stops it. The earnings item also matches the standard KRX title
+"연결재무제표 기준 영업(잠정)실적(공정공시)" (parentheses ignored); because that title names no quarter, it counts only when
+filed on or after `earn_from` (2026-10-01), so the 2026-07-31 Q2 filing never matches. `--dry-run` no longer writes state.
+
 ## 2026-10-26 audit: KOSPI ladder (approved in chat 2026-10-26 18:22 KST, audit item 7)
 
 kosdown `[KOSDOWN]`, kosup `[KOSUP]`, kosbrk `[KOSBRK]` and kos5500 `[KOS5500]` could each send a separate message
