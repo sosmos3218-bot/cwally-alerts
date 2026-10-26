@@ -1,0 +1,37 @@
+{
+  "name": "COUNCIL",
+  "title_prefix": "[COUNCIL]",
+  "display": "3개 AI 위원회(매크로, 펀더멘털, 레드팀) 주간 합의",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "21:00",
+  "schedule_note": "새 cron 없음. 기존 portlight 일요일 21:00 KST 슬롯(cron-job.org 8723329 + GitHub 백업 0 12 * * 0)의 portlight 분기에 붙음. 같은 주 재발송은 state/council.json weekly_sent_week(ISO 주)로 막고, 월요일에 늦게 오면 not_sunday로 조용히 끝남.",
+  "alert_policy": "sunday_weekly",
+  "input_file": "state/council_input.json",
+  "input_note": "매 실행마다 Yahoo, ECOS(실패 시 Naver), configs/port.json 에서 자동으로 채운다. 사람이 고치는 칸은 manual(stops 손절선, extra_holdings, notes)뿐이고 수집이 덮어쓰지 않는다.",
+  "roles": {
+    "macro": {"provider": "gemini", "model": "gemini-4-argon", "weight": 1.0, "thinking_level": "medium", "max_tokens": 8000, "timeout_sec": 100},
+    "fundamental": {"provider": "anthropic", "model": "claude-opus-5-5", "weight": 1.0, "max_tokens": 8000, "timeout_sec": 100},
+    "redteam": {"provider": "openai", "model": "gpt-6.1-sol", "weight": 1.0, "reasoning_effort": "medium", "max_tokens": 8000, "timeout_sec": 100}
+  },
+  "aggregate": {
+    "expand_at": 0.75,
+    "reduce_at": -0.75,
+    "conflict_spread": 3,
+    "veto_min_confidence": 0.6,
+    "min_agree": 2,
+    "min_responses": 2,
+    "bad_key_penalty": 0.15
+  },
+  "limits": {
+    "max_single_total_pct": 15,
+    "max_top3_total_pct": 40,
+    "cash_floor_pct": 10,
+    "note": "초안 값(2026-10-26). 총자산 대비 %. 코드가 직접 판정하고 LLM보다 앞선다. 손절선은 state/council_input.json manual.stops 에 {\"000660\": 가격}으로 적는다. 비어 있으면 손절 판정은 하지 않는다."
+  },
+  "max_input_age_days": 3,
+  "max_price_age_days": 5,
+  "message_max_bytes": 3700,
+  "ends_kst": "2027-04-30 23:59",
+  "ends_note": "2027-04-30 이후 자동 종료. 연장은 이 값을 고친다"
+}
