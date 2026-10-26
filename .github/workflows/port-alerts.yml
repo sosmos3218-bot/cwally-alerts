@@ -237,6 +237,9 @@ on:
     - cron: "40 7 16 11 *"
     # cash30 oneshot_kst (KST→UTC): 2026-11-06 08:40. 남은 30% 현금 배분 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "40 23 5 11 *"
+    # secdiv oneshot_kst (KST->UTC): 2026-10-29 10:00, 2026-10-30 10:00. 삼성전자 3분기 배당 공시 추가 확인 (approved in chat 2026-10-26; GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "0 1 29 10 *"
+    - cron: "0 1 30 10 *"
     # k203780 daily KRX trading days 19:00 KST (after Mirae daily NAV). repeating cron approved 2026-10-22, moved from 0 9 to 0 10 (approved 2026-10-22 18:29 KST). GitHub backup; on-time = cron-job.org job 8698629
     - cron: "0 10 * * 1-5"
     # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
@@ -436,6 +439,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             elif printf '%s\n' "50 4 5 11 *" "12 7 5 11 *" "12 0 6 11 *" "40 7 16 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=oneshot
             elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
+            elif printf '%s\n' "0 1 29 10 *" "0 1 30 10 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=secdiv
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
             else

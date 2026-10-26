@@ -10,7 +10,7 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "approved": "2026-10-26 chat (사용자 요청: 3분기 배당 결정 공시 1회 알림)",
-  "schedule_kst": "평일 09:00, 15:20, 19:00 (기존 morning, afternoon, k203780 슬롯에 부착), 2026-10-27 ~ 2026-11-13",
+  "schedule_kst": "평일 09:00, 15:20, 19:00 (기존 morning, afternoon, k203780 슬롯에 부착), 2026-10-27 ~ 2026-11-13. 추가 one-shot 10/29 10:00, 10/30 10:00",
   "schedule_note": "새 cron 없음. 기존 세 슬롯에서 KIND 공시 목록을 본다. 삼성전자 분기배당 결정은 보통 실적 발표날 아침(2026-07-30 09:30, 04-30 08:53, 01-29 07:32 KIND 접수)이라 09:00 슬롯이 놓치면 15:20 에 잡힌다. 더 촘촘한 확인(예: 실적 발표 예상일 10:00 one-shot)은 선택지로만 남김.",
   "year_guard": 2026,
   "since": "2026-10-01",
@@ -24,7 +24,16 @@
     "source": "대신증권 3분기 DPS 추정(보통주)",
     "full_year_2026": 13014,
     "full_year_source": "대신증권 2026년 연간 DPS 추정",
-    "paid_2026": [{"q": "1분기", "dps": 372}, {"q": "2분기", "dps": 374}]
+    "paid_2026": [
+      {
+        "q": "1분기",
+        "dps": 372
+      },
+      {
+        "q": "2분기",
+        "dps": 374
+      }
+    ]
   },
   "context": "2026-08-21 이사회: 2026년 주주환원 약 90조~110조원, 3분기에 정규배당 포함 약 30조원 배당, 나머지는 2027년 1월 이사회에서 결정. 3분기 배당락일 9/29, 기준일 9/30.",
   "sources": {
@@ -34,7 +43,21 @@
     "price": "https://m.stock.naver.com/api/stock/005930/price (최근 종가)",
     "dart_api_note": "DART OpenAPI 키(secret) 없음. 키 없는 KIND/네이버/DART 공시검색만 씀."
   },
-  "selfcheck": {"since": "2026-07-01", "until": "2026-07-31", "record_date": "2026-06-30", "expect_common": 374, "expect_pref": 374, "expect_total": 2455894601644, "expect_pay": "2026-08-28"},
+  "selfcheck": {
+    "since": "2026-07-01",
+    "until": "2026-07-31",
+    "record_date": "2026-06-30",
+    "expect_common": 374,
+    "expect_pref": 374,
+    "expect_total": 2455894601644,
+    "expect_pay": "2026-08-28"
+  },
   "ends_kst": "2026-11-13 23:59",
-  "ends_note": "3분기 배당 공시가 나오면 1번 보내고 끝(정정공시는 1번 더), 없으면 11/13 19:00 마지막 확인"
+  "ends_note": "3분기 배당 공시가 나오면 1번 보내고 끝(정정공시는 1번 더), 없으면 11/13 19:00 마지막 확인",
+  "oneshot_kst": [
+    "2026-10-29 10:00",
+    "2026-10-30 10:00"
+  ],
+  "oneshot_note": "2026-10-26 채팅 승인: \"10/29와 10/30 10:00에 삼성전자 배당 공시 확인을 한 번씩 추가해 줘.\" 반복 아님. 정시는 cron-job.org one-shot 잡(job=oneshot, picker 가 secdiv_monitor.py auto 실행), 늦은 백업은 GitHub cron 0 1 29 10 * / 0 1 30 10 *. 같은 state/secdiv.json 을 써서 10:00 에 보냈으면 15:20 에 다시 안 보냄.",
+  "oneshot_approved": "2026-10-26"
 }
