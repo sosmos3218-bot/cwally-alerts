@@ -109,6 +109,21 @@ To restore: `git show <this PR merge>^:configs/<name>.json`.
 | hynixlad | `[HYNIXLAD]` | morning 09:00, previous Naver close | 1,450,000 ladder exhausted, 1,322,000 July low, +3% recovery messages; ends 2026-12-30 | 000660 `lad_exhaust` `lad_july` (rearm_pct 3, rearm_title, until 2026-12-30) |
 | lgcns | `[LGCNS]` | afternoon 15:20, Naver price | zones 60,000 / 80,000 / 90,000 (DEEP, SPLIT, NONEW, STOP), sends on zone change + Monday weekly; ends 2026-12-31 | 064400 `z60_*` `z80_*` `z90_*` (one pair per boundary, rearm_pct 0). The Monday weekly is dropped. |
 
-lgcnsq3 (`[LG]`, 3Q judgment until 11/16) is unchanged. d0chk was NOT folded into ssb0005d0 (see the PR): its price
+lgcnsq3 (`[LG]`, 3Q judgment until 11/16) is unchanged. d0chk was not folded in this PR (done in the next one, below): its price
 trigger needs Naver volume, which the `basic` endpoint no longer returns, so it never fired although the price is
 under 15,300, and it conflicts with ssb0005d0 BELOW_NOV. Left for a decision.
+
+## 2026-10-26 audit: d0chk folded into ssb0005d0 (approved in chat 2026-10-26 18:22 KST, audit item 5)
+
+Both were `[0005D0]` (same ETF). The d0chk 1% checklist (price <= 15,300 with volume, 247540 Q3 earnings filing,
+006400 US LFP start; each once) is now the `checklist()` stage of `scripts/ssb0005d0_monitor.py`, run right after the
+condition watch on the 15:20 afternoon slot. Config moved to `configs/ssb0005d0.json` `"checklist"`, state to
+`state/ssb0005d0.json` `"checklist"` (values copied: price_sent, earn_sent, lfp_sent all false). Same triggers, texts
+and once-only flags. Changes: the 09:00 morning check is dropped (15:20 only); when the watch zone is under 15,000
+(TREND/BELOW/BELOW_NOV) the price item says "1% 매수 보류" instead of "주식 1% 매수" (no buy advice next to the
+watch's 추가매수 보류). Known, unchanged: Naver `basic` returns no volume field, so the price item (needs volume > 0)
+has not fired although the price is under 15,300; fixing that would send once at once, so it is left for a decision.
+
+| name | prefix | added | old slots | now in |
+|---|---|---|---|---|
+| d0chk | `[0005D0]` | 2026-10-06 | 09:00 morning + 15:20 afternoon | ssb0005d0 `checklist()` (15:20) |

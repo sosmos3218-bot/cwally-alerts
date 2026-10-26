@@ -664,7 +664,7 @@ jobs:
             python scripts/ews_monitor.py auto
             python scripts/vtrspg_monitor.py auto
             python scripts/oklo_monitor.py auto
-            python scripts/d0chk_monitor.py
+            # d0chk folded into ssb0005d0 (15:20 afternoon) on 2026-10-26; the 09:00 check is dropped
             python scripts/asml_monitor.py slot
             python scripts/samg26_monitor.py auto
             python scripts/peptron_monitor.py auto
@@ -779,7 +779,6 @@ jobs:
             python scripts/dkq3_monitor.py auto
             python scripts/hsteelq3_monitor.py auto
             python scripts/genpact_monitor.py auto
-            python scripts/d0chk_monitor.py
           fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ]; then
             python scripts/464310_monitor.py auto

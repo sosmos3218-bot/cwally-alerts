@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""0005D0 condition watch. Weekday 15:20 KST only. Silent unless a condition changes."""
+"""0005D0 condition watch + 1% checklist (d0chk folded in 2026-10-26). Weekday 15:20 KST only.
+
+watch(): zone and filing changes, silent otherwise. checklist(): the old d0chk three one-time items (price <= 15,300
+with volume, 247540 Q3 earnings filing, 006400 US LFP start), same rules and state values, config "checklist",
+state "checklist". The old 09:00 check is dropped (15:20 only)."""
 from __future__ import annotations
 
 import json
@@ -82,8 +86,8 @@ def history(symbol: str) -> list[dict]:
     return out
 
 
-def notices(code: str) -> list[dict]:
-    url = f"https://stock.naver.com/api/domestic/detail/notice?itemCode={code}&startIdx=0&pageSize=15"
+def notices(code: str, size: int = 15) -> list[dict]:
+    url = f"https://stock.naver.com/api/domestic/detail/notice?itemCode={code}&startIdx=0&pageSize={size}"
     raw = json.loads(http_get(url))
     rows = raw if isinstance(raw, list) else raw.get("result") or raw.get("list") or []
     items = []
@@ -141,7 +145,7 @@ def write_state(prev: dict, **updates) -> None:
     STATE_PATH.write_text(json.dumps(prev, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def watch() -> tuple[int, str | None]:
     dry = "--dry-run" in sys.argv
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
@@ -149,7 +153,7 @@ def main() -> int:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     if now.year != int(cfg.get("year_guard") or 2026) or today > cfg.get("valid_until", "2026-12-31"):
         print("year guard or expired; silent")
-        return 0
+        return 0, None
 
     prev = load_json(
         STATE_PATH,
@@ -204,7 +208,7 @@ def main() -> int:
                 4,
             )
         write_state(prev, updated_at=stamp, last_fail_date=today, last_action="DATA_FAIL", price_err=price_err, notice_err=notice_err)
-        return 1
+        return 1, prev.get("zone")
 
     price = quote_row["price"] if quote_row else None
     value = quote_row.get("value") if quote_row else None
@@ -238,7 +242,7 @@ def main() -> int:
             price_err=price_err,
             notice_err=notice_err,
         )
-        return 0
+        return 0, (zone if price is not None else prev_zone)
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     avg_txt = f"{avg_value:,.0f}원" if avg_value else "확인 불가"
@@ -252,22 +256,22 @@ def main() -> int:
         action = "15,000원 미만. 대금 위축은 함께 확인되지 않아 추세 훼손으로 보지 않음. 추가매수 보류."
         title = "[0005D0] 1.5만 미만 | 추가매수 보류"
     elif delay:
-        action = "양산·일정 지연 키워드 공시. 원문 확인 전 비중 상향 금지."
+        action = "양산, 일정 지연 키워드 공시. 원문 확인 전 비중 상향 금지."
         title = "[0005D0] 일정 지연 공시 | 비중 상향 보류"
     elif earn:
         action = "소재 잠정실적 공시. 하향 여부는 원문 확인 전 판단 금지. 비중 줄일 점검."
         title = "[0005D0] 소재 실적 공시 | 원문 확인"
     else:
-        action = "샘플·양산 확정 키워드 공시. 원문에 고객 채택이 있으면 판단을 다시 엽니다."
+        action = "샘플, 양산 확정 키워드 공시. 원문에 고객 채택이 있으면 판단을 다시 엽니다."
         title = "[0005D0] 샘플 공시 | 원문 확인"
     lines = [
         f"{stamp} | 0005D0 조건 감시",
         "이게 뭐 알림: 전고체 ETF 판단 변경 조건입니다. 매수 신호가 아닙니다.",
         f"지금 상태: {px} | 당일 대금 {val_txt} | 20일 평균 대금 {avg_txt} | 구간 {zone}",
         f"지금 할 일: {action}",
-        "나중에: 삼성SDI·LG에너지솔루션 고객 샘플 채택 또는 양산 일정 확정 공시가 있으면 판단을 다시 엽니다.",
+        "나중에: 삼성SDI, LG에너지솔루션 고객 샘플 채택 또는 양산 일정 확정 공시가 있으면 판단을 다시 엽니다.",
         "익절/줄일 때: 15,000원 미만과 대금 위축이 같이 나오면 추가매수 보류. 소재 실적 하향 공시면 비중 줄일 점검.",
-        "하지 말 것: 키워드를 확정 일정으로 보기. 신용·미수. 15:20 가격을 확정 종가로 보기. MOU와 목표주가는 조건이 아님.",
+        "하지 말 것: 키워드를 확정 일정으로 보기. 신용, 미수. 15:20 가격을 확정 종가로 보기. MOU와 목표주가는 조건이 아님.",
     ]
     if fresh:
         lines.append("")
@@ -295,7 +299,220 @@ def main() -> int:
         price_err=price_err,
         notice_err=notice_err,
     )
+    return 0, (zone if price is not None else prev_zone)
+
+
+
+# ---------- checklist (folded in from d0chk on 2026-10-26; config "checklist", state "checklist") ----------
+def ck_compact(text: str) -> str:
+    return compact(text).upper()
+
+
+def ck_publish(topic: str, title: str, message: str, priority: int) -> bool:
+    ntfy_util.publish(topic, title, message, priority, ["chart_with_upwards_trend"], "https://ntfy.sh", config_name="ssb0005d0")
+    return bool(ntfy_util.LAST_PUBLISH.get("sent"))
+
+
+def ck_write(whole: dict, prev: dict, **updates) -> None:
+    prev.update(updates)
+    cur = load_json(STATE_PATH, {})  # the watch stage may have written the file in this run
+    cur["checklist"] = prev
+    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STATE_PATH.write_text(json.dumps(cur, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def ck_excluded(title: str, terms: list[str]) -> bool:
+    text = ck_compact(title)
+    return any(ck_compact(term) in text for term in terms)
+
+
+def is_q3_earn(title: str) -> bool:
+    text = ck_compact(title)
+    if "잠정실적" not in text and "영업실적" not in text:
+        return False
+    return any(token in text for token in ("3분기", "7월", "8월", "9월", "2026.07", "2026.08", "2026.09"))
+
+
+def is_lfp_start(title: str) -> bool:
+    text = ck_compact(title)
+    if "LFP" not in text:
+        return False
+    start = any(token in text for token in ("양산개시", "생산개시", "본격생산", "양산시작", "양산돌입"))
+    place = any(token in text for token in ("미국", "인디애나", "STARPLUS", "스텔란티스", "SPE", "합작"))
+    return start and place
+
+
+def ck_body(stamp: str, what: str, status: str, now_do: str, later: str, cut: str, dont: str) -> str:
+    return "\n".join([
+        f"{stamp} | 0005D0 체크리스트",
+        f"이게 뭐 알림: {what}",
+        f"지금 결과/상태: {status}",
+        f"지금 할 일: {now_do}",
+        f"나중에: {later}",
+        f"익절/줄일 때: {cut}",
+        f"하지 말 것: {dont}",
+    ])
+
+
+def checklist(zone: str | None, dry: bool) -> int:
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))["checklist"]
+    now = datetime.now(KST)
+    today = now.strftime("%Y-%m-%d")
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    if now.year != int(cfg.get("year_guard") or 2026) or today > cfg.get("valid_until", "2026-12-31"):
+        print("year guard or expired; silent")
+        return 0
+    if now.weekday() >= 5:
+        print("weekend; silent")
+        return 0
+
+    whole = load_json(STATE_PATH, {})
+    prev = {"price_sent": False, "earn_sent": False, "lfp_sent": False, "last_fail_date": None}
+    prev.update(whole.get("checklist") or {})
+    if prev.get("price_sent") and prev.get("earn_sent") and prev.get("lfp_sent"):
+        print("all three already sent; silent")
+        return 0
+
+    price_err = None
+    quote_row = None
+    try:
+        quote_row = quote(cfg["code"])
+        quote_row = {"price": quote_row["price"], "volume": quote_row.get("volume") or 0} if quote_row else None
+    except Exception as exc:
+        price_err = str(exc)
+        print(f"price fetch failed: {exc}", file=sys.stderr)
+
+    notice_err = None
+    earn_rows: list[dict] = []
+    lfp_rows: list[dict] = []
+    try:
+        terms = cfg.get("exclude_terms") or []
+        for row in notices(cfg["earn_code"], 20):
+            if ck_excluded(row["title"], terms):
+                continue
+            if is_q3_earn(row["title"]):
+                earn_rows.append(row)
+        for row in notices(cfg["lfp_code"], 20):
+            if ck_excluded(row["title"], terms):
+                continue
+            if is_lfp_start(row["title"]):
+                lfp_rows.append(row)
+    except Exception as exc:
+        notice_err = str(exc)
+        print(f"notice fetch failed: {exc}", file=sys.stderr)
+
+    if quote_row is None and notice_err:
+        if prev.get("last_fail_date") != today and not dry:
+            ck_publish(
+                "cwally-ops",
+                "[0005D0] 조회 실패 | 재실행 필요",
+                ck_body(
+                    stamp,
+                    "체크리스트 조회가 시세와 공시 둘 다 실패했습니다. 조건 미충족이 아닙니다.",
+                    f"시세 오류 {price_err} | 공시 오류 {notice_err}",
+                    "다음 평일 15:20 재실행을 기다립니다.",
+                    "한 쪽만 되면 그 조건만 다시 봅니다.",
+                    "해당 없음.",
+                    "실패를 관망으로 보지 말 것.",
+                ),
+                4,
+            )
+        ck_write(whole, prev, updated_at=stamp, last_fail_date=today, last_action="DATA_FAIL", price_err=price_err, notice_err=notice_err)
+        return 1
+
+    sent = []
+    price = quote_row["price"] if quote_row else None
+    volume = quote_row["volume"] if quote_row else 0
+    if (
+        not prev.get("price_sent")
+        and today <= cfg.get("price_until", "2026-12-31")
+        and price is not None
+        and volume > 0
+        and price <= float(cfg["price_trigger"])
+    ):
+        title = "[0005D0] 15300 도달 | 주식 1% 매수"
+        msg = ck_body(
+            stamp,
+            "0005D0 정규장 1차 매수 조건입니다. 전고체 뉴스가 아닙니다.",
+            f"체결가 {price:,.0f}원, 당일 거래량 있음. 기준 15,300원 이하.",
+            "주식 포트폴리오의 1%만 매수. 갭으로 더 낮으면 그 가격에 1%.",
+            "2차 1%는 에코프로비엠 3분기 영업이익 180억 원 이상과 삼성SDI 미국 각형 LFP 10월 양산 개시가 둘 다 확인되고 가격이 15,800원 이하일 때만.",
+            "14,500원이 거래량과 깨이면 2차를 열지 말 것.",
+            "17,000원 추격. 신용, 미수. 전고체 MOU나 목표주가로 2차를 대체.",
+        )
+        if zone in {"TREND", "BELOW", "BELOW_NOV"}:  # watch says below 15,000: the buy line must not stand alone
+            title = "[0005D0] 15300 도달 | 1.5만 미만이라 1% 매수 보류"
+            msg = msg.replace("지금 할 일: 주식 포트폴리오의 1%만 매수. 갭으로 더 낮으면 그 가격에 1%.",
+                              "지금 할 일: 15,000원 미만이라 같은 종목 조건 감시가 추가매수 보류 구간입니다. 1% 매수는 보류하고 15,000원 위 회복을 먼저 확인.")
+        print(msg)
+        skipped = not dry and not ck_publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["price_sent"] = True
+            prev["price_sent_at"] = stamp
+            sent.append("price")
+
+    if not prev.get("earn_sent") and today <= cfg.get("earn_until", "2026-11-15") and earn_rows:
+        row = earn_rows[0]
+        title = "[0005D0] 에코프로 3분기 공시 | 180억 확인"
+        msg = ck_body(
+            stamp,
+            "에코프로비엠 3분기 잠정실적 공시입니다. 2차 1% 조건 A입니다.",
+            f"{row['date']} {row['title']}",
+            "연결 영업이익이 180억 원 이상이면 조건 A 통과. 미만이면 2차 취소, 1차만 유지.",
+            "조건 B인 삼성SDI 미국 각형 LFP 10월 양산 개시가 같이 통과되고 가격이 15,800원 이하일 때만 추가 1%.",
+            "180억 원 미만이면 추가 없음.",
+            "공시 제목만 보고 통과 처리. MOU와 목표주가는 조건이 아님.",
+        )
+        print(msg)
+        skipped = not dry and not ck_publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["earn_sent"] = True
+            prev["earn_sent_at"] = stamp
+            prev["earn_title"] = row["title"]
+            sent.append("earn")
+
+    if not prev.get("lfp_sent") and today <= cfg.get("lfp_until", "2026-10-31") and lfp_rows:
+        row = lfp_rows[0]
+        title = "[0005D0] SDI LFP 양산 | 조건 B 통과"
+        msg = ck_body(
+            stamp,
+            "삼성SDI 미국 각형 LFP 양산 개시 발표입니다. 2차 1% 조건 B입니다.",
+            f"{row['date']} {row['title']}",
+            "회사 보도자료 또는 공시에 개시일이 있으면 조건 B 통과. 증권사 추정은 통과가 아님.",
+            "조건 A인 에코프로비엠 3분기 영업이익 180억 원 이상과 가격 15,800원 이하가 같이 있을 때만 추가 1%.",
+            "10월 31일까지 회사 확인이 없으면 2차 취소.",
+            "UL 화재 시험, 원통형 LFP 공개, 전고체 MOU를 양산 개시로 보지 말 것.",
+        )
+        print(msg)
+        skipped = not dry and not ck_publish("cwally-port", title, msg, 4)  # ended -> do not record as sent
+        if not skipped:
+            prev["lfp_sent"] = True
+            prev["lfp_sent_at"] = stamp
+            prev["lfp_title"] = row["title"]
+            sent.append("lfp")
+
+    ck_write(
+        whole,
+        prev,
+        updated_at=stamp,
+        last_price=price,
+        last_volume=volume,
+        last_fail_date=prev.get("last_fail_date"),
+        last_action=",".join(sent) if sent else "WATCH",
+        price_err=price_err,
+        notice_err=notice_err,
+    )
+    if not sent:
+        print(f"no checklist hit; silent price={price} volume={volume} earn={len(earn_rows)} lfp={len(lfp_rows)}")
     return 0
+
+
+
+def main() -> int:
+    """Condition watch first, then the 1% checklist (one script, one 15:20 run)."""
+    rc, zone = watch()
+    rc2 = checklist(zone, "--dry-run" in sys.argv)
+    return rc or rc2
 
 
 if __name__ == "__main__":
