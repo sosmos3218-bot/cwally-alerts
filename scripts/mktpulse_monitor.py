@@ -201,6 +201,7 @@ def research_hits(cfg: dict, state: dict, now: datetime, log: list[str]) -> list
     muse_re, meta_re = re.compile(m["muse_re"]), re.compile(m["meta_re"], re.I)
     since = (now - timedelta(days=int(m["research_days"]))).strftime("%Y-%m-%d")
     checked = state.get("research_checked") or {}
+    seen = state.get("seen") or {}
     cands = []
     for kind in ("industry", "company"):
         for page in range(1, int(m["research_pages"]) + 1):
@@ -212,7 +213,7 @@ def research_hits(cfg: dict, state: dict, now: datetime, log: list[str]) -> list
                 if kind == "industry" and r.get("category") not in m["research_categories"] and not muse_re.search(str(r.get("title"))):
                     continue
                 key = f"r:{kind}:{r.get('researchId')}"
-                if key in checked:
+                if key in checked or key in seen:
                     continue
                 cands.append((kind, key, r))
     hits = []
@@ -225,13 +226,18 @@ def research_hits(cfg: dict, state: dict, now: datetime, log: list[str]) -> list
         text = sanitize(re.sub(r"<[^>]+>", " ", str(d.get("content") or "")))
         title = sanitize(str(r.get("title") or ""))
         blob = title + " " + text
-        checked[key] = now.strftime("%Y-%m-%d")
         mm = muse_re.search(blob)
+        # Only non-hits go to research_checked. A hit stays unchecked so that, if the max_items cap
+        # leaves it unshown, the next run returns it again; once shown it is in `seen` (skipped above).
+        # It drops out by itself when its writeDate leaves research_days.
+        if not (mm and meta_re.search(blob)):
+            checked[key] = now.strftime("%Y-%m-%d")
         if mm and meta_re.search(blob):
             i = mm.start() - len(title) - 1  # offset inside text; <0 = the hit is in the title
             snippet = text[max(0, i - 40): i + 70].strip() if i >= 0 else ""
             hits.append({"key": key, "kind": "리포트", "title": title, "who": str(r.get("brokerName") or ""),
-                         "date": str(r.get("writeDate") or "")[5:].replace("-", "/"), "snippet": sanitize(snippet),
+                         "date": str(r.get("writeDate") or "")[5:].replace("-", "/"), "sort_at": str(r.get("writeDate") or "")[:10],
+                         "snippet": sanitize(snippet),
                          "url": f"https://m.stock.naver.com/research/{kind}/{r['researchId']}"})
         time.sleep(0.1)
     state["research_checked"] = checked
@@ -277,13 +283,41 @@ def news_hits(cfg: dict, now: datetime, log: list[str]) -> list[dict]:
                 continue
             seen_local.add(h)
             out.append({"key": f"n:{h}", "guid": f"g:{(guid.group(1) if guid else h)[:80]}", "kind": "뉴스",
-                        "title": title, "who": source, "date": when.strftime("%m/%d %H:%M") if when else "", "snippet": ""})
+                        "title": title, "who": source, "date": when.strftime("%m/%d %H:%M") if when else "",
+                        "sort_at": when.strftime("%Y-%m-%d %H:%M") if when else "", "snippet": ""})
     return out
 
 
 # ---------------------------------------------------------------- message
 def fmt_flow(f: dict) -> str:
     return ", ".join(f"{k} {signed(v, '억')}" for k, v in f.items())
+
+
+def pick_muse(items: list[dict], seen: dict, max_items: int) -> tuple[list[dict], list[dict]]:
+    """(new, shown): unseen items, reports first, newest first within kind; shown = first max_items."""
+    new = [i for i in items if i["key"] not in seen and i.get("guid", "") not in seen]
+    new.sort(key=lambda i: i.get("sort_at") or "", reverse=True)  # sort_at = YYYY-MM-DD[ HH:MM]; empty last
+    new.sort(key=lambda i: i["kind"] != "리포트")  # stable: keeps newest-first inside each kind
+    return new, new[: max(0, int(max_items))]
+
+
+def mark_seen(seen: dict, shown: list[dict], stamp: str) -> dict:
+    """Mark only the items that were in the message; the rest stay unseen for the next slot."""
+    for i in shown:
+        seen[i["key"]] = stamp
+        if i.get("guid"):
+            seen[i["guid"]] = stamp
+    return seen
+
+
+def carry_line(left: int, slot: str | None, nxt: str | None) -> str:
+    if left <= 0:
+        return ""
+    if not nxt:
+        return f"  외 {left}건은 이번이 마지막 점검이라 따로 보여 드리지 않습니다. 원문 검색으로 확인하세요."
+    if slot and nxt[:10] == slot[:10]:
+        return f"  외 {left}건은 다음 점검에서 이어서 보여 드립니다."
+    return f"  외 {left}건은 다음 거래일 점검({nxt[5:].replace('-', '/')} KST)에서 이어서 보여 드립니다."
 
 
 def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) -> tuple[str, str, dict, list[dict]]:
@@ -365,10 +399,8 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         muse_items += news_hits(cfg, now, log)
     except Exception as exc:
         log.append(f"뉴스 {type(exc).__name__}")
-    seen = state.get("seen") or {}
-    new = [i for i in muse_items if i["key"] not in seen and i.get("guid", "") not in seen]
-    new.sort(key=lambda i: (i["kind"] != "리포트", i["date"]), reverse=False)
-    shown = new[: int(cfg["muse"]["max_items"])]
+    new, shown = pick_muse(muse_items, state.get("seen") or {}, int(cfg["muse"]["max_items"]))
+    nxt = next_slot(cfg, slot, now)
     if not shown:
         lines.append("- 뮤즈 코멘트: 새 코멘트 없음")
     else:
@@ -376,6 +408,8 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         for i in shown:
             tail = f" ({i['snippet']})" if i.get("snippet") else ""
             lines.append(f"  [{i['kind']} {i['who']} {i['date']}] {i['title']}{tail}")
+        if len(new) > len(shown):
+            lines.append(carry_line(len(new) - len(shown), slot, nxt))
     if log:
         lines.append("- 일부 조회 실패: " + "; ".join(log[:4]))
 
@@ -394,7 +428,6 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         tparts.append(f"뮤즈 새 코멘트 {len(new)}건")
     title = f"{PREFIX} {hh}시 " + (", ".join(tparts) if tparts else "시장 점검") + " | 확인만"
 
-    nxt = next_slot(cfg, slot, now)
     later = (f"다음 점검 {nxt[5:].replace('-', '/')} KST. " if nxt else "이번이 마지막 점검입니다. ") + \
         "확정 수급은 장 마감 뒤 15:40 [FLOW] 알림에서 봅니다."
     body = "\n".join([
@@ -411,7 +444,7 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
     print(f"provisional per-stock rows today: {provisional_seen or 'none'}")
     if log:
         print("fetch notes:", "; ".join(log))
-    return sanitize_lines(title), sanitize_lines(body), snap, new
+    return sanitize_lines(title), sanitize_lines(body), snap, shown
 
 
 def sanitize_lines(text: str) -> str:
@@ -469,6 +502,53 @@ def self_test() -> int:
     check("filter drops plain app news", bool(re.search(m["topic_re"], "메타 뮤즈 공유 링크 노출 논란", re.I)), False)
     check("Muse word boundary", bool(re.search(m["muse_re"], "Museum opening")), False)
     check("norm_title strips source", norm_title("메타 뮤즈 D램 - 한국경제") == norm_title("메타 뮤즈 D램"), True)
+    # muse cap / order / carryover
+    check("muse max_items is 3", int(m["max_items"]), 3)
+    items = [
+        {"key": "n:a", "guid": "g:a", "kind": "뉴스", "date": "10/26 09:00", "sort_at": "2026-10-26 09:00"},
+        {"key": "r:old", "kind": "리포트", "date": "10/23", "sort_at": "2026-10-23"},
+        {"key": "n:b", "guid": "g:b", "kind": "뉴스", "date": "10/25 22:00", "sort_at": "2026-10-25 22:00"},
+        {"key": "r:new", "kind": "리포트", "date": "10/26", "sort_at": "2026-10-26"},
+        {"key": "n:c", "guid": "g:c", "kind": "뉴스", "date": "", "sort_at": ""},
+        {"key": "n:x", "guid": "g:x", "kind": "뉴스", "date": "10/26 10:00", "sort_at": "2026-10-26 10:00"},
+    ]
+    new, shown = pick_muse(items, {"g:x": "2026-10-26"}, m["max_items"])
+    check("order reports first, newest first", [i["key"] for i in new], ["r:new", "r:old", "n:a", "n:b", "n:c"])
+    check("cap 3", [i["key"] for i in shown], ["r:new", "r:old", "n:a"])
+    seen = mark_seen({"g:x": "2026-10-26"}, shown, "2026-10-26")
+    check("carryover marks only shown", sorted(seen), ["g:a", "g:x", "n:a", "r:new", "r:old"])
+    new2, shown2 = pick_muse(items, seen, m["max_items"])
+    check("carried items show next run", [i["key"] for i in shown2], ["n:b", "n:c"])
+    check("carry line same day", carry_line(2, "2026-10-26 11:00", "2026-10-26 13:00"), "  외 2건은 다음 점검에서 이어서 보여 드립니다.")
+    check("carry line next trading day", carry_line(2, "2026-10-30 11:00", "2026-11-02 11:00"),
+          "  외 2건은 다음 거래일 점검(11/02 11:00 KST)에서 이어서 보여 드립니다.")
+    check("carry line last slot", "마지막" in carry_line(1, "2026-11-05 11:00", None), True)
+    check("carry line none", carry_line(0, "2026-10-26 11:00", None), "")
+    # research_checked must not suppress an unshown hit
+    global get_json
+    real_get_json = get_json
+    fake = {
+        "https://m.stock.naver.com/api/research/industry?page=1&pageSize=50": [
+            {"researchId": 1, "writeDate": "2026-10-26", "category": "반도체", "title": "메모리 업황", "brokerName": "A증권"},
+            {"researchId": 2, "writeDate": "2026-10-26", "category": "반도체", "title": "파운드리", "brokerName": "B증권"}],
+        "https://m.stock.naver.com/api/research/industry/1": {"researchContent": {"content": "메타 뮤즈 수요로 D램 증가"}},
+        "https://m.stock.naver.com/api/research/industry/2": {"researchContent": {"content": "뮤즈 언급 없음"}},
+    }
+    get_json = lambda url, timeout=15: fake.get(url, [])  # noqa: E731
+    try:
+        rcfg = {"muse": {**m, "research_pages": 1}}
+        st = {"seen": {}, "research_checked": {}}
+        now_t = t("2026-10-26 11:00")
+        h1 = [i["key"] for i in research_hits(rcfg, st, now_t, [])]
+        check("research hit found", h1, ["r:industry:1"])
+        check("non-hit checked, hit not", sorted(st["research_checked"]), ["r:industry:2"])
+        h2 = [i["key"] for i in research_hits(rcfg, st, now_t, [])]
+        check("unshown research hit returns next run", h2, ["r:industry:1"])
+        st["seen"]["r:industry:1"] = "2026-10-26"
+        check("shown research hit skipped", research_hits(rcfg, st, now_t, []), [])
+        check("research hit leaves research_days window", research_hits(rcfg, {"seen": {}, "research_checked": {}}, t("2026-10-30 11:00"), []), [])
+    finally:
+        get_json = real_get_json
     print("SELF-TEST " + ("PASS" if not fails else f"FAIL ({fails})"))
     return 1 if fails else 0
 
@@ -504,19 +584,15 @@ def main() -> int:
             return 0
     elif dry and not slot:
         print("outside slot; dry run continues for wiring check")
-    title, body, snap, new = build(cfg, state, now, slot, mode)
+    title, body, snap, shown = build(cfg, state, now, slot, mode)
     if dry:
         print("DRY RUN (would send)", title, body, "dry-run; no ntfy, state untouched", sep="\n")
         return 0
     publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 3, ["chart_with_upwards_trend"],
             cfg.get("ntfy_server"), config_name="mktpulse")
     stamp = now.strftime("%Y-%m-%d")
-    seen = state.get("seen") or {}
-    for i in new:  # mark only after a real send
-        seen[i["key"]] = stamp
-        if i.get("guid"):
-            seen[i["guid"]] = stamp
-    state["seen"] = seen
+    # mark only after a real send, and only the shown items (the rest carry to the next slot)
+    state["seen"] = mark_seen(state.get("seen") or {}, shown, stamp)
     state.setdefault("slots_sent", {})[slot or now.strftime("%Y-%m-%d %H:%M")] = stamp
     state["last_flow"] = {**(state.get("last_flow") or {}), **snap}
     save_state(state, now, int(cfg["muse"]["keep_days"]))
