@@ -31,5 +31,24 @@
     }
   },
   "earn_done": {},
-  "seed_note": "2026-10-24 시드. 2026-10-23 종가 1,277,000원 기준(Yahoo 000660.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장"
+  "seed_note": "2026-10-24 시드. 2026-10-23 종가 1,277,000원 기준(Yahoo 000660.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장",
+  "extra": {
+    "up1300k": {
+      "armed": true,
+      "fired_day": null
+    },
+    "up1400k": {
+      "armed": true,
+      "fired_day": null
+    },
+    "lad_exhaust": {
+      "armed": false,
+      "fired_day": "migrated"
+    },
+    "lad_july": {
+      "armed": false,
+      "fired_day": "migrated"
+    }
+  },
+  "extra_seed_note": "2026-10-26 extra_lines migration from hynixup fired {'1300000': False, '1400000': False} (last {'day': '2026-10-26', 'close': 1275000.0}); hynixlad zone 2 (last 20261023 1263000.0). engine last close 1,275,000.0 (2026-10-26). armed: ['up1300k', 'up1400k']"
 }

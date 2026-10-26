@@ -644,6 +644,11 @@ def _selftest(name: str, orig: dict) -> int:
     st = copy.deepcopy(seed)
     rows = [{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}]
     check("seed close re-run silent", [s[0] for s in plan_sends(cfg, st, {"rows": rows}, [], at(cfg["seed"]["day"]), lambda c, d: None)], [])
+    # The checks below are written against the config seed day (sessions after cfg seed.day). The committed state
+    # moves on with every 19:00 run, so use a fresh state pinned to the config seed (fixed 2026-10-26: after the
+    # 10-26 run committed last_day 2026-10-26 these checks failed on main).
+    seed = default_state(cfg)
+    seed.update(seeded=True, last_day=cfg["seed"]["day"], last_close=cfg["seed"]["close"])
 
     lv = {ln["key"]: ln["level"] for ln in cfg["lines"]}
     st = default_state(cfg)

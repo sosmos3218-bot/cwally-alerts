@@ -36,5 +36,16 @@
     "fired_day": null,
     "last": 4.988
   },
-  "seed_note": "2026-10-24 시드. 2026-10-23 종가 215,500원 기준(Yahoo 005930.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장. 미국 10년물 4.988% (5.30% 미만, 무장)"
+  "seed_note": "2026-10-24 시드. 2026-10-23 종가 215,500원 기준(Yahoo 005930.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장. 미국 10년물 4.988% (5.30% 미만, 무장)",
+  "extra": {
+    "up220k": {
+      "armed": true,
+      "fired_day": null
+    },
+    "up230k": {
+      "armed": true,
+      "fired_day": null
+    }
+  },
+  "extra_seed_note": "2026-10-26 extra_lines migration from samup fired {'220000': False, '230000': False} (last {'day': '2026-10-26', 'close': 213000.0}). engine last close 213,000.0 (2026-10-26). armed: ['up220k', 'up230k']"
 }
