@@ -699,7 +699,8 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-          FORCE_ALERT: ${{ github.event.inputs.force_square != 'false' && github.event.inputs.force_square != 'false' && github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          # force only for a manual job=square/sgyn dispatch; the on-time 15:20 slot dispatch ({"job":"afternoon"}, no inputs) used to force SQUARE and SGYN every day
+          FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square == 'true' && (github.event.inputs.job == 'square' || github.event.inputs.job == 'sgyn') && '1' || '0' }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)

@@ -9,7 +9,9 @@ const force = process.env.FORCE_ALERT === "1";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-const STATE_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "state", "square.json");
+// own state file: state/square.json belongs to square_monitor.py. Sharing it made each script overwrite the
+// other's last_status, so both saw a "change" and sent every day (fixed 2026-10-26).
+const STATE_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", "state", "square_sell.json");
 const loadState = () => {
   try {
     return existsSync(STATE_PATH) ? JSON.parse(readFileSync(STATE_PATH, "utf8")) : {};
@@ -82,14 +84,13 @@ const msg = [
   `하지 말 것: 할인율만 보고 추격매수. 이 알림은 매수 신호가 아닙니다.`,
 ].join("\n");
 console.log(msg, "topic", topic);
-// dedupe: send only when the status changes (SELL re-reminds after 3 days); HOLD never sends.
+// dedupe: send only when the status changes; HOLD never sends. The unchanged SELL/WATCH status is repeated
+// once a week inside square_monitor.py's Monday summary (it reads state/square_sell.json), not here.
 const prev = loadState();
 const today = kstDay();
-const daysSince = prev.last_sent_date ? (Date.parse(today) - Date.parse(prev.last_sent_date)) / 86400e3 : Infinity;
 const changed = status !== prev.last_status;
-const remind = status === "SELL" && daysSince >= 3;
 let sent = false;
-if (force || (status !== "HOLD" && (changed || remind))) {
+if (force || (status !== "HOLD" && changed)) {
   const shown = force && status === "HOLD" ? "[SQUARE] 테스트 | 보유 유지" : title;
   await ntfy(shown, msg, status === "SELL" ? 5 : 4);
   sent = true;

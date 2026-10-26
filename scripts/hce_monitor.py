@@ -155,8 +155,14 @@ def main() -> int:
     if notice and not confirmed:
         print_d = notice["date"]
         confirmed = True
-        new_confirm = True
-        print(f"3Q notice found: {notice}")
+        # announce once: the config flag is never written back, so before 2026-10-26 every run re-announced the
+        # same notice (p5 "발표일 확정" daily). state/hce.json keeps the confirmed date.
+        try:
+            st = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            st = {}
+        new_confirm = not (st.get("print_date_confirmed") and st.get("print_date") == notice["date"])
+        print(f"3Q notice found: {notice} new_confirm={new_confirm}")
     prenight_d, print_d, next_d = print_window(print_d)
     oneshot_dates = {d for d in (prenight_d, print_d, next_d) if d}
 

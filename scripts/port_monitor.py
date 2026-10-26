@@ -210,25 +210,25 @@ def dca_verdict(cfg: dict, need_samsung: bool, need_hynix: bool) -> tuple[str, s
     waiting = (need_samsung and sop is None) or (need_hynix and hop is None)
     cancel = (sg is not None and sg <= miss) or (hg is not None and hg <= miss)
     if waiting and not cancel:
-        title = "2·3차 보류 | 잠정 미확인"
+        title = "2, 3차 보류 | 잠정 미확인"
         key = "EVENT:DCA_WAIT"
-        lines.append("지금 할 일: 2차·3차는 사지 말고, 1차만 유지하세요.")
+        lines.append("지금 할 일: 2차, 3차는 사지 말고, 1차만 유지하세요.")
     elif cancel:
         who = []
         if sg is not None and sg <= miss:
             who.append("삼성")
         if hg is not None and hg <= miss:
             who.append("닉스")
-        title = "2·3차 취소 | " + "·".join(who) + " 영업이익 -15% 하회"
+        title = "2, 3차 취소 | " + ", ".join(who) + " 영업이익 -15% 하회"
         key = "EVENT:DCA_CANCEL"
-        lines.append("지금 할 일: 2차·3차 주문 취소. 기존 1차는 두고, 신규 추가 금지.")
+        lines.append("지금 할 일: 2차, 3차 주문 취소. 기존 1차는 두고, 신규 추가 금지.")
     else:
-        title = "2·3차 유지 | 콘센 -15% 이내"
+        title = "2, 3차 유지 | 콘센 -15% 이내"
         key = "EVENT:DCA_KEEP"
-        lines.append("지금 할 일: 2차·3차 가격대는 유지. 위로 추격해서 채우지 마세요.")
+        lines.append("지금 할 일: 2차, 3차 가격대는 유지. 위로 추격해서 채우지 마세요.")
     lines.append("나중에: 삼성 2차 23.5만~24.5만, 3차 21만~22.5만. 닉스 2차 160만~170만, 3차 145만~155만.")
-    lines.append("익절/줄일 때: 1차 매수가 -20% 조각만 절반 감액. 신용·미수 금지.")
-    lines.append("하지 말 것: 잠정 전 전량 추가, 공시 미확인 상태에서 2·3차 체결.")
+    lines.append("익절/줄일 때: 1차 매수가 -20% 조각만 절반 감액. 신용, 미수 금지.")
+    lines.append("하지 말 것: 잠정 전 전량 추가, 공시 미확인 상태에서 2, 3차 체결.")
     return title, key, lines
 
 
@@ -380,43 +380,57 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str
         if "samsung_prelim" in ids:
             cons = cfg.get("samsung_op_consensus_trn", 114)
             live_lines.append(
-                f"잠정 영업이익 기준 {cons}조. 콘센 대비 ±5% 이내면 유지, +10%는 전자 28·닉스 21, -10%는 전자 20·닉스 16·주식 50."
+                f"잠정 영업이익 기준 {cons}조. 콘센 대비 ±5% 이내면 유지, +10%는 전자 28, 닉스 21, -10%는 전자 20, 닉스 16, 주식 50."
             )
         if "samsung_confirm" in ids:
-            live_lines.append("확정에서 HBM이 밀리면 전자 20·닉스 14. 가이던스가 내리고 재고가 늘면 반도체 32·KB 10·화재 6.")
+            live_lines.append("확정에서 HBM이 밀리면 전자 20, 닉스 14. 가이던스가 내리고 재고가 늘면 반도체 32, KB 10, 화재 6.")
         if "bok_oct" in ids:
-            live_lines.append("금통위 동결+기존 문장이면 유지. 매파면 KB 10·화재 6·현대차 3. +25bp면 반도체 40·HD중 8, 당일 채권 금지.")
+            live_lines.append("금통위 동결+기존 문장이면 유지. 매파면 KB 10, 화재 6, 현대차 3. +25bp면 반도체 40, HD중 8, 당일 채권 금지.")
         if "bok_nov" in ids:
             live_lines.append("11월에 3.25%가 확인되면 화재 3, 채권 안에서 10년 15. 종목은 그대로.")
         if "fomc_oct" in ids:
             live_lines.append("10월 연준 회의는 점 그림이 없습니다. +25bp여도 12월 규칙을 앞당겨 적용하지 말고, 현금만 15로 늘리세요.")
         if "fomc_dec" in ids:
-            live_lines.append("12월 연준: 동결+점 그림 내림이면 10년 18. +25bp면 닉스 16·현대차 3·현금 15. +50bp면 주식 35·현금 30으로 중지.")
+            live_lines.append("12월 연준: 동결+점 그림 내림이면 10년 18. +25bp면 닉스 16, 현대차 3, 현금 15. +50bp면 주식 35, 현금 30으로 중지.")
     soon_lines = []
     if soon:
         soon_lines.append("21일 안 일정: " + ", ".join(f"{e['label']} {e['start']}" for e in soon))
     return live_lines, soon_lines, bool(live), vtitle, vkey
 
 
-def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool) -> tuple[bool, str]:
+ALWAYS_SEND_KEYS = {"HALT", "EVENT:DCA_CANCEL"}  # hard stop / order cancel: sent on every run. DUAL sends on entry, then weekly.
+
+
+def iso_week(day: str | None) -> str | None:
+    try:
+        return datetime.strptime(day, "%Y-%m-%d").strftime("%G-W%V") if day else None
+    except ValueError:
+        return None
+
+
+def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool,
+                  sig: str | None = None) -> tuple[bool, str]:
+    """weekly_or_change: HALT/DCA_CANCEL always; otherwise only when the signature (verdict key plus the set
+    of live event ids: a new verdict key or a newly live event) differs from the last sent one, plus one send in the first run of each ISO week.
+    Before 2026-10-26 EVENT:* keys and live event days sent on every run, so the same verdict repeated daily."""
     force = os.environ.get("FORCE_ALERT") == "1" or (len(sys.argv) > 1 and sys.argv[1].lower() == "force")
     if force:
         return True, "force"
     if policy != "weekly_or_change":
         return True, "always"
-    last_key = prev.get("last_sent_key")
+    sig = sig or key
+    last_sig = prev.get("last_sent_sig") or prev.get("last_sent_key")
     last_date = prev.get("last_sent_date")
-    if last_date == today and last_key == key and key == "BASE" and not is_live:
-        return False, "same_day_base"
-    if halt or key == "HALT" or key == "DUAL" or key.startswith("EVENT"):
+    if halt or key in ALWAYS_SEND_KEYS:
         return True, "action"
-    if is_live:
-        return True, "event"
-    if last_key != key:
+    # a changed verdict key, or an event id that was not live at the last send; an event window ending is not news
+    last_key, _, last_ids = (last_sig or "").partition("|")
+    cur_key, _, cur_ids = sig.partition("|")
+    if last_key != cur_key or set(cur_ids.split(",")) - set(last_ids.split(",")) - {""}:
         return True, "zone_change"
-    if now.weekday() == 0 and last_date != today:
+    if iso_week(last_date) != now.strftime("%G-W%V"):
         return True, "monday"
-    return False, "quiet_base"
+    return False, "same_as_last_sent"
 
 
 def main() -> int:
@@ -446,15 +460,19 @@ def main() -> int:
         key = vkey or ("EVENT:" + key)
 
     policy = cfg.get("alert_policy") or "weekly_or_change"
-    send, why = should_notify(policy, key, prev, today, now, is_live, halt)
+    live_ids = sorted(e["id"] for e in cfg.get("events", []) if e["start"] <= today <= e["end"])
+    sig = key + ("|" + ",".join(live_ids) if is_live else "")
+    send, why = should_notify(policy, key, prev, today, now, is_live, halt, sig)
     if send and why == "monday" and key == "BASE":
         title = "주간 체크 | 유지 | 오늘 손대지 말 것"
 
     last_sent_key = prev.get("last_sent_key")
     last_sent_date = prev.get("last_sent_date")
+    last_sent_sig = prev.get("last_sent_sig")
     if send:
         last_sent_key = key
         last_sent_date = today
+        last_sent_sig = sig
 
     STATE_PATH.write_text(
         json.dumps(
@@ -464,6 +482,7 @@ def main() -> int:
                 "last_alert_key": key,
                 "last_sent_key": last_sent_key,
                 "last_sent_date": last_sent_date,
+                "last_sent_sig": last_sent_sig,
                 "last_skip_reason": None if send else why,
                 "fx": fx,
                 "wti": wti,
@@ -491,10 +510,10 @@ def main() -> int:
         lines = [
             *head,
             f"지금 할 일: {alloc.strip()}",
-            "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요. 10월 22일 금통위, 10월 삼성 잠정·확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
+            "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요. 10월 22일 금통위, 10월 삼성 잠정, 확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
             *soon_lines,
             "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
-            "하지 말 것: 추격 매수, 신용·미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
+            "하지 말 것: 추격 매수, 신용, 미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
         ]
 
     msg = "\n".join(lines)
