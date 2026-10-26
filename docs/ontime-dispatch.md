@@ -29,6 +29,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 10/11/13/15 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
+| portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인) |
 
 ```
 POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches
@@ -74,6 +75,16 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 - GitHub cron `30 22 * * *`(07:30 KST)는 백업. 늦게 온 백업은 `state/tslaspcx.json`의 `seen` 접수번호와 예측시장 무장 상태(`pm.move_armed`, `pm.levels`)로
   아무것도 다시 보내지 않는다. 두 실행은 concurrency 그룹으로 순서대로 돌고 checkout 은 `ref: main`이라 앞 실행이 push한 state를 본다.
 - `job=tslaspcx` 수동 dispatch 는 `oneoff_mode=auto`가 아니면 dry(selftest + dry, 발송/state 없음).
+- 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
+
+## 일요일 21:00 portlight 반복 잡 (2026-10-26 10:48 승인)
+
+- cron-job.org 반복 잡 1개 8723329 "cwally port portlight (Sun 21:00 KST)": 시간대 Asia/Seoul, 분 0, 시 21, 일요일(wdays [0]), 만료 없음.
+  URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"portlight"}}`.
+  portlight 실행 단계는 `oneoff_mode`를 읽지 않고 늘 `auto`로 돌므로 `oneoff_mode`는 넣지 않는다.
+- 만든 방법: `cronjob-register.yml` `action=register_portlight` (이 잡 하나만, 같은 제목이나 같은 일요일 21:00 dispatch 잡이 있으면 skip).
+- GitHub cron `0 12 * * 0`은 백업. 보통 월요일 새벽에 늦게 와서 `not_sunday`로 조용히 끝난다. 일요일 안에 오면
+  ISO 주 키(`%G-W%V`: portlight/poly `weekly_sent_week`, ghtrend `last_week`, polyinv `weekly_sent`)와 isareb `last_sent_month`로 다시 보내지 않는다.
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
 ## 원샷 (`job=oneshot`)
