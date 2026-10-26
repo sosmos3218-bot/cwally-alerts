@@ -82,18 +82,29 @@ def main() -> int:
         "익절/줄일 때: 하이닉스 하락 또는 할인 30% 이하 축소 시 비중 재검토. 고점 대비 큰 조정 시 축소.",
         "하지 말 것: 할인율만 보고 추격매수. 독립 사업 가치 과대평가 금지. 이 알림은 매수 신호가 아님."
     ]
+    sell = {}
+    try:
+        sell = json.loads((ROOT / "state" / "square_sell.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    sell_ko = {"SELL": "매도 검토", "WATCH": "주의 관찰", "HOLD": "그대로 보유"}.get(sell.get("last_status") or "", "")
+    if sell_ko:
+        lines.insert(2, f"매도 점검(하이닉스 대비, square_sell_alert): {sell_ko} ({sell.get('updated_at') or '-'} 기준)")
     msg = "\n".join(lines)
     print(msg)
-    title = f"[SQUARE] {status_ko}"
+    week = now.strftime("%G-W%V")
+    changed = prev.get("last_status") != status
+    weekly = prev.get("last_weekly_week") != week
+    title = f"[SQUARE] {status_ko}" if changed or prev.get("last_status") is None else f"[SQUARE] 주간 체크 | {status_ko}"
     print(f"TITLE: {title}")
     print(f"STATUS: {status} DISCOUNT: {discount*100:.1f}%")
     if dry:
         print("DRY RUN: no publish, no state write")
         return 0
-    # send only if status changed or weekly (Monday)
-    changed = prev.get("last_status") != status
-    is_monday = now.weekday() == 0
-    if changed or is_monday or prev.get("last_status") is None:
+    # send only if the status changed, or once a week (first run of the ISO week; the afternoon slot runs Mon-Fri,
+    # so normally Monday). The weekly message also carries the square_sell_alert status, so SELL/WATCH is not
+    # repeated as a separate message.
+    if changed or weekly or prev.get("last_status") is None:
         ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, 4 if high else 3)
         sent = True
     else:
@@ -108,6 +119,7 @@ def main() -> int:
                 "last_price_hx": hx,
                 "discount": round(discount, 4),
                 "last_sent": sent,
+                "last_weekly_week": week if sent else prev.get("last_weekly_week"),
             },
             ensure_ascii=False,
             indent=2,

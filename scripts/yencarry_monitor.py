@@ -113,7 +113,7 @@ def boj_stance(day: datetime) -> str:
         return "금리 변경(인상 가능)"
     if "当面の金融政策運営" in text:
         return "금리 동결 가능"
-    return "공표문 확인. 인상·동결은 본문 확인"
+    return "공표문 확인. 인상, 동결은 본문 확인"
 
 
 def ueda_summary(day: datetime) -> list[str]:
@@ -149,12 +149,12 @@ def ueda_summary(day: datetime) -> list[str]:
     hits: list[str] = []
     rules = [
         (r"利上げ|raise (the )?(policy )?rate|further hike|additional hike", "추가 인상 여지 언급"),
-        (r"現状維持|keep(ing)? rates|held (steady|rates)|unchanged", "금리 동결·현상유지 톤"),
+        (r"現状維持|keep(ing)? rates|held (steady|rates)|unchanged", "금리 동결, 현상유지 톤"),
         (r"behind the curve|後れを取|遅れをと", "늦으면 안 된다(매파) 언급"),
         (r"円安|weak(er)? yen|yen weak", "엔약세→수입물가 전가 주시"),
         (r"長期金利|long-term (interest )?rates|JGB", "장기금리 급등 시 대응 언급"),
-        (r"賃金|wage", "임금·물가 선순환 확인"),
-        (r"中東|Middle East|oil|原油", "중동·유가 리스크 언급"),
+        (r"賃金|wage", "임금, 물가 선순환 확인"),
+        (r"中東|Middle East|oil|原油", "중동, 유가 리스크 언급"),
         (r"data(-| )dependent|毎回の会合|each meeting", "데이터 보고 매 회의 결정"),
     ]
     for pat, line in rules:
@@ -172,7 +172,7 @@ def ueda_summary(day: datetime) -> list[str]:
             if len(hits) >= 2:
                 break
     if not hits:
-        return ["회견 중·속보 부족. 공식 요지는 보통 다음날."]
+        return ["회견 중, 속보 부족. 공식 요지는 보통 다음날."]
     return hits[:3]
 
 
@@ -204,7 +204,7 @@ def breaks(cfg: dict, usdjpy: float | None, usdkrw: float | None, j30: float | N
 
 def action_line(keys: list[str]) -> str:
     if not keys:
-        return "레벨 안 깨졌으니 기존 북 유지. 추격·레버리지 금지."
+        return "레벨 안 깨졌으니 기존 북 유지. 추격, 레버리지 금지."
     bits = []
     blob = " ".join(keys)
     if "160 돌파" in blob:
@@ -228,6 +228,12 @@ def action_line(keys: list[str]) -> str:
 
 def event_key(keys: list[str], extra: str = "") -> str:
     return "|".join(keys + ([extra] if extra else []))
+
+
+def level_sig(key: str | None) -> str:
+    """Event key without the live quote: "원달러 1,323원 → 1,340 이탈" -> "원달러 → 1,340 이탈".
+    The raw key changed with every quote, so the same broken level was re-sent on every run."""
+    return "|".join(re.sub(r"\s+[-+]?[\d,.]+(?:원|%)?\s*→", " →", k).strip() for k in (key or "").split("|") if k)
 
 
 def send(cfg: dict, title: str, lines: list[str], priority: int = 4) -> None:
@@ -284,7 +290,7 @@ def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> 
         f"지금 할 일: {act}",
         "나중에: 일한 9/18은 레벨과 상관없이 반드시 보냅니다. 주간 점검은 월요일 09:00.",
         "익절/줄일 때: 엔 롱은 160 재돌파면 접기. 원달러 1,340 아래면 달러 보유 축소.",
-        "하지 말 것: 연준 한 방으로 원·코스피·미국채가 같이 무너진다고 몰빵.",
+        "하지 말 것: 연준 한 방으로 원, 코스피, 미국채가 같이 무너진다고 몰빵.",
     ]
     send(cfg, title, lines, 5 if keys else 4)
 
@@ -313,7 +319,7 @@ def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str
         f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
         "우에다 요약: " + " / ".join(ueda_summary(now)),
         f"지금 할 일: {act}",
-        "나중에: 같은 날 회견 알림은 한 번만. 공식 전문은 보통 다음날. 다음 일한 10/30·12/18도 두 장.",
+        "나중에: 같은 날 회견 알림은 한 번만. 공식 전문은 보통 다음날. 다음 일한 10/30, 12/18도 두 장.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
         "하지 말 것: 회견 톤만 듣고 추격. 엔 강세=원 강세로 같이 베팅.",
     ]
@@ -413,14 +419,13 @@ def main() -> int:
 
     if keys:
         ek = event_key(keys)
-        if state.get("last_event_key") == ek:
-            print("same event; silent")
+        if level_sig(state.get("last_event_key")) != level_sig(ek):
+            emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "레벨 탈출")
+            state["last_event_key"] = ek
             save_state(state, now, q)
             return 0
-        emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "레벨 탈출")
-        state["last_event_key"] = ek
-        save_state(state, now, q)
-        return 0
+        # same broken level(s) as last sent: no repeat; the Monday weekly below still reports it
+        print("same event; silent")
 
     if mode in {"weekly", "auto"} and now.weekday() == 0:
         if state.get("weekly_sent_week") == week:

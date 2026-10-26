@@ -146,9 +146,9 @@ def body(kind: str, stamp: str, session: str, trig_txt: str, px_txt: str) -> str
     else:
         lines += [
             "지금 할 일: 잔량을 정리한다. 나누면 당일 종가와 다음날 시가 두 번만 쓴다.",
-            "나중에: 재가동은 455850 종가 2거래일 연속 25,000원 위, 한미 222,500원 위, 주성 외국인 200억 매도 없음, 이수 외국인·기관 동시 순매수가 모두 나올 때만이다.",
+            "나중에: 재가동은 455850 종가 2거래일 연속 25,000원 위, 한미 222,500원 위, 주성 외국인 200억 매도 없음, 이수 외국인, 기관 동시 순매수가 모두 나올 때만이다.",
             "익절/줄일 때: 지금 잔량을 비운다.",
-            "하지 말 것: 반등만 보고 규칙을 끄지 않는다. 신용·미수로 물타기하지 않는다.",
+            "하지 말 것: 반등만 보고 규칙을 끄지 않는다. 신용, 미수로 물타기하지 않는다.",
         ]
     return "\n".join(lines)
 
@@ -282,12 +282,21 @@ def main() -> int:
     trig_txt += f" | 주성 외국인 {foreign_txt} | {level}단계"
 
     key = f"{session}:{level}"
-    send = level >= 1 and prev.get("last_sent_key") != key
+    # Dedupe on the level, not session+level: the old key changed every trading day, so an unchanged level 3
+    # "청산" was re-sent daily. A level change (up or down to another level >= 1) sends at once; the unchanged
+    # level is repeated once per ISO week (first run of the week, normally Monday).
+    week = now.strftime("%G-W%V")
+    prev_sig = prev.get("last_sent_sig") or ((prev.get("last_sent_key") or "").split(":")[-1] or None)
+    sig = str(level)
+    weekly_repeat = level >= 1 and prev_sig == sig and prev.get("last_sent_week") != week
+    send = level >= 1 and (prev_sig != sig or weekly_repeat)
     title = {
         1: "[455850] 경고 | 신규 금지",
         2: "[455850] 축소 | 절반 정리",
         3: "[455850] 청산 | 잔량 정리",
     }.get(level, "[455850] 관찰")
+    if weekly_repeat:
+        title = title.replace("] ", "] 주간 체크 | ", 1)
     msg = body(str(level) if level else "1", stamp, session or missing, trig_txt, px_txt)
     print(msg)
     if level == 0:
@@ -302,6 +311,8 @@ def main() -> int:
                 "level": level,
                 "triggers": triggers,
                 "last_sent_key": key if send or level == 0 else prev.get("last_sent_key"),
+                "last_sent_sig": sig if send or level == 0 else prev_sig,
+                "last_sent_week": week if send else prev.get("last_sent_week"),
                 "fail_sent_date": None,
                 "px_etf": px_etf,
                 "px_hanmi": px_hanmi,
@@ -315,7 +326,7 @@ def main() -> int:
         encoding="utf-8",
     )
     if send:
-        publish(title, msg, 5 if level == 3 else (4 if level == 2 else 3))
+        publish(title, msg, 3 if weekly_repeat else (5 if level == 3 else (4 if level == 2 else 3)))
     return 0
 
 

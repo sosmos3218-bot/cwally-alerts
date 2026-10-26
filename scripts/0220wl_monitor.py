@@ -26,7 +26,7 @@ ZONE_KO = {
     "EXIT": "품질악화 2개 + 4,612원 폐기",
 }
 DO_NOW = {
-    "TRIM35": "87주 중 상당 부분을 팔고 전환·배당 대기 분만 남기세요.",
+    "TRIM35": "87주 중 상당 부분을 팔고 전환, 배당 대기 분만 남기세요.",
     "TRIM20": "87주 중 절반을 줄이세요.",
     "TRIM12": "약 30주를 지정가로 팔아 1차 익절하세요.",
     "HOLD10": "추가매수 없이 분할배정분을 유지하세요.",
@@ -170,9 +170,14 @@ def main() -> int:
     )
 
     send = False
+    weekly_only = False
+    week = now.strftime("%G-W%V")
+    # EXIT / QUALITY2 used to send on every run while the state persisted. Now they send when they first appear
+    # (or change); the unchanged state is repeated once a week (first run of the ISO week, normally Monday).
+    persistent_new = action_key in {"QUALITY2", "EXIT"} and prev.get("last_sent_action") != action_key
     title = f"[0220WL] {TITLE_BY_ZONE.get(action_key, action_key)}"
     if mode == "event":
-        if zone_changed or new_live or quality_new or action_key in {"QUALITY2", "EXIT"}:
+        if zone_changed or new_live or quality_new or persistent_new:
             send = True
             if action_key == "EXIT":
                 title = "[0220WL] 폐기점검 | 30일 재매수 금지"
@@ -182,6 +187,10 @@ def main() -> int:
                 title = "[0220WL] 품질악화 | 43주 검토"
             else:
                 title = f"[0220WL] 매도점검 | {TITLE_BY_ZONE.get(action_key, action_key)}"
+        elif prev.get("weekly_sent_week") != week:
+            send = True
+            weekly_only = True
+            title = f"[0220WL] 주간 체크 | {'폐기점검 유지' if action_key == 'EXIT' else TITLE_BY_ZONE.get(action_key, action_key)}"
         else:
             print("no 0220wl event; silent")
     else:
@@ -200,7 +209,7 @@ def main() -> int:
         f"이게 뭐 알림: 한화M&S 3우B {shares}주 매도 검토입니다. 원가 {cost:,}원은 분할배정분이며 신규매수 단가가 아닙니다.",
         f"지금 상태: 우선 {px} / 보통 {cx} / 비율 {ratio_s} / 원가 대비 {pnl} / {ZONE_KO.get(action_key, action_key)} / 품질 {qtxt}",
         f"지금 할 일: {DO_NOW.get(action_key, '')}",
-        "나중에: 2026-10 배당·전환조건, 2026-12 상대성과, 2027-06 12개월, 2028-06 교체 판단.",
+        "나중에: 2026-10 배당, 전환조건, 2026-12 상대성과, 2027-06 12개월, 2028-06 교체 판단.",
         "익절: +12% / +20% / +35% 구간에서 순차 축소.",
         "줄일 때: 품질악화(고려 비율<0.32, 상대-8%p, 거래량 35%) 2개면 43주. 같이 4,612원이면 잔량 폐기.",
         "하지 말 것: 평가손익만 보고 추가 매수. 손절 후 30일 재매수. 이율로 비중 바꾸지 말 것.",
@@ -225,6 +234,8 @@ def main() -> int:
                 "ratio": ratio,
                 "quality_flags": flags,
                 "last_event_ids": live_ids,
+                "last_sent_action": action_key if send else prev.get("last_sent_action"),
+                "weekly_sent_week": week if send else prev.get("weekly_sent_week"),
             },
             ensure_ascii=False,
             indent=2,
@@ -235,7 +246,7 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        pri = 5 if action_key in {"STOP20", "EXIT"} or new_live else (
+        pri = 3 if weekly_only else 5 if action_key in {"STOP20", "EXIT"} or new_live else (
             4 if z in EVENT_ZONES or zone_changed or quality_new else 3
         )
         ntfy_publish(server, topic, title, msg, pri, "warning,chart_with_downwards_trend")
