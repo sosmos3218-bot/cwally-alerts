@@ -7,14 +7,14 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "평일 09:00 KST morning. 실적 직후 oneshot 추가.",
+  "schedule_note": "평일 09:00 KST morning. 실적 직후 oneshot 추가. 연도 가드 2026-2027만(valid_until 2027-01-29까지 수명), 그 밖의 해는 발송과 state 기록 없이 종료.",
   "oneshot_kst": [
     "2026-10-30 06:10",
     "2026-10-30 08:10",
     "2026-10-30 09:10"
   ],
   "oneshot_note": "10/29 장후 실적 직후 Bookings/DAU/시나리오 업데이트. GitHub fallback cron + cron-job.org oneshot dispatch.",
-  "year_guard": 2026,
+  "year_guard": [2026, 2027],
   "valid_until": "2027-01-29",
   "alert_policy": "weekly_or_change",
   "cik": "0001315098",

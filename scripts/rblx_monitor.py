@@ -152,6 +152,10 @@ def main() -> int:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
+    years = cfg.get("year_guard") or [now.year]
+    if mode != "force" and now.year not in years:
+        print("rblx year-guard silent")
+        return 0
     if mode == "install":
         publish(
             topic,

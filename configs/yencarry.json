@@ -20,6 +20,8 @@
     "2026-12-18 16:15": "boj_press"
   },
   "period": "weekly",
+  "year_guard": 2026,
+  "year_guard_note": "연도 가드 2026만, fed/boj_press 일회 모드에만 적용(연도 없는 GitHub cron 45 18 16 9 *, 15 7 18 9 *, 15 7 30 10 *, 15 7 18 12 * 가 내년에 다시 울려도 침묵). 주간 점검과 레벨 감시는 반복 알림이라 연도 가드 없음.",
   "once": false,
   "as_of": "2026-10-13",
   "levels": {

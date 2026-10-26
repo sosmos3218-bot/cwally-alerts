@@ -44,6 +44,9 @@ def run(force: bool = False) -> int:
     cfg = load_json(CFG_PATH)
     state = load_json(STATE_PATH)
     now = datetime.now(KST)
+    if now.year != int(cfg.get("year_guard") or 2026):
+        print("005935 year-guard silent")
+        return 0
     if now.weekday() >= 5 and not force:  # weekend, unless oneshot
         return 0
     pref = get_price(cfg["ticker"])
