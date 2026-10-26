@@ -341,7 +341,7 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
         "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})",
         "지금 할 일: " + " ".join(e["line"]["action"] for e in events),
         f"나중에: {later}",
-        f"익절/줄일 때: {trim_text(cfg)} 비중 축소. 미국 10년물 5.30% 이상이면 분할 매수 중단.",
+        f"익절/줄일 때: {trim_text(cfg)} 비중 축소.{cfg.get('trim_extra', ' 미국 10년물 5.30% 이상이면 분할 매수 중단.')}",
         "하지 말 것: 한 번에 전액 매수, 신용 및 미수, 손절선 이탈 뒤 물타기, 조회 실패를 신호로 읽기.",
     ] + ([ref] if ref else []))
     return title, msg, pri
@@ -459,7 +459,7 @@ def install_msg(cfg: dict, st: dict, data: dict, fails: list[str], stamp: str) -
     lines = ", ".join(f"{ln['title']} {fmt(ln['level'])} {({'le': '이하', 'ge': '이상', 'lt': '미만'})[ln['op']]}" for ln in cfg["lines"])
     y = f" 미국 10년물 {data['us10y']:.3f}% (경고 5.30% 이상, 이 알림이 두 종목 공통으로 1회 발송)." if data.get("us10y") is not None else ""
     if not cfg.get("us10y"):
-        y = " 미국 10년물 5.30% 공통 경고는 [005930] 알림이 한 번만 보냅니다."
+        y = cfg.get("us10y_install_note", " 미국 10년물 5.30% 공통 경고는 [005930] 알림이 한 번만 보냅니다.")
     armed = [k for k, v in st["lines"].items() if v.get("armed", True)]
     title = f"{cfg['title_prefix']} 설치 확인 | 매매 신호 아님"
     msg = "\n".join([
@@ -467,7 +467,7 @@ def install_msg(cfg: dict, st: dict, data: dict, fails: list[str], stamp: str) -
         f"이게 뭐 알림: {cfg['short']} 종가 기준 계획 알림 설치 확인입니다. KRX 거래일 19:00에 선을 새로 넘을 때만 옵니다.",
         f"지금 결과/상태: {px}{y}" + (" 조회 실패: " + ", ".join(fails) + "." if fails else "") + f" 무장된 선: {', '.join(armed)}.",
         f"지금 할 일: 없음. 선: {lines}. 선마다 1회, 1% 넘게 반대로 돌아와야 재무장.",
-        f"나중에: {cfg['earnings']['date']} 19:00에 실적 체크 알림 1회(2027년 HBM LTA, CAPEX와 판가, 중국 YMTC/CXMT와 ASP).",
+        "나중에: " + cfg.get("install_later", f"{cfg['earnings']['date']} 19:00에 실적 체크 알림 1회(2027년 HBM LTA, CAPEX와 판가, 중국 YMTC/CXMT와 ASP)."),
         f"익절/줄일 때: {trim_text(cfg)} 비중 축소.",
         "하지 말 것: 이 설치 확인을 매수나 매도 신호로 읽기.",
     ])
@@ -581,6 +581,57 @@ def _selftest(name: str, orig: dict) -> int:
         ev = eval_lines(cfg, st, [{"day": d, "close": close}], d, at(d))
         return sorted(e["key"] for e in ev)
 
+    full = all(k in lv for k in ("buy1", "buy2", "buy3", "trim1", "trim2", "stop"))
+    tb = max((ln for ln in cfg["lines"] if ln["op"] == "le"), key=lambda x: x["level"])  # buy1 for 005930/000660
+    tk, b1 = tb["key"], tb["level"]
+    sp = lv["stop"]
+    if full:
+        _selftest_ladder(check, feed, lv)
+    else:  # reduced ladder (064400: buy3, trim1, stop)
+        t1 = min(ln["level"] for ln in cfg["lines"] if ln["op"] == "ge")
+        tkey = next(ln["key"] for ln in cfg["lines"] if ln["op"] == "ge" and ln["level"] == t1)
+        check(f"{tk} cross fires", feed(b1), [tk])
+        check(f"{tk} again silent", feed(b1 - 1000), [])
+        check("back above but < 1% no re-arm", feed(b1 * 1.009), [])
+        check("down again still silent", feed(b1), [])
+        check("> 1% above re-arms (silent)", feed(b1 * 1.011), [])
+        check(f"{tk} fires again after re-arm", feed(b1 - 1000), [tk])
+        check("stop at exact level silent (strict <)", feed(sp), [])
+        check("stop fires", feed(sp - 1000), ["stop"])
+        check("stop re-arm needs > 1% above", feed(sp * 1.005), [])
+        check("stop silent while disarmed", feed(sp - 2000), [])
+        check(f"rally to {tkey} (re-arms buys)", feed(t1), [tkey])
+        check(f"{tkey} again silent", feed(t1 + 5000), [])
+        check(f"{tkey} dip < 1% below no re-arm", feed(t1 * 0.995), [])
+        check(f"{tkey} >1% below re-arms then cross fires", (feed(t1 * 0.985), feed(t1))[1], [tkey])
+        check("stop fires again after re-arm", feed(sp - 1), sorted([tk, "stop"]))
+    b2 = lv.get("buy2")
+    tl = tb["title"]
+
+    # same day twice / late double run: day already in last_day -> silent
+    st2 = default_state(cfg)
+    st2["last_day"] = "2026-10-23"
+    r = [{"day": "2026-10-26", "close": b1 - 1}]
+    check("first run fires", [e["key"] for e in eval_lines(cfg, st2, r, "2026-10-26", at("2026-10-26"))], [tk])
+    check("second run same day silent", eval_lines(cfg, st2, r, "2026-10-26", at("2026-10-26", 22)), [])
+    st3 = default_state(cfg)
+    st3["last_day"] = "2026-10-23"
+    check("intraday row not judged", eval_lines(cfg, st3, r, "2026-10-26", at("2026-10-26", 14)), [])
+    k2, c2 = ("buy2", b2 - 1) if b2 else ("stop", sp - 1)
+    check("catch-up of missed days in order",
+          [(e["day"], e["key"]) for e in eval_lines(cfg, st3, [{"day": "2026-10-26", "close": b1 - 1}, {"day": "2026-10-27", "close": c2}], "2026-10-27", at("2026-10-27"))],
+          [("2026-10-26", tk), ("2026-10-27", k2)])
+
+    # SK hynix style: seed just above buy1, first close <= buy1 fires once
+    st4 = copy.deepcopy(seed)
+    check(f"first run close <= {tk} fires once",
+          [e["key"] for e in eval_lines(cfg, st4, [{"day": "2026-10-26", "close": b1}], "2026-10-26", at("2026-10-26"))], [tk])
+    _selftest_rest(name, cfg, seed, check, at, orig, tk, b1, tl, lv, sp)
+    print("SELFTEST", "PASS" if ok else "FAIL")
+    return 0 if ok else 1
+
+
+def _selftest_ladder(check, feed, lv) -> None:
     b1, b2, b3, t1, t2, sp = (lv[k] for k in ("buy1", "buy2", "buy3", "trim1", "trim2", "stop"))
     check("buy1 cross fires", feed(b1), ["buy1"])
     check("buy1 again silent", feed(b1 - 1000), [])
@@ -600,24 +651,9 @@ def _selftest(name: str, orig: dict) -> int:
     check("trim1 >1% below re-arms then cross fires", (feed(t1 * 0.985), feed(t1))[1], ["trim1"])
     check("stop fires again after re-arm", feed(sp - 1), ["buy1", "buy2", "buy3", "stop"])
 
-    # same day twice / late double run: day already in last_day -> silent
-    st2 = default_state(cfg)
-    st2["last_day"] = "2026-10-23"
-    r = [{"day": "2026-10-26", "close": b1 - 1}]
-    check("first run fires", [e["key"] for e in eval_lines(cfg, st2, r, "2026-10-26", at("2026-10-26"))], ["buy1"])
-    check("second run same day silent", eval_lines(cfg, st2, r, "2026-10-26", at("2026-10-26", 22)), [])
-    st3 = default_state(cfg)
-    st3["last_day"] = "2026-10-23"
-    check("intraday row not judged", eval_lines(cfg, st3, r, "2026-10-26", at("2026-10-26", 14)), [])
-    check("catch-up of missed days in order",
-          [(e["day"], e["key"]) for e in eval_lines(cfg, st3, [{"day": "2026-10-26", "close": b1 - 1}, {"day": "2026-10-27", "close": b2 - 1}], "2026-10-27", at("2026-10-27"))],
-          [("2026-10-26", "buy1"), ("2026-10-27", "buy2")])
 
-    # SK hynix style: seed just above buy1, first close <= buy1 fires once
-    st4 = copy.deepcopy(seed)
-    check("first run close <= buy1 fires once",
-          [e["key"] for e in eval_lines(cfg, st4, [{"day": "2026-10-26", "close": b1}], "2026-10-26", at("2026-10-26"))], ["buy1"])
-
+def _selftest_rest(name, cfg, seed, check, at, orig, tk, b1v, tl, lv, sp) -> None:
+    g = globals()
     # us10y (005930 only)
     if cfg.get("us10y"):
         s = default_state(cfg)
@@ -627,7 +663,7 @@ def _selftest(name: str, orig: dict) -> int:
         s = default_state(cfg)
         check("us10y same-day twice", [len(eval_us10y(cfg, s, 5.4, "2026-11-02")), len(eval_us10y(cfg, s, 5.4, "2026-11-02"))], [1, 0])
     else:
-        check("000660 has no us10y", "us10y" in default_state(cfg), False)
+        check(f"{name} has no us10y", "us10y" in default_state(cfg), False)
 
     # earnings
     ed = date.fromisoformat(cfg["earnings"]["date"])
@@ -654,7 +690,7 @@ def _selftest(name: str, orig: dict) -> int:
     # messages: forbidden chars, body order, fail notice routing
     stamp = "2026-10-26 19:00 KST"
     all_msgs = []
-    for k in SEVERITY:
+    for k in [k for k in SEVERITY if k in lv]:
         ln = next(x for x in cfg["lines"] if x["key"] == k)
         all_msgs.append(build_lines(cfg, [{"kind": "line", "key": k, "line": ln, "day": "2026-10-26", "close": ln["level"]}], {"rows": [{"day": "2026-10-26", "close": ln["level"]}], "src": "Yahoo"}, stamp))
     all_msgs.append(build_earnings(cfg, str(ed), None, "x", stamp))
@@ -672,7 +708,6 @@ def _selftest(name: str, orig: dict) -> int:
     check("earnings 확인 필요 stays on cwally-port", route_topic("cwally-port", build_earnings(cfg, str(ed), None, None, stamp)[0]), "cwally-port")
     check("stop title", all_msgs[0][0], f"{cfg['title_prefix']} 종가 {fmt(sp)} 미만 | 손절선 이탈")
     # ---- hold on failure: Yahoo down, Naver (NXT) has a price below buy1 -> nothing judged, ops notice, catch-up next run
-    b1v = lv["buy1"]
     def yahoo_down(*a, **k):
         raise RuntimeError("HTTP 503")
     g["yahoo_rows"] = yahoo_down
@@ -684,7 +719,7 @@ def _selftest(name: str, orig: dict) -> int:
     check("yahoo fail: only the failure notice", [t for t, *_ in sends], [f"{cfg['title_prefix']} 조회 실패 | 조건 판단 보류"])
     check("yahoo fail: notice routed to cwally-ops", route_topic("cwally-port", sends[0][0]), "cwally-ops")
     check("yahoo fail: session left unprocessed", s["last_day"], cfg["seed"]["day"])
-    check("yahoo fail: buy1 still armed", s["lines"]["buy1"]["armed"], True)
+    check(f"yahoo fail: {tk} still armed", s["lines"][tk]["armed"], True)
     def yrows(rows):  # stock rows from Yahoo; ^TNX stays quiet at 4.9%
         return lambda c, sym, regular_only=False: [{"day": rows[-1]["day"], "close": 4.9}] if sym.startswith("^") else rows
     g["yahoo_rows"] = yrows([{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]},
@@ -692,7 +727,7 @@ def _selftest(name: str, orig: dict) -> int:
     d2, f2 = collect(cfg, at("2026-10-27"))
     sends = plan_sends(cfg, s, d2, f2, at("2026-10-27"), lambda c, d: None, lambda c, rows, now: "x")
     check("next run catches up 10-26 once, no fail notice", [(t, "2026-10-26" in m) for t, m, *_ in sends],
-          [(f"{cfg['title_prefix']} 종가 {fmt(b1v)} 이하 | 1차 매수 30%", True)])
+          [(f"{cfg['title_prefix']} 종가 {fmt(b1v)} 이하 | {tl}", True)])
     check("catch-up last_day", s["last_day"], "2026-10-27")
     # Yahoo up but missing the session's regular close -> hold
     g["yahoo_rows"] = yrows([{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}])
@@ -748,8 +783,6 @@ def _selftest(name: str, orig: dict) -> int:
     check("earnings message has 참고 line", sends[0][1].split("\n")[-1].startswith("참고: "), True)
     print("SAMPLE:", last)
     print("SAMPLE:", all_msgs[-4 if cfg.get("us10y") else -3][0])
-    print("SELFTEST", "PASS" if ok else "FAIL")
-    return 0 if ok else 1
 
 
 if __name__ == "__main__":
