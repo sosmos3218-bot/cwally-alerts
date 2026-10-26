@@ -7,7 +7,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. Q3 실적 창(11/4) 전후 가격 구간 점검.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 월요일 상태와 새 공시만 보냄(가격 구간 알림은 [FIG-PX]).",
   "valid_until": "2026-11-15",
   "alert_policy": "weekly_or_change",
   "cik": "0001579878",
@@ -30,6 +30,9 @@
     "split": 20,
     "chase": 27
   },
+  "price_zone_alerts": false,
+  "price_zone_note": "2026-10-26 채팅 승인: 20/27달러 구간 변경 알림 끔. FIG 가격 구간 알림은 [FIG-PX](22 / 16.6 / 28.4달러)만 보냄. [FIG] 는 월요일 상태와 새 공시만.",
+  "figpx_lines": "매수 검토 22달러 이하, 약세 시나리오 16.6달러 이하, 기본 시나리오 가치 28.4달러 이상",
   "change_rules": {
     "upgrade": "Q3 매출 380M+ 비트와 가이던스 상향, NDR 유지, AI 기여 확인",
     "downgrade": "매출 가이던스 미스, NDR 하락, 가이던스 하향"
@@ -40,5 +43,5 @@
     "ir": "https://investor.figma.com/"
   },
   "ends_kst": "2026-11-15 09:00",
-  "ends_note": "평일 09:00 가격 구간·월요일 상태. Q3 실적(11/4) 창 후 정리. 2026-11-15 morning이 마지막"
+  "ends_note": "평일 09:00 월요일 상태와 새 공시. Q3 실적(11/4) 창 후 정리. 2026-11-15 morning이 마지막"
 }

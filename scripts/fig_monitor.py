@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""FIG periodic watch: price zones and Monday status. Q3 scoring separate if needed."""
+"""FIG periodic watch: Monday status and new SEC filings. Q3 scoring separate if needed.
+
+Price-zone change alerts (20/27) are off when configs/fig.json price_zone_alerts is false
+(approved in chat 2026-10-26): FIG price zones come only from [FIG-PX] (figpx_monitor.py).
+"""
 from __future__ import annotations
 
 import json
@@ -72,7 +76,7 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     return "\n".join(
         [
             f"{stamp} | FIG | 변경조건 점검",
-            "이게 뭐 알림: 피그마 가격 구간과 변경 조건만 보는 주기 알림입니다. 매수 지시가 아닙니다. Q3 실적 채점은 별도.",
+            "이게 뭐 알림: 피그마 월요일 상태와 새 공시를 보는 주기 알림입니다. 가격 구간 알림은 [FIG-PX]. 매수 지시가 아닙니다. Q3 실적 채점은 별도.",
             f"지금 결과/상태: {status}",
             f"지금 할 일: {action}",
             f"나중에: {later}",
@@ -101,7 +105,7 @@ def main() -> int:
             "평일 09:00 KST morning에서만 돕니다. 구간이 바뀌거나 월요일이면 보냅니다. 그 외는 침묵입니다.",
             "상향 조건은 Q3 매출 380M+ 비트와 가이던스 상향, NDR 유지. 하향은 미스와 가이던스 하향. 실적은 11/4 창.",
             "27달러 이상은 추격 금지. 보유분은 이 알림이 모릅니다.",
-            "이 설치 확인을 매수·매도 신호로 읽기. 조회 실패를 조건 충족으로 세기.",
+            "이 설치 확인을 매수/매도 신호로 읽기. 조회 실패를 조건 충족으로 세기.",
         )
         title = "[FIG] 설치 확인 | 매매 신호 아님"
         print(title)
@@ -142,11 +146,11 @@ def main() -> int:
                     "[FIG] 주가 조회 실패 | 구간 미확인",
                     body(
                         stamp,
-                        f"주가 조회 실패. {qerr or '빈 응답'}. 20달러 이탈이 아닙니다.",
+                        f"주가 조회 실패. {qerr or '빈 응답'}. 가격 이탈 신호가 아닙니다.",
                         "증권 앱에서 FIG 종가를 직접 보세요. 이 알림으로 구간을 판정하지 마세요.",
                         "다음 평일 09:00 KST에 재시도합니다.",
                         "이번 알림으로 사지 말고 줄이지 마세요.",
-                        "조회 실패를 20달러 이탈이나 정상으로 취급.",
+                        "조회 실패를 가격 이탈이나 정상으로 취급.",
                     ),
                     4,
                 )
@@ -155,10 +159,14 @@ def main() -> int:
     else:
         zone = zone_of(price, levels["split"], levels["chase"])
         prev = state.get("zone") or "fair"
-        changed = zone != prev
+        zone_alerts = cfg.get("price_zone_alerts", True)
+        changed = zone != prev and zone_alerts
         weekly = today.weekday() == 0 and state.get("last_weekly") != today.isoformat()
         if changed or weekly or mode == "force":
-            if zone == "split":
+            if not zone_alerts:
+                title = "[FIG] 월요일 상태 | 가격 구간은 [FIG-PX]"
+                action = "상태 점검만. 가격 구간 알림은 [FIG-PX] 가 따로 보냅니다. 일괄 매수 금지."
+            elif zone == "split":
                 title = "[FIG] 20달러 이하 | 분할만, 일괄 금지"
                 action = "장기 관심 구간에 가깝습니다. 새 돈은 나누고, 11/4 실적 전 한 번에 넣지 마세요."
             elif zone == "chase":
@@ -170,18 +178,24 @@ def main() -> int:
             why = "구간 변경" if changed else "월요일 상태"
             if changed and weekly:
                 why = "구간 변경, 월요일 상태"
+            if not zone_alerts:
+                status = f"FIG {price:.2f}달러. 기준일 {base['price_date']} {base['price']}달러, 52주 {base['low_52w']}~{base['high_52w']}. {why}. 선행 PER 약 {base['fwd_pe']}배. [FIG-PX] 선: {cfg.get('figpx_lines', '')}."
+                trim = "28.4달러 이상은 [FIG-PX] 기본 시나리오 가치 도달 알림을 기준으로 비중 점검."
+            else:
+                status = f"FIG {price:.2f}달러. 기준일 {base['price_date']} {base['price']}달러, 52주 {base['low_52w']}~{base['high_52w']}. 구간 {prev} -> {zone}. {why}. 선행 PER 약 {base['fwd_pe']}배."
+                trim = "27달러 이상이면 추격하지 마세요. 20달러 복귀는 손절 신호가 아닙니다."
             alerts.append(
                 (
                     title,
                     body(
                         stamp,
-                        f"FIG {price:.2f}달러. 기준일 {base['price_date']} {base['price']}달러, 52주 {base['low_52w']}~{base['high_52w']}. 구간 {prev} -> {zone}. {why}. 선행 PER 약 {base['fwd_pe']}배.",
+                        status,
                         action,
                         "상향은 Q3 380M+ 비트와 가이던스 상향. 하향은 미스와 가이던스 하향. 실적은 11/4 창.",
-                        "27달러 이상이면 추격하지 마세요. 20달러 복귀는 손절 신호가 아닙니다.",
+                        trim,
                         "목표가 30달러를 안전마진으로 쓰기. 신용, 미수, 실적 전 일괄 매수.",
                     ),
-                    4 if zone != "fair" else 3,
+                    4 if zone != "fair" and zone_alerts else 3,
                 )
             )
             state["zone"] = zone
@@ -245,7 +259,7 @@ def main() -> int:
         print("no alert")
 
     state["updated_at"] = now.isoformat()
-    if mode != "dry":
+    if not dry:
         STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
         STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0

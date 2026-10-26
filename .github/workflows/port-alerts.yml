@@ -248,7 +248,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi]
+        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1278,6 +1278,14 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/vnqi_monitor.py selftest >/dev/null; fi
           python scripts/vnqi_monitor.py "$MODE"
+      - name: Run FIG dry check (job=fig dispatch only, always dry)
+        # approved in chat 2026-10-26: verify [FIG] with price_zone_alerts off. Never sends, never writes state.
+        # Scheduled [FIG] still runs only in the morning bundle (fig_monitor.py auto).
+        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && steps.pick.outputs.job == 'fig' }}
+        run: |
+          python scripts/fig_monitor.py dry
+          echo "--- Monday status preview (force + FIG_DRY=1: no ntfy, no state) ---"
+          FIG_DRY=1 python scripts/fig_monitor.py force
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
