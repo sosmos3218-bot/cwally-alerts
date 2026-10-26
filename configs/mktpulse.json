@@ -110,7 +110,7 @@
       "Calgary Roughnecks"
     ],
     "block_re": "토토|카지노|마작|베트맨|슬롯머신|바카라|게임 설명|게임 소개",
-    "max_items": 4,
+    "max_items": 3,
     "keep_days": 14
   },
   "sources": [
