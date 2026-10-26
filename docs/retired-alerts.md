@@ -40,3 +40,16 @@ cron-job.org jobs 8589357 and 8589366 (payload `job=oneshot`, titles still say p
 | name | prefix | added | oneshot window (KST) | what it did |
 |---|---|---|---|---|
 | pcor | `[PCOR]` | 2026-10-05 | 2026-11-05 08:00 ~ 2026-11-05 18:00 | Procore 3분기 6개 항목(매출, 영업이익률, FCF, 10만 달러 고객, 유지율, 2027 가이던스) 통과/보류/축소 채점. pcorq3 로 통합 |
+
+## 2026-10-26 retire fxbox, krbank (approved in chat 2026-10-26, "fxbox, krbank 폐기")
+
+Both had `ends_kst` in the past, so `ntfy_util.publish()` already blocked every send, but they still ran in
+slots. No other script imported or read their files and no cron-job.org job pointed at them. Removed: config,
+script, state, fxbox `run_one` line and `state/fxbox.json` in flow-alerts.yml (flow slot itself kept),
+krbank Run block, step name/if term and job option in port-alerts.yml, `[FXBOX]` `[KRBANK]` from AGENTS.md
+and README.md. No crons were removed (both rode on shared slots).
+
+| name | prefix | added | end (KST) | what it did |
+|---|---|---|---|---|
+| fxbox | `[FXBOX]` | 2026-10-07 | 2026-10-15 15:40 | 원달러 1,338~1,348원 박스 전망 마감 사후검증 (flow 15:40 슬롯) |
+| krbank | `[KRBANK]` | 2026-09-28 | 2026-09-28 11:25 | 우리금융, 하나금융 목표가와 분할매도 구간 1회 안내 (morning 09:00 슬롯) |
