@@ -248,7 +248,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, fig, vnqi]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -647,6 +647,7 @@ jobs:
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
             python scripts/isrg_monitor.py auto
+            python scripts/lrcx_monitor.py auto
             python scripts/rblx_monitor.py auto
             python scripts/pdd_monitor.py auto
             python scripts/133690_monitor.py auto
@@ -789,6 +790,30 @@ jobs:
           fi
           python scripts/ntfy_archive.py
           exit $failed
+      - name: Run LRCX standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
+        # approved in chat 2026-10-26. job=lrcx dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'lrcx'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/lrcx_monitor.py selftest; fi
+          python scripts/lrcx_monitor.py "$MODE"
+      - name: Run CELLTRION standalone (manual check of price + filings)
+        # approved in chat 2026-10-26. job=celltrion dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'celltrion'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/celltrion_monitor.py selftest; fi
+          python scripts/celltrion_monitor.py "$MODE" all
       - name: Run ISRG standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
         # approved in chat 2026-10-26. job=isrg dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'isrg'
@@ -856,6 +881,13 @@ jobs:
         run: |
           python scripts/slot_guard.py mark 0090b0
           python scripts/0090b0_monitor.py auto
+      - name: Run CELLTRION price (068270 confirmed adjusted close zones; 15:40 0090b0 slot)
+        # approved in chat 2026-10-26. Same slot as 0090b0 (cron-job.org on-time + GitHub 40 6 * * 1-5), slot guard above.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/celltrion_monitor.py auto price
       - name: Run lgiq3
         if: steps.pick.outputs.job == 'lgiq3'
         env:
@@ -1181,6 +1213,17 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/lgesfor_monitor.py selftest >/dev/null; fi
           python scripts/lgesfor_monitor.py "$MODE"
+      - name: Run CELLTRION filings (Q3 분기보고서 vs 잠정, Q4 잠정실적; k203780 19:00 slot)
+        # approved in chat 2026-10-26. Manual k203780 dispatch is dry unless oneoff_mode=auto, like the other chain steps.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          python scripts/celltrion_monitor.py "$MODE" filing
       - name: Run TSLA-SPCX (Tesla SpaceX merger - SEC filings, prediction markets, committee termination; daily 07:30 KST)
         # approved in chat 2026-10-24 12:28 KST. Scheduled backup 30 22 * * * and cron-job.org dispatch (oneoff_mode=auto) send;
         # any other dispatch is dry (selftest + dry: no ntfy, no state). Dedupe: state/tslaspcx.json seen accessions + market arm state.

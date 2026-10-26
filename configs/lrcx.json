@@ -1,0 +1,72 @@
+{
+  "name": "lrcx",
+  "title_prefix": "[LRCX]",
+  "ticker": "LRCX",
+  "display": "램리서치",
+  "cik": "0000707549",
+  "as_of": "2026-10-26",
+  "approval": "사용자 채팅 승인 2026-10-26 (\"둘 다 설계대로 만들고 시험 실행\")",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=lrcx 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "fy27_eps": 9.63,
+  "fy27_eps_note": "FY27 컨센서스 EPS (사용자 제공, 2026-10-26)",
+  "zones": [
+    {
+      "key": "nochase",
+      "lo": 262,
+      "hi": null,
+      "priority": 3
+    },
+    {
+      "key": "z1",
+      "lo": 215,
+      "hi": 225,
+      "priority": 3
+    },
+    {
+      "key": "z2",
+      "lo": 190,
+      "hi": 200,
+      "priority": 4
+    },
+    {
+      "key": "z3",
+      "lo": 165,
+      "hi": 175,
+      "priority": 4
+    }
+  ],
+  "rearm_pct": 3.0,
+  "rearm_note": "구간에 들어오면 1번 알림. 종가가 구간 경계 밖으로 3% 넘게 벗어난 뒤 다시 들어오면 다시 알림.",
+  "invalidation": {
+    "dec_revenue_floor_b": 8.2,
+    "rule": "새 실적 8-K(Item 2.02) EX-99.1 의 12월 분기 매출 < 8.2B, 또는 3월 분기 매출 가이던스 중간값 < 보고된 12월 분기 매출이면 무효화 p4. 아니면 요약 p3. 읽기 실패는 접수번호마다 cwally-ops 1번.",
+    "seed_last_accession": "0000707549-26-000052",
+    "seed_after": "2026-10-26"
+  },
+  "baseline": {
+    "sep_quarter_2026": {
+      "revenue_b": 8.22,
+      "gaap_op_margin_pct": 40.0,
+      "gaap_eps": 2.19,
+      "china_pct": 35.1,
+      "china_note": "보도자료 지역표는 35%, 35.1% 는 사용자 제공(10-Q 기준 추정)"
+    },
+    "dec_quarter_guidance": {
+      "revenue_b": 8.6,
+      "revenue_pm_b": 0.4,
+      "gaap_op_margin_pct": 40.5,
+      "gaap_eps": 2.33,
+      "gaap_eps_pm": 0.15,
+      "source": "8-K 0000707549-26-000052 EX-99.1 Outlook (확인함)"
+    }
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/LRCX?interval=1d&range=10d",
+    "sec": "https://data.sec.gov/submissions/CIK0000707549.json"
+  },
+  "ends_kst": "2027-01-31 23:59",
+  "ends_note": "평일 09:00 분할 매수 구간과 12월 분기 실적 무효화 점검. 2027-01-31 까지 (마지막 평일 실행 2027-01-29 09:00)"
+}
