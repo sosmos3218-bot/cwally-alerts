@@ -1,6 +1,8 @@
 {
-  "updated_at": "2026-10-23T19:00:37.813334+09:00",
-  "last_sent_session": "2026-10-23",
+  "updated_at": "2026-10-26T19:00:37.465559+09:00",
+  "last_sent_session": "2026-10-26",
   "fetch_fail_session": null,
-  "nav_by_session": {}
+  "nav_by_session": {
+    "2026-10-23": 33955.01
+  }
 }
