@@ -5,12 +5,17 @@ morning 슬롯(평일 09:00 KST). 미국 직전 완료 일봉 종가만 본다(�
 - 관심 구간: COIN 완료 종가 <= 160달러. 재무장: 종가 > 170달러
 - 관심 구간 이탈: 완료 종가 < 150달러. 재무장: 종가 > 158달러
 - 기준 시나리오 상단: 완료 종가 >= 220달러. 재무장: 종가 < 205달러
-- 실적(미국 10/29 장 마감 후): 10/28 첫 실행에서 D-1 안내 1회, 10/30 첫 실행에서 확인 4항목 안내 1회
+- 실적(미국 10/29 장 마감 후): 10/28 첫 실행에서 D-1 안내 1회, 10/30 첫 실행부터 SEC 8-K(Item 2.02) 첨부 덱의
+  "Financial Recap" 표에서 거래 매출(Transaction, net), 구독 및 서비스 매출, 조정 EBITDA, 주식보상비용을 읽어
+  직전 분기와 대조한 결과 1회. 못 읽으면 수동 확인 안내를 1회 보내고, 창(post_window_days) 안에서 다음 실행 때 다시 읽는다.
 modes: auto(기본) | dry(발송 없음, state 안 씀) | install(설치 확인 1회, state 안 씀)
+       | earnings-dry [8-K 접수번호] (실적 판독만 출력, 발송과 state 없음. 번호를 주면 그 8-K로 시험)
 """
 from __future__ import annotations
 
+import html
 import json
+import re
 import sys
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -30,6 +35,7 @@ NAME = "coin"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
 STATE_PATH = ROOT / "state" / f"{NAME}.json"
 UA = {"User-Agent": "Mozilla/5.0 (cwally-alerts; +mailto:sosmos3218@gmail.com)"}
+SEC_UA = {"User-Agent": "cwally-alerts sosmos3218@gmail.com"}
 
 
 def ny_now() -> datetime:
@@ -50,6 +56,7 @@ def load_state() -> dict:
         "top_armed": True,
         "pre_sent": False,
         "post_sent": False,
+        "post_parsed": False,
         "last_bar_date": None,
         "last_close": None,
         "fetch_fail_date": None,
@@ -108,6 +115,123 @@ def pct(a: float, b: float) -> float:
     return (a / b - 1) * 100
 
 
+NUM = r"\(?-?[\d,]+\.\d\)?"
+
+
+def edgar_get(url: str) -> bytes:
+    req = urllib.request.Request(url, headers=SEC_UA)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
+def html_to_text(raw: str) -> str:
+    t = re.sub(r"<script.*?</script>|<style.*?</style>", "", raw, flags=re.S)
+    t = re.sub(r"</(p|div|tr|li|h\d|table)>", "\n", t)
+    t = html.unescape(re.sub(r"<[^>]+>", " ", t))
+    return re.sub(r"\s+", " ", t)
+
+
+def _row(section: str, label: str) -> list[float]:
+    """표의 한 행에서 라벨 뒤에 이어지는 소수 한 자리 숫자들을 모두 읽는다. 괄호는 음수."""
+    m = re.search(label + r"\d?\s+((?:" + NUM + r"\s+)+)", section)
+    if not m:
+        raise ValueError(f"행 없음: {label}")
+    vals = [-float(x.strip("()").replace(",", "")) if x.startswith("(") else float(x.replace(",", ""))
+            for x in m.group(1).split()]
+    if len(vals) < 2:
+        raise ValueError(f"행 숫자 부족: {label}")
+    return vals
+
+
+def parse_deck(text: str) -> dict[str, tuple[float, float]]:
+    """덱 본문에서 (최신 분기, 직전 분기) 값을 읽는다. 단위는 백만 달러."""
+    i = text.find("Financial Recap")
+    if i < 0:
+        raise ValueError("Financial Recap 표 없음")
+    j = text.find("Income Statement", i)
+    recap = text[i:j if j > i else i + 4000]
+    k = text.find("Reconciliation of Adjusted EBITDA")
+    if k < 0:
+        raise ValueError("Adjusted EBITDA 조정표 없음")
+    recon = text[k:k + 6000]
+    out = {}
+    for key, section, label in (
+        ("trading", recap, "Transaction, net"),
+        ("subs", recap, "Subscription and services"),
+        ("ebitda", recap, "Adjusted EBITDA"),
+        ("sbc", recon, "Stock-based compensation expense"),
+    ):
+        v = _row(section, label)
+        out[key] = (v[-1], v[-2])
+    return out
+
+
+def fetch_earnings(cfg: dict, acc_override: str | None = None) -> tuple[str, str, dict[str, tuple[float, float]]]:
+    """SEC 8-K(Item 2.02)를 찾아 덱을 읽는다. (접수번호, 제출일, 값). 실패하면 예외."""
+    ern, ed = cfg["earnings"], cfg["edgar"]
+    cik = ed["cik"]
+    if acc_override:
+        acc, fdate = acc_override, "?"
+    else:
+        sub = json.loads(edgar_get(f"https://data.sec.gov/submissions/CIK{cik}.json"))["filings"]["recent"]
+        lo = date.fromisoformat(ern["date_us"])
+        hi = lo + timedelta(days=int(ed["search_days"]))
+        hits = [(d, a) for f, d, a, it in zip(sub["form"], sub["filingDate"], sub["accessionNumber"], sub["items"])
+                if f == "8-K" and ed["item"] in it.split(",") and lo <= date.fromisoformat(d) <= hi]
+        if not hits:
+            raise LookupError(f"{lo} 이후 {ed['search_days']}일 안에 8-K Item {ed['item']} 아직 없음")
+        fdate, acc = max(hits)
+    base_url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-', '')}"
+    items = json.loads(edgar_get(f"{base_url}/index.json"))["directory"]["item"]
+    cands = sorted(
+        (i for i in items if i["name"].lower().endswith(".htm") and not re.match(r"R\d+\.htm$", i["name"])
+         and "index" not in i["name"].lower()),
+        key=lambda i: -int(i.get("size") or 0),
+    )[:3]
+    last_err = "첨부 htm 없음"
+    for it in cands:
+        try:
+            return acc, fdate, parse_deck(html_to_text(edgar_get(f"{base_url}/{it['name']}").decode("utf-8", "replace")))
+        except ValueError as exc:
+            last_err = f"{it['name']}: {exc}"
+    raise ValueError(last_err)
+
+
+def check_layout(parsed: dict[str, tuple[float, float]], base: dict, tol: float = 0.15) -> None:
+    """표의 직전 분기 열이 설정의 2분기 기준값과 같은지 본다. 열이 밀리거나 행이 바뀌면 판독을 믿지 않는다."""
+    pairs = {"trading": "trading_rev_musd", "subs": "subs_services_rev_musd", "ebitda": "adj_ebitda_musd", "sbc": "sbc_musd"}
+    bad = [f"{k} 직전분기 {parsed[k][1]} != 기준 {base[b]}" for k, b in pairs.items() if abs(parsed[k][1] - base[b]) > tol]
+    if bad:
+        raise ValueError("표 구조 변경 의심: " + "; ".join(bad))
+
+
+def earnings_alert(parsed: dict[str, tuple[float, float]], acc: str, fdate: str, status: str, stamp: str, earn_us: date) -> tuple[str, str, int, list[str]]:
+    t, s_, e, b = (parsed[k] for k in ("trading", "subs", "ebitda", "sbc"))
+    gap_cur, gap_prev = e[0] - b[0], e[1] - b[1]
+    ok = {"거래 매출": t[0] > t[1], "서비스 매출": s_[0] > s_[1], "조정 EBITDA와 주식보상비용 차이": gap_cur > gap_prev}
+    n = sum(ok.values())
+    miss = [k for k, v in ok.items() if not v]
+
+    def line(name: str, cur: float, prev: float) -> str:
+        return f"{name} ${cur:,.1f}백만(직전 ${prev:,.1f}, {pct(cur, prev):+.1f}%)"
+
+    nums = (f"{line('거래 매출', *t)}. {line('구독 및 서비스 매출', *s_)}. {line('조정 EBITDA', *e)}. {line('주식보상비용', *b)}. "
+            f"조정 EBITDA에서 주식보상비용을 뺀 차이 {gap_cur:+,.1f}(직전 {gap_prev:+,.1f}, 구조 비교용이고 회계상 이익이 아님). "
+            f"출처 SEC 8-K {acc}" + (f"({fdate} 제출)." if fdate != "?" else "."))
+    if n == 3:
+        title = "[COIN] 실적 숫자 3개 개선 | 가이던스 확인 뒤 분할 검토"
+        action = ("남은 4번(다음 분기 전망, 비용 가이던스)을 보도자료와 콘퍼런스콜 요약에서 직접 확인. 같이 좋아졌으면 분석의 "
+                  "'관망에서 분할 매수' 조건이 맞습니다. 미리 정한 한도 안에서 분할로만 하세요.")
+    else:
+        title = (f"[COIN] 실적 숫자 {n}/3 개선 | 관망 유지" if n else "[COIN] 실적 숫자 개선 없음 | 관망 유지")
+        action = (f"관망 유지. 개선되지 않은 항목({', '.join(miss)})이 다음 분기에 돌아오는지 보세요. "
+                  "4번(다음 분기 전망, 비용 가이던스)은 직접 확인.")
+    msg = body(stamp, f"{earn_us:%m/%d} 미국 장 마감 후 3분기 실적을 자동 판독했습니다. {nums} {status}", action,
+               "숫자 3개는 직전 분기와 단순 비교입니다. 점유율, USDC 잔액, 신사업은 이 판독에 없습니다. 가격 조건 알림은 계속 옵니다.",
+               TRIM, AVOID)
+    return title, msg, 4, ["bar_chart"]
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
@@ -121,7 +245,7 @@ def main() -> int:
     base = ern["q2_baseline"]
 
     end = cfg.get("ends_kst")
-    if mode != "install" and end and now > datetime.strptime(end, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
+    if mode not in ("install", "earnings-dry") and end and now > datetime.strptime(end, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
         print(f"ended at {end}; silent")
         return 0
 
@@ -174,6 +298,18 @@ def main() -> int:
         print("install confirmation sent")
         return 0
 
+    if mode == "earnings-dry":
+        acc_arg = sys.argv[2] if len(sys.argv) > 2 else None
+        acc, fdate, parsed = fetch_earnings(cfg, acc_arg)
+        if not acc_arg:  # 번호를 준 시험 실행은 다른 분기 덱이라 기준값 대조를 건너뛴다
+            check_layout(parsed, base)
+        title, msg, _, _ = earnings_alert(parsed, acc, fdate, status, stamp, date.fromisoformat(ern["date_us"]))
+        print(parsed)
+        print(title)
+        print(msg)
+        print("DRY RUN: no publish, state not written")
+        return 0
+
     dry = mode == "dry"
     state = load_state()
     alerts: list[tuple[str, str, int, list[str]]] = []
@@ -195,16 +331,29 @@ def main() -> int:
             3, ["calendar"],
         ))
         state["pre_sent"] = True
-    if not state.get("post_sent") and post_d <= today_kst < post_end:
+    if not state.get("post_parsed") and post_d <= today_kst < post_end:
+        parse_err = ""
+        try:
+            acc, fdate, parsed = fetch_earnings(cfg)
+            check_layout(parsed, base)
+            alerts.append(earnings_alert(parsed, acc, fdate, status, stamp, earn_us))
+            state["post_parsed"] = True
+            state["post_sent"] = True
+        except Exception as exc:  # noqa: BLE001
+            parse_err = f"{type(exc).__name__}: {exc}"
+            print(f"earnings parse failed: {parse_err}")
+    else:
+        parse_err = ""
+    if not state.get("post_sent") and parse_err:
         alerts.append((
-            "[COIN] 실적 나옴 | 4항목 확인 뒤 판단",
-            body(stamp, f"{earn_us:%m/%d} 미국 장 마감 후 3분기 실적이 나왔습니다. {status}",
+            "[COIN] 실적 나옴 | 4항목 직접 확인",
+            body(stamp, f"{earn_us:%m/%d} 미국 장 마감 후 3분기 실적이 나왔습니다. 자동 판독은 못 했습니다({parse_err}). {status}",
                  (f"회사 IR({ern['ir_url']}) 보도자료에서 4가지를 2분기와 비교. "
                   f"1) 거래 매출 ${base['trading_rev_musd']}백만 달러보다 늘었나, "
                   f"2) 구독 및 서비스 매출 ${base['subs_services_rev_musd']}백만 달러보다 늘었나(비중이 아니라 금액), "
                   f"3) 조정 EBITDA ${base['adj_ebitda_musd']}백만 달러와 주식보상비용 ${base['sbc_musd']}백만 달러 구조가 나아졌나, "
                   "4) 다음 분기 전망과 비용 가이던스가 같이 좋아졌나."),
-                 "1)과 2)가 함께 늘고 3)이 나아지면 관망에서 분할 매수로 바꾸는 조건입니다. 반대로 USDC 잔액과 점유율은 느는데 이익이 계속 줄면 비중을 더 낮게 보세요.",
+                 "1)과 2)가 함께 늘고 3)이 나아지면 관망에서 분할 매수로 바꾸는 조건입니다. 반대로 USDC 잔액과 점유율은 느는데 이익이 계속 줄면 비중을 더 낮게 보세요. 다음 실행 때 자동 판독을 다시 시도합니다.",
                  TRIM, AVOID),
             4, ["bar_chart"],
         ))
