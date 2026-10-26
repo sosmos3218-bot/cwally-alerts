@@ -1,0 +1,52 @@
+{
+  "name": "vnqi",
+  "title_prefix": "[VNQI]",
+  "symbol": "VNQI",
+  "display": "뱅가드 해외 리츠 ETF (VNQI)",
+  "created_at": "2026-10-26T11:20:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤, 월요일은 금요일 종가). 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. 분배금은 새 배당락일(ex-date)마다 1번. job=vnqi 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "alert_policy": "change_only",
+  "approved": "2026-10-26 chat (가격 41.50달러 아래 1번 + 새 연 분배금 1번)",
+  "levels": [
+    {
+      "key": "below4150",
+      "op": "lt",
+      "price": 41.5,
+      "priority": 4,
+      "label": "41.50달러 아래 (52주 저점권 이탈)",
+      "note": "종가 41.50달러 미만. 2026-10-23 기준 52주 저점 41.53달러 바로 아래 선. 한 번 켜지면 종가 41.92달러(41.50 x 1.01) 위로 회복해야 다시 무장"
+    }
+  ],
+  "rearm_buffer_pct": 1.0,
+  "rearm_note": "pcorpx 와 같은 방식. 선 아래로 들어가면 1번만 보내고, 종가가 선 x (1 + 1%) 위로 올라와야 조용히 재무장. 그 사이에서는 직전 상태 유지. 첫 실행(상태 없음)은 현재 종가로 상태만 초기화하고 보내지 않음.",
+  "dividend": {
+    "add_threshold": 2.0,
+    "note": "연 1회 분배(보통 12월 중순 선언, 하순 지급). 새 배당락일이 보이면 1번: 주당 금액, 2.00달러 이상 여부(비중 추가 검토 기준), 최근 종가 대비 수익률. 상태는 state/vnqi.json div_last_ex.",
+    "history": [
+      {"ex_date": "2025-12-19", "amount": 2.1561},
+      {"ex_date": "2024-12-20", "amount": 2.0404}
+    ]
+  },
+  "reference": {
+    "as_of": "2026-10-26",
+    "last_close": 42.71,
+    "last_close_date": "2026-10-23",
+    "w52_low": 41.53,
+    "w52_high": 50.88,
+    "source": "Yahoo Finance chart v8 VNQI meta"
+  },
+  "stale_days": 6,
+  "sources": {
+    "bars": "https://query1.finance.yahoo.com/v8/finance/chart/VNQI?range=2y&interval=1d&events=div",
+    "bars_fallback": "https://query2.finance.yahoo.com/v8/finance/chart/VNQI?range=2y&interval=1d&events=div",
+    "dividends": "https://api.nasdaq.com/api/quote/VNQI/dividends?assetclass=etf",
+    "note": "가격: 야후 query1, 실패하면 query2 (stooq 는 2026-10 현재 JS 검증 페이지라 못 씀). 분배금: 나스닥 배당 API(소수 4자리, 선언일 포함) 우선, 실패하면 야후 events=div(소수 3자리 반올림 값)."
+  },
+  "explain": "VNQI(뱅가드 해외 리츠 ETF) 미국 종가가 41.50달러 아래로 새로 들어갈 때, 그리고 새 연 분배금이 나올 때만 오는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": null,
+  "ends_note": "VNQI 가격선과 연 분배금 감시, 수동 해제 전까지"
+}
