@@ -28,3 +28,15 @@ cron-job.org one-shot jobs for these times are listed in the PR body (deleted se
 | usd240 | `[USD240]` | 2026-10-07 | 2026-10-07 16:05 ~ 2026-10-13 16:05 | 261240 KODEX 미국달러선물 규칙을 10월물 종가로 판정하는 2026년 일회 알림입니다. |
 | ustsy10 | `[USTSY]` | 2026-09-27 | 2026-10-02 00:30 ~ 2026-10-09 02:15 | 10월 1일 재무부 10년, 30년 입찰 공고의 확정 규모, CUSIP, WI 개시와, 10/6 3년, 10/7 10년, 10/8 30년 결과가... |
 | ktb148070 | `[KTB148070]` | 2026-10-20 | 2026-10-22 15:30 ~ 2026-10-22 15:30 | 금통위 후 148070 분할매수 판정. 한은 결정 판정 함수는 scripts/bok_mpc.py 로 이동(krrate 사용) |
+
+## 2026-10-26 merge: pcor into pcorq3 (approved in chat 2026-10-26, "적절히 통합하기")
+
+Disabled, not deleted: `configs/pcor.json` has `disabled: true`, `oneshot_kst: []`, `ends_kst` 2026-10-26 11:00, and
+`scripts/pcor_monitor.py` exits at once when disabled. `state/pcor.json` is kept as history (it never sent).
+Its Run step was removed; its GitHub fallback crons (`0 23 4 11 *`, `0 9 5 11 *`) now map to `JOB=pcorq3`, and its
+two one-shot times (2026-11-05 08:00 and 18:00 KST) moved to `configs/pcorq3.json` `oneshot_kst`, so the existing
+cron-job.org jobs 8589357 and 8589366 (payload `job=oneshot`, titles still say pcor) now run pcorq3.
+
+| name | prefix | added | oneshot window (KST) | what it did |
+|---|---|---|---|---|
+| pcor | `[PCOR]` | 2026-10-05 | 2026-11-05 08:00 ~ 2026-11-05 18:00 | Procore 3분기 6개 항목(매출, 영업이익률, FCF, 10만 달러 고객, 유지율, 2027 가이던스) 통과/보류/축소 채점. pcorq3 로 통합 |

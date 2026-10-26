@@ -15,7 +15,14 @@ Verdict (configs/pcorq3.json rules):
 Forward-looking/cautionary boilerplate is dropped before any stance or financing parse
 (same filter as soq3/neeq3, commit 454c322), so risk-factor text never fires.
 
-Runs on the existing morning 09:00 KST slot inside the window (11/4-11/6, year 2026). No new cron.
+Runs on the existing morning 09:00 KST slot inside the window (11/4-11/6, year 2026) plus the one-shot
+times 11/5 08:00 and 18:00 KST taken over from the retired `pcor` alert (same cron-job.org jobs
+8589357/8589366 and GitHub fallback crons). No new cron.
+
+Absorbed from `pcor` (2026-10-26): procore.com/press fallback when EDGAR has no exhibit yet, one
+fetch-failure notice (cwally-ops), and reference-only lines: free cash flow, $100K customers YoY, gross
+revenue retention, DroneDeploy contribution / organic growth, 2027 guidance wording, a data center
+sentence with a number, and pcor's old 통과/보류/축소 checklist bands. None of these change the verdict.
 Modes: auto | force (ignore window/state) | dry (print only, no ntfy, no state) | selftest.
 Local parser test: PCORQ3_TEST_TEXT=<file> python scripts/pcorq3_monitor.py dry
 Not investment advice.
@@ -74,11 +81,16 @@ def exhibit_names(acc: str) -> tuple[str, list[str]]:
         return base, []
 
 
+def candidate_8ks(filings: list[dict], day: str) -> list[dict]:
+    """8-Ks filed on/after the US-Eastern release date (11/3 after the close = 11/4 ~06:05 KST).
+    Item 2.02 (results) first; others kept as a fallback in case items are blank."""
+    c = [f for f in filings if f.get("form") == "8-K" and f.get("filingDate", "") >= day]
+    return sorted(c, key=lambda f: "2.02" not in (f.get("items") or ""))
+
+
 def sec_release(cfg: dict, filings: list[dict]) -> tuple[str, str]:
     day = cfg["release_filing_date_et"]
-    for f in filings:
-        if f["form"] != "8-K" or f["filingDate"] < day:
-            continue
+    for f in candidate_8ks(filings, day):
         base, names = exhibit_names(f["accessionNumber"])
         ex = [n for n in names if re.search(r"ex-?99|xexx99|exx99", n, re.I) and n.lower().endswith((".htm", ".html"))]
         for name in ex:
@@ -88,6 +100,18 @@ def sec_release(cfg: dict, filings: list[dict]) -> tuple[str, str]:
                 continue
             if re.search(r"third quarter 2026", body, re.I) and re.search(r"Revenue", body):
                 return body, f"{base}/{name}"
+    return "", ""
+
+
+def press_release(cfg: dict) -> tuple[str, str]:
+    """procore.com/press fallback (from pcor). Only a Q3 2026 results page counts."""
+    raw = fetch(cfg["sources"]["press"])
+    for href in re.findall(r'href="([^"]+)"', raw, re.I):
+        if re.search(r"third-quarter-(fiscal-year-)?2026.*result|q3-2026.*result", href, re.I):
+            link = href if href.startswith("http") else "https://www.procore.com" + href
+            body = textify(fetch(link))
+            if re.search(r"third quarter 2026", body, re.I) and re.search(r"Revenue was", body):
+                return body, link
     return "", ""
 
 
@@ -231,7 +255,73 @@ def parse(raw: str, cfg: dict) -> dict:
         p["om_target"] = "미확인"
     fin = financing_sentences(clean, cfg["existing_financing"]["exclude_regex"])
     p["financing"] = [s[:160] for s in fin]
+    p.update(reference_metrics(raw, clean))
     return p
+
+
+def first(pattern: str, text: str) -> float | None:
+    m = re.search(pattern, text, re.I)
+    return float(m.group(1).replace(",", "")) if m else None
+
+
+def reference_metrics(raw: str, clean: str) -> dict:
+    """Reference-only figures ported from pcor. Wording checks use the boilerplate-free text."""
+    r = {
+        "fcf_m": first(r"free cash (?:in)?flow(?: for the (?:first|second|third|fourth) quarter)? (?:was|of) \$?\s*" + NUM + r"\s*million", clean),
+        "cust_100k": first(r"customers contributing more than \$100,000 of annual recurring revenue totaled ([0-9,]{3,})", clean),
+        "cust_yoy": first(r"100,000 of annual recurring revenue totaled [0-9,]+[^.]{0,60}?increase of " + NUM + r"\s*(?:%|percent)", clean),
+        "grr": first(r"gross revenue retention rate of " + NUM + r"\s*(?:%|percent)", clean),
+        "dd_rev": first(r"DroneDeploy[^.]{0,80}?(?:contributed|contribution of|revenue of|added)\s*(?:approximately\s*)?\$\s*" + NUM + r"\s*million", clean),
+        "organic_yoy": first(r"organic revenue (?:growth|grew|increased)[^.]{0,40}?" + NUM + r"\s*(?:%|percent)", clean)
+        or first(r"excluding (?:the (?:impact|contribution) of )?(?:the )?DroneDeploy[^.]{0,80}?(?:grew|growth of|increased|increase of)\s*" + NUM + r"\s*(?:%|percent)", clean),
+        "g27_organic": first(r"2027[^.]{0,160}?(?:organic|excluding (?:the (?:impact|contribution) of )?(?:the )?DroneDeploy)[^.]{0,100}?" + NUM + r"\s*(?:%|percent)", clean),
+        "dd_mentioned": "DroneDeploy" in clean,
+    }
+    if r["dd_rev"] is None:
+        r["dd_rev"] = first(r"\$\s*" + NUM + r"\s*million[^.]{0,60}?(?:from|attributable to|contributed by)\s*(?:the\s*)?DroneDeploy", clean)
+    w = "미확인"
+    if re.search(r"(lower\w*|reduc\w*|cut|below prior)[^.]{0,60}(2027|FY ?'? ?27)|(2027|FY ?'? ?27)[^.]{0,60}(lower\w*|reduc\w*|below prior)", clean, re.I):
+        w = "하향 표현"
+    elif re.search(r"(rais\w*|increas\w*)[^.]{0,60}(2027|FY ?'? ?27)[^.]{0,40}(outlook|guidance|target)", clean, re.I):
+        w = "상향 표현"
+    elif re.search(r"(reaffirm\w*|maintain\w*|reiterat\w*)[^.]{0,80}(2027|FY ?'? ?27)", clean, re.I):
+        w = "유지 표현"
+    r["g27_wording"] = w
+    r["dc_sentence"] = None
+    for sent in sentences(clean):
+        if len(sent) <= 400 and re.search(r"data cent(?:er|re)s?", sent, re.I) and re.search(r"\$\s?[0-9]|[0-9]+(?:\.[0-9]+)?\s*(?:%|percent)", sent):
+            r["dc_sentence"] = sent.strip()[:200]
+            break
+    return r
+
+
+def ref_band(v, pass_at: float, hold_at: float) -> str:
+    if v is None:
+        return "미확인"
+    return "통과" if v >= pass_at else ("보류" if v >= hold_at else "축소")
+
+
+def reference_line(p: dict, cfg: dict) -> str:
+    t = cfg.get("reference_thresholds") or {}
+    parts = []
+    if t:
+        parts.append("옛 pcor 채점(판정 미반영): 매출 " + ref_band(p.get("organic_yoy") if p.get("organic_yoy") is not None else p.get("rev_yoy"), t["rev_pass"], t["rev_hold"])
+                     + ", 영업이익률 " + ref_band(p.get("q3_om"), t["om_pass"], t["om_hold"])
+                     + (f", FCF {p['fcf_m']:g}백만달러 " + ref_band(p["fcf_m"], t["fcf_pass"], t["fcf_hold"]) if p.get("fcf_m") is not None else ", FCF 미확인")
+                     + f", 10만달러 고객 전년비 {fmt(p.get('cust_yoy'))} " + ref_band(p.get("cust_yoy"), t["cust_pass"], t["cust_hold"])
+                     + f", 총매출 유지율 {fmt(p.get('grr'))} " + ref_band(p.get("grr"), t["grr_pass"], t["grr_hold"]))
+    if p.get("dd_rev") is not None:
+        parts.append(f"DroneDeploy 기여 매출 {p['dd_rev']:g}백만달러")
+    elif p.get("organic_yoy") is not None:
+        parts.append(f"DroneDeploy 제외 증가율 {p['organic_yoy']:g}%")
+    else:
+        parts.append("DroneDeploy 기여분 미공시(3분기와 FY27 성장률에 인수 효과 포함 가능)")
+    if p.get("g27_organic") is not None:
+        parts.append(f"FY27 DroneDeploy 제외 성장 {p['g27_organic']:g}%")
+    parts.append(f"2027 문구 {p.get('g27_wording', '미확인')}")
+    if p.get("dc_sentence"):
+        parts.append("데이터센터 원문: " + p["dc_sentence"])
+    return "참고: " + ". ".join(parts) + "."
 
 
 # ---------- decide ----------
@@ -302,6 +392,7 @@ def compose(cfg: dict, verdict: str, why: list[str], p: dict, fin_filings: list[
         "나중에: 콜 요약에서 DroneDeploy 기여 매출과 2027 가이던스 문구 다시 확인. 일회 알림이라 다시 오지 않음.",
         "익절/줄일 때: FY27 성장 10% 미만, 25% 목표 하향, 새 대규모 전환사채/증자 중 하나라도 확인되면 비중 축소.",
         "하지 말 것: 실적 직후 갭 추격, 계획 초과 매수, 위험요인 문구만 보고 단정, 신용/미수. 투자 권유 아님.",
+        reference_line(p, cfg),
     ]
     prio = {"증액": 4, "보류": 3, "청산": 5, "확인 필요": 4}[verdict]
     return title, "\n".join(lines), prio
@@ -391,6 +482,39 @@ def selftest() -> int:
     case("new financing unknown size -> 확인 필요", synth(), "확인 필요", ["2026-11-05 424B5: Procore commenced an at-the-market offering of common stock"])
     case("explicit cut sentence w/o outlook -> 청산", synth(None, None, extra="We are lowering our FY27 non-GAAP operating margin target of 25% to reflect DroneDeploy."), "청산")
     case("reaffirm sentence w/o outlook om, growth 14 -> 증액", synth("growth of 14%", None, extra="We reaffirm our FY27 non-GAAP operating margin target of 25%."), "증액")
+    # filing window: the Q3 8-K is dated 11/3 (US/Eastern) although it lands ~11/4 06:05 KST
+    fl = [{"form": "8-K", "filingDate": "2026-11-03", "accessionNumber": "a-q3", "items": "2.02,9.01"},
+          {"form": "4", "filingDate": "2026-11-03", "accessionNumber": "a-f4", "items": ""},
+          {"form": "8-K", "filingDate": "2026-11-03", "accessionNumber": "a-other", "items": "5.02"},
+          {"form": "8-K", "filingDate": "2026-11-02", "accessionNumber": "a-old", "items": "2.02"},
+          {"form": "8-K", "filingDate": "2026-09-09", "accessionNumber": "a-dd", "items": "8.01"}]
+    got = [f["accessionNumber"] for f in candidate_8ks(fl, cfg["release_filing_date_et"])]
+    ok = got == ["a-q3", "a-other"]
+    fails += not ok
+    print("ok  " if ok else "FAIL", "8-K dated 11/3 is a candidate, 2.02 first, 11/2 and older ignored:", got)
+    # reference metrics ported from pcor (never change the verdict)
+    extra = ("Free cash inflow for the third quarter was $70 million, an increase of 20% year-over-year. "
+             "Achieved a gross revenue retention rate of 94% in the third quarter. "
+             "Number of organic customers contributing more than $100,000 of annual recurring revenue totaled 2,950 as of September 30, 2026, an increase of 13% year-over-year. "
+             "DroneDeploy contributed approximately $9 million of revenue in the quarter. "
+             "Data center projects on the platform grew 40% year-over-year.")
+    p = case("reference metrics do not change verdict", synth(extra=extra), "증액")
+    want = {"fcf_m": 70.0, "grr": 94.0, "cust_100k": 2950.0, "cust_yoy": 13.0, "dd_rev": 9.0}
+    got = {k: p.get(k) for k in want}
+    ok = got == want and bool(p.get("dc_sentence"))
+    fails += not ok
+    print("ok  " if ok else "FAIL", "reference metrics", got, "| dc:", (p.get("dc_sentence") or "")[:50])
+    line = reference_line(p, cfg)
+    ok = "총매출 유지율 94% 보류" in line and "DroneDeploy 기여 매출 9백만달러" in line and "FCF 70백만달러 통과" in line
+    fails += not ok
+    print("ok  " if ok else "FAIL", line[:160])
+    p = parse(synth(), cfg)
+    ok = p.get("dc_sentence") is None and p.get("g27_wording") == "미확인"
+    fails += not ok
+    print("ok  " if ok else "FAIL", "boilerplate '25% FY27 target may be lowered' is not a 2027 wording signal:", p.get("g27_wording"))
+    ok = bool(re.search(r"third-quarter-(fiscal-year-)?2026.*result|q3-2026.*result", "/press/procore-announces-third-quarter-2026-financial-results", re.I)) and not re.search(r"third-quarter-(fiscal-year-)?2026.*result|q3-2026.*result", "/press/procore-announces-timing-of-third-quarter-fiscal-year-2026-earnings-call", re.I)
+    fails += not ok
+    print("ok  " if ok else "FAIL", "press fallback link: results page yes, timing page no")
     t, body, pr = compose(cfg, "보류", ["x"], parse(synth("growth of 12%"), cfg), [], "test", 55.0, "11/03")
     bad = any(ch in t + body for ch in "\u00b7\u2014")
     fails += bad
@@ -433,6 +557,11 @@ def main() -> int:
         except Exception as exc:
             raw, src = "", ""
             err.append(f"sec: {exc}")
+        if not raw:
+            try:
+                raw, src = press_release(cfg)
+            except Exception as exc:
+                err.append(f"press: {exc}")
     fin_filings: list[str] = []
     if filings:
         try:
@@ -440,6 +569,12 @@ def main() -> int:
         except Exception as exc:
             err.append(f"financing scan: {exc}")
     print("src:", src or "-", "| new financing filings:", fin_filings or "none", "| err:", err)
+    if not raw and len(err) >= 2 and mode == "auto" and not st.get("fail_notified"):
+        # both EDGAR and procore.com failed (pcor's 조회 실패 notice; routed to cwally-ops, never a trade signal)
+        send(dry, "[PCOR-Q3] 조회 실패 | 판정 보류", f"SEC EDGAR 와 procore.com 조회가 모두 실패. {'; '.join(err)}. 다음 실행에서 다시 봅니다. 이 알림으로 매매 금지.", 3, "ops")
+        st["fail_notified"] = True
+        save_state(st, now, dry)
+        return 0
     if not raw:
         last_try = now.date() >= end.date()
         if mode == "auto" and last_try and not st.get("missing_notified"):

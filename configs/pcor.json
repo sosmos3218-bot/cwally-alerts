@@ -7,15 +7,12 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "08:00",
-  "oneshot_kst": [
-    "2026-11-05 08:00",
-    "2026-11-05 18:00"
-  ],
+  "oneshot_kst": [],
   "window_start_kst": "2026-11-05 07:30",
   "expire_date": "2026-11-06",
   "event_year": 2026,
   "release_at_kst": "2026-11-05 05:00",
-  "schedule_note": "3Q26 실적은 2026-11-04 미국장 마감 후. 1차 2026-11-05 08:00 KST = UTC 0 23 4 11 *. 원문 없으면 18:00 KST = UTC 0 9 5 11 * 재확인. 연도 가드 2026만. 새 cron 파일과 평일 반복 슬롯은 추가하지 않음. 디스패치 매핑은 워크플로 승인 후.",
+  "schedule_note": "은퇴(2026-10-26). pcorq3 가 대신함. 3Q26 실적은 2026-11-04 미국장 마감 후. 1차 2026-11-05 08:00 KST = UTC 0 23 4 11 *. 원문 없으면 18:00 KST = UTC 0 9 5 11 * 재확인. 연도 가드 2026만. 새 cron 파일과 평일 반복 슬롯은 추가하지 않음. 디스패치 매핑은 워크플로 승인 후.",
   "baseline": {
     "price_date": "2026-10-02",
     "price": 50.95,
@@ -65,8 +62,8 @@
   },
   "cik": "0001611052",
   "explain": "Procore 3분기 원문만으로 매출 증가율, non-GAAP 영업이익률, 자유현금흐름, 10만달러 고객, 총매출 유지율, 2027 가이던스를 통과/보류/축소로 나누는 일회 알림입니다.",
-  "ends_kst": "2026-11-05 18:00",
-  "ends_note": "Procore 3분기 일회 알림, 11/5 18:00이 마지막",
+  "ends_kst": "2026-10-26 11:00",
+  "ends_note": "pcorq3 로 통합되어 종료",
   "acquisition": {
     "name": "DroneDeploy",
     "closed": "2026-09-09",
@@ -78,5 +75,13 @@
     "dronedeploy": "기여 매출 숫자가 있으면 표시, 없으면 '기여분 미공시'",
     "data_center": "data center 문장에 금액이나 %가 있을 때만 그 문장 표시. 없으면 줄 생략",
     "excluded": "상업용, 연구소는 넣지 않음(원문 수치 가능성 낮고 오탐 위험). 2026-10-17 결정"
-  }
+  },
+  "retired_oneshot_kst": [
+    "2026-11-05 08:00",
+    "2026-11-05 18:00"
+  ],
+  "disabled": true,
+  "retired_at_kst": "2026-10-26 11:00",
+  "retired_into": "pcorq3",
+  "retired_note": "2026-10-26 채팅 승인('적절히 통합하기')으로 pcorq3 에 통합. one-shot 11/5 08:00, 18:00 은 pcorq3 oneshot_kst 로 옮김(같은 cron-job.org 잡 8589357/8589366). Run pcor 단계와 Decide 매핑 제거, 스크립트는 disabled 면 바로 종료. state/pcor.json 은 이력으로 남김(발송 이력 없음)."
 }

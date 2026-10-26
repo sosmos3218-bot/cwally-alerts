@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""RETIRED 2026-10-26: merged into pcorq3_monitor.py. Kept only so old dispatches exit quietly."""
 from __future__ import annotations
 
 import json
@@ -277,6 +278,10 @@ def emit(cfg, title, lines, pri):
 def main():
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    if cfg.get("disabled"):
+        # retired 2026-10-26, merged into pcorq3 (configs/pcor.json retired_note). No fetch, no ntfy, no state write.
+        print(f"pcor retired into {cfg.get('retired_into')}; silent")
+        return 0
     th = cfg["thresholds"]
     now = datetime.now(KST)
     st = load_state()

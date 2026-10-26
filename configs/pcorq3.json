@@ -7,8 +7,12 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "cik": "0001611052",
-  "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 3Q26 실적은 2026-11-03(화) 미국장 마감 후(회사 10/13 발표, EST 16:05 = 11/4 06:05 KST 전후), 콜 11/4 08:30 ET = 11/4 22:30 KST. 첫 판정 11/4(수) 09:00 KST, 원문이 없으면 11/5, 11/6 09:00 재시도. 연도 가드 2026만. 판정은 1번만 발송.",
+  "schedule_kst": "09:00 / 08:00 / 18:00",
+  "oneshot_kst": [
+    "2026-11-05 08:00",
+    "2026-11-05 18:00"
+  ],
+  "schedule_note": "3Q26 실적은 2026-11-03(화) 미국장 마감 후(회사 10/13 발표, EST 16:05 = 11/4 06:05 KST 전후), 콜 11/4 08:30 ET = 11/4 22:30 KST. 실행: 11/4(수) 09:00 morning 슬롯(첫 판정), 11/5 08:00 one-shot, 11/5 09:00 morning, 11/5 18:00 one-shot, 11/6 09:00 morning(마지막, 원문 없으면 미게시 1번). 11/5 08:00, 18:00 은 은퇴한 pcor 의 one-shot 을 그대로 넘겨받음(cron-job.org 8589357/8589366 job=oneshot, GitHub 백업 UTC 0 23 4 11 *, 0 9 5 11 *). 새 cron 없음. 연도 가드 2026만. 판정은 1번만 발송.",
   "event_year": 2026,
   "release_at_kst": "2026-11-04 06:05",
   "release_filing_date_et": "2026-11-03",
@@ -45,9 +49,33 @@
   "sources": {
     "sec": "https://data.sec.gov/submissions/CIK0001611052.json",
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/PCOR?interval=1d&range=5d",
-    "timing": "https://www.procore.com/press/procore-announces-timing-of-third-quarter-fiscal-year-2026-earnings-call"
+    "timing": "https://www.procore.com/press/procore-announces-timing-of-third-quarter-fiscal-year-2026-earnings-call",
+    "press": "https://www.procore.com/press"
   },
   "explain": "Procore 3분기 실적 원문(8-K EX-99.1)으로 2027 매출 가이던스 성장률, 25% non-GAAP 영업이익률 목표 유지 여부, 새 조달 여부를 읽어 증액/보류/청산/확인 필요 중 하나를 1번 보내는 알림입니다. 투자 권유 아님.",
   "ends_kst": "2026-11-06 23:59",
-  "ends_note": "Procore 3분기 판정 일회 알림, 11/6 09:00 재시도가 마지막"
+  "ends_note": "Procore 3분기 판정 일회 알림, 11/6 09:00 재시도가 마지막",
+  "reference_thresholds": {
+    "rev_pass": 15,
+    "rev_hold": 12,
+    "om_pass": 20,
+    "om_hold": 19,
+    "fcf_pass": 50,
+    "fcf_hold": 20,
+    "cust_pass": 12,
+    "cust_hold": 8,
+    "grr_pass": 95,
+    "grr_hold": 93
+  },
+  "reference_note": "옛 pcor(2026-10-26 은퇴, pcorq3 로 통합) 체크리스트 기준. 매출 15/12%, non-GAAP 영업이익률 20/19%, FCF 5천만/2천만 달러, 10만 달러 고객 전년비 12/8%, 총매출 유지율 95/93%. 본문 '참고' 줄에만 쓰고 판정에는 반영하지 않음.",
+  "acquisition": {
+    "name": "DroneDeploy",
+    "closed": "2026-09-09",
+    "price_m": 845,
+    "source": "Procore 8-K 2026-09-09 (merger consummated), 2026-07-29 press release (about $845M cash)",
+    "rule": "3분기(9/30 종료)와 2027 가이던스에 인수 매출 포함. 기여분이나 인수 효과 제외 증가율이 원문에 없으면 매출 증가율과 2027 가이던스는 최대 보류."
+  },
+  "absorbed": {
+    "pcor": "2026-10-26 통합. pcor 의 one-shot 시각, procore.com 보도자료 대체 경로, 조회 실패 알림, 참고 지표(FCF, 10만 달러 고객, 총매출 유지율, DroneDeploy 기여분, 2027 문구, 데이터센터 문장)를 넘겨받음. pcor 의 통과/보류/축소 종합 판정과 50/45달러 매수선, 원문 없음 조기 알림은 쓰지 않음."
+  }
 }

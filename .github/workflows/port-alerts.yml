@@ -20,6 +20,7 @@ on:
     - cron: "40 6 29 10 *"
     - cron: "0 13 14 10 *"
     - cron: "0 13 29 10 *"
+    # pcorq3 oneshot_kst (KST->UTC): 2026-11-05 08:00, 18:00 (taken over from retired pcor 2026-10-26; on-time = cron-job.org job=oneshot)
     - cron: "0 23 4 11 *"
     - cron: "0 9 5 11 *"
     - cron: "10 20 9 10 *"
@@ -395,7 +396,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "0 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 6 29 10 *" ]; then JOB=hce
             elif [ "${{ github.event.schedule }}" = "15 7 18 9 *" ] || [ "${{ github.event.schedule }}" = "15 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "15 7 18 12 *" ]; then JOB=yencarry; YC=boj_press
             elif [ "${{ github.event.schedule }}" = "0 13 14 10 *" ] || [ "${{ github.event.schedule }}" = "0 13 29 10 *" ]; then JOB=dram27
-            elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcor
+            elif [ "${{ github.event.schedule }}" = "0 23 4 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 5 11 *" ]; then JOB=pcorq3
             elif [ "${{ github.event.schedule }}" = "10 20 9 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 26 10 *" ] || [ "${{ github.event.schedule }}" = "10 20 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 20 8 12 *" ]; then JOB=spcxq3
             elif [ "${{ github.event.schedule }}" = "20 23 10 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 11 11 *" ] || [ "${{ github.event.schedule }}" = "20 23 12 11 *" ]; then JOB=oklo
             elif [ "${{ github.event.schedule }}" = "30 22 2 12 *" ] || [ "${{ github.event.schedule }}" = "30 22 3 12 *" ] || [ "${{ github.event.schedule }}" = "10 0 5 12 *" ]; then JOB=pathq3
@@ -792,12 +793,6 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/dram27_monitor.py auto
-      - name: Run pcor
-        if: steps.pick.outputs.job == 'pcor'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pcor_monitor.py auto
       - name: Run spcxq3
         if: steps.pick.outputs.job == 'spcxq3'
         env:
@@ -1212,6 +1207,7 @@ jobs:
       - name: Run PCOR (pcorq3 Q3 verdict 11/4-11/6 window + pcorpx close lines 48/46; morning 09:00)
         # approved in chat 2026-10-26. Attached to the existing morning slot, no new cron. Dedupe: state/pcorq3.json final_notified,
         # state/pcorpx.json last_date + armed (1% re-arm buffer). job=pcorq3/pcorpx dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        # pcor merged into pcorq3 (2026-10-26): its 11/5 08:00/18:00 GitHub fallback crons map to JOB=pcorq3 here (auto); on-time runs go through the one-shot picker.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'pcorq3' || steps.pick.outputs.job == 'pcorpx') }}
         env:
           NTFY_TOPIC: cwally-port
@@ -1220,7 +1216,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/pcorq3_monitor.py selftest >/dev/null || rc=1; python scripts/pcorpx_monitor.py selftest >/dev/null || rc=1; fi
           if [ "$PICK_JOB" != "pcorpx" ]; then python scripts/pcorq3_monitor.py "$MODE" || rc=1; fi
