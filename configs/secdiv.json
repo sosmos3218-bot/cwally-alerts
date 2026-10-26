@@ -59,5 +59,10 @@
     "2026-10-30 10:00"
   ],
   "oneshot_note": "2026-10-26 채팅 승인: \"10/29와 10/30 10:00에 삼성전자 배당 공시 확인을 한 번씩 추가해 줘.\" 반복 아님. 정시는 cron-job.org one-shot 잡(job=oneshot, picker 가 secdiv_monitor.py auto 실행), 늦은 백업은 GitHub cron 0 1 29 10 * / 0 1 30 10 *. 같은 state/secdiv.json 을 써서 10:00 에 보냈으면 15:20 에 다시 안 보냄.",
-  "oneshot_approved": "2026-10-26"
+  "oneshot_approved": "2026-10-26",
+  "cronjob_ids": {
+    "2026-10-29 10:00": 8725986,
+    "2026-10-30 10:00": 8725992
+  },
+  "cronjob_note": "cron-job.org one-shot 잡 \"cwally oneshot 10:00 KST (Oct 29) secdiv\" 8725986 (만료 2026-10-29 10:59:59), \"cwally oneshot 10:00 KST (Oct 30) secdiv\" 8725992 (만료 2026-10-30 10:59:59). 2026-10-26 17:35 KST cronjob-register.yml action=register 로 만듦. body {\"job\":\"oneshot\"}. 만료 뒤에는 안 울리고, 지울 때는 action=delete (dry_run 먼저)."
 }
