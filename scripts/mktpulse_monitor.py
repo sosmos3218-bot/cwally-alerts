@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """[MARKET] 장중 시장 점검: 반도체, 전력기기 수급 + 주요 종목 가격 + 메타 뮤즈 코멘트.
 
-Trigger (approved in chat 2026-10-22 09:43 KST): a recurring cron-job.org job (weekdays 10, 11, 13,
-15 Asia/Seoul) dispatches port-alerts.yml with {"job":"oneshot"}; scripts/oneshot_pick.py picks the
+Trigger (approved in chat 2026-10-22 09:43 KST; reduced to once a day at 11:00 KST in chat 2026-10-26):
+a recurring cron-job.org job (weekdays 11 Asia/Seoul) dispatches port-alerts.yml with {"job":"oneshot"}; scripts/oneshot_pick.py picks the
 due `oneshot_kst` entry of configs/mktpulse.json and runs this script with `auto`. There is no
 GitHub schedule cron (2-8 h late, useless intraday).
 
@@ -298,17 +298,13 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         except Exception as exc:
             flows[mk] = None
             log.append(f"{mk} 수급 {type(exc).__name__}")
-    prev = (state.get("last_flow") or {})
     for mk, label in (("KOSPI", "코스피"), ("KOSDAQ", "코스닥")):
         f = flows.get(mk)
         if f is None:
             lines.append(f"- {label} 수급: 아직 없음(장 초반 또는 조회 실패)")
             continue
-        extra = ""
-        p = prev.get(mk) or {}
-        if p.get("day") == today and p.get("foreign") is not None:
-            extra = f" (직전 {p.get('slot', '')[11:]} 대비 외국인 {signed(f['외국인'] - p['foreign'], '억')})"
-        lines.append(f"- {label} 수급(잠정, 억원): {fmt_flow(f).replace('억', '')}{extra}")
+        # 하루 1회(11:00)라 같은 날 직전 점검이 없다. '직전 대비' 줄은 2026-10-26 에 뺐다.
+        lines.append(f"- {label} 수급(잠정, 억원): {fmt_flow(f).replace('억', '')}")
 
     secs = []
     for s in cfg["sectors"]:
@@ -405,7 +401,7 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         "이게 뭐 알림: 장중 반도체, 전력기기 수급과 주요 종목 가격, 메타 뮤즈 관련 새 증권사 코멘트 점검입니다. 매매 신호가 아닙니다.",
         f"지금 결과/상태 ({stamp} KST 조회, 장중 수급은 잠정치):",
         *lines,
-        "지금 할 일: 다음 점검에서 외국인 방향이 이어지는지만 보세요. 뮤즈 코멘트는 원문을 열어 메모리 수요 언급인지 확인하세요.",
+        "지금 할 일: 장 마감 뒤 15:40 [FLOW] 확정 수급에서 외국인 방향이 이어지는지만 보세요. 뮤즈 코멘트는 원문을 열어 메모리 수요 언급인지 확인하세요.",
         f"나중에: {later}",
         "익절/줄일 때: 이 알림만으로 정하지 않습니다. 보유 종목은 각 종목 알림 기준을 따르세요.",
         "하지 말 것: 장중 잠정 수급으로 추격매수. 업종 등락을 종목 수급으로 읽기. 뉴스 제목만 보고 매매. 투자 권유 아님.",
@@ -426,7 +422,7 @@ def sanitize_lines(text: str) -> str:
 def install(cfg: dict) -> int:
     body = "\n".join([
         "이게 뭐 알림: [MARKET] 장중 시장 점검 알림 설치 확인입니다. 매매 신호가 아닙니다.",
-        "지금 결과/상태: 거래일 10:00, 11:00, 13:00, 15:00 KST에 코스피, 코스닥 잠정 수급, 반도체와 전기장비 업종 등락,"
+        "지금 결과/상태: 거래일 하루 1회 11:00 KST에 코스피, 코스닥 잠정 수급, 반도체와 전기장비 업종 등락,"
         " 삼성전자, SK하이닉스, LS ELECTRIC 등 바스켓 가격과 수급, 메타 뮤즈 관련 새 증권사 코멘트를 보냅니다.",
         "지금 할 일: 설치 확인만 하세요.",
         "나중에: 정시 실행은 cron-job.org 반복 잡이 맡습니다. 조회 실패 안내는 cwally-ops로 갑니다.",
@@ -452,13 +448,18 @@ def self_test() -> int:
     check("sanitize middle dot", sanitize("삼성·SK 반등"), "삼성, SK 반등")
     check("sanitize em-dash", sanitize("메모리—수요"), "메모리 수요")
     t = lambda s: datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=KST)  # noqa: E731
-    check("slot on time", current_slot(cfg, t("2026-10-23 10:05"))[0], "2026-10-23 10:00")
-    check("slot 45 min edge", current_slot(cfg, t("2026-10-23 10:45"))[0], "2026-10-23 10:00")
-    check("slot stale 46 min", current_slot(cfg, t("2026-10-23 10:46"))[0], None)
+    check("slot on time", current_slot(cfg, t("2026-10-23 11:05"))[0], "2026-10-23 11:00")
+    check("slot 45 min edge", current_slot(cfg, t("2026-10-23 11:45"))[0], "2026-10-23 11:00")
+    check("slot stale 46 min", current_slot(cfg, t("2026-10-23 11:46"))[0], None)
     check("after close", current_slot(cfg, t("2026-10-23 15:31"))[0], None)
-    check("weekend", current_slot(cfg, t("2026-10-24 10:05"))[0], None)
-    check("after ends", current_slot(cfg, t("2026-11-06 10:05"))[0], None)
-    check("year guard", current_slot(cfg, t("2027-10-22 10:05"))[0], None)
+    check("weekend", current_slot(cfg, t("2026-10-24 11:05"))[0], None)
+    check("after ends", current_slot(cfg, t("2026-11-06 11:05"))[0], None)
+    check("year guard", current_slot(cfg, t("2027-10-22 11:05"))[0], None)
+    check("13:00 slot removed", current_slot(cfg, t("2026-10-27 13:05"))[0], None)
+    check("10:00 slot removed", current_slot(cfg, t("2026-10-27 10:05"))[0], None)
+    check("last slot 11/5 11:00", current_slot(cfg, t("2026-11-05 11:05"))[0], "2026-11-05 11:00")
+    check("next after 10/30 is 11/2 11:00", next_slot(cfg, "2026-10-30 11:00", t("2026-10-30 11:05")), "2026-11-02 11:00")
+    check("no next after 11/5", next_slot(cfg, "2026-11-05 11:00", t("2026-11-05 11:05")), None)
     m = cfg["muse"]
     block = re.compile(m["block_re"])
     check("spam blocked", bool(block.search("베트맨 토토 앱 설정 변경 전 확인할 적용 시점")), True)

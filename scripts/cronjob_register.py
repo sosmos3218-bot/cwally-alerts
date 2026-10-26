@@ -48,6 +48,12 @@ List mode, CRONJOB_ACTION=list (read-only, approved in chat 2026-10-23):
   One GET /jobs. Prints jobId, title, enabled, schedule (timezone, hours, minutes, wdays, mdays,
   months, expiresAt), url, lastStatus, lastExecution, nextExecution. Never prints headers, bodies or keys.
 
+Pulse update, CRONJOB_ACTION=update_pulse (approved in chat 2026-10-26, mktpulse once a day at 11:00 KST):
+  PATCHes only job PULSE_JOB_ID (title + schedule to PULSE_TITLE / PULSE_SCHEDULE: hour 11 Mon-Fri,
+  expiresAt PULSE_EXPIRES). URL, body, headers and auth are left as they are. Refuses unless that job still
+  dispatches port-alerts.yml with the oneshot body and has the old or new pulse title. Skips (exit 10) if it
+  is already at the target. CRONJOB_DRY_RUN=1 checks only.
+
 Pulse mode, CRONJOB_ACTION=register_pulse (mktpulse recurring job, approved in chat 2026-10-22 09:43,
   configs/mktpulse.json cron_approved; implemented 2026-10-23):
   Creates the ONE recurring job PULSE_TITLE: Asia/Seoul, minute 0, hours 10, 11, 13, 15, Mon-Fri,
@@ -95,9 +101,13 @@ SLOT_BODY = {"ref": "main", "inputs": {"job": "k203780", "oneoff_mode": "auto"}}
 SLOT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [SLOT_HOUR],
                  "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TIMEZONE = "Asia/Seoul"
-PULSE_TITLE = "cwally mktpulse 10/11/13/15 KST weekdays"
-PULSE_HOURS = [10, 11, 13, 15]
-PULSE_EXPIRES = 20261105155959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 15:00)
+PULSE_JOB_ID = 8705009  # created 2026-10-23 15:00 KST by register_pulse
+# 2026-10-26 (chat approval): once a day at 11:00 KST only; job 8705009 is moved by action=update_pulse.
+PULSE_TITLE = "cwally mktpulse 11 KST weekdays"
+PULSE_OLD_TITLES = ("cwally mktpulse 10/11/13/15 KST weekdays",)
+PULSE_HOURS = [11]
+PULSE_OLD_HOURS = [10, 11, 13, 15]
+PULSE_EXPIRES = 20261105115959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 11:00)
 PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TSLASPCX_JOB_ID = 8711128  # created 2026-10-24 12:38 KST by register_tslaspcx
@@ -328,7 +338,7 @@ def run_delete() -> int:
             refused.append(f"{jid}: not found in this account")
             continue
         problems = oneshot_problems(j)
-        if (j.get("title") or "").strip() == PULSE_TITLE or jid == SLOT_JOB_ID:
+        if (j.get("title") or "").strip() in (PULSE_TITLE,) + PULSE_OLD_TITLES or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
             problems.append("recurring job (mktpulse pulse or after-close slot); never deleted here")
         if problems:
             refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
@@ -482,15 +492,50 @@ def run_list() -> int:
     jobs = list_jobs(key)
     for j in sorted(jobs, key=lambda x: int(x.get("jobId") or 0)):
         print_job(j)
-    pulse = [j for j in jobs if (j.get("title") or "").strip() == PULSE_TITLE or is_pulse_like(j)]
+    pulse = [j for j in jobs if (j.get("title") or "").strip() in (PULSE_TITLE,) + PULSE_OLD_TITLES or is_pulse_like(j)]
     print(f"total={len(jobs)} mktpulse_jobs={[j.get('jobId') for j in pulse]}")
     return 0
 
 
 def is_pulse_like(j: dict) -> bool:
     sc = j.get("schedule") or {}
+    # recurring weekday dispatch only (a one-shot at 11:xx has fixed mdays/months, so it never matches)
     return ((j.get("url") or "").rstrip("/") == DISPATCH_URL
-            and sorted(int(h) for h in (sc.get("hours") or [])) == PULSE_HOURS)
+            and sorted(int(h) for h in (sc.get("hours") or [])) in (PULSE_HOURS, PULSE_OLD_HOURS)
+            and list(sc.get("mdays") or []) == [-1] and list(sc.get("months") or []) == [-1]
+            and sorted(int(w) for w in (sc.get("wdays") or [])) == [1, 2, 3, 4, 5])
+
+
+def pulse_body_ok(got: dict) -> bool:
+    try:
+        return json.loads((got.get("extendedData") or {}).get("body") or "null") == ONESHOT_BODY
+    except ValueError:
+        return False
+
+
+def run_update_pulse(now: datetime) -> int:
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    print("before:")
+    got = call("GET", f"/jobs/{PULSE_JOB_ID}", key).get("jobDetails") or {}
+    print_job(got)
+    title = (got.get("title") or "").strip()
+    if (got.get("url") or "").rstrip("/") != DISPATCH_URL or not pulse_body_ok(got):
+        raise Stop(BAD_INPUT, f"job {PULSE_JOB_ID} is not the mktpulse oneshot pulse job; not touching it")
+    if title not in (PULSE_TITLE,) + PULSE_OLD_TITLES:
+        raise Stop(BAD_INPUT, f"job {PULSE_JOB_ID} has unexpected title {title!r}; not touching it")
+    sc = got.get("schedule") or {}
+    if title == PULSE_TITLE and all(sc.get(k) == v for k, v in PULSE_SCHEDULE.items()):
+        print("skip: already at target")
+        return SKIP
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would set job {PULSE_JOB_ID} to {PULSE_TITLE!r} Mon-Fri {PULSE_HOURS}:00 Asia/Seoul, expiresAt {PULSE_EXPIRES}")
+        return 0
+    call("PATCH", f"/jobs/{PULSE_JOB_ID}", key, {"job": {"title": PULSE_TITLE, "schedule": dict(PULSE_SCHEDULE)}})
+    print("after:")
+    print_job(call("GET", f"/jobs/{PULSE_JOB_ID}", key).get("jobDetails") or {})
+    return 0
 
 
 def run_register_pulse(now: datetime) -> int:
@@ -503,7 +548,7 @@ def run_register_pulse(now: datetime) -> int:
     if res.get("someFailed"):
         raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
     for j in res.get("jobs") or []:
-        if (j.get("title") or "").strip() == PULSE_TITLE or is_pulse_like(j):
+        if (j.get("title") or "").strip() in (PULSE_TITLE,) + PULSE_OLD_TITLES or is_pulse_like(j):
             print("skip: mktpulse job already exists:")
             print_job(j)
             return SKIP
@@ -650,12 +695,14 @@ def main() -> int:
             return run_list()
         if action == "register_pulse":
             return run_register_pulse(now)
+        if action == "update_pulse":
+            return run_update_pulse(now)
         if action == "register_tslaspcx":
             return run_register_tslaspcx(now)
         if action == "register_portlight":
             return run_register_portlight(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, register_tslaspcx, register_portlight or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

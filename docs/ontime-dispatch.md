@@ -27,7 +27,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
 | 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
-| mktpulse | 거래일 10:00, 11:00, 13:00, 15:00 (~11/05) | 01:00, 02:00, 04:00, 06:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 10/11/13/15 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인) |
+| mktpulse | 거래일 11:00 (~11/05, 2026-10-26부터 하루 1회) | 02:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 11 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인, 2026-10-26 승인으로 11시만) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
 | portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인, 11:59 확인, configs/portlight.json `cron_approved`) |
 
@@ -43,11 +43,12 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 
 토큰: fine-grained PAT, 저장소 `cwally-alerts`만, **Actions: Read and write** (Metadata read는 자동). 다른 권한은 주지 않는다.
 
-## 반복 원샷 트리거 (mktpulse, 2026-10-22 승인)
+## 반복 원샷 트리거 (mktpulse, 2026-10-22 승인, 2026-10-26 하루 1회로 변경)
 
-- cron-job.org 반복 잡 1개 8705009 "cwally mktpulse 10/11/13/15 KST weekdays": 시간대 Asia/Seoul, 분 0, 시 10, 11, 13, 15, 월~금, 만료 2026-11-05 15:59:59.
+- cron-job.org 반복 잡 1개 8705009 "cwally mktpulse 11 KST weekdays": 시간대 Asia/Seoul, 분 0, 시 11, 월~금, 만료 2026-11-05 11:59:59.
+  2026-10-26 사용자 채팅 승인("데일리로", 11:00 선택)으로 `cronjob-register.yml` `action=update_pulse`가 옛 "cwally mktpulse 10/11/13/15 KST weekdays"(시 10, 11, 13, 15, 만료 15:59:59)를 이렇게 바꿈. URL, body, 헤더는 그대로.
   2026-10-23 15:00 KST `cronjob-register.yml` `action=register_pulse`로 만듦(첫 실행 2026-10-26 10:00 KST). 10/22, 10/23 장중 슬롯은 이 잡이 없어서 빠졌다.
-  상태 확인은 `action=list`(읽기 전용, GET /jobs 1번). `register_pulse`는 같은 제목이나 같은 시(10, 11, 13, 15) dispatch 잡이 있으면 skip.
+  상태 확인은 `action=list`(읽기 전용, GET /jobs 1번). `register_pulse`는 같은 제목(옛 제목 포함)이나 같은 시(11, 또는 옛 10, 11, 13, 15) 평일 반복 dispatch 잡이 있으면 skip.
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"oneshot"}}`.
 - 무엇을 보낼지는 picker가 정한다. `oneshot_kst`에 없는 시각(휴장일, 11/05 이후)이면 `job=skip`.
 - 같은 시각의 다른 원샷도 이 잡 하나로 같이 돈다. `cronjob_register.py`는 같은 시각에 같은 URL 잡이 있으면 새 원샷을 만들지 않는다(skip).
