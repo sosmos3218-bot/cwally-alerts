@@ -11,7 +11,7 @@
 
 제목 prefix: `[STEEL]` `[SQUARE]` `[ALUX]` `[FLOW]` `[HCE]` `[SILICON2]` `[LG]` `[IREN]` `[COVER0198]` `[0220WL]` `[USTSY]` `[SGYN]` `[YENCARRY]` `[CCREV]` `[KSHIP]` `[PORT]` `[KRWFX]` `[SEC]` `[GVAL]` `[455850]` `[0005D0]` `[0192T0]` `[091160]` `[278240]` `[2UB]` `[377990]` `[489000]` `[ADDSTOP]` `[AEO]` `[BRK10]` `[BTC90]` `[BTCOCT]` `[CL]` `[CPI]` `[DHR]` `[DRAM27]` `[GENPACT]` `[GOOGL]` `[ISRG]` `[KOSBRK]` `[NKE]` `[NOV3]` `[OKLO]` `[PATH]` `[PFFD]` `[PLTR]` `[PROTEC]` `[SEMREV]` `[SHINWON]` `[SKC]` `[0090B0]` `[BTCBOX]` `[XRPBOX]` `[DKQ3]` `[SNDK]` `[SPCX]` `[TSMC]` `[232140]` `[PORTLIGHT]` `[BURRY]` `[ETH]` `[RATES]` `[FOMC]` `[LGIT]` `[NVDA]` `[OPS]` `[PCOR-Q3]` `[PCOR-PX]` `[FIG-PX]` `[FIG-EARN]` `[VNQI]` `[LGES]` `[IEFA]` `[SEC-DIV]`.
 
-반복 정책 (2026-10-26): `[SQUARE]` `[YENCARRY]` `[ALUX]` `[0220WL]` `[HCE]` `[SGYN]` `[STEEL]` `[455850]` `[PORT]` `[MERAS]` 는 판정/상태/구간이 직전 발송과 다를 때만 보내고, 주 첫 실행(보통 월요일)에 주간 체크 1번. 새로 걸린 손절/이탈은 바로 발송, 같은 상태 반복은 주간 체크에서만. `[PORT]` HALT, DUAL, DCA 취소는 매번 발송.
+반복 정책 (2026-10-26): `[SQUARE]` `[YENCARRY]` `[ALUX]` `[0220WL]` `[HCE]` `[SGYN]` `[STEEL]` `[455850]` `[PORT]` `[MERAS]` 는 판정/상태/구간이 직전 발송과 다를 때만 보내고, 주 첫 실행(보통 월요일)에 주간 체크 1번. 새로 걸린 손절/이탈은 바로 발송, 같은 상태 반복은 주간 체크에서만. `[PORT]` HALT, DCA 취소는 매번 발송 (DUAL 은 진입 시 1번, 이후 주간 체크).
 
 ## 스케줄
 

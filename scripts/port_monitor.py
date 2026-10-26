@@ -398,7 +398,7 @@ def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str
     return live_lines, soon_lines, bool(live), vtitle, vkey
 
 
-ALWAYS_SEND_KEYS = {"HALT", "DUAL", "EVENT:DCA_CANCEL"}  # stop / escalation: sent on every run
+ALWAYS_SEND_KEYS = {"HALT", "EVENT:DCA_CANCEL"}  # hard stop / order cancel: sent on every run. DUAL sends on entry, then weekly.
 
 
 def iso_week(day: str | None) -> str | None:
@@ -410,7 +410,7 @@ def iso_week(day: str | None) -> str | None:
 
 def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool,
                   sig: str | None = None) -> tuple[bool, str]:
-    """weekly_or_change: HALT/DUAL/DCA_CANCEL always; otherwise only when the signature (verdict key plus the set
+    """weekly_or_change: HALT/DCA_CANCEL always; otherwise only when the signature (verdict key plus the set
     of live event ids: a new verdict key or a newly live event) differs from the last sent one, plus one send in the first run of each ISO week.
     Before 2026-10-26 EVENT:* keys and live event days sent on every run, so the same verdict repeated daily."""
     force = os.environ.get("FORCE_ALERT") == "1" or (len(sys.argv) > 1 and sys.argv[1].lower() == "force")
