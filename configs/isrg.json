@@ -3,12 +3,12 @@
   "title_prefix": "[ISRG]",
   "ticker": "ISRG",
   "display": "인튜이티브 서지컬",
-  "as_of": "2026-10-07",
+  "as_of": "2026-10-26",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 3분기 절차 채점은 isrgq3.",
-  "valid_until": "2027-01-22",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 2027 가이던스 판정은 2027년 1, 2월 8-K(Item 2.02) 보도자료로 한 번. 수동 job=isrg 는 oneoff_mode=auto 가 아니면 dry. 4분기 실적은 회사 미공지(제3자 추정 2027-01-26 장 마감 뒤), 마지막 평일 실행은 2027-02-05 09:00",
+  "valid_until": "2027-02-06",
   "alert_policy": "weekly_or_change",
   "cik": "0001035267",
   "holding": false,
@@ -21,18 +21,57 @@
     "fwd_pe": 36.7,
     "low_52w": 328.57,
     "high_52w": 603.88,
-    "analyst_target": 477.47,
+    "analyst_target": 480.13,
     "us_da_vinci_q2": 12,
-    "guidance_low": 13.5,
-    "guidance_high": 15.5,
-    "last_known_filing": "2026-07-27"
+    "guidance_low": 14.0,
+    "guidance_high": 15.0,
+    "last_known_filing": "2026-10-21",
+    "guidance_prior_low": 13.5,
+    "guidance_prior_high": 15.5,
+    "q3_2026": {
+      "report_date_et": "2026-10-20 (8-K 0001035267-26-000067, KST 10/21)",
+      "revenue_b": 3.05,
+      "revenue_growth_pct": 22,
+      "da_vinci_procedure_growth_pct": 14,
+      "procedures_k": 906,
+      "us_procedure_growth_pct": 10,
+      "ous_procedure_growth_pct": 20,
+      "systems_placed": 546,
+      "systems_growth_pct": 28,
+      "adj_op_margin_pct": 42,
+      "adj_eps": 3.0,
+      "guidance_2026": "14~15% (이전 13.5~15.5%)",
+      "instrument_price_cut": "시술당 기구 가격 3~5% 인하",
+      "antitrust_settlement_m": 450,
+      "buyback_b": 2.94,
+      "buyback_shares_m": 7.8,
+      "verified_ex991": [
+        "revenue 3.05B +22% (3,048.7M vs 2,505.1M)",
+        "da Vinci procedures +14%",
+        "systems 546 (427 전년, +27.9%)",
+        "adj op income 1.27B / revenue 3.05B = 41.7% (계산)",
+        "non-GAAP EPS 3.00",
+        "2026 guidance 14~15% (Q2 8-K 13.5~15.5%)",
+        "antitrust 일회성 450M (pre-tax, 세후 347M)",
+        "buyback 7.8M주 2.94B -> 평균 약 376.9달러 (계산)"
+      ],
+      "unverified_source_reported": [
+        "procedures ~906K",
+        "US procedures +10%",
+        "OUS procedures +20%",
+        "instrument price cut 3~5% per procedure",
+        "analyst avg target 480.13"
+      ],
+      "source_note": "사용자가 붙여 넣은 분석(약 10/24) 숫자. EX-99.1로 맞춰 본 항목은 verified_ex991, 보도자료에 없는 항목은 unverified_source_reported"
+    },
+    "buyback_avg_price_q3": 377
   },
   "levels": {
     "split": 380,
     "chase": 500
   },
   "change_rules": {
-    "upgrade": "미국 다빈치 시술 성장 재가속, 2027 가이던스가 중간값 이상, 다빈치5·SP 설치가 가격 할인 없이 유지",
+    "upgrade": "미국 다빈치 시술 성장 재가속, 2027 가이던스 중간값 13% 이상, 다빈치5와 SP 설치가 가격 할인 없이 유지",
     "downgrade": "미국 시술 성장 10% 미만과 가이던스 하향, 기구 매출 성장이 시술 성장 미만, 시스템 ASP 하락"
   },
   "sources": {
@@ -40,6 +79,18 @@
     "sec": "https://data.sec.gov/submissions/CIK0001035267.json",
     "ir": "https://investor.intuitivesurgical.com/news-releases"
   },
-  "ends_kst": "2027-01-22 09:00",
-  "ends_note": "평일 09:00 가격 구간·월요일 상태. 3분기 채점은 isrgq3. 2027-01-22 morning이 마지막"
+  "ends_kst": "2027-02-06 09:00",
+  "ends_note": "평일 09:00 가격 구간, 월요일 상태, 2027 가이던스 1회 판정. 4분기 실적(2027년 1월 말 예상) 뒤 2027-02-06 09:00까지 (마지막 평일 실행 2027-02-05)",
+  "guidance_2027": {
+    "guidance_add": 13.0,
+    "guidance_cut": 12.0,
+    "prior_2026_low": 14.0,
+    "prior_2026_high": 15.0,
+    "months": [
+      "2027-01",
+      "2027-02"
+    ],
+    "seed_after": "2026-10-26",
+    "rule": "2027년 1, 2월 8-K Item 2.02 EX-99.1 에서 2027 전 세계 다빈치 시술 성장 범위 중간값: 13% 이상 증액 검토 p4, 12% 미만 비중 축소 검토 p4, 그 사이 유지 p3, 숫자 없음 공시 미기재 p3. 숫자 판정은 한 번, 접수번호로 중복 제거"
+  }
 }

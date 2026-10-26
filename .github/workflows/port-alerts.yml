@@ -248,7 +248,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn]
+        options: [all, morning, afternoon, samnix, isrg, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, ccrev, kship, shinwon, protec, 2ub, pltr, addstop, sec, krbank, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -793,6 +793,18 @@ jobs:
           fi
           python scripts/ntfy_archive.py
           exit $failed
+      - name: Run ISRG standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
+        # approved in chat 2026-10-26. job=isrg dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'isrg'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/isrg_monitor.py selftest; fi
+          python scripts/isrg_monitor.py "$MODE"
       - name: Run SAMNIX standalone
         if: steps.pick.outputs.job == 'samnix'
         run: |
