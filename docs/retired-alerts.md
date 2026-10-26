@@ -33,6 +33,9 @@ cron-job.org one-shot jobs for these times are listed in the PR body (deleted se
 
 Disabled, not deleted: `configs/pcor.json` has `disabled: true`, `oneshot_kst: []`, `ends_kst` 2026-10-26 11:00, and
 `scripts/pcor_monitor.py` exits at once when disabled. `state/pcor.json` is kept as history (it never sent).
+Update 2026-10-26 (PR #15): the disabled shell is now deleted too (config, script, state, `[PCOR]` prefix).
+Nothing dispatches job=pcor: it is not a dispatch option, no Decide line or schedule cron maps to it, and
+cron-job.org 8589357 / 8589366 send `job=oneshot` (picked as pcorq3).
 Its Run step was removed; its GitHub fallback crons (`0 23 4 11 *`, `0 9 5 11 *`) now map to `JOB=pcorq3`, and its
 two one-shot times (2026-11-05 08:00 and 18:00 KST) moved to `configs/pcorq3.json` `oneshot_kst`, so the existing
 cron-job.org jobs 8589357 and 8589366 (payload `job=oneshot`, titles still say pcor) now run pcorq3.
@@ -53,3 +56,9 @@ and README.md. No crons were removed (both rode on shared slots).
 |---|---|---|---|---|
 | fxbox | `[FXBOX]` | 2026-10-07 | 2026-10-15 15:40 | 원달러 1,338~1,348원 박스 전망 마감 사후검증 (flow 15:40 슬롯) |
 | krbank | `[KRBANK]` | 2026-09-28 | 2026-09-28 11:25 | 우리금융, 하나금융 목표가와 분할매도 구간 1회 안내 (morning 09:00 슬롯) |
+
+## 2026-10-26 delete pcor shell (merged into pcorq3 by c5635aa)
+
+| name | prefix | added | oneshot window (KST) | what it did |
+|---|---|---|---|---|
+| pcor (shell) | `[PCOR]` | 2026-10-05 | none (moved to pcorq3) | c5635aa 에서 pcorq3 로 통합된 뒤 남은 disabled config, script, state 삭제. 기능은 pcorq3 에 있음 |
