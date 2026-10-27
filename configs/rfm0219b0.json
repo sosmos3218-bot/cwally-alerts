@@ -1,28 +1,102 @@
 {
   "name": "rfm0219b0",
   "title_prefix": "[0219B0]",
-  "display": "RF머트리얼즈 3Q 실적 뒤 0219B0 재평가 + 우리로 중국 계약 점검",
-  "approval": "사용자 채팅 승인 2026-10-27 (재승인 없이 범위 안에서 진행)",
-  "etf": {"code": "0219B0", "name": "KoAct 광통신&위성네트워크액티브", "market": "KOSPI ETF", "verified": "네이버 증권 2026-10-27"},
-  "rf": {"code": "327260", "name_kr": "RF머트리얼즈", "kind_name": "알에프머트리얼즈", "market": "KOSDAQ"},
-  "wooriro": {"code": "046970", "name_kr": "우리로", "market": "KOSDAQ"},
+  "display": "0219B0 가격 감시 + 우리로 계약 공시 감시 + RF머트리얼즈 3Q 확정치 재평가",
+  "approval": "사용자 채팅 승인 2026-10-27 (최초 빌드, 같은 날 11:17 KST 변경: 3Q 창 11/16~11/20, 가격 감시, 우리로 매일 감시)",
+  "etf": {
+    "code": "0219B0",
+    "name": "KoAct 광통신&위성네트워크액티브",
+    "market": "KOSPI ETF",
+    "verified": "네이버 증권 2026-10-27"
+  },
+  "rf": {
+    "code": "327260",
+    "name_kr": "RF머트리얼즈",
+    "kind_name": "알에프머트리얼즈",
+    "market": "KOSDAQ"
+  },
+  "wooriro": {
+    "code": "046970",
+    "name_kr": "우리로",
+    "market": "KOSDAQ"
+  },
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "19:00",
-  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 부착. 2026-11-18 ~ 2026-11-20 KST 에만 동작, 밖에서는 조용히 종료. 수동 job=rfm0219b0 는 oneoff_mode=auto 가 아니면 dry(발송 없음).",
-  "window": {"start": "2026-11-18", "end": "2026-11-20"},
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계. 가격과 우리로 감시는 2026-10-28 ~ 2027-02-26 KRX 거래일 매일, 3Q 재평가는 2026-11-16 ~ 11-20 에만. 수동 job=rfm0219b0 는 oneoff_mode=auto 가 아니면 dry(발송 없음).",
   "q3": {
-    "period_start": "2026-07-01", "period_end": "2026-09-30", "report_period": "2026.09",
+    "period_start": "2026-07-01",
+    "period_end": "2026-09-30",
+    "report_period": "2026.09",
     "search_from": "2026-10-01",
-    "note": "3분기 잠정실적 공정공시는 이미 2026-10-27 10:37 KST 에 나왔고 분기보고서 제출 기한은 11/16 이라, 11/18 이후 공시만 찾으면 놓친다. 그래서 2026-10-01 이후 제출된 3분기(2026.07~09) 잠정실적과 분기보고서를 찾는다. 알림은 11/18 19:00 부터만."
+    "prelim": {
+      "acptno": "20261027000133",
+      "filed": "2026-10-27 10:37",
+      "unit": "억원",
+      "rev": 247.54,
+      "op": 48.71,
+      "net": 40.53,
+      "rev_qoq": -1.22,
+      "rev_yoy": 69.68,
+      "op_qoq": -7.92,
+      "op_yoy": 157.59,
+      "net_qoq": -22.57,
+      "net_yoy": 74.92
+    },
+    "miss_pct": 10,
+    "note": "분기보고서(2026.09) 법정 기한 11/16. 창 안에서 분기보고서를 찾으면 확정 3개월 매출과 영업이익을 잠정과 비교(어느 하나라도 잠정보다 10% 넘게 낮으면 p4, 아니면 p3). 11/20 까지 없으면 잠정 수치로 보내고 분기보고서 미제출이라고 적음(p3). 한 번만."
   },
   "wooriro_baseline": {
     "seeded_at": "2026-10-27",
     "contracts": [
-      {"acptno": "20260914000259", "date": "2026-09-11", "party": "Vsunlight Photonic Technology Inc. (브이선라이트)", "amount_krw": 13601464800, "amount_usd": 10164000, "sales_pct": 32.0, "region": "중국", "end": "2028-08-14"},
-      {"acptno": "20261015000382", "date": "2026-10-14", "party": "Wuhan ETERN Optoelectronics Group Limited (ETERN)", "amount_krw": 22777776000, "amount_usd": 16992000, "sales_pct": 53.6, "region": "중국", "end": "2029-02-13"}
+      {
+        "acptno": "20260914000259",
+        "date": "2026-09-11",
+        "party": "Vsunlight Photonic Technology Inc. (브이선라이트)",
+        "amount_krw": 13601464800,
+        "amount_usd": 10164000,
+        "sales_pct": 32.0,
+        "region": "중국",
+        "end": "2028-08-14"
+      },
+      {
+        "acptno": "20261015000382",
+        "date": "2026-10-14",
+        "party": "Wuhan ETERN Optoelectronics Group Limited (ETERN)",
+        "amount_krw": 22777776000,
+        "amount_usd": 16992000,
+        "sales_pct": 53.6,
+        "region": "중국",
+        "end": "2029-02-13"
+      }
     ]
   },
-  "ends_kst": "2026-11-20 23:59",
-  "ends_note": "2026-11-18 ~ 11-20 19:00 에 한 번만 (RF머트리얼즈 3Q 실적 뒤 0219B0 재평가 요청)"
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "2027-02-26 까지 매일 19:00 (0219B0 가격, 우리로 계약 공시), 3Q 재평가는 2026-11-16 ~ 11-20 중 한 번",
+  "daily_window": {
+    "start": "2026-10-28",
+    "end": "2027-02-26"
+  },
+  "q3_window": {
+    "start": "2026-11-16",
+    "end": "2026-11-20"
+  },
+  "price": {
+    "code": "0219B0",
+    "source": "Naver m.stock price (일별 종가)",
+    "down": {
+      "level": 9700,
+      "support": 8640,
+      "priority": 4
+    },
+    "up": {
+      "level": 11300,
+      "priority": 3
+    },
+    "rearm_pct": 3,
+    "rule": "종가 9,700 미만 진입 시 p4 1번, 9,700 x 1.03 초과 종가로 돌아가야 다시 무장. 종가 11,300 이상 진입 시 p3 1번, 11,300 x 0.97 미만 종가로 돌아가야 다시 무장. 데이터 날짜로 중복 방지."
+  },
+  "wooriro_watch": {
+    "rule": "seed 이후 새 KIND 공시 중 공급계약 정정/해지, 납기 연기, ETERN, 브이선라이트 관련이면 공시마다 1번. 해지, 하향 정정, 납기 연기, 방향 판별 못 한 정정은 p4, 그 외 관련 공시(새 계약 체결, 상향 정정, 중국 언급 등) p3."
+  }
 }

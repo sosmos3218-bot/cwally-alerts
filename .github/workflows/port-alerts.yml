@@ -1276,8 +1276,8 @@ jobs:
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/celltrion_monitor.py "$MODE" filing
-      - name: Run RFM0219B0 (one-off; RF머트리얼즈 3Q 실적 뒤 0219B0 재평가 + 우리로 중국 계약 점검; k203780 19:00 slot, active 2026-11-18 ~ 11-20 KST only)
-        # approved in chat 2026-10-27. Outside the window the script exits silently; state/rfm0219b0.json sent makes it fire once.
+      - name: Run RFM0219B0 (0219B0 close 9,700/11,300 + 우리로 계약 공시 daily 2026-10-28 ~ 2027-02-26; RF머트리얼즈 3Q 확정 vs 잠정 once 2026-11-16 ~ 11-20; k203780 19:00 slot)
+        # approved in chat 2026-10-27 (build + 11:17 KST change). Outside 2026-10-28 ~ 2027-02-26 or on KRX holidays the script exits silently; price dedupe by data date, 우리로 by acptno, 3Q by state q3_sent.
         # Manual dispatch (job=k203780 or job=rfm0219b0) is dry (no ntfy, no state) unless oneoff_mode=auto.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'rfm0219b0') }}
         env:
