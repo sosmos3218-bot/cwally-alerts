@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-27T01:31:18.528692+09:00",
+  "updated_at": "2026-10-27T19:00:46.855124+09:00",
   "seeded": true,
-  "last_day": "2026-10-26",
-  "last_close": 73500.0,
+  "last_day": "2026-10-27",
+  "last_close": 75100.0,
   "last_fail_day": null,
   "lines": {
     "buy3": {

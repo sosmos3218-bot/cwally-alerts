@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-27T01:31:18.004961+09:00",
+  "updated_at": "2026-10-27T19:00:44.934615+09:00",
   "seeded": true,
-  "last_day": "2026-10-26",
-  "last_close": 213000.0,
+  "last_day": "2026-10-27",
+  "last_close": 222000.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -34,12 +34,12 @@
   "us10y": {
     "armed": true,
     "fired_day": null,
-    "last": 4.976
+    "last": 4.986
   },
   "extra": {
     "up220k": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-10-27"
     },
     "up230k": {
       "armed": true,
