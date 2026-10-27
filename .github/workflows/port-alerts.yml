@@ -75,9 +75,12 @@ on:
     - cron: "10 22 19 11 *"
     - cron: "10 22 25 11 *"
     - cron: "10 22 26 11 *"
-    # lges1103 oneshot_kst (KST→UTC): 2026-11-03 09:22, 16:32. 확정 실적 판정
+    # lges1103 oneshot_kst (KST→UTC): 2026-11-03 09:22, 12:30, 16:32, 17:10, 2026-11-04 09:22. 확정 실적 + 실적콜 판정
     - cron: "22 0 3 11 *"
+    - cron: "30 3 3 11 *"
     - cron: "32 7 3 11 *"
+    - cron: "10 8 3 11 *"
+    - cron: "22 0 4 11 *"
     # lgesq3 oneshot_kst (KST→UTC): 10-07 09:12/16:12, 10-08 09:12/16:12, 10-09 09:12, 10-13/16/23/30 09:12
     - cron: "12 0 7 10 *"
     - cron: "12 7 7 10 *"
@@ -251,7 +254,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, rfm0219b0, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, celltrion, rfm0219b0, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -353,6 +356,11 @@ on:
         default: dry
         type: choice
         options: [dry, auto, force]
+      lges1103_mode:
+        description: "job=lges1103 only. dry = print, no ntfy, no state write | auto | force"
+        default: dry
+        type: choice
+        options: [dry, auto, force]
       kos5500_mode:
         description: "job=kos5500 only. dry = no ntfy/state; auto = observations"
         type: choice
@@ -408,7 +416,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 3 11 *" ]; then JOB=lgiq3
             elif [ "${{ github.event.schedule }}" = "18 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 27 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 12 11 *" ] || [ "${{ github.event.schedule }}" = "10 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 16 11 *" ]; then JOB=lgcnsq3
             elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
-            elif [ "${{ github.event.schedule }}" = "22 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "32 7 3 11 *" ]; then JOB=lges1103
+            elif [ "${{ github.event.schedule }}" = "22 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "30 3 3 11 *" ] || [ "${{ github.event.schedule }}" = "32 7 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 8 3 11 *" ] || [ "${{ github.event.schedule }}" = "22 0 4 11 *" ]; then JOB=lges1103
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             elif [ "${{ github.event.schedule }}" = "40 2 8 10 *" ] || [ "${{ github.event.schedule }}" = "40 23 26 10 *" ] || [ "${{ github.event.schedule }}" = "20 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 4 11 *" ]; then JOB=sdichg
@@ -918,7 +926,14 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/lges1103_monitor.py auto
+          LGES1103_MODE: ${{ github.event.inputs.lges1103_mode || 'dry' }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$LGES1103_MODE" = "dry" ]; then python scripts/lges1103_monitor.py selftest; fi
+            python scripts/lges1103_monitor.py "$LGES1103_MODE"
+          else
+            python scripts/lges1103_monitor.py auto
+          fi
       - name: Run lgesq3
         if: steps.pick.outputs.job == 'lgesq3'
         env:
