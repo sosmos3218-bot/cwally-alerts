@@ -3,7 +3,7 @@
   "title_prefix": "[AEO]",
   "ticker": "AEO",
   "display": "아메리칸 이글",
-  "as_of": "2026-10-06",
+  "as_of": "2026-10-27",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:05",
@@ -24,49 +24,70 @@
   "window_start_kst": "2026-10-13 09:05",
   "expire_date": "2026-12-03",
   "event_year": 2026,
+  "event_quarter": "Third",
+  "event_fy": 2026,
+  "results_after": "2026-11-01",
   "cik": "0000919012",
-  "last_known_filing": "2026-09-10",
-  "baseline": {
-    "price_date": "2026-10-05",
-    "price": 18.11,
-    "entry_price": 15.0,
-    "annual_dividend": 0.5,
-    "ae_comp": -1,
-    "aerie_comp": 19,
-    "inventory_units": 9,
-    "oi_guide_lo": 540,
-    "oi_guide_hi": 550,
-    "tariff_oi_benefit": 161,
+  "holding": {
+    "shares": 27,
+    "avg_cost": 19.607,
+    "account": "해외계좌",
+    "horizon_end": "2027-10-31",
+    "horizon_note": "12개월. 관세 정상화와 AE 브랜드 회복을 3~4개 분기로 확인 (3Q 12월, 4Q 3월, 1Q 6월)",
+    "max_loss_pct": -20,
+    "add1_shares": 14,
+    "add1_limit": 18.0,
+    "add2_shares": 13,
+    "add2_limit": 16.5,
+    "max_shares": 54
+  },
+  "guide": {
     "q3_oi_lo": 110,
-    "q3_oi_hi": 115
+    "q3_oi_hi": 115,
+    "fy_oi_lo": 540,
+    "fy_oi_hi": 550,
+    "fy_refund_included": 161,
+    "source": "2026-09-09 2Q 보도자료. 가이던스는 IEEPA 관세 환급 포함, 환급은 2Q에 대부분 수령"
+  },
+  "baseline": {
+    "price_date": "2026-10-26",
+    "price": 18.81,
+    "annual_dividend": 0.5,
+    "ae_comp_q2": -1,
+    "aerie_comp_q2": 19,
+    "inv_units_q2": 9,
+    "inv_cost_q2": 14,
+    "oi_q2": 211,
+    "oi_refund_q2": 161
   },
   "thresholds": {
-    "entry_price": 15.0,
-    "exit_price": 15.5,
+    "max_loss_price": 15.69,
+    "loss_rearm_price": 16.5,
+    "trim_price": 23.5,
+    "trim_rearm_price": 22.5,
     "ae_comp_flip": 0,
     "inventory_units_max": 10,
-    "op_margin_ex_refund": 8.0,
-    "aerie_comp_support": 15,
-    "div_cut_below": 0.5,
-    "flip_need": 2
+    "oi_deep_miss_ratio": 0.95,
+    "div_cut_below": 0.5
   },
-  "change_rules": [
-    "본진 American Eagle 동일점포가 0% 초과",
-    "재고 수량 증가율이 10% 미만",
-    "환급 제외 영업이익률이 8% 안팎(7.5% 이상) 유지"
+  "verdict_rules": [
+    "SELL(27주 정리): 환급 제외 OI가 3Q 가이던스 하단의 95% 미만, 또는 하단 미만이면서 AE 동일점포 마이너스나 연간 가이던스 하향, 또는 연간 가이던스 하향과 AE 동일점포 마이너스",
+    "ADD(지정가 분할 추가): 환급 제외 OI가 가이던스 하단 이상, AE 동일점포 0% 이상, 재고 수량 +10% 미만, 연간 가이던스 하단 540M 이상 유지, 4개 모두 확인",
+    "HOLD(보유): 그 밖의 경우",
+    "PENDING: 핵심 수치가 덜 읽히면 보유 유지, 다음 슬롯에서 다시 판정"
   ],
-  "counter_rules": [
-    "Aerie 동일점포가 10%대 중후반(15% 이상)으로 이어지면 관망 반대 근거",
-    "배당 0.50달러와 자사주 감소가 하방을 받치면 15달러 진입 근거",
-    "52주 저점 14.06달러에서 이미 반등한 18달러대는 추세 매수 근거가 아님"
+  "price_rules": [
+    "종가 15.69달러 이하(평단 -20%)면 27주 정리, 16.50달러 이상 회복 시 재무장(무알림)",
+    "종가 23.50달러 이상(평단 +20%)이면 3Q 판정이 ADD가 아닐 때 13주 익절, 22.50달러 이하 시 재무장"
   ],
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/AEO?interval=1d&range=5d",
-    "ir": "https://www.aeo-inc.com/",
-    "sec": "https://data.sec.gov/submissions/CIK0000919012.json"
+    "ir_press_list": "https://investors.ae.com/feed/PressRelease.svc/GetPressReleaseList?LanguageId=1&bodyType=0&pressReleaseDateFilter=3&pageSize=15&pageNumber=0&includeTags=true&year=-1&excludeSelection=1",
+    "wp_search": "https://www.aeo-inc.com/wp-json/wp/v2/posts?per_page=10&search={q}&_fields=date,title,link,content",
+    "ir": "https://www.aeo-inc.com/"
   },
-  "schedule_note": "반복 cron 없음. 가격은 2026-10-13부터 2026-12-01까지 화요일 09:05 KST 일회 슬롯(UTC 00:05 같은 날, cron 5 0). 실적 추정창은 11/24 장마감 후와 12/1~12/2 장마감 후. 11/25 08:12 KST=UTC 12 23 24 11 *, 11/25 09:12=UTC 12 0 25 11 *, 12/02 08:12=UTC 12 23 1 12 *, 12/03 08:12=UTC 12 23 2 12 *. 연도 가드 2026만. 실적일 미확정.",
-  "explain": "AEO 관망의 반대 근거(Aerie, 배당, 15달러)와 변경 조건 3개(본진 컴프, 재고 수량, 환급 제외 영업이익률)만 보는 일회 알림.",
+  "schedule_note": "반복 cron 없음. 가격은 2026-10-13부터 2026-12-01까지 화요일 09:05 KST 일회 슬롯(UTC 00:05 같은 날, cron 5 0). 실적 추정창은 11/24 장마감 후와 12/1~12/2 장마감 후. 11/25 08:12 KST=UTC 12 23 24 11 *, 11/25 09:12=UTC 12 0 25 11 *, 12/02 08:12=UTC 12 23 1 12 *, 12/03 08:12=UTC 12 23 2 12 *. 연도 가드 2026만. 실적일은 IR 공지('to Report Third Quarter Fiscal 2026 Results on ...')로 감지해 1회 알림. 발표가 12/2(미국) 이후면 자동 판정 슬롯이 없어 알림 본문에 슬롯 추가 요청을 적음.",
+  "explain": "AEO 27주(평단 19.607달러) 보유 점검. 3분기 실적일 확정 알림 1회, 실적 직후 환급 제외 영업이익, AE/Aerie 동일점포, 재고, 연간 가이던스로 보유/추가매수/정리 판정, 평단 -20% 손실 한도와 +20% 익절선. 변경 시에만 발송.",
   "ends_kst": "2026-12-03 08:12",
-  "ends_note": "실적 확인 일회 알림, 12/3 08:12가 마지막"
+  "ends_note": "3분기 실적 판정 일회 알림, 12/3 08:12가 마지막"
 }
