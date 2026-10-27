@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-10-27 22:40 KST",
+  "updated_at": "2026-10-27 23:22 KST",
   "items": [
+    {
+      "id": "mY234AQU8hNa",
+      "topic": "cwally-port",
+      "title": "[PYPL] 원문 없음 | 소액 분할매수 유지",
+      "message": "2026-10-27 22:40 KST | PYPL | 3분기 실적\n이게 뭐 알림: 페이팔 3분기 원문만으로 브랜드 결제액, 거래마진 달러, non-GAAP EPS, 2027 가이던스, 자사주 속도를 상회·부합·미달로 채점하는 일회 알림입니다.\n지금 상태: 22:40 KST에도 3분기 원문 없음. 2분기 수치로 채점하지 않음.\n지금 할 일: 소액 분할매수 유지. IR을 직접 확인하고 이 알림으로 매매하지 마세요.\n나중에: 이 일회 창은 2026-10-27에 끝남. 다음 자동 재실행 없음.\n익절/줄일 때: 미발표로 비중 조정 금지.\n하지 말 것: 미발표를 가이던스 하향으로 읽기. 신용, 미수, 추격매수.\n꺼지는 때: 2026-10-27 22:40 KST (페이팔 3분기 실적일 일회 알림 3회, 22:40이 마지막)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1793108435
+    },
     {
       "id": "yopJLaYr0X49",
       "topic": "cwally-port",
@@ -4481,19 +4492,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1792046456
-    },
-    {
-      "id": "F5LGWx7JMlqv",
-      "topic": "cwally-port",
-      "title": "[KOSPI] 폐기 | 종가 6,400 하회",
-      "message": "8단계 경로 전체 폐기. 하방이 주 시나리오. 8200/9385/12000 목표 취소. 오늘 종가 5554.22.",
-      "priority": 5,
-      "tags": [
-        "x",
-        "no_entry",
-        "chart_with_downwards_trend"
-      ],
-      "time": 1792046451
     }
   ]
 }
