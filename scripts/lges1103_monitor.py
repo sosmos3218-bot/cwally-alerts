@@ -2,7 +2,8 @@
 """LG Energy Solution 2026-11-03 confirmed Q3 print + Q3 earnings-call verdict. One-shot, year-guarded.
 
 Part 1 (results, unchanged rules): 11/3 runs read the KRX/DART notice and send one
-"[LGESF] LG엔솔 3Q 확정 <상향|유지|철회|판정 유보>".
+"[LGESF] LG엔솔 3Q 확정 <매수 검토|관망|보류>" (new-buy labels since 2026-10-27, same thresholds:
+상향 -> 매수 검토, 유지 -> 관망, 판정 유보 -> 관망, 철회 -> 보류).
 Part 2 (call verdict, approved in chat 2026-10-27, user does not hold 373220 = new-buy framing):
 from 11/3 11:00 KST (call 10:00) reads the IR script/presentation PDFs, the LG press release,
 11/3 notices and call news, then sends one "[LGESF] 실적콜 판정: <매수 검토|관망|보류|확인 필요>".
@@ -113,22 +114,22 @@ def verdict(p: dict, prelim: dict) -> tuple[str, str, str]:
     ex, comp, op = p["ex"], p["comp"], p["op"]
     if ex is None or op is None:
         return (
-            "판정 유보",
-            "보상금, 사업부 손익, 순이익, 현금흐름을 확정 숫자로 분리하지 못했습니다.",
-            "유지, 상향, 철회 중 하나를 고르지 마세요. 공시 원문 확인 전까지 비중을 바꾸지 마세요.",
+            "관망",
+            "영업이익이나 AMPC를 확정 숫자로 분리하지 못해 판단할 수 없습니다.",
+            "사지 말고 관망하세요. 공시 원문과 실적콜 판정이 나올 때까지 기다리세요.",
         )
     base_op = int(prelim["op_eok"])
     if ex < 0 or op < int(base_op * 0.7):
         return (
-            "철회",
-            "AMPC 제외 흑자 또는 잠정 영업이익 유지 조건이 깨졌습니다.",
-            "조건부 분할매수를 철회하세요. 신규 매수를 멈추고 보유 비중을 재평가하세요.",
+            "보류",
+            "AMPC 제외 영업이익이 적자이거나 확정 영업이익이 잠정의 70% 미만입니다.",
+            "신규 매수 보류. AMPC 제외 이익이 다시 흑자로 확인되기 전에는 사지 마세요.",
         )
     if comp is not None and (ex - comp) >= 2000 and op >= int(base_op * 0.9):
         return (
-            "상향",
-            "보상금을 빼도 AMPC 제외 영업이익이 2,000억원 이상이고 잠정 영업이익의 90% 이상입니다.",
-            "조건부 분할매수를 상향하세요. 그래도 한 번에 비중을 채우지 마세요.",
+            "매수 검토",
+            "보상금을 빼도 AMPC 제외 영업이익이 2,000억원 이상이고 확정 영업이익이 잠정의 90% 이상입니다.",
+            "신규 매수 검토 가능. 계획 금액의 일부만 나눠서 들어가고, 실적콜 판정과 4분기 잠정실적 전까지 추가는 보류하세요.",
         )
     missing = []
     if comp is None:
@@ -141,9 +142,9 @@ def verdict(p: dict, prelim: dict) -> tuple[str, str, str]:
         missing.append("현금흐름")
     gap = ", ".join(missing) if missing else "보상금 차감 후 2,000억 미만"
     return (
-        "유지",
-        f"AMPC 제외 흑자는 남았지만 {gap} 때문에 상향 조건은 아닙니다.",
-        "조건부 분할매수를 유지하세요. 확인되지 않은 2027년 이익을 선반영하지 마세요.",
+        "관망",
+        f"AMPC 제외 흑자는 남았지만 {gap} 때문에 매수 검토 조건은 아닙니다.",
+        "아직 사지 말고 관망하세요. 실적콜 판정이나 4분기 잠정실적을 기다리세요.",
     )
 
 
@@ -156,10 +157,10 @@ def problem(cfg: dict, state: dict, now: datetime, kind: str, detail: str, dry: 
     lines = [
         "이게 뭐 알림: LG에너지솔루션 2026년 3분기 확정 실적과 컨퍼런스콜 판정.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST. 공시: {DISCLOSURES}",
-        "지금 할 일: 유지, 상향, 철회를 고르지 마세요. 원문 확인 전까지 매매를 보류하세요.",
+        "지금 할 일: 매수 판단을 하지 마세요. 원문 확인 전까지 신규 매수를 보류하세요.",
         ("나중에: 같은 날 16:32 KST에 다시 확인합니다." if (now.hour, now.minute) < (16, 30)
          else "나중에: 같은 날 17:10 KST에 한 번 더 확인합니다. 그 뒤에는 실적콜 판정만 남습니다."),
-        "익절/줄일 때: 자료 누락만으로 보유 비중을 바꾸지 마세요.",
+        "익절/줄일 때: 미보유라 해당 없음.",
         "하지 말 것: 잠정 숫자나 증권사 추정을 확정 실적으로 쓰지 마세요.",
     ]
     if dry:
@@ -207,7 +208,7 @@ def results_part(cfg: dict, state: dict, now: datetime, mode: str) -> dict | Non
     label, why, action = verdict(p, cfg["prelim"])
     title = f"[LGESF] LG엔솔 3Q 확정 {label}"
     lines = [
-        "이게 뭐 알림: 373220 2026년 3분기 확정 실적에서 보상금, 사업부 손익, 순이익, 현금흐름을 분리합니다.",
+        "이게 뭐 알림: 373220 2026년 3분기 확정 실적에서 보상금, 사업부 손익, 순이익, 현금흐름을 분리해 신규 매수 여부를 봅니다. 미보유, 참고용, 투자 권유 아님.",
         (
             f"지금 결과/상태: 판정 {label}. {why} "
             f"매출 {fmt(p['sales'])}, 영업이익 {fmt(p['op'])}, AMPC {fmt(p['ampc'])}, "
@@ -217,9 +218,9 @@ def results_part(cfg: dict, state: dict, now: datetime, mode: str) -> dict | Non
             f"공시 {item.get('id')}. 조회 {now:%Y-%m-%d %H:%M} KST. {DISCLOSURES}"
         ),
         f"지금 할 일: {action}",
-        "나중에: 4분기 AMPC 제외 흑자와 ESS 누적 수주 60GWh는 이 알림 범위 밖입니다.",
-        "익절/줄일 때: 철회면 신규 매수를 멈추고, 유지나 상향이어도 한 번에 채우지 마세요.",
-        "하지 말 것: 확인 불가 칸을 추정으로 채우거나 잠정 7,560억원을 확정 이익으로 바꾸지 마세요.",
+        "나중에: 4분기 보조금 제외 가이던스와 일회성 비중은 [LGESF] 실적콜 판정이 따로 봅니다. 4분기 잠정실적(보통 1월 초)에서 AMPC 제외 흑자를 다시 확인하세요.",
+        "익절/줄일 때: 미보유라 해당 없음. 사게 되면 AMPC 제외 적자 전환이 확인될 때 비중 재검토.",
+        "하지 말 것: 확인 불가 칸을 추정으로 채우기, 잠정 7,560억원을 확정 이익으로 보기, 한 번에 다 사기. 투자 권유 아님.",
     ]
     if mode == "dry":
         print(title, *lines, "dry-run; no ntfy", sep="\n")
@@ -671,6 +672,25 @@ def call_part(cfg: dict, state: dict, now: datetime, mode: str, results: dict | 
 # ---------- selftest ----------
 
 def selftest() -> int:
+    pre = {"op_eok": 7560}
+    def rp(op, ampc, comp, ev=1, ess=1, net=1, ocf=1):
+        return {"op": op, "ampc": ampc, "comp": comp, "ex": None if op is None or ampc is None else op - ampc,
+                "ev": ev, "ess": ess, "net": net, "ocf": ocf, "sales": 1}
+    results_cases = [
+        ("results 상향 -> 매수 검토", rp(7560, 4169, 800), "매수 검토"),
+        ("results 상향 edge op 90%", rp(6804, 4000, 500), "매수 검토"),
+        ("results 유지 (보상금 미공개) -> 관망", rp(7560, 4169, None), "관망"),
+        ("results 유지 (보상금 차감 2,000억 미만) -> 관망", rp(7560, 4169, 1500), "관망"),
+        ("results 유지 (op 89%) -> 관망", rp(6700, 4000, 100), "관망"),
+        ("results 철회 (AMPC 제외 적자) -> 보류", rp(4000, 4169, 100), "보류"),
+        ("results 철회 (op 70% 미만) -> 보류", rp(5200, 4000, 100), "보류"),
+        ("results 판정 유보 -> 관망", rp(None, 4169, None), "관망"),
+    ]
+    results_fail = 0
+    for name, p_, want in results_cases:
+        got = verdict(p_, pre)[0]
+        print(("ok  " if got == want else "FAIL"), name, got)
+        results_fail += got != want
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     fails = 0
 
@@ -679,6 +699,27 @@ def selftest() -> int:
         ok = got == want
         fails += not ok
         print(("ok  " if ok else "FAIL"), label, got, "" if ok else f"want {want}")
+
+    fails += results_fail
+    # results part renders with new-buy labels only (stub notices/parse, dry = print only)
+    g = globals()
+    keep = (g["notices"], g["parse"], g["is_final"])
+    try:
+        g["notices"] = lambda *_a, **_k: [{"id": "T1", "title": "연결재무제표기준영업실적", "datetime": "2026-11-03T15:40:00"}]
+        g["is_final"] = lambda r: True
+        for want, fx in [("매수 검토", rp(7560, 4169, 800)), ("관망", rp(7560, 4169, None)), ("보류", rp(4000, 4169, 100))]:
+            g["parse"] = lambda _item, fx=fx: fx
+            import io, contextlib
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                results_part(cfg, {"result_notified": False}, datetime(2026, 11, 3, 16, 32, tzinfo=KST), "dry")
+            out = buf.getvalue()
+            check(f"results dry title {want}", out.splitlines()[0], f"[LGESF] LG엔솔 3Q 확정 {want}")
+            check(f"results {want} has no holder wording", any(w in out for w in ("상향하세요", "유지하세요", "철회하세요", "보유 비중을 재평가")), False)
+            check(f"results {want} no middle dot/em-dash", any(ch in out for ch in "\u00b7\u2014"), False)
+            print(out)
+    finally:
+        g["notices"], g["parse"], g["is_final"] = keep
 
     disclaimer = "본 실적 발표에 포함된 향후 전망은 미래 사업 환경의 변화 및 전략 수정에 따라 달라질 수 있으므로 유의하시기 바랍니다. 4분기 보조금 제외 적자 가능성도 실제 결과와 다를 수 있습니다."
     q_block = "\n질문 받겠습니다.\n하나증권의 김현수입니다.\n4분기에도 보조금 제외 적자가 우려되는데 어떻게 보시는지 여쭤보고 싶습니다.\n3분기 보상금이 5,000억원이라는 얘기도 있습니다.\nCFO:\n"
