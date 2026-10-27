@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-10-26T09:06:39.761906+09:00",
-  "last_price": 79.04,
+  "updated_at": "2026-10-27T09:06:36.482658+09:00",
+  "last_price": 78.13,
   "zone": "buy_split",
   "last_weekly": "2026-10-26",
   "last_filing": "2026-08-25",
   "sent_dates": [],
   "fetch_fail_date": null,
-  "last_multiple": 5.48,
+  "last_multiple": 5.39,
   "filing_alerted": "2026-08-25"
 }

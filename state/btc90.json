@@ -9,10 +9,10 @@
   "break75_sent": false,
   "fomc_sent": false,
   "clarity_sent": false,
-  "updated_at": "2026-10-26T09:01:56.774295+09:00",
+  "updated_at": "2026-10-27T09:01:52.467199+09:00",
   "regime": "HOLD",
-  "close": 80131.63,
-  "close_date": "2026-10-25",
+  "close": 80147.48,
+  "close_date": "2026-10-26",
   "etf": "2026-10-23 순-137.9백만달러",
   "senate": "FETCH_FAIL"
 }
