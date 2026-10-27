@@ -7,6 +7,9 @@
    해지, 하향 정정, 납기 연기, 방향 판별 못 한 정정은 p4, 그 외 관련 공시 p3.
 3) 3Q (2026-11-16 ~ 11-20): RF머트리얼즈 분기보고서(2026.09)를 찾으면 확정 3개월 매출과 영업이익을 잠정(10/27)과 비교,
    어느 하나라도 10% 넘게 낮으면 p4, 아니면 p3. 11/20 까지 없으면 잠정 수치로 p3. 우리로 요약 포함. 한 번만(state q3_sent).
+4) 보유 반영 (2026-10-27 확장): config position(33주, 평단 10,657원)으로 평가손익을 본문에 표시, 종가 7,805 미만(7월 저점) 손절 기준 p5 1번.
+5) 3Q 알림에 3개 조건 판정 합침: 실적(RF머트리얼즈, RFHIC, 대한광통신 영업이익 vs 10/27 컨센서스 2곳 이상 + 우리로 흑자),
+   수요(빅테크 capex 수동 입력 + 미국 광통신주 안정), 가격(11,300 이상 또는 7,805~8,000). 결론: 추가 매수 검토 / 보유 유지 / 정리 검토.
 읽기 실패: 알림 본문에 수동 확인 표시, cwally-ops 는 하루 1번.
 modes: auto | dry(발송 없음, state 안 씀) | seed ; --as-of "YYYY-MM-DD HH:MM" (dry 전용)
 """
@@ -16,7 +19,7 @@ import json
 import re
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -158,6 +161,14 @@ def price_eval(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
             out.append((f"{TAG} 종가 9,700 이탈, 비중 축소 검토", "down", pc["down"]["priority"], d, c))
         elif c > lo * (1 + r) and not ps["down_armed"]:
             ps["down_armed"] = True
+        sp = pc.get("stop")
+        if sp:
+            if c < sp["level"] and ps.get("stop_armed", True):
+                ps["stop_armed"] = False
+                out[:] = [o for o in out if not (o[1] == "down" and o[3] == d)]  # 같은 날 손절이면 9,700 안내는 생략
+                out.append((f"{TAG} 종가 7,805 이탈, 손절 기준 도달", "stop", sp["priority"], d, c))
+            elif c > sp["level"] * (1 + sp["rearm_pct"] / 100) and not ps.get("stop_armed", True):
+                ps["stop_armed"] = True
         if c >= hi and ps["up_armed"]:
             ps["up_armed"] = False
             out.append((f"{TAG} 종가 11,300 회복, 추가 매수 검토 가능", "up", pc["up"]["priority"], d, c))
@@ -167,19 +178,34 @@ def price_eval(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
     return out
 
 
+def pos_line(cfg: dict, c: float) -> str:
+    p = cfg["position"]
+    return f"보유 {p['shares']}주(평단 {p['avg']:,.0f}원) 기준 평가손익 {(c / p['avg'] - 1) * 100:+.1f}% (약 {(c - p['avg']) * p['shares']:+,.0f}원)"
+
+
 def price_msgs(cfg: dict, fired: list, stamp: str) -> list[tuple[str, str, int]]:
     pc, msgs = cfg["price"], []
+    what = f"{cfg['etf']['name']}(0219B0) 종가 기준 9,700원 이탈 / 7,805원 이탈(손절) / 11,300원 회복 감시. 매매 지시 아님."
     for title, side, pri, d, c in fired:
-        if side == "down":
-            st_ = f"{d} 종가 {c:,.0f}원, 9,700원 아래로 내려옴. 다음 지지 {pc['down']['support']:,}원."
-            act, trim = "0219B0 비중 축소를 검토. 8,640원 지지 여부를 보고 남길 수량 정하기.", "8,640원도 깨지면 남은 비중 다시 점검."
+        pl = pos_line(cfg, c)
+        if side == "stop":
+            sp = pc["stop"]
+            st_ = f"{d} 종가 {c:,.0f}원, 7월 저점 {sp['level']:,}원 아래로 내려옴. {pl}."
+            act = f"손절 기준 도달. 보유 {cfg['position']['shares']}주를 정리할지 오늘 정하기. 정리한다면 지정가로 나눠서."
+            trim = "정리를 미루면 7월 저점이 무너진 상태로 세 번째 하락 구간이 될 수 있음."
+            later = f"{sp['level']:,} x 1.03 = {sp['level'] * 1.03:,.0f}원 넘는 종가가 나온 뒤 다시 {sp['level']:,}원 아래로 오면 다시 알림."
+            avoid = "반등 확인 전에 평단 낮추려고 추가 매수하기."
+        elif side == "down":
+            st_ = f"{d} 종가 {c:,.0f}원, 9,700원 아래로 내려옴. 다음 지지 {pc['down']['support']:,}원. {pl}."
+            act, trim = "0219B0 비중 축소를 검토. 8,640원 지지 여부를 보고 남길 수량 정하기.", f"8,640원도 깨지면 남은 비중 다시 점검. 손절 기준은 종가 {pc['stop']['level']:,}원 미만."
             later = f"9,700원 x 1.03 = {pc['down']['level'] * 1.03:,.0f}원 넘는 종가가 나온 뒤 다시 9,700원 아래로 오면 다시 알림."
+            avoid = "장중 가격만 보고 판단하기. 이 알림은 확정 종가 기준."
         else:
-            st_ = f"{d} 종가 {c:,.0f}원, 11,300원 이상으로 회복."
+            st_ = f"{d} 종가 {c:,.0f}원, 11,300원 이상으로 회복. {pl}."
             act, trim = "추가 매수를 검토할 수 있음. 분할로, 계획 비중 안에서.", "급등 직후 추격 매수로 비중 넘기지 않기."
             later = f"11,300원 x 0.97 = {pc['up']['level'] * 0.97:,.0f}원 밑 종가가 나온 뒤 다시 11,300원 이상이면 다시 알림."
-        msgs.append((title, body(stamp, f"{cfg['etf']['name']}(0219B0) 종가 기준 9,700원 이탈 / 11,300원 회복 감시. 매매 지시 아님.",
-                                 st_, act, later, trim, "장중 가격만 보고 판단하기. 이 알림은 확정 종가 기준.", hdr="0219B0 종가 감시"), pri))
+            avoid = "장중 가격만 보고 판단하기. 이 알림은 확정 종가 기준."
+        msgs.append((title, body(stamp, what, st_, act, later, trim, avoid, hdr="0219B0 종가 감시"), pri))
     return msgs
 
 
@@ -302,23 +328,132 @@ def below(final: float, pre: float | None, pct_: float) -> bool:
     return final < pre - abs(pre) * pct_ / 100
 
 
-def q3_build(cfg: dict, st: dict, stamp: str, found: dict | None, q3_err: str | None, final_day: bool):
+def naver_q3(code: str, col: str = "202609") -> dict:
+    """네이버 분기 영업이익(억원). 컬럼이 컨센서스(Y)에서 실적(N)으로 바뀌면 확정으로 본다."""
+    j = json.loads(k79.http(f"https://m.stock.naver.com/api/stock/{code}/finance/quarter"))
+    fi = j["financeInfo"]
+    t = next((x for x in fi["trTitleList"] if x["key"] == col), None)
+    row = next((r for r in fi["rowList"] if r["title"] == "영업이익"), None)
+    v = fnum(((row or {}).get("columns", {}).get(col, {}) or {}).get("value") or "")
+    return {"actual": bool(t and t["isConsensus"] == "N" and v is not None), "op": v if (t and t["isConsensus"] == "N") else None}
+
+
+def optical_check(cfg: dict) -> tuple[bool | None, str]:
+    """미국 광통신주 안정: 모두 기준일 종가 대비 floor_pct 이내면 True. 못 읽으면 None."""
+    oc, parts, ok = cfg["optical"], [], True
+    for sym in oc["symbols"]:
+        j = json.loads(k79.http(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=3mo&interval=1d"))
+        r = j["chart"]["result"][0]
+        days = [(datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c]
+        ref = next((c for d, c in days if d == oc["ref_date"]), None)
+        if ref is None or not days:
+            return None, f"{sym} {oc['ref_date']} 종가 {NA}"
+        last_d, last_c = days[-1]
+        chg = (last_c / ref - 1) * 100
+        parts.append(f"{sym} {oc['ref_date']} 종가 대비 {chg:+.1f}% (최근 {last_d})")
+        ok = ok and chg >= oc["floor_pct"]
+    return ok, ", ".join(parts)
+
+
+def q3_judge(cfg: dict, found: dict | None, now: datetime, today: str) -> dict:
+    """3개 조건 판정. ready = RF 분기보고서 + 나머지 3곳 실적이 모두 읽힘."""
+    cs, errs = cfg["conditions"], []
+    rep = (found or {}).get("report")
+    pre, _, _ = prelim_from(cfg, found)
+    rf_op = pre.get("op")
+    rf_src = "잠정" if not rep else "확정"
+    if rep and rep[1] is not None:
+        rf_op, rf_src = rep[1]["op"][0], "확정"
+    items = [("RF머트리얼즈", rf_op, cs["earn"]["rf"], True)]
+    allknown = rep is not None and rep[1] is not None
+    for name, code, cons in (("RFHIC", "218410", cs["earn"]["rfhic"]), ("대한광통신", "010170", cs["earn"]["daehan"])):
+        try:
+            q = naver_q3(code)
+        except Exception as exc:  # noqa: BLE001
+            q = {"actual": False, "op": None}
+            errs.append(f"{name} 3Q 영업이익 {NA}: {str(exc)[:60]}")
+        items.append((name, q["op"] if q["actual"] else None, cons, q["actual"]))
+        allknown = allknown and q["actual"]
+    try:
+        wq = naver_q3("046970")
+    except Exception as exc:  # noqa: BLE001
+        wq = {"actual": False, "op": None}
+        errs.append(f"우리로 3Q 영업이익 {NA}: {str(exc)[:60]}")
+    allknown = allknown and wq["actual"]
+    beats = sum(1 for _, v, c, a in items if a and v is not None and v > c)
+    misses = sum(1 for _, v, c, a in items if a and v is not None and v <= c)
+    wprofit = None if not wq["actual"] else wq["op"] > 0
+    if (beats >= 2 and wprofit) :
+        c1 = "충족"
+    elif misses >= 2 or wprofit is False:
+        c1 = "미충족"
+    else:
+        c1 = "보류"
+    parts = []
+    for name, v, c, a in items:
+        parts.append(f"{name} {fmt_eok(v) if a and v is not None else '미공시'} (컨센서스 {c:,.0f}억원, {'상회' if a and v is not None and v > c else '하회' if a and v is not None else '대기'}{', ' + rf_src if name == 'RF머트리얼즈' else ''})")
+    parts.append("우리로 " + (f"영업이익 {fmt_eok(wq['op'])} ({'흑자' if wprofit else '적자'})" if wq["actual"] else "미공시"))
+    line1 = f"1) 실적 {c1}: " + "; ".join(parts) + f". 기준: 3곳 중 2곳 이상 상회 + 우리로 흑자 (상회 {beats}, 하회 {misses})"
+    capex = cs["capex"]["verdict"]
+    try:
+        opt_ok, opt_txt = optical_check(cfg)
+    except Exception as exc:  # noqa: BLE001
+        opt_ok, opt_txt = None, f"미국 광통신주 시세 {NA}: {str(exc)[:60]}"
+        errs.append(opt_txt)
+    if capex == "no" or opt_ok is False:
+        c2 = "미충족"
+    elif capex == "yes" and opt_ok:
+        c2 = "충족"
+    else:
+        c2 = "보류"
+    capex_txt = {"yes": "빅테크 2곳 이상 2027 capex 증가 시사(수동 입력)", "no": "capex 증가 시사 2곳 미만(수동 입력)"}.get(capex, "빅테크 capex 판정 미입력(수동 확인 필요: 10/28 알파벳, MSFT, 10/29 아마존)")
+    line2 = f"2) 수요 {c2}: {capex_txt}; {opt_txt}"
+    last = None
+    try:
+        rows = [r for r in price_rows(cfg["price"]["code"]) if r["day"] < today or (now.hour, now.minute) >= (15, 40)]
+        last = rows[-1] if rows else None
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"0219B0 종가 {NA}: {str(exc)[:60]}")
+    p3 = cs["price"]
+    if last is None:
+        c3, line3 = "보류", f"3) 가격 보류: 0219B0 종가 {NA}"
+    else:
+        c = last["close"]
+        ok3 = c >= p3["up"] or p3["low_zone"][0] <= c <= p3["low_zone"][1]
+        c3 = "충족" if ok3 else "미충족"
+        line3 = f"3) 가격 {c3}: 0219B0 {last['day']} 종가 {c:,.0f}원. 기준 {p3['up']:,}원 이상 또는 {p3['low_zone'][0]:,}~{p3['low_zone'][1]:,}원"
+    met = [c1, c2, c3].count("충족")
+    pend = [c1, c2, c3].count("보류")
+    stop_hit = last is not None and last["close"] < cfg["price"]["stop"]["level"]
+    if stop_hit or (c1 == "미충족" and capex == "no"):
+        verdict = "정리 검토"
+    elif met >= 2:
+        verdict = "추가 매수 검토"
+    else:
+        verdict = "보유 유지"
+    pos = pos_line(cfg, last["close"]) if last else f"보유 {cfg['position']['shares']}주(평단 {cfg['position']['avg']:,.0f}원)"
+    concl = f"결론: 충족 {met}/3, 보류 {pend}건. {verdict}. {pos}."
+    if stop_hit:
+        concl += f" 종가가 손절 기준 {cfg['price']['stop']['level']:,}원 미만."
+    return {"ready": allknown, "lines": [line1, line2, line3, concl], "verdict": verdict, "errs": errs, "met": met, "pend": pend}
+
+
+def q3_build(cfg: dict, st: dict, stamp: str, found: dict | None, q3_err: str | None, final_day: bool, jd: dict | None = None):
     """None(아직 보낼 때 아님) 또는 (title, msg, pri, opsneed)."""
     rep = (found or {}).get("report")
-    if rep is None and not final_day:
+    ready = bool(jd and jd["ready"])
+    if not (final_day or (rep is not None and ready)):
         return None
     pre, pre_line, pre_link = prelim_from(cfg, found)
-    links, opsneed, pri = [pre_link], bool(q3_err), 3
+    links, opsneed, pri = [pre_link], bool(q3_err) or bool(jd and jd["errs"]), 3
     miss = cfg["q3"]["miss_pct"]
     if rep is None:
-        title = f"{TAG} RF머트리얼즈 3Q 실적, 재평가 필요"
         rf_txt = (f"RF머트리얼즈({cfg['rf']['code']}) 3분기: 분기보고서(2026.09) 아직 미제출(11/20 19:00 기준"
                   f"{', KIND 목록 ' + NA if q3_err else ''}). 잠정 수치로 판단. {pre_line}")
     else:
         r, s, e = rep
         links.insert(0, VIEW.format(acpt=r["acptno"]))
         if s is None:
-            title = f"{TAG} RF머트리얼즈 3Q 실적, 재평가 필요"
             rf_txt = f"RF머트리얼즈({cfg['rf']['code']}) 3분기: 분기보고서({r['filed']}) 값 수동 확인 필요 ({e}). {pre_line}"
             opsneed = True
         else:
@@ -327,12 +462,15 @@ def q3_build(cfg: dict, st: dict, stamp: str, found: dict | None, q3_err: str | 
             do = (fo / pre["op"] - 1) * 100 if pre.get("op") and pre["op"] > 0 else None
             weak = below(fr, pre.get("rev"), miss) or below(fo, pre.get("op"), miss)
             pri = 4 if weak else 3
-            title = f"{TAG} RF머트리얼즈 3Q 확정치 잠정 대비 {miss}% 넘게 하회, 재평가 필요" if weak else f"{TAG} RF머트리얼즈 3Q 실적, 재평가 필요"
             yoy_r = (fr / s["rev"][2] - 1) * 100 if s["rev"][2] else None
             yoy_o = (fo / s["op"][2] - 1) * 100 if s["op"][2] > 0 else None
             rf_txt = (f"RF머트리얼즈({cfg['rf']['code']}) 3분기 확정(분기보고서 {r['filed']}, {s['basis']} 3개월): "
                       f"매출 {fmt_eok(fr)} (잠정 대비 {pct(dr)}, 전년동기 대비 {pct(yoy_r)}), 영업이익 {fmt_eok(fo)} (잠정 대비 {pct(do)}, 전년동기 대비 {pct(yoy_o)}). "
                       f"판정: {'잠정보다 ' + str(miss) + '% 넘게 낮은 항목 있음' if weak else '잠정 대비 ' + str(miss) + '% 이내 또는 상회'}. {pre_line}")
+    verdict = jd["verdict"] if jd else "보유 유지"
+    if verdict == "정리 검토":
+        pri = max(pri, 4)
+    title = f"{TAG} 3Q 실적 점검 | 0219B0 {verdict}"
     hits = st.get("wooriro_hits") or []
     links += [h["link"] for h in hits]
     w_txt = (f"우리로({cfg['wooriro']['code']}) seed({cfg['wooriro_baseline']['seeded_at']}) 이후 관련 공시: "
@@ -341,12 +479,16 @@ def q3_build(cfg: dict, st: dict, stamp: str, found: dict | None, q3_err: str | 
         w_txt += f" (오늘 목록 {NA}: {st['_wooriro_err']})"
         opsneed = True
     w_txt += ". " + baseline_line(cfg)
-    status = "\n".join([rf_txt, "0219B0 재평가 필요", f"우리로 중국 계약 리스크 점검: {w_txt}", "KIND 링크: " + ", ".join(dict.fromkeys(links))])
-    msg = body(stamp, f"{cfg['etf']['name']}(0219B0) 상위 편입사 RF머트리얼즈 3분기 실적 뒤 재평가 요청과 우리로 중국 계약(ETERN, 브이선라이트) 점검. 한 번만 옵니다. 매매 지시 아님.",
-               status, "RF머트리얼즈 실적과 우리로 계약 변화를 보고 0219B0 비중 계획을 다시 정하기." + (" 값 일부는 원문으로 직접 확인." if opsneed else ""),
-               "이 재평가 알림은 다시 오지 않습니다. 0219B0 종가 9,700 / 11,300 감시와 우리로 공시 감시는 2027-02-26 까지 계속.",
-               "확정치가 잠정보다 크게 낮으면 비중 축소부터 검토." if pri == 4 else "실적 한 분기로 비중을 크게 바꾸지 않기.",
-               "자동 요약만 보고 판단 끝내기, 확인 불가 값을 정상으로 읽기.")
+    cond = "\n".join(jd["lines"]) if jd else "3개 조건 판정 없음"
+    status = "\n".join([rf_txt, "3개 매수 전환 조건 판정:", cond, f"우리로 중국 계약 리스크 점검: {w_txt}", "KIND 링크: " + ", ".join(dict.fromkeys(links))])
+    act = {"추가 매수 검토": f"지정가로 나눠서 최대 {cfg['position']['shares']}주(현 보유와 같은 수량), 0219B0 총비중 3% 이내에서 추가 매수를 검토.",
+           "정리 검토": f"보유 {cfg['position']['shares']}주 정리 여부를 정하기. 정리한다면 지정가로 나눠서.",
+           "보유 유지": "보유 유지. 보류로 남은 조건은 원문과 시세로 직접 확인."}[verdict]
+    msg = body(stamp, f"{cfg['etf']['name']}(0219B0) 3분기 실적 시즌 점검. RF머트리얼즈 확정치, 우리로 중국 계약, 10/27에 정한 매수 전환 조건 3개 판정을 합쳤습니다. 한 번만 옵니다. 매매 지시 아님.",
+               status, act + (" 값 일부는 원문으로 직접 확인." if opsneed else ""),
+               f"이 알림은 다시 오지 않습니다. 0219B0 종가 9,700 / {cfg['price']['stop']['level']:,} / 11,300 감시와 우리로 공시 감시는 2027-02-26 까지 계속.",
+               "확정치가 잠정보다 크게 낮거나 손절 기준에 닿으면 비중 축소부터 검토." if pri == 4 else "한 분기 결과로 비중을 크게 바꾸지 않기.",
+               "자동 요약만 보고 판단 끝내기, 확인 불가 값을 정상으로 읽기, 보류 조건을 충족으로 읽기.")
     return title, msg, pri, opsneed
 
 
@@ -365,7 +507,7 @@ def baseline_line(cfg: dict) -> str:
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
     return (f"{TAG} 데이터 파싱 실패 | 원문 확인 필요",
-            body(stamp, "0219B0 감시(종가, 우리로 공시, RF머트리얼즈 3Q)의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
+            body(stamp, "0219B0 감시(종가, 우리로 공시, RF머트리얼즈 3Q, 3개 조건 판정)의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "네이버 시세나 KIND 원문을 직접 보세요.", "다음 거래일 19:00 에 다시 읽습니다. 가격과 공시는 데이터 날짜, 접수번호로 이어서 판정.",
                  "이 안내로 비중을 바꾸지 않기.", "읽기 실패를 실적 부진이나 가격 이탈로 읽기.", hdr="데이터 읽기 실패"))
 
@@ -397,6 +539,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, rows_fn=None) -> int:
         last = rows[-1]
         st["price"] = {"last_date": last["day"], "last_close": last["close"],
                        "down_armed": not last["close"] < cfg["price"]["down"]["level"], "up_armed": not last["close"] >= cfg["price"]["up"]["level"],
+                       "stop_armed": not last["close"] < cfg["price"]["stop"]["level"],
                        "seed_note": f"seed {stamp}: 마지막 확정 종가 {last['day']} {last['close']:,.0f}원"}
         st["seeded_at"] = stamp
         save_state(st)
@@ -437,11 +580,17 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, rows_fn=None) -> int:
         except Exception as exc:  # noqa: BLE001
             q3_err = str(exc)[:120]
         print(f"q3 report: {'found' if found and found.get('report') else 'none'}{' err ' + q3_err if q3_err else ''}")
-        res = q3_build(cfg, st, stamp, found, q3_err, final_day=today >= q1)
+        jd = None
+        try:
+            jd = q3_judge(cfg, found, now, today)
+            print("q3 judge:", jd["verdict"], "ready" if jd["ready"] else "not ready", jd["lines"])
+        except Exception as exc:  # noqa: BLE001
+            errs.append(f"3개 조건 판정 {NA}: {str(exc)[:120]}")
+        res = q3_build(cfg, st, stamp, found, q3_err, today >= q1, jd)
         if res:
             title, msg, pri, opsneed = res
             out.append((title, msg, pri))
-            st["q3_sent"] = {"at": stamp, "title": title, "priority": pri, "report": bool(found and found.get("report"))}
+            st["q3_sent"] = {"at": stamp, "title": title, "priority": pri, "report": bool(found and found.get("report")), "verdict": jd["verdict"] if jd else None}
             if opsneed:
                 errs.append("RF머트리얼즈 3분기 값이나 우리로 목록 일부를 자동으로 읽지 못함. 재평가 알림 본문의 수동 확인 항목 참고.")
         else:
