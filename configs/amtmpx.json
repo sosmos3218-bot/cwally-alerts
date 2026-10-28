@@ -1,0 +1,31 @@
+{
+  "name": "amtmpx",
+  "title_prefix": "[AMTM-PX]",
+  "symbol": "AMTM",
+  "display": "아멘텀(AMTM, NYSE) 종가 구간",
+  "created_at": "2026-10-28T11:30:00+09:00",
+  "approval": "사용자 채팅 요청 2026-10-28. 기존 morning 슬롯에만 부착, 새 cron/워크플로/저장소 없음",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯(정시 cron-job.org morning 잡, GitHub 0 0 * * 1-5 백업)에 부착. 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. job=amtm 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "alert_policy": "zone_entry_once_rearm_on_exit",
+  "position": {"shares": 34, "avg_cost": 23.9888, "cost_usd": 815.62, "account": "해외주식 계좌, 소액 시작 포지션"},
+  "levels": [
+    {"key": "be2399", "op": "ge", "price": 23.99, "priority": 3, "kind": "info", "label": "본전 회복(평단 23.99달러 이상)"},
+    {"key": "ma200", "op": "ge", "price": 24.67, "priority": 3, "kind": "info", "label": "200일선 회복(24.67달러 이상)"},
+    {"key": "low20", "op": "le", "price": 20.0, "priority": 4, "kind": "conditional_add", "label": "20달러 이하"},
+    {"key": "stop1772", "op": "le", "price": 17.72, "priority": 5, "kind": "warning", "label": "52주 저점 이탈(17.72달러 이하)"}
+  ],
+  "rearm_note": "구간에 들어갈 때 1번만. 종가가 구간을 벗어나면 조용히 재무장(ge: 선 아래 종가, le: 선 위 종가, 완충 없음). 같은 날 여러 선은 한 메시지, 우선순위는 가장 높은 값. 17.72 경고가 켜지면 메시지 전체에서 추가 문구를 빼고 추가매수 보류만 씀.",
+  "earnings_link": "20달러 문구는 [AMTM-EARN] state(state/amtmearn.json found_accession)로 실적 8-K 감지 전/후를 나눔. 감지 전: 추가매수 보류. 감지 후: 시나리오 1 또는 2 확인된 경우에만 지정가 추가 검토(조건부).",
+  "reference": {"as_of": "2026-10-28", "last_close": 21.75, "last_close_date": "2026-10-27", "range_52w": [17.72, 38.11], "dma50": 19.75, "dma200": 24.67, "source": "붙여넣은 분석 + Yahoo chart v8 AMTM 1d"},
+  "stale_days": 6,
+  "sources": {"bars": "https://query1.finance.yahoo.com/v8/finance/chart/AMTM?range=1mo&interval=1d"},
+  "source_note": "기준값 출처: 붙여넣은 외부 분석(2026-10-28). 검증된 전망 아님. 투자 권유 아님.",
+  "explain": "아멘텀(AMTM) 미국 종가가 본전(23.99달러), 200일선(24.67달러) 위로, 또는 20달러, 52주 저점(17.72달러) 아래로 새로 들어갈 때만 오는 알림입니다. 자동 주문 아님.",
+  "valid_until": "2027-10-31",
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "평일 09:00 AMTM 종가 구간 점검, 2027-10-31 종료"
+}
