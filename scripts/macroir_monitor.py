@@ -9,7 +9,7 @@ Price lines (slot `price`, existing k203780 19:00 KST slot, after the KRX close)
   fx1360    USD/KRW >= 1,360                   p3 info     (standalone off: [USTSY] already pings 1,360)
   deal90    Brent <= 90                        p4 deal
   deal95    Brent <= 95                        p3 deal early notice
-  kospi5300 KOSPI <= 5,300                     p3          (standalone off: [KOSDOWN] already pings 5,300)
+  kospi5300 KOSPI <= 5,300                     p3          (standalone off: [KOSPI] 15:40 ladder already pings 5,300)
   ktb104k   148070 <= 104,000 KRW              p4 warning  (long-rate spike)
 Each line fires once when its value ENTERS the zone and re-arms quietly when the value leaves it (figpx/lgeswatch pattern).
 Lines firing on the same run go into one message with the highest priority. If any warning is active
@@ -329,7 +329,7 @@ def build_message(cfg: dict, fired: list[str], vals: dict, dates: dict, armed: d
     folded = [L[k] for k in L if not L[k].get("standalone", True)]
     later = "같은 선은 값이 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다(평일 19:00 점검)."
     if folded:
-        later += " 코스피 5,300 이탈은 [KOSDOWN], 원/달러 1,360원은 [USTSY]가 따로 알리고, 여기서는 다른 선과 같이 울릴 때만 함께 적습니다."
+        later += " 코스피 5,300 이탈은 [KOSPI], 원/달러 1,360원은 [USTSY]가 따로 알리고, 여기서는 다른 선과 같이 울릴 때만 함께 적습니다."
     lines = [
         f"{now_kst():%Y-%m-%d %H:%M} KST | MACRO-IR | 미-이란 거시 시나리오 감시선",
         "이게 뭐 알림: " + cfg["explain"] + " " + SOURCE_NOTE,
@@ -401,7 +401,7 @@ def confirm_message(cfg: dict, vals: dict, dates: dict, armed: dict) -> tuple[st
         "이게 뭐 알림: " + cfg["explain"] + " " + SOURCE_NOTE,
         f"지금 결과/상태: 현재 값: {values_text(vals, dates)}. 이미 구간 안인 선: {', '.join(inside) if inside else '없음(모두 대기)'}.",
         "지금 할 일: 없음. 평일 19:00 KST 에 브렌트 130+원/달러 1,380(p5), 브렌트 125(p4), 브렌트 90(p4)과 95(p3), 148070 104,000원(p4)을 보고 구간에 새로 들어갈 때만 보냅니다. 11/3, 11/4 09:00 에 선거 체크리스트 1회씩.",
-        "나중에: 코스피 5,300 은 [KOSDOWN], 원/달러 1,360 은 [USTSY]가 이미 알려서 여기서는 다른 선과 같이 울릴 때만 함께 적습니다.",
+        "나중에: 코스피 5,300 은 [KOSPI], 원/달러 1,360 은 [USTSY]가 이미 알려서 여기서는 다른 선과 같이 울릴 때만 함께 적습니다.",
         "익절/줄일 때: 해당 없음.",
         "하지 말 것: 이 설치 확인을 매수/매도 신호로 읽기.",
     ]
@@ -437,7 +437,7 @@ def run_price(cfg: dict, dry: bool, now: datetime, fetch=fetch_all) -> int:
         send("port", title, body, prio, [tag], dry)
         st["last_sent"] = {"day": today, "fired": fired, "title": title}
     elif fired:
-        print(f"only folded lines fired {fired}; silent (covered by [KOSDOWN]/[USTSY])")
+        print(f"only folded lines fired {fired}; silent (covered by [KOSPI]/[USTSY])")
     else:
         print("no zone entry; silent")
     st.update({"armed": armed, "last_values": vals, "last_dates": dates, "last_run": today})
