@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-28T00:44:39.088137+09:00",
+  "updated_at": "2026-10-28T19:00:46.261421+09:00",
   "seeded": true,
-  "last_day": "2026-10-27",
-  "last_close": 1341000.0,
+  "last_day": "2026-10-28",
+  "last_close": 1487000.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -30,22 +30,24 @@
       "fired_day": null
     }
   },
-  "earn_done": {},
+  "earn_done": {
+    "2026-10-28": "2026-10-28 19:00 KST"
+  },
   "extra": {
     "up1300k": {
       "armed": false,
       "fired_day": "2026-10-27"
     },
     "up1400k": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-10-28"
     },
     "lad_exhaust": {
       "armed": false,
       "fired_day": "migrated"
     },
     "lad_july": {
-      "armed": false,
+      "armed": true,
       "fired_day": "migrated"
     }
   },

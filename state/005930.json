@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-28T00:44:38.826598+09:00",
+  "updated_at": "2026-10-28T19:00:45.330116+09:00",
   "seeded": true,
-  "last_day": "2026-10-27",
-  "last_close": 222000.0,
+  "last_day": "2026-10-28",
+  "last_close": 242000.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -34,7 +34,7 @@
   "us10y": {
     "armed": true,
     "fired_day": null,
-    "last": 4.988
+    "last": 4.993
   },
   "extra": {
     "up220k": {
@@ -42,8 +42,8 @@
       "fired_day": "2026-10-27"
     },
     "up230k": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-10-28"
     }
   },
   "seed_note": "2026-10-24 시드. 2026-10-23 종가 215,500원 기준(Yahoo 005930.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장. 미국 10년물 4.988% (5.30% 미만, 무장)",
