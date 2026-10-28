@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-28T21:15:09.115035+09:00",
+  "updated_at": "2026-10-29T08:11:10.005728+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -9,6 +9,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-10-28T21:15:09.115035+09:00"
+    },
+    "20261029-xbi-fomc.json#f90fb6797500bbf6": {
+      "file": "20261029-xbi-fomc.json",
+      "title": "[XBI] FOMC 후 관망 유지",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-29T08:11:10.005728+09:00"
     }
   },
   "rejected": {},
