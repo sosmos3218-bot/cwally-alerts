@@ -161,6 +161,16 @@ def notice_alerts(cfg: dict, items: list[dict], seen: set[str]) -> list[dict]:
     return out
 
 
+def split_backlog(found: list[dict], now: datetime, max_age_days: int) -> tuple[list[dict], list[dict]]:
+    """새 공시를 (최근, 오래된 것)으로 나눈다. 날짜를 못 읽으면 최근으로 본다."""
+    cutoff = (now - timedelta(days=max_age_days)).strftime("%Y-%m-%d")
+    fresh, stale = [], []
+    for it in found:
+        day = str(it.get("datetime") or "")[:10]
+        (stale if re.fullmatch(r"\d{4}-\d{2}-\d{2}", day) and day < cutoff else fresh).append(it)
+    return fresh, stale
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
@@ -261,7 +271,16 @@ def main() -> int:
         if not seen:
             print(f"seed {len(items)} notices silently")
         else:
-            for it in notice_alerts(cfg, items, seen):
+            fresh, stale = split_backlog(notice_alerts(cfg, items, seen), now,
+                                         int(cfg.get("notice_max_age_days") or 3))
+            if stale:
+                # 쉬는 기간(10/19~11/10 등)에 쌓인 공시는 한 번에 묶어 1건만 보낸다(재개 첫날 폭주 방지).
+                rows = "; ".join(f"{it['datetime'][:10]} {it['title']}" for it in stale)
+                status = f"알림을 쉬는 동안 나온 주요 공시 {len(stale)}건: {rows}. 원문: {stale[0]['url']}"
+                alerts.append((f"[REMED] 쉬는 동안 나온 공시 {len(stale)}건 | 원문 확인 전 진입 보류",
+                               body(stamp, status, "목록의 공시 원문을 먼저 읽으세요. CB 정정이면 인수자, 전환가 2,954원, 리픽싱 조건이 바뀌었는지 봅니다.",
+                                    LATER, TRIM, AVOID), 3))
+            for it in fresh:
                 t = it["title"]
                 cb_fix = "정정" in t and "전환사채" in t
                 title = "[REMED] CB 정정공시 | 인수자, 조건 확인 전 진입 보류" if cb_fix else "[REMED] 새 주요 공시 | 내용 확인 전 진입 보류"
