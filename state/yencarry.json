@@ -1,14 +1,14 @@
 {
   "briefing_sent": true,
-  "fed_sent_date": "2026-09-16",
+  "fed_sent_date": "2026-10-27",
   "boj_sent_date": null,
   "boj_press_sent_date": "2026-09-18",
   "weekly_sent_week": "2026-W44",
-  "last_event_key": "원달러 1,323원 → 1,340 이탈",
+  "last_event_key": "원달러 1,327원 → 1,340 이탈|fed-2026-10-27",
   "last_quotes": {
-    "usdjpy": 157.746,
-    "usdkrw": 1323.67,
+    "usdjpy": 157.947,
+    "usdkrw": 1327.38,
     "jgb30": 3.9
   },
-  "updated_at": "2026-10-27T15:20:50.881184+09:00"
+  "updated_at": "2026-10-28T09:00:54.981352+09:00"
 }

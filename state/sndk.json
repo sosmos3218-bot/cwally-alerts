@@ -1,8 +1,8 @@
 {
-  "kr_pre_notified": false,
+  "kr_pre_notified": true,
   "sndk_pre_notified": false,
   "sndk_post_notified": false,
   "fail_notified": false,
-  "last_phase": null,
-  "updated_at": null
+  "last_phase": "kr_pre",
+  "updated_at": "2026-10-28T09:01:52.836797+09:00"
 }

@@ -1,23 +1,16 @@
 {
-  "updated_at": "2026-10-27 09:00 KST",
+  "updated_at": "2026-10-28 09:00 KST",
   "zone": "EVENT:DCA_WAIT",
   "last_alert_key": "EVENT:DCA_WAIT",
   "last_sent_key": "EVENT:DCA_WAIT",
-  "last_sent_date": "2026-10-26",
-  "last_sent_sig": "EVENT:DCA_WAIT|hynix_earn",
-  "last_skip_reason": "same_as_last_sent",
-  "fx": 1325.28,
-  "wti": 101.54,
-  "ktb3": 3.789,
-  "ktb10": 4.074,
+  "last_sent_date": "2026-10-28",
+  "last_sent_sig": "EVENT:DCA_WAIT|hynix_earn,samsung_confirm",
+  "last_skip_reason": null,
+  "fx": 1327.28,
+  "wti": 100.06,
+  "ktb3": 3.758,
+  "ktb10": 4.032,
   "history": [
-    {
-      "date": "2026-10-16",
-      "fx": 1340.85,
-      "wti": 96.18,
-      "ktb3": 3.867,
-      "ktb10": 4.193
-    },
     {
       "date": "2026-10-19",
       "fx": 1334.28,
@@ -66,6 +59,13 @@
       "wti": 101.54,
       "ktb3": 3.789,
       "ktb10": 4.074
+    },
+    {
+      "date": "2026-10-28",
+      "fx": 1327.28,
+      "wti": 100.06,
+      "ktb3": 3.758,
+      "ktb10": 4.032
     }
   ]
 }
