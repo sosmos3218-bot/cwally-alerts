@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-28T19:00:45.330116+09:00",
+  "updated_at": "2026-10-29T01:26:52.271457+09:00",
   "seeded": true,
   "last_day": "2026-10-28",
   "last_close": 242000.0,
@@ -34,7 +34,7 @@
   "us10y": {
     "armed": true,
     "fired_day": null,
-    "last": 4.993
+    "last": 5.034
   },
   "extra": {
     "up220k": {
