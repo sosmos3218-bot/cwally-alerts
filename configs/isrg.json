@@ -3,16 +3,16 @@
   "title_prefix": "[ISRG]",
   "ticker": "ISRG",
   "display": "인튜이티브 서지컬",
-  "as_of": "2026-10-26",
+  "as_of": "2026-10-28",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 2027 가이던스 판정은 2027년 1, 2월 8-K(Item 2.02) 보도자료로 한 번. 수동 job=isrg 는 oneoff_mode=auto 가 아니면 dry. 4분기 실적은 회사 미공지(제3자 추정 2027-01-26 장 마감 뒤), 마지막 평일 실행은 2027-02-05 09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning에만 붙임. 미국 전일 종가 확인. 2027 가이던스 3조건 판정은 2027년 1, 2월 8-K(Item 2.02) EX-99.1/99.2로 한 번. 수동 job=isrg 는 oneoff_mode=auto 가 아니면 dry. 4분기 실적은 회사 미공지(제3자 추정 2027-01-26 장 마감 뒤), 마지막 평일 실행은 2027-02-05 09:00",
   "valid_until": "2027-02-06",
   "alert_policy": "weekly_or_change",
   "cik": "0001035267",
-  "holding": false,
-  "holding_note": "보유 여부 미확인. 가격 구간 알림이지 보유 손절 신호가 아님.",
+  "holding": true,
+  "holding_note": "보유 6주, 평단 438.47달러, 해외 계좌(2026-10-28 사용자 입력). 매수나 매도 후 position.shares 와 avg_cost_usd 를 직접 고치세요.",
   "baseline": {
     "price_date": "2026-10-07",
     "price": 414.52,
@@ -68,7 +68,8 @@
   },
   "levels": {
     "split": 380,
-    "chase": 500
+    "chase": 500,
+    "split_note": "380달러 이하: 급락 예외로 다음 회차 1회 앞당김(계획 메모)"
   },
   "change_rules": {
     "upgrade": "미국 다빈치 시술 성장 재가속, 2027 가이던스 중간값 13% 이상, 다빈치5와 SP 설치가 가격 할인 없이 유지",
@@ -77,13 +78,12 @@
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/ISRG?interval=1d&range=5d",
     "sec": "https://data.sec.gov/submissions/CIK0001035267.json",
-    "ir": "https://investor.intuitivesurgical.com/news-releases"
+    "ir": "https://investor.intuitivesurgical.com/news-releases",
+    "fx": "https://query1.finance.yahoo.com/v8/finance/chart/KRW=X?interval=1d&range=5d"
   },
   "ends_kst": "2027-02-06 09:00",
-  "ends_note": "평일 09:00 가격 구간, 월요일 상태, 2027 가이던스 1회 판정. 4분기 실적(2027년 1월 말 예상) 뒤 2027-02-06 09:00까지 (마지막 평일 실행 2027-02-05)",
+  "ends_note": "평일 09:00 가격 구간, 1회차 425달러, 비중 8%, 월요일 상태, 2027 가이던스 3조건 1회 판정. 4분기 실적(2027년 1월 말 예상) 뒤 2027-02-06 09:00까지 (마지막 평일 실행 2027-02-05)",
   "guidance_2027": {
-    "guidance_add": 13.0,
-    "guidance_cut": 12.0,
     "prior_2026_low": 14.0,
     "prior_2026_high": 15.0,
     "months": [
@@ -91,6 +91,48 @@
       "2027-02"
     ],
     "seed_after": "2026-10-26",
-    "rule": "2027년 1, 2월 8-K Item 2.02 EX-99.1 에서 2027 전 세계 다빈치 시술 성장 범위 중간값: 13% 이상 증액 검토 p4, 12% 미만 비중 축소 검토 p4, 그 사이 유지 p3, 숫자 없음 공시 미기재 p3. 숫자 판정은 한 번, 접수번호로 중복 제거"
+    "rule": "2027년 1, 2월 8-K Item 2.02 의 EX-99.1/EX-99.2 에서 (a) 2027 전 세계 다빈치 시술 성장 가이던스 중간값 12% 이상, (b) 미국 다빈치 시술 성장(4분기 문장 우선, 없으면 2026 연간 표) 10% 이상, (c) 다빈치 시술당 I&A 매출 1,800달러 이상(표 값 우선, 없으면 I&A 매출 / 다빈치 시술 수로 계산). 셋 다 통과면 2회차 매수(p4, 지정가 460달러까지, 아니면 430달러), 하나라도 미달이면 보류(p4, 미달 항목), 중간값 10% 미만이면 추가 매수 중단(p5, 우선). 못 읽은 항목이 있으면 확인 필요(p3, 1번), 못 읽은 항목을 통과로 세지 않음. 여러 공시의 항목을 합쳐 최종 판정은 한 번.",
+    "mid_min": 12.0,
+    "mid_stop": 10.0,
+    "us_min": 10.0,
+    "ia_min_usd": 1800
+  },
+  "position": {
+    "shares": 6,
+    "avg_cost_usd": 438.47,
+    "account": "해외 계좌",
+    "total_assets_krw": 200000000,
+    "total_assets_note": "총자산 약 2억원. 바뀌면 이 숫자만 고치면 비중 계산이 따라갑니다.",
+    "target_weight_pct": 5.0,
+    "cap_weight_pct": 6.0,
+    "trim_alert_pct": 8.0,
+    "trim_rearm_pct": 7.5
+  },
+  "tranches": {
+    "t1": {
+      "shares": 3,
+      "low": 420,
+      "high": 425,
+      "rearm_above": 435,
+      "done_at_shares": 9,
+      "when": "4분기 실적 전",
+      "rule": "종가 425달러 이하 1번 알림(p4), 435달러 초과 종가에서 재무장, 보유 9주 이상이면 완료"
+    },
+    "t2": {
+      "shares": 4,
+      "limit_base": 430,
+      "limit_pass": 460,
+      "when": "4분기 실적과 2027 가이던스 뒤",
+      "rule": "guidance_2027 세 조건 판정"
+    },
+    "t3": {
+      "shares": 4,
+      "low": 380,
+      "high": 420,
+      "when": "2027년 2분기 실적 뒤",
+      "implemented": false,
+      "note": "3회차 판정은 아직 구현하지 않음. 2027 상반기 미국 시술 11% 이상, 시술당 I&A 전년 대비 -3% 이내, 가이던스 유지 이상이 계획 조건(메모)."
+    },
+    "plan_total_shares": 17
   }
 }

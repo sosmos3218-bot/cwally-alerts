@@ -17,5 +17,14 @@
     ],
     "verdict": null,
     "fail": {}
+  },
+  "t1": {
+    "armed": true,
+    "fired": null,
+    "done": false
+  },
+  "w8": {
+    "armed": true,
+    "fired": null
   }
 }
