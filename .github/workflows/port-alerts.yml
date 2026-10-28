@@ -1191,6 +1191,22 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/064400_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/064400_monitor.py "$MODE" || rc=1
           exit "$rc"
+      - name: Run 0220WL close (Hanwha M&S 3우B close lines 2,040/2,000, common/pref discount 60%/75%, 10/29 Vision 3Q, 11/2~11/4 tender result, payout filings; same engine as 005930, k203780 19:00 slot)
+        # approved in chat 2026-10-28. attached to the existing k203780 slot, no new cron. Separate from the 15:20 0220wl alert (afternoon).
+        # Dedupe: state/0220wl_close.json last_day + armed, ratio.last_day + armed, notice_done, notice_seen.
+        # job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/0220wl_close_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/0220wl_close_monitor.py "$MODE" || rc=1
+          exit "$rc"
       - name: Run LGES (lgeswatch 373220 close <= 330,000 zone, KIND filing watch, Q4 2026 prelim checklist; k203780 19:00 slot)
         # approved in chat 2026-10-26. attached to the existing k203780 slot, no new cron. Dedupe: state/lgeswatch.json last_date + armed
         # (re-arm when the close is back above 330,000), seen_acptno (KIND receipt numbers), q4_checklist_sent.

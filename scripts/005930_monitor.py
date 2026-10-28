@@ -17,6 +17,14 @@ Events
             across), optional rearm_title/rearm_action (also send on re-arm, e.g. 회복), until (last session day),
             priority, buy_advice (action dropped when the close is under the stop line). Sent as their own
             message, so a plan-line message is unchanged.
+  pair      optional configs "pair" {code, yahoo_symbol, short} + "ratio_lines" (2026-10-28, 0220WL): a second KRX
+            symbol read the same way (Yahoo regular close only, hold on failure). Each session where BOTH regular closes
+            exist is judged in order: discount % = (pair - main) / pair * 100, line ops le/ge/lt on that %, fire once,
+            re-arm after moving back more than rearm_pp (%p). Own cursor st["ratio"]["last_day"]; a session where either
+            close is missing stops the walk (judged later). Absent keys: nothing changes.
+  notices   optional configs "notice_events" (dated filing checks with a checklist, window start..end, sent once when
+            the filing is on the Naver list or on the end day as 공시 확인 필요, catch-up catch_up_days) and
+            "notice_watch" (codes + title keywords, one alert per filing, dedupe by filing no in st["notice_seen"]).
   earnings  on configs earnings.date (KST session day), one 실적 체크 message, flag earn_done[date];
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
@@ -163,6 +171,17 @@ def collect(cfg: dict, now: datetime | None = None) -> tuple[dict, list[str]]:
         gap = regular_gap(data["rows"], now)
         if gap:
             fails.append(f"{cfg['code']} {gap} 정규장 종가 없음 (Yahoo; 판단 보류, 다음 실행에서 따라잡음)")
+    pair = cfg.get("pair")
+    if pair:
+        try:
+            data["pair_rows"] = yahoo_rows(cfg, pair["yahoo_symbol"], regular_only=True)
+        except Exception as exc:
+            data["pair_rows"] = []
+            fails.append(f"{pair['code']} 정규장 종가 (Yahoo {str(exc)[:80]}; 괴리율 판단 보류, 다음 실행에서 따라잡음)")
+        else:
+            gap = regular_gap(data["pair_rows"], now)
+            if gap:
+                fails.append(f"{pair['code']} {gap} 정규장 종가 없음 (Yahoo; 괴리율 판단 보류, 다음 실행에서 따라잡음)")
     if cfg.get("us10y"):
         try:
             data["us10y"] = tnx(cfg)
@@ -211,6 +230,10 @@ def default_state(cfg: dict) -> dict:
         st["us10y"] = {"armed": True, "fired_day": None, "last": None}
     if cfg.get("extra_lines"):
         st["extra"] = {ln["key"]: {"armed": True, "fired_day": None} for ln in cfg["extra_lines"]}
+    if cfg.get("ratio_lines"):
+        st["ratio"] = {"last_day": None, "last": None, "lines": {ln["key"]: {"armed": True, "fired_day": None} for ln in cfg["ratio_lines"]}}
+    if cfg.get("notice_events") or cfg.get("notice_watch"):
+        st["notice_done"], st["notice_seen"] = {}, []
     return st
 
 
@@ -285,6 +308,101 @@ def eval_lines(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
     return events
 
 
+def discount(main: float, pair: float) -> float:
+    return (pair - main) / pair * 100.0
+
+
+def ratio_hit(ln: dict, v: float) -> bool:
+    return {"le": v <= ln["level"], "ge": v >= ln["level"], "lt": v < ln["level"]}[ln["op"]]
+
+
+def ratio_rearm(ln: dict, v: float, pp: float) -> bool:
+    return v < ln["level"] - pp if ln["op"] == "ge" else v > ln["level"] + pp
+
+
+def eval_ratio(cfg: dict, st: dict, rows: list[dict], pair_rows: list[dict], today: str, now: datetime) -> list[dict]:
+    """configs ratio_lines on the same-session discount (pair - main) / pair. Hold (stop the walk) when either close is missing."""
+    if not cfg.get("ratio_lines"):
+        return []
+    close_hm = tuple(map(int, cfg.get("market_close_kst", "15:30").split(":")))
+    rs = st.setdefault("ratio", {"last_day": None, "last": None, "lines": {}})
+    rs.setdefault("lines", {})
+    pmap = {r["day"]: r["close"] for r in pair_rows or []}
+    events = []
+    for r in rows or []:
+        if r["day"] <= (rs.get("last_day") or ""):
+            continue
+        if r["day"] > today or (r["day"] == today and (now.hour, now.minute) < close_hm):
+            continue
+        pc = pmap.get(r["day"])
+        if not pc:
+            break  # pair close missing for this session: hold, judged on a later run
+        v = discount(r["close"], pc)
+        for ln in cfg["ratio_lines"]:
+            s = rs["lines"].setdefault(ln["key"], {"armed": True, "fired_day": None})
+            if s.get("armed", True) and ratio_hit(ln, v):
+                s.update(armed=False, fired_day=r["day"])
+                events.append({"kind": "ratio", "key": ln["key"], "line": ln, "day": r["day"], "close": r["close"], "pair": pc, "v": v})
+            elif not s.get("armed", True) and ratio_rearm(ln, v, float(ln.get("rearm_pp", cfg.get("ratio_rearm_pp", 1.0)))):
+                s["armed"] = True
+                print(f"{cfg['name']} ratio {ln['key']} re-armed on {r['day']} discount {v:.2f}%")
+        rs.update(last_day=r["day"], last=round(v, 4))
+    return events
+
+
+def find_notice(cfg: dict, codes: list[str], keywords: list[str], since: str, exclude: list[str] | None = None, rows_fn=None) -> dict | None:
+    for code in codes:
+        for r in (rows_fn or notice_rows)(cfg, code):
+            if r["datetime"][:10] >= since and any(k in r["title"] for k in keywords) and not any(x in r["title"] for x in exclude or []):
+                return r
+    return None
+
+
+def notice_rows(cfg: dict, code: str) -> list[dict]:
+    """Naver stock notice feed (KRX/KIND mirror, no key): [{'no','code','title','datetime'}], titles scrubbed."""
+    raw = get_json(cfg["sources"]["naver_notice"].format(code=code))
+    out = []
+    for r in raw if isinstance(raw, list) else []:
+        r = r or {}
+        out.append({"no": str(r.get("no") or r.get("bizdateSeq") or ""), "code": code, "title": scrub(str(r.get("title") or "").strip()),
+                    "datetime": str(r.get("datetime") or "")[:16].replace("T", " ")})
+    return out
+
+
+def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None) -> list[dict]:
+    """notice_events (dated checks) and notice_watch (keyword filings, dedupe by filing no). Mutates st and fails."""
+    out = []
+    done = st.setdefault("notice_done", {})
+    for ev in cfg.get("notice_events") or []:
+        if ev["id"] in done or today < ev["start"]:
+            continue
+        if (date.fromisoformat(today) - date.fromisoformat(ev["end"])).days > int(ev.get("catch_up_days", 3)):
+            continue
+        since = (date.fromisoformat(ev["start"]) - timedelta(days=1)).isoformat()
+        filing, ffail = None, None
+        try:
+            filing = find_notice(cfg, ev["codes"], ev["keywords"], since, ev.get("exclude"), rows_fn)
+        except Exception as exc:
+            ffail = str(exc)[:80]
+        if filing or today >= ev["end"]:
+            out.append({"kind": "notice_event", "ev": ev, "filing": filing, "ffail": ffail})
+            done[ev["id"]] = today
+    w = cfg.get("notice_watch")
+    if w:
+        seen = st.setdefault("notice_seen", [])
+        for code in w["codes"]:
+            try:
+                rows = (rows_fn or notice_rows)(cfg, code)
+            except Exception as exc:
+                fails.append(f"{code} 공시 목록 (네이버 {str(exc)[:60]}; 다음 실행에서 다시 확인)")
+                continue
+            for r in sorted(rows, key=lambda x: x["datetime"]):
+                if r["no"] and r["no"] not in seen and r["datetime"][:10] >= w["since"] and any(k in r["title"] for k in w["keywords"]):
+                    seen.append(r["no"])
+                    out.append({"kind": "notice_watch", "filing": r})
+    return out
+
+
 def eval_us10y(cfg: dict, st: dict, y: float | None, today: str) -> list[dict]:
     z = cfg.get("us10y")
     if not z or y is None:
@@ -317,6 +435,8 @@ def fmt(v: float) -> str:
 def ladder(cfg: dict, close: float | None) -> str:
     if close is None:
         return ""
+    if cfg.get("ladder_all"):  # every plan line with its distance (no buy/trim/stop wording)
+        return ", ".join(f"{ln.get('short', ln['title'])} {fmt(ln['level'])}(까지 {dist(ln['level'], close):+.1f}%)" for ln in cfg["lines"]) + "."
     buys = [ln for ln in cfg["lines"] if ln["op"] == "le" and ln["level"] < close]
     trims = [ln for ln in cfg["lines"] if ln["op"] == "ge" and ln["level"] > close]
     stop = next((ln for ln in cfg["lines"] if ln["key"] == "stop"), None)
@@ -343,6 +463,9 @@ def trim_text(cfg: dict) -> str:
 
 def act_events(events: list[dict]) -> list[dict]:
     """Stop in the same message: drop buy-line actions so the 할 일 line has no buy advice next to the stop."""
+    sup = {k for e in events for k in e["line"].get("suppress", [])}  # optional per-line (0220WL: review drops yield5)
+    if sup:
+        events = [e for e in events if e["key"] not in sup]
     if any(e["key"] == "stop" for e in events):
         return [e for e in events if not e["key"].startswith("buy")]
     return events
@@ -358,7 +481,9 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
     hits = [f"{e['line']['label']}: 종가 {fmt(e['close'])}({e['day']}), 기준 {fmt(e['line']['level'])}, 기준 대비 {dist(e['close'], e['line']['level']):+.2f}%."
             for e in events]
     last_close = (data.get("rows") or [{}])[-1].get("close") if data.get("rows") else events[-1]["close"]
-    if top["key"] == "stop":
+    if top["line"].get("later"):
+        later = top["line"]["later"]
+    elif top["key"] == "stop":
         later = "손절 뒤에는 이 계획의 매수선을 다시 쓰지 말고 계획을 새로 세우세요."
     elif top["key"].startswith("trim"):
         later = "남은 수량은 다음 축소선까지 보유. 축소선은 종가가 1% 넘게 아래로 내려왔다 와야 다시 울립니다."
@@ -366,12 +491,12 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
         later = "다음 매수선까지 기다리세요. 같은 선은 종가가 1% 넘게 위로 올라갔다 와야 다시 울립니다."
     msg = "\n".join([
         head(cfg, stamp),
-        f"이게 뭐 알림: {cfg['short']} 종가가 계획한 매수, 축소, 손절 선을 새로 넘을 때만 오는 알림입니다. 매수 지시가 아닙니다.",
-        "지금 결과/상태: " + " ".join(hits) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})",
+        "이게 뭐 알림: " + cfg.get("lines_what", f"{cfg['short']} 종가가 계획한 매수, 축소, 손절 선을 새로 넘을 때만 오는 알림입니다. 매수 지시가 아닙니다."),
+        "지금 결과/상태: " + " ".join(hits) + yield_text(cfg, last_close) + f" {ladder(cfg, last_close)} (정규장 종가, {data.get('src') or '-'})" + pair_text(cfg, data),
         "지금 할 일: " + " ".join(e["line"]["action"] for e in act_events(events)),
         f"나중에: {later}",
-        f"익절/줄일 때: {trim_text(cfg)} 비중 축소.{cfg.get('trim_extra', ' 미국 10년물 5.30% 이상이면 분할 매수 중단.')}",
-        "하지 말 것: 한 번에 전액 매수, 신용 및 미수, 손절선 이탈 뒤 물타기, 조회 실패를 신호로 읽기.",
+        "익절/줄일 때: " + cfg.get("lines_trim", f"{trim_text(cfg)} 비중 축소.{cfg.get('trim_extra', ' 미국 10년물 5.30% 이상이면 분할 매수 중단.')}"),
+        "하지 말 것: " + cfg.get("lines_dont", "한 번에 전액 매수, 신용 및 미수, 손절선 이탈 뒤 물타기, 조회 실패를 신호로 읽기."),
     ] + ([ref] if ref else []))
     return title, msg, pri
 
@@ -413,6 +538,102 @@ def build_extra(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
         "하지 말 것: " + (ln.get("dont") or "레벨 돌파만 보고 추격 매수, 신용 및 미수, 조회 실패를 신호로 읽기."),
     ] + ([ref] if ref else []))
     return title, msg, pri(top)
+
+
+def yield_text(cfg: dict, close: float | None) -> str:
+    """configs "yield" {dps, label, note}: dividend yield on the close, e.g. 0220WL minimum dividend 102원/yr."""
+    y = cfg.get("yield")
+    if not y or not close:
+        return ""
+    return f" {y['label']} {y['dps'] / close * 100:.2f}%(연 {fmt(y['dps'])} / 종가 {fmt(close)}{y.get('note', '')})."
+
+
+def pair_last(data: dict) -> tuple | None:
+    """Latest session with both regular closes: (day, main, pair, discount %)."""
+    pmap = {r["day"]: r["close"] for r in data.get("pair_rows") or []}
+    both = [(r["day"], r["close"], pmap[r["day"]]) for r in data.get("rows") or [] if pmap.get(r["day"])]
+    if not both:
+        return None
+    d, m, p = both[-1]
+    return d, m, p, discount(m, p)
+
+
+def pair_text(cfg: dict, data: dict) -> str:
+    if not cfg.get("pair"):
+        return ""
+    pl = pair_last(data)
+    if not pl:
+        return f" {cfg['pair']['short']} 종가 없음, 괴리율 판단 보류."
+    d, m, p, v = pl
+    return f" {cfg['pair']['short']} 종가 {fmt(p)}({d}), 괴리율 {v:.2f}%."
+
+
+def build_ratio(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    sign = {"le": "이하", "ge": "이상", "lt": "미만"}
+    events = sorted(events, key=lambda e: (-int(e["line"].get("priority", 4)), e["day"]))
+    top = events[0]
+    ln = top["line"]
+    title = f"{cfg['title_prefix']} 괴리율 {ln['level']:.1f}% {sign[ln['op']]} | {ln['title']}"
+    hits = [f"{e['line']['label']}: {e['day']} 우선주 종가 {fmt(e['close'])}, {cfg['pair']['short']} 종가 {fmt(e['pair'])}, "
+            f"괴리율 {e['v']:.2f}%(기준 {e['line']['level']:.1f}%, 차이 {e['v'] - e['line']['level']:+.2f}%p)." for e in events]
+    last_close = (data.get("rows") or [{}])[-1].get("close") if data.get("rows") else top["close"]
+    rt = cfg.get("ratio_text", {})
+    msg = "\n".join([
+        head(cfg, stamp),
+        "이게 뭐 알림: " + rt.get("what", f"{cfg['short']}와 {cfg['pair']['short']}의 같은 날 정규장 종가 괴리율 알림입니다. 매수 지시가 아닙니다."),
+        "지금 결과/상태: " + " ".join(hits) + yield_text(cfg, last_close) + f" {ladder(cfg, last_close)}",
+        "지금 할 일: " + " ".join(dict.fromkeys(e["line"]["action"] for e in events)),
+        "나중에: " + (ln.get("later") or rt.get("later", "같은 선은 괴리율이 1%p 넘게 반대로 돌아갔다 와야 다시 울립니다.")),
+        "익절/줄일 때: " + rt.get("trim", "괴리율 알림만으로 줄이지 마세요."),
+        "하지 말 것: " + rt.get("dont", "괴리율만 보고 추격 매매, 신용 및 미수, 조회 실패를 신호로 읽기."),
+    ] + ([ref] if ref else []))
+    return title, msg, int(ln.get("priority", 4))
+
+
+def build_notice_event(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    ev, filing, ffail = e["ev"], e["filing"], e["ffail"]
+    page = cfg["sources"]["notice_page"].format(code=ev.get("page_code", ev["codes"][0]))
+    if filing:
+        fl, tail = f"공시 있음: {scrub(filing['title'])} ({filing['datetime']}).", "공시 확인됨"
+    else:
+        fl = "공시 자동 확인 안 됨, 공시 확인 필요" + (f" (공시 피드 조회 실패: {ffail})" if ffail else "") + "." + (f" {ev['missing_note']}" if ev.get("missing_note") else "")
+        tail = "공시 확인 필요"
+    checks = " ".join(f"{i}) {c}." for i, c in enumerate(ev["checklist"], 1))
+    pl = pair_last(data)
+    px = f" 최근 종가({pl[0]}): 우선주 {fmt(pl[1])}, {cfg['pair']['short']} {fmt(pl[2])}, 괴리율 {pl[3]:.2f}%." if cfg.get("pair") and pl else ""
+    title = f"{cfg['title_prefix']} {ev['title']} | {tail}"
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {ev['what']} 매수 지시가 아닙니다.",
+        f"지금 결과/상태: {fl}{px} 공시 목록: {page}",
+        f"지금 할 일: 다음을 확인하세요. {checks}",
+        f"나중에: {ev['later']}",
+        "익절/줄일 때: " + ev.get("trim", "이 체크 알림만으로 줄이지 마세요. 가격 선과 괴리율 알림 기준을 따르세요."),
+        "하지 말 것: " + ev.get("dont", "발표 당일 급등락에 추격 매매, 체크 없이 따라가기, 신용 및 미수."),
+    ] + ([ref] if ref else []))
+    return title, msg, int(ev.get("priority", 4))
+
+
+def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    w, f = cfg["notice_watch"], e["filing"]
+    pl = pair_last(data)
+    px = f" 최근 종가({pl[0]}): 우선주 {fmt(pl[1])}, {cfg['pair']['short']} {fmt(pl[2])}, 괴리율 {pl[3]:.2f}%." if cfg.get("pair") and pl else ""
+    f = dict(f, title=scrub(f["title"]))
+    short_title = f["title"]
+    for x in w.get("strip", []):
+        short_title = short_title.replace(x, "")
+    short_title = re.sub(r"\s+", " ", short_title).strip()
+    title = f"{cfg['title_prefix']} {w['title']} | {short_title[:40]}"
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {w['what']} 매수 지시가 아닙니다.",
+        f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px} 공시 목록: {cfg['sources']['notice_page'].format(code=f['code'])}",
+        f"지금 할 일: {w['todo']}",
+        f"나중에: {w['later']}",
+        "익절/줄일 때: " + w.get("trim", "공시 제목만으로 줄이지 마세요."),
+        "하지 말 것: " + w.get("dont", "제목만 보고 추격 매매, 신용 및 미수."),
+    ] + ([ref] if ref else []))
+    return title, msg, int(w.get("priority", 4))
 
 
 def build_us10y(cfg: dict, ev: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
@@ -478,7 +699,7 @@ def load_cfg(name: str) -> dict:
     return json.loads((ROOT / "configs" / f"{name}.json").read_text(encoding="utf-8"))
 
 
-def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None) -> list[tuple]:
+def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None, notice_fn=None) -> list[tuple]:
     """Mutates st; returns [(title, msg, pri, tags)]. Only data['rows'] (Yahoo regular closes) can fire a line;
     ref_fn(cfg, rows, now) only formats the NXT reference line of a message that is already being sent."""
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -508,6 +729,17 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
         sends.append(build_lines(cfg, ev, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["chart_with_downwards_trend"],))
     if extra:
         sends.append(build_extra(cfg, extra, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["bell"],))
+    if cfg.get("ratio_lines"):
+        rev = eval_ratio(cfg, st, data.get("rows") or [], data.get("pair_rows") or [], today, now)
+        if rev:
+            sends.append(build_ratio(cfg, rev, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["scales"],))
+    if cfg.get("notice_events") or cfg.get("notice_watch"):
+        fails = list(fails)
+        for e in eval_notices(cfg, st, today, fails, notice_fn):
+            if e["kind"] == "notice_event":
+                sends.append(build_notice_event(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["clipboard"],))
+            else:
+                sends.append(build_notice_watch(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["page_facing_up"],))
     for e in eval_us10y(cfg, st, data.get("us10y"), today):
         parts = [ref(cfg, data.get("rows"))]
         for other in cfg.get("us10y", {}).get("ref_also", []):
