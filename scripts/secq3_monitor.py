@@ -15,8 +15,14 @@ Sources (official first):
 Third-party market share (TrendForce / Counterpoint) is a dated reference from config, never inferred.
 News headlines on HBM4 share are shown only as "보도(미검증)" and never count toward a condition.
 
+Call add-on (2026-10-28): after the result is sent, from call_addon.send_from_kst (16:10 one-shot, retry
+10/30 09:16) read the Korean call transcript (디일렉 컨콜 전문, a press transcription, not an official
+document) once and judge check 1 (DRAM/NAND ASP QoQ) and check 2 (LTA price structure: floor price, share,
+cut/renegotiation words). Separate message, not part of the R1~R5 score.
+
 Modes: auto (one-shot), dry (print only, no state/send; accepts --deck/--news/--qlabel/--outlook/--now
-for offline tests), force (re-send the result), install (one install-confirmation send).
+for offline tests; --call <url|file> runs only the call add-on on that transcript, --calllist <url|file>
+tests transcript lookup on that list/RSS), force (re-send the result), install (one install-confirmation send).
 Lookup/data problems go to cwally-ops via title words (미게시 / 파싱 실패 / 조회 실패).
 """
 from __future__ import annotations
@@ -54,6 +60,8 @@ DEFAULT_STATE = {
     "sk_update_sent": False,
     "sk_cons_live": None,
     "ops_sent": {},
+    "call_sent": False,
+    "call_at": None,
     "updated_at": None,
 }
 
@@ -552,7 +560,9 @@ def build(cfg: dict, d: dict, now: datetime) -> tuple[str, str, int]:
     tail = [
         f"지금 할 일: {act}",
         "나중에: 11월 중순 분기보고서와 조사기관 3분기 점유율(11월 말)이 나오면 R2와 점유율을 다시 봅니다."
-        + (" SK 3분기 실적이 나오면 11/3까지 1회 갱신합니다." if sk["kind"] != "actual" else ""),
+        + (" SK 3분기 실적이 나오면 11/3까지 1회 갱신합니다." if sk["kind"] != "actual" else "")
+        + (" 오늘 16:10에 컨콜 전문으로 범용 가격(체크1)과 장기계약(체크2) 판정을 1회 보강합니다."
+           if cfg.get("call_addon") and now < kst_at(cfg["call_addon"]["send_from_kst"]) else ""),
         "익절/줄일 때: " + sec_bands(),
         "하지 말 것: 실적 당일 급등 추격 매수, HBM4 비중 기사 제목만 보고 판단 변경, 이 알림만으로 매매.",
     ]
@@ -657,6 +667,222 @@ def gather(cfg: dict, state: dict, now: datetime, opts: dict) -> dict:
     return d
 
 
+# ---------- call add-on: check 1 (commodity ASP) / check 2 (LTA price structure) ----------
+
+ASP_WORDS = ("평균 판매 단가", "평균판매단가", "평균 판매가", "평균판매가", "판매 단가", "ASP", "판가")
+UP_WORDS = ("상승", "인상", "증가", "올랐", "개선")
+DOWN_WORDS = ("하락", "인하", "감소", "떨어", "내렸")
+POS_ADJ = {"초반": 2.0, "중반": 5.0, "후반": 8.0}
+
+
+def kst_at(s: str) -> datetime:
+    return datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+
+
+def read_src(src: str) -> bytes | None:
+    if re.match(r"https?://", src):
+        return fetch(src)
+    return Path(src).read_bytes()
+
+
+def transcript_body(raw: bytes) -> str:
+    s = raw.decode("utf-8", errors="ignore")
+    i = s.find('id="article-view-content-div"')
+    if i >= 0:
+        j = s.find("</article>", i)
+        s = s[i: j if j > 0 else None]
+    s = re.sub(r"<(script|style|figure)[^>]*>.*?</\1>", "", s, flags=re.S | re.I)
+    s = re.sub(r"<br\s*/?>|</(p|div|h\d|li)>", "\n", s, flags=re.I)
+    s = re.sub(r"<[^>]+>", "", s)
+    s = unescape(s).replace("\xa0", " ")
+    return "\n".join(x.strip() for x in s.splitlines() if x.strip())
+
+
+def find_transcript(ca: dict, list_src: str | None = None) -> tuple[str | None, str | None]:
+    """(body text, url) of the Samsung call transcript from the RSS feed or the list pages."""
+    title_re = re.compile(ca["title_re"])
+    srcs = [list_src] if list_src else [ca["rss_url"]] + [ca["list_url"] + f"&page={n}" for n in (1, 2, 3)]
+    for src in srcs:
+        try:
+            raw = read_src(src)
+        except Exception as exc:
+            print(f"transcript list skipped ({src}): {exc}", file=sys.stderr)
+            continue
+        if not raw:
+            continue
+        s = raw.decode("utf-8", errors="ignore")
+        pairs = re.findall(r"<title>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*</title>\s*<link>\s*(.*?)\s*</link>", s, re.S)
+        pairs += [(t, u) for u, t in re.findall(r'href="([^"]*articleView\.html\?idxno=\d+)"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{6,160})', s)]
+        for title, url in pairs:
+            if title_re.search(unescape(title).strip()):
+                url = unescape(url).strip()
+                if not url.startswith("http"):
+                    url = "https://www.thelec.kr" + url
+                body = read_src(url)
+                text = transcript_body(body) if body else ""
+                if len(text) > 2000:
+                    return text, url
+    return None, None
+
+
+def sentences(text: str) -> list[str]:
+    return [x.strip() for x in re.split(r"(?<=[.?!다])\s+|\n", text) if x.strip()]
+
+
+def amount(seg: str) -> float | None:
+    """'40% 중반' -> 45, '90%대 초반' -> 92, '한 자릿수 후반' -> 8, '두 자릿수' -> 10, '소폭' -> 2."""
+    m = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%\s*대?\s*(초반|중반|후반)?", seg)
+    if m:
+        return float(m.group(1)) + POS_ADJ.get(m.group(2) or "", 0.0)
+    m = re.search(r"(한|두)\s*자리\s*수\s*(초반|중반|후반)?|(한|두)\s*자릿수\s*(초반|중반|후반)?", seg)
+    if m:
+        tens = m.group(1) or m.group(3)
+        adj = m.group(2) or m.group(4)
+        if tens == "한":
+            return POS_ADJ.get(adj or "", 5.0) if adj else 5.0
+        return 10.0 + POS_ADJ.get(adj or "", 0.0)
+    if "소폭" in seg:
+        return 2.0
+    if re.search(r"보합|비슷|유사|변동\s*없", seg):
+        return 0.0
+    return None
+
+
+def direction(seg: str, sent: str) -> int | None:
+    for part in (seg, sent):
+        up = any(w in part for w in UP_WORDS)
+        down = any(w in part for w in DOWN_WORDS)
+        if up != down:
+            return 1 if up else -1
+    return None
+
+
+def asp_pick(text: str) -> dict:
+    """First actual (not outlook) ASP sentence for DRAM and NAND. Values signed in %."""
+    sents = [x for x in sentences(text) if any(w in x for w in ASP_WORDS)
+             and not re.search(r"스마트폰|세트|모바일 기기|부품 원가|MLCC", x)]
+    actual = [x for x in sents if not re.search(r"전망|예상|계획|예정|것으로 보", x)]
+    out: dict = {"outlook": next((x for x in sents if re.search(r"전망|예상", x) and re.search(r"D램|낸드|DRAM|NAND", x)), None)}
+    for key, pat, other in (("dram", r"D램|DRAM", r"낸드|NAND"), ("nand", r"낸드|NAND", r"D램|DRAM")):
+        for x in actual:
+            m = re.search(pat, x)
+            if not m:
+                continue
+            seg = x[m.end():]
+            o = re.search(other, seg)
+            seg = seg[: o.start()] if o else seg
+            a, dsign = amount(seg), direction(seg, x)
+            if a is None or dsign is None:
+                continue
+            raw = re.search(r"(\d{1,3}(?:\.\d+)?\s*%\s*대?\s*(?:초반|중반|후반)?|(?:한|두)\s*(?:자리\s*수|자릿수)\s*(?:초반|중반|후반)?|소폭|보합)", seg)
+            out[key] = {"pct": a * dsign, "raw": (raw.group(0).strip() if raw else seg.strip()[:12]) + (" 상승" if dsign > 0 else " 하락"),
+                        "sent": x}
+            break
+    return out
+
+
+def judge_check1(asp: dict, ca: dict) -> tuple[str, str]:
+    d, n = asp.get("dram"), asp.get("nand")
+    if not d:
+        return "확인 불가", "전문에 D램 ASP 문장 없음"
+    if d["pct"] < 0 or (n and n["pct"] < 0):
+        return "경계", "ASP 하락 전환"
+    if d["pct"] >= ca["dram_keep_min_pct"] and (n is None or n["pct"] >= ca["nand_keep_min_pct"]):
+        return "유지", f"D램 +{ca['dram_keep_min_pct']:g}% 이상"
+    return "관찰", f"D램 상승폭 +{ca['dram_keep_min_pct']:g}% 미만"
+
+
+NEG_AFTER = r"[^.]{0,20}(?:없|않|아니)"
+
+
+def judge_check2(text: str, ca: dict) -> tuple[str, str, str | None]:
+    sents = sentences(text)
+    lta = [x for x in sents if any(w in x for w in ca["lta_words"])]
+    warn = [x for x in lta if any(re.search(re.escape(w), x) and not re.search(re.escape(w) + NEG_AFTER, x)
+                                  for w in ca["lta_warn_words"])]
+    keep = [x for x in sents if any(w in x for w in ca["lta_keep_words"]) and re.search(r"가격|floor", x, re.I)]
+    share = next((m.group(0) for x in lta for m in [re.search(r"\d{2}\s*[~∼-]\s*\d{2}\s*%", x)] if m), None)
+    if warn:
+        return "경계", "축소/재협상/취소 언급", warn[0]
+    if keep:
+        return "유지", "하한가격 언급 유지" + (f", 계약 비중 {share}" if share else ""), keep[0]
+    if lta:
+        return "관찰", "장기계약 언급은 있으나 하한가 언급 없음", lta[0]
+    return "확인 불가", "전문에 장기계약 언급 없음", None
+
+
+def build_call(cfg: dict, text: str, now: datetime, url: str | None) -> tuple[str, str]:
+    ca = cfg["call_addon"]
+    asp = asp_pick(text)
+    s1, why1 = judge_check1(asp, ca)
+    s2, why2, snip2 = judge_check2(text, ca)
+    states = {s1, s2}
+    if "경계" in states:
+        head, act = "추가 매수 보류", "추가 매수 보류. 보유분은 [SEC] 가격 기준으로만 관리."
+    elif "확인 불가" in states:
+        head, act = "일부 확인 불가, 판단 유지", "판단 유지. 빠진 항목은 컨콜 원문으로 직접 확인하세요."
+    elif "관찰" in states:
+        head, act = "유지, 다음 분기 재확인", "비중 그대로. 추가 매수는 다음 분기 가격을 확인한 뒤에."
+    else:
+        head, act = "계획 유지", "비중 그대로. 새로 살 때는 [SEC] 가격 구간에서만."
+    h1, h2 = ca["asp_hist"]["1Q26"], ca["asp_hist"]["2Q26"]
+    d, n = asp.get("dram"), asp.get("nand")
+    lines = [
+        "이게 뭐 알림: 삼성전자 3분기 컨콜 전문에서 범용 메모리 가격(체크1)과 장기공급계약 가격 구조(체크2)만 뽑아 판정합니다. 오전 [SECQ3] 결과의 보강이며 매매 신호 아님.",
+        f"지금 결과/상태: 체크1 {s1}, 체크2 {s2}. ({now:%m-%d %H:%M} KST, 출처 {ca['source_label']})",
+        f"- 체크1 범용 가격: 3Q ASP 전분기 대비 D램 {d['raw'] if d else '?'}, 낸드 {n['raw'] if n else '?'} ({why1}). "
+        f"1Q D램 {h1['dram']}/낸드 {h1['nand']}, 2Q {h2['dram']}/{h2['nand']}. "
+        f"기준: D램 +{ca['dram_keep_min_pct']:g}% 이상 유지, 0~{ca['dram_keep_min_pct']:g}% 관찰, 하락 경계.",
+        f"- 체크2 장기계약: {why2}" + (f". 원문: \"{cut(snip2.rstrip('.'), 70)}\"" if snip2 else "") + f". 2Q 기준 {ca['lta_ref']}.",
+    ]
+    if asp.get("outlook"):
+        lines.append(f"- 4분기 가격 언급: {cut(asp['outlook'], 80)}")
+    lines += [
+        f"지금 할 일: {act}",
+        "나중에: 다음 확인은 2027년 1월 4분기 컨콜입니다." + (f" 전문: {url}" if url else ""),
+        "익절/줄일 때: " + sec_bands(),
+        "하지 말 것: 상승폭 둔화만으로 매도, 기사 제목만 보고 판정 변경, 이 알림만으로 매매.",
+    ]
+    body = "\n".join(lines)
+    if len(body.encode("utf-8")) > MAX_BYTES:
+        body = "\n".join(x for x in lines if not x.startswith("- 4분기 가격"))
+    return f"[SECQ3] 컨콜 보강 | {head}", body
+
+
+def call_step(cfg: dict, state: dict, now: datetime, dry: bool, opts: dict) -> None:
+    """At most one add-on message after the result was sent. Saves state itself when not dry."""
+    ca = cfg.get("call_addon")
+    if not ca or state.get("call_sent"):
+        return
+    if not opts.get("call") and not (kst_at(ca["send_from_kst"]) <= now <= kst_at(ca["until_kst"])):
+        return
+    text, url = None, None
+    try:
+        if opts.get("call"):
+            raw = read_src(opts["call"])
+            text, url = (transcript_body(raw) if raw else None), opts["call"]
+        else:
+            text, url = find_transcript(ca, opts.get("calllist"))
+    except Exception as exc:
+        print(f"call transcript failed: {exc}", file=sys.stderr)
+    if not text:
+        if now >= kst_at(ca["ops_from_kst"]):
+            ops(cfg, state, now, f"call@{now:%Y-%m-%d}", "컨콜 전문 미게시",
+                "디일렉 컨콜전문에 삼성전자 3분기 전문이 없어 체크1, 2 보강을 보내지 못함", dry,
+                later="나중에: 보강은 더 시도하지 않습니다. 컨콜 원문은 https://www.samsung.com/global/ir/ 에서 직접 확인하세요.")
+            if not dry:
+                save_state(state, now)
+        else:
+            print("call transcript not published yet; silent")
+        return
+    title, body = build_call(cfg, text, now, url if url and url.startswith("http") else None)
+    send(cfg, title, body, dry)
+    if not dry:
+        state["call_sent"] = True
+        state["call_at"] = now.isoformat(timespec="seconds")
+        save_state(state, now)
+
+
 # ---------- send ----------
 
 def send(cfg: dict, title: str, body: str, dry: bool, priority: int = 4) -> None:
@@ -668,7 +894,8 @@ def send(cfg: dict, title: str, body: str, dry: bool, priority: int = 4) -> None
     publish(cfg["ntfy_topic"], title, body, priority=priority, tags=["bar_chart"], server=cfg["ntfy_server"])
 
 
-def ops(cfg: dict, state: dict, now: datetime, key: str, title_word: str, detail: str, dry: bool) -> None:
+def ops(cfg: dict, state: dict, now: datetime, key: str, title_word: str, detail: str, dry: bool,
+        later: str = "나중에: 다음 원샷에서 다시 확인합니다. 자료: https://www.samsung.com/global/ir/") -> None:
     if state["ops_sent"].get(key):
         return
     title = f"[SECQ3] 3분기 자료 {title_word}"
@@ -676,7 +903,7 @@ def ops(cfg: dict, state: dict, now: datetime, key: str, title_word: str, detail
         "이게 뭐 알림: 삼성전자 3분기 확정실적 비교 알림의 운영 안내.",
         f"지금 결과/상태: {detail}. {now:%Y-%m-%d %H:%M} KST.",
         "지금 할 일: 판단 유보. 숫자 확인 전에는 비중을 바꾸지 마세요.",
-        "나중에: 다음 원샷에서 다시 확인합니다. 자료: https://www.samsung.com/global/ir/",
+        later,
         "익절/줄일 때: 자료 문제만으로 줄이지 마세요.",
         "하지 말 것: 기사 숫자로 공식 자료를 대신하지 마세요.",
     ])
@@ -704,7 +931,7 @@ def main() -> int:
     if mode not in {"auto", "dry", "force", "install"}:
         raise SystemExit(f"unknown mode: {mode}")
     opts = {}
-    for flag in ("--deck", "--news", "--qlabel", "--outlook", "--now"):
+    for flag in ("--deck", "--news", "--qlabel", "--outlook", "--now", "--call", "--calllist"):
         if flag in argv and argv.index(flag) + 1 < len(argv):
             opts[flag[2:]] = argv[argv.index(flag) + 1]
     opts["offline"] = "--offline" in argv
@@ -720,7 +947,18 @@ def main() -> int:
         return 0
     state = read_state()
 
+    if dry and (opts.get("call") or opts.get("calllist")):
+        if opts.get("calllist"):
+            text, url = find_transcript(cfg["call_addon"], opts["calllist"])
+            print(f"DRY transcript lookup: {'found ' + str(url) if text else 'not found'}")
+            if not text:
+                return 0
+            opts["call"] = url
+        call_step(cfg, state, now, dry, opts)
+        return 0
+
     if state.get("result_sent") and mode != "force":
+        call_step(cfg, state, now, dry, opts)
         if state.get("sk_kind_in_result") == "actual" or state.get("sk_update_sent"):
             print("result already sent; silent")
             return 0
@@ -767,6 +1005,7 @@ def main() -> int:
             state.update({"result_sent": True, "result_at": now.isoformat(timespec="seconds"), "result": keep,
                           "sk_kind_in_result": d["sk"]["kind"]})
             save_state(state, now)
+            call_step(cfg, state, now, dry, opts)
         return 0
     if last_try:
         if d.get("deck_status") in ("parse_fail",) and not d["news_ok"]:
