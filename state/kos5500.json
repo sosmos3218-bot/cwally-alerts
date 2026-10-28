@@ -1,19 +1,19 @@
 {
-  "last_day": "2026-10-27",
+  "last_day": "2026-10-28",
   "last_report": {
-    "day": "2026-10-27",
-    "label": "5500 유지",
-    "close": 5638.34,
-    "low": 5612.92,
+    "day": "2026-10-28",
+    "label": "5800 회복 관찰",
+    "close": 6012.44,
+    "low": 5745.51,
     "support": true,
     "below_twice": false,
     "above_twice": false,
     "low_rising": true,
-    "foreign_3d": -1070800000000,
+    "foreign_3d": 715700000000,
     "semi_buy": null,
     "recovery_published": false,
-    "foreign": 593000000000,
-    "institution": 280400000000,
+    "foreign": 815800000000,
+    "institution": 960800000000,
     "krx_final_confirmed": false
   },
   "review_notified": true,
@@ -130,7 +130,23 @@
       "foreign": 593000000000,
       "institution": 280400000000,
       "krx_final_confirmed": false
+    },
+    "2026-10-28": {
+      "day": "2026-10-28",
+      "label": "5800 회복 관찰",
+      "close": 6012.44,
+      "low": 5745.51,
+      "support": true,
+      "below_twice": false,
+      "above_twice": false,
+      "low_rising": true,
+      "foreign_3d": 715700000000,
+      "semi_buy": null,
+      "recovery_published": false,
+      "foreign": 815800000000,
+      "institution": 960800000000,
+      "krx_final_confirmed": false
     }
   },
-  "updated_at": "2026-10-27T15:40:51.445419+09:00"
+  "updated_at": "2026-10-28T15:40:56.727786+09:00"
 }
