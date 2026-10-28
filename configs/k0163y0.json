@@ -1,0 +1,33 @@
+{
+  "name": "k0163y0",
+  "title_prefix": "[0163Y0]",
+  "display": "KoAct 코스닥액티브(0163Y0) 종가 감시: 52주 저점 6,440원 이탈, 20일 이동평균 회복",
+  "approval": "사용자 채팅 승인 2026-10-28 (t9s3): 새 알림 추가, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음",
+  "etf": {
+    "code": "0163Y0",
+    "name": "KoAct 코스닥액티브",
+    "market": "KOSPI 상장 ETF",
+    "verified": "네이버 증권 2026-10-28 (10/26 종가 8,295, 10/27 8,655, 52주 고점 14,800, 저점 6,440)"
+  },
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계, [0219B0] 가격 감시와 같은 시간. KRX 거래일만, 확정 종가(15:40 이후)만 사용, 데이터 날짜(last_date)로 중복 방지. 수동 job=k0163y0 는 oneoff_mode=auto 가 아니면 dry(발송 없음, state 안 씀).",
+  "daily_window": {"start": "2026-10-28", "end": "2027-01-29"},
+  "price_source": "https://m.stock.naver.com/api/stock/0163Y0/price?pageSize=60&page=1",
+  "break": {
+    "level": 6440,
+    "priority": 4,
+    "rearm_pct": 3,
+    "note": "종가 6,440원(52주 저점) 미만이면 1번. 6,440 x 1.03 = 6,633.2원 넘는 종가가 나와야 다시 무장."
+  },
+  "ma": {
+    "window": 20,
+    "priority": 3,
+    "vol_ratio_ok": 1.5,
+    "note": "오늘 종가 > 오늘 SMA20 이고 직전 종가 <= 직전 SMA20 이면(상향 돌파) 1번. 종가가 SMA20 아래로 다시 내려가면 다시 무장. 거래량 비율 = 오늘 거래량 / 오늘 포함 최근 20거래일 평균 거래량, 1.5 이상이면 거래 증가 확인."
+  },
+  "first_run_note": "state 에 price.last_date 가 없으면 마지막 확정 종가로 상태만 기록하고 보내지 않음(지난 신호 재발송 방지).",
+  "ends_kst": "2027-01-29 23:59",
+  "ends_note": "요청에 종료일이 없어 점검용으로 정한 날. 이날 뒤에는 조용히 끝남, 연장하려면 ends_kst 와 daily_window 수정"
+}
