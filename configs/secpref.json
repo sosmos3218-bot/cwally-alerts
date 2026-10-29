@@ -1,0 +1,27 @@
+{
+  "name": "secpref",
+  "title_prefix": "[SEC-PREF]",
+  "display": "삼성전자(005930, 우선주 005935) 자사주 결의 공시 감시: 자기주식 취득 결정, 주식 소각 결정, 자기주식취득 신탁계약 체결 결정과 그 정정",
+  "approval": "사용자 채팅 승인 2026-10-29 (t12s3): 새 알림 추가, 기존 슬롯에 부착, 새 cron 없음. 괴리율 트리거는 기존 [005935] 알림(26% / 16% 구간, KRX 종가)과 겹쳐 만들지 않음",
+  "code": "005930",
+  "pref_code": "005935",
+  "corp_name": "삼성전자",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "평일 09:00, 15:20, 19:00 (기존 morning, afternoon, k203780 슬롯, [SEC-DIV] 와 [000810] 공시 확인과 같은 슬롯)",
+  "schedule_note": "새 cron 없음. 세 슬롯 모두 KIND 공시 목록을 봄, KRX 휴장 여부와 관계없이 공시만 확인. 수동 job=secpref 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "window_start": "2026-10-29",
+  "window_end": "2027-02-27",
+  "window_note": "2027년 1월 이사회의 최종 주주환원 결정(잔여분)까지 보고 2/27 에 끝. 삼성전자는 분기 실적일 아침(07:30 무렵)이나 장 마감 뒤(17:00 무렵) 자사주 공시를 냄.",
+  "title_patterns": ["자기주식 취득 결정", "주식 소각 결정", "자기주식취득 신탁계약 체결 결정", "(정정 포함)"],
+  "exclude_note": "자기주식 처분 결정, 자기주식취득결과보고서, 자기주식처분결과보고서, 변경상장(주식소각)은 결의가 아니라 보내지 않음.",
+  "priority": 4,
+  "sources": {
+    "list": "KIND 상세검색 searchDetailsSub(키 없음, [SEC-DIV] 와 같은 방식, reportNm 없이 전체 목록에서 제목으로 거름), 실패하면 네이버 KRX 공시 피드 https://stock.naver.com/api/domestic/detail/notice?itemCode=005930",
+    "body": "KIND 공시뷰어 원문, 실패하면 같은 날 같은 제목의 네이버 피드 본문",
+    "link": "KIND 공시뷰어 링크, 네이버 피드만 읽힌 경우 네이버 공시 목록"
+  },
+  "ends_kst": "2027-02-27 23:59",
+  "ends_note": "2027년 1월 이사회 최종 주주환원 결정까지 자사주 결의 공시 감시, 2/27 에 끝"
+}
