@@ -1,52 +1,44 @@
 {
   "name": "pltr25",
   "title_prefix": "[PLTR25]",
-  "ticker": "0047R0",
-  "display": "RISE 팔란티어고정테크100 (0047R0) 매수 판단",
+  "ticker": "PLTR",
+  "display": "팔란티어(PLTR) 보통주 신규 매수 판단",
   "as_of": "2026-10-29",
-  "approved": "2026-10-29 12:06 KST 채팅 승인 (설계안 그대로, 주간 점검에 PLTR 대 QQQ 1년 달러 수익률 차이 줄 추가)",
+  "approved": "2026-10-29 12:06 KST 채팅 승인(설치), 2026-10-29 12:49 KST 채팅 승인(0047R0 기준에서 PLTR 보통주 직접 투자 기준으로 전환, 0047R0는 유동성 문제로 제외)",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음에만 붙임. 미국 전일 종가로 비중, 한국 전일 종가로 1년 차이. 수동 job=pltr25 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음에만 붙임. 미국 전일 종가(Yahoo 일봉). 수동 job=pltr25 는 oneoff_mode=auto 가 아니면 selftest + dry.",
   "ends_kst": "2027-02-26 09:00",
-  "ends_note": "PLTR 4분기 실적과 12월 종목교체 반영 후 재검토",
+  "ends_note": "PLTR 신규 매수 판단, 4분기 실적(2027년 2월 초 추정) 반영 후 재검토",
   "alert_policy": "send_on_change_plus_weekly",
   "holding": false,
-  "holding_note": "보유 없음. 매수 검토용. 매수 후에는 이 알림 문구를 보유자용으로 바꿔야 한다.",
-  "codes": {"fund": "0047R0", "compare": "133690", "compare_name": "TIGER 미국나스닥100", "fund_isin": "KR70047R0008"},
+  "holding_note": "보유 없음(미국 직접 투자, 신규 매수 검토). 매수 후에는 보유자용 문구와 손절선으로 바꿔야 한다.",
   "sources": {
     "pltr": "https://query1.finance.yahoo.com/v8/finance/chart/PLTR?range=2y&interval=1d",
     "qqq": "https://query1.finance.yahoo.com/v8/finance/chart/QQQ?range=2y&interval=1d",
-    "funetf": "https://www.funetf.co.kr/product/etf/view/KR70047R0008",
-    "naver_analysis": "https://m.stock.naver.com/api/stock/{code}/etfAnalysis",
-    "naver_daily": "https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=500&requestType=0",
-    "methodology": "https://hkstatic.hankyung.com/resource/datacenter/pdf/kpltt100.pdf"
+    "valuation": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/PLTR?modules=summaryDetail,defaultKeyStatistics"
   },
-  "method": {
-    "target_weight": 25.0,
-    "trigger_pct": 30.0,
-    "trigger_days": 5,
-    "pltr_in_qqq": 0.02,
-    "model_note": "지수 비중 추정: 마지막 리셋(매월 첫 미국 영업일 종가 = D+1, 또는 수시 T+1) 25%에서 PLTR 과 QQQ(PLTR 2% 제외 보정) 상대 수익률로 굴림. FunETF 공시 비중(미국 전일 종가 반영)이 있으면 그 날부터 공시값으로 다시 굴림. 없으면 순수 추정(0.1~0.2%p 낮게 나오는 편)."
+  "zones": {
+    "ma_fast": 50,
+    "ma_slow": 200,
+    "range_days": 120,
+    "b1_ma50_mult": 1.02,
+    "b2_ma200_mult": 1.05,
+    "chase_ma50_mult": 1.15,
+    "hyst": 0.02,
+    "break_exit_mult": 1.03,
+    "chase_exit_mult": 0.97,
+    "confirm_days": 2,
+    "replay_bars": 250,
+    "note": "매일 다시 계산. 추세 이탈: 종가 < 200일선. 2차: 200일선 ~ 200일선x1.05. 1차: 200일선x1.05 ~ 50일선x1.02. 추격 금지: 종가 >= min(직전 120거래일 최고 종가, 50일선x1.15). 그 사이 관망. 더 싼 매수 구간(1차, 2차)으로 내려갈 때는 1일, 추격 금지와 추세 이탈 진입과 위로 벗어날 때는 2일 연속 확인. 위로 벗어날 때 2% 여유(추세 이탈 해제는 200일선x1.03), 추격 금지 해제는 기준선x0.97 아래."
   },
-  "levels": {
-    "pre_pct": 29.0,
-    "pre_streak_days": 3,
-    "pre_rearm_pct": 28.0,
-    "band_lo": 29.8,
-    "band_hi": 30.2,
-    "reset_confirm_funetf_pct": 25.5,
-    "reset_confirm_share_drop": 0.08,
-    "gap_buy": 3.0,
-    "gap_buy_exit": 1.0,
-    "gap_hold": -2.0,
-    "gap_hold_exit": 0.0,
-    "gap_confirm_days": 2,
-    "gap_replay_start": "2026-05-13"
-  },
-  "notes": {
-    "aug_2026_adhoc": "모델 추정: 미국 2026-08-07~08-13 5영업일 연속 30% 초과(최고 31.4%), 08-14 종가 수시 리밸런싱 추정. 1차 자료로 확인 안 됨. 기록만, 계산에 쓰지 않음.",
-    "rule": "KEDI 방법론: 단일 종목 비중이 T-4~T 5영업일 연속 30% 초과면 T 종가 뒤 25%로 재산정, T+1 수행. 정기는 매월 마지막 미국 영업일 D 확정, D+1 종가 수행."
+  "earnings_ref": {
+    "alert": "[PLTR]",
+    "config": "pltr",
+    "us": "2026-11-02 장 마감 뒤",
+    "kst": "2026-11-03 아침",
+    "show_until": "2026-11-13",
+    "note": "실적 숫자 판정은 [PLTR] 알림(configs/pltr.json, 11/13 종료)이 한다. pltr25는 참조 한 줄만 붙이고 실적 파싱은 하지 않는다."
   }
 }
