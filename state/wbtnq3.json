@@ -7,5 +7,14 @@
   "release_date": null,
   "date_missing_notified": false,
   "fail_notified": false,
-  "empty_final_notified": false
+  "empty_final_notified": false,
+  "parsed": {
+    "published": false
+  },
+  "tenq": {
+    "mau_m": null,
+    "mau_growth": null,
+    "mau_is_period": false
+  },
+  "updated_at": "2026-10-29T09:23:16.896428+09:00"
 }
