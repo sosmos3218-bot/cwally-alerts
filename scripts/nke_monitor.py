@@ -67,18 +67,6 @@ def visible(html: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def latest_sec_date(url: str) -> str | None:
-    raw = fetch(url)
-    data = json.loads(raw)
-    recent = ((data.get("filings") or {}).get("recent") or {})
-    forms = recent.get("form") or []
-    dates = recent.get("filingDate") or []
-    for form, day in zip(forms, dates):
-        if form in {"8-K", "10-Q", "10-K"}:
-            return day
-    return None
-
-
 def parse_earnings(blob: str) -> dict:
     china = None
     m = re.search(
@@ -152,6 +140,93 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
     )
 
 
+# ---------- 실적 보도자료 (2026-10-29 승인: 옛 IR 페이지 대신 IR RSS, 없으면 SEC 8-K Exhibit 99) ----------
+QWORD = {"first": 1, "second": 2, "third": 3, "fourth": 4}
+EARN_TITLE_RE = re.compile(r"Reports Fiscal (\d{4}) (First|Second|Third|Fourth) Quarter", re.I)
+
+
+def norm(text: str) -> str:
+    import html as _h
+    return re.sub(r"\s+", " ", _h.unescape(text).replace("\xa0", " "))
+
+
+def period_of(title: str, text: str) -> str | None:
+    """'FY2027 Q1' 같은 키. 제목 우선, 없으면 본문 첫 문단."""
+    m = EARN_TITLE_RE.search(title or "")
+    if not m:
+        m = re.search(r"fiscal (\d{4}) financial results for its (first|second|third|fourth) quarter", text, re.I) or \
+            re.search(r"financial results for its fiscal (\d{4}) (first|second|third|fourth) quarter", text, re.I)
+    if not m:
+        return None
+    return f"FY{m.group(1)} Q{QWORD[m.group(2).lower()]}"
+
+
+def table_total(text: str, region: str) -> float | None:
+    """Divisional Revenues 표: '<region> Footwear ... Total 이번 전년 보고% 환율중립%' 의 보고 기준 %."""
+    i = text.find(region + " Footwear")
+    if i < 0:
+        return None
+    m = re.search(r"Total\s+[\d,]+\s+[\d,]+\s+(-?\d+)\s*%", text[i:i + 600])
+    return float(m.group(1)) if m else None
+
+
+def parse_release(text: str, fy: int | None) -> dict:
+    t = norm(text)
+    out = parse_earnings(t)  # 문장형 중국/북미/FY2028 (예전 규칙 그대로)
+    china = table_total(t, "Greater China")
+    if china is not None:
+        out["china_yoy"] = china
+    na = table_total(t, "North America")
+    if na is not None:
+        out["na_yoy"] = na
+    g = parse_gm(t)
+    out["gm"] = g["cur"] if g else None
+    out["eps_hi"] = None
+    m = re.search(r"Adjusted Diluted earnings per share\W*(?:is|are)? expected to be in the range of \$(\d+\.\d+)\s*(?:to|-|–)\s*\$(\d+\.\d+)([^.]{0,160})", t, re.I)
+    if m and (fy is None or f"fiscal {fy}" in m.group(3).lower() or "fiscal" not in m.group(3).lower()):
+        out["eps_hi"] = float(m.group(2))
+        out["eps_lo"] = float(m.group(1))
+    return out
+
+
+def find_release(cfg: dict, last_period: str, page_fn=None, rss_fn=None, sec_fn=None) -> tuple[dict | None, list[str]]:
+    """last_period 보다 새 실적 보도자료 1건 {period, source, text} 와 오류 목록. RSS 먼저, 없으면 SEC."""
+    page_fn = page_fn or (lambda u: visible(fetch(u)))
+    errs = []
+    try:
+        items = (rss_fn or rss_items)(cfg["sources"]["ir_rss"])
+        for it in sorted(items, key=lambda x: rss_day(x["date"])):
+            p = period_of(it["title"], "")
+            if p and p > last_period:
+                return {"period": p, "source": it["link"], "text": page_fn(it["link"])}, errs
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"IR RSS: {str(exc)[:100]}")
+    try:
+        got = (sec_fn or sec_release)(cfg, last_period)
+        if got:
+            return got, errs
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"SEC: {str(exc)[:100]}")
+    return None, errs
+
+
+def sec_release(cfg: dict, last_period: str) -> dict | None:
+    data = json.loads(fetch(cfg["sources"]["sec"]))
+    rec = (data.get("filings") or {}).get("recent") or {}
+    cik = str(int(cfg["cik"]))
+    for form, day, acc, items in zip(rec.get("form", []), rec.get("filingDate", []), rec.get("accessionNumber", []), rec.get("items", [])):
+        if form != "8-K" or "2.02" not in (items or "") or day < cfg["earnings_sec_from"]:
+            continue
+        base = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc.replace('-', '')}/"
+        for f in json.loads(fetch(base + "index.json"))["directory"]["item"]:
+            if f["name"].endswith(".htm") and re.search(r"ex.*99|99", f["name"], re.I):
+                text = norm(visible(fetch(base + f["name"])))
+                p = period_of("", text)
+                if p and p > last_period:
+                    return {"period": p, "source": base + f["name"], "text": text}
+    return None
+
+
 # ---------- 보수 전환 조건 (2026-10-29 승인) ----------
 def rss_items(url: str) -> list[dict]:
     import html as _h
@@ -187,7 +262,7 @@ def div_amount(title: str, text: str) -> float | None:
 
 def parse_gm(text: str) -> dict | None:
     """{cur, prior, bp, source}. 표의 전년 열이 있으면 그것, 없으면 None(호출자가 config 기준 사용)."""
-    m = re.search(r"Gross margin (expanded|increased|improved|decreased|contracted|declined)\s+(\d+)\s+basis points to\s+(\d{2}(?:\.\d+)?)\s*percent", text, re.I)
+    m = re.search(r"Gross margin (?:for the \w+ quarter )?(expanded|increased|improved|decreased|contracted|declined)\s+(\d+)\s+basis points to\s+(\d{2}(?:\.\d+)?)\s*percent", text, re.I)
     tbl = re.search(r"Gross margin\s+(\d{2}\.\d)\s*%\s+(\d{2}\.\d)\s*%", text)
     if not m and not tbl:
         return None
@@ -433,23 +508,17 @@ def main() -> int:
                 )
             state["div_alerted"] = False
 
-    filing = None
-    ferr = None
-    try:
-        filing = latest_sec_date(cfg["sources"]["sec"])
-    except Exception as exc:
-        ferr = str(exc)
-        print(f"sec fail: {exc}")
-    last_filing = state.get("last_filing") or cfg.get("last_known_filing")
-    if filing and last_filing and filing > last_filing:
-        ir_text = ""
-        try:
-            ir_text = visible(fetch(cfg["sources"]["ir"]))
-        except Exception as exc:
-            print(f"ir fail: {exc}")
-        parsed = parse_earnings(ir_text) if ir_text else {}
-        fingerprint = json.dumps(parsed, sort_keys=True)
-        if fingerprint != state.get("earnings_fingerprint"):
+    last_period = state.get("last_period") or cfg["last_known_period"]
+    rel, rerrs = find_release(cfg, last_period)
+    parsed = parse_release(rel["text"], int(rel["period"][2:6])) if rel else {}
+    if rel and not any(parsed.get(k) is not None for k in ("china_yoy", "gm", "eps_hi")):
+        print(f"release {rel['period']} {rel['source']}: 핵심 값 0개 파싱, 판정 보류")
+        rerrs.append(f"{rel['period']} 보도자료 파싱 실패 ({rel['source']})")
+        rel = None
+    if rel:
+        filing = rel["period"]
+        print(f"release {filing} {rel['source']} parsed={parsed}")
+        if rel:  # 위에서 확인됨
             signals = []
             missing = []
             china = parsed.get("china_yoy")
@@ -481,7 +550,7 @@ def main() -> int:
                         "[NKE] 실적 | 30달러 지지 약화",
                         body(
                             stamp,
-                            f"새 공시 {filing}. 약화: {', '.join(invalidate)}. 파싱 실패: {', '.join(missing) or '없음'}. {na_txt}.",
+                            f"새 실적 보도자료 {filing} ({rel['source']}). 약화: {', '.join(invalidate)}. 파싱 실패: {', '.join(missing) or '없음'}. {na_txt}.",
                             "30달러 분할 관심을 끄세요. 원문에서 중국과 EPS를 확인하세요.",
                             "다음 분기 공시 전엔 이 판정을 유지.",
                             "약화 조건이 원문과 맞으면 보유 재검토.",
@@ -496,7 +565,7 @@ def main() -> int:
                         "[NKE] 실적 | 매수 전환 조건",
                         body(
                             stamp,
-                            f"새 공시 {filing}. 충족 {len(signals)}/{cfg['buy_flip_need']}: {', '.join(signals)}. {na_txt}.",
+                            f"새 실적 보도자료 {filing} ({rel['source']}). 충족 {len(signals)}/{cfg['buy_flip_need']}: {', '.join(signals)}. {na_txt}.",
                             "가격이 32달러 이하일 때만 분할 관심을 다시 보세요. 한 번에 넣지 마세요.",
                             "미파싱 항목은 IR 원문으로 채우기 전 충족으로 세지 마세요.",
                             "32달러 위면 조건이 켜져도 추격하지 마세요.",
@@ -511,7 +580,7 @@ def main() -> int:
                         "[NKE] 실적 | 전환 조건 미충족",
                         body(
                             stamp,
-                            f"새 공시 {filing}. 충족 {len(signals)}/3. 확인 불가: {', '.join(missing) or '없음'}. {na_txt}.",
+                            f"새 실적 보도자료 {filing} ({rel['source']}). 충족 {len(signals)}/3. 확인 불가: {', '.join(missing) or '없음'}. {na_txt}.",
                             "관망 유지. 미파싱은 미충족이 아니라 확인 불가입니다.",
                             "IR 원문에서 중국, FY2028, 매출총이익률을 직접 대조.",
                             "이번 알림으로 사지 마세요.",
@@ -520,25 +589,26 @@ def main() -> int:
                         3,
                     )
                 )
-            state["earnings_fingerprint"] = fingerprint
-            state["last_filing"] = filing
+            state["earnings_fingerprint"] = json.dumps(parsed, sort_keys=True)
+            state["last_period"] = filing
+            state["last_source"] = rel["source"]
             state["last_parsed"] = parsed
-    elif ferr and state.get("fetch_fail_date") != today.isoformat() and today.weekday() == 0:
+    elif rerrs and state.get("earnings_fail_date") != today.isoformat() and (any("파싱 실패" in e for e in rerrs) or today.weekday() == 0):
         alerts.append(
             (
                 "[NKE] 공시 조회 실패 | 실적 조건 미확인",
                 body(
                     stamp,
-                    f"SEC 조회 실패. {ferr}. 실적 조건은 미확인입니다.",
+                    f"실적 보도자료 조회나 파싱 실패. {' / '.join(rerrs)}. 실적 조건은 미확인입니다.",
                     "investors.nike.com 최신 실적을 직접 보세요.",
-                    "다음 월요일에 재시도합니다.",
+                    "다음 평일 09:00 KST에 재시도합니다. 새 보도자료 파싱 실패는 하루 1번, 단순 조회 실패는 월요일에만 안내.",
                     "이번 알림으로 비중을 바꾸지 마세요.",
                     "조회 실패를 조건 미충족으로 두기.",
                 ),
                 4,
             )
         )
-        state["fetch_fail_date"] = today.isoformat()
+        state["earnings_fail_date"] = today.isoformat()
 
     try:
         c_alerts, c_errs = caution_check(cfg, state, stamp, today.isoformat())

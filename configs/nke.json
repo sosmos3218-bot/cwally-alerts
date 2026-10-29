@@ -47,9 +47,8 @@
   ],
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NKE?interval=1d&range=5d",
-    "ir": "https://investors.nike.com/investors/news-events-and-reports/default.aspx",
-    "sec": "https://data.sec.gov/submissions/CIK0000320187.json",
-    "ir_rss": "https://investors.nike.com/news-events/press-releases/rss"
+    "ir_rss": "https://investors.nike.com/news-events/press-releases/rss",
+    "sec": "https://data.sec.gov/submissions/CIK0000320187.json"
   },
   "cik": "0000320187",
   "last_known_filing": "2026-10-02",
@@ -67,5 +66,8 @@
     "gm_release_title_re": "Fiscal 2027 Second Quarter Results",
     "gm_sec_from": "2026-12-01",
     "explain": "보수 전환 조건은 매수 전환/무효화 규칙과 별개의 경고. 배당은 IR 보도자료 RSS의 'Declares $x Quarterly Dividend'(본문 금액 보조)로, 2분기 매출총이익률은 IR RSS 실적 보도자료(없으면 SEC 8-K item 2.02 Exhibit 99.1)로 판정. 배당 판정 창 안의 첫 새 선언만 판정해 같은 금액이 이어지는 이후 분기 선언은 다시 판정하지 않음. 데이터를 못 읽으면 cwally-ops 하루 1번, 다음 평일 재시도."
-  }
+  },
+  "sources_note": "2026-10-29: 옛 IR 페이지(investors/news-events-and-reports/default.aspx)는 일반 페이지로 리다이렉트돼 제거. 실적 판정은 IR RSS 실적 보도자료('Reports Fiscal YYYY ... Quarter'), 없으면 SEC 8-K item 2.02 Exhibit 99. 회계연도 분기 키(FY2027 Q1 등)로 중복 방지.",
+  "last_known_period": "FY2027 Q1",
+  "earnings_sec_from": "2026-10-03"
 }
