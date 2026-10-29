@@ -257,7 +257,12 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
+      sdiq3_mode:
+        description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
+        default: dry
+        type: choice
+        options: [dry, auto]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -985,7 +990,10 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/sdiq3_monitor.py auto
+        run: |
+          MODE="${{ github.event.inputs.sdiq3_mode || 'auto' }}"
+          if [ "$MODE" = "dry" ]; then python scripts/sdiq3_monitor.py selftest; fi
+          python scripts/sdiq3_monitor.py "$MODE"
       - name: Run dearq3
         if: steps.pick.outputs.job == 'dearq3'
         env:
@@ -1141,6 +1149,29 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/cash30_monitor.py "${{ github.event.inputs.cash30_mode || 'auto' }}"
+      - name: Run SDI Q4 2026 disclosure check (existing morning, afternoon, 19:00 slots)
+        # Q4 release date unconfirmed; observation window is in configs/sdiq3.json. No new cron.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          python scripts/sdiq3_monitor.py "$MODE" --part q4
+      - name: Run SDI-PREF (same-session KRX close discount 50 / 61.5, existing 19:00 slot)
+        # No expiry; first run seeds, then zone-entry only. No NXT fallback.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          python scripts/sdipref_monitor.py "$MODE"
       - name: Run k203780
         if: steps.pick.outputs.job == 'k203780'
         env:

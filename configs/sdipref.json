@@ -1,0 +1,17 @@
+{
+  "name": "sdipref",
+  "title_prefix": "[SDI-PREF]",
+  "display": "삼성SDI우 KRX 종가 괴리율",
+  "ticker": "006405",
+  "ticker_common": "006400",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "평일 19:00 KST, 기존 k203780 슬롯",
+  "low_discount_pct": 50,
+  "high_discount_pct": 61.5,
+  "threshold_note": "괴리율 = (1 - 우선주 종가 / 보통주 종가) x 100. 동일 KRX 거래일 종가만 사용. 50% 이하 또는 61.5% 이상 구간 진입 때 1회. 구간을 벗어나면 재무장. 첫 실행은 기준만 기록. 주간 반복 없음.",
+  "price_source": "Daum KRX 일별(A006400/A006405). Naver/NXT 대체 없음. 당일 양 종목 종가가 없으면 상태와 매매 알림을 갱신하지 않음.",
+  "start_date": "2026-10-29",
+  "ends_kst": null,
+  "ends_note": "사용자가 삭제를 요청할 때까지 종가 괴리율 감시 유지"
+}
