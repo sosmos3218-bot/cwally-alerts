@@ -68,6 +68,12 @@ TSLA-SPCX mode, CRONJOB_ACTION=register_tslaspcx (approved in chat 2026-10-24 12
   Skips (exit 10) if a job with TSLASPCX_TITLE exists, or an enabled port-alerts.yml dispatch job already
   fires at the next 07:30 KST. Delete mode refuses it (not a one-shot title). CRONJOB_DRY_RUN=1 checks only.
 
+TSLA price mode, CRONJOB_ACTION=register_tsla (approved 2026-10-29, configs/tsla.json cron_approved):
+  Creates the ONE recurring job TSLA_TITLE: America/New_York, minutes 0 and 30, hours 9-16, Mon-Fri,
+  expires 2027-06-30 16:59:59 NY, body {"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}.
+  09:00 and 16:30 ticks are outside the cash session; tsla_monitor.py stays silent. DST follows the NY timezone.
+  Skips (exit 10) if that title or the same NY 30-minute schedule already exists. Delete mode refuses it.
+
 exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
@@ -115,6 +121,12 @@ TSLASPCX_TITLE = "cwally tslaspcx daily (07:30 KST)"
 TSLASPCX_BODY = {"ref": "main", "inputs": {"job": "tslaspcx", "oneoff_mode": "auto"}}
 TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], "hours": [7],
                      "mdays": [-1], "months": [-1], "wdays": [-1]}
+TSLA_TITLE = "cwally tsla US regular 30min (NY)"
+TSLA_BODY = {"ref": "main", "inputs": {"job": "tsla", "oneoff_mode": "auto"}}
+TSLA_EXPIRES = 20270630165959  # 2027-06-30 16:59:59 America/New_York (configs/tsla.json valid_until)
+TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": TSLA_EXPIRES, "minutes": [0, 30],
+                 "hours": [9, 10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
+                 "wdays": [1, 2, 3, 4, 5]}
 PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
 PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight"}}
 PORTLIGHT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [21],
@@ -338,8 +350,9 @@ def run_delete() -> int:
             refused.append(f"{jid}: not found in this account")
             continue
         problems = oneshot_problems(j)
-        if (j.get("title") or "").strip() in (PULSE_TITLE,) + PULSE_OLD_TITLES or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
-            problems.append("recurring job (mktpulse pulse or after-close slot); never deleted here")
+        title_now = (j.get("title") or "").strip()
+        if title_now in (PULSE_TITLE,) + PULSE_OLD_TITLES + (TSLA_TITLE, TSLASPCX_TITLE, PORTLIGHT_TITLE) or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
+            problems.append("recurring job (mktpulse, after-close, tslaspcx, portlight, or tsla); never deleted here")
         if problems:
             refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
     if refused:
@@ -634,6 +647,71 @@ def run_register_tslaspcx(now: datetime) -> int:
     return 0
 
 
+def is_tsla_like(j: dict) -> bool:
+    sc = j.get("schedule") or {}
+    hours = sorted(int(h) for h in (sc.get("hours") or []))
+    minutes = sorted(int(m) for m in (sc.get("minutes") or []))
+    wdays = sorted(int(w) for w in (sc.get("wdays") or []))
+    return ((j.get("url") or "").rstrip("/") == DISPATCH_URL
+            and sc.get("timezone") == "America/New_York"
+            and hours == [9, 10, 11, 12, 13, 14, 15, 16]
+            and minutes == [0, 30]
+            and list(sc.get("mdays") or []) == [-1]
+            and list(sc.get("months") or []) == [-1]
+            and wdays == [1, 2, 3, 4, 5])
+
+
+def run_register_tsla(now: datetime) -> int:
+    """US regular-session TSLA price check. Timezone America/New_York keeps DST on the clock."""
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    if now.year > 2027:
+        raise Stop(BAD_INPUT, "tsla window ended; nothing to register")
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
+    for j in res.get("jobs") or []:
+        if (j.get("title") or "").strip() == TSLA_TITLE or is_tsla_like(j):
+            print("skip: tsla price job already exists:")
+            print_job(j)
+            return SKIP
+    template = load_template(key)
+    job = {
+        "enabled": True,
+        "title": TSLA_TITLE,
+        "saveResponses": True,
+        "url": DISPATCH_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(TSLA_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(TSLA_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {TSLA_TITLE!r} Mon-Fri 09:00-16:30 America/New_York "
+              f"(code gates 09:30-16:00), body {json.dumps(TSLA_BODY)}, expiresAt {TSLA_EXPIRES}")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
+    try:
+        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == TSLA_BODY
+    except ValueError:
+        body_ok = False
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok}")
+    return 0
+
+
 def run_register_portlight(now: datetime) -> int:
     """Existing portlight slot (AGENTS.md Repeating slots, Sunday 21:00 KST, GitHub cron 0 12 * * 0)."""
     key = env("CRONJOB_API_KEY")
@@ -701,8 +779,10 @@ def main() -> int:
             return run_register_tslaspcx(now)
         if action == "register_portlight":
             return run_register_portlight(now)
+        if action == "register_tsla":
+            return run_register_tsla(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

@@ -29,6 +29,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 11:00 (~11/05, 2026-10-26부터 하루 1회) | 02:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 11 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인, 2026-10-26 승인으로 11시만) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
+| tsla | 미국 정규장 30분 (09:30-16:00 뉴욕, 평일) | `*/30 13-21 * * 1-5` 백업 (코드가 뉴욕 시각으로 거름) | `port-alerts.yml` | `{"job":"tsla","oneoff_mode":"auto"}` (cron-job.org `action=register_tsla`, 시간대 America/New_York, 분 0과 30, 시 9-16, 월-금. 잡 번호는 머지 후 등록) |
 | portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인, 11:59 확인, configs/portlight.json `cron_approved`) |
 
 ```
@@ -88,6 +89,18 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 - 만든 방법: `cronjob-register.yml` `action=register_portlight` (이 잡 하나만, 같은 제목이나 같은 일요일 21:00 dispatch 잡이 있으면 skip).
 - GitHub cron `0 12 * * 0`은 백업. 보통 월요일 새벽에 늦게 와서 `not_sunday`로 조용히 끝난다. 일요일 안에 오면
   ISO 주 키(`%G-W%V`: portlight/poly `weekly_sent_week`, ghtrend `last_week`, polyinv `weekly_sent`)와 isareb `last_sent_month`로 다시 보내지 않는다.
+- 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
+
+## TSLA 정규장 30분 가격 (2026-10-29 승인)
+
+승인 기록: configs/tsla.json `cron_approved` 2026-10-29. 하루 종일 매시 cron 이 아니라, 미국 정규장 창만 본다.
+
+- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)". 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0과 30, 시 9부터 16, 월-금, 만료 2027-06-30 16:59:59 NY.
+  09:00과 16:30 틱은 정규장 밖이라 스크립트가 조용히 끝난다. body 는 `{"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}`.
+- 만든 방법: 머지 후 `cronjob-register.yml` `action=register_tsla`. dry_run 으로 먼저 확인하고, 같은 제목이나 같은 뉴욕 30분 일정이 있으면 skip.
+- GitHub cron `*/30 13-21 * * 1-5` 는 백업이다. UTC 로 넓게 잡아 EDT(13:30-20:00)와 EST(14:30-21:00)를 둘 다 덮고, 스크립트가 뉴욕 09:30-16:00 평일에만 판정한다. 늦게 온 백업이 그 문 밖이면 보내지 않는다.
+- 중복: `state/tsla.json` 의 `sent.s310`, `sent.s300` 에 뉴욕 날짜. 단계마다 그날 한 번. 300달러 이하면 310 안내는 같은 실행에서 보내지 않고 그날 보낸 것으로 기록한다.
+- `job=tsla` 수동 dispatch 는 `oneoff_mode=auto` 가 아니면 dry(selftest 와 가격 305, 295 출력, 발송과 state 없음).
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
 ## 원샷 (`job=oneshot`)
