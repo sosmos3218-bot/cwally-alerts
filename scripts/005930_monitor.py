@@ -25,6 +25,12 @@ Events
   notices   optional configs "notice_events" (dated filing checks with a checklist, window start..end, sent once when
             the filing is on the Naver list or on the end day as 공시 확인 필요, catch-up catch_up_days) and
             "notice_watch" (codes + title keywords, one alert per filing, dedupe by filing no in st["notice_seen"]).
+  time      optional configs "time_checks" (2026-10-29, 0220wl_close): dated reminders with no filing lookup, each
+            {id, start, end, title, checklist, optional what/later/trim/dont/catch_up_days/priority}. Sent once on the
+            end day or the first run after it within catch_up_days (default 3), never at the window start; dedupe by id
+            in st["time_done"]. Wording never says 공시 확인 필요.
+  footer    optional configs "footer_note" (2026-10-29, 0220wl_close): one line appended to the end of every message
+            this config sends. Absent keys (005930/000660/064400): nothing changes.
   earnings  on configs earnings.date (KST session day), one 실적 체크 message, flag earn_done[date];
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
@@ -234,6 +240,8 @@ def default_state(cfg: dict) -> dict:
         st["ratio"] = {"last_day": None, "last": None, "lines": {ln["key"]: {"armed": True, "fired_day": None} for ln in cfg["ratio_lines"]}}
     if cfg.get("notice_events") or cfg.get("notice_watch"):
         st["notice_done"], st["notice_seen"] = {}, []
+    if cfg.get("time_checks"):
+        st["time_done"] = {}
     return st
 
 
@@ -400,6 +408,20 @@ def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None
                 if r["no"] and r["no"] not in seen and r["datetime"][:10] >= w["since"] and any(k in r["title"] for k in w["keywords"]):
                     seen.append(r["no"])
                     out.append({"kind": "notice_watch", "filing": r})
+    return out
+
+
+def eval_time_checks(cfg: dict, st: dict, today: str) -> list[dict]:
+    """configs time_checks: dated reminders (no filing lookup). Once on/after the end day within catch_up_days."""
+    out = []
+    done = st.setdefault("time_done", {})
+    for tc in cfg.get("time_checks") or []:
+        if tc["id"] in done or today < tc["end"]:
+            continue
+        if (date.fromisoformat(today) - date.fromisoformat(tc["end"])).days > int(tc.get("catch_up_days", 3)):
+            continue
+        out.append({"kind": "time_check", "tc": tc})
+        done[tc["id"]] = today
     return out
 
 
@@ -614,6 +636,24 @@ def build_notice_event(cfg: dict, e: dict, data: dict, stamp: str, ref: str | No
     return title, msg, int(ev.get("priority", 4))
 
 
+def build_time_check(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    tc = e["tc"]
+    checks = " ".join(f"{i}) {c}." for i, c in enumerate(tc["checklist"], 1))
+    pl = pair_last(data)
+    px = f" 최근 종가({pl[0]}): 우선주 {fmt(pl[1])}, {cfg['pair']['short']} {fmt(pl[2])}, 괴리율 {pl[3]:.2f}%." if cfg.get("pair") and pl else ""
+    title = f"{cfg['title_prefix']} {tc['title']} | 날짜 점검"
+    msg = "\n".join([
+        head(cfg, stamp),
+        "이게 뭐 알림: " + tc.get("what", f"{cfg['short']} 보유 계획에서 정해 둔 날짜 점검입니다. 공시나 가격 조건이 아니라 날짜로 오는 알림입니다.") + " 매수 지시가 아닙니다.",
+        f"지금 결과/상태: 점검 기간 {tc['start']}~{tc['end']}가 끝났습니다.{px}",
+        f"지금 할 일: 다음을 점검하세요. {checks}",
+        "나중에: " + tc.get("later", "이 점검 알림은 한 번만 옵니다. 가격 선과 괴리율 알림은 계속 돕니다."),
+        "익절/줄일 때: " + tc.get("trim", "체크리스트의 매도 검토 조건에 맞을 때만 정해 둔 수량을 검토하세요."),
+        "하지 말 것: " + tc.get("dont", "점검 없이 날짜만 보고 매매, 신용 및 미수."),
+    ] + ([ref] if ref else []))
+    return title, msg, int(tc.get("priority", 4))
+
+
 def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     w, f = cfg["notice_watch"], e["filing"]
     pl = pair_last(data)
@@ -688,6 +728,12 @@ def build_fail(cfg: dict, fails: list[str], stamp: str) -> tuple[str, str, int]:
     return title, msg, 3
 
 
+def with_footer(cfg: dict, msg: str) -> str:
+    """configs footer_note: one line at the very end of every message (absent: message unchanged)."""
+    foot = cfg.get("footer_note")
+    return f"{msg}\n{foot}" if foot else msg
+
+
 def clean(title: str, msg: str) -> None:
     for ch in FORBIDDEN:
         if ch in title or ch in msg:
@@ -740,6 +786,9 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
                 sends.append(build_notice_event(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["clipboard"],))
             else:
                 sends.append(build_notice_watch(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["page_facing_up"],))
+    if cfg.get("time_checks"):
+        for e in eval_time_checks(cfg, st, today):
+            sends.append(build_time_check(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["calendar"],))
     for e in eval_us10y(cfg, st, data.get("us10y"), today):
         parts = [ref(cfg, data.get("rows"))]
         for other in cfg.get("us10y", {}).get("ref_also", []):
@@ -751,6 +800,8 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
     if fails and st.get("last_fail_day") != today:
         sends.append(build_fail(cfg, fails, stamp) + (["warning"],))
         st["last_fail_day"] = today
+    if cfg.get("footer_note"):
+        sends = [(t, with_footer(cfg, m), p, tags) for t, m, p, tags in sends]
     for t, m, _, _ in sends:
         clean(t, m)
     return sends
@@ -775,6 +826,7 @@ def install_msg(cfg: dict, st: dict, data: dict, fails: list[str], stamp: str) -
         f"익절/줄일 때: {trim_text(cfg)} 비중 축소.",
         "하지 말 것: 이 설치 확인을 매수나 매도 신호로 읽기.",
     ])
+    msg = with_footer(cfg, msg)
     clean(title, msg)
     return title, msg
 

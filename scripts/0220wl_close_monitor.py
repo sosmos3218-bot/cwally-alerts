@@ -10,6 +10,10 @@ Uses the optional engine keys added 2026-10-28 (absent for 005930/000660/064400,
   pair + ratio_lines   same-session discount (0220W0 - 0220WL) / 0220W0: <= 60.0% 할인 해소, >= 75.0% 괴리 확대
   notice_events        10/29 한화비전 3Q filing, 11/2~11/4 tender offer result (catch-up 3 days)
   notice_watch         0220W0/0220WL filings with 배당/소각/자기주식/주주환원 in the title, one alert per filing
+Added 2026-10-29 (chat approval; the 15:20 0220wl alert retired from the workflow):
+  footer_note          holding note line appended to every message
+  time_checks          6개월 상대성과 점검 (end 2027-01-09), 12개월 인컴 유지 점검 (end 2027-07-10): dated reminders,
+                       no filing lookup, once on/after the end day (catch-up 3 days), dedupe st["time_done"]
 Modes: auto | force | dry | selftest (own offline checks, below) | install (one install-confirmation send, no state)
 """
 from __future__ import annotations
@@ -54,6 +58,7 @@ def install_msg(cfg: dict, st: dict, data: dict, fails: list[str], stamp: str) -
         "익절/줄일 때: 괴리율 60% 이하 할인 해소 알림 때 비중 점검.",
         "하지 말 것: 이 설치 확인을 매매 신호로 읽기. 미확인: 잔여재산 분배 순위, 첫해 배당 일할 계산 여부.",
     ])
+    msg = engine.with_footer(cfg, msg)
     engine.clean(title, msg)
     return title, msg
 
@@ -99,7 +104,13 @@ def selftest() -> int:
     def rows(*pairs):
         return [{"day": d, "close": float(c)} for d, c in pairs]
 
-    seed = engine.load_state(cfg)
+    committed = engine.load_state(cfg)
+    check("committed state: seeded, cursors set", (committed["seeded"], bool(committed["last_day"]), bool(committed["ratio"]["last_day"])), (True, True, True))
+    # The checks below are written against the config seed day (2026-10-27). The committed state moves on with every
+    # 19:00 run, so use a fresh state pinned to the config seed (same fix as the engine selftest, 2026-10-26).
+    seed = engine.default_state(cfg)
+    seed.update(seeded=True, last_day=cfg["seed"]["day"], last_close=float(cfg["seed"]["close"]))
+    seed["ratio"].update(last_day=cfg["seed"]["day"], last=round(engine.discount(cfg["seed"]["close"], cfg["seed"]["pair_close"]), 4))
     check("seed: last_day 10-27, all armed", (seed["last_day"], all(v["armed"] for v in seed["lines"].values()),
                                              all(v["armed"] for v in seed["ratio"]["lines"].values())), ("2026-10-27", True, True))
     check("seed discount 71.43%", round(engine.discount(2200, 7700), 2), 71.43)
@@ -274,6 +285,44 @@ def selftest() -> int:
     check("watch: pref 배당 filing, middle dot scrubbed", [x[0] for x in s], [f"{pfx} 주주환원 공시 | 현금, 현물배당결정"])
     check("watch: seen ids", st["notice_seen"], ["8001", "8002"])
 
+    # ---- time checks (dated reminders, no filing lookup), footer note
+    foot = cfg["footer_note"]
+    tcs = {t["id"]: t for t in cfg["time_checks"]}
+    st = copy.deepcopy(seed)
+    st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
+    tc_titles = lambda s: [x[0] for x in s if "날짜 점검" in x[0]]  # noqa: E731
+    check("time: window start 12-21 silent", tc_titles(sends(st, base, at("2026-12-21"))), [])
+    check("time: inside window 01-08 silent", tc_titles(sends(st, base, at("2027-01-08"))), [])
+    s = sends(st, base, at("2027-01-09"))
+    check("time: 6m fires on end day 01-09", tc_titles(s), [f"{pfx} 6개월 상대성과 점검 | 날짜 점검"])
+    check("time: 6m checklist", all(k in s[0][1] for k in ("1) 보통주 대비 괴리율 변화와 상대수익.", "2) 자회사 실적(비전, 로보틱스 vs 유통).", "3) 동반 부진이면 87주 중 43주 매도 검토.")), True)
+    check("time: no 공시 확인 필요 wording", any("공시 확인 필요" in t + m for t, m, *_ in s), False)
+    check("time: message ends with footer", s[0][1].split("\n")[-1], foot)
+    check("time: dedupe id stored", st["time_done"], {"rel-6m-2027-01": "2027-01-09"})
+    check("time: second run same day silent", tc_titles(sends(st, base, at("2027-01-09", 23))), [])
+    check("time: next days silent", tc_titles(sends(st, base, at("2027-01-11"))), [])
+    check("time: 12m window start 06-22 silent", tc_titles(sends(st, base, at("2027-06-22"))), [])
+    s = sends(st, base, at("2027-07-10"))
+    check("time: 12m fires on end day 07-10", tc_titles(s), [f"{pfx} 12개월 인컴 유지 점검 | 날짜 점검"])
+    check("time: 12m checklist", all(k in s[0][1] for k in ("누적 우선배당 102원이 실제로 지급됐는지", "보통주 대비 크게 밀리지 않았는지", "아니면 43주 매도 검토")), True)
+    check("time: 12m once", tc_titles(sends(st, base, at("2027-07-12"))), [])
+    st = copy.deepcopy(seed)
+    st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
+    check("time: end day Sat, first run Mon 01-11 catches up", tc_titles(sends(st, base, at("2027-01-11"))), [f"{pfx} 6개월 상대성과 점검 | 날짜 점검"])
+    st = copy.deepcopy(seed)
+    st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
+    check("time: catch-up limit 3 days (01-13 silent)", tc_titles(sends(st, base, at("2027-01-13"))), [])
+    st = copy.deepcopy(seed)
+    s = sends(st, {"rows": rows(("2026-10-28", 1900)), "pair_rows": rows(("2026-10-28", 7700)), "src": "Yahoo 정규장"}, at("2026-10-28"), ["x"])
+    check("footer on every sent message (price, ratio, fail)", [m.split("\n")[-1] == foot for _, m, *_ in s], [True, True, True])
+    check("footer after the 참고 line", s[0][1].split("\n")[-2].startswith("참고: "), True)
+    check("footer has no middle dot / em-dash", any(ch in foot for ch in engine.FORBIDDEN), False)
+    check("install message ends with footer", install_msg(cfg, copy.deepcopy(seed), base, [], "x")[1].split("\n")[-1], foot)
+    st = copy.deepcopy(seed)
+    st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
+    tc_sample = sends(st, {"rows": rows(("2027-01-08", 2150)), "pair_rows": rows(("2027-01-08", 7400)), "src": "Yahoo 정규장"}, at("2027-01-11"))
+    tc_sample = [x for x in tc_sample if "날짜 점검" in x[0]][0]
+
     # ---- messages
     stamp = "2026-10-28 19:00 KST"
     d = {"rows": rows(("2026-10-28", 1990)), "pair_rows": rows(("2026-10-28", 8000)), "src": "Yahoo 정규장"}
@@ -284,6 +333,8 @@ def selftest() -> int:
         msgs.append(engine.build_ratio(cfg, [{"kind": "ratio", "key": ln["key"], "line": ln, "day": "2026-10-28", "close": 1990.0, "pair": 8000.0, "v": ln["level"]}], d, stamp))
     for ev in cfg["notice_events"]:
         msgs.append(engine.build_notice_event(cfg, {"ev": ev, "filing": None, "ffail": "x"}, d, stamp))
+    for tc in cfg["time_checks"]:
+        msgs.append(engine.build_time_check(cfg, {"tc": tc}, d, stamp))
     msgs.append(engine.build_notice_watch(cfg, {"filing": new}, d, stamp))
     msgs.append(engine.build_fail(cfg, ["x"], stamp))
     msgs.append(install_msg(cfg, copy.deepcopy(seed), base, [], stamp) + (3,))
@@ -297,6 +348,8 @@ def selftest() -> int:
     for t, m, _ in msgs:
         print("SAMPLE:", t)
     print("SAMPLE BODY:", msgs[2][1].replace("\n", " / "))
+    print("SAMPLE TIME CHECK:", tc_sample[0])
+    print(tc_sample[1])
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
