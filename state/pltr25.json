@@ -1,0 +1,43 @@
+{
+  "updated_at": "2026-10-29T12:11:47.594581+09:00",
+  "last_us_date": "2026-10-28",
+  "last_reset": {
+    "date": "2026-10-01",
+    "kind": "monthly"
+  },
+  "anchor": {
+    "us_date": "2026-10-27",
+    "weight": 26.55,
+    "src": "funetf"
+  },
+  "weight_model": 26.24,
+  "weight_funetf": {
+    "us_date": "2026-10-27",
+    "kr_date": "2026-10-28",
+    "value": 26.55
+  },
+  "streak30": 0,
+  "pre_armed": true,
+  "trigger_sent_for": null,
+  "reset_pending": null,
+  "pltr_shares_cu": 765.0,
+  "gap": {
+    "krx_date": "2026-10-28",
+    "value": 0.47,
+    "ret_a": 8.04,
+    "ret_b": 7.57,
+    "zone": "관망",
+    "nav_value": 0.31,
+    "nav_ref": "2026.10.28",
+    "range4w": [
+      -4.12,
+      1.87
+    ],
+    "zone_sent": "관망"
+  },
+  "last_weekly": null,
+  "fetch_fail_date": null,
+  "unconfirmed_sent_for": null,
+  "seeded": "2026-10-29 설치 때 현재 자료로 채움. 발송 없음.",
+  "note_aug_2026_adhoc": "모델 추정: 미국 2026-08-07~08-13 5영업일 연속 30% 초과(최고 31.4%), 08-14 종가 수시 리밸런싱 추정. 1차 자료로 확인 안 됨. 기록만, 계산에 쓰지 않음."
+}
