@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-29T01:26:53.044121+09:00",
+  "updated_at": "2026-10-29T19:01:01.043406+09:00",
   "seeded": true,
-  "last_day": "2026-10-28",
-  "last_close": 2225.0,
+  "last_day": "2026-10-29",
+  "last_close": 2255.0,
   "last_fail_day": null,
   "lines": {
     "review": {
@@ -16,8 +16,8 @@
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-10-28",
-    "last": 71.3273,
+    "last_day": "2026-10-29",
+    "last": 71.3832,
     "lines": {
       "resolve": {
         "armed": true,
@@ -29,7 +29,10 @@
       }
     }
   },
-  "notice_done": {},
+  "notice_done": {
+    "vision3q-2026": "2026-10-29"
+  },
   "notice_seen": [],
+  "time_done": {},
   "seed_note": "2026-10-28 시드. 2026-10-27 KRX 종가 우선주 2,200원, 보통주 7,700원, 괴리율 71.43%(Yahoo 0220WL.KS, 0220W0.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장. 판단은 10/28 종가부터"
 }

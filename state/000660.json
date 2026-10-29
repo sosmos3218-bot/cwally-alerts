@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-29T01:26:52.621467+09:00",
+  "updated_at": "2026-10-29T19:01:00.031944+09:00",
   "seeded": true,
-  "last_day": "2026-10-28",
-  "last_close": 1487000.0,
+  "last_day": "2026-10-29",
+  "last_close": 1526000.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -43,7 +43,7 @@
       "fired_day": "2026-10-28"
     },
     "lad_exhaust": {
-      "armed": false,
+      "armed": true,
       "fired_day": "migrated"
     },
     "lad_july": {
