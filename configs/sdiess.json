@@ -1,0 +1,28 @@
+{
+  "name": "sdiess",
+  "title_prefix": "[SDI-ESS]",
+  "display": "삼성SDI(006400) 단일판매 공급계약 체결 공시(자율공시, 정정 포함) 감시",
+  "approval": "사용자 채팅 승인 2026-10-29 (\"네 소신껏 만들어\"): 새 알림, 기존 09:00 / 15:20 / 19:00 공시 슬롯에 부착, 새 cron 없음",
+  "code": "006400",
+  "corp_name": "삼성SDI",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "평일 09:00, 15:20, 19:00 (기존 morning, afternoon, k203780 슬롯, [SEC-PREF] 와 같은 공시 슬롯)",
+  "schedule_note": "새 cron 없음. 세 슬롯 모두 KIND 공시 목록을 봄. 수동 job=sdiess 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "window_start": "2026-10-29",
+  "window_end": "2027-03-31",
+  "title_pattern": "단일판매ㆍ공급계약체결, 단일판매ㆍ공급계약체결(자율공시), 그 정정. 해지 공시는 대상 아님.",
+  "priority": 4,
+  "big_order_krw": 1000000000000,
+  "big_order_note": "계약금액 1조원 이상이면 제목에 '조 단위 수주' (사용자 상향 조건)",
+  "estimate_policy": "계약상대방이나 금액이 유보되면 유보라고만 적고 추정하지 않음. 언론 추정치는 쓰지 않음.",
+  "sources": {
+    "list": "KIND 상세검색 searchDetailsSub(키 없음, [SEC-DIV] 와 같은 방식, 전체 목록에서 제목으로 거름), 실패하면 네이버 KRX 공시 피드 https://stock.naver.com/api/domestic/detail/notice?itemCode=006400",
+    "body": "KIND 공시뷰어 원문, 실패하면 같은 날 같은 제목의 네이버 피드 본문",
+    "link": "KIND 공시뷰어 링크, 네이버 피드만 읽힌 경우 네이버 공시 목록"
+  },
+  "first_run_note": "state 에 seeded_at 이 없으면 창 안에 이미 있는 공급계약 공시를 seen 으로만 기록, 발송 없음.",
+  "ends_kst": "2027-03-31 19:00",
+  "ends_note": "[SDI-PX] 와 같이 2027-03-31 19:00 슬롯까지 공급계약 공시 감시, 그 뒤 조용히 끝"
+}

@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1546,6 +1546,33 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/secpref_monitor.py selftest; fi
           python scripts/secpref_monitor.py "$MODE"
+      - name: Run SDI-PX (Samsung SDI 006400 KRX close lines 500,000 / 470,000 / 650,000; k203780 19:00 slot; 2026-10-29 ~ 2027-03-31)
+        # approved in chat 2026-10-29. Attached to the existing k203780 slot, no new cron. Daum KRX closes only (no Naver/NXT); dedupe state/sdipx.json price.last_date + armed.
+        # job=sdipx (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'sdipx') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/sdipx_monitor.py selftest; fi
+          python scripts/sdipx_monitor.py "$MODE"
+      - name: Run SDI-ESS (Samsung SDI 006400 supply contract filings, each once; morning 09:00, afternoon 15:20, k203780 19:00 slots; 2026-10-29 ~ 2027-03-31)
+        # approved in chat 2026-10-29. Attached to existing slots, no new cron. Dedupe: state/sdiess.json seen (KIND acptno) + naver_keys.
+        # job=sdiess (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'sdiess') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/sdiess_monitor.py selftest; fi
+          python scripts/sdiess_monitor.py "$MODE"
       - name: Run 005935 dry check (manual job=005935 only; dry-run path, prints what would be sent, no ntfy, no state)
         # 005935 itself runs in the morning bundle and via oneshot_pick; this step never sends (dry-run path, approved 2026-10-11).
         if: ${{ !cancelled() && steps.pick.outputs.job == '005935' }}

@@ -1,0 +1,28 @@
+{
+  "name": "sdipx",
+  "title_prefix": "[SDI-PX]",
+  "display": "삼성SDI(006400) KRX 종가 가격선: 500,000원 이하 2차 분할매수 구간, 470,000원 이하 2차 구간 하단, 650,000원 이상 과열 점검",
+  "approval": "사용자 채팅 승인 2026-10-29 (\"네 소신껏 만들어\"): 새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음",
+  "code": "006400",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업), [SDI-PREF] 와 같은 단계. KRX 거래일, 15:40 이후 확정 KRX 종가만, 데이터 날짜로 1번 판정. 수동 job=sdipx 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "price_source": "Daum KRX 일별 https://finance.daum.net/api/quote/A006400/days (sdipref, [005935] 와 같은 소스, NXT 미포함). 네이버 일별은 NXT 시간외 가격이 섞일 수 있어 쓰지 않음. KRX 종가를 못 읽으면 판정을 건너뛰고 cwally-ops 하루 1번.",
+  "window_start": "2026-10-29",
+  "window_end": "2027-03-31",
+  "baseline": {"day": "2026-10-29", "close": 538000, "prev_close": 534000, "note": "2026-10-29 KRX 종가 538,000원(전일 534,000원), 사용자 제공"},
+  "lines": [
+    {"key": "l500", "op": "le", "level": 500000, "rearm_op": "gt", "rearm": 515000, "priority": 3,
+     "head": "2차 분할매수 구간 진입 (470,000~500,000원)"},
+    {"key": "l470", "op": "le", "level": 470000, "rearm_op": "gt", "rearm": 484100, "priority": 4,
+     "head": "2차 구간 하단, 펀더멘털 변화 확인 후 2차 집행 검토"},
+    {"key": "h650", "op": "ge", "level": 650000, "rearm_op": "lt", "rearm": 630500, "priority": 3,
+     "head": "과열 점검: 추정치 상향 없이 65만원 이상이면 추격 금지, PER 약 54배 (추정 EPS 11,978원 기준)"}
+  ],
+  "eps_est": 11978,
+  "first_run_note": "state 에 last_date 가 없으면 마지막 확정 KRX 종가로 상태만 기록(이미 선 안쪽이면 그 선은 무장 해제), 발송 없음.",
+  "ends_kst": "2027-03-31 19:00",
+  "ends_note": "sdiq3 4분기 관찰 창과 같이 2027-03-31 19:00 슬롯까지, 그 뒤 조용히 끝"
+}
