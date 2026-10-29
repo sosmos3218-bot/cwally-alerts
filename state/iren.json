@@ -1,22 +1,11 @@
 {
-  "updated_at": "2026-10-28 09:00 KST",
-  "price": 27.44,
+  "updated_at": "2026-10-29 09:00 KST",
+  "price": 28.84,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://stocktwits.com/news-articles/markets/equity/iren-leans-on-nvidia-ai-validation-as-semi-analysis-questions-its-infrastructure-claims/cZx5zBmRBFG?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/13/coreweave-imploded-20-over-6-months-this-analyst-predicts-it-will-triple-in-price-over-the-coming-year/?.tsrc=rss",
-    "https://blockspace.media/podcast/irens-new-anthropic-deal-microsofts-ai-chip-play-architects-liquid-inference-compute-market/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-iren-lands-anthropic-deal-131325232.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/sector-financial-stocks-higher-pre-132938038.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/article/tech-slumps-as-oil-prices-rise-focus-turns-to-earnings-season-kickoff-alphacheck-134202547.html?.tsrc=rss",
-    "https://blockspace.media/insight/anthropic-iren-cloud-deal-report/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-iren-flags-ai-infrastructure-141901564.html?.tsrc=rss",
-    "https://www.tikr.com/blog/iren-stock-anthropic-ai-cloud-deal?ref=yahoofinance&.tsrc=rss",
-    "https://finance.yahoo.com/m/1a6521f3-c066-33d2-ab8c-c609e2bd6c19/anthropic-deal-report-gives.html?.tsrc=rss",
-    "https://finance.yahoo.com/m/04ab5ce8-c2c2-3b1c-952c-5ea1b7a9d653/iren-reportedly-joins.html?.tsrc=rss",
     "https://www.fool.com/coverage/stock-market-today/2026/10/12/stock-market-today-oct-12-iren-surges-on-reports-of-anthropic-cloud-services-deal/?.tsrc=rss",
     "https://blockspace.media/short/iren-reportedly-inks-multiyear-deal-with-anthropic-heres-what-we-know/?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/13/iren-slides-5-as-anthropic-cloud-report-buzz-fades-core-scientific-falls-3/?.tsrc=rss",
@@ -125,6 +114,17 @@
     "https://247wallst.com/investing/2026/10/27/iren-limited-fell-by-33-in-2026-but-3-analysts-believe-it-will-nearly-quadruple-in-price-from-here/?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/zacks-investment-ideas-feature-highlights-124600030.html?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/iren-2-top-ai-stocks-170802846.html?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000110465926112411/0001104659-26-112411-index.htm"
+    "https://www.sec.gov/Archives/edgar/data/1878848/000110465926112411/0001104659-26-112411-index.htm",
+    "https://finance.yahoo.com/m/bd4f990c-7105-3233-afd3-4c5c6b889642/coreweave-is-steadying-after.html?.tsrc=rss",
+    "https://finance.yahoo.com/m/6151cb22-1b1a-391b-a195-a7411fe60f0d/neocloud-stocks-like.html?.tsrc=rss",
+    "https://finance.yahoo.com/video/three-billionaires-called-ai-top-110000440.html?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/mu-sndk-neocloud-stocks-extend-gains-on-anthropic-boost-sk-hynix-q3-stunner-jim-cramer-urges-caution/cZU93s9RB61?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-wingspire-equipment-finance-complete-131700873.html?.tsrc=rss",
+    "https://blockspace.media/insight/iren-closes-wingspire-gpu-refinancing/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-stock-climbs-after-it-borrows-against-its-gpu-fleet-to-fund-ai-expansion/cZU9kcSR9GO?.tsrc=rss",
+    "https://www.fool.com/investing/2026/10/28/elon-musk-says-neoclouds-face-a-guppy-level-death/?.tsrc=rss",
+    "https://blockspace.media/short/iren-just-borrowed-363m-against-its-nvidia-gpus-heres-why/?.tsrc=rss",
+    "https://blockspace.media/podcast/irens-363m-gpu-raise-morgan-stanleys-bullish-terawulf-price-target-and-sk-hynixs-earnings/?.tsrc=rss",
+    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000535/0000070858-26-000535-index.htm"
   ]
 }

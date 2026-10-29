@@ -1,5 +1,5 @@
 {
-  "zone": "DISTRESS",
+  "zone": "WATCH",
   "history": [
     {
       "date": "2026-10-21",
@@ -36,11 +36,17 @@
       "price": 79.75,
       "ytm": 15.47,
       "spread_bp": null
+    },
+    {
+      "date": "2026-10-29",
+      "price": 81.245,
+      "ytm": 15.09,
+      "spread_bp": null
     }
   ],
   "last_kind": "CHANGE",
   "shock_sent_date": null,
   "weekly_sent_date": "2026-10-26",
   "fail_active": false,
-  "updated_at": "2026-10-28T09:06:46.494212+09:00"
+  "updated_at": "2026-10-29T09:07:01.049226+09:00"
 }

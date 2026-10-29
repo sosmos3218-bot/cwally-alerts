@@ -1,14 +1,14 @@
 {
   "initialized": true,
   "band": "BELOW",
-  "last_date": "2026-10-26",
-  "last_close": 95.96,
-  "last_sma200": 96.2281,
+  "last_date": "2026-10-27",
+  "last_close": 96.59,
+  "last_sma200": 96.2504,
   "pe_armed": true,
-  "pe_last_asof": "2026-10-26",
-  "pe_last_value": 18.3263,
+  "pe_last_asof": "2026-10-27",
+  "pe_last_value": 18.4703,
   "fail_day": null,
   "pe_fail_day": null,
   "seed_note": "2026-10-26 사용자 요청: 10/23 종가 95.68 < 200일선 96.21 이라 band=BELOW, PER 18.42(10/23 기준) 라 PER 선 무장. 첫 실행은 실제로 선을 넘을 때만 보냄.",
-  "updated_at": "2026-10-28T09:09:13+09:00"
+  "updated_at": "2026-10-29T09:09:47+09:00"
 }

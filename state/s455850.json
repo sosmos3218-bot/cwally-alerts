@@ -1,17 +1,18 @@
 {
-  "updated_at": "2026-10-28 09:06 KST",
-  "session_date": "2026-10-27",
+  "updated_at": "2026-10-29 09:06 KST",
+  "session_date": "2026-10-28",
   "level": 3,
   "triggers": [
     "T1",
-    "T2"
+    "T2",
+    "T3"
   ],
   "last_sent_key": "2026-10-23:3",
   "last_sent_sig": "3",
   "last_sent_week": "2026-W44",
   "fail_sent_date": null,
-  "px_etf": 22300.0,
-  "px_hanmi": 193600.0,
-  "px_jusung": 178300.0,
-  "jusung_foreign_bn": 17.156026
+  "px_etf": 23745.0,
+  "px_hanmi": 205500.0,
+  "px_jusung": 186900.0,
+  "jusung_foreign_bn": -210.783951
 }

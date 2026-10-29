@@ -1,5 +1,5 @@
 {
-  "price": 92.17,
+  "price": 91.69,
   "band": "HOLD",
   "buy1_sent": false,
   "buy2_sent": false,
@@ -8,5 +8,5 @@
   "q3_post_sent": false,
   "fail_sent_date": null,
   "last_kind": null,
-  "updated_at": "2026-10-28T09:06:26.784635+09:00"
+  "updated_at": "2026-10-29T09:06:37.016791+09:00"
 }
