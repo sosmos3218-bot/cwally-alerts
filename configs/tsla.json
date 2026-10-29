@@ -1,0 +1,40 @@
+{
+  "name": "tsla",
+  "title_prefix": "[TSLA]",
+  "ticker": "TSLA",
+  "display": "테슬라",
+  "currency": "USD",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "tsla",
+  "schedule_kst": "미국 정규장 30분마다 (09:30-16:00 America/New_York, 평일)",
+  "schedule_note": "정시는 cron-job.org 반복 잡(시간대 America/New_York, 분 0과 30, 시 9부터 16, 월-금, body {job:tsla, oneoff_mode:auto}). 머지 후 cronjob-register.yml action=register_tsla 로 만든다. GitHub 백업 cron 은 */30 13-21 * * 1-5 (UTC). 이 창은 서머타임(13:30-20:00 UTC)과 표준시(14:30-21:00 UTC)를 둘 다 덮고, 스크립트가 뉴욕 시각 09:30-16:00 평일에만 판정한다. 09:00, 16:30, 늦게 도착한 백업은 그 문 밖에서 조용히 끝난다. job=tsla 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "cron_approved": "2026-10-29",
+  "cron_approval_text": "Check every 30 minutes during US regular market hours only (09:30-16:00 America/New_York, weekdays; handle DST correctly, e.g. by scheduling in UTC broadly and gating in code by NY time).",
+  "cron_utc": "*/30 13-21 * * 1-5",
+  "cron_where": "GitHub backup: */30 13-21 * * 1-5. On time: cron-job.org timezone America/New_York, minutes [0,30], hours [9,10,11,12,13,14,15,16], wdays Mon-Fri, expiresAt 0 (no end). Job id is filled in after action=register_tsla.",
+  "alert_policy": "once_per_ny_day",
+  "dedupe_note": "state/tsla.json sent.s310 and sent.s300 store the America/New_York date already sent. Each stage at most once per NY date. A run at or under 300 sends only stage 2 and also marks stage 1 sent for that date, so the 310 notice does not follow later the same day. A 310 notice earlier the same day does not block a later 300 notice.",
+  "stages": {
+    "s310": {
+      "max_price": 310,
+      "priority": 4,
+      "title": "[TSLA] 310달러 이하 | 7월 저점 접근",
+      "status": "TSLA 310달러 이하, 297달러 7월 저점 접근 중."
+    },
+    "s300": {
+      "max_price": 300,
+      "priority": 5,
+      "title": "[TSLA] 300달러 이하 | 위성 분할 매수 검토",
+      "status": "TSLA 300달러 이하, 위성 분할 매수 검토 구간."
+    }
+  },
+  "checklist": "확인할 것: 비감독 무인 마일 증가 유지, 2027년 2분기 고객 무인 일정 유지 여부. 조건 유지 시 총자산 소수 % 위성, 지정가 분할로만.",
+  "july_low_usd": 297,
+  "sources": {
+    "last": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1m&range=1d"
+  },
+  "explain": "테슬라(TSLA) 현재가가 310달러 또는 300달러 이하인지 미국 정규장에 30분마다 보는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": null,
+  "ends_note": "수동 삭제 전까지 무기한"
+}

@@ -247,6 +247,9 @@ on:
     - cron: "0 10 * * 1-5"
     # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
     - cron: "30 22 * * *"
+    # tsla US regular session, every 30 min. Broad UTC window covers EDT (13:30-20:00) and EST (14:30-21:00).
+    # Code gates to weekdays 09:30-16:00 America/New_York. Approved 2026-10-29. On-time: cron-job.org action=register_tsla.
+    - cron: "*/30 13-21 * * 1-5"
   workflow_dispatch:
     inputs:
       job:
@@ -254,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, xbi, celltrion, rfm0219b0, k0163y0, k000810, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, xbi, celltrion, rfm0219b0, k0163y0, k000810, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -450,6 +453,7 @@ jobs:
             elif printf '%s\n' "0 1 29 10 *" "0 1 30 10 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=secdiv
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
+            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then JOB=tsla
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -465,7 +469,7 @@ jobs:
           }
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "$JOB" in
-              morning|afternoon|portlight|0090b0|k203780|tslaspcx) ;;
+              morning|afternoon|portlight|0090b0|k203780|tslaspcx|tsla) ;;
               *)
                 # late GitHub one-shot cron = fallback; skip if the on-time dispatch already ran it
                 sync_oneshot_marks
@@ -1340,6 +1344,25 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/tslaspcx_monitor.py selftest; fi
           python scripts/tslaspcx_monitor.py "$MODE"
+      - name: Run TSLA (last price <= 310 / <= 300 during US regular hours, once per NY day)
+        # approved 2026-10-29. Backup cron */30 13-21 * * 1-5 UTC; code gates to 09:30-16:00 America/New_York weekdays.
+        # cron-job.org dispatch (oneoff_mode=auto) and the backup cron send. Any other dispatch is dry (selftest + 305/295, no ntfy, no state).
+        # Dedupe: state/tsla.json sent.s310 / sent.s300 = NY date. Stage 2 marks stage 1 sent for that date.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'tsla' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then
+            python scripts/tsla_monitor.py selftest
+            python scripts/tsla_monitor.py dry 305
+            python scripts/tsla_monitor.py dry 295
+          else
+            python scripts/tsla_monitor.py auto
+          fi
       - name: Run BRIEF (one-off outbox briefs; only on dispatch job=brief, never on scheduled slots)
         # approved in chat 2026-10-23 20:08 KST. job=brief + oneoff_mode=auto sends outbox/*.json not yet in state/brief.json; any other mode is dry (selftest + print, no ntfy, no state).
         if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && steps.pick.outputs.job == 'brief' }}
