@@ -1,10 +1,10 @@
 {
-  "final_notified": false,
+  "final_notified": true,
   "release_notified": false,
   "call_notified": false,
   "empty_notified": true,
   "fail_notified": false,
-  "expire_notified": false,
+  "expire_notified": true,
   "score": null,
   "parsed": {
     "published": false,
@@ -21,6 +21,6 @@
     "guide_cut": false,
     "guide_up": false
   },
-  "close": 1377.9649658203125,
-  "updated_at": "2026-10-29T23:40:20.722644+09:00"
+  "close": 1373.699951171875,
+  "updated_at": "2026-10-30T05:20:19.128965+09:00"
 }
