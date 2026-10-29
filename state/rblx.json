@@ -1,16 +1,18 @@
 {
-  "updated_at": "2026-10-29T09:06:43.407584+09:00",
-  "last_price": 53.28,
+  "updated_at": "2026-10-30T06:10:28.216408+09:00",
+  "last_price": 52.46,
   "zone": "hold",
   "last_weekly": "2026-10-26",
   "last_filing": "2026-07-30",
   "earnings_fingerprint": null,
   "sent_dates": [
-    "2026-10-29"
+    "2026-10-29",
+    "2026-10-30"
   ],
   "fetch_fail_date": null,
   "note": "2026-10-07 보유 28주, 평단 47.9164. -10% 43.12, -20% 38.33. 추가매수 신호 아님.",
   "holding": true,
   "shares": 28,
-  "avg_cost": 47.9164
+  "avg_cost": 47.9164,
+  "q3_bookings_m": null
 }
