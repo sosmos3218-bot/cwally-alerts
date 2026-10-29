@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-29T08:11:10.005728+09:00",
+  "updated_at": "2026-10-29T16:15:42.262111+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -18,6 +18,24 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-10-29T08:11:10.005728+09:00"
+    },
+    "20261029-earn-skh-msft-googl-1.json#d4977182468c8075": {
+      "file": "20261029-earn-skh-msft-googl-1.json",
+      "title": "[EARN] 10/28 SK하이닉스, 삼성전자, MS, 알파벳 실적과 메모리 시나리오 판정 (1/2)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-29T16:15:42.262111+09:00"
+    },
+    "20261029-earn-skh-msft-googl-2.json#4c4b651f4b9609cb": {
+      "file": "20261029-earn-skh-msft-googl-2.json",
+      "title": "[EARN] 10/28 SK하이닉스, 삼성전자, MS, 알파벳 실적과 메모리 시나리오 판정 (2/2)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-29T16:15:42.262111+09:00"
     }
   },
   "rejected": {},
