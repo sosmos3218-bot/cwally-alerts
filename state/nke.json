@@ -7,5 +7,15 @@
   "last_filing": "2026-10-02",
   "earnings_fingerprint": null,
   "fetch_fail_date": null,
-  "note": "2026-10-02 8-K는 이미 반영한 FY2027 Q1. 다음 공시부터 판정."
+  "note": "2026-10-02 8-K는 이미 반영한 FY2027 Q1. 다음 공시부터 판정.",
+  "caution": {
+    "div_seen": [
+      "https://investors.nike.com/news-events/press-releases/detail/565/nike-inc-declares-0-41-quarterly-dividend",
+      "https://investors.nike.com/news-events/press-releases/detail/572/nike-inc-declares-0-41-quarterly-dividend"
+    ],
+    "div_judged": null,
+    "gm_judged": null,
+    "seed_note": "2026-10-29 seed: 기존 배당 선언(2026-05-04, 2026-08-06, 둘 다 0.41달러)은 판정 제외. FY27 2분기 실적 보도자료는 아직 없음."
+  },
+  "caution_fail_date": null
 }

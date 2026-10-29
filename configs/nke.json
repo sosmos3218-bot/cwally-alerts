@@ -19,7 +19,10 @@
     "china_yoy_cn": -26,
     "adj_eps_fy27_lo": 1.15,
     "adj_eps_fy27_hi": 1.35,
-    "na_yoy": 2
+    "na_yoy": 2,
+    "quarterly_dividend": 0.41,
+    "gm_q2_fy26": 40.6,
+    "gm_q2_fy26_source": "NIKE 8-K 2025-12-18 (0000320187-25-000138) Exhibit 99.1 q2fy26exhibit991er.htm: 'Gross margin decreased 300 basis points to 40.6 percent', 표 Gross margin 40.6% (FY25 Q2 43.6%). 2026-10-29 확인."
   },
   "thresholds": {
     "buy_price": 30,
@@ -27,7 +30,9 @@
     "gm_buy": 44,
     "china_single_digit_floor": -10,
     "china_break": -30,
-    "div_cut_below": 1.64
+    "div_cut_below": 1.64,
+    "div_raise_slow_max_pct": 1.0,
+    "div_raise_slow_min_pct": 0.0
   },
   "buy_flip_need": 2,
   "buy_flip_rules": [
@@ -43,10 +48,24 @@
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/NKE?interval=1d&range=5d",
     "ir": "https://investors.nike.com/investors/news-events-and-reports/default.aspx",
-    "sec": "https://data.sec.gov/submissions/CIK0000320187.json"
+    "sec": "https://data.sec.gov/submissions/CIK0000320187.json",
+    "ir_rss": "https://investors.nike.com/news-events/press-releases/rss"
   },
   "cik": "0000320187",
   "last_known_filing": "2026-10-02",
   "ends_kst": "2027-06-30 09:00",
-  "ends_note": "평일 09:00 가격/배당/실적 조건 점검, 이후 자동 종료"
+  "ends_note": "평일 09:00 가격/배당/실적 조건 점검, 이후 자동 종료",
+  "caution_rules": [
+    "배당 인상 둔화: 다음 분기 배당 선언(보통 11월)이 기존 분기 0.41달러(연 1.64달러) 대비 0% 이상 1% 이하 인상(동결 포함)이면 p3 '[NKE] 배당 인상 둔화, 보수 전환 검토'. 선언 1건당 1번. 삭감은 기존 무효화 규칙(연간 배당 1.64달러 미만)이 맡음.",
+    "2분기 매출총이익률 하락: FY27 2분기 실적(12/17 ET 예정, 12/18 KST) 매출총이익률이 FY26 2분기(40.6%)보다 낮으면 p3 '[NKE] 2분기 매출총이익률 전년 대비 하락, 보수 전환 검토'. 1번만."
+  ],
+  "caution": {
+    "div_window": {
+      "from": "2026-10-29",
+      "to": "2026-12-31"
+    },
+    "gm_release_title_re": "Fiscal 2027 Second Quarter Results",
+    "gm_sec_from": "2026-12-01",
+    "explain": "보수 전환 조건은 매수 전환/무효화 규칙과 별개의 경고. 배당은 IR 보도자료 RSS의 'Declares $x Quarterly Dividend'(본문 금액 보조)로, 2분기 매출총이익률은 IR RSS 실적 보도자료(없으면 SEC 8-K item 2.02 Exhibit 99.1)로 판정. 배당 판정 창 안의 첫 새 선언만 판정해 같은 금액이 이어지는 이후 분기 선언은 다시 판정하지 않음. 데이터를 못 읽으면 cwally-ops 하루 1번, 다음 평일 재시도."
+  }
 }

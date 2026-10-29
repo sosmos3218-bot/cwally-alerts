@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NKE watch: price zones, dividend cut, earnings flip/invalidate. Silent unless change."""
+"""NKE watch: price zones, dividend cut, earnings flip/invalidate, caution (배당 인상 둔화, 2분기 매출총이익률 전년 대비 하락). Silent unless change."""
 from __future__ import annotations
 
 import json
@@ -150,6 +150,160 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
             f"하지 말 것: {avoid}",
         ]
     )
+
+
+# ---------- 보수 전환 조건 (2026-10-29 승인) ----------
+def rss_items(url: str) -> list[dict]:
+    import html as _h
+    raw = fetch(url)
+    out = []
+    for it in re.findall(r"(?s)<item>(.*?)</item>", raw):
+        t = re.search(r"(?s)<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", it)
+        l = re.search(r"(?s)<link>(.*?)</link>", it)
+        d = re.search(r"(?s)<pubDate>(.*?)</pubDate>", it)
+        if t and l:
+            out.append({"title": _h.unescape(t.group(1).strip()), "link": l.group(1).strip(), "date": (d.group(1).strip() if d else "")})
+    if not out:
+        raise RuntimeError("IR RSS 항목 0건")
+    return out
+
+
+def rss_day(pub: str) -> str:
+    try:
+        return datetime.strptime(pub, "%a, %d %b %y %H:%M:%S %z").date().isoformat()
+    except ValueError:
+        try:
+            return datetime.strptime(pub, "%a, %d %b %Y %H:%M:%S %z").date().isoformat()
+        except ValueError:
+            return ""
+
+
+def div_amount(title: str, text: str) -> float | None:
+    m = re.search(r"\$(\d+\.\d+)\s+Quarterly Dividend", title, re.I)
+    if not m:
+        m = re.search(r"quarterly (?:cash )?dividend of \$(\d+\.\d+)", text, re.I)
+    return float(m.group(1)) if m else None
+
+
+def parse_gm(text: str) -> dict | None:
+    """{cur, prior, bp, source}. 표의 전년 열이 있으면 그것, 없으면 None(호출자가 config 기준 사용)."""
+    m = re.search(r"Gross margin (expanded|increased|improved|decreased|contracted|declined)\s+(\d+)\s+basis points to\s+(\d{2}(?:\.\d+)?)\s*percent", text, re.I)
+    tbl = re.search(r"Gross margin\s+(\d{2}\.\d)\s*%\s+(\d{2}\.\d)\s*%", text)
+    if not m and not tbl:
+        return None
+    cur = float(m.group(3)) if m else float(tbl.group(1))
+    prior = float(tbl.group(2)) if tbl else None
+    if prior is None and m:
+        sign = -1 if m.group(1).lower() in {"decreased", "contracted", "declined"} else 1
+        prior = round(cur - sign * int(m.group(2)) / 100, 1)
+    return {"cur": cur, "prior": prior}
+
+
+def sec_q2_release(cfg: dict) -> tuple[str, str] | None:
+    data = json.loads(fetch(cfg["sources"]["sec"]))
+    rec = (data.get("filings") or {}).get("recent") or {}
+    cik = str(int(cfg["cik"]))
+    for form, day, acc, items in zip(rec.get("form", []), rec.get("filingDate", []), rec.get("accessionNumber", []), rec.get("items", [])):
+        if form != "8-K" or "2.02" not in (items or "") or day < cfg["caution"]["gm_sec_from"]:
+            continue
+        base = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc.replace('-', '')}/"
+        idx = json.loads(fetch(base + "index.json"))
+        for f in idx["directory"]["item"]:
+            if re.search(r"ex.*99|99.*\.htm", f["name"], re.I) and f["name"].endswith(".htm"):
+                text = visible(fetch(base + f["name"]))
+                if re.search(r"second quarter", text, re.I) and re.search(r"fiscal 2027", text, re.I):
+                    return base + f["name"], text
+    return None
+
+
+def caution_check(cfg: dict, state: dict, stamp: str, today: str, rss_fn=None, page_fn=None, sec_fn=None) -> tuple[list, list]:
+    """(alerts, errors). state['caution'] 를 갱신."""
+    rss_fn, page_fn, sec_fn = rss_fn or rss_items, page_fn or (lambda u: visible(fetch(u))), sec_fn or sec_q2_release
+    th, base, cc = cfg["thresholds"], cfg["baseline"], cfg["caution"]
+    cs = state.setdefault("caution", {"div_seen": [], "div_judged": None, "gm_judged": None})
+    alerts, errs = [], []
+    items = []
+    try:
+        items = rss_fn(cfg["sources"]["ir_rss"])
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"IR RSS: {str(exc)[:120]}")
+    # 1) 배당 인상 둔화
+    w = cc["div_window"]
+    if items and not cs.get("div_judged"):
+        for it in sorted(items, key=lambda x: rss_day(x["date"])):
+            if not re.search(r"Quarterly Dividend", it["title"], re.I) or it["link"] in cs["div_seen"]:
+                continue
+            day = rss_day(it["date"])
+            if not (w["from"] <= day <= w["to"]):
+                cs["div_seen"].append(it["link"])
+                continue
+            text = ""
+            amt = div_amount(it["title"], "")
+            if amt is None:
+                try:
+                    text = page_fn(it["link"])
+                except Exception as exc:  # noqa: BLE001
+                    errs.append(f"배당 보도자료 본문: {str(exc)[:80]}")
+                    break
+                amt = div_amount(it["title"], text)
+            if amt is None:
+                errs.append(f"배당 금액 파싱 실패: {it['title'][:80]}")
+                break
+            old = float(base["quarterly_dividend"])
+            chg = (amt / old - 1) * 100
+            cs["div_seen"].append(it["link"])
+            cs["div_judged"] = {"day": day, "amount": amt, "old": old, "pct": round(chg, 2), "link": it["link"]}
+            lo, hi = float(th.get("div_raise_slow_min_pct", 0.0)), float(th["div_raise_slow_max_pct"])
+            if lo - 1e-9 <= chg <= hi + 1e-9:
+                alerts.append((
+                    "[NKE] 배당 인상 둔화, 보수 전환 검토",
+                    body(stamp,
+                         f"{day} 분기 배당 선언 {amt:.4g}달러, 기존 {old:.2f}달러 대비 {chg:+.2f}% (연 환산 {amt * 4:.2f}달러, 기존 {old * 4:.2f}달러). "
+                         f"기준: 인상률 {lo:g}% 이상 {hi:g}% 이하면 둔화. 출처 {it['link']}",
+                         "보수 전환을 검토하세요. 30달러 분할 관심 규모를 줄이거나 다음 실적까지 보류.",
+                         "삭감이 아니므로 무효화는 아닙니다. 2분기 매출총이익률 전년 대비 결과와 함께 보세요.",
+                         "보유분은 배당 수익률만 믿고 늘리지 말고 비중 상한을 낮춰 두기.",
+                         "동결을 삭감으로 읽기. 이 알림만으로 전량 매도."),
+                    3))
+            elif chg < 0:
+                print(f"caution div: cut {chg:.2f}% -> 기존 무효화 규칙(div_cut_below)이 처리; 보수 전환 알림 없음")
+            else:
+                print(f"caution div: raise {chg:.2f}% > {hi}%; silent")
+            break
+    # 2) 2분기 매출총이익률
+    if not cs.get("gm_judged"):
+        src = None
+        rel = [it for it in items if re.search(cc["gm_release_title_re"], it["title"], re.I)]
+        try:
+            if rel:
+                src = (rel[0]["link"], page_fn(rel[0]["link"]))
+            elif today >= cc["gm_sec_from"]:
+                src = sec_fn(cfg)
+        except Exception as exc:  # noqa: BLE001
+            errs.append(f"2분기 실적 보도자료: {str(exc)[:100]}")
+        if src:
+            g = parse_gm(src[1])
+            if not g:
+                errs.append("2분기 매출총이익률 파싱 실패")
+            else:
+                prior_cfg = float(base["gm_q2_fy26"])
+                prior = g["prior"] if g["prior"] is not None else prior_cfg
+                bp = round((g["cur"] - prior) * 100)
+                cs["gm_judged"] = {"cur": g["cur"], "prior": prior, "bp": bp, "source": src[0], "at": stamp}
+                note = "" if abs(prior - prior_cfg) < 0.05 else f" (보도자료 전년 열 {prior}%, config 기준 {prior_cfg}%와 다름, 보도자료 값 사용)"
+                if g["cur"] < prior:
+                    alerts.append((
+                        "[NKE] 2분기 매출총이익률 전년 대비 하락, 보수 전환 검토",
+                        body(stamp,
+                             f"FY27 2분기 매출총이익률 {g['cur']:.1f}%, FY26 2분기 {prior:.1f}% 대비 {bp:+d}bp{note}. 출처 {src[0]}",
+                             "보수 전환을 검토하세요. 30달러 분할 관심 규모를 줄이거나 다음 분기 확인까지 보류.",
+                             "매수 전환 조건(매출총이익률 44%)과 거리가 멀어졌는지 같이 보세요.",
+                             "관세나 재고 정리 같은 일회성 설명이 원문에 있으면 따로 메모.",
+                             "한 분기 하락만으로 무효화로 취급. 주가 반응으로 판단."),
+                        3))
+                else:
+                    print(f"caution gm: {g['cur']}% vs {prior}% ({bp:+d}bp) 하락 아님; silent")
+    return alerts, errs
 
 
 def main() -> int:
@@ -385,6 +539,28 @@ def main() -> int:
             )
         )
         state["fetch_fail_date"] = today.isoformat()
+
+    try:
+        c_alerts, c_errs = caution_check(cfg, state, stamp, today.isoformat())
+    except Exception as exc:  # noqa: BLE001
+        c_alerts, c_errs = [], [f"{type(exc).__name__}: {str(exc)[:120]}"]
+    alerts.extend(c_alerts)
+    if c_errs and state.get("caution_fail_date") != today.isoformat():
+        alerts.append(
+            (
+                "[NKE] 보수 전환 데이터 조회 실패 | 조건 미확인",
+                body(
+                    stamp,
+                    f"보수 전환 조건(배당 인상 둔화, 2분기 매출총이익률) 데이터를 읽지 못했습니다. {' / '.join(c_errs)}. 조건 미충족이 아닙니다.",
+                    "investors.nike.com 보도자료에서 배당 선언 금액이나 2분기 매출총이익률을 직접 보세요.",
+                    "다음 평일 09:00 KST에 재시도합니다.",
+                    "이번 안내로 비중을 바꾸지 마세요.",
+                    "읽기 실패를 정상이나 조건 충족으로 취급.",
+                ),
+                3,
+            )
+        )
+        state["caution_fail_date"] = today.isoformat()
 
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
