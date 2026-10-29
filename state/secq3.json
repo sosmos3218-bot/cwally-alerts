@@ -22,7 +22,7 @@
   "sk_update_sent": false,
   "sk_cons_live": null,
   "ops_sent": {},
-  "call_sent": false,
-  "call_at": null,
-  "updated_at": "2026-10-29T11:10:26+09:00"
+  "call_sent": true,
+  "call_at": "2026-10-29T16:30:29+09:00",
+  "updated_at": "2026-10-29T16:30:29+09:00"
 }
