@@ -1,7 +1,7 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
   "last_problem_key": null,
-  "last_key": null,
-  "updated_at": null
+  "last_key": "171079648",
+  "updated_at": "2026-10-29T09:14:19+09:00"
 }
