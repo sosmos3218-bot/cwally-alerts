@@ -1,8 +1,24 @@
 {
-  "seen": [],
-  "fired": null,
+  "seen": [
+    "kind:20261029000101"
+  ],
+  "fired": {
+    "id": "kind:20261029000101",
+    "filed": "2026-10-29 09:53",
+    "title": "삼성전자 현금ㆍ현물 배당 결정 삼성전자",
+    "link": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261029800101",
+    "kind": "분기배당",
+    "common": 4601.0,
+    "pref": 4601.0,
+    "yield_common": 1.7,
+    "yield_pref": 2.2,
+    "total": 30003024457217.0,
+    "record": "2026-09-30",
+    "pay": "2026-11-27",
+    "board": "2026-10-29"
+  },
   "followup_sent": false,
   "final_done": false,
   "fail_notified": false,
-  "updated_at": "2026-10-29 09:09 KST"
+  "updated_at": "2026-10-29 10:00 KST"
 }
