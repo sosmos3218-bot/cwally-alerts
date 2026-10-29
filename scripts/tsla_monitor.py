@@ -71,16 +71,6 @@ def in_regular_session(now_ny: datetime) -> bool:
     return OPEN_MIN <= minutes <= CLOSE_MIN
 
 
-def in_calendar(now_ny: datetime, cfg: dict) -> bool:
-    years = cfg.get("year_guard") or []
-    if years and now_ny.year not in years:
-        return False
-    until = cfg.get("valid_until")
-    if until and now_ny.date().isoformat() > until:
-        return False
-    return True
-
-
 def pick_stage(price: float) -> str | None:
     """Deeper level wins. 300 is stage 2 only; 310 is stage 1 only."""
     if price <= 300:
@@ -201,9 +191,6 @@ def run(mode: str, price_arg: float | None, now_ny: datetime | None = None) -> i
     if cfg.get("checklist") != CHECKLIST:
         print("checklist mismatch", file=sys.stderr)
         return 2
-    if price_arg is None and not in_calendar(now_ny, cfg):
-        print("outside calendar; silent")
-        return 0
     if price_arg is None and not in_regular_session(now_ny):
         print("outside NY regular session; silent")
         return 0
@@ -263,6 +250,9 @@ def selftest() -> int:
         print(("ok  " if ok else "FAIL"), label, got, "" if ok else f"want {want}")
 
     check("checklist", cfg.get("checklist"), CHECKLIST)
+    check("ends_kst null", cfg.get("ends_kst"), None)
+    check("no valid_until", "valid_until" in cfg, False)
+    check("no year_guard", "year_guard" in cfg, False)
     check("305 stage", pick_stage(305), "s310")
     check("310 exact", pick_stage(310), "s310")
     check("310.01", pick_stage(310.01), None)
@@ -305,6 +295,8 @@ def selftest() -> int:
         idx = [text.find(label) for label in order]
         check("body order", idx, sorted(idx))
         check("no forbidden", any(ch in text for ch in FORBIDDEN), False)
+        check("no fixed expiry", "2027-07-01" in text or "2027-06-30" in text, False)
+        check("open ended", "종료일 없음" in text, True)
 
     def walk(obj) -> None:
         nonlocal fails

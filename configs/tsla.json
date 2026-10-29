@@ -12,7 +12,7 @@
   "cron_approved": "2026-10-29",
   "cron_approval_text": "Check every 30 minutes during US regular market hours only (09:30-16:00 America/New_York, weekdays; handle DST correctly, e.g. by scheduling in UTC broadly and gating in code by NY time).",
   "cron_utc": "*/30 13-21 * * 1-5",
-  "cron_where": "GitHub backup: */30 13-21 * * 1-5. On time: cron-job.org timezone America/New_York, minutes [0,30], hours [9,10,11,12,13,14,15,16], wdays Mon-Fri, expires 2027-06-30 16:59:59 NY. Job id is filled in after action=register_tsla.",
+  "cron_where": "GitHub backup: */30 13-21 * * 1-5. On time: cron-job.org timezone America/New_York, minutes [0,30], hours [9,10,11,12,13,14,15,16], wdays Mon-Fri, expiresAt 0 (no end). Job id is filled in after action=register_tsla.",
   "alert_policy": "once_per_ny_day",
   "dedupe_note": "state/tsla.json sent.s310 and sent.s300 store the America/New_York date already sent. Each stage at most once per NY date. A run at or under 300 sends only stage 2 and also marks stage 1 sent for that date, so the 310 notice does not follow later the same day. A 310 notice earlier the same day does not block a later 300 notice.",
   "stages": {
@@ -34,9 +34,7 @@
   "sources": {
     "last": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?interval=1m&range=1d"
   },
-  "year_guard": [2026, 2027],
-  "valid_until": "2027-06-30",
   "explain": "테슬라(TSLA) 현재가가 310달러 또는 300달러 이하인지 미국 정규장에 30분마다 보는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
-  "ends_kst": "2027-07-01 06:00",
-  "ends_note": "2027년 2분기 고객 무인 일정 확인 창이 끝나면 종료"
+  "ends_kst": null,
+  "ends_note": "수동 삭제 전까지 무기한"
 }

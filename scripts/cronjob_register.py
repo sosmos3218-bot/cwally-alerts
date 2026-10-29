@@ -70,7 +70,8 @@ TSLA-SPCX mode, CRONJOB_ACTION=register_tslaspcx (approved in chat 2026-10-24 12
 
 TSLA price mode, CRONJOB_ACTION=register_tsla (approved 2026-10-29, configs/tsla.json cron_approved):
   Creates the ONE recurring job TSLA_TITLE: America/New_York, minutes 0 and 30, hours 9-16, Mon-Fri,
-  expires 2027-06-30 16:59:59 NY, body {"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}.
+  expiresAt 0 (no end date; configs/tsla.json ends_kst is null), body
+  {"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}.
   09:00 and 16:30 ticks are outside the cash session; tsla_monitor.py stays silent. DST follows the NY timezone.
   Skips (exit 10) if that title or the same NY 30-minute schedule already exists. Delete mode refuses it.
 
@@ -123,8 +124,7 @@ TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], 
                      "mdays": [-1], "months": [-1], "wdays": [-1]}
 TSLA_TITLE = "cwally tsla US regular 30min (NY)"
 TSLA_BODY = {"ref": "main", "inputs": {"job": "tsla", "oneoff_mode": "auto"}}
-TSLA_EXPIRES = 20270630165959  # 2027-06-30 16:59:59 America/New_York (configs/tsla.json valid_until)
-TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": TSLA_EXPIRES, "minutes": [0, 30],
+TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0, 30],
                  "hours": [9, 10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
                  "wdays": [1, 2, 3, 4, 5]}
 PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
@@ -662,12 +662,11 @@ def is_tsla_like(j: dict) -> bool:
 
 
 def run_register_tsla(now: datetime) -> int:
-    """US regular-session TSLA price check. Timezone America/New_York keeps DST on the clock."""
+    """US regular-session TSLA price check. Timezone America/New_York keeps DST on the clock. No expiry."""
+    del now  # same signature as the other register_* helpers; this job does not expire
     key = env("CRONJOB_API_KEY")
     if not key:
         raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
-    if now.year > 2027:
-        raise Stop(BAD_INPUT, "tsla window ended; nothing to register")
     res = call("GET", "/jobs", key)
     if res.get("someFailed"):
         raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
@@ -696,7 +695,7 @@ def run_register_tsla(now: datetime) -> int:
         job["notification"] = template["notification"]
     if env("CRONJOB_DRY_RUN") == "1":
         print(f"dry run ok: would create {TSLA_TITLE!r} Mon-Fri 09:00-16:30 America/New_York "
-              f"(code gates 09:30-16:00), body {json.dumps(TSLA_BODY)}, expiresAt {TSLA_EXPIRES}")
+              f"(code gates 09:30-16:00), body {json.dumps(TSLA_BODY)}, expiresAt 0")
         return 0
     job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
     if not job_id:

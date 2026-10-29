@@ -95,7 +95,7 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 
 승인 기록: configs/tsla.json `cron_approved` 2026-10-29. 하루 종일 매시 cron 이 아니라, 미국 정규장 창만 본다.
 
-- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)". 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0과 30, 시 9부터 16, 월-금, 만료 2027-06-30 16:59:59 NY.
+- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)". 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0과 30, 시 9부터 16, 월-금, 만료 없음(`expiresAt` 0, `ends_kst` null).
   09:00과 16:30 틱은 정규장 밖이라 스크립트가 조용히 끝난다. body 는 `{"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}`.
 - 만든 방법: 머지 후 `cronjob-register.yml` `action=register_tsla`. dry_run 으로 먼저 확인하고, 같은 제목이나 같은 뉴욕 30분 일정이 있으면 skip.
 - GitHub cron `*/30 13-21 * * 1-5` 는 백업이다. UTC 로 넓게 잡아 EDT(13:30-20:00)와 EST(14:30-21:00)를 둘 다 덮고, 스크립트가 뉴욕 09:30-16:00 평일에만 판정한다. 늦게 온 백업이 그 문 밖이면 보내지 않는다.
