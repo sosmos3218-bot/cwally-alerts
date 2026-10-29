@@ -1,0 +1,62 @@
+{
+  "name": "mkif",
+  "title_prefix": "[MKIF]",
+  "code": "088980",
+  "display": "맥쿼리인프라",
+  "created_at": "2026-10-29T15:00:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 19:00",
+  "schedule_note": "새 cron 없음. 종가 선은 기존 port-alerts morning 평일 09:00 KST 슬롯(전 거래일 확정 종가, 데이터 거래일 last_date로 중복 방지). 공시 감시와 예상분배금 미확인 알림은 기존 k203780 19:00 KST 슬롯(cron-job.org 잡 8698629, GitHub 백업 0 10 * * 1-5). job=mkif 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "holding": false,
+  "account_note": "아직 보유 없음. 중개형 ISA에서 배당 목적 분할매수 검토 중.",
+  "explain": "맥쿼리인프라(088980) 배당 목적 편입 검토용 감시. 종가가 8,950원 이하, 8,300원 이하, 11,300원 이상 구간에 새로 들어갈 때와 분배금, 신규 투자, 비엔씨티 관련 공시가 나올 때만 옵니다. 자동 주문 아님, 투자 권유 아님.",
+  "basis": {
+    "as_of": "2026-10-29",
+    "price_intraday": 9450,
+    "dps_2026e": 700,
+    "dps_2027e": 680,
+    "h1_2026_dps": 350,
+    "h2_2025_dps": 380,
+    "consensus_target": 12633,
+    "samsung_target": 11300,
+    "bps": 10450,
+    "borrow_limit_note": "민간투자법 개정으로 차입 한도 약 1.0조원에서 3.3조원, 잠실 MICE 등 신규 투자 검토(상승 계기이자 레버리지 위험)",
+    "h1_drop_note": "비엔씨티 후순위대출 금리 12%에서 6%, 백양터널 청산, 수정산터널 실시협약 2027년 종료",
+    "source": "사용자 팩트체크(2026-10-29): 회사 IR, 한국신용평가, 삼성증권 리포트 7/30, 10/2, 네이버 시세"
+  },
+  "levels": [
+    {"key": "buy8950", "op": "le", "price": 8950, "priority": 3, "kind": "buy",
+     "label": "8,950원 이하", "note": "2027년 예상 DPS 680원 기준 수익률 약 7.6%"},
+    {"key": "warn8300", "op": "le", "price": 8300, "priority": 4, "kind": "warning",
+     "label": "8,300원 이하 급락", "note": "원인부터 확인: 분배금, 금리, 비엔씨티"},
+    {"key": "high11300", "op": "ge", "price": 11300, "priority": 3, "kind": "hold",
+     "label": "11,300원 이상(삼성증권 목표가)", "note": "2026년 예상 DPS 700원 기준 수익률 약 6.2%"}
+  ],
+  "rearm_note": "구간에 들어갈 때 1번만 보냄. 종가가 구간을 벗어나면 조용히 재무장(le: 선 위 종가, ge: 선 아래 종가). 첫 실행은 현재 종가로 상태만 초기화. 8,300원과 8,950원이 같이 걸리면 경고만 보냄. 최근 분배금 340원 이하 또는 비엔씨티 재구조화 플래그가 있으면 8,950원 알림은 보류 전용 문구.",
+  "sources": {
+    "price": "https://m.stock.naver.com/api/stock/088980/price?pageSize=10&page=1",
+    "notices": "https://stock.naver.com/api/domestic/detail/notice?itemCode=088980&page=1&pageSize=30",
+    "notices_note": "DART OpenAPI 키가 저장소에 없어 네이버 KRX 공시 피드(본문 포함)를 쓴다. 공시 번호(no)로 중복 방지."
+  },
+  "close_ready_kst": "15:40",
+  "stale_days": 6,
+  "dist": {
+    "good_min": 350,
+    "low_max": 340,
+    "title_keys": ["금전분배", "예상분배금", "현금배당", "현금ㆍ현물배당", "분배금 결의"],
+    "reminders": [
+      {"due_kst": "2026-12-20 19:00", "period": "2026-12-31", "label": "2026년 하반기"},
+      {"due_kst": "2027-06-20 19:00", "period": "2027-06-30", "label": "2027년 상반기"},
+      {"due_kst": "2027-12-20 19:00", "period": "2027-12-31", "label": "2027년 하반기"}
+    ]
+  },
+  "bnct_keys": ["비엔씨티", "BNCT", "부산신항", "부산항 신항", "신항제2배후"],
+  "bnct_flag_days": 365,
+  "invest_keys": ["신규 투자", "신규투자", "투자 결정", "약정금 투자", "취득", "매입", "인수", "차입", "자금보충", "자금 보충", "잠실", "MICE", "사채", "유상증자"],
+  "material_keys": ["재구조화", "소송", "판정", "처분", "청산", "만료", "해지", "손상", "실시협약", "감액"],
+  "ignore_keys": ["자산운용보고서", "영업보고서", "투자설명서", "감사보고서", "정관", "감독이사", "분배락", "권리락", "주주명부", "기준일 설정", "주주총회", "신주인수권증서", "추가상장", "청약결과", "발행결과", "신주발행가액", "소유상황", "대량보유"],
+  "ends_kst": "2027-12-31 23:59",
+  "ends_note": "맥쿼리인프라 배당 목적 분할매수 검토 기간(2027년 배당 저점 통과까지). 연장은 채팅 승인"
+}
