@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla]
+        options: [all, morning, afternoon, samnix, isrg, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla]
       samnix_mode:
         description: "job=samnix only. dry=no ntfy/state | test=one labeled send, no state | auto=send and state"
         default: dry
@@ -1515,6 +1515,13 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/secpref_monitor.py selftest; fi
           python scripts/secpref_monitor.py "$MODE"
+      - name: Run 005935 dry check (manual job=005935 only; dry-run path, prints what would be sent, no ntfy, no state)
+        # 005935 itself runs in the morning bundle and via oneshot_pick; this step never sends (dry-run path, approved 2026-10-11).
+        if: ${{ !cancelled() && steps.pick.outputs.job == '005935' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/005935_monitor.py dry
       - name: Run MACRO-IR (US-Iran macro lines Brent/USD-KRW/KOSPI/148070 on k203780 19:00 slot; 11/3 and 11/4 election checklists on morning 09:00)
         # approved in chat 2026-10-26. Attached to existing slots, no new cron. Dedupe: state/macroir.json armed (fire on zone entry,
         # re-arm on exit), pre_sent/post_sent. job=macroir or a manual job=k203780 dispatch is dry (selftest + dry: no ntfy, no state)

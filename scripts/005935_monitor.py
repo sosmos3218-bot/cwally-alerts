@@ -169,8 +169,11 @@ def run(mode: str = "") -> int:
     cfg = load_json(CFG_PATH)
     state = load_json(STATE_PATH)
     now = datetime.now(KST)
-    if now.year != int(cfg.get("year_guard") or 2026):
-        print("005935 year-guard silent")
+    yg = cfg.get("year_guard") or 2026
+    years = {int(y) for y in yg} if isinstance(yg, list) else {int(yg)}
+    ends = cfg.get("ends_kst")
+    if now.year not in years or (ends and now > datetime.strptime(ends, "%Y-%m-%d %H:%M").replace(tzinfo=KST)):
+        print("005935 year-guard / ends_kst silent")
         return 0
     if now.weekday() >= 5 and not force and not dry:
         return 0
