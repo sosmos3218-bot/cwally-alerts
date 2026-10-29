@@ -1,17 +1,22 @@
 {
-  "updated_at": "2026-10-28 15:41 KST",
+  "updated_at": "2026-10-29 15:41 KST",
   "fired": {
     "band_high": false,
     "band_low": false
   },
-  "last_move_day": null,
+  "last_move_day": "2026-10-29",
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-10-28",
-    "close": 5230,
-    "chg_pct": 1.95
+    "day": "2026-10-29",
+    "close": 5090,
+    "chg_pct": -5.91
   },
-  "last_sent": null,
+  "last_sent": {
+    "at": "2026-10-29 15:41 KST",
+    "hits": [
+      "move_down"
+    ]
+  },
   "earnings_notified": false,
   "empty_notified": false,
   "annual_notified": false,
