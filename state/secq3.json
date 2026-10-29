@@ -1,12 +1,28 @@
 {
-  "result_sent": false,
-  "result_at": null,
-  "result": null,
-  "sk_kind_in_result": null,
+  "result_sent": true,
+  "result_at": "2026-10-29T11:10:26+09:00",
+  "result": {
+    "ds_op": 106.5,
+    "ds_opm": 72.4,
+    "ds_opm_prev": 70.0,
+    "sdc_op": 1.1,
+    "harman_op": 0.6,
+    "mxnw_op": -0.6,
+    "total_op": 107.4,
+    "mem_sales": 140.7,
+    "mem_share_prev": 60.4,
+    "hbm4_pct": null,
+    "hbm4_snip": null,
+    "q4_overall": null,
+    "q4_memory": null,
+    "q4_tone": null,
+    "q4_implied": 117.6
+  },
+  "sk_kind_in_result": "actual",
   "sk_update_sent": false,
   "sk_cons_live": null,
   "ops_sent": {},
   "call_sent": false,
   "call_at": null,
-  "updated_at": "2026-10-29T10:00:41+09:00"
+  "updated_at": "2026-10-29T11:10:26+09:00"
 }
