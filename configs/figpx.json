@@ -8,7 +8,7 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤, GitHub 백업 0 0 * * 1-5, 정시는 cron-job.org morning 잡). 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. job=figpx 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착(미국 장 마감 뒤, GitHub 백업 0 0 * * 1-5, 정시는 cron-job.org morning 잡). 미국 동부 기준 완료 일봉 종가만 사용, 데이터 거래일로 중복 방지. job=figpx 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry. SEC 공시 화이트리스트(2026-11-06부터, configs sec 블록)도 같은 09:00 실행에서 본다. 접수번호 dedupe는 state/figpx.json sec_seen.",
   "alert_policy": "change_only",
   "levels": [
     {
@@ -50,5 +50,50 @@
   "valid_until": "2027-10-31",
   "explain": "피그마(FIG, NYSE) 미국 종가가 22달러 이하(매수 검토), 16.6달러 이하(약세 시나리오), 28.4달러 이상(기본 시나리오 가치)에 새로 들어갈 때만 오는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
   "ends_kst": "2027-10-31 23:59",
-  "ends_note": "FIG 종가 구간 알림, 12개월 시나리오 기간(연장은 채팅 승인)"
+  "ends_note": "FIG 종가 구간 알림, 12개월 시나리오 기간(연장은 채팅 승인)",
+  "sec": {
+    "start_date_kst": "2026-11-06",
+    "start_note": "11/04~11/06 실적 공시는 [FIG-Q3], [FIG-EARN] 몫. 11/06 이전 실행은 새 접수번호를 조용히 기록만 한다.",
+    "cik": "0001579878",
+    "submissions": "https://data.sec.gov/submissions/CIK0001579878.json",
+    "user_agent": "cwally-alerts sosmos3218@gmail.com",
+    "p4_8k_items": [
+      "1.01",
+      "1.02",
+      "2.01",
+      "2.05",
+      "2.06",
+      "3.01",
+      "4.01",
+      "4.02",
+      "5.01"
+    ],
+    "officer_502_items": [
+      "5.02"
+    ],
+    "ignore_8k_items": [
+      "5.07",
+      "9.01",
+      "2.02",
+      "7.01"
+    ],
+    "p4_forms_prefix": [
+      "S-1",
+      "S-3",
+      "424B"
+    ],
+    "p3_forms": [
+      "SCHEDULE 13D",
+      "SCHEDULE 13D/A",
+      "SC 13D",
+      "SC 13D/A"
+    ],
+    "p2_forms": [
+      "10-K",
+      "10-K/A"
+    ],
+    "insider_sale_usd": 20000000,
+    "insider_sale_note": "2025-07-31 상장 뒤 Form 4 장내 매도(S) 신고 건별 합계: 2천만 달러 초과 8건(상장일 8/5 매출 7건 + CEO 2025-11-19 1.13억 달러), 1천만 달러 초과 14건, 5백만 달러 초과 24건(2026-10-29 EDGAR 집계). 2천만 달러가 CEO 대량 매도를 잡으므로 유지.",
+    "approved_note": "approved in chat 2026-10-29 (FIG SEC 화이트리스트, 11/6부터 [FIG-PX])"
+  }
 }

@@ -1394,6 +1394,8 @@ jobs:
         # (existing cron-job.org 08:00 job=oneshot); the 11/5 09:00 morning run here is its catch-up. Dedupe: state/figpx.json last_date + armed
         # (re-arm when the close leaves the zone), state/figearn.json reminder_sent/checklist_sent + date guard. job=figpx/figearn dispatch is dry
         # (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        # figpx also runs the FIG SEC filing whitelist from 2026-11-06 (approved in chat 2026-10-29): EDGAR CIK 0001579878,
+        # dedupe by accession number in state/figpx.json sec_seen (seeded at install), same figpx_monitor.py call, no new cron.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'figpx' || steps.pick.outputs.job == 'figearn') }}
         env:
           NTFY_TOPIC: cwally-port
