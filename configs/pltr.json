@@ -7,7 +7,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00 / 15:20",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00·15:20 KST 실행기에만 붙임. 2026-10-20~11-15만 조회, 이후·다른 해는 침묵.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00, 15:20 KST 실행기에만 붙임. 2026-10-20~11-15만 조회, 이후와 다른 해는 침묵.",
   "oneshot_year": 2026,
   "window_start": "2026-10-20",
   "window_end": "2026-11-15",
