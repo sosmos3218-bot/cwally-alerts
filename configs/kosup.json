@@ -4,15 +4,35 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "기존 flow 슬롯 평일 15:40 KST 재사용. 상방 레벨 돌파 알림.",
+  "schedule_note": "기존 flow 슬롯 평일 15:40 KST 재사용. 상방 레벨 돌파 알림(5750/6000, p4)과 시장 상태 신호(6,700 재탈환, 7,000 안착, p3). [KOSPI] 사다리로 발송.",
   "year_guard": 2026,
   "expire_date": "2026-12-31",
   "user": "Cwally",
-  "levels": [5750, 6000],
+  "levels": [
+    5750,
+    6000
+  ],
   "sources": {
-    "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=2&page=1",
+    "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=3&page=1",
     "basic": "https://m.stock.naver.com/api/index/KOSPI/basic"
   },
   "ends_kst": "2026-12-31 15:40",
-  "ends_note": "평일 15:40 점검, 2026년 종료"
+  "ends_note": "평일 15:40 점검, 2026년 종료",
+  "zones": {
+    "z6700": {
+      "label": "6,700 재탈환",
+      "line": 6700,
+      "rearm_below": 6600,
+      "days": 1,
+      "priority": 3
+    },
+    "z7000": {
+      "label": "7,000 안착",
+      "line": 7000,
+      "rearm_below": 6900,
+      "days": 2,
+      "priority": 3
+    }
+  },
+  "zones_note": "2026-10-30 승인(owner note pt29u): 멈춘 외부 Grok '코스피 8단계 ntfy 라인 체크'의 상방 신호 대체. 확정 종가 기준, 상태가 바뀔 때만 p3. 6,700 은 종가 1일 >= 6,700, 6,600 미만에서 재무장. 7,000 은 종가 2일 연속 >= 7,000, 6,900 미만에서 재무장. 같은 날 둘 다면 한 건. 5750/6000 돌파(p4)와 별개."
 }

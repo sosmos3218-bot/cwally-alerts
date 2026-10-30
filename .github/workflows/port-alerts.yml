@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1152,6 +1152,17 @@ jobs:
           else
             python scripts/kos5500_monitor.py "$KOS5500_MODE"
           fi
+
+      - name: Run kosup dry check
+        # 2026-10-30 (owner note pt29u): manual check for the [KOSPI] 6,700 재탈환 / 7,000 안착 zones in kosup.
+        # Dispatch only, always dry (selftest + dry: no ntfy, no state). Real runs stay on the flow 15:40 [KOSPI] ladder.
+        if: steps.pick.outputs.job == 'kosup'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          python scripts/kosup_monitor.py selftest
+          python scripts/kosup_monitor.py dry
 
       - name: Run optq3
         if: steps.pick.outputs.job == 'optq3'
