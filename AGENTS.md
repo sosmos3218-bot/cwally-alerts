@@ -3,7 +3,7 @@
 This repo is the only place for GitHub Actions + ntfy.
 
 - Never create a new repository for an ntfy alert.
-- Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` for ops/system alerts only: workflow failures (`scripts/ops_notify.py`) and data-fetch failure notices (titles with 조회 실패/수집 실패/파싱 실패/해석 불가/미게시 are routed by `ntfy_util.route_topic`; custom publishers must call it too). A fetch failure is never a trade signal, so it never goes to `cwally-port`.
+- Topics: `cwally-port` for holdings, trades, AND market flow. `cwally-ops` for ops/system alerts only: workflow failures (`scripts/ops_notify.py`) and data-fetch failure notices (titles with 조회 실패/수집 실패/파싱 실패/해석 불가/수급 누락/확인 불가/숫자 미확인/미게시, the same list as `OPS_TITLE_RE` in `scripts/ntfy_util.py`, are routed by `ntfy_util.route_topic`; custom publishers must call it too). A fetch failure is never a trade signal, so it never goes to `cwally-port`.
 - `[PORT]` is only for the port universe check (`port_monitor.py`) and `[FLOW]` only for market/stock investor flow (`flow_monitor`, `secu_flow`). Every other alert uses its own prefix.
 - Do not use `cwally-flow` or ad-hoc topics such as `clarity-52505089`.
 - Do not let `NTFY_TOPIC` env/secret override onto a personal topic. Workflows must hardcode `cwally-port` (or `cwally-ops`).

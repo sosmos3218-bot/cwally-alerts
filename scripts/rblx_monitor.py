@@ -2,6 +2,7 @@
 """RBLX watch: price zone, Q3 bookings guide, new filing, post-earnings scenarios. Silent unless change."""
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -49,7 +50,18 @@ def quote(url: str) -> tuple[float | None, str | None]:
     except (TypeError, ValueError):
         return None, "price parse"
 
-def latest_sec_date(url: str) -> str | None:
+def sec_recent(url: str) -> dict:
+    data = json.loads(fetch(url))
+    return (data.get("filings") or {}).get("recent") or {}
+
+def latest_sec_date(url: str, recent: dict | None = None) -> str | None:
+    if recent is not None:
+        forms = recent.get("form") or []
+        dates = recent.get("filingDate") or []
+        for form, day in zip(forms, dates):
+            if form in {"8-K", "10-Q", "10-K"}:
+                return day
+        return None
     data = json.loads(fetch(url))
     recent = ((data.get("filings") or {}).get("recent") or {})
     forms = recent.get("form") or []
@@ -59,22 +71,111 @@ def latest_sec_date(url: str) -> str | None:
             return day
     return None
 
-def visible(html: str) -> str:
-    text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", html)
+def visible(raw: str) -> str:
+    text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", raw)
     text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
     text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
+    # SEC exhibits put zero-width spaces between table cells; \s does not match them.
+    text = re.sub(r"[\u200b\u200c\u200d\u2060\ufeff]", " ", text)
     return re.sub(r"\s+", " ", text)
 
+# Exact bookings in millions from the revenue-to-bookings reconciliation table
+# ("Bookings $1,697"). Rounded prose ("bookings were $1.7 billion") and "$ 1.7 B" never match,
+# because a rounded value cannot decide the 1,576/1,653 thresholds.
+BOOKINGS_RE = re.compile(
+    r"\bBookings\s*\$\s*([0-9]{1,2},[0-9]{3}|[0-9]{3,4})(?![0-9.,])(?!\s*(?:[MB]|million|billion)\b)"
+)
+DAU_RES = (
+    re.compile(r"\bDAUs\s+were\s+([0-9]{2,3}(?:\.[0-9])?)\s*million", re.I),
+    re.compile(r"Daily active users \(DAUs\)[^.]{0,80}?\bto\s+([0-9]{2,3}(?:\.[0-9])?)\s*million", re.I),
+)
+
 def parse_bookings(blob: str) -> float | None:
-    m = re.search(
-        r"bookings[^.]{0,80}?\$\s*([0-9]+(?:\.[0-9]+)?)\s*(billion|million)",
-        blob,
-        re.I,
-    )
-    if not m:
-        return None
-    val = float(m.group(1))
-    return val * (1000 if m.group(2).lower() == "billion" else 1)
+    for m in BOOKINGS_RE.finditer(blob or ""):
+        # skip the next-quarter guidance reconciliation ("Guidance ... Bookings $ 1,890 $ 2,000")
+        if "guidance" in blob[max(0, m.start() - 400) : m.start()].lower():
+            continue
+        return float(m.group(1).replace(",", ""))
+    return None
+
+def parse_dau(blob: str) -> float | None:
+    for rx in DAU_RES:
+        m = rx.search(blob or "")
+        if m:
+            return float(m.group(1))
+    return None
+
+def sec_doc_base(cik: str, accession: str) -> str:
+    return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession.replace('-', '')}/"
+
+def ex991_url(cik: str, accession: str) -> str | None:
+    """Filing index page -> EX-99.1 document URL."""
+    idx = fetch(sec_doc_base(cik, accession) + f"{accession}-index.html")
+    for row in re.findall(r"(?is)<tr[^>]*>(.*?)</tr>", idx):
+        cells = [re.sub(r"<[^>]+>", "", c).strip() for c in re.findall(r"(?is)<td[^>]*>(.*?)</td>", row)]
+        if any(c.upper() == "EX-99.1" for c in cells):
+            href = re.search(r'href="([^"]+)"', row)
+            if href:
+                link = href.group(1).replace("/ix?doc=", "")
+                return link if link.startswith("http") else "https://www.sec.gov" + link
+    return None
+
+def sec_earnings(recent: dict, cik: str, since: str | None) -> dict:
+    """Newest 8-K (Item 2.02) filed after `since` -> EX-99.1 -> exact bookings / DAU."""
+    out = {"filing": None, "accession": None, "url": None, "bookings_m": None, "dau_m": None, "err": None, "source": "sec"}
+    forms = recent.get("form") or []
+    dates = recent.get("filingDate") or []
+    accs = recent.get("accessionNumber") or []
+    items = recent.get("items") or [""] * len(forms)
+    for form, day, acc, item in zip(forms, dates, accs, items):
+        if form != "8-K" or (since and day <= since):
+            continue
+        if item and "2.02" not in item:
+            continue
+        out.update(filing=day, accession=acc)
+        try:
+            url = ex991_url(cik, acc)
+            if not url:
+                out["err"] = f"EX-99.1 없음 ({acc})"
+                return out
+            out["url"] = url
+            text = visible(fetch(url))
+            out["bookings_m"] = parse_bookings(text)
+            out["dau_m"] = parse_dau(text)
+            if out["bookings_m"] is None:
+                out["err"] = "EX-99.1 bookings 표 숫자 미확인"
+        except Exception as exc:
+            out["err"] = f"SEC 문서 조회 실패: {exc}"
+        return out
+    out["err"] = f"{since} 이후 실적 8-K 없음"
+    return out
+
+def earnings_with_fallback(cfg: dict, recent: dict | None, since: str | None, sec_err: str | None) -> dict:
+    """SEC EDGAR first; ir.roblox.com only when SEC gave no exact number."""
+    if recent is not None:
+        res = sec_earnings(recent, str(cfg.get("cik") or "1315098"), since)
+    else:
+        res = {"filing": None, "accession": None, "url": None, "bookings_m": None, "dau_m": None, "err": f"SEC 조회 실패: {sec_err}", "source": "sec"}
+    print(f"sec earnings: {json.dumps(res, ensure_ascii=False)}")
+    if res["bookings_m"] is not None:
+        return res
+    try:
+        ir_text = visible(fetch(cfg["sources"]["ir"]))
+        ir_b = parse_bookings(ir_text)
+        if ir_b is not None:
+            res.update(bookings_m=ir_b, dau_m=res["dau_m"] or parse_dau(ir_text), url=cfg["sources"]["ir"], source="ir", err=None)
+            print(f"ir fallback bookings={ir_b}")
+    except Exception as exc:
+        print(f"ir fallback fail: {exc}")
+    return res
+
+def dau_text(dau: float | None, q2: float | None) -> str:
+    if dau is None:
+        return "DAU는 원문 확인 필요."
+    if q2:
+        return f"DAU {dau:g}백만 명, 2분기 {q2:g}백만 명 대비 {dau - q2:+g}백만."
+    return f"DAU {dau:g}백만 명."
 
 def zone_of(price: float, stop: float, review: float, high: float) -> str:
     if price <= stop:
@@ -102,8 +203,8 @@ def q3_judgment(bookings: float | None, lo: float, hi: float, price: float | Non
     if bookings is None:
         return (
             "[RBLX] 10/30 실적 | bookings 확인 불가",
-            f"2026-10-30 판정. bookings를 읽지 못했습니다. 15.76억 미만이 아닙니다. {pnl}. {dau_note}",
-            "ir.roblox.com 원문에서 Q3 bookings/DAU를 직접 보세요. 비중을 바꾸지 마세요.",
+            f"2026-10-30 판정. bookings 정확한 숫자를 읽지 못했습니다. 15.76억 미만이 아닙니다. {pnl}. {dau_note}",
+            "SEC 8-K EX-99.1 원문에서 Q3 bookings/DAU를 직접 보세요. 다음 oneshot/평일 09:00에 다시 읽습니다. 비중을 바꾸지 마세요.",
             4,
             scenarios,
         )
@@ -186,6 +287,7 @@ def main() -> int:
             "last_filing": cfg["baseline"]["last_known_filing"],
             "earnings_fingerprint": None,
             "sent_dates": [],
+            "fail_notified_dates": [],
             "fetch_fail_date": None,
         },
     )
@@ -274,80 +376,40 @@ def main() -> int:
             state["zone"] = zone
             print(f"price zone unchanged ({zone}); silent")
 
-    # Post-earnings oneshot / Q3 judge with scenarios
-    if today.isoformat() in ONESHOT_DATES and (today.isoformat() not in (state.get("sent_dates") or []) or mode == "force"):
-        shares = float(cfg["position"]["shares"])
-        cost = float(cfg["position"]["avg_cost"])
-        ir_text = ""
-        try:
-            ir_text = visible(fetch(cfg["sources"]["ir"]))
-        except Exception as exc:
-            print(f"q3 ir fail: {exc}")
-        bookings = parse_bookings(ir_text) if ir_text else None
-        lo = base["q3_bookings_lo_m"]
-        hi = base["q3_bookings_hi_m"]
-        dau_note = "DAU 추이는 IR 원문 확인 필요."
-        title, status, action, pri, scenarios = q3_judgment(bookings, lo, hi, price, shares, cost, dau_note)
-        alerts.append(
-            (
-                title,
-                body(
-                    stamp,
-                    status,
-                    action,
-                    "상향은 16.53억 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다. 독립 앱/오프라인은 2027 가시화 대기.",
-                    "확인 불가와 가이드 안을 매도나 추가매수로 쓰지 마세요.",
-                    "파싱 실패를 15.76억 미만으로 세기. 주가 반응으로 조건 충족 단정.",
-                    scenarios,
-                ),
-                pri,
-            )
-        )
-        sent = list(state.get("sent_dates") or [])
-        if today.isoformat() not in sent:
-            sent.append(today.isoformat())
-        state["sent_dates"] = sent
-        state["q3_bookings_m"] = bookings
-
-    filing = None
-    ferr = None
+    # SEC EDGAR is the primary earnings source (ir.roblox.com returns 403 to the runner).
+    recent, ferr = None, None
     try:
-        filing = latest_sec_date(cfg["sources"]["sec"])
+        recent = sec_recent(cfg["sources"]["sec"])
     except Exception as exc:
         ferr = str(exc)
         print(f"sec fail: {exc}")
+    filing = latest_sec_date(cfg["sources"]["sec"], recent) if recent is not None else None
     last_filing = state.get("last_filing") or base["last_known_filing"]
-    if today.isoformat() not in ONESHOT_DATES and filing and last_filing and filing > last_filing:
-        ir_text = ""
-        try:
-            ir_text = visible(fetch(cfg["sources"]["ir"]))
-        except Exception as exc:
-            print(f"ir fail: {exc}")
-        bookings = parse_bookings(ir_text) if ir_text else None
-        fingerprint = json.dumps({"filing": filing, "bookings_m": bookings}, sort_keys=True)
-        if fingerprint != state.get("earnings_fingerprint"):
-            lo = base["q3_bookings_lo_m"]
-            hi = base["q3_bookings_hi_m"]
-            if bookings is None:
-                title = "[RBLX] 새 공시 | bookings 확인 불가"
-                status = f"새 공시 {filing}. IR에서 bookings를 읽지 못했습니다. 미확인이며 미충족이 아닙니다."
-                action = "ir.roblox.com 원문에서 bookings와 미국/캐나다 수익화를 직접 보세요."
-                pri = 4
-            elif bookings < lo:
-                title = "[RBLX] 실적 | 가이드 하단 미달"
-                status = f"새 공시 {filing}. 파싱 bookings {bookings:.0f}백만 달러, 가이드 하단 {lo} 미만."
-                action = "비중 축소 쪽으로 보세요. 파싱값과 원문이 다르면 원문을 우선하세요."
-                pri = 5
-            elif bookings > hi:
-                title = "[RBLX] 실적 | 가이드 상단 초과"
-                status = f"새 공시 {filing}. 파싱 bookings {bookings:.0f}백만 달러, 가이드 상단 {hi} 초과. 미국/캐나다 수익화는 이 알림이 확인하지 못했습니다."
-                action = "관망을 유지하고 원문에서 미국/캐나다 시간당 수익화 반등을 확인하세요. 그 전 매수 전환 아님."
-                pri = 4
-            else:
-                title = "[RBLX] 실적 | 가이드 안"
-                status = f"새 공시 {filing}. 파싱 bookings {bookings:.0f}백만 달러, 가이드 {lo}~{hi} 안."
-                action = "관망 유지. 가이드 안은 상향 조건이 아닙니다."
-                pri = 3
+    oneshot_handled = False
+
+    # Post-earnings oneshot / Q3 judge with scenarios.
+    # sent_dates gets the date only after an exact parse; a failure notice goes out at most once
+    # per date (fail_notified_dates) so later oneshots / the morning run retry.
+    day = today.isoformat()
+    if day in ONESHOT_DATES and (day not in (state.get("sent_dates") or []) or mode == "force"):
+        oneshot_handled = True
+        shares = float(cfg["position"]["shares"])
+        cost = float(cfg["position"]["avg_cost"])
+        res = earnings_with_fallback(cfg, recent, base["last_known_filing"], ferr)
+        bookings = res["bookings_m"]
+        lo = base["q3_bookings_lo_m"]
+        hi = base["q3_bookings_hi_m"]
+        dau_note = dau_text(res["dau_m"], base.get("q2_dau_m"))
+        if bookings is not None:
+            dau_note += f" 출처: {res['url']}"
+        elif res.get("err"):
+            dau_note += f" 사유: {res['err']}."
+        title, status, action, pri, scenarios = q3_judgment(bookings, lo, hi, price, shares, cost, dau_note)
+        failed = bookings is None
+        notified = list(state.get("fail_notified_dates") or [])
+        if failed and day in notified and mode != "force":
+            print(f"q3 parse still failing ({res.get('err')}); failure already notified today, silent retry")
+        else:
             alerts.append(
                 (
                     title,
@@ -355,16 +417,92 @@ def main() -> int:
                         stamp,
                         status,
                         action,
-                        "상향은 상단 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다.",
-                        "파싱 실패나 가이드 안을 매수 전환으로 쓰지 마세요.",
-                        "확인 불가를 충족으로 세기. 주가 반응으로 조건 충족 단정.",
+                        "상향은 16.53억 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다. 독립 앱/오프라인은 2027 가시화 대기.",
+                        "확인 불가와 가이드 안을 매도나 추가매수로 쓰지 마세요.",
+                        "파싱 실패를 15.76억 미만으로 세기. 주가 반응으로 조건 충족 단정.",
+                        scenarios,
                     ),
                     pri,
                 )
             )
-            state["earnings_fingerprint"] = fingerprint
+        if failed:
+            if day not in notified:
+                notified.append(day)
+            state["fail_notified_dates"] = notified
+        else:
+            sent = list(state.get("sent_dates") or [])
+            if day not in sent:
+                sent.append(day)
+            state["sent_dates"] = sent
+            state["q3_bookings_m"] = bookings
+            state["q3_dau_m"] = res["dau_m"]
+            state["q3_source"] = res["url"]
+            if res["accession"]:
+                state["earnings_fingerprint"] = json.dumps({"accession": res["accession"], "bookings_m": bookings}, sort_keys=True)
+                state["last_bookings_m"] = bookings
+            if filing:
+                state["last_filing"] = max(filing, last_filing or filing)
+                last_filing = state["last_filing"]
+
+    # New filing branch: now runs on oneshot dates too (skipped only when the oneshot above
+    # already handled this run, so one run never sends two earnings notices).
+    if filing and last_filing and filing > last_filing and not oneshot_handled:
+        res = earnings_with_fallback(cfg, recent, last_filing, ferr)
+        bookings = res["bookings_m"]
+        if res["accession"] is None and bookings is None:
+            # new 10-Q / 10-K / non-earnings 8-K only: nothing to judge
+            print(f"new filing {filing} without earnings 8-K ({res.get('err')}); last_filing -> {filing}")
             state["last_filing"] = filing
-            state["last_bookings_m"] = bookings
+        else:
+            fingerprint = json.dumps({"accession": res["accession"], "bookings_m": bookings}, sort_keys=True)
+            fdate = res["filing"] or filing
+            if fingerprint != state.get("earnings_fingerprint"):
+                lo = base["q3_bookings_lo_m"]
+                hi = base["q3_bookings_hi_m"]
+                dau_note = dau_text(res["dau_m"], base.get("q2_dau_m"))
+                src = f" 출처: {res['url']}" if res["url"] else ""
+                if bookings is None:
+                    title = "[RBLX] 새 공시 | bookings 확인 불가"
+                    status = f"새 공시 {fdate}. SEC EX-99.1에서 bookings 정확한 숫자를 읽지 못했습니다. 사유: {res.get('err')}. 미확인이며 미충족이 아닙니다.{src}"
+                    action = "SEC 8-K EX-99.1 원문에서 bookings와 미국/캐나다 수익화를 직접 보세요. 다음 평일 09:00에 다시 읽습니다."
+                    pri = 4
+                elif bookings < lo:
+                    title = "[RBLX] 실적 | 가이드 하단 미달"
+                    status = f"새 공시 {fdate}. bookings {bookings:.0f}백만 달러, 가이드 하단 {lo} 미만. {dau_note}{src}"
+                    action = "비중 축소 쪽으로 보세요. 파싱값과 원문이 다르면 원문을 우선하세요."
+                    pri = 5
+                elif bookings > hi:
+                    title = "[RBLX] 실적 | 가이드 상단 초과"
+                    status = f"새 공시 {fdate}. bookings {bookings:.0f}백만 달러, 가이드 상단 {hi} 초과. {dau_note} 미국/캐나다 수익화는 이 알림이 확인하지 못했습니다.{src}"
+                    action = "관망을 유지하고 원문에서 미국/캐나다 시간당 수익화 반등을 확인하세요. 그 전 매수 전환 아님."
+                    pri = 4
+                else:
+                    title = "[RBLX] 실적 | 가이드 안"
+                    status = f"새 공시 {fdate}. bookings {bookings:.0f}백만 달러, 가이드 {lo}~{hi} 안. {dau_note}{src}"
+                    action = "관망 유지. 가이드 안은 상향 조건이 아닙니다."
+                    pri = 3
+                alerts.append(
+                    (
+                        title,
+                        body(
+                            stamp,
+                            status,
+                            action,
+                            "상향은 상단 초과와 미국/캐나다 수익화 반등이 같이 있을 때입니다.",
+                            "파싱 실패나 가이드 안을 매수 전환으로 쓰지 마세요.",
+                            "확인 불가를 충족으로 세기. 주가 반응으로 조건 충족 단정.",
+                        ),
+                        pri,
+                    )
+                )
+                state["earnings_fingerprint"] = fingerprint
+            else:
+                print("earnings fingerprint unchanged; silent")
+            if bookings is not None:
+                # advance only after an exact parse, so a failed parse is retried next run
+                state["last_filing"] = filing
+                state["last_bookings_m"] = bookings
+                state["last_dau_m"] = res["dau_m"]
     elif ferr and state.get("fetch_fail_date") != today.isoformat() and today.weekday() == 0:
         alerts.append(
             (
@@ -372,7 +510,7 @@ def main() -> int:
                 body(
                     stamp,
                     f"SEC 조회 실패. {ferr}. 실적 조건은 미확인입니다.",
-                    "ir.roblox.com 최신 실적을 직접 보세요.",
+                    "SEC EDGAR(CIK 1315098) 최신 8-K를 직접 보세요.",
                     "다음 월요일에 재시도합니다.",
                     "이번 알림으로 비중을 바꾸지 마세요.",
                     "조회 실패를 조건 미충족으로 두기.",
