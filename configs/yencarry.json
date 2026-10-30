@@ -47,5 +47,11 @@
   "boj_force": true,
   "boj_press_force": true,
   "ends_kst": null,
-  "ends_note": "일본은행/연준 일회 알림은 12/18까지, 구간 감시와 월요일 점검은 수동 해제 전까지"
+  "ends_note": "일본은행/연준 일회 알림은 12/18까지, 구간 감시와 월요일 점검은 수동 해제 전까지",
+  "hysteresis": {
+    "usdkrw": 10.0,
+    "usdjpy": 0.5,
+    "jgb30": 0.05,
+    "note": "2026-10-30 승인(owner note pt24u): 레벨은 깨질 때 1번, 버퍼만큼 되돌아간 뒤에만 재무장. 30일 백테스트 레벨 발송 12건 -> 2건"
+  }
 }

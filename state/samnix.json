@@ -41,5 +41,9 @@
         }
       ]
     }
-  }
+  },
+  "last_digest_at": "2026-10-30T15:21:15+09:00",
+  "week_rows": [],
+  "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
+  "digest_after": "20261029"
 }

@@ -161,7 +161,43 @@ def ntfy(server, topic, title, message, priority=3):
         print(resp.read().decode())
 
 
+DRY = False
+
+
+def decide(h4: bool, h5: bool, s3: bool):
+    """-> (title, do_now, priority) for a real signal, or None on a calm day (no message)."""
+    if s3:
+        return ("[FLOW] 과열 조짐 | 추격 금지",
+                "장이 과열 조짐입니다. 새로 추격해 사지 말고, 이미 있는 포지션은 익절 라인만 지키세요.", 4)
+    if h4:
+        return ("[FLOW] 외국인+기관 강매수",
+                "외국인과 기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 마세요.", 4)
+    if h5:
+        return ("[FLOW] 예탁금 호흡 | 종목 주문 아님",
+                "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 마세요.", 4)
+    return None
+
+
+def selftest() -> int:
+    ok = True
+    for args, want in (((False, False, False), None), ((True, False, False), ("[FLOW] 외국인+기관 강매수", 4)),
+                       ((False, True, False), ("[FLOW] 예탁금 호흡 | 종목 주문 아님", 4)),
+                       ((False, False, True), ("[FLOW] 과열 조짐 | 추격 금지", 4)), ((True, True, True), ("[FLOW] 과열 조짐 | 추격 금지", 4))):
+        d = decide(*args)
+        got = None if d is None else (d[0], d[2])
+        good = got == want and (d is None or not any(c in d[0] + d[1] for c in "\u00b7\u2014"))
+        ok &= good
+        print("ok  " if good else "FAIL", args, got)
+    print("selftest", "PASS" if ok else "FAIL")
+    return 0 if ok else 1
+
+
 def main() -> int:
+    global DRY
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
+    DRY = mode == "dry"
     now = datetime.now(KST)
     sys.path.insert(0, str(ROOT / "scripts"))
     import kr_calendar
@@ -216,27 +252,25 @@ def main() -> int:
             f"5일 예탁금 {dep_chg:+.1f}% / 신용 {cred_chg:+.1f}%" + (" → 과열 조짐" if s3 else "")
         )
     else:
-        flags.append("예탁금·신용 5일 데이터 없음")
+        flags.append("예탁금, 신용 5일 데이터 없음")
 
-    if s3:
-        do_now = "장이 과열 조짐입니다. 새로 추격해 사지 말고, 이미 있는 포지션은 익절 라인만 지키세요."
-        title = "[FLOW] 과열 조짐 | 추격 금지"
-    elif h4:
-        do_now = "외국인·기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 마세요."
-        title = "[FLOW] 외국인+기관 강매수"
-    elif h5:
-        do_now = "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 마세요."
-        title = "[FLOW] 예탁금 호흡 | 종목 주문 아님"
-    else:
-        do_now = "특별한 강매수·과열 신호는 없습니다. 기존 계획대로 두세요."
-        title = "[FLOW] 오늘 수급 평온 | 계획 유지"
+    decision = decide(h4, h5, s3)
+    if decision is None:
+        # calm day (no 강매수 / 예탁금 / 과열 signal): no message since 2026-10-30 (approved in chat, owner note pt24u)
+        print("[FLOW] 오늘 수급 평온: 신호 없음, 발송 안 함 (calm-day message removed 2026-10-30)")
+        if not DRY:
+            STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "h5": h5, "s3": s3, "sent": False, "updated_at": now.isoformat()},
+                                             ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        return 0
+    title, do_now, prio = decision
 
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | FLOW | {idx_txt}",
         f"이게 뭐 알림: {explain}",
-        "지금 상태: " + " / ".join(flags),
+        "지금 결과/상태: " + " / ".join(flags),
         f"지금 할 일: {do_now}",
-        "나중에: 내일도 같은 시간에 한 번 더 보냅니다. 종목별 매수는 [STEEL] [HCE] 같은 보유 알림을 따르세요.",
+        "나중에: 평일 15:40 에 다시 보고, 강매수, 예탁금 급증, 과열 신호가 있는 날만 보냅니다(평온한 날은 안 보냄). 종목별 판단은 [STEEL] [HCE] 같은 보유 알림을 따르세요.",
         "익절/줄일 때: 이 알림으로 팔지 않습니다. 과열 조짐(예탁금+신용 5일 +3%)이면 새 매수만 쉽게 보세요.",
         "하지 말 것: 수급 숫자만 보고 추격매수. 이 알림을 단타 주문으로 쓰지 말 것.",
         "",
@@ -260,7 +294,10 @@ def main() -> int:
     if prev.get("day") == day:
         print("already sent today; silent")
         return 0
-    ntfy(server, topic, title, msg, 4 if (h4 or h5 or s3) else 3)
+    if DRY:
+        print(f"DRY RUN would send (p{prio}): {title}; no ntfy, no state")
+        return 0
+    ntfy(server, topic, title, msg, prio)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(
         json.dumps({"day": day, "h4": h4, "h5": h5, "s3": s3, "updated_at": now.isoformat()}, ensure_ascii=False, indent=2) + "\n",

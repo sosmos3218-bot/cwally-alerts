@@ -7,5 +7,14 @@
     "017960": 15440.0
   },
   "last_week": "2026-W43",
-  "fetch_fail_date": null
+  "fetch_fail_date": null,
+  "anchor_us10y": 4.988999843597412,
+  "anchor_closes": {
+    "005930": 230500.0,
+    "000660": 1516000.0,
+    "017960": 15440.0
+  },
+  "anchor_at": "2026-10-30T09:09:09+09:00",
+  "last_month": "2026-10",
+  "anchor_note": "2026-10-30 threshold change: anchors = values of the 10/30 09:09 send"
 }

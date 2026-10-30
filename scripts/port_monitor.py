@@ -410,8 +410,8 @@ def iso_week(day: str | None) -> str | None:
 
 def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool,
                   sig: str | None = None) -> tuple[bool, str]:
-    """weekly_or_change: HALT/DCA_CANCEL always; otherwise only when the signature (verdict key plus the set
-    of live event ids: a new verdict key or a newly live event) differs from the last sent one, plus one send in the first run of each ISO week.
+    """weekly_or_change: HALT/DCA_CANCEL always; otherwise only when the verdict key differs from the last sent one
+    (live event ids no longer count on their own since 2026-10-30), plus one send in the first run of each ISO week.
     Before 2026-10-26 EVENT:* keys and live event days sent on every run, so the same verdict repeated daily."""
     force = os.environ.get("FORCE_ALERT") == "1" or (len(sys.argv) > 1 and sys.argv[1].lower() == "force")
     if force:
@@ -423,17 +423,45 @@ def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, 
     last_date = prev.get("last_sent_date")
     if halt or key in ALWAYS_SEND_KEYS:
         return True, "action"
-    # a changed verdict key, or an event id that was not live at the last send; an event window ending is not news
-    last_key, _, last_ids = (last_sig or "").partition("|")
-    cur_key, _, cur_ids = sig.partition("|")
-    if last_key != cur_key or set(cur_ids.split(",")) - set(last_ids.split(",")) - {""}:
+    # only a changed verdict key counts (2026-10-30, owner note pt24u). Before, a newly live event id with the same
+    # verdict (e.g. DCA_WAIT on 10/28 and again on 10/29 when fomc_oct went live) re-sent identical advice with new numbers.
+    last_key = (last_sig or "").partition("|")[0]
+    cur_key = sig.partition("|")[0]
+    if last_key != cur_key:
         return True, "zone_change"
     if iso_week(last_date) != now.strftime("%G-W%V"):
         return True, "monday"
     return False, "same_as_last_sent"
 
 
+def selftest() -> int:
+    fails = 0
+
+    def check(label, got, want):
+        nonlocal fails
+        ok = got == want
+        fails += not ok
+        print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
+    now = datetime(2026, 10, 29, 9, 0, tzinfo=KST)
+    prev = {"last_sent_sig": "EVENT:DCA_WAIT|hynix_earn,samsung_confirm", "last_sent_date": "2026-10-28"}
+    sn = lambda key, sig, p=prev, n=now: should_notify("weekly_or_change", key, p, "x", n, True, False, sig)  # noqa: E731
+    check("same verdict + new live event id: silent", sn("EVENT:DCA_WAIT", "EVENT:DCA_WAIT|fomc_oct,hynix_earn,samsung_confirm"), (False, "same_as_last_sent"))
+    check("same verdict, numbers only: silent", sn("EVENT:DCA_WAIT", "EVENT:DCA_WAIT|hynix_earn,samsung_confirm"), (False, "same_as_last_sent"))
+    check("verdict change -> send", sn("EVENT:DCA_KEEP", "EVENT:DCA_KEEP|hynix_earn"), (True, "zone_change"))
+    check("DCA_CANCEL always", sn("EVENT:DCA_CANCEL", "EVENT:DCA_CANCEL|hynix_earn"), (True, "action"))
+    check("HALT always", should_notify("weekly_or_change", "HALT", prev, "x", now, False, True, "HALT"), (True, "action"))
+    check("new ISO week -> weekly send", sn("EVENT:DCA_WAIT", "EVENT:DCA_WAIT|hynix_earn", n=datetime(2026, 11, 2, 9, 0, tzinfo=KST)), (True, "monday"))
+    check("event -> base is a change", sn("BASE", "BASE"), (True, "zone_change"))
+    check("legacy last_sent_key only", should_notify("weekly_or_change", "BASE", {"last_sent_key": "BASE", "last_sent_date": "2026-10-28"}, "x", now, False, False, "BASE"), (False, "same_as_last_sent"))
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
+
+
 def main() -> int:
+    arg = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if arg == "selftest":
+        return selftest()
+    dry = arg == "dry" or (len(sys.argv) > 2 and sys.argv[2].lower() == "dry")
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     today = now.strftime("%Y-%m-%d")
@@ -474,28 +502,31 @@ def main() -> int:
         last_sent_date = today
         last_sent_sig = sig
 
-    STATE_PATH.write_text(
-        json.dumps(
-            {
-                "updated_at": stamp,
-                "zone": key,
-                "last_alert_key": key,
-                "last_sent_key": last_sent_key,
-                "last_sent_date": last_sent_date,
-                "last_sent_sig": last_sent_sig,
-                "last_skip_reason": None if send else why,
-                "fx": fx,
-                "wti": wti,
-                "ktb3": ktb3,
-                "ktb10": ktb10,
-                "history": hist,
-            },
-            ensure_ascii=False,
-            indent=2,
+    if dry:
+        print(f"DRY: state not written (would notify={send} reason={why})", file=sys.stderr)
+    else:
+        STATE_PATH.write_text(
+            json.dumps(
+                {
+                    "updated_at": stamp,
+                    "zone": key,
+                    "last_alert_key": key,
+                    "last_sent_key": last_sent_key,
+                    "last_sent_date": last_sent_date,
+                    "last_sent_sig": last_sent_sig,
+                    "last_skip_reason": None if send else why,
+                    "fx": fx,
+                    "wti": wti,
+                    "ktb3": ktb3,
+                    "ktb10": ktb10,
+                    "history": hist,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
 
     alloc = f"주식 {eq}, 채권 35(짧은 만기 {front} / 10년 {ten}), 현금 {cash}. 종목 {wtxt(w)}. " + " ".join(reasons)
     head = [
@@ -519,7 +550,9 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     print(f"notify={send} reason={why}", file=sys.stderr)
-    if send:
+    if send and dry:
+        print(f"DRY RUN would send: [PORT] {title}")
+    elif send:
         ntfy_publish(
             "https://ntfy.sh",
             "cwally-port",

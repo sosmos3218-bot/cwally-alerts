@@ -16,6 +16,55 @@ KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "yencarry.json"
 STATE_PATH = ROOT / "state" / "yencarry.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
+DRY = False
+# Hysteresis (approved in chat 2026-10-30, owner note pt24u): a level fires once when it is crossed and re-arms only after
+# the quote moves back past the line by a buffer (원달러 10원, 달러/엔 0.5엔, 일본 30년 0.05%p). Level messages go out
+# only when a NEW level enters the active set; a level leaving the set is silent. 30-day backtest (09:00/15:20 runs,
+# Yahoo hourly): old rule 12 level sends (archive: 22 incl. the pre-10/19 quote-key bug) -> 2.
+LEVEL_DEFS = [  # key, quote, op, config level key, label
+    ("jpy152", "usdjpy", "le", "usdjpy_low", "달러/엔 {q} → 152 이탈"),
+    ("jpy160", "usdjpy", "ge", "usdjpy_high", "달러/엔 {q} → 160 돌파"),
+    ("jpy158", "usdjpy", "ge", "usdjpy_watch", "달러/엔 {q} → 158 돌파"),
+    ("krw1340", "usdkrw", "le", "usdkrw_low", "원달러 {q}원 → 1,340 이탈"),
+    ("krw1400", "usdkrw", "ge", "usdkrw_high", "원달러 {q}원 → 1,400 돌파"),
+    ("jgb45", "jgb30", "ge", "jgb30_danger", "일본 30년 {q}% → 4.5 돌파"),
+    ("jgb43", "jgb30", "ge", "jgb30_warn", "일본 30년 {q}% → 4.3 돌파"),
+    ("jgb425", "jgb30", "ge", "jgb30_watch", "일본 30년 {q}% → 4.25 돌파"),
+]
+DEFAULT_BUF = {"usdkrw": 10.0, "usdjpy": 0.5, "jgb30": 0.05}
+DEFAULT_LV = {"usdjpy_watch": 158, "jgb30_watch": 4.25}
+
+
+def level_step(cfg: dict, active: dict | None, q: dict) -> tuple[dict, list[str], list[str]]:
+    """-> (new active {key: True}, display keys for every active level, newly entered keys).
+    active None = first run: init from quotes, nothing counts as new. Missing quote keeps the level as it was."""
+    buf = dict(DEFAULT_BUF, **(cfg.get("hysteresis") or {}))
+    lv = dict(DEFAULT_LV, **cfg["levels"])
+    first = active is None
+    cur = dict(active or {})
+    for key, qn, op, lk, _ in LEVEL_DEFS:
+        v = q.get(qn)
+        if v is None:
+            continue
+        line, b = float(lv[lk]), float(buf[qn])
+        inside = v <= line if op == "le" else v >= line
+        out = v >= line + b if op == "le" else v <= line - b
+        if inside:
+            cur[key] = True
+        elif out:
+            cur.pop(key, None)
+    new = [] if first else [k for k in cur if k not in (active or {})]
+    nd = {"usdjpy": 1, "usdkrw": 0, "jgb30": 2}
+    shown = []
+    for key, qn, op, lk, label in LEVEL_DEFS:
+        if key not in cur:
+            continue
+        if key == "jpy158" and "jpy160" in cur:
+            continue  # 160 supersedes the 158 watch (old elif)
+        if key in ("jgb43", "jgb425") and "jgb45" in cur or key == "jgb425" and "jgb43" in cur:
+            continue
+        shown.append(label.format(q=fmt(q.get(qn), nd[qn])))
+    return cur, shown, new
 
 
 def fetch(url: str, timeout: int = 20) -> str:
@@ -239,6 +288,9 @@ def level_sig(key: str | None) -> str:
 
 
 def send(cfg: dict, title: str, lines: list[str], priority: int = 4) -> None:
+    if DRY:
+        print(f"DRY RUN would send (p{priority}): {title}\n" + "\n".join(lines))
+        return
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
     publish(topic, title, "\n".join(lines), priority, ["jp", "chart_with_upwards_trend"], server)
@@ -268,6 +320,9 @@ def load_state() -> dict:
 
 
 def save_state(state: dict, now: datetime, quotes_d: dict) -> None:
+    if DRY:
+        print("DRY: state not saved")
+        return
     state["updated_at"] = now.isoformat()
     state["last_quotes"] = quotes_d
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -288,7 +343,7 @@ def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> 
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 연준 후속",
         "이게 뭐 알림: 연준 발표 뒤, 정해둔 레벨이 깨졌는지 보고 북을 바꿀지 결정하는 알림입니다.",
-        f"지금 상태: 연준 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 결과/상태: 연준 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
         f"지금 할 일: {act}",
         "나중에: 일한 9/18은 레벨과 상관없이 반드시 보냅니다. 주간 점검은 월요일 09:00.",
         "익절/줄일 때: 엔 롱은 160 재돌파면 접기. 원달러 1,340 아래면 달러 보유 축소.",
@@ -303,7 +358,7 @@ def emit_boj(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], sta
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 결과",
         "이게 뭐 알림: 일본은행 결정. 레벨이 안 깨져도 결과는 반드시 보냅니다.",
-        f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 결과/상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
         f"지금 할 일: {act}",
         "나중에: 다음 일한 10/30, 12/18도 공표문+회견 두 장입니다.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
@@ -318,7 +373,7 @@ def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 기자회견 후",
         "이게 뭐 알림: 우에다 기자회견(15:30) 뒤 레벨과 발언 요약을 봅니다. 공표문 알림과 별도입니다.",
-        f"지금 상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 결과/상태: 일한 {stance}. {status_line(usdjpy, usdkrw, j30, keys)}",
         "우에다 요약: " + " / ".join(ueda_summary(now)),
         f"지금 할 일: {act}",
         "나중에: 같은 날 회견 알림은 한 번만. 공식 전문은 보통 다음날. 다음 일한 10/30, 12/18도 두 장.",
@@ -334,9 +389,9 @@ def emit_event(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], w
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 이벤트 {why}",
         "이게 뭐 알림: 정해둔 레벨이 깨졌습니다.",
-        f"지금 상태: {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 결과/상태: {status_line(usdjpy, usdkrw, j30, keys)}",
         f"지금 할 일: {act}",
-        "나중에: 같은 레벨에 붙잡히면 다시 안 보냅니다. 주간 점검은 월요일 09:00.",
+        "나중에: 같은 레벨은 버퍼(원달러 10원, 달러/엔 0.5엔, 일본 30년 0.05%p)만큼 되돌아간 뒤 다시 깨질 때만 또 보냅니다. 주간 점검은 월요일 09:00.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
         "하지 말 것: 깨진 레벨 없이 추격. 엔 강세=원 강세로 같이 베팅.",
     ]
@@ -349,7 +404,7 @@ def emit_weekly(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) 
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 주간",
         "이게 뭐 알림: 엔캐리 레벨을 한 주에 한 번 보는 점검입니다.",
-        f"지금 상태: {status_line(usdjpy, usdkrw, j30, keys)}",
+        f"지금 결과/상태: {status_line(usdjpy, usdkrw, j30, keys)}",
         f"지금 할 일: {act}",
         "나중에: 152/160, 1,340/1,400, 일본 30년 4.3 깨지면 그때 다시 보냅니다.",
         "익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.",
@@ -359,7 +414,11 @@ def emit_weekly(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) 
 
 
 def main() -> int:
+    global DRY
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
+    DRY = (sys.argv[2] if len(sys.argv) > 2 else "auto").lower() == "dry"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     # Year guard only for the dated one-off modes (fed / boj_press): their GitHub crons have no year.
@@ -369,9 +428,11 @@ def main() -> int:
         return 0
     state = load_state()
     usdjpy, usdkrw, j30 = quotes()
-    keys = breaks(cfg, usdjpy, usdkrw, j30)
     q = {"usdjpy": usdjpy, "usdkrw": usdkrw, "jgb30": j30}
-    print(f"{now} | {mode} | {q} | {keys}")
+    prev_active = state.get("active_levels")
+    active, keys, new_levels = level_step(cfg, prev_active, q)
+    state["active_levels"] = active
+    print(f"{now} | {mode}{' DRY' if DRY else ''} | {q} | active={sorted(active)} new={new_levels} | {keys}")
 
     today = now.strftime("%Y-%m-%d")
     week = now.strftime("%G-W%V")
@@ -419,15 +480,14 @@ def main() -> int:
             save_state(state, now, q)
             return 0
 
+    if new_levels:
+        emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "레벨 탈출")
+        state["last_event_key"] = event_key(keys)
+        save_state(state, now, q)
+        return 0
     if keys:
-        ek = event_key(keys)
-        if level_sig(state.get("last_event_key")) != level_sig(ek):
-            emit_event(cfg, now, usdjpy, usdkrw, j30, keys, "레벨 탈출")
-            state["last_event_key"] = ek
-            save_state(state, now, q)
-            return 0
-        # same broken level(s) as last sent: no repeat; the Monday weekly below still reports it
-        print("same event; silent")
+        # level(s) still active (inside the zone or within the re-arm buffer): no repeat; the Monday weekly still reports it
+        print("no new level (hysteresis); silent")
 
     if mode in {"weekly", "auto"} and now.weekday() == 0:
         if state.get("weekly_sent_week") == week:
@@ -442,6 +502,45 @@ def main() -> int:
     print("silent")
     save_state(state, now, q)
     return 0
+
+
+def selftest() -> int:
+    global DRY
+    DRY = True
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    fails = 0
+
+    def check(label, got, want):
+        nonlocal fails
+        ok = got == want
+        fails += not ok
+        print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
+    Q = lambda k, j=157.0, g=3.9: {"usdkrw": k, "usdjpy": j, "jgb30": g}  # noqa: E731
+    a, keys, new = level_step(cfg, None, Q(1335))
+    check("first run init, nothing new", (sorted(a), new), (["krw1340"], []))
+    a, keys, new = level_step(cfg, {}, Q(1340))
+    check("1,340 entry fires (<=)", new, ["krw1340"])
+    walk = [(1341, []), (1337, []), (1349.9, []), (1338, []), (1350, []), (1352, []), (1339, ["krw1340"]), (1345, []), (1336, [])]
+    act = {"krw1340": True}
+    for i, (k, want) in enumerate(walk):
+        act, keys, new = level_step(cfg, act, Q(k))
+        check(f"krw walk{i} {k}", new, want)
+    check("status keeps the level while inside the buffer", any("1,340 이탈" in x for x in level_step(cfg, {"krw1340": True}, Q(1345))[1]), True)
+    act = {}
+    seq = [(157.9, []), (158.0, ["jpy158"]), (157.7, []), (158.2, []), (157.5, []), (158.0, ["jpy158"])]
+    for i, (j, want) in enumerate(seq):
+        act, _, new = level_step(cfg, act, Q(1360, j))
+        check(f"jpy walk{i} {j}", new, want)
+    act, keys, new = level_step(cfg, {"jpy158": True}, Q(1360, 160.1))
+    check("160 entry, 158 hidden", (new, [x for x in keys if "158" in x]), (["jpy160"], []))
+    act, keys, new = level_step(cfg, {"krw1340": True}, Q(None))
+    check("missing quote keeps level", sorted(act), ["krw1340"])
+    act, keys, new = level_step(cfg, {"krw1340": True}, Q(1395))
+    check("leaving is silent", (new, sorted(act)), ([], []))
+    check("1,400 entry", level_step(cfg, {}, Q(1400))[2], ["krw1400"])
+    check("1,400 exit needs 1,390", sorted(level_step(cfg, {"krw1400": True}, Q(1391))[0]), ["krw1400"])
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
 
 
 if __name__ == "__main__":

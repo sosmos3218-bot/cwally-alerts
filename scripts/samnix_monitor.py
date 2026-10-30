@@ -5,6 +5,11 @@ Plus (2026-10-24, approved card t25s2) a per-stock foreign net-buy streak flip a
 foreign net buy > 0 on 3 consecutive trading days right after a net-sell day -> one alert (priority 4).
 One net-sell day re-arms. Judged by data trading date (state["flip"][code]["last_date"]), confirmed rows only
 (<= the preceding trading day at 15:20), so a date is never judged twice. Modes: auto | dry | test | selftest.
+
+Weekly digest (approved in chat 2026-10-30, owner note pt24u): the daily 15:20 reference message is no longer sent.
+Each weekday 15:20 run records the preceding day's confirmed totals in state week_rows silently. The Friday 15:20 run
+(or, if Friday was missed, the next run whose last digest is 7+ days old) sends ONE p3 "[SAMNIX] 주간 수급 요약
+(MM/DD~MM/DD)". Zero rows -> nothing sent (the digest clock still advances). The p4 foreign 3-day flip stays immediate.
 """
 from __future__ import annotations
 
@@ -153,7 +158,7 @@ def flip_message(now: datetime, name: str, ev: dict) -> tuple[str, str]:
         "판단 조건: 10/23 반등을 솔리다임 IPO 철회 안도 반등으로만 보는 판단을 바꿀 두 조건 중 하나(외국인 3일 연속 순매수 전환)입니다. "
         "다른 하나(실적 발표 뒤 코스피 5,500 유지)는 [KOS5500] 알림이 따로 봅니다. 두 조건이 함께 맞을 때 판단 변경을 검토하세요.",
         "지금 할 일: 외국인 전환 사실만 확인. 이 알림 하나로 추격 매수하지 마세요.",
-        "나중에: 외국인이 다시 순매도하는 날 이 조건이 다시 무장되고, 다음 전환 때 다시 옵니다. 평일 15:20 일일 수급 알림은 그대로 옵니다.",
+        "나중에: 외국인이 다시 순매도하는 날 이 조건이 다시 무장되고, 다음 전환 때 다시 옵니다. 일일 수급은 금요일 15:20 주간 요약으로 옵니다.",
         "익절/줄일 때: 이 알림만으로 매매하지 말고 개별 종목 조건을 따르세요.",
         "하지 말 것: 3일 순매수만 보고 반등 지속을 단정하기.",
     ]
@@ -228,6 +233,7 @@ def selftest() -> int:
     assert "\u00b7" not in t + m and "\u2014" not in t + m and route_topic("cwally-port", t) == "cwally-port"
     assert "확인 불가" not in t and "조회 실패" not in t
     print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: 4\n{m}\n")
+    weekly_selftest()
     print("SELFTEST OK: no network, no publish, no state")
     return 0
 
@@ -276,59 +282,150 @@ def main(mode: str = "auto") -> int:
     if errors:
         reason = "; ".join(errors)
         print(f"수급 데이터 없음; quiet skip: {reason}")
-        if mode == "auto":
-            state["last_skip"] = {"day": send_day, "reason": reason, "at": now.isoformat()}
-            save_state(state)
+        if mode in ("auto", "dry"):  # the weekly digest still goes out on its day with the rows already queued
+            work = json.loads(json.dumps(state))
+            sends = [] if work.get("day") == send_day else weekly_step(work, now, None, send_day)
+            for t, m in sends:
+                print(t, "\n", m)
+            if mode == "auto":
+                for t, m in sends:
+                    ntfy(server, topic, t, m)
+                work["last_skip"] = {"day": send_day, "reason": reason, "at": now.isoformat()}
+                save_state(work)
         return 0
 
     # Naver reports net shares, not KRW. Convert by each stock's close before aggregation.
     foreign = sum(r["foreign"] * r["close"] for r in flows.values())
     organ = sum(r["organ"] * r["close"] for r in flows.values())
-    if foreign > 0 and organ > 0:
-        signal = "외국인+기관 순매수 | 수급 우호"
-        do_now = "전 거래일 수급은 우호적입니다. 당일 수급 확인 전 추격하지 마세요."
-    elif foreign < 0:
-        signal = "외국인 순매도 | 반등 신중"
-        do_now = "전 거래일 외국인 순매도입니다. 당일 수급 확인 전 추가 매수를 보류하세요."
-    else:
-        signal = "수급 혼조 | 계획 유지"
-        do_now = "전 거래일 수급이 혼조입니다. 기존 계획을 유지하세요."
-    title = f"[SAMNIX] 참고용 {signal}"
+    row = {"flow_day": flow_day, "foreign": round(foreign), "organ": round(organ),
+           "stocks": {n: {"foreign": r["foreign"], "organ": r["organ"], "close": r["close"]} for n, r in flows.items()}}
+    print(f"{ymd(flow_day)} 외국인 합 {fmt_krw(foreign)} / 기관 합 {fmt_krw(organ)} ({signal_of(foreign, organ)[0]})")
     if mode == "test":
-        title = f"[SAMNIX] 테스트 참고용 {signal}"
-    label = f"{flow_day[:4]}-{flow_day[4:6]}-{flow_day[6:]} 수급 주식 수 × 해당일 종가 (추정금액)"
-    lines = [
-        f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | 수급 기준 {label}",
-        "이게 뭐 알림: 삼성전자/하이닉스 전 거래일 확정 수급 참고용. 매매 신호가 아닙니다.",
-        f"지금 상태: 외국인 합 {fmt_krw(foreign)} / 기관 합 {fmt_krw(organ)} ({label})",
-        "고수 동향: 당일 상위 투자자 순매수 자료 미확보. 고정 문구로 동향을 단정하지 않습니다.",
-        "수요 지표: 당일 메모리 가격/AI 수요 지표 미확보. 별도 확인이 필요합니다.",
-        "평가: 전 거래일 수급 방향만 확인됨. 당일 반등 지속성은 판단 불가.",
-        f"지금 할 일: {do_now}",
-        "나중에: 다음 평일 15:20에 최신 확정 수급을 확인합니다.",
-        "익절/줄일 때: 이 알림만으로 매매하지 말고 개별 종목 조건을 따르세요.",
-        "하지 말 것: 전 거래일 추정 수급금액만 보고 당일 추격 매수.",
-        "", "종목별:",
-    ]
-    for name, row in flows.items():
-        lines.append(f"- {name} 외국인 {fmt_shares(row['foreign'])} ({fmt_krw(row['foreign'] * row['close'])}) / 기관 {fmt_shares(row['organ'])} ({fmt_krw(row['organ'] * row['close'])})")
-    message = "\n".join(lines)
-    print(title, "\n", message)
+        t, m = digest_message(now, [row], now - timedelta(days=7))
+        t = t.replace("[SAMNIX] ", "[SAMNIX] 테스트 ", 1)
+        print(t, "\n", m)
+        ntfy(server, topic, t, m)
+        print("TEST: state 변경 없음")
+        return 0
+    work = json.loads(json.dumps(state))
+    sends = weekly_step(work, now, row, send_day)
+    for t, m in sends:
+        print(t, "\n", m)
     if mode == "dry":
         print("DRY: ntfy/state 변경 없음")
         return 0
-    if mode == "auto" and state.get("day") == send_day:
-        print("already sent today; silent")
-        return 0
-    ntfy(server, topic, title, message)
-    if mode == "test":
-        print("TEST: state 변경 없음")
-        return 0
-    state.update({"day": send_day, "flow_day": flow_day, "updated_at": now.isoformat()})
-    state.pop("last_skip", None)
-    save_state(state)
+    for t, m in sends:
+        ntfy(server, topic, t, m)
+    work.pop("last_skip", None)
+    save_state(work)
     return 0
 
+
+def signal_of(foreign: float, organ: float) -> tuple[str, str]:
+    if foreign > 0 and organ > 0:
+        return "외국인+기관 순매수", "우호"
+    if foreign < 0:
+        return "외국인 순매도", "신중"
+    return "수급 혼조", "중립"
+
+
+def parse_iso(s):
+    try:
+        return datetime.fromisoformat(s) if s else None
+    except ValueError:
+        return None
+
+
+def digest_due(state: dict, now: datetime) -> bool:
+    last = parse_iso(state.get("last_digest_at"))
+    if last is None or last.date() == now.date():
+        return False
+    return now.weekday() == 4 or (now - last) >= timedelta(days=7)
+
+
+def weekly_step(state: dict, now: datetime, row: dict | None, send_day: str) -> list[tuple[str, str]]:
+    """Record one confirmed day (dedupe by flow_day), then send the weekly digest when due. Mutates state."""
+    rows = state.setdefault("week_rows", [])
+    if row and row["flow_day"] > state.get("digest_after", "") and row["flow_day"] not in {r["flow_day"] for r in rows}:
+        rows.append(row)
+    state.update({"day": send_day, "flow_day": (row or {}).get("flow_day", state.get("flow_day")), "updated_at": now.isoformat()})
+    if state.get("last_digest_at") is None:
+        state["last_digest_at"] = now.isoformat()
+        state["week_rows"] = []  # the seeding day was already sent as a daily message
+        state["digest_after"] = (row or {}).get("flow_day", "")
+        print("digest clock seeded")
+        return []
+    if not digest_due(state, now):
+        print(f"weekly digest not due (last {state.get('last_digest_at')}); {len(rows)} day(s) queued; silent")
+        return []
+    since = parse_iso(state["last_digest_at"])
+    out = []
+    if rows:
+        out.append(digest_message(now, sorted(rows, key=lambda r: r["flow_day"]), since))
+    else:
+        print("weekly digest due but no rows; silent")
+    state["week_rows"] = []
+    state["last_digest_at"] = now.isoformat()
+    return out
+
+
+def digest_message(now: datetime, rows: list[dict], since: datetime) -> tuple[str, str]:
+    f_sum = sum(r["foreign"] for r in rows)
+    o_sum = sum(r["organ"] for r in rows)
+    days = " ".join(f"{ymd(r['flow_day'])[5:]} 외국인 {fmt_krw(r['foreign'])}, 기관 {fmt_krw(r['organ'])} ({signal_of(r['foreign'], r['organ'])[0]})." for r in rows)
+    per = []
+    for name in CODES.values():
+        fs = sum((r["stocks"].get(name) or {}).get("foreign", 0) for r in rows)
+        os_ = sum((r["stocks"].get(name) or {}).get("organ", 0) for r in rows)
+        per.append(f"{name} 외국인 {fmt_shares(fs)}, 기관 {fmt_shares(os_)}")
+    sig, tone = signal_of(f_sum, o_sum)
+    span = f"{ymd(rows[0]['flow_day'])[5:].replace('-', '/')}~{ymd(rows[-1]['flow_day'])[5:].replace('-', '/')}"
+    title = f"[SAMNIX] 주간 수급 요약 ({span}) | 참고용 {sig}"
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | 삼성전자, SK하이닉스 주간 확정 수급 (주식 수 × 해당일 종가, 추정금액)",
+        "이게 뭐 알림: 매일 15:20 에 모은 전 거래일 확정 수급을 금요일 15:20 에 1번 묶어 보내는 참고용 요약. 매매 신호가 아닙니다.",
+        f"지금 결과/상태: {len(rows)}거래일 합계 외국인 {fmt_krw(f_sum)}, 기관 {fmt_krw(o_sum)}, 주간 방향 {sig}({tone}). 일별: {days} 종목별 주식 수 합계: {', '.join(per)}.",
+        "지금 할 일: 주간 방향만 확인. 다음 주 개별 종목 조건 알림과 함께 보세요.",
+        "나중에: 외국인 순매도 뒤 3거래일 연속 순매수 전환(우선순위 4)은 요약을 기다리지 않고 바로 옵니다. 다음 요약은 다음 금요일 15:20.",
+        "익절/줄일 때: 이 요약만으로 매매하지 말고 개별 종목 조건을 따르세요.",
+        "하지 말 것: 지난주 수급 합계만 보고 추격 매수, 신용/미수.",
+    ]
+    return title, "\n".join(lines)
+
+
+def weekly_selftest() -> None:
+    def R(d, f, o):
+        return {"flow_day": d, "foreign": f * 1e8, "organ": o * 1e8,
+                "stocks": {"삼성전자": {"foreign": f * 100, "organ": o * 100, "close": 1}, "SK하이닉스": {"foreign": f, "organ": o, "close": 1}}}
+
+    def at(s):
+        return datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+    st = {}
+    assert weekly_step(st, at("2026-10-30 15:20"), R("20261029", 1, 1), "20261030") == []  # seed
+    assert weekly_step(st, at("2026-10-30 15:40"), R("20261029", 1, 1), "20261030") == [] and st["week_rows"] == []  # rerun after seed
+    for d, fd in (("2026-11-02", "20261030"), ("2026-11-03", "20261102"), ("2026-11-04", "20261103"), ("2026-11-05", "20261104")):
+        assert weekly_step(st, at(f"{d} 15:20"), R(fd, 2, -1), d.replace("-", "")) == [], d  # daily silent
+    assert weekly_step(st, at("2026-11-05 15:25"), R("20261104", 2, -1), "20261105") == []  # same flow_day dedupe
+    assert len(st["week_rows"]) == 4
+    out = weekly_step(st, at("2026-11-06 15:20"), R("20261105", 3, 9), "20261106")
+    assert len(out) == 1 and out[0][0] == "[SAMNIX] 주간 수급 요약 (10/30~11/05) | 참고용 외국인+기관 순매수", out[0][0]
+    t, m = out[0]
+    assert "\u00b7" not in t + m and "\u2014" not in t + m
+    assert [x.split(":")[0] for x in m.split("\n")[1:7]] == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]
+    assert "5거래일 합계 외국인 +11억원" in m, m
+    assert weekly_step(st, at("2026-11-06 15:30"), None, "20261106") == []  # same Friday rerun
+    # missed Friday 11/13 -> Monday 11/16 catch-up (7+ days)
+    for d, fd in (("2026-11-09", "20261106"), ("2026-11-10", "20261109"), ("2026-11-11", "20261110"), ("2026-11-12", "20261111")):
+        assert weekly_step(st, at(f"{d} 15:20"), R(fd, -1, -1), d.replace("-", "")) == []
+    out = weekly_step(st, at("2026-11-16 15:20"), R("20261113", -1, 1), "20261116")
+    assert len(out) == 1 and "11/06~11/13" in out[0][0] and "외국인 순매도" in out[0][0], out
+    assert weekly_step(st, at("2026-11-17 15:20"), None, "20261117") == []  # not due next day
+    # empty week: Friday silent, clock advances, Monday not a catch-up
+    st["week_rows"] = []
+    assert weekly_step(st, at("2026-11-20 15:20"), None, "20261120") == []
+    assert st["last_digest_at"].startswith("2026-11-20")
+    assert weekly_step(st, at("2026-11-23 15:20"), None, "20261123") == []
+    print("weekly selftest OK")
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1] if len(sys.argv) > 1 else "auto"))

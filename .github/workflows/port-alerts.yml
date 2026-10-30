@@ -593,7 +593,10 @@ jobs:
             python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}" "$IRM"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
-            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"
+            # manual job=yencarry/all dispatch is dry unless oneoff_mode=auto (2026-10-30, hysteresis change); schedules and morning stay auto
+            YCM=auto
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then YCM=dry; python scripts/yencarry_monitor.py selftest >/dev/null; fi
+            python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}" "$YCM"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
             MODE="${{ steps.pick.outputs.krwfx_mode }}"
@@ -601,7 +604,10 @@ jobs:
             python scripts/krwfx_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
-            python scripts/port_monitor.py
+            # manual job=port/all dispatch is dry unless oneoff_mode=auto (2026-10-30, verdict-only change rule); morning stays auto
+            PTM=auto
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then PTM=dry; python scripts/port_monitor.py selftest >/dev/null; fi
+            python scripts/port_monitor.py "$PTM"
             python scripts/brk10_monitor.py event
             python scripts/googl_monitor.py event
           fi
