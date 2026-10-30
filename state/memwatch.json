@@ -1,0 +1,195 @@
+{
+  "tf_seen": {
+    "13249": {
+      "date": "2026-09-22",
+      "title": "DRAM Module Revenue Surges 59% YoY in 2025 as Crowding-Out Effect Constrains Chip Supply and Drives Prices Higher, Says TrendForce",
+      "figs": []
+    },
+    "13252": {
+      "date": "2026-09-24",
+      "title": "Japanese and Korean MLCC Makers Cut Consumer Supply to Focus on AI, Chinese Suppliers Enter Global Brand Qualification, Says TrendForce"
+    },
+    "13255": {
+      "date": "2026-09-29",
+      "title": "HBM Supply Constraints Persist, 2027 Price Outlook Revised Upward with Blended ASP Forecast to Rise 121% YoY, Says TrendForce"
+    },
+    "13258": {
+      "date": "2026-09-30",
+      "title": "AI Server Demand Sustains Memory Contract Price Increases in 4Q26, While Consumer-Side Pressure Persists, Says TrendForce",
+      "figs": [
+        {
+          "prod": "dram",
+          "lo": 10.0,
+          "hi": 15.0,
+          "dir": 1,
+          "kind": "forecast",
+          "q": "4Q26"
+        },
+        {
+          "prod": "nand",
+          "lo": 15.0,
+          "hi": 20.0,
+          "dir": 1,
+          "kind": "forecast",
+          "q": "4Q26"
+        }
+      ]
+    },
+    "13260": {
+      "date": "2026-10-08",
+      "title": "Six Leading Suppliers Bet on VCSEL NPO; VCSEL Demand Projected to Reach 650 Million Units by 2031, Says TrendForce"
+    },
+    "13267": {
+      "date": "2026-10-13",
+      "title": "Integrated Optical-Electrical Testing Platforms Become Key to CPO Mass Production, Reshaping the Test Equipment Supply Chain, Says TrendForce"
+    },
+    "13269": {
+      "date": "2026-10-14",
+      "title": "CSP CapEx Projected to Exceed US$1.5 Trillion in 2027, with AI Server Revenue Growing Over 90% YoY on Higher Shipments and Prices, Says TrendForce"
+    },
+    "13275": {
+      "date": "2026-10-19",
+      "title": "Optical Fiber Spot Prices Surge Severalfold in 2026, with Data Center-Driven Supply Shortages Expected to Persist Through 2028, Says TrendForce"
+    },
+    "13279": {
+      "date": "2026-10-22",
+      "title": "Server CPU Shipments Projected to Grow Over 40% YoY in 2027, with Arm-Based Products Continuing to Gain Market Share, Says TrendForce"
+    },
+    "13284": {
+      "date": "2026-10-29",
+      "title": "AI Inference Drives CPU and DDR5 Demand, with High-Capacitance MLCC Shortages Expected to Persist Through 1H27, Says TrendForce"
+    }
+  },
+  "tf_latest": {
+    "dram": {
+      "lo": 10.0,
+      "hi": 15.0,
+      "dir": 1,
+      "kind": "forecast",
+      "q": "4Q26",
+      "date": "2026-09-30",
+      "id": "13258"
+    },
+    "nand": {
+      "lo": 15.0,
+      "hi": 20.0,
+      "dir": 1,
+      "kind": "forecast",
+      "q": "4Q26",
+      "date": "2026-09-30",
+      "id": "13258"
+    }
+  },
+  "px": {
+    "dram": {
+      "2026-03": {
+        "v": 13.0,
+        "src": "wayback",
+        "label": "2H Mar"
+      },
+      "2026-02": {
+        "v": 13.0,
+        "src": "derived",
+        "label": "2H Mar 전기 대비 역산"
+      },
+      "2026-04": {
+        "v": 16.0,
+        "src": "wayback",
+        "label": "2H Apr"
+      },
+      "2026-06": {
+        "v": 21.0,
+        "src": "wayback",
+        "label": "2H Jun"
+      },
+      "2026-05": {
+        "v": 20.0,
+        "src": "derived",
+        "label": "2H Jun 전기 대비 역산"
+      },
+      "2026-08": {
+        "v": 25.0,
+        "src": "live",
+        "label": "2H Aug"
+      },
+      "2026-07": {
+        "v": 23.9992,
+        "src": "derived",
+        "label": "2H Aug 전기 대비 역산"
+      }
+    },
+    "nand": {
+      "2026-01": {
+        "v": 9.458,
+        "src": "wayback",
+        "label": "2H Jan"
+      },
+      "2025-12": {
+        "v": 5.738,
+        "src": "derived",
+        "label": "2H Jan 전기 대비 역산"
+      },
+      "2026-02": {
+        "v": 12.665,
+        "src": "wayback",
+        "label": "2H Feb"
+      },
+      "2026-05": {
+        "v": 26.508,
+        "src": "wayback",
+        "label": "2H May"
+      },
+      "2026-04": {
+        "v": 24.1575,
+        "src": "derived",
+        "label": "2H May 전기 대비 역산"
+      },
+      "2026-06": {
+        "v": 28.82,
+        "src": "wayback",
+        "label": "2H Jun"
+      },
+      "2026-09": {
+        "v": 30.608,
+        "src": "live",
+        "label": "2H Sep"
+      },
+      "2026-08": {
+        "v": 30.4739,
+        "src": "derived",
+        "label": "2H Sep 전기 대비 역산"
+      }
+    }
+  },
+  "px_armed": {
+    "dram": true,
+    "nand": true
+  },
+  "rolling": {
+    "dram": {
+      "last": "2026-08",
+      "base": "2026-05",
+      "chg": 25.0,
+      "v": 25.0,
+      "b": 20.0
+    },
+    "nand": {
+      "last": "2026-09",
+      "base": "2026-06",
+      "chg": 6.2,
+      "v": 30.608,
+      "b": 28.82
+    }
+  },
+  "news_seen": {},
+  "cx_seen": {},
+  "yield_hits": [],
+  "ops_day": {},
+  "seeded_at": "2026-10-30T17:00:02.445236+09:00",
+  "seed_count": {
+    "tf": 10,
+    "news": 0,
+    "cxmt": 0
+  },
+  "updated_at": "2026-10-30T17:00:02.445236+09:00"
+}
