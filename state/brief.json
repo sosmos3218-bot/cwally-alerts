@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-29T16:15:42.262111+09:00",
+  "updated_at": "2026-10-30T20:50:08.715940+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -36,6 +36,42 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-10-29T16:15:42.262111+09:00"
+    },
+    "20261030-kospi-rebound-1.json#839656ca70ee399d": {
+      "file": "20261030-kospi-rebound-1.json",
+      "title": "[BRIEF] 실적 후 반등 성격 판정 10/30 (1/4)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-30T20:50:08.715940+09:00"
+    },
+    "20261030-kospi-rebound-2.json#9e212ca6ac383d18": {
+      "file": "20261030-kospi-rebound-2.json",
+      "title": "[BRIEF] 실적 후 반등 성격 판정 10/30 (2/4)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-30T20:50:08.715940+09:00"
+    },
+    "20261030-kospi-rebound-3.json#f335ce7b5f2a4721": {
+      "file": "20261030-kospi-rebound-3.json",
+      "title": "[BRIEF] 실적 후 반등 성격 판정 10/30 (3/4)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-30T20:50:08.715940+09:00"
+    },
+    "20261030-kospi-rebound-4.json#dbebc629a2323797": {
+      "file": "20261030-kospi-rebound-4.json",
+      "title": "[BRIEF] 실적 후 반등 성격 판정 10/30 (4/4)",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-10-30T20:50:08.715940+09:00"
     }
   },
   "rejected": {},
