@@ -1,0 +1,20 @@
+{
+  "name": "bok",
+  "display": "[BOK] 한국은행 금통위 기준금리 3.25% 도달",
+  "approval": "사용자 채팅 요청 '다음 금통위 결과가 3.25% 이상이면 ntfy로 알려 줘.' (2026-10-30 KST)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule": "기존 평일 19:00 KST k203780 슬롯(KRX 거래일). 새 cron 없음",
+  "threshold": 3.25,
+  "baseline": {"rate": 3.00, "since": "2026-08-27", "verified": "한은 기준금리 추이 표 2026-10-30 확인: 2026-08-27 3.00% (2.75%에서 인상), 2026-10-22 동결", "url": "https://www.bok.or.kr/portal/singl/baseRate/list.do?dataSeCd=01&menuNo=200643"},
+  "next_meeting_verified": {"date": "2026-11-26", "url": "https://www.bok.or.kr/portal/singl/crncyPolicyDrcMtg/listYear.do?mtgSe=A&menuNo=200755&pYear=2026", "note": "2027년 일정은 2026-10-30 기준 한은 페이지에 아직 없음. 실행 때 configs/krrate.json mpc.schedule + 한은 일정 페이지(올해, 내년)를 다시 읽어 합침"},
+  "priority": {"reach": 4, "result": 3},
+  "notify_result_below": true,
+  "notify_result_note": "3.25% 미만(동결, 인하, 3.25% 못 미친 인상)이면 회의 결과 p3 1번. 이미 3.25% 도달 알림을 보낸 뒤 회의는 결과 p3 1번(3.25% 이상 유지 여부 표시). [KR-RATE] 19:00 금통위 요약과 같은 날 함께 옴",
+  "retry_days": 3,
+  "sources": "configs/krrate.json 의 mpc.rules, sources(한은 통화정책방향 보도자료, 한은 기준금리 표, 한은 회의 페이지, 기사 헤드라인) 를 scripts/krrate_monitor.mpc_decision 으로 재사용(읽기 전용). 교차확인: ECOS 722Y001(기존 ECOS_API_KEY secret), 네이버 KROCRT=ECIX",
+  "window_start": "2026-10-31",
+  "window_end": "2027-03-31",
+  "ends_kst": "2027-03-31 19:00",
+  "ends_note": "2027-03-31 19:00 슬롯이 마지막. 그 뒤 조용히 종료"
+}
