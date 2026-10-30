@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1265,6 +1265,19 @@ jobs:
           python scripts/005930_monitor.py "$MODE" || rc=1
           python scripts/000660_monitor.py "$MODE" || rc=1
           exit "$rc"
+      - name: Run SECEARN (005930 earnings call auto-check, manual trigger for the one-time 2026 Q3 backfill)
+        # approved in the 005930_autocheck spec (2026-10-30). The quarterly auto-check itself runs inside the 005930 step above on the
+        # k203780 19:00 slot (no new cron). job=secearn dispatch is dry (selftest + backfill-dry: no ntfy, no state) unless oneoff_mode=auto,
+        # which sends configs/005930.json earn_auto.backfill (2026Q3) once; state/005930.json earn_auto[2026Q3] blocks a repeat.
+        if: steps.pick.outputs.job == 'secearn'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/005930_monitor.py selftest >/dev/null && python scripts/005930_monitor.py backfill-dry; else python scripts/005930_monitor.py backfill; fi
       - name: Run 064400 (LG CNS close-based plan lines, 10/30 earnings check; same engine as 005930, k203780 19:00 slot)
         # approved in chat 2026-10-26. attached to the existing k203780 slot, no new cron. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
