@@ -1,0 +1,64 @@
+{
+  "name": "steelre",
+  "title_prefix": "[STEELRE]",
+  "display": "POSCO홀딩스, 고려아연 재진입 판정 (1회)",
+  "approval": "2026-10-30 채팅 승인 t24u (저장소 밖 예외 없음, cwally-alerts 안에서 다시 만듦), 카드 t24s2 답 '네 소신대로' 18:19 KST. 저장소 밖 루틴 QLc3LuZfQRfCucCB 대체",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "18:00",
+  "oneshot_kst": ["2026-11-19 18:00"],
+  "oneshot_note": "판정 1회. on-time = cron-job.org job=oneshot (cronjob-register.yml), GitHub 백업 cron 0 9 19 11 * (같은 시각, oneshot_pick check-cron 으로 중복 방지). state/steelre.json sent 로 한 번만 발송.",
+  "verdict_kst": "2026-11-19 18:00",
+  "window_end_kst": "2026-11-19 18:30",
+  "event_year": 2026,
+  "ends_kst": "2026-11-19 18:30",
+  "ends_note": "이후 자동 발송 없음",
+  "snapshot_days": ["2026-11-03", "2026-11-06"],
+  "snapshot_note": "평일 09:00 morning 슬롯에 붙음(새 cron 없음). 11/3 (POSCO 11/2 실적 다음 날), 11/6 (고려아연 11/5 실적 다음 날)에만 컨센서스와 목표가를 state/steelre.json snaps 에 조용히 저장. 판정은 10/30 기준값과 비교.",
+  "manual_note": "수동 job=steelre 는 oneoff_mode=auto 가 아니면 selftest + dry (ntfy 없음, state 안 씀).",
+  "stocks": {
+    "005490": {
+      "name": "POSCO홀딩스",
+      "earnings_day": "2026-11-02",
+      "judge_from": "2026-11-16",
+      "related_alert": "[STEEL] (9/15 기준 가격대, 1차 32~33.5만, 2차 30~31.5만, 3차 28~29.5만, 재검토 26만)"
+    },
+    "010130": {
+      "name": "고려아연",
+      "earnings_day": "2026-11-05",
+      "judge_from": "2026-11-19",
+      "related_alert": "[KZ] kzq3 (3분기 실적, 11/7 종료)",
+      "extra_block": true
+    }
+  },
+  "rules": {
+    "a_low_window_days": 365,
+    "a_hold_trading_days": 10,
+    "b_target_drop_max_pct": 5.0,
+    "b_consensus_drop_max_pct": 5.0,
+    "opt1_rebound_mult": 1.05,
+    "opt2_foreign_days": 5,
+    "opt3_rel_days": 20,
+    "need_options": 2,
+    "note": "필수 A: 최근 52주(365일) KRX 정규장 종가 최저(같은 값이면 늦은 날)를 저점으로 보고, 저점 뒤 10거래일 이상 지났고 그 사이 더 낮은 종가가 없으면 충족(저점이 최근 10거래일 안이면 미충족). Daum KRX 일봉만(NXT 제외). 필수 B: 네이버 컨센서스(FnGuide) 2026 연간(E) 영업이익과 EPS, 평균 목표가가 10/30 기준값 대비 각각 5% 넘게 내려가지 않으면 충족. 4분기(E)는 참고로만 표시. 실적 발표 뒤 판정 가능일(POSCO 11/16, 고려아연 11/19) 전이거나 3분기 실적 공시를 KIND에서 못 찾으면 확인 불가. 목표가 변경 횟수는 확인 불가로 적음(추정 안 함). 선택 1 가격 회복: 종가 >= 저점 종가 x1.05 (20일선은 참고 표시만). 선택 2: 외국인 최근 5거래일 누적 순매수(주) > 0 (네이버, 실패 시 Daum). 선택 3: 20거래일 수익률 - 코스피 20거래일 수익률 > 0. 라벨: A 또는 B 확인 불가면 판정 불가, A와 B 충족이고 선택 2개 이상이면 재검토 가능, 그 밖은 보류 유지. 고려아연 추가 블록(경영권분쟁 공시, 3분기 실적 공시, 아연 가격)은 정보만, 라벨을 바꾸지 않음."
+  },
+  "baseline": {
+    "day": "2026-10-30",
+    "source": "m.stock.naver.com integration consensusInfo + finance/annual, finance/quarter (FnGuide 컨센서스). 2026-10-30 18:2x KST 조회",
+    "005490": {"target": 498944, "target_date": "2026-10-29", "fy_op": 30915, "fy_eps": 24080, "q3e_op": 8131, "q4_op_implied": 7526, "q4_note": "연간(E) 30,915 - 1분기 7,068 - 2분기 8,190 - 3분기(E) 8,131", "krx_close": 273500},
+    "010130": {"target": 1480000, "target_date": "2026-10-29", "fy_op": 20899, "fy_eps": 58485, "q3e_op": 3650, "q4_op_implied": 3917, "q4_note": "연간(E) 20,899 - 1분기 7,461 - 2분기 5,871 - 3분기(E) 3,650", "krx_close": 876000},
+    "unit_note": "영업이익 억원, EPS 원, 목표가 원. krx_close = Daum KRX 10/30 종가"
+  },
+  "sources": {
+    "daily": "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page={page}&perPage=100&pagination=true",
+    "kospi": "https://finance.daum.net/api/market_index/days?page=1&perPage=40&market=KOSPI&pagination=true",
+    "integration": "https://m.stock.naver.com/api/stock/{code}/integration",
+    "annual": "https://m.stock.naver.com/api/stock/{code}/finance/annual",
+    "quarter": "https://m.stock.naver.com/api/stock/{code}/finance/quarter",
+    "foreign": "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=10",
+    "foreign_fallback": "https://finance.daum.net/api/investor/days?symbolCode=A{code}&page=1&perPage=10&pagination=true",
+    "kind": "https://kind.krx.co.kr/disclosure/details.do (searchDetailsSub)",
+    "zinc": "https://m.stock.naver.com/front-api/marketIndex/prices?category=metals&reutersCode=CMZN0&page=1&pageSize=25"
+  },
+  "filings_since": "2026-10-30"
+}

@@ -101,8 +101,32 @@ def pick_focus(zones):
     return "BETWEEN"
 
 
+# 2026-10-30 채팅 승인 t24u: POSCO홀딩스가 매수 구간(1~3차)이나 재검토 구간이면 11/19까지 한 줄 덧붙임. 그 밖은 그대로.
+STEELRE_ZONES = {"BUY1", "BUY2", "BUY3", "REVIEW"}
+STEELRE_UNTIL = "2026-11-19"
+STEELRE_LINE = "재진입 판정은 11/19 [STEELRE] 결과 우선 (9/15 기준 가격대)"
+
+
+def steelre_note(rows, today):
+    posco = next((z for key, *_, z in rows if key == "POSCO"), None)
+    return STEELRE_LINE if posco in STEELRE_ZONES and today <= STEELRE_UNTIL else None
+
+
+def selftest():
+    r = lambda z: [("POSCO", {}, {}, 1.0, z), ("HYUNDAI", {}, {}, 1.0, "BUY1")]  # noqa: E731
+    for z, day, want in (("BUY1", "2026-11-19", True), ("BUY3", "2026-10-30", True), ("REVIEW", "2026-11-01", True),
+                         ("BUY2", "2026-11-20", False), ("BETWEEN", "2026-11-01", False), ("ABOVE_BUY1", "2026-11-01", False),
+                         ("TARGET1", "2026-11-01", False)):
+        assert (steelre_note(r(z), day) is not None) == want, (z, day)
+    assert "\u00b7" not in STEELRE_LINE and "\u2014" not in STEELRE_LINE
+    print("steel selftest ok")
+    return 0
+
+
 def main():
     mode = (sys.argv[1] if len(sys.argv) > 1 else "weekly").lower()
+    if mode == "selftest":
+        return selftest()
     cfg = json.loads((ROOT / "configs" / "steel.json").read_text(encoding="utf-8"))
     topic = "cwally-port"
     server = "https://ntfy.sh"
@@ -160,6 +184,9 @@ def main():
         "줄일 때: 포스코 26만, 현대제철 2.5만, 풍산 5.6만 아래면 비중을 줄이고 다시 봅니다.",
         "하지 말 것: 위에서 추격매수, 신용/미수, 철강 비중 {cap}% 초과.".format(cap=cap),
     ]
+    note = steelre_note(rows, datetime.now(KST).strftime("%Y-%m-%d"))
+    if note:
+        lines.insert(lines.index("지금 할 일: " + " ".join(todo)) + 1, note)
     if mode == "quarterly":
         lines.append("분기 확인: 스프레드/리튀/판가/탄약수주. +40% 난 종목은 원래 비중으로 돌리세요.")
 
