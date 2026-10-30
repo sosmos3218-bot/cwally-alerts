@@ -565,6 +565,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          IREN_ONEOFF: ${{ github.event.inputs.oneoff_mode }}
         run: |
           JOB="${{ steps.pick.outputs.job }}"
           # isolate failures: one broken script must not skip the rest (flow-alerts run_one pattern)
@@ -585,7 +586,11 @@ jobs:
             python scripts/lg_monitor.py "${{ steps.pick.outputs.lg_mode }}"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "iren" ]; then
-            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}"
+            # [IREN] weekly news digest (approved in chat 2026-10-30): daily runs queue news silently, Monday (or catch-up
+            # 7+ days) sends one p2 digest; new schedule windows stay immediate p3. Manual dispatch (not morning) is dry unless oneoff_mode=auto.
+            IRM=auto
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then IRM=dry; python scripts/iren_monitor.py selftest >/dev/null; fi
+            python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}" "$IRM"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
             python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}"

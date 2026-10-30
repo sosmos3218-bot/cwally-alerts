@@ -126,5 +126,8 @@
     "https://finance.yahoo.com/technology/ai/articles/nebius-vs-iren-ai-infrastructure-130000823.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/iren-limited-iren-expected-beat-130030024.html?.tsrc=rss",
     "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss"
-  ]
+  ],
+  "last_digest_at": "2026-10-30 09:00 KST",
+  "pending_news": [],
+  "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive"
 }
