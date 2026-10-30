@@ -34,7 +34,15 @@ Events
   earnings  on configs earnings.date (KST session day), one 실적 체크 message, flag earn_done[date];
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
-            not found or feed failed -> "공시 확인 필요".
+            not found or feed failed -> "공시 확인 필요". (005930 used this up to 2026 Q3; still used by 000660/064400.)
+  earn_auto optional configs "earn_auto" (2026-10-30, 005930 only): quarterly earnings auto-check with no hardcoded date.
+            The Naver notice feed gives the quarter (latest 영업(잠정)실적 filing month: Jan-Mar = previous Q4, Apr-Jun Q1,
+            Jul-Sep Q2, Oct-Dec Q3) and the results day (기업설명회(IR) 개최 안내공시 일시, else the quarter's second results
+            filing). On/after the results day: one filing notice (실적 체크), then on every KRX trading-day 19:00 run the
+            디일렉 transcript "삼성전자 YYYY년 N분기 실적발표 컨퍼런스콜 전문" is looked up (scripts/earncall_lib.py, shared
+            with secq3) and the 3 checks are judged 문제없음/경계/확인 불가 with a quoted sentence; one result per quarter
+            (state earn_auto[YYYYQn].sent). No transcript within wait_trading_days -> one 확인 불가 message. Quarters before
+            start_quarter are never sent automatically; mode backfill sends earn_auto.backfill (2026Q3) once.
 Data: judgment uses only the KRX regular-session close from Yahoo chart <code>.KS (chart close +
 regularMarketPrice stamped at/after 15:30 KST). Hold on failure: if Yahoo fails or has no regular close for
 the session, nothing is judged from any other source; a 조회 실패 notice goes to cwally-ops (once a day) and
@@ -43,7 +51,9 @@ after-market price (approved 2026-10-24 21:48 KST): it is only printed as a refe
 ("참고: NXT 애프터마켓 ..."), never judged. No new secret.
 
 Modes: auto (slot) | force (ignore holiday) | dry (print, no ntfy, no state) | selftest (offline checks) |
-       install (one install-confirmation send to cwally-port, no state) | seed (write state from live data, no ntfy)
+       install (one install-confirmation send to cwally-port, no state) | seed (write state from live data, no ntfy) |
+       backfill (005930: send the earn_auto.backfill quarter once, state earn_auto[q]) | backfill-dry (same, print only:
+       no ntfy, no state) | earn-dry (print the live quarter detection and what the earn_auto step would send, no ntfy, no state)
 """
 from __future__ import annotations
 
@@ -59,7 +69,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kr_calendar import is_trading_day, session_day  # noqa: E402
-from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+from ntfy_util import append_ends, publish, resolve_server, resolve_topic  # noqa: E402
+import earncall_lib as ec  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts krplan"}
@@ -740,12 +751,270 @@ def clean(title: str, msg: str) -> None:
             raise ValueError(f"forbidden char U+{ord(ch):04X} in message: {title}")
 
 
+# ---------- earn_auto: quarterly earnings call auto-check (2026-10-30, configs/005930.json) ----------
+def earn_notice_rows(cfg: dict) -> list[dict]:
+    """Naver notice feed with contents (IR notice carries the call date). Titles scrubbed."""
+    raw = get_json(cfg["sources"]["naver_notice"].format(code=cfg["code"]))
+    out = []
+    for r in raw if isinstance(raw, list) else []:
+        r = r or {}
+        out.append({"no": str(r.get("no") or ""), "title": scrub(str(r.get("title") or "").strip()),
+                    "datetime": str(r.get("datetime") or "")[:16].replace("T", " "), "contents": str(r.get("contents") or "")})
+    return out
+
+
+def earn_transcript(ea: dict, y: int, q: int, url: str | None = None, reader=None) -> tuple[str | None, str | None]:
+    """(text, url) for that quarter: the fixed url first (only if its page title matches), then RSS + sitemap."""
+    reader = reader or ec.read_src
+    tconf = dict(ea["transcript"], title_re=ec.title_re_for(ea["transcript"]["title_re"], y, q))
+    if url:
+        try:
+            raw = reader(url)
+            head = raw.decode("utf-8", errors="ignore")[:200000] if raw else ""
+            m = re.search(r'og:title"\s+content="([^"]+)"', head) or re.search(r"<title>(.*?)</title>", head, re.S)
+            text = ec.transcript_body(raw) if raw else ""
+            if m and re.search(tconf["title_re"], m.group(1)) and len(text) > 2000:
+                return text, url
+            print(f"earn transcript url {url}: title mismatch or short body; searching feeds")
+        except Exception as exc:
+            print(f"earn transcript url {url} failed: {exc}")
+    return ec.find_transcript(tconf, reader=reader)
+
+
+EARN_IO = {"notices": earn_notice_rows, "transcript": earn_transcript, "china": ec.china_news}
+
+
+def trading_days_after(start: str, end: str) -> int:
+    d, n = date.fromisoformat(start), 0
+    stop = date.fromisoformat(end)
+    while d < stop:
+        d += timedelta(days=1)
+        n += is_trading_day(d)
+    return n
+
+
+def earn_quarter(cfg: dict, rows: list[dict]) -> dict | None:
+    """Quarter + results day from the notice feed (or configs earn_auto.override)."""
+    ea = cfg["earn_auto"]
+    ov = ea.get("override") or {}
+    fil = [r for r in rows if len(r["datetime"]) >= 10 and any(k in r["title"] for k in ea["filing_keywords"]) and "예고" not in r["title"]]
+    fil.sort(key=lambda r: r["datetime"])
+    if ov.get("quarter"):
+        y, q = ec.parse_qkey(ov["quarter"])
+    elif fil:
+        y, q = ec.quarter_of_filing(date.fromisoformat(fil[-1]["datetime"][:10]))
+    else:
+        return None
+    qf = [r for r in fil if ec.quarter_of_filing(date.fromisoformat(r["datetime"][:10])) == (y, q)]
+    first = qf[0]["datetime"][:10] if qf else None
+    rd, src = (ov.get("results_day"), "설정값") if ov.get("quarter") and ov.get("results_day") else (None, None)
+    if not rd and first:
+        lo = (date.fromisoformat(first) - timedelta(days=1)).isoformat()
+        hi = (date.fromisoformat(first) + timedelta(days=int(ea.get("ir_max_days", 45)))).isoformat()
+        for r in rows:
+            if ea["ir_keyword"] in r["title"] and r["datetime"][:10] >= lo:
+                m = re.search(r"일시\s*(\d{4}-\d{2}-\d{2})", html_text(r.get("contents") or ""))
+                if m and first <= m.group(1) <= hi:
+                    rd, src = m.group(1), "IR 개최 안내공시"
+                    break
+    days = sorted({r["datetime"][:10] for r in qf})
+    if not rd and len(days) >= 2:
+        rd, src = days[-1], "두 번째 실적 공시"
+    return {"key": ec.qkey(y, q), "y": y, "q": q, "label": ec.qlabel(y, q), "first_day": first, "results_day": rd,
+            "results_src": src, "filings": qf, "url": ov.get("transcript_url") if ov.get("quarter") else None}
+
+
+def earn_judge(ea: dict, text: str | None, now: datetime, china_fn=None) -> dict:
+    i1 = ec.judge_item1(text, ea["item1"])
+    i2 = ec.judge_item2(text, ea["item2"])
+    asp = ec.judge_asp(text, float(ea["item3"]["asp_drop_pct"]))
+    china = (china_fn or EARN_IO["china"])(ea["item3"]["china"], now)
+    i3 = ec.judge_item3(asp, china)
+    if not text:  # no transcript: every item is 확인 불가; the China keyword count is shown only as 참고
+        i3 = dict(i3, status=ec.UNK, china_only=False)
+    return {"items": [dict(i1, no=1), dict(i2, no=2), dict(i3, no=3)], "text": bool(text)}
+
+
+def q_text(s: str | None, n: int = 80) -> str:
+    return f'"{ec.cut(scrub(s or "").rstrip(". "), n)}"' if s else "없음"
+
+
+def trims_short(cfg: dict) -> str:
+    return ", ".join(f"{fmt(ln['level'])} {ln['title'].split()[-1]}" for ln in cfg["lines"] if ln["op"] == "ge")
+
+
+def build_earn_result(cfg: dict, qi: dict, j: dict, url: str | None, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    ea = cfg["earn_auto"]
+    i1, i2, i3 = j["items"]
+    asp, china = i3["asp"], i3["china"]
+    tail, todo = ec.conclusion(j["items"], trims_short(cfg), bool(ea["item3"]["china"].get("counts_as_negative")))
+    ny, nq = ec.next_quarter(qi["y"], qi["q"])
+    asp_vals = f"전분기 대비 D램 {asp['dram']['raw'] if asp.get('dram') else '못 읽음'}, 낸드 {asp['nand']['raw'] if asp.get('nand') else '못 읽음'}"
+    if china.get("fail"):
+        ch = f"중국 확인 불가(뉴스 조회 실패: {china['fail']})"
+    elif china["n"]:
+        h = china["hits"][0]
+        ch = f"중국 {china['status']}(키워드): 최근 {ea['item3']['china'].get('window_days', 30)}일 뉴스 제목 키워드 {china['n']}건, 예 {q_text(h['title'], 60)}({h['day']}, 키워드 {h['kw']})"
+    else:
+        ch = f"중국 {china['status']}: 최근 {ea['item3']['china'].get('window_days', 30)}일 뉴스 제목 키워드 0건"
+    if j["text"]:
+        what = (f"이게 뭐 알림: {cfg['short']} {qi['label']} 실적 컨퍼런스콜 전문({ea['transcript']['source_label']}, 언론 받아쓰기라 공식 자료 아님)으로 "
+                "실적 체크 3가지를 자동 판정했습니다. 분기마다 1번만 옵니다. 매수 지시가 아닙니다.")
+        title = f"{cfg['title_prefix']} {qi['label']} 실적 자동 점검 | {tail}"
+        i3_line = (f"- 3) 중국 YMTC/CXMT 출하와 분기 ASP 10% 이상 하락: {i3['status']}. ASP {asp['status']}({asp_vals}), 근거 {q_text(asp.get('evidence'), 70)}. "
+                   f"{ch}. 중국 부분은 뉴스 제목 키워드 기준이라 최종 판단은 기사를 보고 직접 하세요.")
+    else:
+        what = (f"이게 뭐 알림: {cfg['short']} {qi['label']} 실적 발표({qi['results_day'] or qi['first_day']}) 뒤 {ea['wait_trading_days']}거래일 안에 "
+                f"컨퍼런스콜 전문({ea['transcript']['source_label']})이 안 올라와 실적 체크 3가지를 자동 판정하지 못했습니다. 분기마다 1번만 옵니다. 매수 지시가 아닙니다.")
+        title = f"{cfg['title_prefix']} {qi['label']} 실적 자동 점검 | 컨콜 전문 없음, 추가 매수 보류"
+        i3_line = f"- 3) 중국 YMTC/CXMT 출하와 분기 ASP 10% 이상 하락: {i3['status']} (ASP 못 읽음). 참고로 {ch}. 중국 부분은 키워드 기준이라 직접 판단하세요."
+    lines = [
+        head(cfg, stamp),
+        what,
+        f"지금 결과/상태: 1번 {i1['status']}, 2번 {i2['status']}, 3번 {i3['status']}{'(중국 키워드)' if i3.get('china_only') else ''}. 확인 불가는 문제없음으로 세지 않습니다.",
+        f"- 1) 2027년 HBM 장기공급계약(LTA) 물량 축소: {i1['status']}({i1['why']}). 근거 {q_text(i1.get('evidence'))}",
+        f"- 2) CAPEX 강행과 판가 하락 암시: {i2['status']}({i2['why']}). 근거 {q_text(i2.get('evidence'))}"
+        + (f", 투자 {q_text(i2['capex'], 60)}" if i2.get("capex") else ""),
+        i3_line,
+        f"지금 할 일: {todo}",
+        f"나중에: 다음 자동 판정은 {ec.qlabel(ny, nq)} 실적 발표 뒤입니다(영업(잠정)실적 공시와 IR 안내공시로 발표일을 자동으로 찾음)."
+        + (f" 전문: {url}" if url else ""),
+        f"익절/줄일 때: 경계가 있으면 축소선({trims_short(cfg)})을 기다리지 말고 비중 축소 전환 검토. 모두 문제없으면 축소선 그대로.",
+        "하지 말 것: 자동 판정만 믿고 한 번에 매매, 뉴스 제목만으로 결론, 확인 불가를 문제없음으로 읽기, 신용 및 미수.",
+    ] + ([ref] if ref else [])
+    body = "\n".join(lines)
+    if len(body.encode("utf-8")) > 3600:  # ntfy 4096-byte limit incl. the end line: shorten quotes, never drop a section
+        body = body.replace(q_text(i1.get("evidence")), q_text(i1.get("evidence"), 45)).replace(q_text(i2.get("evidence")), q_text(i2.get("evidence"), 45))
+    pri = 4 if any(i["status"] != ec.OK for i in j["items"]) else 3
+    return title, body, pri
+
+
+def build_earn_notice(cfg: dict, qi: dict, filing: dict | None, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    ea = cfg["earn_auto"]
+    page = cfg["sources"]["notice_page"].format(code=cfg["code"])
+    if filing:
+        fl, tail = f"실적 공시 있음: {filing['title']} ({filing['datetime']}).", "공시 확인됨"
+    else:
+        fl, tail = "실적 공시 자동 확인 안 됨, 공시 확인 필요.", "공시 확인 필요"
+    checks = " ".join(f"{i}) {c}." for i, c in enumerate(cfg["checklist"], 1))
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {cfg['short']} {qi['label']} 실적 발표일({qi['results_day']}, {qi['results_src']}) 체크리스트입니다. 매수 지시가 아닙니다.",
+        f"지금 결과/상태: {fl} 공시 목록: {page}",
+        f"지금 할 일: 실적과 컨퍼런스콜에서 다음 3가지를 보세요. {checks} 컨콜 전문이 올라오면 3가지를 자동 판정해서 1번 더 보냅니다"
+        f"(발표일 뒤 {ea['wait_trading_days']}거래일까지, 없으면 확인 불가 1번).",
+        f"나중에: {cfg['plan_rule']} 모두 문제없으면 기존 매수선과 축소선 계획 유지.",
+        f"익절/줄일 때: 하나라도 부정적이면 축소선({trims_short(cfg)})을 기다리지 말고 비중 축소 전환을 검토.",
+        "하지 말 것: 발표 당일 급등락에 추격 매매, 체크 없이 매수선 알림만 따라가기, 신용 및 미수.",
+    ] + ([ref] if ref else []))
+    return f"{cfg['title_prefix']} {qi['label']} 실적 체크 | {tail}", msg, 4
+
+
+def earn_auto_step(cfg: dict, st: dict, now: datetime, stamp: str, ref_fn=None, io: dict | None = None) -> list[tuple]:
+    """Mutates st["earn_auto"]; returns [(title, msg, pri, tags)]. Any lookup failure is silent (next 19:00 run retries)."""
+    ea = cfg.get("earn_auto")
+    if not ea:
+        return []
+    io = {**EARN_IO, **(io or {})}
+    today = session_day(now).isoformat()
+    try:
+        rows = io["notices"](cfg)
+    except Exception as exc:
+        print(f"earn_auto: notice feed failed ({str(exc)[:80]}); retry next run")
+        return []
+    qi = earn_quarter(cfg, rows)
+    if not qi:
+        print("earn_auto: no results filing in the feed; silent")
+        return []
+    print(f"earn_auto: quarter {qi['key']} first filing {qi['first_day']} results day {qi['results_day']} ({qi['results_src']})")
+    if ec.parse_qkey(qi["key"]) < ec.parse_qkey(ea["start_quarter"]):
+        print(f"earn_auto: {qi['key']} is before start_quarter {ea['start_quarter']} (backfill only); silent")
+        return []
+    s = st.setdefault("earn_auto", {}).setdefault(qi["key"], {})
+    if s.get("sent"):
+        print(f"earn_auto: {qi['key']} already sent {s['sent']}; silent")
+        return []
+    sends = []
+    rd = qi["results_day"]
+    ref = ref_fn() if ref_fn else None
+    if rd and today >= rd and not s.get("notice_sent"):
+        lo = (date.fromisoformat(rd) - timedelta(days=1)).isoformat()
+        filing = next((r for r in reversed(qi["filings"]) if r["datetime"][:10] >= lo), None)
+        sends.append(build_earn_notice(cfg, qi, filing, stamp, ref) + (["clipboard"],))
+        s.update(notice_sent=stamp, results_day=rd)
+    start = rd or qi["first_day"]
+    if not start or today < start:
+        return sends
+    if rd:
+        late = trading_days_after(rd, today) >= int(ea["wait_trading_days"])
+    else:
+        late = (date.fromisoformat(today) - date.fromisoformat(start)).days >= int(ea["prelim_wait_days"])
+    text, url = None, None
+    try:
+        text, url = io["transcript"](ea, qi["y"], qi["q"], qi.get("url"))
+    except Exception as exc:
+        print(f"earn_auto: transcript lookup failed ({str(exc)[:80]})")
+    if not text and not late:
+        print(f"earn_auto: {qi['key']} transcript not found yet; retry next trading day")
+        return sends
+    j = earn_judge(ea, text, now, io["china"])
+    sends.append(build_earn_result(cfg, qi, j, url, stamp, ref) + (["bar_chart"],))
+    s.update(sent=stamp, kind="judged" if text else "no_transcript", via="auto", url=url,
+             verdict={str(i["no"]): i["status"] for i in j["items"]})
+    return sends
+
+
+def earn_backfill(cfg: dict, dry: bool, now: datetime | None = None, io: dict | None = None, ref_fn=None) -> int:
+    """Send configs earn_auto.backfill (2026Q3) once. dry: print only (no ntfy, no state)."""
+    io = {**EARN_IO, **(io or {})}
+    ea = cfg["earn_auto"]
+    bf = ea["backfill"]
+    now = now or datetime.now(KST)
+    stamp = now.strftime("%Y-%m-%d %H:%M KST")
+    st = load_state(cfg)
+    y, q = ec.parse_qkey(bf["quarter"])
+    prev = (st.get("earn_auto") or {}).get(bf["quarter"]) or {}
+    if prev.get("sent"):
+        print(f"backfill {bf['quarter']} already sent {prev['sent']}" + ("; dry run still prints the message" if dry else "; silent"))
+        if not dry:
+            return 0
+    text, url = io["transcript"](ea, y, q, bf.get("transcript_url"))
+    if not text:
+        print(f"backfill {bf['quarter']}: transcript not found; nothing sent")
+        return 1
+    qi = {"key": bf["quarter"], "y": y, "q": q, "label": ec.qlabel(y, q), "results_day": bf["results_day"], "first_day": bf["results_day"]}
+    j = earn_judge(ea, text, now, io["china"])
+    ref = (ref_fn or (lambda: ref_text([nxt_ref(cfg, None, now)])))()
+    title, msg, pri = build_earn_result(cfg, qi, j, url, stamp, ref)
+    clean(title, msg)
+    for i in j["items"]:
+        print(f"item {i['no']}: {i['status']} | {i.get('why')} | evidence: {scrub(i.get('evidence') or '-')}")
+        if i["no"] == 3:
+            print(f"  ASP: {i['asp']['status']} | {i['asp']['why']} | dram={(i['asp'].get('dram') or {}).get('raw')} nand={(i['asp'].get('nand') or {}).get('raw')}")
+            print(f"  China: {i['china']['status']} | n={i['china']['n']} fail={i['china'].get('fail')}")
+            for h in i["china"]["hits"][:10]:
+                print(f"    {h['day']} [{h['kw']}] {scrub(h['title'])}")
+    full = append_ends(msg, cfg["name"])
+    print(title)
+    print(full)
+    print(f"[{len(full.encode('utf-8'))} bytes] topic=cwally-port send={not dry}")
+    if dry:
+        print("DRY RUN: no ntfy, no state")
+        return 0
+    publish(resolve_topic("port", cfg.get("ntfy_topic")), title, msg, pri, ["bar_chart"], resolve_server(cfg.get("ntfy_server")))
+    st.setdefault("earn_auto", {})[bf["quarter"]] = {"sent": stamp, "kind": "judged", "via": "backfill", "url": url,
+                                                     "verdict": {str(i["no"]): i["status"] for i in j["items"]}}
+    save_state(cfg, st)
+    return 0
+
+
 # ---------- run ----------
 def load_cfg(name: str) -> dict:
     return json.loads((ROOT / "configs" / f"{name}.json").read_text(encoding="utf-8"))
 
 
-def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None, notice_fn=None) -> list[tuple]:
+def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None, notice_fn=None,
+               earn_io: dict | None = None) -> list[tuple]:
     """Mutates st; returns [(title, msg, pri, tags)]. Only data['rows'] (Yahoo regular closes) can fire a line;
     ref_fn(cfg, rows, now) only formats the NXT reference line of a message that is already being sent."""
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -759,6 +1028,8 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
         return cache[c["code"]]
 
     sends = []
+    if cfg.get("earn_auto"):
+        sends += earn_auto_step(cfg, st, now, stamp, lambda: ref_text([ref(cfg, data.get("rows"))]), earn_io)
     d = earnings_due(cfg, st, today)
     if d:
         filing, ffail = None, None
@@ -836,6 +1107,21 @@ def run(name: str, argv: list[str]) -> int:
     cfg = load_cfg(name)
     if mode == "selftest":
         return selftest(name)
+    if mode in {"backfill", "backfill-dry"}:
+        if not cfg.get("earn_auto"):
+            print(f"{name}: no earn_auto in config; nothing to backfill")
+            return 1
+        return earn_backfill(cfg, dry=mode == "backfill-dry")
+    if mode == "earn-dry":
+        if not cfg.get("earn_auto"):
+            print(f"{name}: no earn_auto in config")
+            return 0
+        now = datetime.now(KST)
+        print("DRY RUN (earn_auto only)")
+        for t, m, _, _ in earn_auto_step(cfg, copy.deepcopy(load_state(cfg)), now, now.strftime("%Y-%m-%d %H:%M KST")):
+            print(t)
+            print(append_ends(m, name))
+        return 0
     dry = mode in {"dry", "test", "dry-run"}
     if dry:
         print("DRY RUN")
@@ -993,6 +1279,8 @@ def _selftest(name: str, orig: dict) -> int:
     _selftest_rest(name, cfg, seed, check, at, orig, tk, b1, tl, lv, sp)
     if extras:
         _selftest_extra(name, check, at)
+    if load_cfg(name).get("earn_auto"):
+        _selftest_earn(name, check, at)
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
@@ -1034,6 +1322,187 @@ def _selftest_extra(name, check, at) -> None:
             low = plan["stop"]["level"] - 1
             _, m2, _ = build_extra(full, [dict(e, close=low)], {"rows": [{"day": "2026-11-20", "close": low}]}, "x")
             check(f"extra {ln['key']}: no buy advice under stop", ln["action"] in m2, False)
+
+
+# ---- earn_auto fixtures (offline). 문제없음 / 경계 / 확인 불가 for each item, plus flow, dedupe, backfill.
+EARN_FIX = {
+    "ok": "\n".join([
+        "이에 전분기 대비 회사 D램 평균판매가격(ASP)은 약 20%, 낸드 ASP는 10% 후반 상승했다.",
+        "2026년 연간 시설 투자 규모는 84조원으로 전년 대비 증가할 것으로 예상된다.",
+        "Q. 메모리 장기공급계약(LTA) 축소 우려는 없나요?",
+        "2027년 HBM 공급 물량은 목표 수준의 가격으로 협상이 완료돼 이미 완판된 상태다.",
+        "일부 고객과는 장기공급계약을 완료했고 추가 고객과 협상을 진행 중이다.",
+        "부품 가격 상승에 따른 완제품 판매가격 인상 영향으로 스마트폰 수요가 감소했다.",
+        "환율 하락의 영향으로 부품 사업 이익이 줄었다.",
+    ]),
+    "warn": "\n".join([
+        "이에 전분기 대비 회사 D램 ASP는 10% 초반 하락했고 낸드 ASP는 한 자릿수 후반 하락했다.",
+        "2027년 시설 투자는 큰 폭으로 증가할 것으로 예상된다.",
+        "4분기 D램 가격은 하락 전환이 불가피할 것으로 보인다.",
+        "일부 고객과 2027년 HBM 장기공급계약 물량을 재협상하고 있다.",
+    ]),
+    "neg": "\n".join([  # negated warn words, no CAPEX/price sentence at all -> item1 문제없음, item2 확인 불가
+        "장기공급계약 물량 축소는 없다.",
+        "D램 평균판매가격은 40% 중반 상승했다.",
+    ]),
+    "none": "회사는 주주환원을 검토하고 있다. 신제품 출시를 준비한다.",
+}
+
+
+def _china_rss(items: list[tuple[str, str]]) -> bytes:
+    body = "".join(f"<item><title>{t}</title><pubDate>{d}</pubDate></item>" for t, d in items)
+    return f"<rss><channel>{body}</channel></rss>".encode()
+
+
+def _selftest_earn(name, check, at) -> None:
+    cfg = load_cfg(name)
+    ea = cfg["earn_auto"]
+    now = at("2026-10-30")
+    cconf = ea["item3"]["china"]
+    no_china = lambda c, n: {"status": ec.OK, "fail": None, "hits": [], "n": 0}  # noqa: E731
+    # item judgments on fixtures
+    st = {k: [i["status"] for i in earn_judge(ea, v, now, no_china)["items"]] for k, v in EARN_FIX.items()}
+    check("earn fixture ok: 문제없음 x3", st["ok"], [ec.OK, ec.OK, ec.OK])
+    check("earn fixture warn: 경계 x3", st["warn"], [ec.WARN, ec.WARN, ec.WARN])
+    check("earn fixture negated/no capex: 1 문제없음, 2 확인 불가, 3 확인 불가(낸드 없음)", st["neg"], [ec.OK, ec.UNK, ec.UNK])
+    check("earn fixture unrelated text: 확인 불가 x3", st["none"], [ec.UNK, ec.UNK, ec.UNK])
+    check("earn no transcript: 확인 불가 x3", [i["status"] for i in earn_judge(ea, None, now, no_china)["items"]], [ec.UNK] * 3)
+    i1 = ec.judge_item1(EARN_FIX["ok"], ea["item1"])
+    check("item1 evidence prefers 2027 HBM answer, never the question", ("2027년 HBM" in i1["evidence"], i1["evidence"].startswith("Q")), (True, False))
+    i2 = ec.judge_item2(EARN_FIX["warn"], ea["item2"])
+    check("item2 경계 quotes the price-decline and the CAPEX sentence", ("하락" in i2["evidence"], "시설 투자" in i2["capex"]), (True, True))
+    check("item2 ok: set price/FX decline lines are not a memory price hint", ec.judge_item2(EARN_FIX["ok"], ea["item2"])["why"], "설비 투자 확대 문장은 있으나 판가 하락 암시 없음")
+    a = ec.judge_asp(EARN_FIX["warn"], -10.0)
+    check("item3 ASP D램 -12% <= -10% 경계", (a["status"], a["dram"]["pct"]), (ec.WARN, -12.0))
+    check("item3 ASP -8% only is not 경계", ec.judge_asp("D램 ASP는 한 자릿수 후반 하락했다. 낸드 ASP는 소폭 상승했다.", -10.0)["status"], ec.OK)
+    # China news keywords (window, names, keyword, dedupe, failure)
+    rss = _china_rss([("CXMT, 물량 공세로 삼전닉스 압박 - 뉴스1", "Tue, 20 Oct 2026 03:00:00 GMT"),
+                      ("CXMT, 물량 공세로 삼전닉스 압박 - 다른매체", "Tue, 20 Oct 2026 04:00:00 GMT"),
+                      ("YMTC 신임 대표 선임 - A", "Wed, 21 Oct 2026 03:00:00 GMT"),
+                      ("삼성전자 출하 확대 - B", "Wed, 21 Oct 2026 03:00:00 GMT"),
+                      ("CXMT 저가 공급 - C", "Mon, 01 Sep 2026 03:00:00 GMT")])
+    ch = ec.china_news(cconf, now, lambda u: rss)
+    check("china: keyword + name in 30 days, dedupe by headline", (ch["status"], ch["n"], ch["hits"][0]["kw"]), (ec.WARN, 1, "물량 공세"))
+    check("china: no hit -> 문제없음", ec.china_news(cconf, now, lambda u: _china_rss([("YMTC 신임 대표 - A", "Wed, 21 Oct 2026 03:00:00 GMT")]))["status"], ec.OK)
+
+    def down(u):
+        raise RuntimeError("HTTP 503")
+    check("china: feed failure -> 확인 불가", ec.china_news(cconf, now, down)["status"], ec.UNK)
+    j = earn_judge(ea, EARN_FIX["ok"], now, lambda c, n: ch)
+    check("ok transcript + China keyword -> item3 경계(china_only)", (j["items"][2]["status"], j["items"][2]["china_only"]), (ec.WARN, True))
+    trims = trims_short(cfg)
+    check("conclusion: China keyword only -> 보류", ec.conclusion(j["items"], trims)[0], "추가 매수 보류, 중국 기사 확인")
+    check("conclusion: counts_as_negative -> 중단", ec.conclusion(j["items"], trims, True)[0], "추가 매수 중단, 비중 축소 검토")
+    jw = earn_judge(ea, EARN_FIX["warn"], now, no_china)
+    check("conclusion: 경계 -> 추가 매수 중단, 축소선 언급", (ec.conclusion(jw["items"], trims)[0], "260,000원 30%" in ec.conclusion(jw["items"], trims)[1]),
+          ("추가 매수 중단, 비중 축소 검토", True))
+    jn = earn_judge(ea, EARN_FIX["neg"], now, no_china)
+    check("conclusion: 확인 불가 mixed -> names items, 보류", ec.conclusion(jn["items"], trims), ("추가 매수 보류", ec.conclusion(jn["items"], trims)[1]))
+    check("conclusion: 확인 불가 names 2, 3", "확인 불가 2, 3번" in ec.conclusion(jn["items"], trims)[1], True)
+    check("conclusion: all ok -> 기존 계획 유지", ec.conclusion(earn_judge(ea, EARN_FIX["ok"], now, no_china)["items"], trims)[0], "기존 계획 유지")
+    # quarter detection from the notice feed
+    ir = {"no": "3", "title": "삼성전자(주) 기업설명회(IR) 개최(안내공시)", "datetime": "2026-10-08 08:05",
+          "contents": "<style>.x{}</style><td>1. 일시 및 장소</td><td>일시</td><td>2026-10-29</td><td>10:00</td>"}
+    rows_q3 = [{"no": "5", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""},
+               {"no": "4", "title": "삼성전자(주) (정정)연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""}, ir,
+               {"no": "2", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-08 07:44", "contents": ""},
+               {"no": "1", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-07-30 06:50", "contents": ""}]
+    q = earn_quarter(cfg, rows_q3)
+    check("quarter: Oct filings -> 2026Q3, results day from IR notice", (q["key"], q["first_day"], q["results_day"], q["results_src"]),
+          ("2026Q3", "2026-10-08", "2026-10-29", "IR 개최 안내공시"))
+    q = earn_quarter(cfg, [r for r in rows_q3 if r is not ir])
+    check("quarter: no IR -> second results filing day", (q["results_day"], q["results_src"]), ("2026-10-29", "두 번째 실적 공시"))
+    pre = {"no": "6", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2027-01-07 07:40", "contents": ""}
+    ir4 = dict(ir, no="7", datetime="2027-01-07 08:05", contents="일시 2027-01-28 10:00")
+    q4 = earn_quarter(cfg, [ir4, pre] + rows_q3)
+    check("quarter: Jan 2027 prelim -> 2026Q4 (label, next)", (q4["key"], q4["label"], q4["results_day"], ec.next_quarter(q4["y"], q4["q"])),
+          ("2026Q4", "2026년 4분기", "2027-01-28", (2027, 1)))
+    q4b = earn_quarter(cfg, [pre] + rows_q3)
+    check("quarter: prelim only -> results day unknown", (q4b["key"], q4b["results_day"]), ("2026Q4", None))
+    ov = dict(cfg, earn_auto=dict(ea, override={"quarter": "2027Q1", "results_day": "2027-04-30", "transcript_url": "u"}))
+    check("quarter: config override", (earn_quarter(ov, rows_q3)["key"], earn_quarter(ov, rows_q3)["results_day"], earn_quarter(ov, rows_q3)["url"]),
+          ("2027Q1", "2027-04-30", "u"))
+    check("title_re: comma variant and the real title", [bool(re.search(ec.title_re_for(ea["transcript"]["title_re"], 2026, 3), t)) for t in
+          ("삼성전자 2026년 3분기 실적발표 컨퍼런스콜 전문", "삼성전자, 2026년 3분기 실적발표 컨퍼런스콜 전문", "SK하이닉스 2026년 3분기 실적발표 컨퍼런스콜 전문",
+           "삼성전자 2026년 2분기 실적발표 컨퍼런스콜 전문")], [True, True, False, False])
+    # flow: Q4 2026 (start_quarter) on the 19:00 slots
+    found = {"text": None}
+    io = {"notices": lambda c: [ir4, pre] + rows_q3,
+          "transcript": lambda e, y, qq, url=None: (found["text"], "https://www.thelec.kr/news/articleView.html?idxno=1" if found["text"] else None),
+          "china": no_china}
+    s = {"earn_auto": {}}
+
+    def step(d, h=19):
+        return [t for t, *_ in earn_auto_step(cfg, s, at(d, h), f"{d} {h}:00 KST", None, io)]
+    check("flow: before results day silent", step("2027-01-27"), [])
+    check("flow: results day, no transcript yet -> filing notice only",
+          step("2027-01-28"), [f"{cfg['title_prefix']} 2026년 4분기 실적 체크 | 공시 확인 필요"])
+    check("flow: next day still no transcript -> silent", step("2027-01-29"), [])
+    found["text"] = EARN_FIX["warn"]
+    check("flow: transcript found -> one judged result", step("2027-02-01"), [f"{cfg['title_prefix']} 2026년 4분기 실적 자동 점검 | 추가 매수 중단, 비중 축소 검토"])
+    check("flow: state marks the quarter", (s["earn_auto"]["2026Q4"]["kind"], s["earn_auto"]["2026Q4"]["verdict"]), ("judged", {"1": ec.WARN, "2": ec.WARN, "3": ec.WARN}))
+    check("flow: second run same quarter silent", step("2027-02-02"), [])
+    found["text"], s = None, {"earn_auto": {}}
+    step("2027-01-28")
+    days = ["2027-01-29", "2027-02-01", "2027-02-02", "2027-02-03", "2027-02-04", "2027-02-05"]
+    got = [step(d) for d in days]
+    check(f"flow: no transcript within {ea['wait_trading_days']} trading days -> one 확인 불가 message on the 5th",
+          got, [[], [], [], [], [f"{cfg['title_prefix']} 2026년 4분기 실적 자동 점검 | 컨콜 전문 없음, 추가 매수 보류"], []])
+    check("flow: no-transcript kind", (s["earn_auto"]["2026Q4"]["kind"], s["earn_auto"]["2026Q4"]["verdict"]), ("no_transcript", {"1": ec.UNK, "2": ec.UNK, "3": ec.UNK}))
+    s = {"earn_auto": {}}
+    io_q3 = dict(io, notices=lambda c: rows_q3)
+    found["text"] = EARN_FIX["ok"]
+    check("flow: 2026Q3 is before start_quarter -> never automatic", [t for t, *_ in earn_auto_step(cfg, s, at("2026-10-30"), "x", None, io_q3)], [])
+
+    def feed_down(c):
+        raise RuntimeError("HTTP 500")
+    check("flow: notice feed down -> silent, no state", (earn_auto_step(cfg, s, at("2027-01-28"), "x", None, dict(io, notices=feed_down)), s), ([], {"earn_auto": {}}))
+    # messages: six-item order (bullet lines skipped), forbidden chars, routing, size
+    qi = {"key": "2026Q3", "y": 2026, "q": 3, "label": "2026년 3분기", "results_day": "2026-10-29", "first_day": "2026-10-08", "results_src": "IR 개최 안내공시"}
+    dirty = dict(ch, hits=[dict(ch["hits"][0], title="CXMT, 삼전\u00b7하닉 제치고 \u2014 물량 공세 - X")])
+    msgs = [build_earn_result(cfg, qi, earn_judge(ea, t, now, (lambda c, n, d=dirty: d)), "https://x", "2026-10-30 19:00 KST", "참고: x.")
+            for t in (EARN_FIX["ok"], EARN_FIX["warn"], EARN_FIX["neg"], None, EARN_FIX["ok"] + "\n고성능\u00b7고용량 장기공급계약을 체결했다.")]
+    msgs.append(build_earn_notice(cfg, qi, None, "2026-10-30 19:00 KST", "참고: x."))
+    order = ["이게 뭐 알림:", "지금 결과/상태:", "지금 할 일:", "나중에:", "익절/줄일 때:", "하지 말 것:"]
+    bad_order = [t for t, m, _ in msgs if [x.split(":")[0] + ":" for x in m.split("\n")[1:] if not x.startswith(("- ", "참고:"))] != order]
+    check("earn messages: six-item order", bad_order, [])
+    check("earn messages: no middle dot / em-dash", [t for t, m, _ in msgs if any(c in t + m for c in FORBIDDEN)], [])
+    from ntfy_util import route_topic
+    check("earn messages: all routed to cwally-port (titles avoid ops words)", sorted({route_topic("cwally-port", t) for t, *_ in msgs}), ["cwally-port"])
+    check("earn messages: under 3,700 bytes with the end line", [t for t, m, _ in msgs if len(append_ends(m, name).encode("utf-8")) > 3700], [])
+    check("earn messages: China part says keyword-based, manual", all("키워드" in m and "직접" in m for _, m, _ in msgs[:5]), True)
+    check("earn no-transcript message says 확인 불가 and 보류", ("확인 불가" in msgs[3][1], "보류" in msgs[3][0]), (True, True))
+    # backfill: dry writes nothing; real send writes only earn_auto[2026Q3] once; missing transcript sends nothing
+    g = globals()
+    import tempfile
+    keep = {k: g[k] for k in ("state_path", "publish")}
+    sent = []
+    bio = {"transcript": lambda e, y, qq, url=None: (EARN_FIX["ok"], url), "china": no_china}
+    with tempfile.TemporaryDirectory() as tmp:
+        sp = Path(tmp) / f"{name}.json"
+        sp.write_text(json.dumps(load_state(cfg), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        before = sp.read_text(encoding="utf-8")
+        g["state_path"] = lambda n: sp
+        g["publish"] = lambda *a, **k: sent.append(a[1])
+        try:
+            rc = earn_backfill(cfg, False, now, dict(bio, transcript=lambda *a, **k: (None, None)))
+            check("backfill: no transcript -> rc 1, no send, no state", (rc, sent, sp.read_text(encoding="utf-8") == before), (1, [], True))
+            rc = earn_backfill(cfg, True, now, bio, lambda: "참고: x.")
+            check("backfill dry: rc 0, no send, state file unchanged", (rc, sent, sp.read_text(encoding="utf-8") == before), (0, [], True))
+            rc = earn_backfill(cfg, False, now, bio, lambda: "참고: x.")
+            after = json.loads(sp.read_text(encoding="utf-8"))
+            check("backfill real: one send, title", (rc, sent), (0, [f"{cfg['title_prefix']} 2026년 3분기 실적 자동 점검 | 기존 계획 유지"]))
+            check("backfill real: only earn_auto added", ({k: v for k, v in after.items() if k != "earn_auto"} == json.loads(before), sorted(after["earn_auto"])),
+                  (True, ["2026Q3"]))
+            rc = earn_backfill(cfg, False, now, bio, lambda: "참고: x.")
+            check("backfill again: silent", (rc, len(sent)), (0, 1))
+        finally:
+            g.update(keep)
+    check("2026Q3 backfill mark also blocks the automatic path", earn_auto_step(dict(cfg, earn_auto=dict(ea, start_quarter="2026Q3")),
+          {"earn_auto": {"2026Q3": {"sent": "x"}}}, at("2026-10-30"), "x", None, io_q3), [])
+    # secq3 keeps the same functions (moved, not changed)
+    import secq3_monitor as sq
+    check("secq3 uses the shared parser objects", (sq.asp_pick is ec.asp_pick, sq.judge_check2 is ec.judge_check2, sq.transcript_body is ec.transcript_body), (True, True, True))
 
 
 def _selftest_ladder(check, feed, lv) -> None:

@@ -130,6 +130,7 @@
   },
   "call_addon": {
     "note": "체크1 범용 메모리 가격, 체크2 장기공급계약 가격 구조. 결과 발송 뒤 별도 메시지 1회, R1~R5 점수에 넣지 않음. 2026-10-28 사용자 승인, Aside 설정.",
+    "code_note": "2026-10-30: 전문 찾기, ASP, LTA 해석 코드를 scripts/earncall_lib.py 로 그대로 옮겨 [005930] earn_auto 와 같이 씀. 이 알림의 동작과 state 는 그대로.",
     "rss_url": "https://www.thelec.kr/rss/allArticle.xml",
     "list_url": "https://www.thelec.kr/news/articleList.html?sc_sub_section_code=S2N6&view_type=sm",
     "title_re": "삼성전자\\s*2026년\\s*3분기\\s*실적발표\\s*컨퍼런스콜\\s*전문",

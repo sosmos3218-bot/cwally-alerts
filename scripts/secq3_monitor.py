@@ -669,10 +669,13 @@ def gather(cfg: dict, state: dict, now: datetime, opts: dict) -> dict:
 
 # ---------- call add-on: check 1 (commodity ASP) / check 2 (LTA price structure) ----------
 
-ASP_WORDS = ("평균 판매 단가", "평균판매단가", "평균 판매가", "평균판매가", "판매 단가", "ASP", "판가")
-UP_WORDS = ("상승", "인상", "증가", "올랐", "개선")
-DOWN_WORDS = ("하락", "인하", "감소", "떨어", "내렸")
-POS_ADJ = {"초반": 2.0, "중반": 5.0, "후반": 8.0}
+# Moved to scripts/earncall_lib.py on 2026-10-30 (shared with the [005930] quarterly earnings auto-check).
+# Same code, same names; this module's behaviour is unchanged.
+from earncall_lib import (  # noqa: E402,F401
+    ASP_WORDS, DOWN_WORDS, NEG_AFTER, POS_ADJ, UP_WORDS, amount, asp_pick, direction, judge_check1, judge_check2,
+    sentences, transcript_body,
+)
+import earncall_lib  # noqa: E402
 
 
 def kst_at(s: str) -> datetime:
@@ -685,130 +688,9 @@ def read_src(src: str) -> bytes | None:
     return Path(src).read_bytes()
 
 
-def transcript_body(raw: bytes) -> str:
-    s = raw.decode("utf-8", errors="ignore")
-    i = s.find('id="article-view-content-div"')
-    if i >= 0:
-        j = s.find("</article>", i)
-        s = s[i: j if j > 0 else None]
-    s = re.sub(r"<(script|style|figure)[^>]*>.*?</\1>", "", s, flags=re.S | re.I)
-    s = re.sub(r"<br\s*/?>|</(p|div|h\d|li)>", "\n", s, flags=re.I)
-    s = re.sub(r"<[^>]+>", "", s)
-    s = unescape(s).replace("\xa0", " ")
-    return "\n".join(x.strip() for x in s.splitlines() if x.strip())
-
-
 def find_transcript(ca: dict, list_src: str | None = None) -> tuple[str | None, str | None]:
     """(body text, url) of the Samsung call transcript from the RSS feed or the list pages."""
-    title_re = re.compile(ca["title_re"])
-    srcs = [list_src] if list_src else [ca["rss_url"]] + [ca["list_url"] + f"&page={n}" for n in (1, 2, 3)]
-    for src in srcs:
-        try:
-            raw = read_src(src)
-        except Exception as exc:
-            print(f"transcript list skipped ({src}): {exc}", file=sys.stderr)
-            continue
-        if not raw:
-            continue
-        s = raw.decode("utf-8", errors="ignore")
-        pairs = re.findall(r"<title>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*</title>\s*<link>\s*(.*?)\s*</link>", s, re.S)
-        pairs += [(t, u) for u, t in re.findall(r'href="([^"]*articleView\.html\?idxno=\d+)"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{6,160})', s)]
-        for title, url in pairs:
-            if title_re.search(unescape(title).strip()):
-                url = unescape(url).strip()
-                if not url.startswith("http"):
-                    url = "https://www.thelec.kr" + url
-                body = read_src(url)
-                text = transcript_body(body) if body else ""
-                if len(text) > 2000:
-                    return text, url
-    return None, None
-
-
-def sentences(text: str) -> list[str]:
-    return [x.strip() for x in re.split(r"(?<=[.?!다])\s+|\n", text) if x.strip()]
-
-
-def amount(seg: str) -> float | None:
-    """'40% 중반' -> 45, '90%대 초반' -> 92, '한 자릿수 후반' -> 8, '두 자릿수' -> 10, '소폭' -> 2."""
-    m = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%\s*대?\s*(초반|중반|후반)?", seg)
-    if m:
-        return float(m.group(1)) + POS_ADJ.get(m.group(2) or "", 0.0)
-    m = re.search(r"(한|두)\s*자리\s*수\s*(초반|중반|후반)?|(한|두)\s*자릿수\s*(초반|중반|후반)?", seg)
-    if m:
-        tens = m.group(1) or m.group(3)
-        adj = m.group(2) or m.group(4)
-        if tens == "한":
-            return POS_ADJ.get(adj or "", 5.0) if adj else 5.0
-        return 10.0 + POS_ADJ.get(adj or "", 0.0)
-    if "소폭" in seg:
-        return 2.0
-    if re.search(r"보합|비슷|유사|변동\s*없", seg):
-        return 0.0
-    return None
-
-
-def direction(seg: str, sent: str) -> int | None:
-    for part in (seg, sent):
-        up = any(w in part for w in UP_WORDS)
-        down = any(w in part for w in DOWN_WORDS)
-        if up != down:
-            return 1 if up else -1
-    return None
-
-
-def asp_pick(text: str) -> dict:
-    """First actual (not outlook) ASP sentence for DRAM and NAND. Values signed in %."""
-    sents = [x for x in sentences(text) if any(w in x for w in ASP_WORDS)
-             and not re.search(r"스마트폰|세트|모바일 기기|부품 원가|MLCC", x)]
-    actual = [x for x in sents if not re.search(r"전망|예상|계획|예정|것으로 보", x)]
-    out: dict = {"outlook": next((x for x in sents if re.search(r"전망|예상", x) and re.search(r"D램|낸드|DRAM|NAND", x)), None)}
-    for key, pat, other in (("dram", r"D램|DRAM", r"낸드|NAND"), ("nand", r"낸드|NAND", r"D램|DRAM")):
-        for x in actual:
-            m = re.search(pat, x)
-            if not m:
-                continue
-            seg = x[m.end():]
-            o = re.search(other, seg)
-            seg = seg[: o.start()] if o else seg
-            a, dsign = amount(seg), direction(seg, x)
-            if a is None or dsign is None:
-                continue
-            raw = re.search(r"(\d{1,3}(?:\.\d+)?\s*%\s*대?\s*(?:초반|중반|후반)?|(?:한|두)\s*(?:자리\s*수|자릿수)\s*(?:초반|중반|후반)?|소폭|보합)", seg)
-            out[key] = {"pct": a * dsign, "raw": (raw.group(0).strip() if raw else seg.strip()[:12]) + (" 상승" if dsign > 0 else " 하락"),
-                        "sent": x}
-            break
-    return out
-
-
-def judge_check1(asp: dict, ca: dict) -> tuple[str, str]:
-    d, n = asp.get("dram"), asp.get("nand")
-    if not d:
-        return "확인 불가", "전문에 D램 ASP 문장 없음"
-    if d["pct"] < 0 or (n and n["pct"] < 0):
-        return "경계", "ASP 하락 전환"
-    if d["pct"] >= ca["dram_keep_min_pct"] and (n is None or n["pct"] >= ca["nand_keep_min_pct"]):
-        return "유지", f"D램 +{ca['dram_keep_min_pct']:g}% 이상"
-    return "관찰", f"D램 상승폭 +{ca['dram_keep_min_pct']:g}% 미만"
-
-
-NEG_AFTER = r"[^.]{0,20}(?:없|않|아니)"
-
-
-def judge_check2(text: str, ca: dict) -> tuple[str, str, str | None]:
-    sents = sentences(text)
-    lta = [x for x in sents if any(w in x for w in ca["lta_words"])]
-    warn = [x for x in lta if any(re.search(re.escape(w), x) and not re.search(re.escape(w) + NEG_AFTER, x)
-                                  for w in ca["lta_warn_words"])]
-    keep = [x for x in sents if any(w in x for w in ca["lta_keep_words"]) and re.search(r"가격|floor", x, re.I)]
-    share = next((m.group(0) for x in lta for m in [re.search(r"\d{2}\s*[~∼-]\s*\d{2}\s*%", x)] if m), None)
-    if warn:
-        return "경계", "축소/재협상/취소 언급", warn[0]
-    if keep:
-        return "유지", "하한가격 언급 유지" + (f", 계약 비중 {share}" if share else ""), keep[0]
-    if lta:
-        return "관찰", "장기계약 언급은 있으나 하한가 언급 없음", lta[0]
-    return "확인 불가", "전문에 장기계약 언급 없음", None
+    return earncall_lib.find_transcript(ca, list_src, reader=read_src)
 
 
 def build_call(cfg: dict, text: str, now: datetime, url: str | None) -> tuple[str, str]:
