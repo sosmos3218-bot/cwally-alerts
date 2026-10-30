@@ -3,12 +3,12 @@
     "l855": true,
     "l830": true,
     "l819": true,
-    "l905": false
+    "l905": true
   },
   "stop": false,
   "last_bar": {
-    "day": "2026-10-29",
-    "close": 935.87
+    "day": "2026-10-30",
+    "close": 899.78
   },
   "last_sent": {
     "at": "2026-10-28 15:41 KST",
@@ -19,5 +19,5 @@
   },
   "last_fail_day": null,
   "seed_note": "2026-10-26 seed: all lines armed, baseline 10/23 close 862.77 (user wants the 10/26 15:40 run to send 1차 if close <= 855).",
-  "updated_at": "2026-10-29 15:41 KST"
+  "updated_at": "2026-10-30 15:40 KST"
 }

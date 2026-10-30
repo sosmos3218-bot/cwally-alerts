@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-29 15:40 KST",
+  "updated_at": "2026-10-30 15:40 KST",
   "fired": {
     "close_break": false,
     "intraday_break": false,
-    "flow_expand": false,
+    "flow_expand": true,
     "reversal": false
   },
   "flow_days": [
@@ -38,29 +38,32 @@
     {
       "day": "2026-10-29",
       "foreign": 721.0
+    },
+    {
+      "day": "2026-10-30",
+      "foreign": -16173.0
     }
   ],
   "seen_links": [],
   "last_sent": {
-    "at": "2026-10-23 15:40 KST",
+    "at": "2026-10-30 15:40 KST",
     "hits": [
       "flow"
     ]
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-10-29",
-    "close": 5937.66,
-    "low": 5817.92
+    "day": "2026-10-30",
+    "close": 5730.74,
+    "low": 5599.42
   },
   "reversal": {
-    "day": "2026-10-29",
-    "streak": 3,
-    "streak_sum": 14809.0,
-    "streak_start": "2026-10-27",
-    "close": 5937.66,
+    "day": "2026-10-30",
+    "streak": 0,
+    "streak_sum": 0.0,
+    "streak_start": null,
+    "close": 5730.74,
     "hold": false,
-    "fired": false,
-    "seed_note": "2026-10-30 install seed from stored finalized flow_days (10/27 +5930, 10/28 +8158, 10/29 +721) and 10/29 close 5937.66: armed, not firing. 10/30 intraday foreign about -14,600억, KOSPI about 5,660."
+    "fired": false
   }
 }
