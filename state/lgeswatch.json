@@ -8,8 +8,8 @@
     "tgt500": true,
     "tgt550": true
   },
-  "last_date": "2026-10-29",
-  "last_close": 355500.0,
+  "last_date": "2026-10-30",
+  "last_close": 356500.0,
   "init_note": "initialized from 2026-10-26 close 374,000, no send",
   "kind_fail_notified": false,
   "seen_acptno": [
@@ -19,6 +19,6 @@
     "20261028000628"
   ],
   "filings_seeded": true,
-  "updated_at": "2026-10-30T01:37:13+09:00",
+  "updated_at": "2026-10-30T19:01:08+09:00",
   "levels_note": "2026-10-26 lgeshold 구간 합침: 10/26 종가 374,000 기준으로 초기화(36만~40만 안이라 add360 은 이미 진입 상태, 오늘 15:20 [LGESH] buy 알림과 같음). 발송 없음."
 }

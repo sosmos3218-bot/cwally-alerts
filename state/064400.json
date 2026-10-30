@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-10-30T01:37:10.178936+09:00",
+  "updated_at": "2026-10-30T19:01:02.702792+09:00",
   "seeded": true,
-  "last_day": "2026-10-29",
-  "last_close": 77200.0,
+  "last_day": "2026-10-30",
+  "last_close": 72200.0,
   "last_fail_day": null,
   "lines": {
     "buy3": {
@@ -18,7 +18,9 @@
       "fired_day": null
     }
   },
-  "earn_done": {},
+  "earn_done": {
+    "2026-10-30": "2026-10-30 19:01 KST"
+  },
   "extra": {
     "z60_dn": {
       "armed": true,

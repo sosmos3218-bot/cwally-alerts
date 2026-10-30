@@ -1,7 +1,7 @@
 {
   "price": {
-    "last_date": "2026-10-29",
-    "last_close": 538000.0,
+    "last_date": "2026-10-30",
+    "last_close": 543000.0,
     "armed": {
       "l500": true,
       "l470": true,
@@ -9,5 +9,5 @@
     },
     "seed_note": "첫 실행 2026-10-29 19:01 KST: 마지막 KRX 확정 종가 2026-10-29 538,000원"
   },
-  "updated_at": "2026-10-30 01:38 KST"
+  "updated_at": "2026-10-30 19:01 KST"
 }
