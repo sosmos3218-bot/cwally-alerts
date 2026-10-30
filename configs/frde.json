@@ -1,0 +1,45 @@
+{
+  "name": "frde",
+  "title_prefix": "[FR-DE]",
+  "display": "프랑스-독일 10년물 스프레드(OAT-Bund) 단계 경보 + 유럽 ETF 매수/매도 추천",
+  "approval": "사용자 채팅 승인 2026-10-30 (스프레드 경보와 ETF 매수/매도 추천 포함)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 평일 15:40 KST flow-alerts.yml 묶음(flow, kos5500 옆 run_one frde)에 부착. 15:40 KST 는 유럽 장 시작 전이라 직전 유럽 거래일 종가 근처 값으로 판정. 수동 port-alerts job=frde 는 oneoff_mode=auto 가 아니면 dry(발송 없음, state 안 씀).",
+  "sources": {
+    "primary": "https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=FR10Y-FR%7CDE10Y-DE&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json",
+    "fallback_fr": "https://m.stock.naver.com/front-api/marketIndex/prices?category=bond&reutersCode=FR10YT=RR&page=1&pageSize=10",
+    "fallback_de": "https://m.stock.naver.com/front-api/marketIndex/prices?category=bond&reutersCode=DE10YT=RR&page=1&pageSize=10",
+    "etf_price": "Naver m.stock /api/stock/<code>/price (scripts/k079900_monitor.py naver_rows)"
+  },
+  "sources_note": "2026-10-30 조사: 공식 API 중 일별 국가별 10년물은 독일만 있음(Bundesbank). ECB data portal 은 국가별 10년물이 월간(IRS)뿐이고 FM 데이터셋 일별 FR/DE 10년 벤치마크 시리즈는 404, Banque de France Webstat 은 API 키 필요. 그래서 1순위는 CNBC 시세 JSON(FR10Y-FR, DE10Y-DE, 같은 출처 같은 시점, 키 없음), 실패하면 2순위 네이버 시장지표 채권(FR10YT=RR, DE10YT=RR 일별 종가, 같은 날짜끼리만 비교). 두 출처 값 차이는 수 bp 수준(10/29: CNBC 157.3bp, 네이버 종가 152.2bp). 둘 다 실패하거나 값이 이상하면 판정하지 않고 cwally-ops 하루 1번.",
+  "reference": {"2026-10-29": "약 155.5bp", "2026-10-23 장중 고점": "약 176bp", "basis": "OMFIF 10/28 시나리오(250~300bp가 ECB 개입 분기점)"},
+  "rearm_bp": 20,
+  "relief_level": 200,
+  "relief_min_stage": 2,
+  "etfs": {
+    "456250": "KODEX 유럽명품TOP10 STOXX",
+    "379790": "RISE 유로스탁스50(H)",
+    "195930": "TIGER 유로스탁스50(합성 H)",
+    "225050": "TIGER 유로스탁스50레버리지(합성 H)",
+    "245350": "TIGER 유로스탁스배당30",
+    "411860": "KIWOOM 독일DAX",
+    "400570": "KODEX 유럽탄소배출권선물ICE(H)"
+  },
+  "stages": [
+    {"key": "s200", "level": 200, "priority": 3, "title": "[FR-DE] 스프레드 200bp 돌파 | 주의",
+     "recs": [["225050", "레버리지 보유분 축소, 신규 매수 금지"], ["245350", "배당30 비중 축소 검토"], ["411860", "DAX 유지"], ["456250", "명품 유지"]]},
+    {"key": "s250", "level": 250, "priority": 4, "title": "[FR-DE] 스프레드 250bp 근접 돌파 | ECB 개입 임계점",
+     "recs": [["225050", "매도"], ["245350", "매도"], ["379790", "유로스탁스50(H) 비중 절반 축소"], ["195930", "유로스탁스50(H) 비중 절반 축소"], ["411860", "DAX 유지(초기 피난처)"], ["400570", "탄소배출권 비중 축소"]]},
+    {"key": "s300", "level": 300, "priority": 4, "title": "[FR-DE] 스프레드 300bp 돌파 | 개입선 돌파",
+     "recs": [["379790", "ECB TPI 가동 또는 EU 중재 보도가 나오면 분할 매수 1차 후보(환헤지), 그 전까지 매수 보류"], ["195930", "ECB TPI 가동 또는 EU 중재 보도가 나오면 분할 매수 1차 후보(환헤지), 그 전까지 매수 보류"], ["225050", "신규 매수 금지 유지"], ["456250", "환노출이라 원/유로 급락 시 축소 검토"], ["411860", "독일 지원 부담 우려로 상승분 일부 차익실현"]]},
+    {"key": "s350", "level": 350, "priority": 5, "title": "[FR-DE] 스프레드 350bp 돌파 | 전염 위험",
+     "recs": [["456250", "환노출, 축소"], ["245350", "환노출, 축소"], ["411860", "환노출, 축소"], ["379790", "환헤지형, 유지"], ["195930", "환헤지형, 유지"], ["400570", "매도"], ["*", "신규 매수 금지"]]}
+  ],
+  "relief": {"priority": 3, "title": "[FR-DE] 스프레드 200bp 아래 복귀 | 재진입 검토",
+     "recs": [["379790", "분할 재매수"], ["195930", "분할 재매수"], ["245350", "재진입 검토"], ["225050", "재진입하지 않음"]]},
+  "closing_line": "사용자 보유 여부와 비중에 맞춰 판단하세요. 근거: OMFIF 10/28 시나리오(250~300bp가 ECB 개입 분기점)",
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "2027-02-26 까지 평일 15:40 KST"
+}

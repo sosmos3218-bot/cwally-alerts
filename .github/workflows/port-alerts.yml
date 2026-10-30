@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -851,6 +851,17 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
           if [ "$MODE" = "dry" ]; then python scripts/pltr25_monitor.py selftest; fi
           python scripts/pltr25_monitor.py "$MODE"
+      - name: Run FRDE standalone (manual check; the weekday 15:40 flow-alerts slot runs it in auto)
+        # approved in chat 2026-10-30. job=frde dispatch is dry (no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'frde'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          python scripts/frde_monitor.py "$MODE"
       - name: Run CELLTRION standalone (manual check of price + filings)
         # approved in chat 2026-10-26. job=celltrion dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'celltrion'
