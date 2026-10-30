@@ -23,6 +23,13 @@
     "streak_sum_max": -10000,
     "streak_rule": "완료 3거래일 연속 음수이고 합계 -1조 이하"
   },
+  "reversal": {
+    "streak_days": 5,
+    "close_min": 6000,
+    "rule": "외국인 KOSPI 순매수(flow 소스 foreignValue, 장 마감 확정치)가 완료 5거래일 이상 연속 양수이고 같은 날 코스피 종가 6000 이상. 두 조건이 함께 맞는 첫날 한 번만 알림, 연속이 끊기거나 종가 6000 미만인 날 재무장.",
+    "approved": "2026-10-30 15:09 KST (chat)",
+    "note": "SK하이닉스 11월 판단 되돌림 신호. 수급일과 종가일이 다르거나 조회 실패면 판정 보류(상태 유지). 빠진 거래일이 있으면 연속은 거기서 끊김. year_guard/expire_date 2026-12-31 동일."
+  },
   "sources": {
     "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=2&page=1",
     "basic": "https://m.stock.naver.com/api/index/KOSPI/basic",

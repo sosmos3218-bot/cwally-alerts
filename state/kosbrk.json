@@ -3,7 +3,8 @@
   "fired": {
     "close_break": false,
     "intraday_break": false,
-    "flow_expand": false
+    "flow_expand": false,
+    "reversal": false
   },
   "flow_days": [
     {
@@ -51,5 +52,15 @@
     "day": "2026-10-29",
     "close": 5937.66,
     "low": 5817.92
+  },
+  "reversal": {
+    "day": "2026-10-29",
+    "streak": 3,
+    "streak_sum": 14809.0,
+    "streak_start": "2026-10-27",
+    "close": 5937.66,
+    "hold": false,
+    "fired": false,
+    "seed_note": "2026-10-30 install seed from stored finalized flow_days (10/27 +5930, 10/28 +8158, 10/29 +721) and 10/29 close 5937.66: armed, not firing. 10/30 intraday foreign about -14,600억, KOSPI about 5,660."
   }
 }

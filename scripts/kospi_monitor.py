@@ -212,6 +212,13 @@ def selftest() -> int:
     check("single part, no count", t, "[KOSPI] 종가 5,760.00 | 5750 돌파 | 상방 확인")
     check("kos5500 label", kos5500_label("[KOS5500] 5500 이탈 첫날 | 10/20 원샷"), "5500 이탈 첫날")
     check("no forbidden chars", any(ch in m for ch in FORBIDDEN), False)
+    rev = {"name": "kosbrk", "title": "[KOSBRK] SK하이닉스 11월 판단 되돌림 신호 | 외국인 5일 연속 순매수, 종가 6,010.00",
+           "priority": 4, "tags": ["chart_with_upwards_trend"],
+           "message": "2026-11-06 15:40 KST | KOSBRK\n이게 뭐 알림: 되돌림\n지금 상태: 5거래일 연속 순매수"}
+    t, m, _, _ = combine([rev, down], stamp)
+    check("reversal section under kosbrk label", [ln for ln in m.split("\n") if ln.startswith("[")],
+          ["[하방 레벨] 종가 5,440.00 | 5450 이탈 | 하방 확인",
+           "[대기 논리 변경 조건] SK하이닉스 11월 판단 되돌림 신호 | 외국인 5일 연속 순매수, 종가 6,010.00"])
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
