@@ -7,7 +7,7 @@
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "18:00",
   "oneshot_kst": ["2026-11-19 18:00"],
-  "oneshot_note": "판정 1회. on-time = cron-job.org job=oneshot (cronjob-register.yml), GitHub 백업 cron 0 9 19 11 * (같은 시각, oneshot_pick check-cron 으로 중복 방지). state/steelre.json sent 로 한 번만 발송.",
+  "oneshot_note": "판정 1회. on-time = cron-job.org job 8755023 \"cwally oneshot 18:00 KST (Nov 19) steelre\" (job=oneshot, cronjob-register.yml, 2026-10-30 등록, 만료 18:59:59), GitHub 백업 cron 0 9 19 11 * (같은 시각, oneshot_pick check-cron 으로 중복 방지). state/steelre.json sent 로 한 번만 발송.",
   "verdict_kst": "2026-11-19 18:00",
   "window_end_kst": "2026-11-19 18:30",
   "event_year": 2026,
