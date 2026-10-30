@@ -1,0 +1,62 @@
+{
+  "name": "lly",
+  "title_prefix": "[LLY]",
+  "ticker": "LLY",
+  "display": "일라이 릴리",
+  "as_of": "2026-10-30",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 번들에 isrg 바로 뒤로 붙임. 미국 정규장 전일 종가(Yahoo) 1,200달러 선 확인. 4분기 2026 실적과 2027 가이던스 판정은 2027년 1, 2월 8-K(Item 2.02) EX-99.1로 한 번(SEC EDGAR, investor.lilly.com 안 씀). 수동 job=lly 는 oneoff_mode=auto 가 아니면 셀프테스트 + dry. 3분기 one-shot(llyq3)과는 별개.",
+  "valid_until": "2027-03-06",
+  "cik": "0000059478",
+  "holding": null,
+  "holding_note": "LLY 보유 여부와 수량을 모름(2026-10-30). 나중에 holding 에 true/false, 수량과 평단을 채워 넣으세요. 지금은 본문에 보유 정보를 넣지 않습니다.",
+  "context": {
+    "judgment_date": "2026-10-30",
+    "judgment": "보유 유지, 신규 진입 중립",
+    "close_ref": 1373.7,
+    "eps_guide_mid_2026": 35.5,
+    "pe_ref": 38.7,
+    "one_time_2026_b": 2.0,
+    "us_price_q3_reported_pct": -7,
+    "us_price_q3_ex_adj_pct": -10,
+    "note": "밸류는 2026 EPS 가이던스 35.00~36.00달러 중간값 35.50달러, 10/29 종가 1,373.70달러 기준. 3분기 미국 가격 -7%는 보도자료, 조정 제외 약 -10%는 실적콜 발언."
+  },
+  "price_line": {
+    "line": 1200,
+    "rearm_above": 1212,
+    "seed_close": 1373.7,
+    "seed_date": "2026-10-29",
+    "rule": "미국 정규장 종가 1,200달러 이하면 1번 알림(p4, 강세 전환 조건(조정) 도달, 신규 진입 재검토). 1,212달러(1,200달러 +1%) 초과 종가에서 재무장. 종가 조회 실패면 판단 보류, cwally-ops 하루 1번."
+  },
+  "guidance_2027": {
+    "months": ["2027-01", "2027-02"],
+    "seed_after": "2026-10-30",
+    "valid_until": "2027-03-06",
+    "q4_bear_below_b": 24.33,
+    "q4_note": "4분기 암시 범위 23.83~24.83십억 달러(2026 가이던스 91.0~92.0 - 9개월 매출 67.170)의 중간값",
+    "fy2026_guide_low_b": 91.0,
+    "fy2026_guide_high_b": 92.0,
+    "nine_month_rev_b": 67.17,
+    "growth_bear_below_pct": 10.0,
+    "growth_bull_min_pct": 15.0,
+    "one_time_2026_b": 2.0,
+    "foundayo_bull_min_m": 300,
+    "rule": "2027년 1, 2월에 낸 8-K Item 2.02 의 EX-99.1(보도자료)에서 (a) 4분기 2026 매출 24.33십억 달러 미만이면 약세, (b) 2027 매출 가이던스 중간값 성장률(2026 실제 매출 대비) 10% 미만이면 약세, 2026 일회성 약 2.0십억 달러를 뺀 기준으로 15% 이상이면 강세 후보, (c) Foundayo 4분기 매출 300백만 달러 이상이면 강세 후보. (a)나 (b) 약세면 약세 전환(우선), (b)와 (c) 모두 강세 후보면 강세 전환, 아니면 중립 유지. 못 읽은 항목은 확인 필요, 통과로 세지 않음. accession 으로 중복 제거, 판정 1번. 2027-03-06 까지 없으면 만료 안내 1번."
+  },
+  "reminders": [
+    {
+      "id": "retatrutide_fda",
+      "after": "2027-03-31",
+      "text": "레타트루타이드 FDA 신청 여부 확인 (2027년 1분기 예정)"
+    }
+  ],
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/LLY?interval=1d&range=5d",
+    "sec": "https://data.sec.gov/submissions/CIK0000059478.json",
+    "archives": "https://www.sec.gov/Archives/edgar/data/59478/"
+  },
+  "ends_kst": "2027-04-05 09:00",
+  "ends_note": "평일 09:00 1,200달러 종가 선, 4분기와 2027 가이던스 판정 1번(2027-03-06까지), 2027-04-01 이후 첫 실행의 레타트루타이드 FDA 신청 확인 1번. 2027-04-05 09:00 마지막"
+}

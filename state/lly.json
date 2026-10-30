@@ -1,0 +1,20 @@
+{
+  "updated_at": null,
+  "price": {
+    "armed": true,
+    "fired": null,
+    "last_close": 1373.7,
+    "last_date": "2026-10-29",
+    "fail_day": null
+  },
+  "guidance": {
+    "seed_after": "2026-10-30",
+    "seen": [],
+    "verdict": null,
+    "fail": {},
+    "items": {}
+  },
+  "sec_fail_day": null,
+  "expiry_sent": null,
+  "reminders": {}
+}
