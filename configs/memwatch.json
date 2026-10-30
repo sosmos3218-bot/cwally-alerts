@@ -1,0 +1,79 @@
+{
+  "name": "memwatch",
+  "title_prefix": "[MEMWATCH]",
+  "display": "D램/낸드 분기 계약가 -10% 와 CXMT HBM 해외 고객 인증 감시",
+  "created_at": "2026-10-30T17:30:00+09:00",
+  "approval": "사용자 요청 2026-10-30 (pt6u): \"cwally-alerts에 D램/낸드 분기 계약가 10% 이상 하락과 CXMT 해외 고객 인증 보도를 감시하는 알림을 추가하라.\"",
+  "plan_rule": "삼성전자(005930) 계획 규칙: 분기 D램 또는 낸드 계약가가 전분기 대비 10% 이상 하락, 또는 CXMT HBM3E 가 중국 밖 고객(엔비디아, AMD, 구글, 브로드컴, 애플 등) 인증 통과, 또는 수율 50% 이상 보도가 여러 곳이면 '추가 매수 보류' 재적용. SK하이닉스(000660)도 같은 영향.",
+  "baseline_2026_10": "트렌드포스 2026-09-30: 4Q26 범용 D램 계약가 +10~15%, 낸드 +15~20% 전망. CXMT HBM3E 수율 20~30%, 고객은 중국 내 설계사뿐 (2026-10-28 로이터 등).",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음, 새 cron-job.org 잡 없음. 기존 port-alerts morning 평일 09:00 KST 묶음(hbmchk, hbmasp 옆)에 부착. 수동 job=memwatch 는 oneoff_mode=auto 가 아니면 selftest + dry (ntfy, state 없음).",
+  "price": {
+    "drop_pct": -10.0,
+    "rearm_pct": -5.0,
+    "tf_list_urls": [
+      "https://www.trendforce.com/presscenter/news/Semiconductors",
+      "https://www.trendforce.com/presscenter/news/Semiconductors?page=2"
+    ],
+    "tf_article_base": "https://www.trendforce.com",
+    "tf_title_re": "(DRAM|NAND|Memory|Flash).*(Price|ASP)|(Price|ASP).*(DRAM|NAND|Memory)",
+    "tf_lead_chars": 2500,
+    "tables": {
+      "dram": {
+        "url": "https://www.trendforce.com/price/dram/dram_contract",
+        "item": "DDR4 8Gb 1Gx8",
+        "label": "D램 고정거래가(DDR4 8Gb 1Gx8, 트렌드포스 무료 표)"
+      },
+      "nand": {
+        "url": "https://www.trendforce.com/price/flash/flash_contract",
+        "item": "NAND 128Gb 16Gx8 MLC",
+        "label": "낸드 고정거래가(128Gb 16Gx8 MLC, 트렌드포스 무료 표)"
+      }
+    },
+    "rolling_months": 3,
+    "news": {
+      "queries": [
+        {
+          "q": "(D램 OR 낸드) (고정거래가격 OR 계약가격 OR 계약가 OR 가격) 하락 when:14d",
+          "lang": "ko"
+        },
+        {
+          "q": "(DRAM OR NAND) contract prices (fall OR decline OR drop OR plunge) when:14d",
+          "lang": "en"
+        }
+      ],
+      "window_days": 14,
+      "note": "구글 뉴스 RSS(무료, 키 없음) 제목 키워드. 가격 단어 바로 뒤 숫자 10% 이상 + 하락 단어일 때만. 주가, 현물가, HBM 제목은 뺌."
+    }
+  },
+  "cxmt": {
+    "window_days": 14,
+    "yield_min_pct": 50,
+    "yield_multi_sources": 2,
+    "yield_count_days": 30,
+    "queries": [
+      {
+        "q": "(CXMT OR ChangXin OR Changxin) HBM when:14d",
+        "lang": "en"
+      },
+      {
+        "q": "(CXMT OR ChangXin) HBM3E (qualification OR qualified OR certified OR Nvidia OR AMD OR Google OR Broadcom OR Apple OR yield) when:14d",
+        "lang": "en"
+      },
+      {
+        "q": "(창신메모리 OR CXMT OR 창신) HBM when:14d",
+        "lang": "ko"
+      },
+      {
+        "q": "(창신메모리 OR CXMT) HBM (인증 OR 퀄 OR 납품 OR 수율 OR 엔비디아) when:14d",
+        "lang": "ko"
+      }
+    ],
+    "note": "구글 뉴스 RSS 제목 키워드. 인증: CXMT 이름 + HBM + 인증 단어 + 중국 밖 고객 이름, 부정/부인 단어와 삼성, SK하이닉스, 마이크론 이름이 같이 있는 제목은 뺌. 수율: CXMT + HBM + 수율 단어 바로 옆 50~99%, 목표/계획/전망 표현은 뺌. 키워드 매치라 원문 직접 확인 필요."
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지"
+}
