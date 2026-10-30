@@ -3,7 +3,10 @@
 
 Plus (2026-10-24, approved card t25s2) a per-stock foreign net-buy streak flip alert:
 foreign net buy > 0 on 3 consecutive trading days right after a net-sell day -> one alert (priority 4).
-One net-sell day re-arms. Judged by data trading date (state["flip"][code]["last_date"]), confirmed rows only
+One net-sell day re-arms.
+First-tranche marker (2026-10-30, pre-approved 10/26): on a flip, the same trading day KOSPI close (Naver index price)
+>= configs first_tranche.kospi_level adds "1차 조건 충족" to the title (p4); below it a body line "코스피 5,500 미만, 1차 조건 미충족".
+Toggle: first_tranche.enabled. Flip detection, dedupe and state are unchanged. Judged by data trading date (state["flip"][code]["last_date"]), confirmed rows only
 (<= the preceding trading day at 15:20), so a date is never judged twice. Modes: auto | dry | test | selftest.
 
 Weekly digest (approved in chat 2026-10-30, owner note pt24u): the daily 15:20 reference message is no longer sent.
@@ -147,9 +150,44 @@ def seed_flip(rows: list[dict], now: datetime) -> dict:
     return st
 
 
-def flip_message(now: datetime, name: str, ev: dict) -> tuple[str, str]:
+def first_tranche_line(ft: dict | None, kospi: dict | None, day: str) -> tuple[bool, str]:
+    """(1차 조건 충족 여부, 본문 줄). ft = configs/samnix.json first_tranche, kospi = {"day","close"} or None."""
+    if not ft or not ft.get("enabled"):
+        return False, ""
+    level = float(ft.get("kospi_level", 5500))
+    lv = f"{level:,.0f}"
+    if not kospi or kospi.get("close") is None or kospi.get("day") != day:
+        return False, (f"1차 조건: 전환 마지막 날({ymd(day)}) 코스피 종가가 아직 조회되지 않아 1차 조건 충족 여부는 표시하지 않습니다. "
+                       f"[KOSPI] 15:40 묶음의 5,500 상태로 직접 확인하세요.")
+    close = kospi["close"]
+    if close >= level:
+        return True, (f"1차 조건 판정: {ft.get('marker', '1차 조건 충족')}. {ymd(day)} 코스피 종가 {close:,.2f} (코스피 {lv} 이상) + 외국인 {FLIP_RUN}일 연속 순매수 전환. "
+                      "분할매수 1차 검토 조건일 뿐 주문 지시가 아닙니다.")
+    return False, f"코스피 {lv} 미만, 1차 조건 미충족 ({ymd(day)} 코스피 종가 {close:,.2f})."
+
+
+def kospi_close(day: str) -> dict | None:
+    """Naver 지수 일별 종가 (samnix 와 같은 데이터 거래일). 없거나 실패면 None (추정 안 함)."""
+    import naver_api
+    try:
+        raw = naver_api.get_json("https://m.stock.naver.com/api/index/KOSPI/price?pageSize=10&page=1")
+    except Exception as exc:  # noqa: BLE001
+        print(f"kospi close 조회 실패: {exc}")
+        return None
+    for r in raw if isinstance(raw, list) else []:
+        if str(r.get("localTradedAt", "")).replace("-", "") == day:
+            return {"day": day, "close": naver_api.num(r.get("closePrice"))}
+    return None
+
+
+def flip_message(now: datetime, name: str, ev: dict, ft: dict | None = None, kospi: dict | None = None) -> tuple[str, str, int]:
     run = ev["days"]
-    title = f"[SAMNIX] 참고용 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
+    met, ft_line = first_tranche_line(ft, kospi, run[-1]["day"])
+    if met:
+        title = f"[SAMNIX] {ft.get('marker', '1차 조건 충족')} 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
+    else:
+        title = f"[SAMNIX] 참고용 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
+    prio = int(ft.get("priority", 4)) if met else 4
     days = ", ".join(f"{ymd(r['day'])} 외국인 {fmt_opt(r.get('foreign'))} / 기관 {fmt_opt(r.get('organ'))}" for r in run)
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | {name} 외국인 순매수 전환 (확정 수급, 주식 수)",
@@ -162,7 +200,9 @@ def flip_message(now: datetime, name: str, ev: dict) -> tuple[str, str]:
         "익절/줄일 때: 이 알림만으로 매매하지 말고 개별 종목 조건을 따르세요.",
         "하지 말 것: 3일 순매수만 보고 반등 지속을 단정하기.",
     ]
-    return title, "\n".join(lines)
+    if ft_line:
+        lines.insert(4, ft_line)  # 판단 조건 다음, 지금 할 일 앞
+    return title, "\n".join(lines), prio
 
 
 def flip_check(mode: str, now: datetime, flow_day: str, state: dict) -> None:
@@ -184,11 +224,13 @@ def flip_check(mode: str, now: datetime, flow_day: str, state: dict) -> None:
         events = flip_events(rows, work)
         print(f"flip {name}: 현재 외국인 {foreign_streak(rows)}, armed={work.get('armed')}, last_date={work.get('last_date')}, 새 전환 {len(events)}건 | 최근 {tail}")
         for ev in events:
-            title, message = flip_message(now, name, ev)
+            ft = cfg.get("first_tranche")
+            kospi = kospi_close(ev["days"][-1]["day"]) if ft and ft.get("enabled") else None
+            title, message, prio = flip_message(now, name, ev, ft, kospi)
             assert route_topic("cwally-port", title) == "cwally-port", title
             print(title, "\n", message)
             if mode == "auto":
-                ntfy(cfg.get("ntfy_server") or "https://ntfy.sh", cfg.get("ntfy_topic") or "cwally-port", title, message, 4)
+                ntfy(cfg.get("ntfy_server") or "https://ntfy.sh", cfg.get("ntfy_topic") or "cwally-port", title, message, prio)
                 work.setdefault("fired", []).append({"date": ev["days"][-1]["day"], "at": now.isoformat()})
                 work["fired"] = work["fired"][-10:]
         if mode == "auto":
@@ -229,13 +271,43 @@ def selftest() -> int:
     assert flip_events(mk([1, 1, 1]), {"armed": True}) == []
     assert foreign_streak(mk([-1, 2, 3])) == "2거래일 연속 순매수 (2026-10-02~2026-10-03)"
     assert foreign_streak(mk([1, None])) == NA
-    t, m = flip_message(datetime(2026, 10, 27, 15, 20, tzinfo=KST), "SK하이닉스", flip_events(mk([-5] * 18 + [3, 2, 1]), {"armed": True})[0])
+    when = datetime(2026, 10, 27, 15, 20, tzinfo=KST)
+    ev0 = flip_events(mk([-5] * 18 + [3, 2, 1]), {"armed": True})[0]
+    t, m, p = flip_message(when, "SK하이닉스", ev0)
+    assert t == "[SAMNIX] 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and p == 4 and "1차 조건" not in m
     assert "\u00b7" not in t + m and "\u2014" not in t + m and route_topic("cwally-port", t) == "cwally-port"
     assert "확인 불가" not in t and "조회 실패" not in t
-    print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: 4\n{m}\n")
+    print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
+    first_tranche_selftest(when, ev0)
     weekly_selftest()
     print("SELFTEST OK: no network, no publish, no state")
     return 0
+
+
+def first_tranche_selftest(when: datetime, ev: dict) -> None:
+    """1차 조건 표시 (2026-10-30, 사용자 사전 승인 10/26). 가짜 숫자, 네트워크 없음."""
+    ft = json.loads(CFG_PATH.read_text(encoding="utf-8")).get("first_tranche") or {}
+    assert ft.get("kospi_level") == 5500 and ft.get("marker") == "1차 조건 충족", ft
+    ft = dict(ft, enabled=True)
+    day = ev["days"][-1]["day"]
+    seen = []
+    for label, kospi in (("코스피 5,500 이상", {"day": day, "close": 5612.34}),
+                         ("코스피 5,500 미만", {"day": day, "close": 5480.10}),
+                         ("종가 미조회", None)):
+        t, m, p = flip_message(when, "SK하이닉스", ev, ft, kospi)
+        assert "확인 불가" not in t and "조회 실패" not in t and route_topic("cwally-port", t) == "cwally-port", t
+        assert "\u00b7" not in t + m and "\u2014" not in t + m
+        seen.append((t, p, m))
+        print(f"-- first_tranche fixture: {label}\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
+    assert seen[0][0] == "[SAMNIX] 1차 조건 충족 외국인 순매수 전환 SK하이닉스 3일 연속" and seen[0][1] == 4
+    assert seen[1][0] == "[SAMNIX] 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and "코스피 5,500 미만, 1차 조건 미충족" in seen[1][2]
+    assert seen[2][0] == seen[1][0] and "1차 조건 충족 여부는 표시하지 않습니다" in seen[2][2]
+    # 다른 날짜 종가는 쓰지 않음
+    t, m, _ = flip_message(when, "SK하이닉스", ev, ft, {"day": "20261001", "close": 6000.0})
+    assert t == seen[1][0] and "아직 조회되지 않아" in m
+    # 토글 false 면 기존 메시지 그대로
+    assert flip_message(when, "SK하이닉스", ev, dict(ft, enabled=False), {"day": day, "close": 6000.0})[0] == seen[1][0]
+    print("first_tranche selftest OK")
 
 
 def ntfy(server: str, topic: str, title: str, message: str, priority: int = 3) -> None:

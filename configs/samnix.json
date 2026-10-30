@@ -12,5 +12,14 @@
     "priority": 4
   },
   "ends_kst": null,
-  "ends_note": "수동 해제 전까지 평일 15:20 삼전닉스 반등 추적"
+  "ends_note": "수동 해제 전까지 평일 15:20 삼전닉스 반등 추적",
+  "first_tranche": {
+    "enabled": true,
+    "kospi_level": 5500,
+    "marker": "1차 조건 충족",
+    "priority": 4,
+    "approval": "사용자 사전 승인 2026-10-26 (\"1차 조건 알림 제안이 오면 samnix 확장으로 만들고 시험 실행해줘\"), 2026-10-30 판정 4d 기존 알림 확장",
+    "rule": "외국인 전환(foreign_flip) 발생 시 전환 마지막 거래일의 코스피 종가(네이버 지수 일별, 같은 날짜만)가 kospi_level 이상이면 제목에 marker, 미만이면 본문에 '코스피 5,500 미만, 1차 조건 미충족'. 종가가 아직 없으면 본문에 그 사실만 쓰고 추정 안 함. 전환 판정, 중복 방지, state 는 그대로.",
+    "remove": "enabled=false 로 끄거나 해당 커밋 revert"
+  }
 }
