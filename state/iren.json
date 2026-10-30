@@ -1,21 +1,11 @@
 {
-  "updated_at": "2026-10-29 09:00 KST",
-  "price": 28.84,
+  "updated_at": "2026-10-30 09:00 KST",
+  "price": 26.25,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://www.fool.com/coverage/stock-market-today/2026/10/12/stock-market-today-oct-12-iren-surges-on-reports-of-anthropic-cloud-services-deal/?.tsrc=rss",
-    "https://blockspace.media/short/iren-reportedly-inks-multiyear-deal-with-anthropic-heres-what-we-know/?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/13/iren-slides-5-as-anthropic-cloud-report-buzz-fades-core-scientific-falls-3/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/irens-global-expansion-accelerates-drive-134900594.html?.tsrc=rss",
-    "https://www.fool.com/coverage/stock-market-today/2026/10/13/stock-market-today-oct-13-iren-holds-moderate-buy-rating-as-analysts-eye-ai-cloud-execution/?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126039451/0001140361-26-039451-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126039452/0001140361-26-039452-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126039453/0001140361-26-039453-index.htm",
-    "https://stocktwits.com/news-articles/markets/equity/dow-futures-rise-nasdaq-subdued-premarket-ahead-of-inflation-data-asml-mu-skhy-tsla-bac-lqda-gme-iren-stocks-in-focus/cZxfS2RRBpN?.tsrc=rss",
-    "https://beincrypto.com/jim-cramer-coreweave-stock-crashes-15/?.tsrc=rss",
     "https://finance.yahoo.com/m/e7396a5f-59db-30ad-b0ed-49dbca81119f/why-gartner-ai-outlook-sent.html?.tsrc=rss",
     "https://stocktwits.com/news-articles/markets/equity/iren-s-redbank-campus-adds-900-mw-to-its-plans-but-power-is-not-secured-yet/cZxfkVMRBpn?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/14/cipher-digital-falls-5-as-850m-zero-coupon-note-pricing-extends-slide-applied-digital-declines-6-iren-drops-4/?.tsrc=rss",
@@ -125,6 +115,16 @@
     "https://www.fool.com/investing/2026/10/28/elon-musk-says-neoclouds-face-a-guppy-level-death/?.tsrc=rss",
     "https://blockspace.media/short/iren-just-borrowed-363m-against-its-nvidia-gpus-heres-why/?.tsrc=rss",
     "https://blockspace.media/podcast/irens-363m-gpu-raise-morgan-stanleys-bullish-terawulf-price-target-and-sk-hynixs-earnings/?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000535/0000070858-26-000535-index.htm"
+    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000535/0000070858-26-000535-index.htm",
+    "https://finance.yahoo.com/real-estate/articles/mike-alfred-joins-opendoor-board-103000753.html?.tsrc=rss",
+    "https://finance.yahoo.com/news/alphabet-9bn-cash-burn-drags-104457828.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/cipher-digital-gears-report-q3-150400080.html?.tsrc=rss",
+    "https://www.tikr.com/blog/alphabet-sinks-12-on-search-miss-and-9-billion-cash-burn-is-this-the-quarter-we-feared?ref=yahoofinance&.tsrc=rss",
+    "https://www.fool.com/investing/2026/10/29/3-ai-stocks-to-buy-and-hold-through-2030/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-iren-secures-363-million-011520078.html?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-nbis-iren-apld-stocks-drop-after-microsoft-capex-falls-short-on-delayed-third-party-capacity/cZUQeHWR9bT?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/nebius-vs-iren-ai-infrastructure-130000823.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-limited-iren-expected-beat-130030024.html?.tsrc=rss",
+    "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss"
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-29T12:53:59.131838+09:00",
+  "updated_at": "2026-10-30T09:07:04.165849+09:00",
   "last_date": "2026-10-28",
   "close": 196.81,
   "ma50": 186.28,
@@ -24,11 +24,11 @@
   "zone_sent": "관망",
   "pending": null,
   "valuation": {
-    "fwd_pe": 84.22526,
-    "trail_pe": 169.6638,
-    "ps": 76.82756,
-    "date": "2026-10-29"
+    "fwd_pe": 84.05836,
+    "trail_pe": 169.32759,
+    "ps": 76.675316,
+    "date": "2026-10-30"
   },
-  "last_weekly": null,
+  "last_weekly": "2026-W44",
   "fetch_fail_date": null
 }

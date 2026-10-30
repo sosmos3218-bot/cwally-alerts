@@ -9,18 +9,18 @@
       "ntfy_entry_id": "uRtD3iy64xtc"
     },
     "000660": {
-      "status": "idle",
-      "signal_date": null,
-      "entry_close": null,
-      "entry_foreign_shares": null,
+      "status": "signal",
+      "signal_date": "2026-10-29",
+      "entry_close": 1526000.0,
+      "entry_foreign_shares": 295979.0,
       "day3_sent": false
     }
   },
   "last_weekly_iso": "2026-W44",
   "missing_streak": 0,
   "last_missing_notice_day": null,
-  "last_data_day": "2026-10-23",
-  "last_title": "[MEMSWING] 주간 요약 2026-W44 | 상태 점검",
-  "updated_at": "2026-10-26T09:01:04+09:00",
+  "last_data_day": "2026-10-29",
+  "last_title": "[MEMSWING] 하이닉스 진입 조건 충족 | 분할 진입 검토",
+  "updated_at": "2026-10-30T09:01:02+09:00",
   "note": "초기신호: 삼성 10/19 외인 +1,243,370주 종가 223,500 (ntfy uRtD3iy64xtc). 하이닉스 idle (10/16 -63,914, 10/19 -140,212, 종가 1,304,000)."
 }

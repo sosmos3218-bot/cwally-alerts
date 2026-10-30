@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-10-29T09:08:49.977620+09:00",
+  "updated_at": "2026-10-30T09:09:11.467079+09:00",
   "recover_armed": true,
   "breakdown_armed": true,
   "high_armed": true,
   "high_ref": null,
   "rs_regime": "neutral",
   "holding_alerted": {},
-  "last_bar_date": "2026-10-28",
-  "last_close": 54.82,
-  "last_rs_pct": 1.21,
+  "last_bar_date": "2026-10-29",
+  "last_close": 55.11,
+  "last_rs_pct": 1.53,
   "fetch_fail_date": null
 }

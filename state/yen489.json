@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-10-29 09:06 KST",
+  "updated_at": "2026-10-30 09:06 KST",
   "fx_key": null,
   "rate_key": null,
   "fail_sent_date": null,
-  "last_jpy100": 847.5362029821143,
+  "last_jpy100": 847.177583752106,
   "last_low_52w": 836.5177398312344,
   "last_kr_policy": 3.0,
   "last_jp_policy": 1.25,
   "last_bok": "공표문 아직 없음",
-  "last_boj": null
+  "last_boj": "공표문 아직 없음"
 }

@@ -8,12 +8,12 @@
       "as_of": "2026-10-21"
     },
     "last": {
-      "eps": 3334.0,
+      "eps": 3306.0,
       "op": null,
-      "rev": 8315.0,
+      "rev": 8271.0,
       "src": "FnGuide 컨센서스(wisereport)",
-      "as_of": "2026-10-29"
+      "as_of": "2026-10-30"
     }
   },
-  "updated_at": "2026-10-29 09:09 KST"
+  "updated_at": "2026-10-30 09:09 KST"
 }
