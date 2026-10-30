@@ -59,7 +59,7 @@
     },
     {
       "id": "midterm",
-      "label": "중간선거·텍사스 계통",
+      "label": "중간선거와 텍사스 계통",
       "start": "2026-11-01",
       "end": "2026-11-10",
       "check": "ERCOT interconnection audit / Sweetwater Batch Zero 조건. 심사 밀리면 27년 0.5GW 파이프라인 이연."
@@ -90,9 +90,11 @@
     "Horizon 2 인수 8-K",
     "Horizon 3-4 유예기간 준수",
     "Sweetwater / ERCOT 문구 변화",
-    "2027 용량 $/W · 선급 비율",
+    "2027 용량 $/W, 선급 비율",
     "채굴 종료 후 첫 분기 FCF"
   ],
   "ends_kst": null,
-  "ends_note": "수동 해제 전까지 월요일 주간 점검과 신규 공시 때 발송"
+  "ends_note": "수동 해제 전까지 월요일 주간 점검과 새 뉴스, 일정 때 발송(SEC 공시는 2026-10-30부터 [IREN-PX])",
+  "holding": false,
+  "holding_note": "보유 없음, 관심 종목(2026-10-30 사용자 확인). 문구를 보유 전제에서 관심 종목 기준으로 수정."
 }
