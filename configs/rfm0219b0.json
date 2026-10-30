@@ -123,9 +123,9 @@
       "rule": "3곳 중 2곳 이상 컨센서스 상회 + 우리로 3Q 영업이익 흑자. 실적은 네이버 분기 컬럼이 컨센서스에서 실적으로 바뀐 값, RF머트리얼즈는 분기보고서."
     },
     "capex": {
-      "verdict": null,
-      "note": "빅테크 2곳 이상이 2027 capex 증가를 시사하면 yes, 아니면 no. 10/28 알파벳, MSFT, 10/29 아마존 실적 뒤 사람이 입력(configs/rfm0219b0.json conditions.capex.verdict). null이면 보류.",
-      "set_at": null
+      "verdict": "yes",
+      "note": "빅테크 2곳 이상이 2027 capex 증가를 시사하면 yes, 아니면 no. 10/28 알파벳, MSFT, 10/29 아마존 실적 뒤 사람이 입력(configs/rfm0219b0.json conditions.capex.verdict). null이면 보류. 10/30 판정 예: 알파벳, 아마존 2027 capex 증가 명시, 마이크로소프트 불분명 (3분기 콜).",
+      "set_at": "2026-10-30"
     },
     "price": {
       "up": 11300,
