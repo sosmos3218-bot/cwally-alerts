@@ -26,11 +26,11 @@ def main() -> int:
 
     if mode == "dry":
         print("DRY RUN: ski096775q3 checklist would send")
-        print("[SKIQ3] 3Q 실적 후 우선주 재평가 | 체크리스트")
+        print("[SKIQ3] 096775 3Q 실적 후 우선주 재평가 | 체크리스트")
         return 0
 
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
-    title = "[SKIQ3] 3Q 실적 후 우선주 재평가 | 체크리스트"
+    title = "[SKIQ3] 096775 3Q 실적 후 우선주 재평가 | 체크리스트"
     lines = [
         f"{stamp} | SKIQ3 | SK이노베이션우 096775",
         "이게 뭐 알림: 2026년 3분기 실적 발표 후 재고이익 제외 경상 영업이익, 배당 재개 가능성, 주주환원 정책 내용을 기준으로 우선주 매력도를 다시 보는 리마인더입니다. 투자 권유 아닙니다.",

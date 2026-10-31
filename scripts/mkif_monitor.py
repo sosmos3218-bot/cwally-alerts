@@ -134,7 +134,7 @@ def price_message(cfg: dict, fired: list[str], close: float, day: str, holds: li
              "신규 투자가 확정되면 매력 증가, 340원 이하나 비엔씨티 추가 재구조화, 금리 재상승이면 미루기. 이 알림이 공시도 같이 봅니다.")
     trim = "아직 보유 없음. 보유하게 되면 11,300원 이상(수익률 약 6.2%)에서는 배당 매력이 낮아져 추가 편입보다 비중 점검이 먼저입니다."
     if "warn8300" in fired:
-        title = f"[MKIF] 종가 {won(close)}, 8,300원 이하 급락 | 추가매수 보류 후 원인 확인"
+        title = f"[MKIF] 088980 종가 {won(close)}, 8,300원 이하 급락 | 추가매수 보류 후 원인 확인"
         status = base + " 8,300원 이하 구간에 새로 들어왔습니다." + (" 8,950원 선도 같이 걸렸지만 경고가 우선합니다." if "buy8950" in fired else "")
         if holds:
             status += " 진행 중인 보류 조건: " + "; ".join(holds) + "."
@@ -142,20 +142,20 @@ def price_message(cfg: dict, fired: list[str], close: float, day: str, holds: li
         avoid = "원인 확인 전 주문, 하락 중 물타기, 신용/미수. " + DISCLAIMER
         prio = 4
     elif "buy8950" in fired and holds:
-        title = f"[MKIF] 종가 {won(close)}, 8,950원 이하 | 매수 보류 조건 진행 중"
+        title = f"[MKIF] 088980 종가 {won(close)}, 8,950원 이하 | 매수 보류 조건 진행 중"
         status = base + " 8,950원 이하 구간에 들어왔지만 보류 조건이 있습니다: " + "; ".join(holds) + "."
         todo = "보류 유지. 다음 예상분배금 공시와 비엔씨티 관련 내용을 원문으로 먼저 확인하세요."
         avoid = "가격만 보고 주문, 신용/미수. " + DISCLAIMER
         prio = 3
     elif "buy8950" in fired:
-        title = f"[MKIF] 종가 {won(close)}, 8,950원 이하 | 분할매수 검토 구간"
+        title = f"[MKIF] 088980 종가 {won(close)}, 8,950원 이하 | 분할매수 검토 구간"
         status = base + " 8,950원 이하 구간에 새로 들어왔습니다. 2027년이 배당 저점(680원), 2028년부터 성장 예상."
         todo = ("분배금 하향, 비엔씨티 재구조화 없을 때만 중개형 ISA에서 계획 금액의 일부로 분할매수 검토. "
                 "2차는 하반기 예상분배금 공시 확인 뒤에 판단.")
         avoid = "한 번에 전액 매수, 신용/미수, 시세 차익 기대(신규 투자 발표 전에는 배당이 주 수익). " + DISCLAIMER
         prio = 3
     else:
-        title = f"[MKIF] 종가 {won(close)}, 11,300원 이상 | 신규매수 보류, 배당 매력 낮아짐"
+        title = f"[MKIF] 088980 종가 {won(close)}, 11,300원 이상 | 신규매수 보류, 배당 매력 낮아짐"
         status = base + " 삼성증권 목표가 11,300원 이상 구간에 새로 들어왔습니다. 컨센서스 목표가는 12,633원."
         todo = "신규매수 보류. 2026년 700원 기준 수익률이 6.2% 근처로 내려와 배당 목적 편입 매력이 낮아졌습니다. 상승 이유(신규 투자 발표 등)를 공시로 확인."
         avoid = "상승 추격 매수, 신용/미수. " + DISCLAIMER
@@ -172,7 +172,7 @@ def run_price(cfg: dict, st: dict, now: datetime, dry: bool, fetch=fetch_closes)
         print(f"price fetch failed: {exc}")
         today = now.strftime("%Y-%m-%d")
         if st.get("price_fail_date") != today:
-            t, m = "[MKIF] 시세 조회 실패 | 매매 신호 아님", f"맥쿼리인프라 일별 시세 조회 실패: {exc}. 다음 09:00 실행에서 다시 봅니다."
+            t, m = "[MKIF] 088980 시세 조회 실패 | 매매 신호 아님", f"맥쿼리인프라 일별 시세 조회 실패: {exc}. 다음 09:00 실행에서 다시 봅니다."
             if dry:
                 print(f"DRY RUN would send (ops): {t}\n{m}")
             else:
@@ -299,7 +299,7 @@ def disc_tier(cfg: dict, c: dict, latest: dict | None) -> tuple[int, str, str] |
 def disc_message(cfg: dict, item: dict, c: dict, tier: tuple[int, str, str]) -> tuple[str, str, int]:
     prio, tail, todo = tier
     filed = str(item.get("datetime") or "")[:16].replace("T", " ")
-    title = f"[MKIF] {tail}"
+    title = f"[MKIF] 088980 {tail}"
     warn = prio >= 4
     amt = f" 주당 {won(c['amount'])}." if c.get("amount") is not None else ""
     status = f"{filed} 공시: {clean(item.get('title', ''))}. 제목: {clean(c.get('subject', ''))}.{amt} 원문: {item.get('url') or NOTICE_URL}"
@@ -317,7 +317,7 @@ def disc_message(cfg: dict, item: dict, c: dict, tier: tuple[int, str, str]) -> 
 
 def reminder_message(cfg: dict, r: dict, latest: dict | None) -> tuple[str, str, int]:
     last = f"마지막으로 읽은 분배금 공시: {won(latest['amount'])}({latest.get('filed', '')})." if latest and latest.get("amount") else "읽은 분배금 공시 없음."
-    title = f"[MKIF] {r['label']} 예상분배금 공시 미확인 | 직접 확인"
+    title = f"[MKIF] 088980 {r['label']} 예상분배금 공시 미확인 | 직접 확인"
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | MKIF | 맥쿼리인프라(088980)",
         "이게 뭐 알림: " + cfg["explain"],
@@ -399,7 +399,7 @@ def run_disc(cfg: dict, st: dict, now: datetime, dry: bool, fetch=fetch_notices)
         print(f"notice fetch failed: {exc}")
         today = now.strftime("%Y-%m-%d")
         if st.get("notice_fail_date") != today:
-            t, m = "[MKIF] 공시 조회 실패 | 매매 신호 아님", f"맥쿼리인프라 공시 피드 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다."
+            t, m = "[MKIF] 088980 공시 조회 실패 | 매매 신호 아님", f"맥쿼리인프라 공시 피드 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다."
             if dry:
                 print(f"DRY RUN would send (ops): {t}\n{m}")
             else:
@@ -432,7 +432,7 @@ def confirm_message(cfg: dict, close: float | None, day: str | None, st: dict) -
         "익절/줄일 때: 아직 보유 없음.",
         "하지 말 것: 이 설치 확인을 매매 신호로 읽기. " + DISCLAIMER,
     ]
-    return "[MKIF] 설치 확인 | 매매 신호 아님", "\n".join(lines)
+    return "[MKIF] 088980 설치 확인 | 매매 신호 아님", "\n".join(lines)
 
 
 # ---------- selftest ----------
@@ -484,17 +484,17 @@ def selftest() -> int:
     today = date(2026, 11, 2)
     t, b, p = price_message(cfg, ["buy8950"], 8900, "2026-11-02", [])
     check("buy p3", p, 3)
-    check("buy title", t, "[MKIF] 종가 8,900원, 8,950원 이하 | 분할매수 검토 구간")
+    check("buy title", t, "[MKIF] 088980 종가 8,900원, 8,950원 이하 | 분할매수 검토 구간")
     check("buy conditional", "분배금 하향, 비엔씨티 재구조화 없을 때만" in b, True)
     check("buy yield 680", "2027년 680원 7.6%" in b, True)
     t, b, p = price_message(cfg, ["buy8950", "warn8300"], 8250, "2026-11-02", [])
     check("warn overrides buy p4", p, 4)
-    check("warn title", t, "[MKIF] 종가 8,250원, 8,300원 이하 급락 | 추가매수 보류 후 원인 확인")
+    check("warn title", t, "[MKIF] 088980 종가 8,250원, 8,300원 이하 급락 | 추가매수 보류 후 원인 확인")
     check("warn no buy wording", has_buy_wording(t + b.replace(cfg["explain"], "")) or has_buy_wording(t + b), False)
     t, b, p = price_message(cfg, ["warn8300"], 8250, "2026-11-02", ["최근 분배금 공시 330원(2026-12-11), 340원 이하"])
     check("warn alone no buy", has_buy_wording(t + b), False)
     t, b, p = price_message(cfg, ["high11300"], 11350, "2026-11-02", [])
-    check("high title", (p, t), (3, "[MKIF] 종가 11,350원, 11,300원 이상 | 신규매수 보류, 배당 매력 낮아짐"))
+    check("high title", (p, t), (3, "[MKIF] 088980 종가 11,350원, 11,300원 이상 | 신규매수 보류, 배당 매력 낮아짐"))
     check("high yield 700", "2026년 700원 6.2%" in b, True)
     check("high no buy advice", has_buy_wording(t + b.replace("상승 추격 매수", "")), False)
 
@@ -509,7 +509,7 @@ def selftest() -> int:
     check("bnct flag expires", hold_reasons(cfg, s_old, today), [])
     for name, s in (("low dist", s_low), ("bnct", s_bn)):
         t, b, p = price_message(cfg, ["buy8950"], 8900, "2026-11-02", hold_reasons(cfg, s, today))
-        check(f"hold-only {name} title", t, "[MKIF] 종가 8,900원, 8,950원 이하 | 매수 보류 조건 진행 중")
+        check(f"hold-only {name} title", t, "[MKIF] 088980 종가 8,900원, 8,950원 이하 | 매수 보류 조건 진행 중")
         check(f"hold-only {name} no buy wording", has_buy_wording(t + b), False)
 
     # run_price with fixtures: init, catch-up, dedupe, override
@@ -527,7 +527,7 @@ def selftest() -> int:
         builtins.print = orig
     would = [x for x in sent if x.startswith("DRY RUN would send")]
     check("run gap: one message only", len(would), 1)
-    check("run gap: warning wins", would[0].startswith("DRY RUN would send (p4): [MKIF] 종가 8,200원, 8,300원 이하 급락"), True)
+    check("run gap: warning wins", would[0].startswith("DRY RUN would send (p4): [MKIF] 088980 종가 8,200원, 8,300원 이하 급락"), True)
     sent.clear()
     builtins.print = lambda *a, **k: sent.append(" ".join(str(x) for x in a))
     try:
@@ -574,7 +574,7 @@ def selftest() -> int:
         check(f"tier {it['id']}", (tier[0], tier[1]) if tier else None, (want_p, want_tail) if want_p else None)
         if tier:
             t, b, p = disc_message(cfg, it, c, tier)
-            check(f"msg {it['id']} prefix/prio", (t.startswith("[MKIF] "), p), (True, want_p))
+            check(f"msg {it['id']} prefix/prio", (t.startswith("[MKIF] 088980 "), p), (True, want_p))
             check(f"msg {it['id']} no dot/dash", clean_ok(t, b), True)
             check(f"msg {it['id']} six parts", [x.split(":")[0] for x in b.split("\n")[1:]],
                   ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
@@ -624,21 +624,21 @@ def selftest() -> int:
     msgs, upd = disc_eval(cfg, s, seed_items, datetime(2026, 12, 18, 19, 0, tzinfo=KST))
     check("no reminder before 12/20 19:00", msgs, [])
     msgs, upd = disc_eval(cfg, s, seed_items, datetime(2026, 12, 21, 19, 0, tzinfo=KST))
-    check("H2 reminder once", [(m[0], m[2]) for m in msgs], [("[MKIF] 2026년 하반기 예상분배금 공시 미확인 | 직접 확인", 3)])
+    check("H2 reminder once", [(m[0], m[2]) for m in msgs], [("[MKIF] 088980 2026년 하반기 예상분배금 공시 미확인 | 직접 확인", 3)])
     check("reminder clean", all(clean_ok(m[0], m[1]) for m in msgs), True)
     s3 = {**s, **upd}
     msgs, upd = disc_eval(cfg, s3, seed_items, datetime(2026, 12, 22, 19, 0, tzinfo=KST))
     check("H2 reminder not repeated", msgs, [])
     s3.update(upd)
     msgs, upd = disc_eval(cfg, s3, seed_items, datetime(2027, 6, 21, 19, 0, tzinfo=KST))
-    check("H1 2027 reminder", [m[0] for m in msgs], ["[MKIF] 2027년 상반기 예상분배금 공시 미확인 | 직접 확인"])
+    check("H1 2027 reminder", [m[0] for m in msgs], ["[MKIF] 088980 2027년 상반기 예상분배금 공시 미확인 | 직접 확인"])
 
     # end date via ntfy_util
     import ntfy_util
     check("ends after 2027-12-31 23:59 (+59m grace)", ntfy_util._ended("mkif", cfg, datetime(2028, 1, 1, 1, 0, tzinfo=KST))[0], True)
     check("active before end", ntfy_util._ended("mkif", cfg, datetime(2027, 12, 31, 23, 0, tzinfo=KST))[0], False)
     t, b = confirm_message(cfg, 9450, "2026-10-29", {"dist_latest": {"amount": 350, "filed": "2026-06-15"}})
-    check("confirm title", t, "[MKIF] 설치 확인 | 매매 신호 아님")
+    check("confirm title", t, "[MKIF] 088980 설치 확인 | 매매 신호 아님")
     check("confirm clean", clean_ok(t, b), True)
     check("clean() strips dot/dash", clean("가\u00b7나\u2014다"), "가, 나-다")
     print("selftest", "PASS" if not fails else f"FAIL {fails}")

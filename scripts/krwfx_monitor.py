@@ -177,7 +177,7 @@ def main() -> int:
         "익절/줄일 때: 3개월 원화 강세가 꺾이면 달러 보유를 다시 늘리세요. 1주 되돌림만으로 환율 북을 갈아엎지 마세요.",
         "하지 말 것: 100엔/원만 보고 원화 약세/강세 단정. 엔 강세=원 강세로 같이 베팅. 추격 환전.",
     ]
-    title = f"[KRWFX] {title_bit}"
+    title = f"[KRWFX] USDKRW {title_bit}"
     topic = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
     pri = 4 if abs(gap) >= warn else 3

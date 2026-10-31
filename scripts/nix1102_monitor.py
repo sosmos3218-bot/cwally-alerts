@@ -306,7 +306,7 @@ def stock_lines(res: dict, cfg: dict) -> list[str]:
 
 def build_message(cfg: dict, results: list[dict], now: datetime) -> tuple[str, str, int]:
     verdicts = {r["code"]: r["verdict"] for r in results}
-    title = cfg["title_prefix"] + " " + " | ".join(f"{r['short']} {r['verdict']}" for r in results)
+    title = cfg["title_prefix"] + " 000660/005930 " + " | ".join(f"{r['short']} {r['verdict']}" for r in results)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     do_now = []
     later = []
@@ -390,7 +390,7 @@ def run(mode: str, now: datetime | None = None, data: dict | None = None) -> int
         return 0
     if no_candle:
         if not st.get("ops_sent"):
-            ops_title = f"{cfg['title_prefix']} 11/2 일봉 조회 실패 | 판정 없음"
+            ops_title = f"{cfg['title_prefix']} 000660/005930 11/2 일봉 조회 실패 | 판정 없음"
             ops_body = "\n".join(
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | NIX1102",

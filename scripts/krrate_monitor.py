@@ -612,7 +612,7 @@ def y10_msg(cfg, stamp, d, v, src, prev, y3, nxt, hold: str | None = None):
 
 def spread_msg(cfg, stamp, d, aa, y3, sp, w, b, bsp):
     g = cfg["spread"]
-    title = f"[KR-RATE] 신용 스프레드 {w:+.0f}bp 확대 (20거래일) | 회사채 위험 점검"
+    title = f"[KR-RATE] 148070 신용 스프레드 {w:+.0f}bp 확대 (20거래일) | 회사채 위험 점검"
     msg = body(stamp, f"회사채 AA- 3년과 국고채 3년 금리 차이가 약 1개월(20거래일) 전보다 {g['widen_trigger_bp']}bp 넘게 벌어지면 1번 오는 알림. 매매 신호 아님.",
                f"{d} 회사채 AA- 3년 {aa:.3f}% - 국고채 3년 {y3:.3f}% = {sp:.0f}bp. {b} {bsp:.0f}bp 대비 {w:+.0f}bp "
                f"(기준 {g['widen_trigger_bp']}bp 초과). 출처 KOFIA 최종호가(한국은행 ECOS).",
@@ -639,7 +639,7 @@ def mpc_msg(stamp, d, dec, y, nxt, ex: dict | None = None):
     if nv and nv[1] is not None:
         cross = f" 네이버 기준금리 {nv[1]:.2f}% ({nv[0]} 발표) {'일치' if abs(nv[1] - dec['rate']) < 0.001 and nv[0] == d else '불일치, 원문 확인'}."
     y10 = y.get("y10", (None,))[0]
-    title = f"[KR-RATE] {d[5:7]}/{d[8:]} 금통위 기준금리 {dk} {dec['rate']:.2f}%" + (f" | 국고10년 {y10:.3f}%" if y10 is not None else "")
+    title = f"[KR-RATE] 148070 {d[5:7]}/{d[8:]} 금통위 기준금리 {dk} {dec['rate']:.2f}%" + (f" | 국고10년 {y10:.3f}%" if y10 is not None else "")
     def build(guide: str) -> str:
         if ex is None:
             status = (f"기준금리 {prev}{dec['rate']:.2f}% ({dk}), 출처 {dec.get('source')}. {dec.get('dissent') or ''}.{cross} "
@@ -672,7 +672,7 @@ def cpi_msg(cfg, stamp, c):
     g = cfg["cpi"]
     emph = c["qb"] is not None and c["qb"] < g["emphasis_below_pct"]
     y, m = c["month"].split("-")
-    title = f"[KR-RATE] {y}년 {int(m)}월 근원물가 {c['qb']:.1f}% (농산물 및 석유류 제외)" + (f" | {g['emphasis_below_pct']}% 미만" if emph else "")
+    title = f"[KR-RATE] 148070 {y}년 {int(m)}월 근원물가 {c['qb']:.1f}% (농산물 및 석유류 제외)" + (f" | {g['emphasis_below_pct']}% 미만" if emph else "")
     prev = f" (전월 {c['qb_prev']:.1f}%)" if c.get("qb_prev") is not None else ""
     db = f"{c['db']:.1f}%" if c.get("db") is not None else NA
     msg = body(stamp, "근원물가(농산물및석유류제외지수 전년동월비) 새 달 수치가 나오면 1번 오는 알림. 2.5% 미만이면 강조. 매매 신호 아님.",
@@ -798,7 +798,7 @@ def main() -> int:
         v, src = close("y10", d)
         if v is None:
             if d == sess.isoformat() and late:
-                ops_once("y10", "[KR-RATE] 국고10년 조회 실패 | 조건 판정 못 함",
+                ops_once("y10", "[KR-RATE] 148070 국고10년 조회 실패 | 조건 판정 못 함",
                          ops_body("국고채 10년 금리 조건 알림의 데이터 조회 실패 안내.",
                                   f"{d} 국고채 10년 종가 {NA} (ECOS, 네이버 모두 그날 값 없음. {' | '.join(errors)[:200]})."))
             break
@@ -843,11 +843,11 @@ def main() -> int:
     if sst.get("last_day"):
         lag = len(trading_days_between(sst["last_day"], sess, 10)) - 1
         if lag >= 2 and late:
-            ops_once("spread", "[KR-RATE] 신용 스프레드 조회 실패 | 판정 밀림",
+            ops_once("spread", "[KR-RATE] 148070 신용 스프레드 조회 실패 | 판정 밀림",
                      ops_body("회사채 신용 스프레드 알림의 데이터 지연 안내.",
                               f"ECOS 회사채 AA-/국고3년 값이 {sst['last_day']} 이후 {lag}거래일째 없음 ({' | '.join(errors)[:200]})."))
     elif late and not hist:
-        ops_once("spread", "[KR-RATE] 신용 스프레드 조회 실패 | 판정 못 함",
+        ops_once("spread", "[KR-RATE] 148070 신용 스프레드 조회 실패 | 판정 못 함",
                  ops_body("회사채 신용 스프레드 알림의 데이터 조회 실패 안내.", f"ECOS 시장금리 {NA} ({' | '.join(errors)[:200]})."))
 
     # --- 2a) 금통위 결정일 ---
@@ -865,7 +865,7 @@ def main() -> int:
         dec = mpc_decision(cfg, d)
         print(f"mpc {d}: {dec}")
         if dec.get("status") != "ok":
-            ops_once(f"mpc_{d}", "[KR-RATE] 금통위 결정 확인 불가 | 요약 못 보냄",
+            ops_once(f"mpc_{d}", "[KR-RATE] 148070 금통위 결정 확인 불가 | 요약 못 보냄",
                      ops_body("금통위 결정일 요약의 데이터 확인 실패 안내.",
                               f"{d} 기준금리 결정 {NA} ({dec.get('why')}). 다음 실행 때 다시 봅니다({cfg['mpc']['retry_days']}일 안)."))
             continue
@@ -897,7 +897,7 @@ def main() -> int:
     except Exception as exc:  # noqa: BLE001
         print(f"cpi failed: {exc}", file=sys.stderr)
         if late:
-            ops_once("cpi", "[KR-RATE] 근원물가 조회 실패 | 새 달 수치 판정 못 함",
+            ops_once("cpi", "[KR-RATE] 148070 근원물가 조회 실패 | 새 달 수치 판정 못 함",
                      ops_body("근원물가 알림의 데이터 조회 실패 안내.", f"ECOS 소비자물가지수(특수분류) {NA} ({str(exc)[:200]})."))
 
     if now_sp:
@@ -1079,7 +1079,7 @@ def selftest(cfg: dict) -> int:
         assert "\u00b7" not in t + m and "\u2014" not in t + m
         assert route_topic("cwally-port", t) == "cwally-port", t
         print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p} TAGS: {tg}\n{m}\n")
-    assert route_topic("cwally-port", "[KR-RATE] 국고10년 조회 실패 | 조건 판정 못 함") == "cwally-ops"
+    assert route_topic("cwally-port", "[KR-RATE] 148070 국고10년 조회 실패 | 조건 판정 못 함") == "cwally-ops"
     print("SELFTEST OK: no network, no publish, no state")
     return 0
 

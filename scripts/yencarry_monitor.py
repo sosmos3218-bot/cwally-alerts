@@ -339,7 +339,7 @@ def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> 
     us_day = (now - timedelta(hours=13)).date()
     stance = fed_stance(datetime(us_day.year, us_day.month, us_day.day, tzinfo=timezone.utc))
     act = action_line(keys)
-    title = f"[YENCARRY] {act}"
+    title = f"[YENCARRY] USDJPY {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 연준 후속",
         "이게 뭐 알림: 연준 발표 뒤, 정해둔 레벨이 깨졌는지 보고 북을 바꿀지 결정하는 알림입니다.",
@@ -354,7 +354,7 @@ def emit_fed(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> 
 
 def emit_boj(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], stance: str) -> None:
     act = action_line(keys)
-    title = f"[YENCARRY] 일한 {stance} | {act}"
+    title = f"[YENCARRY] USDJPY 일한 {stance} | {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 결과",
         "이게 뭐 알림: 일본은행 결정. 레벨이 안 깨져도 결과는 반드시 보냅니다.",
@@ -369,7 +369,7 @@ def emit_boj(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], sta
 
 def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], stance: str) -> None:
     act = action_line(keys)
-    title = f"[YENCARRY] 일한 회견 후 | {act}"
+    title = f"[YENCARRY] USDJPY 일한 회견 후 | {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 일한 기자회견 후",
         "이게 뭐 알림: 우에다 기자회견(15:30) 뒤 레벨과 발언 요약을 봅니다. 공표문 알림과 별도입니다.",
@@ -385,7 +385,7 @@ def emit_boj_press(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str
 
 def emit_event(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], why: str) -> None:
     act = action_line(keys)
-    title = f"[YENCARRY] {act}"
+    title = f"[YENCARRY] USDJPY {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 이벤트 {why}",
         "이게 뭐 알림: 정해둔 레벨이 깨졌습니다.",
@@ -400,7 +400,7 @@ def emit_event(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str], w
 
 def emit_weekly(cfg: dict, now: datetime, usdjpy, usdkrw, j30, keys: list[str]) -> None:
     act = action_line(keys)
-    title = f"[YENCARRY] 주간 점검 | {act}"
+    title = f"[YENCARRY] USDJPY 주간 점검 | {act}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | YENCARRY | 주간",
         "이게 뭐 알림: 엔캐리 레벨을 한 주에 한 번 보는 점검입니다.",

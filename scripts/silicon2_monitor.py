@@ -127,16 +127,16 @@ def main() -> int:
     )
 
     send = False
-    title = f"[SILICON2] {TITLE_BY_ZONE.get(z, z)}"
+    title = f"[SILICON2] 257720 {TITLE_BY_ZONE.get(z, z)}"
     if mode == "event":
         if zone_changed or new_live:
             send = True
-            title = f"[SILICON2] 구간/일정 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[SILICON2] 257720 구간/일정 | {TITLE_BY_ZONE.get(z, z)}"
         else:
             print("no silicon2 event; silent")
     else:
         send = True
-        title = f"[SILICON2] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}" if now.weekday() == 0 else f"[SILICON2] {TITLE_BY_ZONE.get(z, z)}"
+        title = f"[SILICON2] 257720 주간 체크 | {TITLE_BY_ZONE.get(z, z)}" if now.weekday() == 0 else f"[SILICON2] 257720 {TITLE_BY_ZONE.get(z, z)}"
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     cap = cfg["max_equity_weight_pct"]

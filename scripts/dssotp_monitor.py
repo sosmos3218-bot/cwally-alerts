@@ -330,7 +330,7 @@ def fail_once(state: dict, cfg: dict, now: datetime, note: str, dry: bool) -> No
             "하지 말 것: 조회 실패를 호재나 악재로 해석.",
         ]
     )
-    send(cfg, "[DSSOTP] 시세 조회 실패 | 판정 보류", body, 3, dry)
+    send(cfg, "[DSSOTP] 000150 시세 조회 실패 | 판정 보류", body, 3, dry)
     if not dry:
         state["last_fail_day"] = day
 
@@ -354,9 +354,9 @@ def result_alert(cfg: dict, state: dict, now: datetime, res: dict | None, dry: b
     else:
         head = "3분기 잠정실적 공시 없이 계산한 표입니다(미리보기/수동)."
     if sm.get("base"):
-        title = f"[DSSOTP] 3분기 후 SOTP 갱신 | 기준 {man(sm['base'])}만원, 표 확인"
+        title = f"[DSSOTP] 000150 3분기 후 SOTP 갱신 | 기준 {man(sm['base'])}만원, 표 확인"
     else:
-        title = "[DSSOTP] 3분기 후 SOTP 갱신 | 피어 배수 없음, 표 확인"
+        title = "[DSSOTP] 000150 3분기 후 SOTP 갱신 | 피어 배수 없음, 표 확인"
     body = "\n".join(
         [
             f"{stamp} | 000150",
@@ -391,7 +391,7 @@ def empty_alert(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
             "하지 말 것: 미게시를 호재나 악재로 해석.",
         ]
     )
-    send(cfg, "[DSSOTP] 3분기 잠정실적 미게시 | 직접 확인", body, 3, dry)
+    send(cfg, "[DSSOTP] 000150 3분기 잠정실적 미게시 | 직접 확인", body, 3, dry)
     if not dry:
         state["empty_notified"] = True
     save(state, now, dry)
@@ -456,7 +456,7 @@ def install(cfg: dict, now: datetime) -> None:
             "하지 말 것: 이 알림을 매매 신호로 해석.",
         ]
     )
-    send(cfg, "[DSSOTP] 설치 확인 | 매매 신호 아님", body, 3, False)
+    send(cfg, "[DSSOTP] 000150 설치 확인 | 매매 신호 아님", body, 3, False)
 
 
 def main() -> int:

@@ -258,21 +258,21 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        title = f"[HCE] {TITLE_BY_ZONE.get(z, z)}"
+        title = f"[HCE] 267270 {TITLE_BY_ZONE.get(z, z)}"
         if new_confirm:
-            title = f"[HCE] 발표일 확정 | {print_d}"
+            title = f"[HCE] 267270 발표일 확정 | {print_d}"
         elif prenight:
-            title = "[HCE] 발표 전날 | 선취 금지"
+            title = "[HCE] 267270 발표 전날 | 선취 금지"
         elif print_day:
-            title = f"[HCE] 당일 종가 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[HCE] 267270 당일 종가 | {TITLE_BY_ZONE.get(z, z)}"
         elif next_day:
-            title = f"[HCE] 익일 종가 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[HCE] 267270 익일 종가 | {TITLE_BY_ZONE.get(z, z)}"
         elif zone_changed:
-            title = f"[HCE] 구간 변화 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[HCE] 267270 구간 변화 | {TITLE_BY_ZONE.get(z, z)}"
         elif new_live:
-            title = f"[HCE] 일정 창 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[HCE] 267270 일정 창 | {TITLE_BY_ZONE.get(z, z)}"
         elif mode != "event" and now.weekday() == 0:
-            title = f"[HCE] 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[HCE] 267270 주간 체크 | {TITLE_BY_ZONE.get(z, z)}"
         pri = 5 if z == "KILL" or prenight or new_confirm else (4 if z == "REDUCE" or zone_changed or oneshot else 3)
         ntfy_publish(server, topic, title, msg, pri, "tractor,chart_with_upwards_trend")
     return 0

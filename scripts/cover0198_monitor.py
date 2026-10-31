@@ -126,16 +126,16 @@ def main() -> int:
     lag = (ret20 - bench20) if ret20 is not None and bench20 is not None else None
 
     send = False
-    title = f"[COVER0198] {TITLE_BY_ZONE.get(z, z)}"
+    title = f"[COVER0198] 0198A0 {TITLE_BY_ZONE.get(z, z)}"
     if mode == "event":
         if zone_changed or new_live:
             send = True
-            title = f"[COVER0198] 매도점검 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[COVER0198] 0198A0 매도점검 | {TITLE_BY_ZONE.get(z, z)}"
         else:
             print("no cover0198 event; silent")
     else:
         send = True
-        title = f"[COVER0198] 점검 | {TITLE_BY_ZONE.get(z, z)}"
+        title = f"[COVER0198] 0198A0 점검 | {TITLE_BY_ZONE.get(z, z)}"
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     cost = cfg["cost"]

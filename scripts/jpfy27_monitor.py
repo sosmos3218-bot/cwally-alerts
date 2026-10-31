@@ -134,7 +134,7 @@ def build_hits(hits: list[tuple[list[str], dict]]) -> tuple[str, list[str]]:
     else:
         amt = "신규국채 숫자: 제목에서 확인 못 함"
     kinds = sorted({c for cls, _ in hits for c in cls})
-    title = f"[JPFY27] {'/'.join(kinds)} 새 보도 | 원문 확인"
+    title = f"[JPFY27] ^N225 {'/'.join(kinds)} 새 보도 | 원문 확인"
     lines = [
         "1) 이게 뭐 알림: 일본 2027회계연도 예산안, 국채발행, 식품세 법안 관련 새 보도가 떴다는 알림. 공식 발표 확인 전 보도 기준.",
         "2) 지금 결과/상태:",
@@ -154,7 +154,7 @@ def main() -> int:
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
 
     if mode == "install":
-        send(cfg, "[JPFY27] 설치 확인 | 매매 신호 아님", [
+        send(cfg, "[JPFY27] ^N225 설치 확인 | 매매 신호 아님", [
             "1) 이게 뭐 알림: 예산안, 국채발행, 식품세 법안 새 보도 변화 감지 알림 설치 확인.",
             "2) 지금 결과/상태: 설치만 됨. 변화가 있을 때만 옴. 고정 문구 정기 발송은 없앴음.",
             "3) 지금 할 일: 없음.",
@@ -180,7 +180,7 @@ def main() -> int:
     if ok == 0:
         last = state.get("last_fail_notice")
         if dry or last != now.strftime("%Y-%m-%d"):
-            title = "[JPFY27] 조회 실패 | 뉴스 피드 전부 실패"
+            title = "[JPFY27] ^N225 조회 실패 | 뉴스 피드 전부 실패"
             lines = [
                 "1) 이게 뭐 알림: 예산안 보도 확인 실패 알림 (매매 신호 아님).",
                 "2) 지금 결과/상태: 뉴스 피드 5개 모두 응답 없음.",

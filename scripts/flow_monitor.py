@@ -167,22 +167,22 @@ DRY = False
 def decide(h4: bool, h5: bool, s3: bool):
     """-> (title, do_now, priority) for a real signal, or None on a calm day (no message)."""
     if s3:
-        return ("[FLOW] 과열 조짐 | 추격 금지",
+        return ("[FLOW] KOSPI 과열 조짐 | 추격 금지",
                 "장이 과열 조짐입니다. 새로 추격해 사지 말고, 이미 있는 포지션은 익절 라인만 지키세요.", 4)
     if h4:
-        return ("[FLOW] 외국인+기관 강매수",
+        return ("[FLOW] KOSPI 외국인+기관 강매수",
                 "외국인과 기관이 같이 사고 있습니다. 기존 매수 계획은 유지하되, 이 숫자만 보고 새 종목을 추격하지는 마세요.", 4)
     if h5:
-        return ("[FLOW] 예탁금 호흡 | 종목 주문 아님",
+        return ("[FLOW] KOSPI 예탁금 호흡 | 종목 주문 아님",
                 "계좌 예탁금이 평소보다 많이 늘었습니다. 시장 호흡의 한 신호일 뿐, 종목 주문으로 쓰지 마세요.", 4)
     return None
 
 
 def selftest() -> int:
     ok = True
-    for args, want in (((False, False, False), None), ((True, False, False), ("[FLOW] 외국인+기관 강매수", 4)),
-                       ((False, True, False), ("[FLOW] 예탁금 호흡 | 종목 주문 아님", 4)),
-                       ((False, False, True), ("[FLOW] 과열 조짐 | 추격 금지", 4)), ((True, True, True), ("[FLOW] 과열 조짐 | 추격 금지", 4))):
+    for args, want in (((False, False, False), None), ((True, False, False), ("[FLOW] KOSPI 외국인+기관 강매수", 4)),
+                       ((False, True, False), ("[FLOW] KOSPI 예탁금 호흡 | 종목 주문 아님", 4)),
+                       ((False, False, True), ("[FLOW] KOSPI 과열 조짐 | 추격 금지", 4)), ((True, True, True), ("[FLOW] KOSPI 과열 조짐 | 추격 금지", 4))):
         d = decide(*args)
         got = None if d is None else (d[0], d[2])
         good = got == want and (d is None or not any(c in d[0] + d[1] for c in "\u00b7\u2014"))
@@ -257,7 +257,7 @@ def main() -> int:
     decision = decide(h4, h5, s3)
     if decision is None:
         # calm day (no 강매수 / 예탁금 / 과열 signal): no message since 2026-10-30 (approved in chat, owner note pt24u)
-        print("[FLOW] 오늘 수급 평온: 신호 없음, 발송 안 함 (calm-day message removed 2026-10-30)")
+        print("[FLOW] KOSPI 오늘 수급 평온: 신호 없음, 발송 안 함 (calm-day message removed 2026-10-30)")
         if not DRY:
             STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
             STATE_PATH.write_text(json.dumps({"day": day, "h4": h4, "h5": h5, "s3": s3, "sent": False, "updated_at": now.isoformat()},

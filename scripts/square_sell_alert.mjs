@@ -70,9 +70,9 @@ const doNow = {
   HOLD: "그대로 들고 계세요. 오늘은 팔 신호가 아닙니다.",
 }[status];
 const title = {
-  SELL: "[SQUARE] 비중 축소 검토",
-  WATCH: "[SQUARE] 주의 | 추가매수 보류",
-  HOLD: "[SQUARE] 보유 유지",
+  SELL: "[SQUARE] 402340 비중 축소 검토",
+  WATCH: "[SQUARE] 402340 주의 | 추가매수 보류",
+  HOLD: "[SQUARE] 402340 보유 유지",
 }[status];
 
 const msg = [
@@ -91,7 +91,7 @@ const today = kstDay();
 const changed = status !== prev.last_status;
 let sent = false;
 if (force || (status !== "HOLD" && changed)) {
-  const shown = force && status === "HOLD" ? "[SQUARE] 테스트 | 보유 유지" : title;
+  const shown = force && status === "HOLD" ? "[SQUARE] 402340 테스트 | 보유 유지" : title;
   await ntfy(shown, msg, status === "SELL" ? 5 : 4);
   sent = true;
 } else {

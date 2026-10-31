@@ -11,7 +11,7 @@ modes:
            year guard / ends_kst, or more than stale_min (45) minutes after the nearest slot.
   dry      fetch and print the message it would send. Never calls publish(), never writes state.
   force    send now even off-slot (manual retry). Writes state.
-  install  one install-confirmation send `[MARKET] 설치 확인 | 매매 신호 아님`. Never writes state.
+  install  one install-confirmation send `[MARKET] KOSPI/KOSDAQ 설치 확인 | 매매 신호 아님`. Never writes state.
   self-test  offline checks of the filters, sanitizer and slot guard (no network, no send).
 """
 from __future__ import annotations
@@ -426,7 +426,7 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         tparts.append(f"외국인 코스피 {signed(kf, '억')}")
     if shown:
         tparts.append(f"뮤즈 새 코멘트 {len(new)}건")
-    title = f"{PREFIX} {hh}시 " + (", ".join(tparts) if tparts else "시장 점검") + " | 확인만"
+    title = f"{PREFIX} KOSPI/KOSDAQ {hh}시 " + (", ".join(tparts) if tparts else "시장 점검") + " | 확인만"
 
     later = (f"다음 점검 {nxt[5:].replace('-', '/')} KST. " if nxt else "이번이 마지막 점검입니다. ") + \
         "확정 수급은 장 마감 뒤 15:40 [FLOW] 알림에서 봅니다."
@@ -462,7 +462,7 @@ def install(cfg: dict) -> int:
         "익절/줄일 때: 이 알림으로 정하지 않습니다.",
         "하지 말 것: 설치 확인을 매수 신호로 읽기.",
     ])
-    publish(resolve_topic("port", cfg.get("ntfy_topic")), f"{PREFIX} 설치 확인 | 매매 신호 아님", body, 3,
+    publish(resolve_topic("port", cfg.get("ntfy_topic")), f"{PREFIX} KOSPI/KOSDAQ 설치 확인 | 매매 신호 아님", body, 3,
             ["information_source"], cfg.get("ntfy_server"), config_name="mktpulse")
     print("install confirmation sent (state untouched)")
     return 0

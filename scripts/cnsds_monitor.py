@@ -108,7 +108,7 @@ def main() -> int:
     cfg = load_cfg()
     now = datetime.now(KST)
     if mode == "install":
-        send(cfg, "[CNSDS] 설치 확인 | 매매 신호 아님", [
+        send(cfg, "[CNSDS] 064400/018260 설치 확인 | 매매 신호 아님", [
             "이게 뭐 알림: LG씨엔에스와 삼성SDS 가격 전환 알림 설치 확인. 매매 신호 아님.",
             "지금 결과/상태: 평일 15:20 기존 슬롯. LG CNS 8만원 미만이고 삼성SDS 17.5만원 초과면 가격 할인 유지.",
             "지금 할 일: 없음. 선이 바뀔 때와 월요일에만 옵니다.",
@@ -131,7 +131,7 @@ def main() -> int:
         cns = sds = None
         err = type(exc).__name__
     if not cns or not sds:
-        title = "[CNSDS] 시세 조회 실패 | 판단 유보"
+        title = "[CNSDS] 064400/018260 시세 조회 실패 | 판단 유보"
         lines = [
             "이게 뭐 알림: LG씨엔에스 대 삼성SDS 전환 알림의 운영 안내.",
             f"지금 결과/상태: 시세 조회 실패({err}). {now:%Y-%m-%d %H:%M} KST.",
@@ -154,7 +154,7 @@ def main() -> int:
     changed = state.get("verdict") not in (None, v)
     weekly = now.weekday() == 0
     send_now = mode == "force" or ((changed or weekly) and state.get("last_alert_date") != today)
-    title = f"[CNSDS] {label} | CNS {cns/10000:.1f}만 SDS {sds/10000:.1f}만"
+    title = f"[CNSDS] 064400/018260 {label} | CNS {cns/10000:.1f}만 SDS {sds/10000:.1f}만"
     lines = [
         f"이게 뭐 알림: LG씨엔에스와 삼성SDS 가격 전환 알림. {'조건이 바뀌었습니다.' if changed else '월요일 요약.'} 투자 권유 아님.",
         f"지금 결과/상태: {now:%Y-%m-%d %H:%M} KST LG CNS {cns:,.0f}원, 삼성SDS {sds:,.0f}원. 선은 8만원과 17.5만원. 기준일 {cfg['as_of']}.",

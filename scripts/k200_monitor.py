@@ -182,7 +182,7 @@ def message(cfg: dict, fired: list[str], day: str, close: float, prev: float | N
     by = {ln["key"]: ln for ln in cfg["lines"]}
     fl = [by[k] for k in fired]
     prio = max(int(ln["priority"]) for ln in fl)
-    title = f"[K200] 종가 {close:,.2f} | " + " + ".join(ln["label"] for ln in fl)
+    title = f"[K200] KOSPI200 종가 {close:,.2f} | " + " + ".join(ln["label"] for ln in fl)
     chg = f", 전일 대비 {(close / prev - 1) * 100:+.2f}%" if prev else ""
     rearm = " ".join(
         f"{ln['level']:g}선은 종가 {ln['rearm']:.2f} {'이상' if ln['rearm_op'] == 'ge' else '이하'}에서 다시 무장." for ln in fl)
@@ -306,7 +306,7 @@ def main() -> int:
             raise ValueError("확정 종가 없음")
     except Exception as exc:
         day = now.strftime("%Y-%m-%d")
-        title = "[K200] 시세 조회 실패 | 판정 보류"
+        title = "[K200] KOSPI200 시세 조회 실패 | 판정 보류"
         body = f"{stamp} | K200\n코스피200 시세 조회 실패: {exc}. 다음 평일 15:40 에 다시 보고, 놓친 종가는 그때 날짜 순서대로 판정합니다. 이 실패로 매매하지 마세요."
         print(title, "\n" + body)
         if not dry and state.get("last_fail_day") != day:

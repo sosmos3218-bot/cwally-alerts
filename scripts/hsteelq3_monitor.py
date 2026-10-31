@@ -201,7 +201,7 @@ def main() -> int:
         if not state.get("fail_notified"):
             emit(
                 cfg,
-                "[STEEL] 현대제철 3Q 조회 실패 | 판정 유보",
+                "[STEEL] 005490/004020/103140 현대제철 3Q 조회 실패 | 판정 유보",
                 [
                     f"{stamp} | PORT | {cfg['event_label']}",
                     "이게 뭐 알림: 현대제철 3분기 잠정 연결 영업이익을 1,200억 원과 비교하고, 판재 스프레드와 봉형강 적자가 연간 이익 경로를 바꾸는지 판정.",
@@ -230,19 +230,19 @@ def main() -> int:
     op = parsed.get("op")
     gap = round(op - float(cfg["consensus_op_eok"]), 1) if isinstance(op, float) else None
     if tag == "상향열림":
-        title = "[STEEL] 현대제철 3Q 1,200억 이상 | 회복 경로 열림"
+        title = "[STEEL] 005490/004020/103140 현대제철 3Q 1,200억 이상 | 회복 경로 열림"
         action = "연간 경로 상향 확정은 아님. 4분기 스프레드가 유지되는지 볼 때까지 추격 매수 없음."
     elif tag == "하향":
-        title = "[STEEL] 현대제철 3Q 경로 하향 | 신규 보류"
+        title = "[STEEL] 005490/004020/103140 현대제철 3Q 경로 하향 | 신규 보류"
         action = "연간 이익 경로는 낮춰 보세요. 신규 매수 보류. 보유는 원문 확인 후 판단."
     elif tag == "경계":
-        title = "[STEEL] 현대제철 3Q 1,200억 미달 | 경로 유지 보류"
+        title = "[STEEL] 005490/004020/103140 현대제철 3Q 1,200억 미달 | 경로 유지 보류"
         action = "컨센서스 미달. 연간 상향은 하지 마세요. 스프레드 문구가 좋아도 이익이 기준 아래면 보류."
     elif tag == "보류":
-        title = "[STEEL] 현대제철 3Q 이익만 확인 | 경로 변경 안 함"
+        title = "[STEEL] 005490/004020/103140 현대제철 3Q 이익만 확인 | 경로 변경 안 함"
         action = "영업이익은 1,200억 이상이지만 판재 스프레드 또는 봉형강 적자 폭이 비었음. 연간 경로는 바꾸지 마세요."
     else:
-        title = "[STEEL] 현대제철 3Q 아직 없음 | 판정 유보"
+        title = "[STEEL] 005490/004020/103140 현대제철 3Q 아직 없음 | 판정 유보"
         action = "잠정 숫자가 안 보입니다. 다음 공시까지 대기. 경로 변경 없음."
     lines = [
         f"{stamp} | PORT | {cfg['event_label']} | {tag}",

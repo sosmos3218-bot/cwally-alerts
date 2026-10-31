@@ -645,8 +645,8 @@ def review_msg(cfg: dict, stamp: str, rv: dict, sig: dict, prev: dict | None, em
                 f"(c) 상위 10종목 비중 변화 {yn(sig['c'])} ({w.get('c', NA)}); (d) 지수/방법론/분배정책 공시 {yn(sig['d'])} ({w.get('d', NA)}).")
     q = rv["q"]
     head = f"배당 ETF 분기 비교 ({q[:4]}년 {q[-1]}분기 점검)"
-    title = (f"[US-DIV] {q[:4]} {q[-1]}분기 배당 ETF 비교 | 신호 {sig['count']}개 2분기 연속, 교체 검토"
-             if emph else f"[US-DIV] {q[:4]} {q[-1]}분기 배당 ETF 비교 | {c1} vs {c2} 검토용")
+    title = (f"[US-DIV] 429000/458730 {q[:4]} {q[-1]}분기 배당 ETF 비교 | 신호 {sig['count']}개 2분기 연속, 교체 검토"
+             if emph else f"[US-DIV] 429000/458730 {q[:4]} {q[-1]}분기 배당 ETF 비교 | {c1} vs {c2} 검토용")
     msg = body(stamp, head,
                f"{c1} {cfg['etfs'][0]['name']} vs {c2} {cfg['etfs'][1]['name']} 분기 비교. 사실 정리와 검토 안내이며 매수/매도 권유 아님.",
                "\n".join([sec1, sec2, sec3, sec4]),
@@ -733,7 +733,7 @@ def main() -> int:
 
     last_try = sess == window[-1]
     if fatal and mode == "auto" and not last_try:
-        ops_once("fetch", "[US-DIV] 배당 ETF 분기 비교 조회 실패 | 다음 실행에서 다시 시도",
+        ops_once("fetch", "[US-DIV] 429000/458730 배당 ETF 분기 비교 조회 실패 | 다음 실행에서 다시 시도",
                  body(stamp, "배당 ETF 분기 비교", "분기 비교 알림의 데이터 조회 실패 안내.",
                       f"{NA}: {' | '.join(fatal)[:400]}.", "필요하면 네이버 증권, KIND 에서 직접 보세요.",
                       f"이 분기 {window[-1].isoformat()} 까지 19:00 실행마다 다시 시도합니다.",
@@ -834,7 +834,7 @@ def selftest(cfg: dict) -> int:
         assert (p == 4 and "rotating_light" in tg) if em else (p == 3 and "rotating_light" not in tg)
         assert "권유 아님" in m
         print(f"--- sample (emph={em})\nTITLE: {t}\nPRIORITY: {p} TAGS: {tg} BYTES: {len(m.encode())}\n{m}\n")
-    ops_t = "[US-DIV] 배당 ETF 분기 비교 조회 실패 | 다음 실행에서 다시 시도"
+    ops_t = "[US-DIV] 429000/458730 배당 ETF 분기 비교 조회 실패 | 다음 실행에서 다시 시도"
     assert route_topic("cwally-port", ops_t) == "cwally-ops"
     print("SELFTEST OK: no network, no publish, no state")
     return 0

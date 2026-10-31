@@ -153,13 +153,13 @@ def build_message(cfg: dict, events: list[dict], close: tuple[str, float] | None
             f"차입금 {b['borrowings_eok']:.0f}억, 교환사채 {b['eb_face_eok']:.0f}억(조기상환 청구 {b['eb_put_from']}부터), "
             f"시설투자 잔여 {b['capex_remaining_eok']:.0f}억(종료 {b['ohsong2_end']})")
     if install:
-        title = f"{cfg['title_prefix']} 설치 확인 | 매매 신호 아님"
+        title = f"{cfg['title_prefix']} 087010 설치 확인 | 매매 신호 아님"
         intro = "이게 뭐 알림: 펩트론 087010 공시 점검이 설치됐는지 확인하는 1회 알림입니다. 매매 신호가 아닙니다."
         status = ["지금 결과/상태: 새 공시를 보면 이 형식으로 알립니다. 아직 감지된 변화는 없습니다.", f"- {px}"]
         todo = "지금 할 일: 없음. 평일 09:00에 새 공시가 있을 때만 알림이 옵니다."
     else:
         kind = top_kind(events)
-        title = f"{cfg['title_prefix']} {HEAD[kind]}"
+        title = f"{cfg['title_prefix']} 087010 {HEAD[kind]}"
         intro = "이게 뭐 알림: 펩트론 087010 릴리 평가 종료 이후 공시 점검입니다. 새 공시나 분기 변화가 있어 보냅니다."
         shown = [f"- {e['text']}" for e in events[:5]]
         if len(events) > 5:
@@ -200,7 +200,7 @@ def problem(cfg: dict, state: dict, now: datetime, key: str, detail: str, dry: b
     if ops_daily.get(key) == day and not dry:
         print(f"ops already sent today: {key}")
         return
-    title = f"{cfg['title_prefix']} 펩트론 {key} 조회 실패 | 판단 유보"
+    title = f"{cfg['title_prefix']} 087010 펩트론 {key} 조회 실패 | 판단 유보"
     lines = [
         "이게 뭐 알림: 펩트론 087010 공시 점검의 데이터 문제 안내.",
         f"지금 결과/상태: {detail}. {now:%Y-%m-%d %H:%M} KST. 이번 실행의 공시 확인은 건너뛰었습니다.",
@@ -334,7 +334,7 @@ def self_test() -> int:
     assert "\u00b7" not in body and "\u2014" not in body, "no middle dot or em dash"
     assert t.startswith("[PEPT]")
     ti, li = build_message(cfg, [], None, True)
-    assert ti == "[PEPT] 설치 확인 | 매매 신호 아님" and "매매 신호가 아닙니다" in "\n".join(li)
+    assert ti == "[PEPT] 087010 설치 확인 | 매매 신호 아님" and "매매 신호가 아닙니다" in "\n".join(li)
     assert not is_trading_day(date(2026, 10, 9))
     print("self-test ok")
     return 0

@@ -552,7 +552,7 @@ def fail_once(cfg: dict, state: dict, now: datetime, what: str, dry: bool) -> No
         print(f"fail already notified today: {what}")
         return
     state["fail_day"] = day
-    send(cfg, "[DOOSAN] 조회 실패 | 오늘 판정 보류",
+    send(cfg, "[DOOSAN] 000150/034020/241560/131970 조회 실패 | 오늘 판정 보류",
          "\n".join([
              "이게 뭐 알림: 두산 4종목 알림의 데이터 조회 실패 안내입니다. 매매 신호가 아닙니다.",
              f"지금 결과/상태: {what}",
@@ -626,7 +626,7 @@ def run_slot(cfg: dict, state: dict, now: datetime, mode: str) -> None:
         action = "관망"
     if not heads:
         heads = [f"주간 요약 {md(d0)}"]
-    title = f"[DOOSAN] {', '.join(heads[:2])}" + (f" 외 {len(heads) - 2}건" if len(heads) > 2 else "") + f" | {action}"
+    title = f"[DOOSAN] 000150/034020/241560/131970 {', '.join(heads[:2])}" + (f" 외 {len(heads) - 2}건" if len(heads) > 2 else "") + f" | {action}"
     body = [f"이게 뭐 알림: 두산 4종목(두산, 두산에너빌리티, 두산밥캣, 두산테스나) {md(d0)} 확정치 점검에서 새로 걸린 조건"
             + (", 주간 요약" if digest else "") + "입니다. 매매 신호가 아닙니다."]
     body.append(f"지금 결과/상태 ({md(d0)} KRX 종가, 확정 수급, 억원):")
@@ -686,7 +686,7 @@ def run_auto(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
         print(f"{stamp} doosan auto silent; 오늘 접수된 3분기 실적 없음")
         save(state, now, dry)
         return
-    title = f"[DOOSAN] {', '.join(heads[:2])}" + (f" 외 {len(heads) - 2}건" if len(heads) > 2 else "") + " | 다음 날 시가 확인"
+    title = f"[DOOSAN] 000150/034020/241560/131970 {', '.join(heads[:2])}" + (f" 외 {len(heads) - 2}건" if len(heads) > 2 else "") + " | 다음 날 시가 확인"
     body = ["이게 뭐 알림: 두산 4종목 중 오늘 접수된 3분기 실적을 발표 전 고정한 컨센서스와 비교한 결과입니다. 매매 신호가 아닙니다.",
             "지금 결과/상태 (잠정치, 억원):"]
     body += [f"- {x}" for x in lines]
@@ -732,7 +732,7 @@ def install(cfg: dict, now: datetime) -> None:
         "익절/줄일 때: 해당 없음.",
         "하지 말 것: 이 알림을 매매 신호로 해석. 투자 권유 아님.",
     ])
-    send(cfg, "[DOOSAN] 설치 확인 | 매매 신호 아님", body, 3, False)
+    send(cfg, "[DOOSAN] 000150/034020/241560/131970 설치 확인 | 매매 신호 아님", body, 3, False)
 
 
 def main() -> int:

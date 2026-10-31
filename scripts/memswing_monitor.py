@@ -446,7 +446,7 @@ def event_message(ev: dict, snap: dict, cfg: dict, stamp: str) -> tuple[str, str
     hold_min = cfg["hold_min_days"]
 
     if kind == "entry":
-        title = f"[MEMSWING] {short} 진입 조건 충족 | 분할 진입 검토"
+        title = f"[MEMSWING] 005930/000660 {short} 진입 조건 충족 | 분할 진입 검토"
         result = (
             f"{name} idle->signal. KRX 종가 {fmt_won(close)} (기준 {fmt_won(thr)} 초과). "
             f"외인 직전일 {fmt_shares(ev.get('f_prev'))}, 당일 {fmt_shares(ev.get('f_today'))} "
@@ -461,7 +461,7 @@ def event_message(ev: dict, snap: dict, cfg: dict, stamp: str) -> tuple[str, str
         dont = "장후 NXT나 시간외로 판정 바꾸기, 추격, 신용, 미수. 투자 권유 아님."
         what = "외국인 순매수 2거래일 연속과 기준가 위 종가로 스윙 진입 조건이 새로 충족됨."
     elif kind == "stop":
-        title = f"[MEMSWING] {short} 손절선 이탈 | 정리 검토"
+        title = f"[MEMSWING] 005930/000660 {short} 손절선 이탈 | 정리 검토"
         result = (
             f"{name} signal->idle (손절). KRX 종가 {fmt_won(close)} < 손절 {fmt_won(stop)}. "
             f"보유 {ev.get('days_held')}거래일. 당일 외인 {fmt_shares(ev.get('f_today'))}."
@@ -472,7 +472,7 @@ def event_message(ev: dict, snap: dict, cfg: dict, stamp: str) -> tuple[str, str
         dont = "손절 이탈을 일시 조정으로 보고 비중 확대. 신용, 미수. 투자 권유 아님."
         what = "스윙 보유 중 종가가 손절선 아래로 마감해 청산 조건이 충족됨."
     elif kind == "exit_due":
-        title = f"[MEMSWING] {short} {hold_max}거래일 만료 | 청산 검토"
+        title = f"[MEMSWING] 005930/000660 {short} {hold_max}거래일 만료 | 청산 검토"
         result = (
             f"{name} signal->idle (만료). 보유 {ev.get('days_held')}거래일(한도 {hold_max}). "
             f"KRX 종가 {fmt_won(close)}, 손절 {fmt_won(stop)}. 당일 외인 {fmt_shares(ev.get('f_today'))}."
@@ -483,7 +483,7 @@ def event_message(ev: dict, snap: dict, cfg: dict, stamp: str) -> tuple[str, str
         dont = "만료 알림을 신규 매수 신호로 읽기. 신용, 미수. 투자 권유 아님."
         what = f"스윙 보유 창 {hold_max}거래일에 도달해 청산 검토가 필요함."
     else:  # day3
-        title = f"[MEMSWING] {short} {hold_min}거래일 도달 | 조기 청산창 열림"
+        title = f"[MEMSWING] 005930/000660 {short} {hold_min}거래일 도달 | 조기 청산창 열림"
         result = (
             f"{name} 보유 {ev.get('days_held')}거래일. 종가 {fmt_won(close)}, "
             f"손절까지 {fmt_pct(stop, close) if close else '확인 불가'}, "
@@ -524,7 +524,7 @@ def weekly_message(snaps: list[dict], stamp: str, week_key: str) -> tuple[str, s
             f"{'(보유 ' + str(held) + '일)' if st == 'signal' else ''}, "
             f"손절까지 {dist_stop}, 기준까지 {dist_thr}. 외인 최근5: {flow_txt}.{sell_note}"
         )
-    title = f"[MEMSWING] 주간 요약 {week_key} | 상태 점검"
+    title = f"[MEMSWING] 005930/000660 주간 요약 {week_key} | 상태 점검"
     msg = body_lines(
         stamp,
         "삼성전자, SK하이닉스 스윙 주간 요약. 상태 변경이 없어도 주 1회 보낸다.",
@@ -538,7 +538,7 @@ def weekly_message(snaps: list[dict], stamp: str, week_key: str) -> tuple[str, s
 
 
 def missing_ops_message(stamp: str, data_day: str, streak: int, err: str | None) -> tuple[str, str, int]:
-    title = f"[MEMSWING] 직전 거래일 수급 미게시 | 판정 보류"
+    title = f"[MEMSWING] 005930/000660 직전 거래일 수급 미게시 | 판정 보류"
     detail = f"오류: {err[:160]}" if err else f"{data_day} 확정 수급 행 없음"
     msg = body_lines(
         stamp,

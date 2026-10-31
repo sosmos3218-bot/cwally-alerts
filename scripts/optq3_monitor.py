@@ -34,7 +34,7 @@ def main() -> int:
     # Placeholder: in real run, fetch DART or financial APIs for the 5 holdings.
     # For this skeleton, we report the expected check window and criteria.
     holdings = [h["name"] for h in cfg.get("holdings", [])]
-    title = "[OPTQ3] 3Q 실적 대조 창 | 추가매수 보류"
+    title = "[OPTQ3] 0219B0/327260/046970/138080/010170/368770 3Q 실적 대조 창 | 추가매수 보류"
     body = (
         "이게 뭐 알림: 0219B0 상위 5개 편입사 3분기 실적 발표 후 영업이익과 영업현금흐름을 사전 트리거와 대조하는 점검이다.\n"
         "지금 결과/상태: 아직 3분기 실적 데이터가 충분히 공개되지 않았거나 조회 범위 밖이다. 주요 종목 RF머트리얼즈, 우리로, 오이솔루션, 대한광통신, 파이버프로.\n"

@@ -45,7 +45,12 @@ FORBIDDEN = ("\u00b7", "\u2014")
 
 
 def strip_prefix(title: str) -> str:
-    return title.split("]", 1)[1].strip() if title.startswith("[") and "]" in title else title
+    body = title.split("]", 1)[1].strip() if title.startswith("[") and "]" in title else title
+    # Standalone component sends put KOSPI after the bracket. The ladder title is already
+    # [KOSPI], and kos5500_last_label stores the scenario text, so drop that token here.
+    if body.startswith("KOSPI "):
+        body = body[len("KOSPI "):]
+    return body
 
 
 def kos5500_label(title: str) -> str:
@@ -211,6 +216,10 @@ def selftest() -> int:
     t, m, _, _ = combine([up], stamp)
     check("single part, no count", t, "[KOSPI] 종가 5,760.00 | 5750 돌파 | 상방 확인")
     check("kos5500 label", kos5500_label("[KOS5500] 5500 이탈 첫날 | 10/20 원샷"), "5500 이탈 첫날")
+    check("kos5500 label ignores index token", kos5500_label("[KOS5500] KOSPI 5500 이탈 첫날 | 10/20 원샷"), "5500 이탈 첫날")
+    stamped = {**down, "title": "[KOSDOWN] KOSPI 종가 5,440.00 | 5450 이탈 | 하방 확인"}
+    t, _, _, _ = combine([stamped], stamp)
+    check("ladder title drops repeated KOSPI token", t, "[KOSPI] 종가 5,440.00 | 5450 이탈 | 하방 확인")
     check("no forbidden chars", any(ch in m for ch in FORBIDDEN), False)
     rev = {"name": "kosbrk", "title": "[KOSBRK] SK하이닉스 11월 판단 되돌림 신호 | 외국인 5일 연속 순매수, 종가 6,010.00",
            "priority": 4, "tags": ["chart_with_upwards_trend"],

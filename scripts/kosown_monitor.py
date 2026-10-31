@@ -94,7 +94,7 @@ def install_confirm(now: datetime) -> int:
         "이 알림으로 즐이지 마세요. 임계값 회복 전까지는 관망.",
         "지분율 숫자만으로 수급 전환 확정하기. 매크로 리스크 무시하기.",
     )
-    publish(ntfy, server, "[KOSOWN] 설치 확인 | 매매 신호 아님", message, 3)
+    publish(ntfy, server, "[KOSOWN] 005930/000660 설치 확인 | 매매 신호 아님", message, 3)
     print("install-confirm sent; state not written")
     return 0
 
@@ -123,7 +123,7 @@ def run(now: datetime | None = None) -> int:
             "지분율만으로 즉각 수급 전환 판단하기.",
         )
         try:
-            publish(ntfy, server, "[KOSOWN] 기준 유지 | 임계값 회복 전까지 관망", message, 3)
+            publish(ntfy, server, "[KOSOWN] 005930/000660 기준 유지 | 임계값 회복 전까지 관망", message, 3)
             work["last_baseline_week"] = week
             work["updated_at"] = stamp
             atomic_save(STATE_PATH, work)

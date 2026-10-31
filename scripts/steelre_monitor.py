@@ -420,7 +420,7 @@ def kz_block(kz: dict) -> list[str]:
 def message(results: dict, cfg: dict, kz: dict | None, now: datetime, dry_note: str = "") -> tuple[str, str, int]:
     names = cfg["stocks"]
     labs = [f"{names[c]['name']} {results[c]['label']}" for c in names]
-    title = f"{TAG} 철강, 비철 재진입 판정 | " + ", ".join(labs)
+    title = f"{TAG} 010130/005490 철강, 비철 재진입 판정 | " + ", ".join(labs)
     lines = [f"{now.strftime('%Y-%m-%d %H:%M')} KST | STEELRE | 재진입 판정 1회" + dry_note,
              "이게 뭐 알림: POSCO홀딩스와 고려아연을 다시 살 만한지 조건 5개로 본 1회 판정. [STEEL] 9/15 가격대보다 이 결과를 먼저 봄.",
              "지금 결과/상태:"]
@@ -530,7 +530,7 @@ def ops_send(st: dict, now: datetime, errs: list[str], cfg: dict, dry: bool) -> 
     day = now.date().isoformat()
     if st.get("ops_day") == day:
         return
-    t = f"{TAG} 시세 조회 실패 | 재진입 판정 못 함"
+    t = f"{TAG} 010130/005490 시세 조회 실패 | 재진입 판정 못 함"
     m = "\n".join([f"{now.strftime('%Y-%m-%d %H:%M')} KST | STEELRE",
                    "이게 뭐 알림: 11/19 재진입 판정용 시세를 못 읽음. 매매 신호 아님.",
                    "지금 결과/상태: " + clean("; ".join(errs)[:400]),

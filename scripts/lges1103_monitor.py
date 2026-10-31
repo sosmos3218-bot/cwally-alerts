@@ -2,11 +2,11 @@
 """LG Energy Solution 2026-11-03 confirmed Q3 print + Q3 earnings-call verdict. One-shot, year-guarded.
 
 Part 1 (results, unchanged rules): 11/3 runs read the KRX/DART notice and send one
-"[LGESF] LG엔솔 3Q 확정 <매수 검토|관망|보류>" (new-buy labels since 2026-10-27, same thresholds:
+"[LGESF] 373220 LG엔솔 3Q 확정 <매수 검토|관망|보류>" (new-buy labels since 2026-10-27, same thresholds:
 상향 -> 매수 검토, 유지 -> 관망, 판정 유보 -> 관망, 철회 -> 보류).
 Part 2 (call verdict, approved in chat 2026-10-27, user does not hold 373220 = new-buy framing):
 from 11/3 11:00 KST (call 10:00) reads the IR script/presentation PDFs, the LG press release,
-11/3 notices and call news, then sends one "[LGESF] 실적콜 판정: <매수 검토|관망|보류|확인 필요>".
+11/3 notices and call news, then sends one "[LGESF] 373220 실적콜 판정: <매수 검토|관망|보류|확인 필요>".
   - 4Q ex-credit (보조금 제외) profit guidance: positive / negative / mixed or aspirational / not stated.
   - 3Q one-off (customer compensation etc.) as % of 3Q ex-credit OP (3,391억 prelim) and of reported OP.
   매수 검토 = guidance positive AND (one-off < 50% of ex-credit OP OR stated immaterial)
@@ -153,7 +153,7 @@ def problem(cfg: dict, state: dict, now: datetime, kind: str, detail: str, dry: 
     if state.get("last_problem_key") == key:
         print(f"problem already reported: {kind}")
         return
-    title = f"[LGESF] LG엔솔 확정 {kind} | 판정 유보"
+    title = f"[LGESF] 373220 LG엔솔 확정 {kind} | 판정 유보"
     lines = [
         "이게 뭐 알림: LG에너지솔루션 2026년 3분기 확정 실적과 컨퍼런스콜 판정.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST. 공시: {DISCLOSURES}",
@@ -206,7 +206,7 @@ def results_part(cfg: dict, state: dict, now: datetime, mode: str) -> dict | Non
     item = matches[0]
     p = parse(item)
     label, why, action = verdict(p, cfg["prelim"])
-    title = f"[LGESF] LG엔솔 3Q 확정 {label}"
+    title = f"[LGESF] 373220 LG엔솔 3Q 확정 {label}"
     lines = [
         "이게 뭐 알림: 373220 2026년 3분기 확정 실적에서 보상금, 사업부 손익, 순이익, 현금흐름을 분리해 신규 매수 여부를 봅니다. 미보유, 참고용, 투자 권유 아님.",
         (
@@ -580,7 +580,7 @@ def call_message(cfg: dict, label: str, why: str, ev: dict, base_ex: int, base_o
         "보류": "신규 매수 보류. 보조금과 일회성을 뺀 이익이 다시 흑자로 확인되기 전에는 사지 않기.",
         "확인 필요": "판정 못 함. IR 자료와 공시 원문을 직접 확인하기 전에는 매수 결정 미루기.",
     }[label]
-    title = f"[LGESF] 실적콜 판정: {label}"
+    title = f"[LGESF] 373220 실적콜 판정: {label}"
     lines = [
         "이게 뭐 알림: LG에너지솔루션(373220) 11/3 3분기 실적콜에서 4분기 보조금 제외 손익 가이던스와 3분기 일회성(보상금) 비중을 보고 신규 매수 여부를 판정합니다. 미보유, 참고용, 투자 권유 아님.",
         f"지금 결과/상태: 판정 {label}. 이유: {why}. 4분기 보조금 제외 가이던스: {gtxt}. 3분기 일회성: {otxt}. "
@@ -647,7 +647,7 @@ def call_part(cfg: dict, state: dict, now: datetime, mode: str, results: dict | 
             print("call part: ops notice already sent; silent")
             return "already"
         kind = "자료 조회 실패" if meta["errors"] and not srcs else "자료 미게시"
-        title = f"[LGESF] 실적콜 판정: 확인 필요 | {kind}"
+        title = f"[LGESF] 373220 실적콜 판정: 확인 필요 | {kind}"
         lines = [
             "이게 뭐 알림: LG에너지솔루션 11/3 3분기 실적콜 판정(신규 매수 기준). 미보유, 매매 신호 아님.",
             f"지금 결과/상태: 마지막 실행({now:%Y-%m-%d %H:%M} KST)까지 판정할 자료를 찾지 못했습니다. "
@@ -714,7 +714,7 @@ def selftest() -> int:
             with contextlib.redirect_stdout(buf):
                 results_part(cfg, {"result_notified": False}, datetime(2026, 11, 3, 16, 32, tzinfo=KST), "dry")
             out = buf.getvalue()
-            check(f"results dry title {want}", out.splitlines()[0], f"[LGESF] LG엔솔 3Q 확정 {want}")
+            check(f"results dry title {want}", out.splitlines()[0], f"[LGESF] 373220 LG엔솔 3Q 확정 {want}")
             check(f"results {want} has no holder wording", any(w in out for w in ("상향하세요", "유지하세요", "철회하세요", "보유 비중을 재평가")), False)
             check(f"results {want} no middle dot/em-dash", any(ch in out for ch in "\u00b7\u2014"), False)
             print(out)
@@ -796,7 +796,7 @@ def selftest() -> int:
         st = copy.deepcopy(base)
         sent.clear()
         check("final nothing -> ops", call_part(cfg, st, at("2026-11-04 09:22"), "auto", gather=fake([]), sender=snd), "ops")
-        check("ops title routes to cwally-ops", (sent[0][0], sent[0][1]), ("ops", "[LGESF] 실적콜 판정: 확인 필요 | 자료 미게시"))
+        check("ops title routes to cwally-ops", (sent[0][0], sent[0][1]), ("ops", "[LGESF] 373220 실적콜 판정: 확인 필요 | 자료 미게시"))
         check("ops once", call_part(cfg, st, at("2026-11-04 10:00"), "auto", gather=fake([]), sender=snd), "already")
         st = copy.deepcopy(base)
         sent.clear()

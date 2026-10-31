@@ -116,7 +116,7 @@ def install_confirm(now: datetime) -> int:
         "연도가 다른 점추정을 차액으로 읽기. 4달러대 중후반을 확정 ASP로 읽기.",
         baseline_extra(cfg),
     )
-    publish(ntfy, server, "[HBMASP] 설치 확인 | 매매 신호 아님", message, 3)
+    publish(ntfy, server, "[HBMASP] 005930/000660 설치 확인 | 매매 신호 아님", message, 3)
     print("install-confirm sent; state not written")
     return 0
 
@@ -146,7 +146,7 @@ def run(now: datetime | None = None) -> int:
             baseline_extra(cfg),
         )
         try:
-            publish(ntfy, server, "[HBMASP] 기준 유지 | 제시가를 확정가로 보지 말 것", message, 3)
+            publish(ntfy, server, "[HBMASP] 005930/000660 기준 유지 | 제시가를 확정가로 보지 말 것", message, 3)
             work["last_baseline_week"] = week
             changed = True
         except Exception as exc:
@@ -178,7 +178,7 @@ def run(now: datetime | None = None) -> int:
                     "제목을 확정 계약, 3배 ASP, 영업이익 민감도로 읽기.",
                     [f"출처: {item.get('url') or '주소 없음'}"],
                 )
-                publish(ntfy, server, "[HBMASP] 새 공시 | 제시가와 확정가 구분", message, 4)
+                publish(ntfy, server, "[HBMASP] 005930/000660 새 공시 | 제시가와 확정가 구분", message, 4)
                 work.setdefault("notice_versions", []).append(key)
                 seen.add(key)
                 work["notice_versions"] = work["notice_versions"][-500:]
@@ -186,7 +186,7 @@ def run(now: datetime | None = None) -> int:
         except Exception as exc:
             errors.append(f"{name} 공시 조회 실패: {exc}")
     if errors and state.get("ops_daily", {}).get(today) != "notice":
-        ops = "[HBMASP] 공시 조회 실패 | 매매 신호 아님"
+        ops = "[HBMASP] 005930/000660 공시 조회 실패 | 매매 신호 아님"
         message = body(
             stamp,
             "HBM 공시 목록 조회 실패 안내입니다. 매매 신호가 아닙니다.",

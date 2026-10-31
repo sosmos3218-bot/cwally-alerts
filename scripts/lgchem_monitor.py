@@ -95,7 +95,7 @@ def main():
         "cns_ai_slowed": False,
     }
     verdict, reasons = evaluate(cfg, sample)
-    title = f"[LGCHEM] 3Q \uc2e4\uc801 \ud310\uc815: {verdict} | \uc124\uce58 \ud655\uc778 \ub610\ub294 \ub300\uae30"
+    title = f"[LGCHEM] 051910 3Q \uc2e4\uc801 \ud310\uc815: {verdict} | \uc124\uce58 \ud655\uc778 \ub610\ub294 \ub300\uae30"
     lines = [
         "\uc774\uac8c \ubb50 \uc54c\ub9bc: " + cfg["explain"],
         f"\uc9c0\uae08 \uacb0\uacfc\u00b7\uc0c1\ud0dc: {verdict}. \uc0ac\uc720: {'; '.join(reasons)}. NAV {sample['nav_share_pct']}%.",

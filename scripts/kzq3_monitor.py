@@ -192,9 +192,9 @@ def main():
         print(f"decision={action} | {why}")
         print(f"state(read-only)={json.dumps(st, ensure_ascii=False)}")
         if op is None:
-            print("would send: [KZ] 원문 없음 | 보유 유지" + (" (skipped: empty_notified already true)" if st.get("empty_notified") else ""))
+            print("would send: [KZ] 010130 원문 없음 | 보유 유지" + (" (skipped: empty_notified already true)" if st.get("empty_notified") else ""))
         else:
-            print(f"would send: [KZ] {action} | 3분기 vs 추정")
+            print(f"would send: [KZ] 010130 {action} | 3분기 vs 추정")
         return 0
     if op is None and mode != "force":
         if not st.get("empty_notified"):
@@ -207,7 +207,7 @@ def main():
                 "익절/줄일 때: 미발표로 비중 조정 금지.",
                 "하지 말 것: 추정을 실적으로 읽기. 신용, 미수, 추격매수. 투자 권유 아님.",
             ]
-            emit(cfg, "[KZ] 원문 없음 | 보유 유지", lines, 3)
+            emit(cfg, "[KZ] 010130 원문 없음 | 보유 유지", lines, 3)
             st["empty_notified"] = True
             save_state(st, now)
         return 0
@@ -222,7 +222,7 @@ def main():
         "하지 말 것: TTM PER 편차로 과평가 단정. 경영권 분쟁 무시. 신용, 미수, 추격매수. 투자 권유 아님.",
         "출처: " + cfg["sources"]["news"],
     ]
-    title = f"[KZ] {action} | 3분기 vs 추정"
+    title = f"[KZ] 010130 {action} | 3분기 vs 추정"
     emit(cfg, title, lines, 4 if action != "중립" else 3)
     st["final_notified"] = True
     st["score"] = action

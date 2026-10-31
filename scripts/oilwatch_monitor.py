@@ -214,7 +214,7 @@ def main() -> int:
         miss = ", ".join(errs) if errs else "없음"
         alerts.append(
             (
-                "[OIL] 설치 확인 | 매매 신호 아님",
+                "[OIL] BZ=F 설치 확인 | 매매 신호 아님",
                 body(
                     stamp,
                     f"설치 확인 발송입니다. 현재 {', '.join(parts)}. 조회 실패 항목: {miss}. 첫 정규 실행(평일 09:00)은 기준값만 기록하고 울리지 않습니다.",
@@ -233,7 +233,7 @@ def main() -> int:
                 verb = "수집 실패" if key == "margin" else "조회 실패"
                 alerts.append(
                     (
-                        f"[OIL] {names[key]} {verb} | 조건 미확인",
+                        f"[OIL] BZ=F {names[key]} {verb} | 조건 미확인",
                         body(
                             stamp,
                             f"{names[key]} {verb}. {err}. 조건 미충족이 아닙니다.",
@@ -266,7 +266,7 @@ def main() -> int:
                 b, bd = vals["brent"]
                 alerts.append(
                     (
-                        "[OIL] 브렌트 120달러 이상 | 확전 시나리오 점검",
+                        "[OIL] BZ=F 브렌트 120달러 이상 | 확전 시나리오 점검",
                         body(
                             stamp,
                             f"브렌트 종가 {b:.2f}달러({bd} 미국장). 확전 시나리오 경계 120달러 이상입니다.",
@@ -282,7 +282,7 @@ def main() -> int:
                 b, bd = vals["brent"]
                 alerts.append(
                     (
-                        "[OIL] 브렌트 85달러 미만 | 완화 시나리오 점검",
+                        "[OIL] BZ=F 브렌트 85달러 미만 | 완화 시나리오 점검",
                         body(
                             stamp,
                             f"브렌트 종가 {b:.2f}달러({bd} 미국장). 완화 시나리오 경계 85달러 미만입니다.",
@@ -298,7 +298,7 @@ def main() -> int:
                 est, d0, d1, _ = vals["margin"]
                 alerts.append(
                     (
-                        "[OIL] 정제마진 추정 15달러 미만 | 정유주 비중 점검",
+                        "[OIL] BZ=F 정제마진 추정 15달러 미만 | 정유주 비중 점검",
                         body(
                             stamp,
                             f"정제마진 추정치 {est:.1f}달러({d0}~{d1} 평균). 기준 15달러 미만입니다. 공식 복합정제마진이 아니라 페트로넷 가격으로 만든 추정치입니다.",
@@ -314,7 +314,7 @@ def main() -> int:
                 fx, fd = vals["fx"]
                 alerts.append(
                     (
-                        "[OIL] 원/달러 1,300원 미만 | 미국 에너지 원화수익 점검",
+                        "[OIL] BZ=F 원/달러 1,300원 미만 | 미국 에너지 원화수익 점검",
                         body(
                             stamp,
                             f"원/달러 {fx:,.1f}원({fd}). 1,300원 미만입니다. [PORT]의 1,340 이하 2일 연속 규칙과는 별개 알림입니다.",

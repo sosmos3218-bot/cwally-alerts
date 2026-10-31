@@ -105,7 +105,7 @@ def main() -> int:
         basic = json.loads(fetch(cfg["sources"]["basic"]))
         price_rows = json.loads(fetch(cfg["sources"]["price"]))
     except Exception as exc:
-        fail_once(state, now, cfg, "[KOSDOWN] 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
+        fail_once(state, now, cfg, "[KOSDOWN] KOSPI 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
         return 0
 
     bar = latest_closed(price_rows, basic)
@@ -142,7 +142,7 @@ def main() -> int:
         return 0
 
     broken = ", ".join(f"{int(lv)}" for lv in new_hits)
-    title = f"[KOSDOWN] 종가 {close:,.2f} | {broken} 이탈 | 하방 확인"
+    title = f"[KOSDOWN] KOSPI 종가 {close:,.2f} | {broken} 이탈 | 하방 확인"
     body = "\n".join([
         f"{stamp} | KOSDOWN",
         "이게 뭐 알림: 코스피 하방 시나리오 레벨 이탈입니다. 매도 신호가 아닙니다.",

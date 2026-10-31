@@ -421,11 +421,11 @@ def tf_msg(stamp: str, art: dict, hit: dict, st: dict) -> tuple[str, str, int]:
     p, q = PROD_KO[hit["prod"]], hit.get("q") or "분기"
     rng = fmt_rng(hit["lo"], hit["hi"], -1)
     if hit["level"] == "확정":
-        title = f"[MEMWATCH] 트렌드포스 {q} {p} 계약가 {rng} 집계 | 확정, 추가 매수 보류"
+        title = f"[MEMWATCH] 005930/000660 트렌드포스 {q} {p} 계약가 {rng} 집계 | 확정, 추가 매수 보류"
         what = f"트렌드포스가 {p} 분기 계약가(전분기 대비) 10% 이상 하락을 집계했다는 알림. 삼성전자 계획 규칙의 추가 매수 보류 조건입니다."
         action = ACT_CONFIRMED
     else:
-        title = f"[MEMWATCH] 트렌드포스 {q} {p} 계약가 {rng} 전망 | 경계, 추가 매수 보류 검토"
+        title = f"[MEMWATCH] 005930/000660 트렌드포스 {q} {p} 계약가 {rng} 전망 | 경계, 추가 매수 보류 검토"
         what = (f"트렌드포스 분기 전망에서 {p} 계약가 하락 범위 큰 쪽이 10% 이상이라는 알림. 전망이라 '경계'입니다"
                 + (" (범위 전체가 -10% 이하)." if hit.get("full") else " (범위 작은 쪽은 10% 미만)."))
         action = "원문 전망 숫자를 직접 확인. " + ACT_CONFIRMED
@@ -436,7 +436,7 @@ def tf_msg(stamp: str, art: dict, hit: dict, st: dict) -> tuple[str, str, int]:
 def table_msg(stamp: str, prod: str, r: dict, cfg: dict, st: dict) -> tuple[str, str, int]:
     p = PROD_KO[prod]
     label = cfg["price"]["tables"][prod]["label"]
-    title = f"[MEMWATCH] {p} 고정거래가 3개월 {r['chg']:+.1f}% | 확정, 추가 매수 보류"
+    title = f"[MEMWATCH] 005930/000660 {p} 고정거래가 3개월 {r['chg']:+.1f}% | 확정, 추가 매수 보류"
     status = (f"{label}: {r['last']} 평균 {r['v']:g}달러, {r['base']} {r['b']:g}달러 대비 {r['chg']:+.1f}% (기준 -10% 이하). "
               f"링크: {cfg['price']['tables'][prod]['url']}")
     what = f"{p} 계약(고정거래) 가격이 3개월 누적 10% 이상 내렸다는 알림. 분기 계약가 -10% 규칙에 해당합니다. 무료 표는 1~2달 늦게 갱신됩니다."
@@ -454,21 +454,21 @@ def items_lines(items: list[dict], extra) -> str:
 
 
 def news_msg(stamp: str, items: list[dict], st: dict) -> tuple[str, str, int]:
-    title = f"[MEMWATCH] 메모리 계약가 10% 이상 하락 보도 {len(items)}건 | 원문 확인, 추가 매수 보류 검토"
+    title = f"[MEMWATCH] 005930/000660 메모리 계약가 10% 이상 하락 보도 {len(items)}건 | 원문 확인, 추가 매수 보류 검토"
     what = "D램/낸드 가격 10% 이상 하락이 기사 제목에 나왔다는 알림. 제목 키워드 매치라 원문을 직접 읽어야 합니다."
     status = items_lines(items, lambda it: f"{PROD_KO[it['hit']['prod']]} {it['hit']['match']}")
     return title, body(stamp, "계약가 하락 보도 (키워드)", what, status, ACT_KEYWORD, ref_line(st)), 4
 
 
 def cx_msg(stamp: str, items: list[dict], st: dict) -> tuple[str, str, int]:
-    title = f"[MEMWATCH] CXMT HBM 해외 고객 인증 보도 {len(items)}건 | 원문 확인, 추가 매수 보류 검토"
+    title = f"[MEMWATCH] 005930/000660 CXMT HBM 해외 고객 인증 보도 {len(items)}건 | 원문 확인, 추가 매수 보류 검토"
     what = "CXMT(창신메모리) HBM 이 중국 밖 고객 인증이나 납품을 받았다는 제목이 나왔다는 알림. 제목 키워드 매치라 원문을 직접 읽어야 합니다."
     status = items_lines(items, lambda it: ", ".join(it["hit"]["words"]))
     return title, body(stamp, "CXMT 해외 고객 인증 (키워드)", what, status, ACT_KEYWORD, ref_line(st)), 4
 
 
 def cy_msg(stamp: str, items: list[dict], nsrc: int, need: int, days: int, st: dict) -> tuple[str, str, int]:
-    title = f"[MEMWATCH] CXMT HBM 수율 50% 이상 보도 {len(items)}건 (출처 {nsrc}곳) | 원문 확인"
+    title = f"[MEMWATCH] 005930/000660 CXMT HBM 수율 50% 이상 보도 {len(items)}건 (출처 {nsrc}곳) | 원문 확인"
     what = "CXMT HBM 수율이 50% 이상이라는 제목이 나왔다는 알림. 제목 키워드 매치라 원문을 직접 읽어야 합니다."
     multi = f"최근 {days}일 서로 다른 출처 {nsrc}곳, 여러 보도 조건({need}곳 이상) " + ("충족" if nsrc >= need else "아직 미충족")
     status = multi + ". " + items_lines(items, lambda it: ", ".join(it["hit"]["words"]))
@@ -476,7 +476,7 @@ def cy_msg(stamp: str, items: list[dict], nsrc: int, need: int, days: int, st: d
 
 
 def ops_msg(stamp: str, fails: list[str]) -> tuple[str, str, int]:
-    title = "[MEMWATCH] 데이터 수집 실패 | 일부 판정 보류"
+    title = "[MEMWATCH] 005930/000660 데이터 수집 실패 | 일부 판정 보류"
     b = clean("\n".join([f"{stamp} | MEMWATCH | 데이터 수집 안내", "이게 뭐 알림: MEMWATCH 데이터 조회/파싱 실패 안내. 매매 신호 아님.",
                          "지금 결과/상태: " + " / ".join(fails), "지금 할 일: 필요하면 트렌드포스 프레스센터와 기사 검색을 직접 보세요.",
                          "나중에: 다음 평일 09:00 에 다시 봅니다. 같은 날 같은 안내는 1번만.", "익절/줄일 때: 이 안내로 비중을 바꾸지 않기.",
@@ -866,7 +866,7 @@ def selftest(cfg: dict) -> int:
     pri = {t: p for t, p, _ in res["titles"]}
     print("\n".join(titles))
     assert any("트렌드포스 1Q27 D램 계약가 -13~18% 전망 | 경계" in t for t in titles), titles
-    assert any(t.startswith("[MEMWATCH] D램 고정거래가 3개월 -16.0% | 확정") and pri[t] == 5 for t in titles), titles
+    assert any(t.startswith("[MEMWATCH] 005930/000660 D램 고정거래가 3개월 -16.0% | 확정") and pri[t] == 5 for t in titles), titles
     assert any("메모리 계약가 10% 이상 하락 보도 1건" in t for t in titles), titles
     assert any("CXMT HBM 해외 고객 인증 보도 1건" in t for t in titles), titles
     assert any("CXMT HBM 수율 50% 이상 보도 2건 (출처 2곳)" in t for t in titles), titles

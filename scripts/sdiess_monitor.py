@@ -232,7 +232,7 @@ def message(cfg: dict, r: dict, p: dict | None, stamp: str) -> tuple[str, str, i
         tags.append("배터리")
     if withheld:
         tags.append(" ".join(withheld) + " 유보")
-    title = f"{TAG} {'정정 ' if corr else ''}공급계약 체결" + (f", {', '.join(tags)}" if tags else "")
+    title = f"{TAG} 006400 {'정정 ' if corr else ''}공급계약 체결" + (f", {', '.join(tags)}" if tags else "")
     st = f"{r['filed']} 접수 '{show_title(r['title'])}' ({r['src']}). {line} 링크: {link_of(r)}"
     if big:
         act = "조 단위 수주. 사용자 상향 조건 충족이니 [SDI-PX] 가격선과 [SDI] 4분기 실적 점검을 같이 보고 2차 분할매수 계획 재검토."
@@ -263,14 +263,14 @@ def check_text(t: str, m: str) -> None:
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} 공시 조회 실패 | 원문 확인 필요",
+    return (f"{TAG} 006400 공시 조회 실패 | 원문 확인 필요",
             body(stamp, "공시 읽기 실패", "삼성SDI 공급계약 공시 감시의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "KIND 나 DART 에서 삼성SDI 공시를 직접 보세요.", "다음 슬롯에서 다시 읽고, 못 본 공시는 그때 보냅니다.",
                  "이 안내로 비중을 바꾸지 않기.", "읽기 실패를 공시 없음으로 읽기."))
 
 
 def install_message(stamp: str) -> tuple[str, str]:
-    return (f"{TAG} 설치 확인 | 매매 신호 아님",
+    return (f"{TAG} 006400 설치 확인 | 매매 신호 아님",
             body(stamp, "설치 확인", "삼성SDI 공급계약 공시 감시 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.",
                  "평일 09:00, 15:20, 19:00 KST 에 KIND 공시를 보고 단일판매 공급계약 체결(자율공시, 정정 포함)이 나오면 공시마다 1번 보냅니다. "
                  "계약상대방, 금액, 매출액 대비 비율, 기간, 링크, ESS 나 배터리 언급 여부를 붙이고, 1조원 이상이면 제목에 조 단위 수주.",

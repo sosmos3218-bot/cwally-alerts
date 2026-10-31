@@ -102,21 +102,21 @@ ZONE_TXT = {0: "기준일 저가 아래", 1: "저점권(기준일 저가~2,270�
 def zone_alert(prev: int, z: int, lines: dict) -> tuple[str, str, int]:
     low = f"{lines['low']:,.0f}원"
     if z == 0:
-        return (f"[REMED] {low} 아래 마감 | 하락 지속, 진입 보류",
+        return (f"[REMED] 302550 {low} 아래 마감 | 하락 지속, 진입 보류",
                 f"신규 진입 보류. 바닥 확인 전이라 사지 마세요. 다음 기준은 {low} 위 회복입니다.", 4)
     if z == 1 and prev == 0:
-        return (f"[REMED] {low} 위 회복 | 아직 관망",
+        return (f"[REMED] 302550 {low} 위 회복 | 아직 관망",
                 "회복만으로 사지 마세요. 2,270원 위 마감과 거래량 감소를 먼저 기다리세요.", 3)
     if z == 1:
-        return ("[REMED] 2,270원 아래 다시 마감 | 진입 보류",
+        return ("[REMED] 302550 2,270원 아래 다시 마감 | 진입 보류",
                 "구 저점 회복이 실패했습니다. 진입했다면 비중을 줄이고, 아니라면 계속 관망하세요.", 4)
     if z == 2 and prev < 2:
-        return ("[REMED] 2,270원 위 마감 | 실적 전 소액 분할만 검토",
+        return ("[REMED] 302550 2,270원 위 마감 | 실적 전 소액 분할만 검토",
                 "들어간다면 목표 비중의 1/3 이하로만. 나머지는 3분기 실적 확인 뒤에 판단하세요.", 4)
     if z == 2:
-        return ("[REMED] 2,600원 아래 다시 마감 | 추가 진입 보류",
+        return ("[REMED] 302550 2,600원 아래 다시 마감 | 추가 진입 보류",
                 "추세 회복이 꺾였습니다. 새로 더 사지 말고 2,270원 지지 여부를 보세요.", 3)
-    return ("[REMED] 2,600원 회복(거래량 동반) | 추세 전환, 추격 금지",
+    return ("[REMED] 302550 2,600원 회복(거래량 동반) | 추세 전환, 추격 금지",
             "추세가 돌아선 신호입니다. 다음 날 바로 추격하지 말고 눌림(2,600원 부근)과 실적을 보고 판단하세요.", 4)
 
 
@@ -207,7 +207,7 @@ def main() -> int:
                   f"현재 구간 {ZONE_TXT[bz]}. 평일 15:45 KST 종가로 판정.")
         else:
             st = f"기준일 {base_day} 종가 조회 실패({err}). 첫 정규 실행에서 다시 읽습니다."
-        publish(topic, "[REMED] 설치 확인 | 매매 신호 아님",
+        publish(topic, "[REMED] 302550 설치 확인 | 매매 신호 아님",
                 body(stamp, st, "설치 확인만 하세요. 이 알림으로 사거나 팔지 마세요.",
                      "구간이 바뀌거나 CB 정정, 유상증자, 실적 같은 주요 공시가 나올 때만 옵니다. " + LATER,
                      TRIM, "설치 확인을 매수 신호로 읽기."),
@@ -237,7 +237,7 @@ def main() -> int:
     if bar is None or bar["day"] != today or low_line is None:
         why = err or ("당일 봉 없음" if low_line is not None else "기준일 저가 없음")
         if state.get("fetch_fail_date") != today:
-            alerts.append(("[REMED] 종가 조회 실패 | 조건 미확인",
+            alerts.append(("[REMED] 302550 종가 조회 실패 | 조건 미확인",
                            body(stamp, f"당일 종가 조회 실패: {why}. 구간 판정 안 함.", "증권 앱에서 리메드 종가를 직접 보세요.",
                                 "다음 거래일 15:45에 다시 봅니다.", "이번 알림으로 사거나 팔지 마세요.", "조회 실패를 신호로 읽기."), 3))
             state["fetch_fail_date"] = today
@@ -277,13 +277,13 @@ def main() -> int:
                 # 쉬는 기간(10/19~11/10 등)에 쌓인 공시는 한 번에 묶어 1건만 보낸다(재개 첫날 폭주 방지).
                 rows = "; ".join(f"{it['datetime'][:10]} {it['title']}" for it in stale)
                 status = f"알림을 쉬는 동안 나온 주요 공시 {len(stale)}건: {rows}. 원문: {stale[0]['url']}"
-                alerts.append((f"[REMED] 쉬는 동안 나온 공시 {len(stale)}건 | 원문 확인 전 진입 보류",
+                alerts.append((f"[REMED] 302550 쉬는 동안 나온 공시 {len(stale)}건 | 원문 확인 전 진입 보류",
                                body(stamp, status, "목록의 공시 원문을 먼저 읽으세요. CB 정정이면 인수자, 전환가 2,954원, 리픽싱 조건이 바뀌었는지 봅니다.",
                                     LATER, TRIM, AVOID), 3))
             for it in fresh:
                 t = it["title"]
                 cb_fix = "정정" in t and "전환사채" in t
-                title = "[REMED] CB 정정공시 | 인수자, 조건 확인 전 진입 보류" if cb_fix else "[REMED] 새 주요 공시 | 내용 확인 전 진입 보류"
+                title = "[REMED] 302550 CB 정정공시 | 인수자, 조건 확인 전 진입 보류" if cb_fix else "[REMED] 302550 새 주요 공시 | 내용 확인 전 진입 보류"
                 status = f"{it['datetime'][:16].replace('T', ' ')} 공시: {t}. 원문: {it['url']}"
                 action = ("인수자 변경(메드테크1호 조합 예정)과 전환가 2,954원, 리픽싱 없음 조건이 바뀌었는지 원문을 보세요."
                           if cb_fix else "공시 원문을 먼저 읽으세요. 희석(CB, 유상증자)이나 실적 변화면 기준선을 다시 봅니다.")
@@ -301,7 +301,7 @@ def main() -> int:
             grade, action, pri = q3_grade(op, gate)
             status = (f"3분기 영업이익 {op:,.0f}억 원(네이버 분기 실적, 정수 억 단위). 직전 2분기 9억, 1분기 7억. "
                       f"판정 {grade}: 9억 이상 유지 / 5~8억 둔화 / 5억 미만 악화.")
-            alerts.append((f"[REMED] 3분기 영업이익 {op:,.0f}억 | {grade}",
+            alerts.append((f"[REMED] 302550 3분기 영업이익 {op:,.0f}억 | {grade}",
                            body(stamp, status, action, "분기보고서 원문(DART)에서 일회성 손익과 순현금을 확인하세요. " + LATER, TRIM, AVOID), pri))
             state["q3_done"] = {"op": op, "grade": grade, "at": stamp}
 

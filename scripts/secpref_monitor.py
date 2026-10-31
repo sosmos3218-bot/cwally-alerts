@@ -366,7 +366,7 @@ def message(cfg: dict, r: dict, kind: str, p: dict | None, stamp: str, jan: bool
     if kind in ("buy", "burn", "trust"):
         pref_tag = ", 우선주 포함" if pq else (", 보통주만" if p and kind != "trust" and p.get("cq") else "")
     head = f"{JAN_TAG} | " if jan else ""
-    title = f"{TAG} {head}{'정정 ' if corr else ''}{lab}{pref_tag}"
+    title = f"{TAG} 005930 {head}{'정정 ' if corr else ''}{lab}{pref_tag}"
     st = f"{r['filed']} 접수 '{show_title(r['title'])}' ({r['src']}). {detail_line(kind, p)}"
     if kind in NEW_KINDS or jan or in_jan:
         st += " " + return_items(kind, p)
@@ -407,14 +407,14 @@ def check_text(t: str, m: str) -> None:
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} 공시 조회 실패 | 원문 확인 필요",
+    return (f"{TAG} 005930 공시 조회 실패 | 원문 확인 필요",
             body(stamp, "공시 읽기 실패", "삼성전자 자사주 공시 감시의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "KIND 나 DART 에서 삼성전자 공시를 직접 보세요.", "다음 슬롯에서 다시 읽고, 못 본 공시는 그때 보냅니다.",
                  "이 안내로 비중을 바꾸지 않기.", "읽기 실패를 공시 없음으로 읽기."))
 
 
 def install_message(stamp: str) -> tuple[str, str]:
-    return (f"{TAG} 설치 확인 | 매매 신호 아님",
+    return (f"{TAG} 005930 설치 확인 | 매매 신호 아님",
             body(stamp, "설치 확인", "삼성전자 자사주 결의 공시 감시 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.",
                  "평일 09:00, 15:20, 19:00 KST 에 KIND 공시를 보고 자기주식 취득 결정, 주식 소각 결정, 자기주식취득 신탁계약 체결 결정"
                  ", 현금 배당 결정, 기업가치 제고 계획, 주주환원 자율공시와 공정공시(정정 포함)가 나오면 공시마다 1번 보냅니다. 읽히면 보통주와 우선주 수량, 금액, 우선주 비중을 붙입니다. 괴리율은 기존 [005935] 알림이 맡습니다.",
@@ -598,7 +598,7 @@ def selftest() -> int:
     jan2 = {**rep, "id": "kind:20270128000102", "acptno": "20270128000102", "filed": "2027-01-28 07:42"}
     jnow = datetime(2027, 1, 28, 9, 0, tzinfo=KST)
     o = step(cfg2, st2, jnow, "T", [], fetch=lambda c, a, b: ([jan1, jan2], []))
-    assert len(o) == 2 and o[0][2] == 5 and o[0][0].startswith(f"{TAG} {JAN_TAG} | ") and o[1][2] == 4 and JAN_TAG not in o[1][0], o
+    assert len(o) == 2 and o[0][2] == 5 and o[0][0].startswith(f"{TAG} 005930 {JAN_TAG} | ") and o[1][2] == 4 and JAN_TAG not in o[1][0], o
     assert "주당 배당금 보통주 4,601원, 우선주 4,601원" in o[0][1] and "주주환원 항목" in o[1][1], o[1][1]
     jan3 = {**jan1, "id": "kind:20270129000001", "acptno": "20270129000001", "filed": "2027-01-29 07:40"}
     o = step(cfg2, st2, jnow, "T", [], fetch=lambda c, a, b: ([jan3], []))

@@ -137,7 +137,7 @@ def problem(cfg: dict, state: dict, now: datetime, kind: str, detail: str, dry: 
     if state.get("last_problem_key") == key:
         print(f"problem already reported: {kind}")
         return
-    title = f"[DEAR] 디어유 3Q {kind} | 관망 유지"
+    title = f"[DEAR] 376300 디어유 3Q {kind} | 관망 유지"
     lines = [
         "이게 뭐 알림: 디어유 376300 2026년 3분기 잠정실적이 나오면 매출, 영업이익, 순이익, 평균 구독자를 200만·205만·영업이익률 35%와 비교하는 알림의 운영 안내.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST. 공시: {DISCLOSURES}",
@@ -163,7 +163,7 @@ def result_message(cfg: dict, item: dict, p: dict, now: datetime) -> tuple[str, 
     ni = f"{p['ni']:.1f}억원" if p["ni"] is not None else "미기재"
     subs = f"{p['subs']:g}만" if p["subs"] is not None else "미기재"
     opm = f"{p['opm']:.1f}%" if p["opm"] is not None else "계산 불가"
-    title = f"[DEAR] 디어유 3Q {verdict} | 구독 {subs}"
+    title = f"[DEAR] 376300 디어유 3Q {verdict} | 구독 {subs}"
     if verdict == "매수 검토":
         action = "매수 검토. 신규 비중 확대 검토만 해당하고 즉시 매수 신호가 아닙니다."
     elif verdict == "회피":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """[BOK] 한국은행 금통위 기준금리 결정이 3.25% 이상이면 p4 1번. 기존 평일 19:00 k203780 슬롯.
 결정일(configs/krrate.json mpc.schedule + 한은 일정 페이지 올해, 내년)마다 1번 판정:
-  새 기준금리 >= 3.25% 이고 아직 도달 알림 전 -> p4 '[BOK] 기준금리 X.XX% 인상, 3.25% 도달'
+  새 기준금리 >= 3.25% 이고 아직 도달 알림 전 -> p4 '[BOK] KOSPI 기준금리 X.XX% 인상, 3.25% 도달'
   그 밖(동결, 인하, 3.25% 미만, 도달 뒤 회의) -> 결과 p3 1번 (회의가 열렸다는 확인용)
 결정 판정은 scripts/krrate_monitor.mpc_decision(한은 보도자료, 기준금리 표, 회의 페이지, 기사) 재사용, ECOS 722Y001 교차확인.
 결정일에 출처가 판정 못 하면 cwally-ops 하루 1번, retry_days 동안 다음 슬롯에서 다시 시도.
@@ -70,20 +70,20 @@ def message(cfg: dict, d: str, dec: dict, reached_before: bool, nxt: str, cross:
           f"출처: {dec.get('source', '확인 불가')}. {cross}." + (f" 소수의견: {dec['dissent']}." if dec.get("dissent") else ""))
     later = f"다음 회의 {nxt}. 2027-03-31 19:00 까지 회의마다 1번."
     if rate >= th - 1e-9 and not reached_before:
-        head = f"{TAG} 기준금리 {rate:.2f}% {dk}, {th:.2f}% 도달" if dec["decision"] != "hold" else f"{TAG} 기준금리 {rate:.2f}% 동결, {th:.2f}% 이상"
+        head = f"{TAG} KOSPI 기준금리 {rate:.2f}% {dk}, {th:.2f}% 도달" if dec["decision"] != "hold" else f"{TAG} KOSPI 기준금리 {rate:.2f}% 동결, {th:.2f}% 이상"
         return (head, body(stamp, f"{th:.2f}% 도달", WHAT, st,
                            "금리 민감 보유분(채권 ETF, 리츠, 고배당, 성장주) 점검. 대출 금리 변동분 확인.",
                            later + " 도달 알림은 이번 1번만, 다음 회의부터는 결과만 p3.",
                            "금리 상단 근처 판단은 결정문과 다음 회의 신호 문구([KR-RATE] 요약)로 따로 확인.",
                            "이 알림만으로 매수, 매도 결정하기."), cfg["priority"]["reach"], True)
     tail = f"{th:.2f}% 이상 유지" if rate >= th - 1e-9 else f"{th:.2f}% 미도달"
-    return (f"{TAG} {d[5:7]}/{d[8:]} 금통위 기준금리 {rate:.2f}% {dk} | {tail}",
+    return (f"{TAG} KOSPI {d[5:7]}/{d[8:]} 금통위 기준금리 {rate:.2f}% {dk} | {tail}",
             body(stamp, "금통위 결과", WHAT, st, "확인만 하세요. 할 일 없음.", later,
                  "해당 없음.", "이 결과 알림을 매매 신호로 보기."), cfg["priority"]["result"], False)
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} 금통위 결정 확인 실패 | 판정 보류",
+    return (f"{TAG} KOSPI 금통위 결정 확인 실패 | 판정 보류",
             body(stamp, "출처 읽기 실패", "기준금리 3.25% 알림의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "한국은행 홈페이지 통화정책방향 보도자료에서 결정을 직접 보세요.",
                  "다음 19:00 슬롯에서 다시 시도합니다(결정일 뒤 3일까지).",
@@ -91,7 +91,7 @@ def ops_msg(stamp: str, status: str) -> tuple[str, str]:
 
 
 def install_message(stamp: str) -> tuple[str, str]:
-    return (f"{TAG} 설치 확인 | 매매 신호 아님",
+    return (f"{TAG} KOSPI 설치 확인 | 매매 신호 아님",
             body(stamp, "설치 확인", "한국은행 기준금리 3.25% 도달 알림 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.",
                  "현재 기준금리 3.00%(2026-08-27 인상, 10/22 동결, 한은 기준금리 표). 다음 금통위 2026-11-26. "
                  "결정일 19:00 KST 에 새 기준금리가 3.25% 이상이면 p4 1번, 아니면 결과 p3 1번.",
@@ -226,7 +226,7 @@ def selftest() -> int:
         assert len(sent) == 1 and sent[0][0] != "cwally-port" or "실패" in sent[0][1], sent
         sent.clear()
         run("auto", n("2026-11-27 19:00"), cfg, {}, pub, sched, hike, ecos)
-        assert len(sent) == 1 and sent[0][1] == "[BOK] 기준금리 3.25% 인상, 3.25% 도달" and sent[0][3] == 4, sent
+        assert len(sent) == 1 and sent[0][1] == "[BOK] KOSPI 기준금리 3.25% 인상, 3.25% 도달" and sent[0][3] == 4, sent
         sent.clear()
         run("auto", n("2026-11-30 19:00"), cfg, {}, pub, sched, hike, ecos)
         assert not sent

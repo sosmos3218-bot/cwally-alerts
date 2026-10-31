@@ -228,7 +228,7 @@ def main() -> int:
     print(f"{stamp} mode={mode}")
 
     if mode == "install":
-        title = "[ISAREB] 설치 확인 | 매매 신호 아님"
+        title = "[ISAREB] 005930/0022T0/437350/005935/448290/452360/270810/064400 설치 확인 | 매매 신호 아님"
         msg = "\n".join(
             [
                 f"{stamp} | ISA 리밸런싱 알림 설치",
@@ -252,7 +252,7 @@ def main() -> int:
 
     rows, missing = value_rows(cfg)
     if missing or len(rows) != len(cfg["holdings"]):
-        title = "[ISAREB] 시세 조회 실패 | 직접 확인"
+        title = "[ISAREB] 005930/0022T0/437350/005935/448290/452360/270810/064400 시세 조회 실패 | 직접 확인"
         msg = "\n".join(
             [
                 f"{stamp} | ISA 리밸런싱 조회 실패",
@@ -276,10 +276,10 @@ def main() -> int:
 
     p = plan(cfg, rows)
     if p["hold"]:
-        title = "[ISAREB] 밴드 안 | 이번 달 매매 없음"
+        title = "[ISAREB] 005930/0022T0/437350/005935/448290/452360/270810/064400 밴드 안 | 이번 달 매매 없음"
         action = "지금 할 일: 주문하지 말 것."
     else:
-        title = "[ISAREB] 삼성 비중 초과 | 교체 수량만 검토"
+        title = "[ISAREB] 005930/0022T0/437350/005935/448290/452360/270810/064400 삼성 비중 초과 | 교체 수량만 검토"
         action = "지금 할 일: " + " ".join(p["actions"])
     msg = "\n".join(
         [

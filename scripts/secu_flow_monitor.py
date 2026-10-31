@@ -91,7 +91,7 @@ def main() -> int:
         sec = fetch("005935", day)
         hyx = fetch("000660", day)
     except Exception as exc:  # 조회 실패 = 조건 미충족 아님
-        publish(resolve_topic("ops"), "[FLOW] 조회 실패 | 수급 판정 미갱신",
+        publish(resolve_topic("ops"), "[FLOW] 005935/000660 조회 실패 | 수급 판정 미갱신",
                 f"삼성전자우·하이닉스 수급 조회 실패: {exc}\n판정은 보내지 않았습니다. 다음 영업일 자동 재시도.", 3, ["warning"])
         return 0
     if sec is None and hyx is None:
@@ -99,7 +99,7 @@ def main() -> int:
         print(f"{day} 영업일 데이터 미게시; silent retry next slot")
         return 0
     if sec is None or hyx is None:
-        publish(resolve_topic("ops"), "[FLOW] 수급 누락 | 판정 미갱신",
+        publish(resolve_topic("ops"), "[FLOW] 005935/000660 수급 누락 | 판정 미갱신",
                 f"{day} 삼성전자우={'OK' if sec else '누락'}, 하이닉스={'OK' if hyx else '누락'}. 판정은 보내지 않았습니다.", 3, ["warning"])
         return 0
 
@@ -133,7 +133,7 @@ def main() -> int:
     ]
     msg = "\n".join(lines)
     print(msg)
-    publish("cwally-port", f"[FLOW] {LABEL[v]}", msg, 4 if v in ("A", "B") else 3,
+    publish("cwally-port", f"[FLOW] 005935/000660 {LABEL[v]}", msg, 4 if v in ("A", "B") else 3,
             [{"A": "rotating_light", "B": "rocket", "C": "eyes"}[v]], CFG.get("ntfy_server"))
 
     st["last_day"], st["last_verdict"] = day, v

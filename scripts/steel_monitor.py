@@ -192,11 +192,11 @@ def main():
 
     focus_title = TITLE_BY_ZONE.get(focus, "구간 점검")
     if mode == "event":
-        title = f"[STEEL] 구간 변화 | {focus_title}"
+        title = f"[STEEL] 005490/004020/103140 구간 변화 | {focus_title}"
     elif mode == "quarterly":
-        title = f"[STEEL] 분기 리밸런스 | {focus_title}"
+        title = f"[STEEL] 005490/004020/103140 분기 리밸런스 | {focus_title}"
     else:
-        title = f"[STEEL] {focus_title}"
+        title = f"[STEEL] 005490/004020/103140 {focus_title}"
     msg = "\n".join(lines)
     print(msg)
     pri = 5 if any(z in {"REVIEW", "BUY3"} for *_, z in rows) else (4 if mode != "weekly" else 3)

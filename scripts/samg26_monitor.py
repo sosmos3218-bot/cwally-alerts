@@ -229,13 +229,13 @@ def build_message(cfg: dict, state: dict, obs: dict, res: dict, kind: str) -> tu
     fpe = obs["close"] / cons["eps"] if cons["eps"] > 0 else None
     action, todo = action_line(res["band"], res["gate"])
     if kind == "install":
-        title = f"{cfg['title_prefix']} 설치 확인 | 매매 신호 아님"
+        title = f"{cfg['title_prefix']} 419530 설치 확인 | 매매 신호 아님"
         todo = ("가격 구간 판단은 다음 거래일 09:00 첫 정기 실행부터 시작합니다."
                 if obs.get("stale") else todo)
     elif res["events"]:
-        title = f"{cfg['title_prefix']} {action}"
+        title = f"{cfg['title_prefix']} 419530 {action}"
     else:
-        title = f"{cfg['title_prefix']} 주간 점검 | {action.split(' | ')[-1]}"
+        title = f"{cfg['title_prefix']} 419530 주간 점검 | {action.split(' | ')[-1]}"
     act = obs.get("actual") or {}
     cfo = state.get("latest_cfo_verified") or {}
     price_line = (f"직전 반영 종가 {obs['close']:,.0f}원 ({obs['session']:%Y-%m-%d}). 오늘 종가는 아직 데이터에 없어 구간 판단은 하지 않았습니다"
@@ -294,7 +294,7 @@ def problem(cfg: dict, state: dict, now: datetime, key: str, detail: str, dry: b
     if ops_daily.get(key) == day and not dry:
         print(f"ops already sent today: {key}")
         return
-    title = f"{cfg['title_prefix']} SAMG엔터 {key} 조회 실패 | 판단 유보"
+    title = f"{cfg['title_prefix']} 419530 SAMG엔터 {key} 조회 실패 | 판단 유보"
     lines = [
         "이게 뭐 알림: SAMG엔터 419530 정기 점검의 데이터 문제 안내.",
         f"지금 결과/상태: {detail}. {now:%Y-%m-%d %H:%M} KST. 이번 실행의 매매 판단은 막았습니다.",

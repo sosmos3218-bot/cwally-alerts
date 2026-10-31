@@ -315,7 +315,7 @@ def build_message(cfg: dict, fired: list[str], vals: dict, dates: dict, armed: d
     else:
         act = "점검"
         head = L[fired[0]]["label"]
-    title = f"{NAME} {head} | {act}"
+    title = f"{NAME} KOSPI {head} | {act}"
 
     if warn:
         trim = "주식 비중 축소는 계획한 비율 안에서만, 한 번에 다 정리하지 않기." if ("combo130" in warn or "brent125" in warn) else "국고채 10년물은 보유분 유지, 추가 편입 없이 금리 흐름 확인."
@@ -370,12 +370,12 @@ def scenario_text(cfg: dict) -> str:
 def event_message(cfg: dict, kind: str, vals: dict, dates: dict) -> tuple[str, str, int]:
     warn = warning_active(vals, [])
     if kind == "pre":
-        title = f"{NAME} 미 중간선거 당일 점검 | 국고채 추격 매수 중단"
+        title = f"{NAME} KOSPI 미 중간선거 당일 점검 | 국고채 추격 매수 중단"
         todo = ("체크리스트 3개. 1) 국고채 10년물(148070, 365780) 추격 매수 중단, 보유분만 유지. "
                 "2) ISA 안 해외 ETF 환노출(언헤지) 비중 확인. 3) 현금 버퍼(파킹형 ETF) 비율 확인.")
         later = "내일(11/4) 09:00 에 선거 뒤 3개 시나리오 대조표가 옵니다. 가격선은 평일 19:00 에 계속 봅니다."
     else:
-        title = f"{NAME} 선거 다음 날 시나리오 대조 | 기준선 확인"
+        title = f"{NAME} KOSPI 선거 다음 날 시나리오 대조 | 기준선 확인"
         todo = (f"아래 3개 시나리오 기준과 현재 값을 비교하세요. 현재 값 일치 수: {scenario_match(cfg, vals)}. "
                 f"{scenario_text(cfg)}. 미국 동부 기준 11/3 저녁이라 개표 결과가 확정 전일 수 있음. 결과 확정 뉴스 확인 뒤 판단.")
         later = "판단 변경 조건(브렌트 130달러 + 원/달러 1,380원, 브렌트 90달러 이하)은 평일 19:00 가격선이 따로 알립니다."
@@ -394,7 +394,7 @@ def event_message(cfg: dict, kind: str, vals: dict, dates: dict) -> tuple[str, s
 
 
 def confirm_message(cfg: dict, vals: dict, dates: dict, armed: dict) -> tuple[str, str]:
-    title = f"{NAME} 설치 확인 | 매매 신호 아님"
+    title = f"{NAME} KOSPI 설치 확인 | 매매 신호 아님"
     inside = [ln["label"] for ln in cfg["lines"] if armed.get(ln["key"]) is False]
     lines = [
         "[테스트] MACRO-IR 알림 설정 완료",
@@ -413,7 +413,7 @@ def confirm_message(cfg: dict, vals: dict, dates: dict, armed: dict) -> tuple[st
 def fail_notice(st: dict, errs: dict, today: str, dry: bool) -> None:
     if not errs or st.get("fail_day") == today:
         return
-    title = f"{NAME} 시세 조회 실패 | 매매 신호 아님"
+    title = f"{NAME} KOSPI 시세 조회 실패 | 매매 신호 아님"
     body = "조회 실패: " + "; ".join(f"{k} {v}" for k, v in errs.items()) + ". 이 값이 필요한 선은 이번에 판정하지 않았습니다(실패를 미충족으로 보지 않음). 다음 실행에서 다시 봅니다."
     send("ops", title, body, 3, ["warning"], dry)
     st["fail_day"] = today
@@ -607,7 +607,7 @@ def selftest() -> int:
         check(f"event {kind} no middle dot / em-dash", any(c in t + b for c in BANNED_CHARS), False)
     check("post has 3 scenarios", all(s in msgs["event_post"][1] for s in ("타결(", "교착(", "격화(")), True)
     t, b = confirm_message(cfg, base, dates, A)
-    check("confirm title", t, "[MACRO-IR] 설치 확인 | 매매 신호 아님")
+    check("confirm title", t, "[MACRO-IR] KOSPI 설치 확인 | 매매 신호 아님")
     check("confirm no middle dot / em-dash", any(c in t + b for c in BANNED_CHARS), False)
 
     # dry run must never write state and never publish (past bug)

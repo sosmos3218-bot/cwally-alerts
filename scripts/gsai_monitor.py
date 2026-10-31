@@ -146,7 +146,7 @@ def build_message(payload, eligible):
         rows = payload["series"][code]
         amounts = ", ".join(f"{r['date']} {r['net_buy_won']:+,}원" for r in reversed(rows[:2]))
         details.append(f"{NAMES[code]}({code}) {amounts}")
-    title = "[GSAI] 동일 종목 외국인 5천억원 이상 2거래일 | 추격매수 금지"
+    title = "[GSAI] 005930/000660 동일 종목 외국인 5천억원 이상 2거래일 | 추격매수 금지"
     body = "\n".join([
         "이게 뭐 알림: 정규시장 외국인 합계 순매수 거래대금, 동일 종목 매일 5천억원 이상 2거래일 첫 충족. 매수 주문 아님.",
         "지금 상태: " + " / ".join(details),

@@ -245,7 +245,7 @@ def result_message(cfg: dict, d: dict, rep: dict, link: str, px: tuple[float | N
     rest_txt = (f"{est['full_year_source']} {est['full_year_2026']:,}원에서 1~3분기({' + '.join(str(x['dps']) for x in est['paid_2026'])} + {d['common']:,.0f}원)를 빼면 "
                 f"남은 몫은 약 {rest:,.0f}원" + (f"(최근 종가 대비 {rest / close * 100:.1f}%)" if close else "") + "이지만 추정치이고 확정이 아닙니다.")
     corr = " 정정 공시가 첫 공시로 잡혔습니다." if is_correction(rep["title"]) else ""
-    title = f"[SEC-DIV] {label} 배당 주당 {d['common']:,.0f}원 확정 (추정 {b}) | 지금 사면 이번 배당 없음"
+    title = f"[SEC-DIV] 005930 {label} 배당 주당 {d['common']:,.0f}원 확정 (추정 {b}) | 지금 사면 이번 배당 없음"
     lines = [
         head(now, f"{label} 배당 결정"),
         f"이게 뭐 알림: {cfg['display']}입니다. 공시가 나와서 보냅니다. 매매 신호 아님, 투자 권유 아님.",
@@ -271,7 +271,7 @@ def followup_message(cfg: dict, old: dict, new: dict, rep: dict, link: str, now:
     diffs = [f"{lab} {fmt(old.get(k))} -> {fmt(new.get(k))}" for k, lab, fmt in FIELDS if old.get(k) != new.get(k)]
     what = ", ".join(diffs) if diffs else "숫자와 날짜 변화 없음(문구 정정으로 보임)"
     short = diffs[0] if diffs else "숫자 변화 없음"
-    title = f"[SEC-DIV] 3분기 배당 정정 공시 | {short}"
+    title = f"[SEC-DIV] 005930 3분기 배당 정정 공시 | {short}"
     lines = [
         head(now, "3분기 배당 정정"),
         "이게 뭐 알림: 앞서 보낸 삼성전자 3분기 배당 결정 공시에 정정 공시가 나와서 1번 더 보냅니다. 매매 신호 아님.",
@@ -286,7 +286,7 @@ def followup_message(cfg: dict, old: dict, new: dict, rep: dict, link: str, now:
 
 
 def missing_message(cfg: dict, now: datetime) -> tuple[str, str, int]:
-    title = "[SEC-DIV] 11/13까지 3분기 배당 공시 못 찾음 | 확인만"
+    title = "[SEC-DIV] 005930 11/13까지 3분기 배당 공시 못 찾음 | 확인만"
     lines = [
         head(now, "3분기 배당 공시 마지막 확인"),
         "이게 뭐 알림: 삼성전자 3분기 배당 결정 공시 알림의 마지막 확인입니다. 조회 실패가 아니라 기한까지 공시를 못 찾았다는 정보입니다. 매매 신호 아님.",
@@ -309,7 +309,7 @@ def install_message(cfg: dict, now: datetime) -> tuple[str, str]:
         "익절/줄일 때: 해당 없음.",
         "하지 말 것: 이 메시지를 매매 신호로 해석하기.",
     ]
-    return "[SEC-DIV] 설치 확인 | 매매 신호 아님", clean("\n".join(lines))
+    return "[SEC-DIV] 005930 설치 확인 | 매매 신호 아님", clean("\n".join(lines))
 
 
 # ---------- run ----------
@@ -364,7 +364,7 @@ def run(mode: str) -> int:
     except Exception as exc:
         print(f"all sources failed: {exc}")
         if not st.get("fail_notified"):
-            t = "[SEC-DIV] 공시 조회 실패 | 매매 신호 아님"
+            t = "[SEC-DIV] 005930 공시 조회 실패 | 매매 신호 아님"
             b = f"삼성전자 3분기 배당 공시 확인 중 KIND, 네이버 공시 피드 조회 실패: {exc}. 다음 슬롯에서 다시 봅니다."
             if dry:
                 print(f"DRY RUN would send (ops): {t}\n{b}")
@@ -480,7 +480,7 @@ def selftest() -> int:
     now = datetime(2026, 10, 29, 9, 5, tzinfo=KST)
     rep = {"id": "kind:20261029000100", "acptno": "20261029000100", "title": "현금ㆍ현물 배당 결정", "filed": "2026-10-29 08:50"}
     t, b, pri = result_message(cfg, q3, rep, "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261029800100", (212000.0, "2026-10-28"), now)
-    check("title", t, "[SEC-DIV] 3분기 배당 주당 4,600원 확정 (추정 범위 안) | 지금 사면 이번 배당 없음")
+    check("title", t, "[SEC-DIV] 005930 3분기 배당 주당 4,600원 확정 (추정 범위 안) | 지금 사면 이번 배당 없음")
     check("yield 2.17%", "배당수익률 2.17%" in b, True)
     check("residual 7,668", "약 7,668원" in b and "3.6%" in b, True)
     check("ex-date note", "지금 사도 이번 3분기 배당은 받지 못합니다" in b, True)

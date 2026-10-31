@@ -154,22 +154,22 @@ def main() -> int:
     first_shock = shock and not prev.get("shock_sent")
 
     send = False
-    title = f"[LG] {TITLE_BY_ZONE.get(z, z)}"
+    title = f"[LG] 003550 {TITLE_BY_ZONE.get(z, z)}"
     if first_persist:
         send = True
-        title = "[LG] 손절 10만 하회 지속"
+        title = "[LG] 003550 손절 10만 하회 지속"
     elif first_shock:
         send = True
-        title = "[LG] 자회사 실적 쇼크"
+        title = "[LG] 003550 자회사 실적 쇼크"
     elif mode == "event":
         if zone_changed or new_live:
             send = True
-            title = f"[LG] 구간/일정 | {TITLE_BY_ZONE.get(z, z)}"
+            title = f"[LG] 003550 구간/일정 | {TITLE_BY_ZONE.get(z, z)}"
         else:
             print("no lg event; silent")
     else:
         send = True
-        title = f"[LG] 체크 | {TITLE_BY_ZONE.get(z, z)}"
+        title = f"[LG] 003550 체크 | {TITLE_BY_ZONE.get(z, z)}"
 
     px = f"{price:,.0f}원" if price is not None else "시세 없음"
     cap = cfg["max_equity_weight_pct"]
