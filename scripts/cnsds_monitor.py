@@ -2,7 +2,7 @@
 """LG CNS vs Samsung SDS price-switch watch. No new cron.
 
 Sends when the 2026-10-08 switch flips, or on Monday. Silent otherwise.
-Earnings stay on lgcnsq3. Price zones moved from lgcns to the 064400 engine extra_lines (2026-10-26).
+3Q26 earnings were checked on 10/30 (lgcnsq3 retired 2026-10-31). Price zones moved from lgcns to the 064400 engine extra_lines (2026-10-26).
 """
 from __future__ import annotations
 
@@ -112,7 +112,7 @@ def main() -> int:
             "이게 뭐 알림: LG씨엔에스와 삼성SDS 가격 전환 알림 설치 확인. 매매 신호 아님.",
             "지금 결과/상태: 평일 15:20 기존 슬롯. LG CNS 8만원 미만이고 삼성SDS 17.5만원 초과면 가격 할인 유지.",
             "지금 할 일: 없음. 선이 바뀔 때와 월요일에만 옵니다.",
-            "나중에: 3분기 실적은 [LG] lgcnsq3, 가격 구간은 [064400].",
+            "나중에: 가격 구간과 계획 선은 [064400].",
             "익절/줄일 때: 이 설치 알림으로 비중을 바꾸지 마세요.",
             "하지 말 것: 설치 확인을 매수 신호로 읽기. GPU 5000원 하한을 확정으로 읽기.",
         ], 3)

@@ -1,7 +1,7 @@
 {
   "name": "cnsds",
   "title_prefix": "[CNSDS]",
-  "title_note": "LG씨엔에스 대 삼성SDS 가격 전환. 가격 구간은 [064400](2026-10-26 lgcns 통합), 3분기 실적은 [LG] lgcnsq3.",
+  "title_note": "LG씨엔에스 대 삼성SDS 가격 전환. 가격 구간은 [064400](2026-10-26 lgcns 통합), 3분기 실적은 10/30 확인 끝([064400] earnings_result).",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:20",

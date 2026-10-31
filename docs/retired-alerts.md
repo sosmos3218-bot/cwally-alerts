@@ -153,3 +153,12 @@ kosown and macroir are unchanged.
 |---|---|---|---|
 | kosdown, kosup, kosbrk | `[KOSDOWN]` `[KOSUP]` `[KOSBRK]` | flow 15:40, one message each | flow 15:40, a section of `[KOSPI]` |
 | kos5500 | `[KOS5500]` | flow 15:40 daily + 09:00 morning repeat | flow 15:40, a `[KOSPI]` section only when the scenario label changes |
+
+## 2026-10-31: lgcnsq3 retired (LG CNS alerts merged into 064400)
+
+| name | prefix | old slots | why | now |
+|---|---|---|---|---|
+| lgcnsq3 | `[LG]` | afternoon 15:20 slot + one-shots 10-08 09:18, 10-27 09:10, 10-30 16:10, 11-12 09:10, 11-13 16:10, 11-16 09:10 KST | 3Q26 result sent 10/30 (filing 173692466, `result_notified` true); every later run was silent | 064400 `earnings_result` keeps the numbers (sales 16,643억, OP 1,382억, margin 8.3%). Price zones were already in 064400 since 2026-10-26. |
+
+Removed: config, script, state, the six one-shot crons and their pick line, the afternoon Run line and the `Run lgcnsq3` step. The `[LG]` prefix stays (lg, lgesq3).
+
