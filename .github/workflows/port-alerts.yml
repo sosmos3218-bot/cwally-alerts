@@ -254,7 +254,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, shi, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102]
+        options: [all, morning, afternoon, sdiq3, samnix, isrg, lly, lrcx, frde, shi, xbi, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1466,6 +1466,19 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/tslaspcx_monitor.py selftest; fi
           python scripts/tslaspcx_monitor.py "$MODE"
+      - name: Run CAPEX (MEMWATCH hyperscaler capex guidance cut watch; in the daily 07:30 KST tslaspcx flow)
+        # approved 2026-10-31 (t61u). Runs after TSLA-SPCX on job=tslaspcx (cron-job.org 8711128 oneoff_mode=auto, backup 30 22 * * *) and on job=capex.
+        # Any dispatch without oneoff_mode=auto is dry (selftest + dry: no ntfy, no state). Dedupe: state/capex.json seen accessions. Ends 2027-02-28.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'tslaspcx' || steps.pick.outputs.job == 'capex') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/capex_monitor.py selftest; fi
+          python scripts/capex_monitor.py "$MODE"
       - name: Run TSLA (last price <= 310 / <= 300 during US regular hours, once per NY day)
         # approved 2026-10-29. Backup cron */30 13-21 * * 1-5 UTC; code gates to 09:30-16:00 America/New_York weekdays.
         # cron-job.org dispatch (oneoff_mode=auto) and the backup cron send. Any other dispatch is dry (selftest + 305/295, no ntfy, no state).

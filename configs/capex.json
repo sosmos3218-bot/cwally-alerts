@@ -1,0 +1,113 @@
+{
+  "name": "capex",
+  "title_prefix": "[MEMWATCH]",
+  "display": "하이퍼스케일러 AI capex 가이던스 하향 감시 (MSFT, GOOGL, META, AMZN)",
+  "created_at": "2026-10-31T15:30:00+09:00",
+  "approval": "사용자 승인 2026-10-31 (t61u, \"네 소신껏 진행\"): 2026-10-30 [BRIEF] 단계 5 제안을 4개사 범위(Oracle, CoreWeave 제외)로 [MEMWATCH] 확장. 새 cron, 새 cron-job.org 잡, 새 workflow 입력 없음",
+  "plan_rule": "[MEMWATCH] 삼성전자(005930)/SK하이닉스(000660) '추가 매수 보류' 규칙의 하이퍼스케일러 쪽 입력. 같은 실적 시즌(달력 분기)에 2개사 이상 capex 가이던스 중간값 5% 이상 하향이면 추가 매수 보류 재적용, 1차/2차 분할매수 멈춤.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "매일 07:30",
+  "schedule_note": "기존 07:30 tslaspcx 흐름(cron-job.org 8711128 dispatch {job:tslaspcx, oneoff_mode:auto} + GitHub 30 22 * * * 백업, 주말 포함 매일)의 한 단계. 새 cron 없음. 수동 job=capex 는 oneoff_mode=auto 가 아니면 selftest + dry (ntfy, state 없음). 두 실행이 다 와도 state seen(접수번호)으로 한 번만.",
+  "ends_kst": "2027-02-28 23:59",
+  "ends_note": "2027-02-28 까지 (4분기 실적 시즌 뒤 재검토). 그 뒤에는 판정 안 함",
+  "rules": {
+    "cut_pct": 5.0,
+    "p_cut": 4,
+    "p_multi": 5,
+    "p_wording": 3,
+    "multi_min_companies": 2,
+    "season": "공시일의 달력 분기 (예 2027-Q1 = 1~3월 공시 = 4분기 실적 시즌)",
+    "compare": "같은 기간 키(FY2026 등 연간, 또는 Q4 2026 등 분기)끼리만 비교. 새 기간 첫 가이던스는 비교 대상 없음 -> 저장만(본문에 '직전 가이던스 대비 하향(narrowed/lowered from prior outlook of ...)' 문구가 있으면 그 이전값과 비교). 상향, 유지, 5% 미만 하향은 저장만, 발송 없음.",
+    "wording_re": "(?i)\\b(moderat(e|ing|ion)|slow(er|ing)? (the )?(pace|growth|rate)|pace of (investment|spend|capex|capital)|re-?evaluat\\w*|scal(e|ing) back|pull(ing)? back|lower than (previously|prior|our prior)|below (our )?prior|decelerat\\w*|reduc\\w+ (our )?(capital|capex|infrastructure|investment))",
+    "capex_re": "(?i)capital expenditures?|\\bcapex\\b|purchases of property and equipment|(AI|technical) infrastructure (investment|spend\\w*)"
+  },
+  "sec": {
+    "user_agent": "cwally-alerts capex watch sosmos3218@gmail.com",
+    "forms": [
+      "8-K",
+      "8-K/A"
+    ],
+    "max_docs_per_filing": 4,
+    "max_doc_bytes": 3000000,
+    "ops_fail_after_runs": 3
+  },
+  "companies": [
+    {
+      "ticker": "MSFT",
+      "name": "Microsoft",
+      "cik": "0000789019",
+      "ir": "https://www.microsoft.com/en-us/investor",
+      "note": "보도자료(Ex.99.1)에 capex 가이던스 없음, 실적 콜(CFO)에서만 제시"
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "Alphabet",
+      "cik": "0001652044",
+      "ir": "https://abc.xyz/investor/",
+      "note": "보도자료에 capex 가이던스 없음, 실적 콜에서만 제시"
+    },
+    {
+      "ticker": "META",
+      "name": "Meta Platforms",
+      "cik": "0001326801",
+      "ir": "https://investor.atmeta.com/",
+      "note": "보도자료 CFO Outlook 문단에 연간 capex 범위"
+    },
+    {
+      "ticker": "AMZN",
+      "name": "Amazon",
+      "cik": "0001018724",
+      "ir": "https://ir.aboutamazon.com/",
+      "note": "보도자료 Guidance 문단에 연간 현금 capex"
+    }
+  ],
+  "explain": "SEC EDGAR 8-K Ex.99.1(회사 IR 보도자료와 같은 문서)에서 capex 가이던스 문장을 찾아 회사별 기간별 중간값을 저장하고 비교합니다. 매매 신호나 주문이 아니라 [MEMWATCH] 추가 매수 보류 규칙을 다시 볼 때를 알려줍니다.",
+  "seed": {
+    "note": "2026-10-31 빌드 때 state/capex.json 에 넣은 10월 실적 뒤 가이던스. 이 값과 지금까지의 8-K 접수번호는 판정하지 않음(과거 데이터로 발송 없음).",
+    "MSFT": {
+      "CY2026": {
+        "mid": 170.0,
+        "lo": 170.0,
+        "hi": 170.0,
+        "text": "for the calendar year, spend should be approximately $170 billion",
+        "src": "FY27 Q1 실적 콜 2026-10-28 (Amy Hood). 보도마다 2026/2027 표기 엇갈림, 원문 'for the calendar year'"
+      },
+      "Q2 FY2027": {
+        "mid": 50.0,
+        "lo": 50.0,
+        "hi": 50.0,
+        "text": "In Q2, we expect CapEx spend will be over $50 billion",
+        "src": "FY27 Q1 실적 콜 2026-10-28, 하한값('over')을 중간값으로 저장"
+      }
+    },
+    "GOOGL": {
+      "FY2026": {
+        "mid": 200.0,
+        "lo": 195.0,
+        "hi": 205.0,
+        "text": "our full year 2026 CapEx guidance range of $195 billion to $205 billion remain unchanged",
+        "src": "Q3 2026 실적 콜 2026-10-28 (Anat Ashkenazi). 8-K 0001652044-26-000080 Ex.99.1 에는 가이던스 없음"
+      }
+    },
+    "META": {
+      "FY2026": {
+        "mid": 140.0,
+        "lo": 135.0,
+        "hi": 145.0,
+        "text": "We anticipate 2026 capital expenditures, including principal payments on finance leases, to be in the range of $135-145 billion, narrowed from our prior outlook of $130-145 billion.",
+        "src": "8-K 0001628280-26-066700 Ex.99.1 (2026-10-21 공시)"
+      }
+    },
+    "AMZN": {
+      "FY2026": {
+        "mid": 220.0,
+        "lo": 220.0,
+        "hi": 220.0,
+        "text": "We continue to expect 2026 cash capital expenditures to be approximately $220 billion.",
+        "src": "8-K 0001018724-26-000038 Ex.99.1 (2026-10-29 공시)"
+      }
+    }
+  }
+}
