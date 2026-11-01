@@ -1,18 +1,18 @@
 {
-  "last_week": "2026-W43",
+  "last_week": "2026-W44",
   "last_repos": [
-    "makecindy/cindy",
-    "Nutlope/hallmark",
-    "debpalash/VoiceStudio",
-    "pbakaus/impeccable",
-    "pollen-robotics/microduck",
-    "TauricResearch/TradingAgents",
-    "Renhuai123/ziwei-doushu",
-    "JetBrains/thinkrail",
-    "coollabsio/coolify",
-    "cloudflare/security-audit-skill"
+    "thedotmack/claude-mem",
+    "lightpanda-io/browser",
+    "shiyu-coder/Kronos",
+    "pingdotgg/t3code",
+    "milind-soni/OpenMausBot",
+    "public-apis/public-apis",
+    "cjpais/Handy",
+    "Donchitos/Claude-Code-Game-Studios",
+    "kornia/kornia",
+    "beenuar/AiSOC"
   ],
-  "updated_at": "2026-10-26 10:54 KST",
+  "updated_at": "2026-11-01 21:00 KST",
   "last_skip_reason": null,
   "catchup_note": "2026-10-26 10:54 KST forced catch-up for the 2026-10-25 (W43) week; recorded as W43 so Sunday 2026-11-01 (W44) still sends"
 }
