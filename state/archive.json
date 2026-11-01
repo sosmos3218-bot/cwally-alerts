@@ -1,6 +1,15 @@
 {
-  "updated_at": "2026-11-01 07:30 KST",
+  "updated_at": "2026-11-01 10:18 KST",
   "items": [
+    {
+      "id": "cYYvFWYW7fq2",
+      "topic": "cwally-port",
+      "title": "[0141S0] 추매중단 경고",
+      "message": "0141S0 종가 6040원(평단9214 대비 -34%), 1M -25% 3M -22% 6M -55%. AUM 약56B. 4종 중 일부 OP 컨센/실적 10% 하회, 목표가 하향. 엔진수주·LNG인도 유지되나 중국추격 확대. 가설 유지하되 추매 중단. 평가액 약89만원.",
+      "priority": 3,
+      "tags": [],
+      "time": 1793489802
+    },
     {
       "id": "EfwNEEOfeGCD",
       "topic": "cwally-port",
@@ -4469,19 +4478,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1792478448
-    },
-    {
-      "id": "UalyJcyv0eTa",
-      "topic": "cwally-port",
-      "title": "[KOSPI] 폐기 | 종가 6,400 하회",
-      "message": "8단계 경로 전체 폐기. 하방이 주 시나리오. 8200/9385/12000 목표 취소. 오늘 종가 5552.74.",
-      "priority": 5,
-      "tags": [
-        "x",
-        "no_entry",
-        "chart_with_downwards_trend"
-      ],
-      "time": 1792478447
     }
   ]
 }
