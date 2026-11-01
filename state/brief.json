@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-30T20:50:08.715940+09:00",
+  "updated_at": "2026-11-02T08:12:11.159574+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -72,6 +72,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-10-30T20:50:08.715940+09:00"
+    },
+    "20261102-weekly-discovery.json#ce73a104636e5526": {
+      "file": "20261102-weekly-discovery.json",
+      "title": "[BRIEF] 주간 종목 발굴 11/2: HWM, FTNT, RDDT, 278470, 326030, 145020",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-02T08:12:11.159574+09:00"
     }
   },
   "rejected": {},
