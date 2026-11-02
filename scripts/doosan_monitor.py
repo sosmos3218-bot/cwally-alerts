@@ -10,6 +10,7 @@
                              DOOSAN_NOW="YYYY-MM-DD HH:MM" 으로 시각을 바꿔 볼 수 있다.
   doosan_monitor.py force    slot 판정을 같은 날 다시 보낸다 (수동 실행은 채팅 승인 필요).
   doosan_monitor.py install  설치 확인 1회 발송 (AGENTS.md), state 쓰기 없음.
+  doosan_monitor.py selftest 오프라인 점검: 모든 조회를 고정 자료로 대체, 네트워크, ntfy, state 파일 없음.
 
 금액 = 순매수 주식 수 x KRX 종가 추정. 매매 신호가 아니다.
 """
@@ -722,6 +723,303 @@ def selftest(cfg: dict) -> None:
         print("DART 점검 실패", exc)
 
 
+# ---------- offline selftest (no network, no ntfy, no state file) ----------
+# Added 2026-11-02 (user approval pt33u). `doosan_monitor.py selftest` stubs every fetch at urllib.request.urlopen
+# with the fixtures below (Daum days/investor, Naver trend/integration/notice/quarter, DART search), blocks sockets,
+# captures publish() and save(), and seeds state from {} + configs/doosan.json consensus_seed. It never reads or
+# writes state/doosan.json. The live parser check stays in `dry` (selftest(cfg) above, unchanged).
+
+def _st_days(closes_chg: list[tuple[str, float, float]]) -> dict:
+    """[(YYYYMMDD, close, chg%)] -> Daum days JSON."""
+    data = []
+    for d, c, chg in closes_chg:
+        prev = round(c / (1 + chg / 100), 2) if chg else c
+        data.append({"date": f"{d[:4]}-{d[4:6]}-{d[6:]} 00:00:00", "tradePrice": c, "prevClosingPrice": prev, "changeRate": chg / 100})
+    return {"data": list(reversed(data))}
+
+
+def _st_trading_days(end: str, n: int) -> list[str]:
+    d = date(int(end[:4]), int(end[4:6]), int(end[6:]))
+    out = []
+    while len(out) < n:
+        if kr_calendar.is_trading_day(d):
+            out.append(d.strftime("%Y%m%d"))
+        d -= timedelta(days=1)
+    return list(reversed(out))
+
+
+class _StResp:
+    def __init__(self, url: str, body: str):
+        self._url, self._body = url, body.encode("utf-8")
+
+    def read(self):
+        return self._body
+
+    def geturl(self):
+        return self._url
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def offline_selftest(cfg: dict) -> int:
+    import copy
+    from unittest import mock
+
+    n = {"ok": 0, "fail": 0}
+
+    def check(label, got, want):
+        good = got == want
+        n["ok" if good else "fail"] += 1
+        print(("ok  " if good else "FAIL"), label, "" if good else f"got={got!r} want={want!r}")
+
+    g = globals()
+    sent: list[tuple[str, str, int, str]] = []
+    saved: list[dict] = []
+    calls: list[str] = []
+    fx: dict = {}  # url fragment -> body (str) or Exception
+    codes = [t["code"] for t in cfg["tickers"]]
+    state_before = (lambda s: (s.st_size, s.st_mtime_ns))(STATE_PATH.stat()) if STATE_PATH.exists() else None
+
+    def fake_urlopen(req, timeout=None, **_k):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        calls.append(url)
+        for frag, body in fx.items():
+            if frag in url:
+                if isinstance(body, Exception):
+                    raise body
+                return _StResp(url, body if isinstance(body, str) else json.dumps(body, ensure_ascii=False))
+        raise OSError(f"selftest: no fixture for {url}")
+
+    def no_socket(*_a, **_k):
+        raise OSError("selftest: network disabled")
+
+    def fake_publish(topic, title, body, pri=3, tags=None, server=None, **_k):
+        sent.append((route_topic(topic, title), title, pri, body))
+
+    def fake_save(state, now, dry):
+        saved.append(copy.deepcopy(state))
+
+    def at(s: str) -> datetime:
+        return datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+
+    def market(d0: str, special: dict | None = None, foreign: dict | None = None, missing_d0: set | None = None,
+               no_flow_d0: set | None = None, notice: dict | None = None, quarter: dict | None = None, dart: str = "<table></table>"):
+        """Load fixtures: 25 trading days ending d0, chg 0.5% unless special[code] = {day: chg}."""
+        fx.clear()
+        _NOTICE_CACHE.clear()
+        days = _st_trading_days(d0, 25)
+        for code in codes:
+            base = {"000150": 100000.0, "034020": 50000.0, "241560": 60000.0, "131970": 30000.0}[code]
+            rows, trend = [], []
+            for d in days:
+                if code in (missing_d0 or set()) and d == d0:
+                    continue
+                chg = (special or {}).get(code, {}).get(d, 0.5)
+                rows.append((d, base, chg))
+                fshares = (foreign or {}).get(code, {}).get(d, 1000.0)  # 1000 shares x 100,000 = 1억, under every threshold
+                tr = {"bizdate": d, "closePrice": str(base), "foreignerPureBuyQuant": str(fshares), "organPureBuyQuant": "500"}
+                if code in (no_flow_d0 or set()) and d == d0:
+                    tr["foreignerPureBuyQuant"] = None
+                trend.append(tr)
+            fx[f"/api/quote/A{code}/days"] = _st_days(rows)
+            fx[f"/api/investor/days?symbolCode=A{code}"] = {"data": [{"date": f"{d[:4]}-{d[4:6]}-{d[6:]}", "foreignStraightPurchaseVolume": 1000} for d in days]}
+            fx[f"/api/stock/{code}/integration"] = {"totalInfos": [{"code": "lastClosePrice", "value": f"{base:,.0f}"}]}
+            fx[f"/api/stock/{code}/trend"] = list(reversed(trend))
+            fx[f"notice?itemCode={code}"] = (notice or {}).get(code, [])
+            fx[f"/api/stock/{code}/finance/quarter"] = (quarter or {}).get(code) or {"financeInfo": {
+                "trTitleList": [{"key": "202609", "isConsensus": "Y"}],
+                "rowList": [{"title": "매출액", "columns": {"202609": {"value": "50,000"}}},
+                            {"title": "영업이익", "columns": {"202609": {"value": "4,000"}}}]}}
+        fx["dart.fss.or.kr"] = dart
+
+    def seed_state(week: str | None = None) -> dict:
+        st = {"earn": {c: {"cons": dict(v)} for c, v in cfg["earnings"]["consensus_seed"].items()}}
+        if week:
+            st["digest_week"] = week
+        return st
+
+    q3_body = ("<p>1. 연결실적내용 단위 : 억원, % 구분 당해실적 직전실적 증감률 전년동기실적 증감률 당기실적 2026-07-01 ~ 2026-09-30 "
+               "매출액 당해실적 55,000 54,000 1.9 50,000 10.0 누계실적 160,000 영업이익 당해실적 4,100 4,800 -14.6 4,500 -8.9 누계실적 13,000 "
+               "당기순이익 당해실적 2,000</p>")
+
+    patches = [mock.patch("urllib.request.urlopen", fake_urlopen), mock.patch("socket.socket.connect", no_socket),
+               mock.patch("socket.create_connection", no_socket), mock.patch("time.sleep", lambda *_a: None)]
+    keep = {k: g[k] for k in ("publish", "save")}
+    for p in patches:
+        p.start()
+    g["publish"], g["save"] = fake_publish, fake_save
+    try:
+        # --- parser
+        r = parse_result(html_text(q3_body), "2026-09-30")
+        check("parse 3Q notice (억원): rev, op, yoy base", r, {"rev": 55000, "op": 4100, "op_yoy_base": 4500})
+        r = parse_result(html_text(q3_body.replace("단위 : 억원", "단위 : 백만원").replace("55,000", "5,500,000").replace("4,100", "410,000").replace("4,500", "450,000")), "2026-09-30")
+        check("parse 3Q notice (백만원 -> 억원)", (r or {}).get("op"), 4100)
+        check("no unit -> None", parse_result(html_text(q3_body.replace("단위 : 억원,", "")), "2026-09-30"), None)
+        check("no 영업이익 row -> None", parse_result(html_text(q3_body.replace("영업이익", "영업손실이익X")), "2026-09-30"), None)
+        check("2분기 notice is not read as 3분기", parse_result(html_text(q3_body.replace("2026-09-30", "2026-06-30")), "2026-09-30"), None)
+
+        # --- judge: price fire once, re-arm below half, escalate, opposite direction
+        t0 = cfg["tickers"][0]
+        rules = cfg["rules"]
+
+        def ev_at(seq_chg, seq_f=None):
+            rows = [{"day": f"202610{i + 1:02d}", "close": 100000.0, "chg": c, "f": (seq_f[i] if seq_f else None), "o": 0.0} for i, c in enumerate(seq_chg)]
+            td = {"short": t0["short"], "rows": rows, "sign_ok": True}
+            return [[e["kind"] + ":" + str(e["pri"]) for e in judge(t0, td, rules, rows[i]["day"])] for i in range(len(rows))]
+
+        check("price +6 fires p3, +6 again silent, +1 re-arms, +6 fires, +11 escalates p4, -6 fires down",
+              ev_at([6, 6, 1, 6, 11, -6]), [["price:3"], [], [], ["price:3"], ["price:4"], ["price:3"]])
+        check("price +4.9 under 5% never fires", ev_at([4.9, 4.9]), [[], []])
+        check("foreign 120억 fires, 130 silent, 40 re-arms, 110 fires (100억 threshold)",
+              [[k for k in e if k.startswith("flow:")] for e in ev_at([0, 0, 0, 0], [120, 130, 40, 110])], [["flow:3"], [], [], ["flow:3"]])
+        check("foreign 3-day buy streak fires once", [[k for k in e if k.startswith("streak")] for e in ev_at([0] * 4, [10, 10, 10, 10])],
+              [[], [], ["streak:3"], []])
+        check("foreign 5-day cum 300억 fires once", [[k for k in e if k.startswith("flow5")] for e in ev_at([0] * 6, [70, 70, 70, 70, 70, 70])],
+              [[], [], [], [], ["flow5:3"], []])
+
+        # --- guard (year, end date, holiday)
+        check("guard: trading day 2026-11-03 09:00 -> run", guard(cfg, at("2026-11-03 09:00")), None)
+        check("guard: Saturday -> 휴장", guard(cfg, at("2026-11-07 09:00")), "KRX 휴장/주말")
+        check("guard: after ends_kst + 59m -> ended", guard(cfg, at("2026-11-20 10:00")), "ended")
+        check("guard: ends_kst + 30m still runs", guard(cfg, at("2026-11-20 09:30")), None)
+        check("guard: 2027 -> year-guard", guard(cfg, at("2027-11-03 09:00")), "year-guard")
+
+        # --- run_slot: fire, repeat same day silent, no-fire day silent
+        now = at("2026-11-03 09:00")
+        d0 = "20261102"
+        week = now.strftime("%G-W%V")
+        market(d0, special={"000150": {d0: 6.0}})
+        st = seed_state(week)
+        sent.clear(); saved.clear()
+        run_slot(cfg, st, now, "slot")
+        check("slot: 두산 +6% on 11/2 -> one send", len(sent), 1)
+        title = sent[0][1] if sent else ""
+        check("slot title has [DOOSAN] and the 4 tickers", title.startswith("[DOOSAN] 000150/034020/241560/131970 "), True)
+        check("slot title names the move and action", ("두산 +6.0%" in title, title.endswith("| 추격 금지, 확인만")), (True, True))
+        check("slot send goes to cwally-port p3", (sent[0][0], sent[0][2]) if sent else None, ("cwally-port", 3))
+        check("slot body has the six-item order", all(k in (sent[0][3] if sent else "") for k in ("이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것")), True)
+        check("slot state: last_day = d0, saved once (captured, not written)", (st.get("last_day"), len(saved)), (d0, 1))
+        sent.clear()
+        run_slot(cfg, st, now, "slot")
+        check("slot: same day again -> silent (price already judged)", sent, [])
+        nxt = at("2026-11-04 09:00")
+        market("20261103", special={"000150": {d0: 6.0, "20261103": 6.0}})
+        run_slot(cfg, st, nxt, "slot")
+        check("slot: next day +6% again (still armed off) -> silent", sent, [])
+        st2 = seed_state(week)
+        market(d0)
+        run_slot(cfg, st2, now, "slot")
+        check("slot: all flat, weekly summary already sent -> silent", (sent, st2.get("last_day")), ([], d0))
+        st3 = seed_state(None)
+        market(d0)
+        run_slot(cfg, st3, now, "slot")
+        check("slot: first run of the ISO week -> weekly summary once", (len(sent), "주간 요약" in (sent[0][1] if sent else ""), st3.get("digest_week")), (1, True, week))
+        sent.clear()
+
+        # --- missing data: hold, ops once a day, partial data noted
+        market(d0)
+        for code in codes:
+            fx[f"/api/quote/A{code}/days"] = OSError("HTTP 503")
+        st4 = seed_state(week)
+        run_slot(cfg, st4, now, "slot")
+        check("all fetches fail -> one 조회 실패 notice to cwally-ops, no judgment",
+              [(s[0], s[1].split(" | ")[0][-5:]) for s in sent], [("cwally-ops", "조회 실패")])
+        check("fetch fail keeps last_day unset (hold)", st4.get("last_day"), None)
+        sent.clear()
+        run_slot(cfg, st4, now + timedelta(hours=1), "slot")
+        check("fetch fail same day -> no second notice", sent, [])
+        market(d0, special={"034020": {d0: 7.0}}, missing_d0={"000150"}, no_flow_d0={"241560"})
+        st5 = seed_state(week)
+        run_slot(cfg, st5, now, "slot")
+        body = sent[0][3] if sent else ""
+        check("partial: 두산 d0 close missing -> noted, others still judged", (len(sent), "두산: 두산 11/2 KRX 종가 없음(다음) 조회 실패" in body, "에너빌 +7.0%" in (sent[0][1] if sent else "")), (1, True, True))
+        check("partial: 밥캣 flow not posted -> 수급 미게시 note", "밥캣 11/2 수급 미게시" in body, True)
+        sent.clear()
+
+        # --- earnings schedule: 예고 공시 -> D-3 once, then D-1 once
+        notice = {"000150": [{"title": "(주)두산 결산실적공시 예고(안내공시)", "datetime": "2026-10-26T16:00:00",
+                              "contents": "1. 결산기간 종료일 2026-09-30 2. 공시예정일 2026-11-09 3. 기타"}]}
+        market(d0, notice=notice)
+        st6 = seed_state(week)
+        evs = earnings_events(cfg, st6, at("2026-11-04 09:00"), [])
+        check("예고 공시 2026-11-09 found on 11/4 -> new-date notice tagged D-3", [(e["head"], e["n"]) for e in evs], [("두산 실적 11/9 확인", 3)])
+        check("same day again -> silent", earnings_events(cfg, st6, at("2026-11-04 09:30"), []), [])
+        evs = earnings_events(cfg, st6, at("2026-11-06 09:00"), [])
+        check("11/6 -> D-1 once", [e["head"] for e in evs if e["head"].startswith("두산")], ["두산 실적 D-1"])
+        check("D-1 not repeated", [e for e in earnings_events(cfg, st6, at("2026-11-06 10:00"), []) if e["head"].startswith("두산")], [])
+
+        # --- run_auto: today's 3Q result vs consensus, once
+        res_notice = {"000150": [{"title": "(주)두산 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-11-09T15:40:00", "contents": q3_body}]}
+        market("20261109", notice=res_notice)
+        st7 = seed_state(week)
+        sent.clear(); saved.clear()
+        run_auto(cfg, st7, at("2026-11-09 17:05"), False)
+        title = sent[0][1] if sent else ""
+        check("auto: 두산 3Q result today -> one send", len(sent), 1)
+        check("auto title has [DOOSAN], ticker and OP vs consensus", (title.startswith("[DOOSAN] 000150/"), "두산 3Q 영업익 4,100억 컨센 대비 -15%" in title), (True, True))
+        check("auto: OP 15% under consensus 4,797 -> p4", sent[0][2] if sent else None, 4)
+        check("auto: result_sent recorded", st7["earn"]["000150"].get("result_sent"), True)
+        sent.clear()
+        run_auto(cfg, st7, at("2026-11-09 17:30"), False)
+        check("auto: same result again -> silent", sent, [])
+        st8 = seed_state(week)
+        market("20261110", notice=res_notice)
+        run_auto(cfg, st8, at("2026-11-10 17:05"), False)
+        check("auto: yesterday's filing is not today's -> silent (09:00 slot picks it up)", sent, [])
+        st9 = seed_state(week)
+        market("20261109")
+        run_auto(cfg, st9, at("2026-11-09 17:05"), False)
+        check("auto: no filing -> silent", sent, [])
+        market("20261109")
+        for code in codes:
+            fx[f"notice?itemCode={code}"] = OSError("HTTP 500")
+        fx["dart.fss.or.kr"] = OSError("HTTP 500")
+        st10 = seed_state(week)
+        run_auto(cfg, st10, at("2026-11-09 17:05"), False)
+        check("auto: fetch failure -> silent, nothing marked sent", (sent, any(v.get("result_sent") for v in st10["earn"].values())), ([], False))
+
+        # --- 두산테스나 DART path: filed + actual numbers -> result; filed but only consensus -> 접수 line on the slot
+        dart = ('<table><tr><td>코스닥</td><td><a href="/dsaf001/main.do?rcpNo=20261116000123">두산테스나</a></td>'
+                "<td>분기보고서 (2026.09)</td><td>두산테스나</td><td>2026.11.16</td></tr></table>")
+        actual = {"financeInfo": {"trTitleList": [{"key": "202609", "isConsensus": "N"}],
+                                  "rowList": [{"title": "매출액", "columns": {"202609": {"value": "820"}}}, {"title": "영업이익", "columns": {"202609": {"value": "70"}}}]}}
+        market("20261116", quarter={"131970": actual}, dart=dart)
+        st11 = seed_state(week)
+        found = find_results(cfg, st11, at("2026-11-16 17:05"), only_today=True)
+        check("Tesna: DART 분기보고서 + actual OP 70 -> found", [(f["code"], f["res"].get("op"), f["res"].get("rcp")) for f in found], [("131970", 70.0, "20261116000123")])
+        lines, pri, heads, sc = results_message(cfg, st11, found, final=False)
+        check("Tesna result line has DART link, +11% vs consensus 63 -> p4", ("rcpNo=20261116000123" in lines[0], pri, heads), (True, 4, ["테스나 3Q 영업익 70억 컨센 대비 +11%"]))
+        market("20261116", dart=dart)
+        st12 = seed_state(week)
+        found = find_results(cfg, st12, at("2026-11-16 17:05"), only_today=True)
+        check("Tesna filed, numbers still consensus -> auto waits", results_message(cfg, st12, found, final=False)[3], [])
+        check("... slot (final) -> 분기보고서 접수 line", results_message(cfg, st12, found, final=True)[2], ["테스나 분기보고서 접수"])
+
+        # --- dry never publishes or saves to disk
+        market(d0, special={"000150": {d0: 6.0}})
+        sent.clear(); saved.clear()
+        g["publish"] = keep["publish"]  # the real publish must not be reached in dry
+        try:
+            g["save"] = keep["save"]
+            run_slot(cfg, seed_state(week), now, "dry")
+        finally:
+            g["publish"], g["save"] = fake_publish, fake_save
+        check("dry: real publish not reached, no ntfy url requested", any("ntfy" in u for u in calls), False)
+    finally:
+        g.update(keep)
+        for p in reversed(patches):
+            p.stop()
+        _NOTICE_CACHE.clear()
+    check("no ntfy.sh request at any point", any("ntfy" in u for u in calls), False)
+    check("state/doosan.json untouched (size, mtime)", ((lambda s: (s.st_size, s.st_mtime_ns))(STATE_PATH.stat()) if STATE_PATH.exists() else None) == state_before, True)
+    print(f"SELFTEST {'OK' if not n['fail'] else 'FAIL'}: {n['ok']} passed, {n['fail']} failed (fixtures only, no network, no publish, no state)")
+    return 1 if n["fail"] else 0
+
+
 def install(cfg: dict, now: datetime) -> None:
     body = "\n".join([
         "이게 뭐 알림: 두산 4종목(두산, 두산에너빌리티, 두산밥캣, 두산테스나) 가격, 외인 수급, 3분기 실적 알림이 설치됐다는 확인입니다.",
@@ -738,10 +1036,12 @@ def install(cfg: dict, now: datetime) -> None:
 def main() -> int:
     args = [a.lower() for a in sys.argv[1:]]
     mode = args[0] if args else "auto"
-    if mode not in ("slot", "auto", "dry", "force", "install"):
+    if mode not in ("slot", "auto", "dry", "force", "install", "selftest"):
         print(f"unknown mode {mode}")
         return 2
     cfg = load_json(CFG_PATH)
+    if mode == "selftest":
+        return offline_selftest(cfg)
     now = datetime.now(KST)
     if os.environ.get("DOOSAN_NOW") and mode == "dry":
         now = datetime.strptime(os.environ["DOOSAN_NOW"], "%Y-%m-%d %H:%M").replace(tzinfo=KST)

@@ -38,8 +38,12 @@ def textify(html):
     return re.sub(r"\s+", " ", unescape(t))
 
 
+def default_state():
+    return {"final_notified": False, "empty_notified": False, "fail_notified": False}
+
+
 def load_state():
-    st = {"final_notified": False, "empty_notified": False, "fail_notified": False}
+    st = default_state()
     if STATE.exists():
         try:
             st.update(json.loads(STATE.read_text(encoding="utf-8")))
@@ -156,6 +160,8 @@ def emit(cfg, title, lines, pri):
 def main():
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    if mode == "selftest":
+        return offline_selftest(cfg)
     now = datetime.now(KST)
     st = load_state()
     start = datetime.fromisoformat(cfg["window_start_kst"]).replace(tzinfo=KST)
@@ -218,7 +224,7 @@ def main():
         f"지금 상태: 결론 {action}. {why}. 메리츠 {b['meritz_op_eok']}억, 현대차 {b['hyundai_op_eok']}억 대비. 아연 {b['zinc_lme']}달러, 은 {b['silver_spot']}달러 기준. 주가 앵커 {b['price_anchor']//10000}만원(10/8). 목표 {b['target_hyundai']//10000}만원.",
         "지금 할 일: " + ("매수 우위 검토" if action == "상향" else "중립 유지, 조정 시 분할" if action in {"기준", "중립"} else "축소 검토") + ". 미국 47억달러 조달 공개 여부 별도 확인.",
         "나중에: 은 온스당 1달러 → 연간 OP ~100~120억 변동. 아연 3,500달러 하회 시 하향. 4분기 5,000억대 회복 시 상향.",
-        "익절/줄일 때: OP 3,800억 미만 또는 금속가격 급락 시 비중 축소. 인허가·조달 지연 시 할인 확대.",
+        "익절/줄일 때: OP 3,800억 미만 또는 금속가격 급락 시 비중 축소. 인허가, 조달 지연 시 할인 확대.",
         "하지 말 것: TTM PER 편차로 과평가 단정. 경영권 분쟁 무시. 신용, 미수, 추격매수. 투자 권유 아님.",
         "출처: " + cfg["sources"]["news"],
     ]
@@ -228,6 +234,182 @@ def main():
     st["score"] = action
     save_state(st, now)
     return 0
+
+
+# ---------- offline selftest (no network, no ntfy, no state file) ----------
+# Added 2026-11-02 (user approval pt33u). `kzq3_monitor.py selftest` replaces notices()/get_json() with the fixtures
+# below, blocks urlopen and sockets, captures publish() and save_state(), fixes the clock, and seeds state from
+# default_state(). It never reads or writes state/kzq3.json. The live Q2/Q1 parser check stays in `dry` (selftest(cfg)).
+
+def offline_selftest(cfg):
+    import copy
+    from unittest import mock
+
+    n = {"ok": 0, "fail": 0}
+
+    def check(label, got, want):
+        good = got == want
+        n["ok" if good else "fail"] += 1
+        print(("ok  " if good else "FAIL"), label, "" if good else f"got={got!r} want={want!r}")
+
+    g = globals()
+    sent, saved, net = [], [], []
+    fx = {"notices": [], "quarter": None}
+    state_before = (lambda s: (s.st_size, s.st_mtime_ns))(STATE.stat()) if STATE.exists() else None
+
+    def body(op, ytd, start="2026-07-01", end="2026-09-30", unit="억원"):
+        return (f"1. 연결실적내용 단위 : {unit}, % 구분 당기실적 {start} ~ {end} 매출액 당해실적 40,000 39,000 2.6 "
+                f"영업이익 당해실적 {op} 3,500 10.0 3,300 12.0 누계실적 {ytd} 12,000 5.0 법인세비용차감전계속사업이익 당해실적 3,000")
+
+    def note(title, dt, text):
+        return {"id": title + dt, "title": title, "datetime": dt, "text": text, "url": "fixture"}
+
+    def quarter(cons, op="4,100"):
+        return {"financeInfo": {"trTitleList": [{"key": "202606", "isConsensus": "N"}, {"key": "202609", "isConsensus": cons}],
+                                "rowList": [{"title": "영업이익", "columns": {"202606": {"value": "3,633"}, "202609": {"value": op}}}]}}
+
+    def fake_notices(code, size=30):
+        if isinstance(fx["notices"], Exception):
+            raise fx["notices"]
+        return copy.deepcopy(fx["notices"])
+
+    def fake_get_json(url, timeout=20):
+        if fx["quarter"] is None:
+            raise OSError("selftest: quarter fixture missing")
+        return copy.deepcopy(fx["quarter"])
+
+    def blocked(*a, **_k):
+        net.append(str(a[:1]))
+        raise OSError("selftest: network disabled")
+
+    def fake_publish(topic, title, message, priority=3, tags=None, server=None, **_k):
+        sent.append((title, priority, message))
+
+    def fake_save(st, now):
+        st["updated_at"] = now.isoformat()
+        saved.append(copy.deepcopy(st))
+
+    clock = {"now": None}
+
+    class FixedDT(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return clock["now"]
+
+    def run(mode, when, st):
+        clock["now"] = datetime.strptime(when, "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+        g["load_state"] = lambda: st
+        old_argv = sys.argv
+        sys.argv = ["kzq3_monitor.py", mode]
+        try:
+            return main()
+        finally:
+            sys.argv = old_argv
+
+    q3_ok = note("고려아연 연결재무제표기준영업(잠정)실적(공정공시)", "2026-11-05T07:10:00", body("4,400", "13,332"))
+    keep = {k: g[k] for k in ("notices", "get_json", "publish", "save_state", "load_state", "datetime")}
+    patches = [mock.patch("urllib.request.urlopen", blocked), mock.patch("socket.socket.connect", blocked),
+               mock.patch("socket.create_connection", blocked)]
+    for p in patches:
+        p.start()
+    g.update(notices=fake_notices, get_json=fake_get_json, publish=fake_publish, save_state=fake_save, datetime=FixedDT)
+    g["urlopen"] = blocked
+    try:
+        # --- parser
+        check("parse Q3 notice 억원: op, ytd, period", parse_notice(body("4,400", "13,332"), "2026-09-30"),
+              {"op": 4400, "ytd": 13332, "period": "2026-07-01 ~ 2026-09-30"})
+        check("parse Q3 notice 백만원 -> 억원", (parse_notice(body("440,000", "1,333,200", unit="백만원"), "2026-09-30") or {}).get("op"), 4400)
+        check("Q2 period is not read as Q3", parse_notice(body("3,633", "13,332", "2026-04-01", "2026-06-30"), "2026-09-30"), None)
+        check("no unit -> None", parse_notice(body("4,400", "13,332").replace("단위 : 억원,", ""), "2026-09-30"), None)
+        check("no 영업이익 row -> None", parse_notice(body("4,400", "13,332").replace("영업이익", "기타"), "2026-09-30"), None)
+
+        # --- find_result: notice first, 정정 and pre-window skipped, quarter fallback only when not consensus
+        fx.update(notices=[q3_ok], quarter=quarter("N", "9,999"))
+        got, src, _ = find_result("2026-09-30", "2026-11-04")
+        check("notice found -> op 4400 via notice (quarter ignored)", ((got or {}).get("op"), src), (4400, "notice"))
+        fx.update(notices=[note("[정정] 고려아연 연결재무제표기준영업(잠정)실적(공정공시)", "2026-11-05T07:10:00", body("1,000", "9,000"))], quarter=quarter("Y"))
+        check("정정 notice skipped, consensus quarter -> None", find_result("2026-09-30", "2026-11-04")[:2], (None, "none"))
+        fx.update(notices=[note("고려아연 연결재무제표기준영업(잠정)실적(공정공시)", "2026-11-03T07:10:00", body("4,400", "13,332"))])
+        check("notice before window start skipped", find_result("2026-09-30", "2026-11-04")[1], "none")
+        fx.update(notices=[], quarter=quarter("N", "4,100"))
+        got, src, _ = find_result("2026-09-30", "2026-11-04")
+        check("no notice + actual quarter -> fallback op 4100", ((got or {}).get("op"), src), (4100, "naver_quarter"))
+        fx.update(notices=OSError("HTTP 500"), quarter=quarter("N", "4,100"))
+        got, src, err = find_result("2026-09-30", "2026-11-04")
+        check("notice fetch error -> fallback still used, error kept", (src, err.startswith("notice: HTTP 500")), ("naver_quarter", True))
+        fx.update(notices=OSError("HTTP 500"), quarter=None)
+        got, src, err = find_result("2026-09-30", "2026-11-04")
+        check("both sources fail -> None with both errors", (got, "notice:" in err and "quarter:" in err), (None, True))
+
+        # --- score thresholds
+        b = cfg["baseline"]
+        check("score 4300 상향, 4246 기준, 3888 중립, 3887 하향, None 확인불가",
+              [score(x, b)[0] for x in (4300, b["hyundai_op_eok"], b["meritz_op_eok"], b["meritz_op_eok"] - 1, None)],
+              ["상향", "기준", "중립", "하향", "확인불가"])
+
+        # --- main: fire once
+        fx.update(notices=[q3_ok], quarter=quarter("Y"))
+        st = default_state()
+        sent.clear(); saved.clear()
+        run("auto", "2026-11-05 16:10", st)
+        check("fire: OP 4400 -> one send", len(sent), 1)
+        check("fire title has [KZ] 010130 prefix", sent[0][0] if sent else None, "[KZ] 010130 상향 | 3분기 vs 추정")
+        check("fire p4, body has the six items", (sent[0][1] if sent else None, all(k in (sent[0][2] if sent else "") for k in ("이게 뭐 알림", "지금 상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"))), (4, True))
+        check("fire marks final_notified + score (captured save)", (st["final_notified"], st.get("score"), len(saved)), (True, "상향", 1))
+        sent.clear()
+        run("auto", "2026-11-06 09:10", st)
+        check("once-only: next run after final -> silent", sent, [])
+        fx.update(notices=[note(q3_ok["title"], q3_ok["datetime"], body("3,900", "13,000"))])
+        st = default_state()
+        run("auto", "2026-11-05 16:10", st)
+        check("중립 (3900) -> p3", [(s[0], s[1]) for s in sent], [("[KZ] 010130 중립 | 3분기 vs 추정", 3)])
+        sent.clear()
+
+        # --- missing data -> hold once, then the result still fires
+        fx.update(notices=[], quarter=quarter("Y"))
+        st = default_state()
+        run("auto", "2026-11-05 16:10", st)
+        check("missing: no notice, consensus only -> 원문 없음 | 보유 유지 p3", [(s[0], s[1]) for s in sent], [("[KZ] 010130 원문 없음 | 보유 유지", 3)])
+        check("missing: empty_notified set, final not set", (st["empty_notified"], st["final_notified"]), (True, False))
+        sent.clear()
+        run("auto", "2026-11-06 09:10", st)
+        check("missing again -> no second 원문 없음", sent, [])
+        fx.update(notices=[q3_ok])
+        run("auto", "2026-11-07 09:10", st)
+        check("result appears later -> final send", [s[0] for s in sent], ["[KZ] 010130 상향 | 3분기 vs 추정"])
+        sent.clear()
+        fx.update(notices=OSError("HTTP 503"), quarter=None)
+        st = default_state()
+        run("auto", "2026-11-05 16:10", st)
+        check("both fetches fail -> held as 원문 없음 (no score)", [s[0] for s in sent], ["[KZ] 010130 원문 없음 | 보유 유지"])
+        sent.clear()
+
+        # --- window / expiry / year
+        fx.update(notices=[q3_ok], quarter=quarter("Y"))
+        for when, label in (("2026-11-04 08:59", "before window start 11/4 09:00"), ("2026-11-08 00:00", "after expire 11/7 23:59:59"),
+                            ("2027-11-05 16:10", "other year")):
+            st = default_state()
+            run("auto", when, st)
+            check(f"outside window ({label}) -> silent, not final", (sent, st["final_notified"]), ([], False))
+        st = default_state()
+        run("auto", "2026-11-07 23:59", st)
+        check("last minute of window still fires", len(sent), 1)
+        sent.clear()
+
+        # --- dry: no send, no save
+        saved.clear()
+        st = default_state()
+        run("dry", "2026-11-05 16:10", st)
+        check("dry: no publish, no save", (sent, saved, st["final_notified"]), ([], [], False))
+
+        check("no network call attempted", net, [])
+    finally:
+        g.update(keep)
+        for p in reversed(patches):
+            p.stop()
+    check("state/kzq3.json untouched (size, mtime)", ((lambda s: (s.st_size, s.st_mtime_ns))(STATE.stat()) if STATE.exists() else None) == state_before, True)
+    print(f"SELFTEST {'OK' if not n['fail'] else 'FAIL'}: {n['ok']} passed, {n['fail']} failed (fixtures only, no network, no publish, no state)")
+    return 1 if n["fail"] else 0
 
 
 if __name__ == "__main__":
