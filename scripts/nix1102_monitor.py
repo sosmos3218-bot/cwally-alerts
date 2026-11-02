@@ -322,7 +322,7 @@ def stock_lines(res: dict, cfg: dict) -> list[str]:
 
 def build_message(cfg: dict, results: list[dict], now: datetime) -> tuple[str, str, int]:
     verdicts = {r["code"]: r["verdict"] for r in results}
-    title = cfg["title_prefix"] + " 000660/005930 " + " | ".join(f"{r['short']}({r['code']}) {r['verdict']}" for r in results)
+    title = cfg["title_prefix"] + " " + "/".join(r["code"] for r in results) + " " + " | ".join(f"{r['short']}({r['code']}) {r['verdict']}" for r in results)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     do_now = []
     later = []
@@ -405,24 +405,31 @@ def run(mode: str, now: datetime | None = None, data: dict | None = None) -> int
         print("nix1102 data incomplete, wait for final run:", missing)
         return 0
     if no_candle:
+        bad = [r for r in results if not r["t"] or not r["r"]]
+        good = [r for r in results if r["t"] and r["r"]]
         if not st.get("ops_sent"):
-            ops_title = f"{cfg['title_prefix']} 000660/005930 11/2 일봉 조회 실패 | 판정 없음"
+            codes = "/".join(r["code"] for r in bad)
+            ops_title = f"{cfg['title_prefix']} {codes} 11/2 일봉 조회 실패 | " + ("판정 없음" if not good else "해당 종목만 판정 제외")
             ops_body = "\n".join(
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | NIX1102",
                     "이게 뭐 알림: 11/2 장 마감 후 점검에 필요한 일봉을 받지 못했습니다. 매매 신호가 아닙니다.",
-                    "지금 상태: KRX 일봉 없음 " + ", ".join(no_candle) + (". 오류: " + " / ".join(data["errors"]) if data["errors"] else ""),
-                    "지금 할 일: HTS에서 직접 11/2 종가와 10/30 저가를 비교하세요.",
+                    "지금 상태: KRX 일봉 없음 " + ", ".join(f"{r['name']}({r['code']})" for r in bad) + (". 오류: " + " / ".join(data["errors"]) if data["errors"] else ""),
+                    ("나머지 종목: " + ", ".join(f"{r['name']}({r['code']})" for r in good) + " 판정은 cwally-port로 따로 보냈습니다.") if good else "나머지 종목: 없음.",
+                    "지금 할 일: HTS에서 직접 해당 종목의 11/2 종가와 10/30 저가를 비교하세요.",
                     "나중에: 필요하면 job=nix1102 를 oneoff_mode=auto 로 다시 실행.",
                     "익절/줄일 때: 해당 없음.",
                     "하지 말 것: 이 알림을 지지 이탈로 읽기.",
                 ]
             )
             publish("cwally-ops", ops_title, ops_body, 3, ["warning"], server)
-            st["ops_sent"] = {"at": stamp}
-        st.setdefault("attempts", []).append({"at": stamp, "missing": missing})
-        save_state(st)
-        return 0
+            st["ops_sent"] = {"at": stamp, "codes": [r["code"] for r in bad]}
+        if not good:
+            st.setdefault("attempts", []).append({"at": stamp, "missing": missing})
+            save_state(st)
+            return 0
+        results = good
+        title, body, prio = build_message(cfg, results, now)
     publish(topic, title, body, prio, ["bar_chart"], server)
     st["sent"] = {"at": stamp, "title": title, "verdicts": {r["code"]: r["verdict"] for r in results}}
     st.setdefault("attempts", []).append({"at": stamp, "missing": missing})
@@ -478,6 +485,26 @@ def selftest() -> int:
         title, body, _ = build_message(cfg, results, now)
         assert "(000660)" in title and "(005930)" in title, title
         assert "\u00b7" not in title + body and "\u2014" not in title + body, "middle dot or em-dash"
+    # partial candle failure: good stock -> port, bad stock -> ops once
+    sent: list = []
+    g = globals()
+    saved = {k: g[k] for k in ("publish", "load_state", "save_state")}
+    mem: dict = {}
+    g["publish"] = lambda topic, title, body, prio, tags, server: sent.append((topic, title))
+    g["load_state"] = lambda: mem
+    g["save_state"] = lambda st: None
+    try:
+        hy, sam = cases["support_ok"]
+        hy = {"daily": {k: v for k, v in hy["daily"].items() if k != "2026-11-02"}, "foreign": hy["foreign"]}
+        data = {"stocks": {"000660": hy, "005930": sam}, "adr": adr, "fx": fx, "errors": []}
+        run("force", datetime(2026, 11, 3, 8, 20, tzinfo=KST), data)
+    finally:
+        g.update(saved)
+    print("partial sends:", sent)
+    assert [t for t, _ in sent] == ["cwally-ops", "cwally-port"], sent
+    assert "000660" in sent[0][1] and "005930" not in sent[0][1], sent[0][1]
+    assert "005930" in sent[1][1] and "000660" not in sent[1][1], sent[1][1]
+    assert mem["sent"]["verdicts"] == {"005930": "1차 분할 진입 검토"}, mem["sent"]
     # 15:40 gate: today's row before close is not a bar
     assert "2026-11-02" not in _gate_rows(datetime(2026, 11, 2, 15, 39, tzinfo=KST))
     assert "2026-11-02" in _gate_rows(datetime(2026, 11, 2, 15, 40, tzinfo=KST))
