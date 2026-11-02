@@ -1,0 +1,50 @@
+account_krw: 100000000
+risk_pct: 1.0
+max_position_weight_pct: 20
+max_total_open_risk_pct: 6
+cash_krw: null
+stop_mode: pct
+stop_pct: 7.5
+atr_k: 2
+max_stop_distance_pct: 10
+panic_enabled: true
+panic_pct: 12
+climax_min_gain_pct: 20
+climax_body_pct: -4.5
+climax_range_atr: 2
+climax_sell_fraction: 0.5
+ma_window: 50
+ma_arm_gain_pct: 8
+chase_max_distance_pct: 5
+liquidity_avg_days: 20
+liquidity_min_avg_value_krw: 5000000000
+base_min_days: 35
+base_max_days: 60
+base_min_depth_pct: 10
+base_max_depth_pct: 35
+high52_days: 252
+trend_mas: [50, 150, 200]
+history_calendar_days: 1200
+reference_tickers: ["005930", "000660"]
+# 0 이면 보통주 전체를 받습니다. 유동성 필터는 받은 뒤 20일 평균 거래대금으로 적용합니다.
+download_min_marcap_krw: 0
+download_min_amount_krw: 0
+workers: 8
+max_fetch_fail_ratio: 0.05
+eps_min_yoy_pct: 15
+eps_require: false
+# 시가총액 상위 종목 중 50일선 위에 있는 비율. 이 값 미만이면 신규 수량을 절반으로 줄입니다.
+breadth_top_n: 200
+breadth_ma_window: 50
+breadth_min_pct: 30
+dart_min_interval_sec: 0.25
+sector_breadth_enabled: false
+sector_breadth_min_ratio: 0.5
+sector_groups: []
+ntfy_enabled: true
+ntfy_topic: cwally-port
+ntfy_priority: 3
+ends_kst: null
+ends_note: "평일 15:40 KST. 휴장일은 알림 없음."
+cron_approved: "2026-11-02"
+cron_utc: "40 6 * * 1-5"

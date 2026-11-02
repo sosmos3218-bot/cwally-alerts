@@ -1,0 +1,114 @@
+# 평일 15:40 KST. 승인 2026-11-02. UTC cron 40 6 * * 1-5.
+# 휴장이면 스크립트가 종료코드 0 으로 끝나고 알림을 보내지 않습니다.
+
+name: trend-monitor
+
+on:
+  schedule:
+    - cron: "40 6 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준일 YYYY-MM-DD 또는 YYYYMMDD. 비우면 서울 기준 최근 마감 거래일"
+        required: false
+        default: ""
+        type: string
+      demo:
+        description: "데모 픽스처만 사용"
+        required: false
+        default: false
+        type: boolean
+      allow_partial:
+        description: "15:30 이전 미완성 봉 허용"
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: "ntfy 본문만 출력하고 보내지 않음"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cwally-trend-monitor
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned requirements
+        run: python -m pip install -r trend_monitor/requirements.txt
+
+      - name: Run trend monitor
+        env:
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          INPUT_DATE: ${{ inputs.date }}
+          INPUT_DEMO: ${{ inputs.demo }}
+          INPUT_PARTIAL: ${{ inputs.allow_partial }}
+          INPUT_DRY: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${INPUT_DEMO}" = "true" ]; then
+            args+=(--demo)
+          fi
+          if [ -n "${INPUT_DATE}" ]; then
+            args+=(--date "${INPUT_DATE}")
+          fi
+          if [ "${INPUT_PARTIAL}" = "true" ]; then
+            args+=(--allow-partial)
+          fi
+          if [ "${INPUT_DRY}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+          # 보유와 관심 종목은 체크아웃된 trend_monitor/holdings.csv, watchlist.csv 를 읽습니다.
+          python -m trend_monitor "${args[@]}"
+
+      - name: Commit output to main
+        if: success() && (github.event_name == 'schedule' || (inputs.demo != true && inputs.dry_run != true))
+        run: |
+          set -euo pipefail
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -- trend_monitor/holdings.csv trend_monitor/watchlist.csv
+          git add -- trend_monitor/output/latest.json trend_monitor/output/*.json trend_monitor/output/*.md trend_monitor/output/*.csv
+          if git diff --cached --name-only -- trend_monitor/holdings.csv trend_monitor/watchlist.csv | grep -q .; then
+            echo "refusing to commit holdings.csv or watchlist.csv"
+            exit 1
+          fi
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update trend monitor output"
+          ok=0
+          for i in 1 2 3 4; do
+            if git pull --rebase origin main; then
+              ok=1
+              break
+            fi
+            sleep $((i * 5))
+          done
+          if [ "$ok" != "1" ]; then
+            echo "rebase failed"
+            exit 1
+          fi
+          git push origin HEAD:main
+
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python3 scripts/ops_notify.py trend-monitor trend
