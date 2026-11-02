@@ -1,0 +1,56 @@
+{
+  "name": "hwm",
+  "title_prefix": "[HWM]",
+  "ticker": "HWM",
+  "display": "하우멧 에어로스페이스",
+  "cik": "0000004281",
+  "as_of": "2026-11-02",
+  "approval": "사용자 채팅 승인 2026-11-02 t63u (\"네 소신껏 진행\"), 11/2 제안 가격표 그대로 (job=hwm 수동 dispatch 와 단독 step 포함)",
+  "holding": false,
+  "holding_note": "보유 없음 (신규 매수 후보). 11/2 주간 발굴 브리프에서 선정.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi 바로 뒤)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=hwm 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "eps_2026_guide": 5.50,
+  "eps_2027_consensus": 6.45,
+  "eps_note": "2026 조정 EPS 가이던스 5.50달러 (8-K 0001104659-26-119857 EX-99.1, 10/29). 2027 컨센서스 6.45달러는 MarketBeat (제3자, 미검증)",
+  "zones": [
+    {"key": "nochase", "lo": 215, "hi": null, "priority": 3, "budget_pct": 0, "title": "[HWM] HWM 추격 금지 종가 $215 이상"},
+    {"key": "z1", "lo": 192, "hi": 197, "priority": 3, "budget_pct": 30, "title": "[HWM] HWM 1차 분할 매수 구간 $192~197 (30%)"},
+    {"key": "z2", "lo": 178, "hi": 185, "priority": 4, "budget_pct": 35, "title": "[HWM] HWM 2차 분할 매수 구간 $178~185 (35%)"},
+    {"key": "z3", "lo": 160, "hi": 170, "priority": 4, "budget_pct": 35, "title": "[HWM] HWM 3차 분할 매수 구간 $160~170 (35%)"}
+  ],
+  "nochase_note": "추격 금지는 1차 구간 알림이 한 번 나기 전까지만 판정 (state.z1_hit). 1차가 한 번 나면 꺼짐.",
+  "zone_basis": "1차 192~197: 10/26~10/28 실적 전후 종가대(191.99~195.19), 2027 P/E 약 30배. 2차 178~185: 10/23 장중 183.52 와 2025-10-10 장중 183.83 이중 바닥 바로 아래, 약 28배. 3차 160~170: 2025-08 저점대(장중 169.45, 종가 171.00), 약 25.6배. 추격 금지 215 이상: 10/29 고가 207.65 와 2025-12 고가 212.52 위.",
+  "rearm_pct": 3.0,
+  "rearm_note": "구간에 들어오면 1번 알림. 종가가 구간 경계 밖으로 3% 넘게 벗어난 뒤 다시 들어오면 다시 알림.",
+  "stop": {"below": 155, "rearm_above": 159.65, "priority": 4, "title": "[HWM] HWM 종가 $155 미만 손절 기준, 정리 검토", "basis": "3차 하단 160 의 3% 아래, 2025 여름 저점 이탈 = 추세 붕괴, 2027 P/E 약 24배"},
+  "take_profit": {"at_or_above": 248, "rearm_below": 240.56, "priority": 3, "fraction": "1/3", "title": "[HWM] HWM 종가 $248 이상 일부 익절 검토 (1/3)", "basis": "200일선 248.70, 2026 평균 주가 247.26 부근"},
+  "invalidation": {
+    "rev_2027_floor_b": 11.5,
+    "priority": 4,
+    "title": "[HWM] HWM 2027 매출 가이던스 하향, 추가 매수 중단",
+    "rule": "seed_after 이후 새 8-K(Item 2.02) EX-99.1 에서 2027 매출 가이던스(표 Baseline 우선, 없으면 'approximately $X billion' 문장)가 11.5B 미만이면 무효화 p4, 이후 분할 매수 구간 알림 중단(손절/익절은 계속). 11.5B 이상이면 실적 확인 요약 p3. 못 읽으면 접수번호마다 cwally-ops 1번.",
+    "seed_after": "2026-10-30",
+    "seed_last_accession": "0001104659-26-119857"
+  },
+  "baseline": {
+    "price_date": "2026-10-30",
+    "price": 199.22,
+    "high_52w": 310.00,
+    "high_52w_date": "2026-08-06",
+    "low_52w": 183.52,
+    "low_52w_date": "2026-10-23",
+    "ma200": 248.70,
+    "q3_2026": "매출 2,703M +29% (유기 +25%), GAAP 영업이익률 28.7%, 조정 EPS 1.46, 2026 가이던스 매출 10,300M / 조정 EBITDA 3,330M / 조정 EPS 5.50, 2027 매출 약 11.5B (+12%)",
+    "net_debt_m": 3936
+  },
+  "change_conditions": "보잉/에어버스 인도 지연이나 생산 목표 하향이면 2, 3차를 한 단계 낮춰 검토. 순부채/EBITDA 2배 초과나 조정 EBITDA 마진 32% 미만이면 보수 전환. 2027 EPS 가이던스 6.45달러 초과와 200일선 회복이면 1차를 현재가 근처로 앞당기는 검토. 변경은 사용자 승인 뒤.",
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/HWM?interval=1d&range=10d",
+    "sec": "https://data.sec.gov/submissions/CIK0000004281.json"
+  },
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 HWM 분할 매수 구간, 손절, 일부 익절과 4분기 실적(2027년 2월 중순 추정) 2027 매출 가이던스 무효화 점검. 2027-02-26 까지 (마지막 평일 실행 2027-02-26 09:00)"
+}
