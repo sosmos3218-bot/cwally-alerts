@@ -1,11 +1,11 @@
 {
-  "day": "20261030",
-  "flow_day": "20261029",
-  "updated_at": "2026-10-30T15:21:15.654703+09:00",
+  "day": "20261102",
+  "flow_day": "20261030",
+  "updated_at": "2026-11-02T15:21:18.984256+09:00",
   "flip": {
     "005930": {
       "armed": true,
-      "last_date": "20261029",
+      "last_date": "20261030",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -24,7 +24,7 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261029",
+      "last_date": "20261030",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -43,7 +43,25 @@
     }
   },
   "last_digest_at": "2026-10-30T15:21:15+09:00",
-  "week_rows": [],
+  "week_rows": [
+    {
+      "flow_day": "20261030",
+      "foreign": -654342269000,
+      "organ": 201264252500,
+      "stocks": {
+        "삼성전자": {
+          "foreign": -1072820.0,
+          "organ": 1742739.0,
+          "close": 220500.0
+        },
+        "SK하이닉스": {
+          "foreign": -300349.0,
+          "organ": -131567.0,
+          "close": 1391000.0
+        }
+      }
+    }
+  ],
   "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
   "digest_after": "20261029"
 }

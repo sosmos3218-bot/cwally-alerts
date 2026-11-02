@@ -6,11 +6,11 @@
   "weekly_sent_week": "2026-W45",
   "last_event_key": "원달러 1,337원 → 1,340 이탈",
   "last_quotes": {
-    "usdjpy": 157.663,
-    "usdkrw": 1333.28,
-    "jgb30": 3.984
+    "usdjpy": 157.815,
+    "usdkrw": 1341.78,
+    "jgb30": 3.934
   },
-  "updated_at": "2026-11-02T09:00:53.025362+09:00",
+  "updated_at": "2026-11-02T15:20:46.013491+09:00",
   "active_levels": {
     "krw1340": true
   },

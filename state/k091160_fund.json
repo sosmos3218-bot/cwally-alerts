@@ -293,18 +293,32 @@
         "q_key": "202609",
         "q": 769640.0
       }
+    },
+    "2026-11-02": {
+      "sam": {
+        "y_key": "202612",
+        "y": 3828135.0,
+        "q_key": "202609",
+        "q": 1069435.0
+      },
+      "hyn": {
+        "y_key": "202612",
+        "y": 2811602.0,
+        "q_key": "202609",
+        "q": 769640.0
+      }
     }
   },
   "effective": {
-    "consensus_detail": "2026-09-29->2026-10-30 합산 -0.1% (삼성 -4.1%, 하이닉스 +5.9%)",
+    "consensus_detail": "2026-10-02->2026-11-02 합산 +2.5% (삼성 -0.2%, 하이닉스 +6.5%)",
     "memory_quarter": "4Q26",
     "dram_qoq_pct": null,
     "nand_qoq_pct": null,
-    "dram_dir": null,
+    "dram_dir": "up",
     "nand_dir": null,
     "memory_src": "https://www.trendforce.com/presscenter/news",
-    "updated_at": "2026-10-30 15:20 KST",
-    "consensus_trend": "flat",
+    "updated_at": "2026-11-02 15:20 KST",
+    "consensus_trend": "up",
     "prelim_detail": "삼성 3Q26 잠정 영업이익 107.40조 vs 컨센서스 106.64조 (+0.7%), 공시 2026-10-08"
   },
   "prelim": {
@@ -318,5 +332,5 @@
   },
   "last_alert_key": null,
   "fail_sent_date": null,
-  "updated_at": "2026-10-30 15:20 KST"
+  "updated_at": "2026-11-02 15:20 KST"
 }
