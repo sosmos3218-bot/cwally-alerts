@@ -8,7 +8,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, lly 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry.",
   "holding": false,
   "holding_note": "보유 없음, 목표 비중 미정. 가격 매수 구간은 아직 없음.",
   "price_bands": null,

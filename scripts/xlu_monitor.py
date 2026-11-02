@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""[XLU] SPDR 유틸리티 ETF 판단(긍정 / 중립 / 부정). 평일 09:00 KST morning 묶음 (xbi, lly 옆).
+"""[XLU] SPDR 유틸리티 ETF 판단(긍정 / 중립 / 부정). 평일 09:00 KST morning 묶음 (xbi, hwm 옆).
 
 2026-11-02 채팅 승인. 보유 없음, 가격 매수 구간 없음(configs/xlu.json price_bands 는 나중에 채울 자리).
 판단은 미 10년물 전일 종가(Yahoo ^TNX, 실패 시 FRED DGS10)와 FOMC 결과로만 정한다:
