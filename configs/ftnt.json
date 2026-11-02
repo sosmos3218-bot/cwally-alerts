@@ -1,0 +1,60 @@
+{
+  "name": "ftnt",
+  "title_prefix": "[FTNT]",
+  "ticker": "FTNT",
+  "display": "포티넷",
+  "cik": "0001262039",
+  "as_of": "2026-11-02",
+  "approval": "사용자 채팅 승인 2026-11-02 t65u (\"as you wish\"), 11/2 제안 가격표에서 비중만 20/35/45 로 변경 (job=ftnt 수동 dispatch 와 단독 step 포함)",
+  "holding": false,
+  "holding_note": "보유 없음 (신규 매수 후보). 11/2 주간 발굴 브리프에서 선정.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(hwm 바로 뒤)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=ftnt 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "eps_2026_guide": 3.56,
+  "eps_2027_consensus": 3.88,
+  "eps_note": "2026 비GAAP EPS 가이던스 3.54~3.58 중간값 (8-K 0001262039-26-000024 EX-99.1, 10/28). 2027 컨센서스 3.87~3.89 (Yahoo, Equibles, 제3자, 미검증)",
+  "zones": [
+    {"key": "nochase", "lo": 150, "hi": null, "priority": 3, "budget_pct": 0, "title": "[FTNT] FTNT 추격 금지 종가 $150 이상"},
+    {"key": "z1", "lo": 128, "hi": 133, "priority": 3, "budget_pct": 20, "title": "[FTNT] FTNT 1차 분할 매수 구간 $128~133 (20%)"},
+    {"key": "z2", "lo": 114, "hi": 121, "priority": 4, "budget_pct": 35, "title": "[FTNT] FTNT 2차 분할 매수 구간 $114~121 (35%)"},
+    {"key": "z3", "lo": 100, "hi": 107, "priority": 4, "budget_pct": 45, "title": "[FTNT] FTNT 3차 분할 매수 구간 $100~107 (45%)"}
+  ],
+  "nochase_note": "추격 금지는 1차 구간 알림이 한 번 나기 전까지만 판정 (state.z1_hit). 1차가 한 번 나면 꺼짐.",
+  "zone_basis": "1차 128~133: 200일선 128.38, 10/29 장중 127.40, 5/27~28 장중 126.6~126.8, 6/9 장중 133.05, 2027 P/E 약 33.6배. 2차 114~121: 5월 중순 박스(112.7~123.3), 약 30.3배. 3차 100~107: 5/7 갭 상승일 범위(104.51~112.39), 약 26.7배, EV/FCF 약 21배. 추격 금지 150 이상: 10/29 고가 139.44 위, 7~8월 저점 143.77~148.25.",
+  "rearm_pct": 3.0,
+  "rearm_note": "구간에 들어오면 1번 알림. 종가가 구간 경계 밖으로 3% 넘게 벗어난 뒤 다시 들어오면 다시 알림.",
+  "stop": {"below": 97, "rearm_above": 99.91, "priority": 4, "title": "[FTNT] FTNT 종가 $97 미만 손절 기준, 정리 검토", "basis": "3차 하단 100 의 3% 아래, 5월 갭(89.95~104.51)을 다 메우는 흐름의 신호, 2027 P/E 약 25배"},
+  "take_profit": {"at_or_above": 170, "rearm_below": 164.90, "priority": 3, "fraction": "1/3", "title": "[FTNT] FTNT 종가 $170 이상 일부 익절 검토 (1/3)", "basis": "50일선 171.34, 10/28 급락 전 갭 하단 174 부근, 2027 P/E 약 43.8배"},
+  "invalidation": {
+    "service_growth_floor_pct": 10.0,
+    "q4_billings_floor_m": 2775.0,
+    "guide_year": 2027,
+    "base_year": 2026,
+    "priority": 4,
+    "title": "[FTNT] FTNT 2027 서비스 매출 가이던스 둔화, 추가 매수 중단",
+    "rule": "seed_after 이후 새 8-K(Item 2.02) EX-99.1 이 2026 4분기/연간 실적(또는 2027 연간 가이던스 포함)이면 판정: (a) 'For the fiscal year 2027' 서비스 매출 가이던스 중간값이 같은 보도자료 손익계산서의 2026 연간 서비스 매출 대비 10% 미만 성장, 또는 (b) 4분기 Total billings < 2,775M (표 값 우선, 문장 '$X.XX billion' 은 반올림 폭 안이면 판정 불가). 하나라도 해당하면 무효화 p4, 이후 분할 매수 구간 알림 중단(손절/익절은 계속). 둘 다 통과면 실적 확인 요약 p3. 못 읽은 항목이 있으면 cwally-ops 에 접수번호마다 1번, 통과로 세지 않음. 다른 분기 실적 8-K 는 기록만.",
+    "seed_after": "2026-10-30",
+    "seed_last_accession": "0001262039-26-000024"
+  },
+  "baseline": {
+    "price_date": "2026-10-30",
+    "price": 136.08,
+    "high_52w": 197.13,
+    "high_52w_date": "2026-10-13",
+    "low_52w": 73.55,
+    "low_52w_date": "2026-01-20",
+    "ma200": 128.38,
+    "ma50": 171.34,
+    "q3_2026": "매출 2,078.4M +20.5% (제품 765.0M +36.8%, 서비스 1,313.4M +12.7%), 빌링 2,336.3M +29.2%, GAAP 영업이익률 33.9%, FCF 864.8M, 순현금 약 4.82B. 2026 가이던스 매출 8.125~8.215B, 서비스 5.150~5.170B (7월 5.18~5.22B 에서 하향), 빌링 9.568~9.718B, 비GAAP EPS 3.54~3.58. 4분기 빌링 가이던스 2.775~2.925B",
+    "service_2026_guide_mid_b": 5.16
+  },
+  "change_conditions": "제품 매출 성장 20% 미만이면 2, 3차를 낮춰 검토(방화벽 교체 주기 종료 신호). 서비스 비중 하락 지속과 GAAP 총이익률 78% 미만이면 보수 전환. 4분기 빌링이 가이던스 상단 2.925B 이상이고 서비스 성장이 재가속하면 1차를 현재가 근처로 앞당기는 검토. 변경은 사용자 승인 뒤.",
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/FTNT?interval=1d&range=10d",
+    "sec": "https://data.sec.gov/submissions/CIK0001262039.json"
+  },
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 FTNT 분할 매수 구간, 손절, 일부 익절과 4분기 실적(2027년 2월 첫 주 추정) 2027 서비스 매출 가이던스, 4분기 빌링 무효화 점검. 2027-02-26 까지 (마지막 평일 실행 2027-02-26 09:00)"
+}
