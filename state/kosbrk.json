@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-02 15:40 KST",
+  "updated_at": "2026-11-03 01:30 KST",
   "fired": {
     "close_break": false,
     "intraday_break": false,
@@ -45,7 +45,7 @@
     },
     {
       "day": "2026-11-02",
-      "foreign": -3731.0
+      "foreign": -3845.0
     }
   ],
   "seen_links": [],
