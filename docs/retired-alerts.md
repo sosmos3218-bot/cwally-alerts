@@ -162,3 +162,15 @@ kosown and macroir are unchanged.
 
 Removed: config, script, state, the six one-shot crons and their pick line, the afternoon Run line and the `Run lgcnsq3` step. The `[LG]` prefix stays (lg, lgesq3).
 
+
+## 2026-11-02 delete isrg (사용자 요청 삭제, approved in chat 2026-11-02, "ISRG 관련 ntfy 관련된 것들 전부 지워줘")
+
+Deleted: `configs/isrg.json`, `scripts/isrg_monitor.py`, `state/isrg.json`, the morning-bundle Run line and the
+"Run ISRG standalone" step and `isrg` job option in port-alerts.yml, the README row, and `[ISRG]` from the AGENTS.md
+and README.md prefix lists. It rode on the shared 09:00 morning slot: no schedule cron, Decide branch or oneshot_kst.
+lly, xbi and lrcx only mentioned it in comments and notes (now neutral); none imported or read its files.
+Sent messages stay in state/archive.json (until rotated) and in cwally-ntfy-archive.
+
+| name | prefix | added | end (KST) | what it did |
+|---|---|---|---|---|
+| isrg | `[ISRG]` | 2026-10-26 | retired 2026-11-02 (was 2027-02-06 09:00) | 인튜이티브 서지컬(ISRG) 보유분 감시: 가격 구간, 1회차 매수 구간, 비중 축소, 2027 가이던스 3조건 판정. 사용자 요청 삭제 |

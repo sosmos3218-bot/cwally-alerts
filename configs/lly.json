@@ -7,7 +7,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 번들에 isrg 바로 뒤로 붙임. 미국 정규장 전일 종가(Yahoo) 1,200달러 선 확인. 4분기 2026 실적과 2027 가이던스 판정은 2027년 1, 2월 8-K(Item 2.02) EX-99.1로 한 번(SEC EDGAR, investor.lilly.com 안 씀). 수동 job=lly 는 oneoff_mode=auto 가 아니면 셀프테스트 + dry. 3분기 one-shot(llyq3)과는 별개.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 번들에 붙임. 미국 정규장 전일 종가(Yahoo) 1,200달러 선 확인. 4분기 2026 실적과 2027 가이던스 판정은 2027년 1, 2월 8-K(Item 2.02) EX-99.1로 한 번(SEC EDGAR, investor.lilly.com 안 씀). 수동 job=lly 는 oneoff_mode=auto 가 아니면 셀프테스트 + dry. 3분기 one-shot(llyq3)과는 별개.",
   "valid_until": "2027-03-06",
   "cik": "0000059478",
   "holding": null,

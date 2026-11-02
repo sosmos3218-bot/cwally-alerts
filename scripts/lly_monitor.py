@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """[LLY] Eli Lilly watch on the weekday 09:00 KST morning bundle (approved in chat 2026-10-30).
 
-Modeled on scripts/isrg_monitor.py (code copied, ISRG itself untouched):
+Shared US earnings-monitor pattern (self-contained, no other alert files read):
 1. Price line: US regular-session close (Yahoo regularMarketPrice of the last session) <= $1,200 -> one
    alert (p4, 강세 전환 조건(조정) 도달, 신규 진입 재검토); re-arm after a close > $1,212 (+1%). Seeded with
    the 2026-10-29 close $1,373.70, so nothing fires at install. Close lookup failure = 판단 보류 and one
@@ -60,7 +60,7 @@ def fetch(url: str) -> str:
 
 
 def quote_meta(url: str) -> tuple[float | None, str | None]:
-    """(regularMarketPrice, market date YYYY-MM-DD in the exchange timezone). Same as isrg_monitor."""
+    """(regularMarketPrice, market date YYYY-MM-DD in the exchange timezone). Same pattern as the other US monitors."""
     data = json.loads(fetch(url))
     result = (data.get("chart") or {}).get("result") or []
     if not result:
@@ -91,7 +91,7 @@ def _f(x: str) -> float:
 
 # ---------- SEC EDGAR ----------
 def earnings_8ks(data: dict, months: tuple[str, ...]) -> list[dict]:
-    """8-K Item 2.02 whose filingDate YYYY-MM is in months, oldest first (copied from isrg_monitor)."""
+    """8-K Item 2.02 whose filingDate YYYY-MM is in months, oldest first."""
     recent = ((data.get("filings") or {}).get("recent") or {})
     out = []
     for i, form in enumerate(recent.get("form") or []):
@@ -439,7 +439,7 @@ def install_message(cfg: dict, stamp: str) -> tuple[str, str]:
         f"2) 2027년 1, 2월 8-K(Item 2.02) EX-99.1로 한 번 판정: (a) 4분기 매출 {eok(gc['q4_bear_below_b'])} 미만 약세, (b) 2027 가이던스 중간값 성장 10% 미만 약세, "
         f"일회성 {eok(gc['one_time_2026_b'])} 뺀 기준 15% 이상 강세 후보, (c) Foundayo 4분기 300백만 달러 이상 강세 후보. 약세 우선, (b)(c) 모두면 강세, 아니면 중립. "
         f"못 읽은 항목은 확인 필요. {gc['valid_until']}까지 없으면 만료 안내 1번. 3) 2027-03-31 이후 첫 실행에 레타트루타이드 FDA 신청 확인 1번.",
-        "평일 09:00 KST morning 번들(isrg 뒤)에서만 돕니다. 새 cron 없음. 할 일 없음.",
+        "평일 09:00 KST morning 번들에서만 돕니다. 새 cron 없음. 할 일 없음.",
         "4분기 실적은 보통 2월 초(날짜 미확정)입니다. 판정 알림을 기다리세요.",
         "보유 정보가 없어 비중 알림은 없습니다. 보유 여부를 config holding 에 채우면 됩니다.",
         "이 설치 확인을 매수나 매도 신호로 읽기. 조회 실패를 조건 충족으로 세기. " + AVOID,

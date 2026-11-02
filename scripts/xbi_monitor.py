@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""[XBI] SPDR S&P 바이오텍 ETF 분할 매수 구간 점검. 평일 09:00 KST morning 묶음 (isrg, lrcx 옆).
+"""[XBI] SPDR S&P 바이오텍 ETF 분할 매수 구간 점검. 평일 09:00 KST morning 묶음 (lrcx 옆).
 
 가격: 미국 전일 종가(Yahoo 일봉). 데이터 거래일(state.last_date)로 중복 방지.
 구간(configs/xbi.json zones): 들어오면 1번 알림(p3), 경계 밖으로 rearm_pct(4%) 넘게 벗어난 뒤 다시 들어오면 다시 알림.

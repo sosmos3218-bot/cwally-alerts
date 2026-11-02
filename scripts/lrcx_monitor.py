@@ -27,7 +27,7 @@ KST = timezone(timedelta(hours=9))
 ET = ZoneInfo("America/New_York")
 CFG_PATH = ROOT / "configs" / "lrcx.json"
 STATE_PATH = ROOT / "state" / "lrcx.json"
-SEC_UA = {"User-Agent": "cwally-alerts isrg research monitor research@example.com"}
+SEC_UA = {"User-Agent": "cwally-alerts research monitor research@example.com"}
 WEB_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
 NA = "확인 불가"
 

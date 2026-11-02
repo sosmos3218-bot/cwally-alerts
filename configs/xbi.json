@@ -8,7 +8,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(isrg, lrcx 옆)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=xbi 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(lrcx 옆)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=xbi 는 oneoff_mode=auto 가 아니면 selftest + dry.",
   "high_52w": 169.89,
   "high_note": "52주 고점 2026-08-25 장중 $169.89",
   "budget_note": "총자산 약 2억원의 5%, 약 1,000만원 (1차 300만, 2차 350만, 3차 350만). 해외 계좌 기준, 22% 해외 양도세(연 250만원 공제)와 환율 위험. ISA 로 사면 국내 상장 바이오 ETF 로 바꿔야 함 (계좌 미정).",
