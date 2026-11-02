@@ -384,7 +384,7 @@ def fx_msg(cfg, stamp, kind, base, fx, y10, ief):
     g = cfg["fx"]
     strong = kind == "strong"
     lim = g["strong_below"] if strong else g["warn_below"]
-    title = (f"[US-BOND] 원/달러 {fx[1]:,.1f}원 | 손익분기 환율 {lim:,}원 아래"
+    title = (f"[US-BOND] IEF 원/달러 {fx[1]:,.1f}원 | 손익분기 환율 {lim:,}원 아래"
              + (" 강한 경고" if strong else " 경고"))
     msg = body(stamp, f"환헤지 없는 IEF 의 원화 손익분기 환율 기준(사용자 분석 {g['warn_below']:,}원 경고, {g['strong_below']:,}원 강한 경고)"
                       f" 아래로 원/달러가 내려가면 오는 알림. 매매 신호 아님.",
@@ -400,7 +400,7 @@ def fx_msg(cfg, stamp, kind, base, fx, y10, ief):
 
 def regime_msg(cfg, stamp, d, a, dy_bp, dfx_pct, t):
     g = cfg["regime"]
-    title = f"[US-BOND] 금리 상승 + 달러 약세 {t}거래일 지속 | 역상관 체제"
+    title = f"[US-BOND] IEF 금리 상승 + 달러 약세 {t}거래일 지속 | 역상관 체제"
     msg = body(stamp, f"KRX {g['lookback_trading_days']}거래일 전 대비 미국 10년이 +{g['yield_up_bp']}bp 넘게 오르고 원/달러가 "
                       f"{g['fx_change_pct']}% 밑으로 내린 상태가 {g['persist_trading_days']}거래일 이어지면 1번 오는 알림. 매매 신호 아님.",
                f"{d} 기준 {a} 대비 10년 {dy_bp:+.0f}bp, 원/달러 {dfx_pct:+.2f}%. 연속 {t}거래일. "
@@ -422,7 +422,7 @@ def fomc_msg(cfg, stamp, dec, post, pre, base, fx, ief, states):
         add1, pre_txt = NA, f"FOMC 전 대비 {NA}"
     vsb = f"기준 대비 {(post[1] - base['y10']) * 100:+.0f}bp" if post else f"기준 대비 {NA}"
     head = f" | 10년 {post[1]:.2f}%" if post else ""
-    title = f"[US-BOND] FOMC 다음 날 요약 ({md(dec)} 결정){head} | 1차 분할 조건 {add1 if add1 != NA else '판정 보류'}"
+    title = f"[US-BOND] IEF FOMC 다음 날 요약 ({md(dec)} 결정){head} | 1차 분할 조건 {add1 if add1 != NA else '판정 보류'}"
     if add1 == "충족":
         act = "1차 분할 조건 충족(FOMC 뒤 10년이 FOMC 전보다 +25bp 넘게 오르지 않음). 계획한 1차분 검토."
     elif add1 == "미충족":
@@ -482,7 +482,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
         if fr[k] >= int(cfg["ops_fail_after_runs"]) and state.setdefault("fail_notice", {}).get(k) != today:
             state["fail_notice"][k] = today
             what = {"y10": "미국 10년 금리", "ief": "IEF 종가", "fx": "원/달러 환율"}[k]
-            out.append((f"[US-BOND] {what} 조회 실패 {fr[k]}회 연속 | 조건 판정 보류",
+            out.append((f"[US-BOND] IEF {what} 조회 실패 {fr[k]}회 연속 | 조건 판정 보류",
                         body(stamp, "US-BOND 알림의 데이터 조회 실패 안내.",
                              f"{what} {NA}: 모든 출처 실패 {fr[k]}회 연속. {' | '.join(data['errors'])[:300]}",
                              "필요하면 증권사 앱이나 FRED/연준/한국은행 사이트에서 직접 보세요.", "다음 19:00 실행 때 다시 봅니다.",
@@ -680,7 +680,7 @@ def main() -> int:
             return 1
         try:
             stamp = now.strftime("%Y-%m-%d %H:%M KST")
-            publish(resolve_topic("ops"), "[US-BOND] 스크립트 오류 | 이번 실행 판정 못 함",
+            publish(resolve_topic("ops"), "[US-BOND] IEF 스크립트 오류 | 이번 실행 판정 못 함",
                     body(stamp, "US-BOND 알림 스크립트 오류 안내.", f"{type(exc).__name__}: {str(exc)[:200]}. state 는 바꾸지 않음.",
                          "할 일 없음. 다음 19:00 실행 때 다시 돕니다.", "같은 오류가 이어지면 스크립트 점검 필요.",
                          "이번 안내로 비중을 바꾸지 마세요.", "오류를 조건 미충족으로 읽기."),

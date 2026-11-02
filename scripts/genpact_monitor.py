@@ -312,7 +312,7 @@ def main() -> int:
         px = {"regular": None, "post": None, "prev": None}
 
     send = False
-    title = "[GENPACT] 대기"
+    title = "[GENPACT] G 대기"
     msg = ""
     verdict, rows, metrics = "확인불가", [], {}
     if text:
@@ -322,7 +322,7 @@ def main() -> int:
             send = True
             state["fail_notified"] = True
             state["phase"] = "parse_fail"
-            title = "[GENPACT] 파싱 실패 | 원문 확인"
+            title = "[GENPACT] G 파싱 실패 | 원문 확인"
             wtext, _ = weighted(cfg, "보류", px.get("post") or px.get("regular"))
             msg = body(cfg, now, verdict, rows, metrics, px, wtext, source)
         elif verdict != "확인불가":
@@ -331,13 +331,13 @@ def main() -> int:
             state["phase"] = "results"
             state["verdict"] = verdict
             wtext, exp = weighted(cfg, verdict, px.get("post") or px.get("regular"))
-            title = f"[GENPACT] {verdict} | 가중 {exp:.0f}달러"
+            title = f"[GENPACT] G {verdict} | 가중 {exp:.0f}달러"
             msg = body(cfg, now, verdict, rows, metrics, px, wtext, source)
     elif today >= end and year_ok and not state.get("miss_notified"):
         send = True
         state["miss_notified"] = True
         state["phase"] = "miss"
-        title = "[GENPACT] 기간 종료 | 실적 미확인"
+        title = "[GENPACT] G 기간 종료 | 실적 미확인"
         msg = "\n".join([
             f"{now.strftime('%Y-%m-%d %H:%M KST')} | GENPACT G",
             "이게 뭐 알림: 젠팩트 3분기 실적 확인 창이 끝났습니다.",
@@ -351,7 +351,7 @@ def main() -> int:
         send = True
         state["fail_notified"] = True
         state["phase"] = "fetch_fail"
-        title = "[GENPACT] 조회 실패 | 직접 확인"
+        title = "[GENPACT] G 조회 실패 | 직접 확인"
         msg = "\n".join([
             f"{now.strftime('%Y-%m-%d %H:%M KST')} | GENPACT G",
             "이게 뭐 알림: 실적 창 첫날 조회가 실패했습니다.",

@@ -210,7 +210,7 @@ def report_msg(co: dict, rep: dict, res: dict | None, err: str | None, link: str
         head = f"{res['qname']} 단독 영업이익률 {cm:.1f}%" if cm is not None else f"{res['qname']} 단독"
         if res.get("yoy") and res["yoy"][0] and res["cur"][0]:
             head += f", 전년 같은 분기 대비 {(res['cur'][1] / res['cur'][0] - res['yoy'][1] / res['yoy'][0]) * 100:+.1f}%p"
-        title = f"[KR-HC-RPT] {co['name_kr']} {name} 제출 | {head}"
+        title = f"[KR-HC-RPT] {co['code']} {co['name_kr']} {name} 제출 | {head}"
         parts = [f"{res['qname']} 단독({res['basis']}, {res['cur_how']}): {fig(res['cur'])}"]
         if res.get("yoy"):
             parts.append(f"전년 같은 분기({res['yoy_how']}): {fig(res['yoy'])}. 대비 {cmp(res['cur'], res['yoy'])}")
@@ -219,7 +219,7 @@ def report_msg(co: dict, rep: dict, res: dict | None, err: str | None, link: str
         parts += res["notes"]
         status = f"{name} 제출 {rep['filed']} KST. " + " / ".join(parts) + f". 링크 {link}"
     else:
-        title = f"[KR-HC-RPT] {co['name_kr']} {name} 제출 | 영업이익률 자동 계산 안 됨, 원문 확인"
+        title = f"[KR-HC-RPT] {co['code']} {co['name_kr']} {name} 제출 | 영업이익률 자동 계산 안 됨, 원문 확인"
         status = f"{name} 제출 {rep['filed']} KST. 영업이익률 {NA} ({err or '표를 읽지 못함'}). 링크 {link}"
     msg = "\n".join([
         f"{stamp} | {co['code']} | {co['name_kr']}",
@@ -297,7 +297,7 @@ def main() -> int:
                 state["seen_acptno"] = sorted(set(state.get("seen_acptno") or []) | {rep["acptno"]})
         except Exception as exc:  # noqa: BLE001
             print(f"{co['code']} KIND fetch failed: {exc}", file=sys.stderr)
-            ops_once(f"kind_{co['code']}", f"[KR-HC-RPT] {co['name_kr']} 정기보고서 목록 조회 실패 | 공시 판정 못 함",
+            ops_once(f"kind_{co['code']}", f"[KR-HC-RPT] {co['code']} {co['name_kr']} 정기보고서 목록 조회 실패 | 공시 판정 못 함",
                      "\n".join([f"{stamp} | {co['code']} | {co['name_kr']}",
                                 f"이게 뭐 알림: {co['name_kr']} 정기보고서 알림의 데이터 조회 실패 안내.",
                                 f"지금 결과/상태: KIND 공시 목록 {NA} ({str(exc)[:200]}).",

@@ -336,17 +336,17 @@ def earn_copy(ver: str, got: dict, cfg_e: dict) -> tuple[str, list[str], int]:
     eps_txt = f"{eps:,.0f}원" if eps is not None else "없음"
     q4_txt = f"{q4:.1f}조" if q4 is not None else (got.get("q4_note") or "숫자 없음")
     if ver == "CUT":
-        title = f"[SEC] 연간치 하향 | 3Q {op_txt}"
+        title = f"[SEC] 005930 연간치 하향 | 3Q {op_txt}"
         now_do = "연간 추정치가 내려갈 구간입니다. 29만 위 비중 증가 금지."
         later = "4분기 코멘트와 메모리 가격을 보고 다음 구간을 정하세요."
         pri = 5
     elif ver == "UP":
-        title = f"[SEC] 연간치 상향 | 3Q {op_txt}"
+        title = f"[SEC] 005930 연간치 상향 | 3Q {op_txt}"
         now_do = "연간치는 올라갈 수 있습니다. 그래도 29만 위 추격은 금지."
         later = "4분기가 120조를 지키는지 한 번 더 보세요."
         pri = 4
     else:
-        title = f"[SEC] 연간치 유지 | 3Q {op_txt}"
+        title = f"[SEC] 005930 연간치 유지 | 3Q {op_txt}"
         now_do = "연간치는 유지로 봅니다. 구간 규칙은 그대로입니다."
         later = "4분기 가이던스가 120조 아래로 내려오면 하향으로 바꿉니다."
         pri = 4
@@ -382,7 +382,7 @@ def run_earnings(cfg: dict, now: datetime, state: dict) -> dict:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     if not got.get("fetch_ok"):
         if not state.get("earn_fail_notified"):
-            title = "[SEC] 실적 조회 실패 | 판정 보류"
+            title = "[SEC] 005930 실적 조회 실패 | 판정 보류"
             msg = "\n".join(
                 [
                     f"{stamp} | SEC | 삼성전자 005930",
@@ -409,7 +409,7 @@ def run_earnings(cfg: dict, now: datetime, state: dict) -> dict:
 
     if ver == "PENDING":
         if today >= earn.get("expected_date", today) and not state.get("earn_pending_notified"):
-            title = "[SEC] 실적 아직 없음 | 판정 보류"
+            title = "[SEC] 005930 실적 아직 없음 | 판정 보류"
             msg = "\n".join(
                 [
                     f"{stamp} | SEC | 삼성전자 005930",
@@ -501,7 +501,7 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        title = f"[SEC] {act} {man_txt} {zname}"
+        title = f"[SEC] 005930 {act} {man_txt} {zname}"
         pri = 5 if z in {"REDUCE", "EXIT"} or "20만하회" in warn or "50만과열" in warn else (4 if warn or z in {"SELL1", "SELL2"} else 3)
         ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, pri, "chart_with_upwards_trend")
 

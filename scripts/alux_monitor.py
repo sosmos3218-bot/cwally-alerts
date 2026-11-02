@@ -194,21 +194,21 @@ def q3_message(q: dict, j: dict, close: float | None, now_s: str) -> tuple[str, 
     price_note = f" 지금 종가는 {fmt_won(close)}입니다." if close is not None else ""
     what = "에이럭스 3분기 실적이 확정되어 중립 상향 기준 세 가지로 자동 판정했습니다."
     if j["verdict"] == "UP":
-        title = "[ALUX] 3Q 중립 상향 | 계획의 50%만, 지정가"
+        title = "[ALUX] 475580 3Q 중립 상향 | 계획의 50%만, 지정가"
         todo = f"계획 금액의 50%만 {cap:,}원 이하 지정가로 사세요.{price_note} {cap:,}원 위면 사지 마세요."
         later = "나머지 50%는 CB 해법 확정 또는 해안정찰 수주를 확인하고 종가 7,600원 돌파(거래량 2배)가 나온 뒤에만 삽니다."
         reduce = "산 뒤 종가가 진입가 아래로 8% 빠지거나 7,000원을 이탈하면 정리합니다. 7,500~7,750원에서 절반 익절."
         avoid = f"{cap:,}원 위 추격매수, 신용과 미수, 한 번에 전액 진입."
         pri, tags = 4, "chart_with_upwards_trend"
     elif j["verdict"] == "DROP":
-        title = "[ALUX] 3Q 탈락 | 검토 중단"
+        title = "[ALUX] 475580 3Q 탈락 | 검토 중단"
         todo = "새로 사지 마세요. 영업적자 -25억 초과 또는 현금성자산 150억 미만이라 신규 진입 검토를 멈춥니다."
         later = "다음 판단은 2027-03 사업보고서입니다. 그 전에는 CB 해법이나 큰 수주 공시가 나올 때만 다시 봅니다."
         reduce = "이미 들고 있다면 종가 5,600원 이탈 때 정리하는 기존 기준을 지키세요."
         avoid = "물타기, 신용과 미수, 반등 추격."
         pri, tags = 4, "warning"
     else:
-        title = "[ALUX] 3Q 관망 유지 | 아직 사지 마세요"
+        title = "[ALUX] 475580 3Q 관망 유지 | 아직 사지 마세요"
         todo = "아직 사지 마세요. 세 기준 중 일부가 미달이지만 탈락선은 넘지 않았습니다."
         later = "다음 판단은 2027-03 사업보고서입니다. 그 전에는 CB 해법이나 큰 수주 공시가 나올 때 다시 봅니다."
         reduce = "이미 들고 있다면 종가 5,600원 이탈 때 정리하는 기존 기준을 지키세요."
@@ -298,7 +298,7 @@ def main() -> int:
     last = rows[0] if rows else None
     close = last["close"] if last else None
     if last is None:
-        ops_once(out, state, "price", "[ALUX] 시세 조회 실패", f"{now_s} 에이럭스 종가를 읽지 못했습니다. 돌파 판단은 건너뛰었습니다. 매매 신호가 아닙니다.", today)
+        ops_once(out, state, "price", "[ALUX] 475580 시세 조회 실패", f"{now_s} 에이럭스 종가를 읽지 못했습니다. 돌파 판단은 건너뛰었습니다. 매매 신호가 아닙니다.", today)
 
     # 1) Q3 verdict (once)
     q3 = state["q3"]
@@ -325,7 +325,7 @@ def main() -> int:
                     miss = [n for n, ok in zip(["매출총이익률", "영업이익", "현금성자산"], j["ok"]) if ok is None]
                     ops_once(
                         out, state, "q3",
-                        "[ALUX] 3Q 숫자 미확인",
+                        "[ALUX] 475580 3Q 숫자 미확인",
                         f"{now_s} 3분기 확정 열은 보이는데 {', '.join(miss)}을 읽지 못해 판정을 미뤘습니다. 내일 다시 시도합니다. 공시 원문을 직접 확인하세요. 매매 신호가 아닙니다.",
                         today,
                     )
@@ -336,7 +336,7 @@ def main() -> int:
                                    "gpm": j["gpm"], "op": j["op"], "cash": j["cash"], "rev": j["rev"]})
         except Exception as exc:
             print(f"q3 check failed: {exc}", file=sys.stderr)
-            ops_once(out, state, "q3err", "[ALUX] 3Q 실적 조회 실패", f"{now_s} 3분기 실적 조회 중 오류가 났습니다. 매매 신호가 아닙니다.", today)
+            ops_once(out, state, "q3err", "[ALUX] 475580 3Q 실적 조회 실패", f"{now_s} 3분기 실적 조회 중 오류가 났습니다. 매매 신호가 아닙니다.", today)
 
     # 2) notices: coastal order, CB and financing, other key disclosures
     try:
@@ -344,7 +344,7 @@ def main() -> int:
     except Exception as exc:
         notices = []
         print(f"notices failed: {exc}", file=sys.stderr)
-        ops_once(out, state, "notice", "[ALUX] 공시 조회 실패", f"{now_s} 에이럭스 공시 목록을 읽지 못했습니다. 매매 신호가 아닙니다.", today)
+        ops_once(out, state, "notice", "[ALUX] 475580 공시 조회 실패", f"{now_s} 에이럭스 공시 목록을 읽지 못했습니다. 매매 신호가 아닙니다.", today)
     seen = list(state["seen_notices"])
     if notices and not seen:
         seen = [n["id"] for n in notices]  # first run: seed silently
@@ -363,13 +363,13 @@ def main() -> int:
             lines.append(f"- [{CLASS_KO[c]}] {n['title']}")
         lines.append(hits[0][1]["url"])
         if top == "ORDER":
-            title = "[ALUX] 해안정찰/방산 수주 공시 | 원문 확인"
+            title = "[ALUX] 475580 해안정찰/방산 수주 공시 | 원문 확인"
             todo = "공시 원문에서 계약 금액과 기간을 먼저 확인하세요. 아직 사지 마세요."
         elif top == "FIN":
-            title = "[ALUX] CB/자금조달 공시 | 원문 확인"
+            title = "[ALUX] 475580 CB/자금조달 공시 | 원문 확인"
             todo = "전환가액, 상환 조건, 유상증자 방식을 원문에서 확인하세요. 아직 사지 마세요."
         else:
-            title = "[ALUX] 새 공시 | 원문 확인"
+            title = "[ALUX] 475580 새 공시 | 원문 확인"
             todo = "공시 원문을 확인하세요. 아직 사지 마세요."
         msg = body_lines(
             now_s,
@@ -413,7 +413,7 @@ def main() -> int:
                 "종가가 7,250원 아래로 다시 내려오면 돌파 실패로 봅니다.",
                 "3분기 판정 전 추격매수, 8,000원 위 급등 추격, 신용과 미수.",
             )
-            if out.send(TOPIC, f"[ALUX] 종가 {bo['close']:,} 돌파 | 실적 판정부터", msg, 4, ["rocket"]):
+            if out.send(TOPIC, f"[ALUX] 475580 종가 {bo['close']:,} 돌파 | 실적 판정부터", msg, 4, ["rocket"]):
                 b["active"] = True
                 b["sent_day"] = last["day"]
 
@@ -434,7 +434,7 @@ def main() -> int:
             "이미 들고 있다면 종가 5,600원 이탈 때 정리합니다.",
             "추격매수, 신용과 미수.",
         )
-        if out.send(TOPIC, "[ALUX] 주간 체크 | 관망 유지" if not v else f"[ALUX] 주간 체크 | 3Q {v}", msg, 3, ["calendar"]):
+        if out.send(TOPIC, "[ALUX] 475580 주간 체크 | 관망 유지" if not v else f"[ALUX] 475580 주간 체크 | 3Q {v}", msg, 3, ["calendar"]):
             state["weekly_sent_week"] = week
 
     if close is not None:

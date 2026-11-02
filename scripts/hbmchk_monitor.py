@@ -251,7 +251,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
     if flow_candidates:
         details = [f"- {name} Naver {r['date']} 종가 {r['close']:,.0f}원, MA20 {r['ma20']:,.0f}원, 외국인 최근3일 {', '.join(f'{v:+,.0f}주' for v in r['foreign'])}"
                    for _, name, r in flow_candidates]
-        ev = event("[HBMCHK] 수급 회복 관찰 | 실적/계약 확인 전 신규매수 보류", body(
+        ev = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK 수급 회복 관찰 | 실적/계약 확인 전 신규매수 보류", body(
             stamp, "삼성전자와 SK하이닉스의 완료 일봉 수급 및 MA20 관찰입니다. 매수 신호가 아닙니다.",
             " / ".join(f"{name} 외국인 3일 양수 및 종가 MA20 이상" for _, name, _ in flow_candidates),
             "신규 추격매수는 보류하고 아래 공식 원문 체크리스트를 사람이 확인하세요.",
@@ -276,7 +276,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
         hit, old = close < line, bool(state.get("sol_below_line", False))
         print(f"KR {code} date={day} close={close} below={hit}")
         if hit and not old:
-            ev = event("[HBMCHK] 신규진입 보류/보유 위험 점검", body(
+            ev = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK 신규진입 보류/보유 위험 점검", body(
                 stamp, "SOL 475300의 기존 25,000원 위험선 완료 일봉 점검입니다.",
                 f"Naver {day} 종가 {close:,.0f}원, 25,000원 미만.",
                 "신규진입을 보류하고 보유 중인 경우에만 사람의 위험 검토를 하세요.",
@@ -303,7 +303,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
             print(f"US {ticker} {result} previous={previous} notify={notify}")
             if notify:
                 a, last = result["anchor"], result["latest"]
-                ev = event(f"[HBMCHK] {ticker} {result['tier']}% 조정 | 목표가 아닌 위험 점검", body(
+                ev = event(f"[HBMCHK] 005930/000660/475300/NVDA/SNDK {ticker} {result['tier']}% 조정 | 목표가 아닌 위험 점검", body(
                     stamp, f"{ticker} 최근 30거래일 최고 종가 대비 조정 폭 관찰입니다.",
                     f"데이터일 {last['day']}, 종가 ${last['close']:.2f}, 30거래일 최고 종가 ${a['close']:.2f} ({a['day']}), 조정 {result['drawdown']:.2f}%.",
                     "목표가로 매수하지 말고 변동성, 실적, 현금 비중을 사람이 재검토하세요.",
@@ -339,7 +339,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
                 if notice_start <= when.date() <= now.date() and NOTICE_RE.search(item["title"]) and key not in seen:
                     candidates.append((when, key, item))
             for when, key, item in sorted(candidates):
-                ev = event("[HBMCHK] 새 공시, 원문 재검토", body(
+                ev = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK 새 공시, 원문 재검토", body(
                     stamp, f"{name}의 제목 키워드 기반 새 공시 원문 확인 요청입니다.",
                     f"API 공시표시일 {when.date()} | {item['title']}",
                     "공시 원문에서 실제 내용과 조건, 금액, 상대방, 기간을 직접 확인하세요.",
@@ -364,7 +364,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
         if state.get("ops_daily", {}).get(key) == today:
             print(f"ops dedup {key} {today}: {detail}")
             continue
-        ev = event(f"[HBMCHK] {label} 수집 실패 | 판정 유보", body(
+        ev = event(f"[HBMCHK] 005930/000660/475300/NVDA/SNDK {label} 수집 실패 | 판정 유보", body(
             stamp, "HBMCHK 원천 데이터 수집 또는 검증 실패 안내입니다.",
             f"{label}: {detail}. 누락을 0이나 최신값으로 대체하지 않았습니다.",
             "해당 자산 판정만 유보하고 다른 성공 자산 결과만 사용하세요.",
@@ -461,7 +461,7 @@ def self_test() -> int:
     assert next_us_state(10, 0) == (False, 0)
     calls = []
     fake = lambda *args, **kw: calls.append(args)
-    sample = event("[HBMCHK] test", "body")
+    sample = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK test", "body")
     assert deliver(sample, True, fake, "x") and not calls
     assert deliver(sample, False, fake, "x") and len(calls) == 1
     print("SELF-TEST PASS: freshness after-close-today trading-dates foreign-None notice-filter old-notice amendment intraday-US us-lag-fallback drawdown-5-10 strict-25000 dedup-rearm dry-run-no-publish mocked-publish")

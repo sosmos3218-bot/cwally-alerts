@@ -80,14 +80,14 @@ def won(v: float) -> str:
 def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str) -> tuple[str, str, int]:
     k = z["key"]
     if k == "nochase":
-        title = f"{TAG} 추격 금지선 돌파 | 종가 {won(p)}원 > {won(z['lo'])}원, 신규 매수 보류"
+        title = f"{TAG} 068270 추격 금지선 돌파 | 종가 {won(p)}원 > {won(z['lo'])}원, 신규 매수 보류"
         action = "신규 매수 보류. 이미 가진 물량은 이 알림으로 정하지 않기."
     elif k == "z1":
-        title = f"{TAG} 1차 분할 매수 구간 진입 | 종가 {won(p)}원 ({won(z['lo'])}~{won(z['hi'])}, 자사주 평균 {won(cfg['buyback_avg_price'])}원)"
+        title = f"{TAG} 068270 1차 분할 매수 구간 진입 | 종가 {won(p)}원 ({won(z['lo'])}~{won(z['hi'])}, 자사주 평균 {won(cfg['buyback_avg_price'])}원)"
         action = "계획한 1차 분할만. 한 번에 다 사지 않기."
     else:
         n = {"z2": "2", "z3": "3"}[k]
-        title = f"{TAG} {n}차 분할 매수 구간 진입 | 종가 {won(p)}원 ({won(z['lo'])}~{won(z['hi'])})"
+        title = f"{TAG} 068270 {n}차 분할 매수 구간 진입 | 종가 {won(p)}원 ({won(z['lo'])}~{won(z['hi'])})"
         action = f"계획한 {n}차 분할만. 무효화 알림이 왔으면 멈추기."
     status = (f"{day} 확정 종가 {won(p)}원 (수정주가). 회사 자사주 평균 매입가 {won(cfg['buyback_avg_price'])}원. "
               "구간: 추격 금지 200,000원 이상, 1차 181,000~185,000, 2차 173,000~176,000, 3차 159,000~168,000.")
@@ -98,7 +98,7 @@ def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str) -> tuple[str, s
 
 
 def ops_msg(stamp: str, tail: str, status: str) -> tuple[str, str, int]:
-    return (f"{TAG} {tail}", body(stamp, "셀트리온 알림 데이터 수집 안내. 매매 신호 아님.", status, "필요하면 KIND 또는 DART 원문을 직접 보세요.",
+    return (f"{TAG} 068270 {tail}", body(stamp, "셀트리온 알림 데이터 수집 안내. 매매 신호 아님.", status, "필요하면 KIND 또는 DART 원문을 직접 보세요.",
                                    "다음 실행 때 다시 봅니다.", "이 안내로 비중을 바꾸지 않기.", "조회 실패를 조건 미충족으로 읽기."), 3)
 
 
@@ -150,10 +150,10 @@ def q3_msg(cfg: dict, rep: dict, cur: tuple[float, float], link: str, stamp: str
     status = (f"{rep['title']} 제출 {rep['filed']} KST. 3분기 3개월 단독 확정: 매출 {won(cur[0])}억, 영업이익 {won(cur[1])}억 "
               f"(잠정 매출 {won(q['prelim_rev_eok'])}억, 영업이익 {won(q['prelim_op_eok'])}억). 잠정 대비 매출 {dr:+.1f}%, 영업이익 {do:+.1f}%. 링크 {link}")
     if min(dr, do) < q["invalidate_below_pct"]:
-        return (f"{TAG} 무효화 | 확정치 잠정 대비 -10% 초과 또는 성장 둔화, 분할 매수 중단",
+        return (f"{TAG} 068270 무효화 | 확정치 잠정 대비 -10% 초과 또는 성장 둔화, 분할 매수 중단",
                 body(stamp, "셀트리온 3분기 확정치가 분할 매수 전제를 깼다는 알림.", status, "남은 분할 매수 중단. 구간 알림이 와도 새로 사지 않기.",
                      "4분기 잠정실적 때 다시 판단.", "보유분 축소는 따로 정한 기준대로.", "무효화 뒤 구간 알림만 보고 분할 계속하기."), 4)
-    return (f"{TAG} 3분기 분기보고서 확인 | 잠정 대비 매출 {dr:+.1f}%, 영업이익 {do:+.1f}%",
+    return (f"{TAG} 068270 3분기 분기보고서 확인 | 잠정 대비 매출 {dr:+.1f}%, 영업이익 {do:+.1f}%",
             body(stamp, "셀트리온 3분기 분기보고서 확정치를 잠정치와 비교한 결과. 무효화 조건(-10% 초과) 미해당.", status,
                  "분할 매수 계획 유지.", "4분기 잠정실적이 나오면 다시 점검합니다.", "보고서 하나로 비중을 크게 바꾸지 않기.", "확인 알림을 매수 신호로 읽기."), 3)
 
@@ -228,11 +228,11 @@ def q4_msg(cfg: dict, n: dict, r: dict, stamp: str) -> tuple[str, str, int]:
               f"기준: 매출 전년동기대비 {q['min_rev_yoy_pct']:g}% 이상, 영업이익률 {q['min_op_margin_pct']:g}% 이상. 원문 {n.get('url') or NA}")
     bad = (r.get("rev_yoy") is not None and r["rev_yoy"] < q["min_rev_yoy_pct"]) or r["margin"] < q["min_op_margin_pct"]
     if bad:
-        return (f"{TAG} 무효화 | 확정치 잠정 대비 -10% 초과 또는 성장 둔화, 분할 매수 중단",
+        return (f"{TAG} 068270 무효화 | 확정치 잠정 대비 -10% 초과 또는 성장 둔화, 분할 매수 중단",
                 body(stamp, "셀트리온 4분기 잠정실적이 성장 둔화 조건에 걸렸다는 알림.", status + ". 성장 둔화 조건 해당.",
                      "남은 분할 매수 중단. 구간 알림이 와도 새로 사지 않기.", "다음 실적 때 다시 판단.", "보유분 축소는 따로 정한 기준대로.",
                      "무효화 뒤 구간 알림만 보고 분할 계속하기."), 4)
-    return (f"{TAG} 4분기 잠정실적 확인 | 매출 전년비 {yoy}, 영업이익률 {r['margin']:.1f}%",
+    return (f"{TAG} 068270 4분기 잠정실적 확인 | 매출 전년비 {yoy}, 영업이익률 {r['margin']:.1f}%",
             body(stamp, "셀트리온 4분기 잠정실적이 무효화 조건에 걸리지 않았다는 요약.", status + ". 무효화 조건 미해당.",
                  "분할 매수 계획 유지.", "알림 종료일 2027-02-27 까지 구간 알림은 계속 옵니다.", "잠정치 하나로 비중을 크게 바꾸지 않기.",
                  "확인 알림을 매수 신호로 읽기."), 3)

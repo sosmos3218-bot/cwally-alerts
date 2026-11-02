@@ -176,7 +176,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, yields_fn=None, price_
     if y is None:
         print(f"yields unavailable: {errs}")
         if st.get("fail_date") != today:
-            title = "[FR-DE] 금리 조회 실패 | 스프레드 판정 보류"
+            title = "[FR-DE] VGK 금리 조회 실패 | 스프레드 판정 보류"
             msg = "\n".join([f"{stamp} | FR-DE | 데이터 읽기 실패",
                              "이게 뭐 알림: 프랑스-독일 10년물 스프레드 경보의 데이터 읽기 실패 안내. 매매 신호 아님.",
                              f"지금 결과/상태: {' / '.join(errs)}. 오늘은 판정하지 않았습니다.",

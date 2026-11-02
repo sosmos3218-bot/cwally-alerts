@@ -199,7 +199,7 @@ def main() -> int:
             print(f"fetch fail {url}: {exc}")
     if mode != "dry" and not ok:
         if not state.get("fail_notified"):
-            emit(cfg, "[LGIT] LG이노텍 3Q 조회 실패 | 판정 유보", [
+            emit(cfg, "[LGIT] 011070 LG이노텍 3Q 조회 실패 | 판정 유보", [
                 f"{stamp} | PORT | {cfg['event_label']}",
                 "이게 뭐 알림: LG이노텍 3분기 매출·영업이익·광학·패키지 이익과 4분기 가이던스를 컨센서스와 비교하고 보유·추가매수·축소를 고릅니다.",
                 f"지금 상태: 조회 실패. {err or '출처 없음'}. 숫자를 추정하지 않음.",
@@ -228,16 +228,16 @@ def main() -> int:
     op = parsed.get("op")
     gap = round(op - float(c["house_op_hi_eok"]), 1) if isinstance(op, float) else None
     if act == "추가매수":
-        title = "[LGIT] LG이노텍 3Q 하우스 상회 | 추가매수"
+        title = "[LGIT] 011070 LG이노텍 3Q 하우스 상회 | 추가매수"
         todo = "계획 수량의 일부만 추가. 오늘 급등분 추격은 하지 마세요."
     elif act == "축소":
-        title = "[LGIT] LG이노텍 3Q 기준 미달 | 축소"
+        title = "[LGIT] 011070 LG이노텍 3Q 기준 미달 | 축소"
         todo = "신규 매수 중단. 보유분은 원문 확인 후 일부 축소."
     elif act == "보유":
-        title = "[LGIT] LG이노텍 3Q 시차 부합 | 보유"
+        title = "[LGIT] 011070 LG이노텍 3Q 시차 부합 | 보유"
         todo = "보유 유지. 추가매수는 4분기 가이던스가 숫자로 확인된 뒤로 미루세요."
     else:
-        title = "[LGIT] LG이노텍 3Q 아직 없음 | 판정 유보"
+        title = "[LGIT] 011070 LG이노텍 3Q 아직 없음 | 판정 유보"
         todo = "잠정 숫자가 안 보입니다. 매수·매도 없음."
     lines = [
         f"{stamp} | PORT | {cfg['event_label']} | {act}",

@@ -224,13 +224,13 @@ def main() -> int:
     title_bit = TITLE_BY_ZONE.get(z, z)
     if new_discs:
         kinds = "/".join(sorted({d.get("kind") or "DISC" for d in new_discs}))
-        title = f"[SHINWON] 공시 {kinds} | {title_bit}"
+        title = f"[SHINWON] 009270 공시 {kinds} | {title_bit}"
     elif time_fire:
-        title = "[SHINWON] 11/13 전량"
+        title = "[SHINWON] 009270 11/13 전량"
     elif zone_changed:
-        title = f"[SHINWON] 구간 변화 | {title_bit}"
+        title = f"[SHINWON] 009270 구간 변화 | {title_bit}"
     else:
-        title = f"[SHINWON] {title_bit}"
+        title = f"[SHINWON] 009270 {title_bit}"
     msg = "\n".join(lines)
     print(msg)
     delivered = False

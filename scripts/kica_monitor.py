@@ -101,7 +101,7 @@ def fail_once(state: dict, cfg: dict, now: datetime, note: str, dry: bool) -> No
             "하지 말 것: 조회 실패를 급등락 신호로 해석.",
         ]
     )
-    send(cfg, "[KICA] 시세 조회 실패 | 판정 보류", body, 4, dry)
+    send(cfg, "[KICA] 053300 시세 조회 실패 | 판정 보류", body, 4, dry)
     if not dry:
         state["last_fail_day"] = day
 
@@ -199,7 +199,7 @@ def daily(cfg: dict, state: dict, now: datetime, dry: bool) -> None:
         parts.append(f"{hi:,.0f}원 상단 돌파")
     if "band_low" in hits:
         parts.append(f"{lo:,.0f}원 하단 이탈")
-    title = f"[KICA] {close:,}원 {chg:+.1f}% | " + ", ".join(parts)
+    title = f"[KICA] 053300 {close:,}원 {chg:+.1f}% | " + ", ".join(parts)
     if "move_down" in hits or "band_low" in hits:
         action = "크게 빠졌습니다. 서두르지 말고 이유(공시, 뉴스)를 먼저 확인하세요."
     else:
@@ -307,7 +307,7 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
                 "하지 말 것: 미게시를 호재나 악재로 해석.",
             ]
         )
-        send(cfg, "[KICA] 3분기 실적 미게시 | 직접 확인", body, 3, dry)
+        send(cfg, "[KICA] 053300 3분기 실적 미게시 | 직접 확인", body, 3, dry)
         if not dry:
             state["empty_notified"] = True
         save(state, dry)
@@ -326,7 +326,7 @@ def earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool) -> Non
         tone = "작년 3분기보다 줄었습니다"
     else:
         tone = "작년 3분기와 비슷합니다"
-    title = f"[KICA] 3분기 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
+    title = f"[KICA] 053300 3분기 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
     rev_txt = f"매출 {rev:,.0f}억, " if rev is not None else ""
     ni_txt = f", 순이익 {ni:,.0f}억" if ni is not None else ""
     dy_note = f"배당수익률 {dy:.1f}% (기준 3.5% {'충족' if dy_ok else '미달'})" if dy is not None else "배당수익률 조회 실패"
@@ -384,7 +384,7 @@ def annual_earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool)
                 "하지 말 것: 미게시를 호재나 악재로 해석.",
             ]
         )
-        send(cfg, "[KICA] 연간 실적 미게시 | 직접 확인", body, 3, dry)
+        send(cfg, "[KICA] 053300 연간 실적 미게시 | 직접 확인", body, 3, dry)
         if not dry:
             state["annual_empty_notified"] = True
         save(state, dry)
@@ -402,7 +402,7 @@ def annual_earnings(cfg: dict, state: dict, now: datetime, mode: str, dry: bool)
         tone = "작년 연간보다 줄었습니다"
     else:
         tone = "작년 연간과 비슷합니다"
-    title = f"[KICA] 연간 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
+    title = f"[KICA] 053300 연간 OP {op:,.0f}억 | YoY {yoy:+.0f}% | 배당중심 {logic}"
     rev_txt = f"매출 {rev:,.0f}억, " if rev is not None else ""
     ni_txt = f", 순이익 {ni:,.0f}억" if ni is not None else ""
     dy_note = f"배당수익률 {dy:.1f}% (기준 3.5% {'충족' if dy_ok else '미달'})" if dy is not None else "배당수익률 조회 실패"
@@ -436,7 +436,7 @@ def install(cfg: dict) -> None:
             "하지 말 것: 이 알림을 매매 신호로 해석.",
         ]
     )
-    send(cfg, "[KICA] 설치 확인 | 매매 신호 아님", body, 3, False)
+    send(cfg, "[KICA] 053300 설치 확인 | 매매 신호 아님", body, 3, False)
 
 
 def main() -> int:

@@ -479,7 +479,7 @@ def result_message(ctx: Ctx, cfg: dict, state: dict, res: dict) -> tuple[str, st
     oneoff_txt, large = one_off(res, cfg)
     pos, dec, pri, why = decide(res, cfg, cons_dir, large)
     op = res["op"]
-    title = f"[JYP] 3Q 영업이익 {op:,.0f}억 {pos} | {dec}"
+    title = f"[JYP] 035900 3Q 영업이익 {op:,.0f}억 {pos} | {dec}"
     yoy = pct(op, res.get("op_yoy_base"))
     lines = [f"영업이익 {eok(op)} (예상 {lo}~{hi}억, {pos})"
              + (f". 전년 동기 {eok(res['op_yoy_base'])} 대비 {yoy:+.1f}%" if yoy is not None else "")]
@@ -518,7 +518,7 @@ def result_message(ctx: Ctx, cfg: dict, state: dict, res: dict) -> tuple[str, st
 
 
 def pending_message(ctx: Ctx, cfg: dict, res: dict) -> tuple[str, str, int]:
-    title = "[JYP] 3분기 공시 접수 | 원문 확인, 판단 유지"
+    title = "[JYP] 035900 3분기 공시 접수 | 원문 확인, 판단 유지"
     body = "\n".join([
         "이게 뭐 알림: JYP Ent.(035900) 3분기 실적 공시가 DART에 올라왔지만 숫자를 아직 읽지 못한 마지막 확인입니다. 매매 신호가 아닙니다.",
         f"지금 결과/상태: {res.get('day')} 접수. 숫자는 DART 원문에서 확인하세요: {DART_VIEW.format(rcp=res.get('rcp'))}",
@@ -533,7 +533,7 @@ def pending_message(ctx: Ctx, cfg: dict, res: dict) -> tuple[str, str, int]:
 def final_missing_message(ctx: Ctx, cfg: dict, state: dict, notes: list[str]) -> tuple[str, str, int]:
     cons, _ = consensus_2027(ctx, cfg)
     cons_txt, _ = cons_compare(cons, state.get("cons") or {}, cfg["consensus_2027"]["up_pct"], after_filing=False)
-    title = "[JYP] 3분기 실적 미발표 | 판단 유지(중립/관망)"
+    title = "[JYP] 035900 3분기 실적 미발표 | 판단 유지(중립/관망)"
     lines = [f"11/9~11/17 평일 17:05와 {ctx.now:%m/%d %H:%M} 확인까지 DART, KRX 공시에 3분기 잠정실적과 분기보고서 없음",
              cons_txt]
     if notes:
@@ -556,7 +556,7 @@ def fail_once(ctx: Ctx, cfg: dict, state: dict, what: str) -> None:
         print(f"fail already notified today: {what}")
         return
     state["fail_day"] = day
-    send(ctx, cfg, "[JYP] 조회 실패 | 오늘 판정 보류", "\n".join([
+    send(ctx, cfg, "[JYP] 035900 조회 실패 | 오늘 판정 보류", "\n".join([
         "이게 뭐 알림: JYP 3분기 실적 알림의 데이터 조회 실패 안내입니다. 매매 신호가 아닙니다.",
         f"지금 결과/상태: {what[:400]}",
         "지금 할 일: 없음. 조회 실패를 미발표나 호재로 읽지 마세요.",

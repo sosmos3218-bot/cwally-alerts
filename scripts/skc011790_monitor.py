@@ -188,7 +188,7 @@ def main() -> int:
         if prev.get("last_fail_date") != today:
             publish(
                 "cwally-ops",
-                "[SKC] 조회 실패 | 재실행 필요",
+                "[SKC] 011790 조회 실패 | 재실행 필요",
                 "\n".join([
                     f"{stamp} | SKC 011790 조건 감시",
                     "이게 뭐 알림: 시세와 공시 조회가 같이 실패했습니다. 조건 미충족이 아닙니다.",
@@ -258,25 +258,25 @@ def main() -> int:
         action = f"예고 공시. 예정 실적일 {sched}. " + (
             f"체크 날짜를 {date_updated}로 바꿈." if date_updated else "날짜가 없어 체크 날짜는 안 바꿈."
         )
-        title = "[SKC] 실적 예고 | 날짜 확인"
+        title = "[SKC] 011790 실적 예고 | 날짜 확인"
     elif earn_new:
         action = "잠정실적 공시. 원문 확인 전 비중 변경 금지."
-        title = "[SKC] 잠정실적 | 원문 확인"
+        title = "[SKC] 011790 잠정실적 | 원문 확인"
     elif zone == "LOW":
         action = "하단 6.9만 이하. 매도의견 구간. 비중 확대 아님. 공시 확인."
-        title = "[SKC] 6.9만 이하 | 추가매수 보류"
+        title = "[SKC] 011790 6.9만 이하 | 추가매수 보류"
     elif zone == "GAP":
         action = "컨센서스 10만 대비 15% 아래. 목표가 상향이 아님. 인증 전 관망."
-        title = "[SKC] 목표 대비 15% 아래 | 관망"
+        title = "[SKC] 011790 목표 대비 15% 아래 | 관망"
     elif zone == "HIGH":
         action = "컨센서스 상단 13만. 줄일 구간 점검. 추격 금지."
-        title = "[SKC] 13만 상단 | 줄일 점검"
+        title = "[SKC] 011790 13만 상단 | 줄일 점검"
     elif due:
         action = "실적 체크리스트. 원문 확인 전 비중 변경 금지."
-        title = "[SKC] 3분기 체크 | 비중 보류"
+        title = "[SKC] 011790 3분기 체크 | 비중 보류"
     else:
         action = "조건 공시. 원문 확인 전 매수 금지."
-        title = "[SKC] 조건 공시 | 원문 확인"
+        title = "[SKC] 011790 조건 공시 | 원문 확인"
     lines = [
         f"{stamp} | SKC 011790 조건 감시",
         "이게 뭐 알림: 실적 예고·잠정실적과 판단 변경 조건을 보는 알림입니다.",

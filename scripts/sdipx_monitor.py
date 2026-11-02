@@ -112,19 +112,19 @@ def messages(cfg: dict, ev: list[dict], stamp: str) -> list[tuple[str, str, int]
                    else f"2차 구간 하단. 펀더멘털 변화(실적, 수주, 정책) 확인 뒤 2차 집행 검토. {AMPC}. 지정가로만.")
             trim = "더 내려가면 470,000원 선에서 따로 알림. 계획 비중 넘기지 않기." if e["key"] == "l500" else "하단 이탈이 이어지면 계획 자체를 다시 점검."
             avoid = "자동 매수 신호로 보기, 시장가 주문, 한 번에 다 사기."
-        out.append((f"{TAG} {e['head']}", body(stamp, "KRX 종가 가격선", WHAT, st, act, rearm + (f" {AMPC}." if e["key"] == "h650" else ""), trim, avoid), e["priority"]))
+        out.append((f"{TAG} 006400 {e['head']}", body(stamp, "KRX 종가 가격선", WHAT, st, act, rearm + (f" {AMPC}." if e["key"] == "h650" else ""), trim, avoid), e["priority"]))
     return out
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} KRX 종가 조회 실패 | 판정 건너뜀",
+    return (f"{TAG} 006400 KRX 종가 조회 실패 | 판정 건너뜀",
             body(stamp, "KRX 종가 읽기 실패", "삼성SDI 가격선 알림의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "증권 앱에서 삼성SDI KRX 종가를 직접 보세요.", "다음 19:00 슬롯에서 다시 읽고, 빠진 날짜는 KRX 종가로 이어서 판정합니다.",
                  "이 안내로 비중을 바꾸지 않기.", "NXT 시간외 가격이나 네이버 일별 값으로 대신 판정하기."))
 
 
 def install_message(stamp: str) -> tuple[str, str]:
-    return (f"{TAG} 설치 확인 | 매매 신호 아님",
+    return (f"{TAG} 006400 설치 확인 | 매매 신호 아님",
             body(stamp, "설치 확인", "삼성SDI(006400) KRX 종가 가격선 알림 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.",
                  "평일 19:00 KST 에 Daum KRX 확정 종가로 500,000원 이하(2차 분할매수 구간), 470,000원 이하(2차 구간 하단), "
                  "650,000원 이상(과열 점검)을 선마다 1번 봅니다. 기준은 10/29 KRX 종가 538,000원.",

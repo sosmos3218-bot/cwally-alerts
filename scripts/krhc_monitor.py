@@ -179,7 +179,7 @@ def build(cfg: dict, mon: date, last: date, now: datetime, late: bool) -> tuple[
             errors.append(f"{s['code']}: {exc}")
             parts.append(f"{j}) {s['name']} {s['code']}: 주간 등락 {NA}")
     wk = f"{mon:%m/%d}~{last:%m/%d}"
-    title = f"[KR-HC] {wk} 주간 비교{' (늦은 발송)' if late else ''} | 매매 신호 아님"
+    title = f"[KR-HC] 143860/227540/248270/068270/207940 {wk} 주간 비교{' (늦은 발송)' if late else ''} | 매매 신호 아님"
     status = (f"기준 {prev_last:%m/%d} 종가 → {last:%m/%d} 종가. " + " / ".join(parts))
     msg = "\n".join([
         f"{stamp} | KR-HC | 헬스케어 주간 비교",
@@ -229,7 +229,7 @@ def main() -> int:
         print("errors: " + " | ".join(errors), file=sys.stderr)
     if ok == 0:
         today = now.strftime("%Y-%m-%d")
-        title = "[KR-HC] 주간 비교 조회 실패 | 주간 요약 못 보냄"
+        title = "[KR-HC] 143860/227540/248270/068270/207940 주간 비교 조회 실패 | 주간 요약 못 보냄"
         msg = "\n".join([
             f"{now:%Y-%m-%d %H:%M KST} | KR-HC | 헬스케어 주간 비교",
             "이게 뭐 알림: 헬스케어 주간 비교 요약의 데이터 조회 실패 안내.",

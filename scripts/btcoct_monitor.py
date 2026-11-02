@@ -164,12 +164,12 @@ def copy_for(kind: str, cfg: dict, now: datetime, spot, sma50, sma200, week_clos
         f"유효 확정: 10월 일중저가 {cycle_low:,.0f}달러 미만."
     )
     titles = {
-        "FETCH_FAIL": f"{prefix} 조회 실패 | 판정 보류",
-        "SNAPSHOT": f"{prefix} 구조 스냅샷 | 10월 저점 유지",
-        "ALIVE": f"{prefix} 10월 저점 시나리오 유지 | 추격 금지",
-        "WEEKLY_ABOVE": f"{prefix} 주봉이 50주선 위 | 조기 약화",
-        "CONFIRMED": f"{prefix} 여름 저점 하향 | 10월 시나리오 유효",
-        "INVALIDATED": f"{prefix} 10월 저점 폐기 | 여름 저점 유지",
+        "FETCH_FAIL": f"{prefix} BTC 조회 실패 | 판정 보류",
+        "SNAPSHOT": f"{prefix} BTC 구조 스냅샷 | 10월 저점 유지",
+        "ALIVE": f"{prefix} BTC 10월 저점 시나리오 유지 | 추격 금지",
+        "WEEKLY_ABOVE": f"{prefix} BTC 주봉이 50주선 위 | 조기 약화",
+        "CONFIRMED": f"{prefix} BTC 여름 저점 하향 | 10월 시나리오 유효",
+        "INVALIDATED": f"{prefix} BTC 10월 저점 폐기 | 여름 저점 유지",
     }
     now_do = {
         "FETCH_FAIL": "직접 시세만 보고, 이 알림으로 사지 마세요.",

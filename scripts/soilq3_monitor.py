@@ -134,7 +134,7 @@ def main() -> int:
         cs = f"네이버 3분기 영업이익 컨센서스 {cons:,.0f}억원." if cons else "컨센서스 조회 안 됨."
         alerts.append(
             (
-                "[SOILQ3] 설치 확인 | 매매 신호 아님",
+                "[SOILQ3] 010950 설치 확인 | 매매 신호 아님",
                 body(
                     stamp,
                     f"설치 확인 발송입니다. 발표일은 아직 공시 전이고 {cfg['expected_date_note']}. {cs}",
@@ -159,7 +159,7 @@ def main() -> int:
             if state.get("fail_date") != today:
                 alerts.append(
                     (
-                        "[SOILQ3] 공시 조회 실패 | 조건 미확인",
+                        "[SOILQ3] 010950 공시 조회 실패 | 조건 미확인",
                         body(stamp, f"S-Oil 공시 목록 조회 실패. {exc}. 실적 미발표라는 뜻이 아닙니다.", "DART나 증권 앱에서 S-Oil 공시를 직접 보세요.", "다음 평일 09:00 KST에 재시도합니다.", "이번 알림으로 비중을 바꾸지 마세요.", "조회 실패를 미발표로 취급."),
                         3,
                     )
@@ -188,7 +188,7 @@ def main() -> int:
                 when = parse_ir(text_of(n.get("contents", ""))) or "본문에서 일시 확인 필요"
                 alerts.append(
                     (
-                        "[SOILQ3] 실적 발표일 공시 | 날짜만 확인",
+                        "[SOILQ3] 010950 실적 발표일 공시 | 날짜만 확인",
                         body(stamp, f"S-Oil 기업설명회(IR) 개최 공시({dt[:16].replace('T', ' ')}). 일시: {when}.", "발표일을 캘린더에 적어 두세요. 아직 실적 숫자는 아닙니다.", "잠정실적 공시가 나오면 컨센서스 비교와 함께 다시 울립니다.", "해당 없음.", "발표 전 기대만으로 추가 매수."),
                         2,
                     )
@@ -202,7 +202,7 @@ def main() -> int:
                 if op is None:
                     alerts.append(
                         (
-                            "[SOILQ3] 실적 파싱 실패 | 원문 확인",
+                            "[SOILQ3] 010950 실적 파싱 실패 | 원문 확인",
                             body(stamp, f"3분기 잠정실적 공시({dt[:16].replace('T', ' ')})는 나왔지만 숫자를 읽지 못했습니다.", "DART에서 S-Oil 잠정실적 공시 원문을 직접 보세요.", "자동 재시도는 없습니다.", "숫자 확인 전 비중 변경 보류.", "파싱 실패를 실적 부진으로 취급."),
                             3,
                         )
@@ -231,7 +231,7 @@ def main() -> int:
                 }[grade]
                 alerts.append(
                     (
-                        f"[SOILQ3] 3분기 영업이익 {grade} | {'추격 금지' if grade == '상회' else ('비중 점검' if grade == '하회' else '유지 점검')}",
+                        f"[SOILQ3] 010950 3분기 영업이익 {grade} | {'추격 금지' if grade == '상회' else ('비중 점검' if grade == '하회' else '유지 점검')}",
                         body(stamp, status, acts[0], "4분기는 정제마진과 유가 방향이 좌우합니다. [OIL] 알림(정제마진 15달러, 브렌트 85/120)을 같이 보세요.", "[OIL] 정제마진 추정치가 15달러 아래로 가면 S-Oil부터 줄일 후보입니다.", acts[1]),
                         4,
                     )

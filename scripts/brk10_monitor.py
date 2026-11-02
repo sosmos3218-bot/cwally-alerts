@@ -206,7 +206,7 @@ def main() -> int:
         return 0
 
     title_z = alert_key
-    title = f"[BRK10] {TITLE_BY_ZONE.get(title_z, title_z)}"
+    title = f"[BRK10] 475350 {TITLE_BY_ZONE.get(title_z, title_z)}"
     lines = [
         f"{stamp} | BRK10 | {cfg['display']} {cfg['code']}",
         "이게 뭐 알림: 버크셔 상위10 ETF(475350) 분할매수·축소·환율 가이드입니다. 총자산 12%가 한도입니다.",

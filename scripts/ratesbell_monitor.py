@@ -131,7 +131,7 @@ def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
     buf = float(cfg.get("ten_break_buffer", 0.0))
     day = ten_day or "날짜없음"
     if cross == "UP":
-        title = f"[RATES] 10년물 종가 {up:.2f}% 상향 돌파 | 추격 금지"
+        title = f"[RATES] ^TNX 10년물 종가 {up:.2f}% 상향 돌파 | 추격 금지"
         lines = [
             f"레벨 돌파: 10년물 종가 {up:.2f}% 상향 돌파 (전 미국장 종가 {ten:.2f}%, {day}).",
             f"의미: {up:.2f}%는 10월 하순 박스 상단입니다. FOMC 뒤 재돌파면 '금리 정점 통과' 논리가 약해지고 한국 반도체 비중 확대 근거도 약해집니다.",
@@ -139,7 +139,7 @@ def break_text(cross: str, cfg: dict, ten: float, ten_day: str | None):
             f"재무장: 종가가 {up - buf:.2f}% 이하로 내려오면 조용히 다시 감시합니다. {up - buf:.2f}~{up:.2f}% 사이에서는 다시 보내지 않습니다.",
         ]
         return title, lines, 4
-    title = f"[RATES] 10년물 종가 {down:.2f}% 하향 이탈 | 추가 하락"
+    title = f"[RATES] ^TNX 10년물 종가 {down:.2f}% 하향 이탈 | 추가 하락"
     lines = [
         f"레벨 이탈: 10년물 종가 {down:.2f}% 하향 이탈 (전 미국장 종가 {ten:.2f}%, {day}).",
         f"의미: 10월 하순 박스({down:.2f}~{up:.2f}%) 아래로 추가 하락입니다. '금리 정점 통과' 논리에는 우호적입니다.",
@@ -157,7 +157,7 @@ def body(stamp: str, cfg: dict, ten, ten_day, mtg, mtg_day, streak: int, status:
         "이게 뭐 알림: 국채금리와 모기지 금리가 2008년식 위기 진입 조건에 닿는지 보는 알림입니다. 위기 확정이 아닙니다.",
     ]
     if kind == "FAIL" or status == "FAIL":
-        title = "[RATES] 금리 조회 실패 | 직접 확인"
+        title = "[RATES] ^TNX 금리 조회 실패 | 직접 확인"
         lines = common + [
             "지금 결과/상태: 10년물 또는 모기지 조회 실패. 실패를 관망으로 처리하지 않습니다.",
             "지금 할 일: 야후 ^TNX와 프레디맥 PMMS를 직접 확인하세요.",
@@ -167,15 +167,15 @@ def body(stamp: str, cfg: dict, ten, ten_day, mtg, mtg_day, streak: int, status:
         ]
         return title, lines, 4
     if status == "ESCALATE":
-        title = f"[RATES] 10년 {ten_txt} | 위기경계, 추격 금지"
+        title = f"[RATES] ^TNX 10년 {ten_txt} | 위기경계, 추격 금지"
         action = "변경조건 충족. 신규 위험자산 추격 금지. 국채 듀레이션은 분할만 검토."
         pri = 5
     elif status == "RELIEF":
-        title = f"[RATES] 10년 {ten_txt} | 5% 아래 되돌림"
+        title = f"[RATES] ^TNX 10년 {ten_txt} | 5% 아래 되돌림"
         action = "10년물이 5% 아래로 되밀렸습니다. 위기경계 해제 후보. 하루 수치로 전량 전환하지 마세요."
         pri = 4
     else:
-        title = f"[RATES] 10년 {ten_txt} | 관망, 추격 금지"
+        title = f"[RATES] ^TNX 10년 {ten_txt} | 관망, 추격 금지"
         action = "5.00~5.50% 관망 구간. 모기지 7.50% 2주 연속 전에는 위기 진입으로 보지 않습니다."
         pri = 3
     lines = common + [

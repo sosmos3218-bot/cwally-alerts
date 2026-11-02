@@ -551,12 +551,12 @@ def main() -> int:
     print(msg)
     print(f"notify={send} reason={why}", file=sys.stderr)
     if send and dry:
-        print(f"DRY RUN would send: [PORT] {title}")
+        print(f"DRY RUN would send: [PORT] KOSPI {title}")
     elif send:
         ntfy_publish(
             "https://ntfy.sh",
             "cwally-port",
-            f"[PORT] {title}",
+            f"[PORT] KOSPI {title}",
             msg,
             5 if halt or (vkey == "EVENT:DCA_CANCEL") else (4 if is_live else 3),
             "chart_with_upwards_trend,kr",

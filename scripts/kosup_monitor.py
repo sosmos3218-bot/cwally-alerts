@@ -122,7 +122,7 @@ def zone_message(zcfg: dict, fired: list[str], closes: list, stamp: str) -> tupl
     day, close = closes[-1]
     labels = " + ".join(zcfg[k]["label"] for k in fired)
     two = ", ".join(f"{d} {c:,.2f}" for d, c in closes[-2:])
-    title = f"[KOSUP] 종가 {close:,.2f} | {labels} | 추격 매수 보류, 근거 재확인"
+    title = f"[KOSUP] KOSPI 종가 {close:,.2f} | {labels} | 추격 매수 보류, 근거 재확인"
     rearm = ", ".join(f"{zcfg[k]['label']}은 종가 {zcfg[k]['rearm_below']:,.0f} 아래로 내려간 뒤 재무장" for k in zcfg)
     body = "\n".join([
         f"{stamp} | KOSUP | 코스피 시장 상태 신호",
@@ -174,7 +174,7 @@ def selftest() -> int:
                       [("2026-12-02", 7050), ("2026-12-03", 7080)])
     check("same-day combo", f, ["z6700", "z7000"])
     t, b = zone_message(zc, f, st["closes"], "2026-12-03 15:40 KST")
-    check("combo one message title", t, "[KOSUP] 종가 7,080.00 | 6,700 재탈환 + 7,000 안착 | 추격 매수 보류, 근거 재확인")
+    check("combo one message title", t, "[KOSUP] KOSPI 종가 7,080.00 | 6,700 재탈환 + 7,000 안착 | 추격 매수 보류, 근거 재확인")
     check("six parts", [x.split(":")[0] for x in b.split("\n")[1:7]], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
     check("no dot/dash", any(ch in t + b for ch in "\u00b7\u2014"), False)
     check("no buy wording", [w for w in ZONE_BAD_WORDS if w in t + b], [])
@@ -242,7 +242,7 @@ def main() -> int:
         basic = json.loads(fetch(cfg["sources"]["basic"]))
         price_rows = json.loads(fetch(cfg["sources"]["price"]))
     except Exception as exc:
-        fail_once(state, now, cfg, "[KOSUP] 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
+        fail_once(state, now, cfg, "[KOSUP] KOSPI 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
         return 0
 
     bar = latest_closed(price_rows, basic)
@@ -292,7 +292,7 @@ def main() -> int:
         return 0
 
     broken = ", ".join(f"{int(lv)}" for lv in new_hits)
-    title = f"[KOSUP] 종가 {close:,.2f} | {broken} 돌파 | 상방 확인"
+    title = f"[KOSUP] KOSPI 종가 {close:,.2f} | {broken} 돌파 | 상방 확인"
     body = "\n".join([
         f"{stamp} | KOSUP",
         "이게 뭐 알림: 코스피 상방 레벨 돌파입니다. 매수 신호가 아닙니다.",

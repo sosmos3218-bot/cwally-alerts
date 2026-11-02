@@ -74,7 +74,7 @@ def evaluate(state, day, c, p, d, cfg):
 def message(day, c, p, d, event):
     low = event == 'LOW'
     head = '50% 이하 진입, 상대가치 이점 재점검' if low else '61.5% 이상 진입, 할인 확대 재점검'
-    title = f'{TAG} {head}'
+    title = f'{TAG} 006405 {head}'
     body = '\n'.join([
         '이게 뭐 알림: 삼성SDI 보통주 006400과 우선주 006405의 동일 거래일 KRX 종가 괴리율 감시.',
         f'지금 결과/상태: {day} KRX 정규장 종가 보통주 {c:,.0f}원, 우선주 {p:,.0f}원. 괴리율 {d:.4f}%. 경계는 반올림 전 값으로 판정. 출처 Daum KRX 일별.',
@@ -120,7 +120,7 @@ def main():
         raise SystemExit('unknown mode')
     cfg = json.loads(CFG_PATH.read_text())
     if mode == 'install':
-        title = TAG+' 설치 확인 | 매매 신호 아님'
+        title = TAG+' 006405 설치 확인 | 매매 신호 아님'
         body = '\n'.join([
             '이게 뭐 알림: 삼성SDI 보통주/우선주 종가 괴리율 알림 설치 확인.',
             '지금 결과/상태: 같은 날 KRX 종가로 50% 이하 또는 61.5% 이상 진입을 감시하도록 연결했습니다. 실전 조건 충족 알림이 아닙니다.',
@@ -147,7 +147,7 @@ def main():
         if dry:
             print('DRY RUN: no ntfy, no state'); return
         if state.get('ops_day') != day.isoformat():
-            publish('cwally-ops', TAG+' 종가 조회 실패', f'{day} 동일 거래일 KRX 종가 확인 실패: {exc}. 매매 신호 아님. 데이터 상태는 갱신하지 않습니다.', 3, ['warning'], resolve_server(cfg['ntfy_server']), config_name='sdipref')
+            publish('cwally-ops', TAG+' 006405 종가 조회 실패', f'{day} 동일 거래일 KRX 종가 확인 실패: {exc}. 매매 신호 아님. 데이터 상태는 갱신하지 않습니다.', 3, ['warning'], resolve_server(cfg['ntfy_server']), config_name='sdipref')
             state['ops_day'] = day.isoformat()
             STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2)+'\n')
         return

@@ -95,7 +95,7 @@ def main() -> int:
     week = now.strftime("%G-W%V")
     changed = prev.get("last_status") != status
     weekly = prev.get("last_weekly_week") != week
-    title = f"[SQUARE] {status_ko}" if changed or prev.get("last_status") is None else f"[SQUARE] 주간 체크 | {status_ko}"
+    title = f"[SQUARE] 402340 {status_ko}" if changed or prev.get("last_status") is None else f"[SQUARE] 402340 주간 체크 | {status_ko}"
     print(f"TITLE: {title}")
     print(f"STATUS: {status} DISCOUNT: {discount*100:.1f}%")
     if dry:

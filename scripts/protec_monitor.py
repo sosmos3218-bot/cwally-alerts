@@ -355,27 +355,27 @@ def main() -> int:
     )
 
     if action == "FULL":
-        title = "[PROTEC] 논거 훼손 | 전량"
+        title = "[PROTEC] 053610 논거 훼손 | 전량"
     elif action == "HALF" and c1_now:
-        title = "[PROTEC] C1 숫자확정 | 절반"
+        title = "[PROTEC] 053610 C1 숫자확정 | 절반"
     elif action == "HALF":
-        title = "[PROTEC] 논거 훼손 | 절반"
+        title = "[PROTEC] 053610 논거 훼손 | 절반"
     elif action == "BUY3":
-        title = "[PROTEC] 47,000 발표전 | 3차 기회"
+        title = "[PROTEC] 053610 47,000 발표전 | 3차 기회"
     elif action == "NOBUY":
-        title = "[PROTEC] 47,000 발표후 | 매수금지 · 숫자대기"
+        title = "[PROTEC] 053610 47,000 발표후 | 매수금지 · 숫자대기"
     elif first_miss7:
-        title = "[PROTEC] C7 레이저수주 미확인"
+        title = "[PROTEC] 053610 C7 레이저수주 미확인"
     elif earn_new:
-        title = "[PROTEC] 실적 공시 | 본사 숫자 필요"
+        title = "[PROTEC] 053610 실적 공시 | 본사 숫자 필요"
     elif new_discs:
-        title = f"[PROTEC] 공시 {(new_discs[0].get('kind') or 'CHECK')}"
+        title = f"[PROTEC] 053610 공시 {(new_discs[0].get('kind') or 'CHECK')}"
     elif new_window:
-        title = "[PROTEC] 확인창 개시 | 원문 체크"
+        title = "[PROTEC] 053610 확인창 개시 | 원문 체크"
     elif monday:
-        title = "[PROTEC] 주간 점검 | 관망"
+        title = "[PROTEC] 053610 주간 점검 | 관망"
     else:
-        title = "[PROTEC] 관망"
+        title = "[PROTEC] 053610 관망"
 
     msg = "\n".join(lines)
     print(msg)

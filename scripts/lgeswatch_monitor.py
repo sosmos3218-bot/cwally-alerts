@@ -208,7 +208,7 @@ def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float |
     ref = cfg["reference"]
     chg = f", 전 거래일 대비 {(close / prev - 1) * 100:+.1f}%" if prev else ""
     labels = " + ".join(lvs[k]["label"] for k in fired)
-    title = f"[LGES] 종가 {won(close)} {top['label']} | {ACTION.get(top['key'], '확인')}"
+    title = f"[LGES] 373220 종가 {won(close)} {top['label']} | {ACTION.get(top['key'], '확인')}"
     all_lines = ", ".join(f"{x['label'].replace(' 구간 진입', '')} {line_text(x)}" for x in cfg["levels"])
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
@@ -233,7 +233,7 @@ def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
         "major": "유상증자, 사채 발행, 자산 양수도 같은 결정인지 확인.",
         "periodic": "AMPC 제외 이익, ESS 수주 잔고, 우발채무 주석을 확인.",
     }.get(rule["key"], "원문을 확인.")
-    title = f"[LGES] 새 공시 {rule['label']} | 원문 확인"
+    title = f"[LGES] 373220 새 공시 {rule['label']} | 원문 확인"
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
@@ -248,7 +248,7 @@ def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
 
 def q4_msg(cfg: dict, f: dict) -> tuple[str, str, int]:
     link = cfg["sources"]["kind_view"].format(acpt=f["acptno"])
-    title = "[LGES] 4분기 잠정실적 확인 | 체크리스트 4개"
+    title = "[LGES] 373220 4분기 잠정실적 확인 | 체크리스트 4개"
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
@@ -272,7 +272,7 @@ def confirm_msg(cfg: dict, close: float | None, day: str | None) -> tuple[str, s
         "익절/줄일 때: AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달이면 비중 축소 검토.",
         "하지 말 것: 이 설치 확인을 매수/매도 신호로 읽기.",
     ]
-    return "[LGES] 설치 확인 | 매매 신호 아님", "\n".join(lines)
+    return "[LGES] 373220 설치 확인 | 매매 신호 아님", "\n".join(lines)
 
 
 # ---------- selftest ----------
@@ -387,7 +387,7 @@ def main() -> int:
         bars = []
         print(f"bars fetch failed: {exc}")
         if not st.get("price_fail_notified"):
-            send(dry, ops, "[LGES] 시세 조회 실패 | 매매 신호 아님", f"373220 일별 시세 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다.", 3, ["warning"])
+            send(dry, ops, "[LGES] 373220 시세 조회 실패 | 매매 신호 아님", f"373220 일별 시세 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다.", 3, ["warning"])
             st["price_fail_notified"] = True
     if bars:
         last_d, last_c = bars[-1]
@@ -436,7 +436,7 @@ def main() -> int:
         fl = None
         print(f"KIND fetch failed: {exc}")
         if not st.get("kind_fail_notified"):
-            send(dry, ops, "[LGES] 공시 조회 실패 | 매매 신호 아님", f"KIND 공시 목록 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다.", 3, ["warning"])
+            send(dry, ops, "[LGES] 373220 공시 조회 실패 | 매매 신호 아님", f"KIND 공시 목록 조회 실패: {exc}. 다음 19:00 실행에서 다시 봅니다.", 3, ["warning"])
             st["kind_fail_notified"] = True
     if fl is not None:
         print("filings:", [(f["acptno"], clean(f["title"])) for f in fl])

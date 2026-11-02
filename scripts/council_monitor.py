@@ -649,7 +649,7 @@ def build_message(data: dict, checks: dict, responses: list[dict], result: dict,
         parts.append("추가매수 막힘")
     if result["conflict"]:
         parts.append("의견 충돌")
-    title = f"[COUNCIL] {parts[0]} | " + (", ".join(parts[1:]) if len(parts) > 1 else "후보 없음")
+    title = f"[COUNCIL] KOSPI {parts[0]} | " + (", ".join(parts[1:]) if len(parts) > 1 else "후보 없음")
     label = {"macro": "매크로", "fundamental": "펀더멘털", "redteam": "레드팀"}
     score_txt = ", ".join(f"{label[r['role']]} {r['score']:+d}(확신 {r['confidence']:.2f})" for r in responses)
     if failed_roles:
@@ -687,7 +687,7 @@ def build_message(data: dict, checks: dict, responses: list[dict], result: dict,
 
 
 def failure_message(kind: str, detail: str, now: datetime) -> tuple[str, str]:
-    title = f"[COUNCIL] {kind} 실패 | 판단 없음"
+    title = f"[COUNCIL] KOSPI {kind} 실패 | 판단 없음"
     body = "\n".join([
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | COUNCIL 주간",
         "이게 뭐 알림: 3개 AI 주간 합의 알림.",
@@ -905,7 +905,7 @@ def selftest(cfg: dict) -> int:
     # 17 제목과 본문 형식
     d, checks, rs, fl, res = run(texts)
     title, body = build_message(d, checks, rs, res, fl, cfg, now)
-    check("title prefix", title.startswith("[COUNCIL] "))
+    check("title prefix", title.startswith("[COUNCIL] KOSPI "))
     check("body has six items in order", all(k in body for k in ("이게 뭐 알림", "지금 결과", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것")))
     idx = [body.index(k) for k in ("이게 뭐 알림", "지금 결과", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것")]
     check("body order", idx == sorted(idx))

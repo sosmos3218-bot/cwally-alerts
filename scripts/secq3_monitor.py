@@ -582,7 +582,7 @@ def build(cfg: dict, d: dict, now: datetime) -> tuple[str, str, int]:
         body = "\n".join(body_lines)
     if len(body.encode("utf-8")) > MAX_BYTES:
         body = body.encode("utf-8")[:MAX_BYTES].decode("utf-8", errors="ignore")
-    title = f"[SECQ3] 3Q 확정 재평가 {n_ok}/5 | {act.split('.')[0]}"
+    title = f"[SECQ3] 005930 3Q 확정 재평가 {n_ok}/5 | {act.split('.')[0]}"
     return title, body, n_ok
 
 
@@ -728,7 +728,7 @@ def build_call(cfg: dict, text: str, now: datetime, url: str | None) -> tuple[st
     body = "\n".join(lines)
     if len(body.encode("utf-8")) > MAX_BYTES:
         body = "\n".join(x for x in lines if not x.startswith("- 4분기 가격"))
-    return f"[SECQ3] 컨콜 보강 | {head}", body
+    return f"[SECQ3] 005930 컨콜 보강 | {head}", body
 
 
 def call_step(cfg: dict, state: dict, now: datetime, dry: bool, opts: dict) -> None:
@@ -780,7 +780,7 @@ def ops(cfg: dict, state: dict, now: datetime, key: str, title_word: str, detail
         later: str = "나중에: 다음 원샷에서 다시 확인합니다. 자료: https://www.samsung.com/global/ir/") -> None:
     if state["ops_sent"].get(key):
         return
-    title = f"[SECQ3] 3분기 자료 {title_word}"
+    title = f"[SECQ3] 005930 3분기 자료 {title_word}"
     body = "\n".join([
         "이게 뭐 알림: 삼성전자 3분기 확정실적 비교 알림의 운영 안내.",
         f"지금 결과/상태: {detail}. {now:%Y-%m-%d %H:%M} KST.",
@@ -803,7 +803,7 @@ def install(cfg: dict) -> None:
         "익절/줄일 때: " + sec_bands(),
         "하지 말 것: 이 설치 알림을 매매 신호로 보지 마세요.",
     ])
-    publish(cfg["ntfy_topic"], "[SECQ3] 설치 확인 | 매매 신호 아님", body, priority=2, tags=["white_check_mark"],
+    publish(cfg["ntfy_topic"], "[SECQ3] 005930 설치 확인 | 매매 신호 아님", body, priority=2, tags=["white_check_mark"],
             server=cfg["ntfy_server"])
 
 

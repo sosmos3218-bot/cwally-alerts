@@ -100,22 +100,22 @@ def main() -> int:
     px = "조회 실패" if close is None else f"{close:,.0f}원 ({pct:+.1f}%, 10/7 58만원 대비)"
     label = phase(day)
     if mode == "install":
-        title = "[SKINC] 설치 확인 | 매매 신호 아님"
+        title = "[SKINC] 034730 설치 확인 | 매매 신호 아님"
         do_now = "설치 확인입니다. 매수·매도하지 마세요."
     elif day == "2026-11-02":
-        title = "[SKINC] 11/2 결제 시작 | 정규장 추격 금지"
+        title = "[SKINC] 034730 11/2 결제 시작 | 정규장 추격 금지"
         do_now = "오늘부터 12/1까지 시간외 대량매매 창입니다. 정규장에 물량이 쏟아진다고 보지 마세요."
     elif day == "2026-12-01":
-        title = "[SKINC] 매각 창 종료일 | 체결 공시 확인"
+        title = "[SKINC] 034730 매각 창 종료일 | 체결 공시 확인"
         do_now = "창 마지막 날입니다. 체결 공시가 없으면 재원 확정으로 보지 마세요."
     elif day == "2027-01-04":
-        title = "[SKINC] 자사주 소각 예정일 | 의결권 회복 아님"
+        title = "[SKINC] 034730 자사주 소각 예정일 | 의결권 회복 아님"
         do_now = "소각은 발행주식 지분율만 올립니다. 의결권 30.5%가 3분의 1로 되돌아가지 않습니다."
     elif close is None:
-        title = "[SKINC] 주가 조회 실패 | 매매 보류"
+        title = "[SKINC] 034730 주가 조회 실패 | 매매 보류"
         do_now = "시세를 못 읽었습니다. 가격으로 판단하지 마세요."
     else:
-        title = f"[SKINC] {label} | 추가매수 보류"
+        title = f"[SKINC] 034730 {label} | 추가매수 보류"
         do_now = "이중 할인은 남아 있으나 결제 전입니다. 비중을 늘리지 마세요."
 
     lines = [

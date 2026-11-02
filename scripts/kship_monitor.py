@@ -102,16 +102,16 @@ def main() -> int:
     etf_trim = etf is not None and etf >= z["etf"]["trim"]
 
     if shi_trim or etf_trim:
-        title = "[KSHIP] 익절 구간 | 각 1/3 축소"
+        title = "[KSHIP] 0115D0/009540/010140 익절 구간 | 각 1/3 축소"
         do_now = "삼성중 3만원 또는 ETF 1.1만원이면 각 1/3만 줄이세요. 65:35 비율은 유지합니다."
     elif shi_chase or etf_chase:
-        title = "[KSHIP] 추격 금지 | 3차 보류"
+        title = "[KSHIP] 0115D0/009540/010140 추격 금지 | 3차 보류"
         do_now = "삼성중 2.4만원 위 또는 ETF 9,500원 위입니다. 빈 이벤트를 채우지 말고 3차는 남김니다."
     elif shi_t2 or etf_t2 or hold_t2:
-        title = "[KSHIP] 2차 구간 | 25% 분할"
+        title = "[KSHIP] 0115D0/009540/010140 2차 구간 | 25% 분할"
         do_now = "2차 25%를 ETF 50 / 지주 15 / 삼성중 35로 분할합니다. 30만원 미만 교체는 쉽니다."
     else:
-        title = "[KSHIP] 65:35 유지 | 추가매수 보류"
+        title = "[KSHIP] 0115D0/009540/010140 65:35 유지 | 추가매수 보류"
         do_now = "현 구간은 1차 또는 대기입니다. 목표 비중 ETF 50 / 지주 15 / 삼성중 35을 유지합니다."
 
     lines = [

@@ -182,7 +182,7 @@ def make_report(data: dict, cfg: dict, now: datetime, review: bool) -> tuple[str
         action = "분할 진입 조건 검토. KRX 최종 수급은 별도 확인"
     incomplete = current["foreign"] is None or current["institution"] is None
     prefix = "수급 미게시 | 가격만 관찰" if incomplete else current["label"]
-    title = f"[KOS5500] {prefix}" + (" | 10/20 원샷" if review else "")
+    title = f"[KOS5500] KOSPI {prefix}" + (" | 10/20 원샷" if review else "")
     lines = [
         "이게 뭐 알림: " + cfg["explain"],
         f"지금 상태: {current['day']} 종가 {current['close']:,.2f}, 전 거래일 대비 {delta:+,.2f}p ({rate:+.2f}%).",
@@ -231,7 +231,7 @@ def save(state: dict) -> None:
 
 
 def ops(state: dict, cfg: dict, now: datetime, key: str, note: str, dry: bool) -> None:
-    title = "[KOS5500] 조회 실패 | 판정 보류"
+    title = "[KOS5500] KOSPI 조회 실패 | 판정 보류"
     body = "\n".join([
         "이게 뭐 알림: 코스피 시나리오 점검 자료가 준비되지 않았습니다.",
         "지금 상태: " + note,
@@ -261,7 +261,7 @@ def main(argv=None, now=None) -> int:
     now = (now or datetime.now(KST)).astimezone(KST)
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     if mode == "install":
-        title = "[KOS5500] 설치 확인 | 매매 신호 아님"
+        title = "[KOS5500] KOSPI 설치 확인 | 매매 신호 아님"
         body = "\n".join([
             "이게 뭐 알림: 코스피 5500 시나리오 알림 설치 확인입니다.",
             "지금 상태: 설치 경로 확인용이며 10월 20일 시장 판정 결과가 아닙니다.",

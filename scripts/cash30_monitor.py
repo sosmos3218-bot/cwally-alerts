@@ -194,7 +194,7 @@ def main() -> int:
     print("px:", px, "ty:", ty, "| nee:", nee_st.get("call_stance"), nee_st.get("score"), "| so:", so_st.get("score"), "| inputs:", json.dumps(cfg["inputs"].get("rate_targets"), ensure_ascii=False), cfg["inputs"].get("so_verdict"))
 
     if not any(px.values()):
-        title = "[CASH30] 시세 조회 실패 | 판정 보류"  # route_topic -> cwally-ops
+        title = "[CASH30] NEE/SO/DUK 시세 조회 실패 | 판정 보류"  # route_topic -> cwally-ops
         msg = "\n".join([now.strftime("%Y-%m-%d %H:%M KST") + " | CASH30", "이게 뭐 알림: " + cfg["explain"],
                          "지금 상태: 세 종목 시세 조회 실패.", "지금 할 일: 이 알림으로 배분 결정 금지. 시세 직접 확인.",
                          "나중에: 수동 재실행은 job=cash30.", "익절/줄일 때: 해당 없음.", "하지 말 것: 실패를 신호로 해석."])
@@ -205,7 +205,7 @@ def main() -> int:
         return 0
 
     res = decide(cfg, nee_st, so_st, px, ty)
-    title = f"[CASH30] {res['title']}"
+    title = f"[CASH30] NEE/SO/DUK {res['title']}"
     msg = body(cfg, now, res, px, ty)
     if dry:
         print(f"DRY RUN would send: {title}\n{msg}")

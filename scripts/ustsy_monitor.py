@@ -115,7 +115,7 @@ def main() -> int:
         print("ustsy baseline set; silent")
         return 0
 
-    title = f"[USTSY] {TITLE_BY_ZONE.get(z, z)}"
+    title = f"[USTSY] 484790/476760 {TITLE_BY_ZONE.get(z, z)}"
     lines = [
         f"{now} | USTSY | 원달러 {px}",
         "이게 뭐 알림: 미국 30년국채 헤지(484790) 70% / 비헤지(476760) 30% 비중을 원달러로 조정할지 보는 알림입니다.",

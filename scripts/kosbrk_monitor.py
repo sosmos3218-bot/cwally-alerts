@@ -190,7 +190,7 @@ def main() -> int:
         basic = json.loads(fetch(cfg["sources"]["basic"]))
         price_rows = json.loads(fetch(cfg["sources"]["price"]))
     except Exception as exc:
-        fail_once(state, now, cfg, "[KOSBRK] 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
+        fail_once(state, now, cfg, "[KOSBRK] KOSPI 시세 조회 실패 | 판정 보류", f"코스피 시세 조회 실패: {exc}", dry)
         return 0
 
     bar = latest_closed(price_rows, basic)
@@ -248,7 +248,7 @@ def main() -> int:
             flow_note = "완료 수급 2일 미만. 재확대 판정 보류"
         flow_note = flow_detail or flow_note
     except Exception as exc:
-        fail_once(state, now, cfg, "[KOSBRK] 수급 조회 실패 | 판정 보류", f"외국인 수급 조회 실패: {exc}", dry)
+        fail_once(state, now, cfg, "[KOSBRK] KOSPI 수급 조회 실패 | 판정 보류", f"외국인 수급 조회 실패: {exc}", dry)
         return 0
 
     guide = []
@@ -307,7 +307,7 @@ def main() -> int:
         "flow": "외국인 순매도 재확대",
         "guide": "반도체 가이던스 하향 키워드",
     }
-    title = "[KOSBRK] " + " / ".join(labels[k] for k in new_hits) + " | 대기 논리 재검토"
+    title = "[KOSBRK] KOSPI " + " / ".join(labels[k] for k in new_hits) + " | 대기 논리 재검토"
     body = "\n".join(
         [
             f"{stamp} | KOSBRK",
@@ -330,7 +330,7 @@ def main() -> int:
 def reversal_message(stamp: str, day: str, info: dict, rule: dict, today: float) -> tuple[str, str]:
     n, total, close = info["streak"], info["streak_sum"], info["close"]
     line = float(rule.get("close_min") or 6000)
-    title = f"[KOSBRK] SK하이닉스 11월 판단 되돌림 신호 | 외국인 {n}일 연속 순매수, 종가 {close:,.2f}"
+    title = f"[KOSBRK] KOSPI SK하이닉스 11월 판단 되돌림 신호 | 외국인 {n}일 연속 순매수, 종가 {close:,.2f}"
     body = "\n".join(
         [
             f"{stamp} | KOSBRK",
@@ -384,7 +384,7 @@ def selftest() -> int:
     check("zero is not a net buy", buy_streak([{"day": "2026-11-02", "foreign": 0.0}])[0], 0)
     t, b = reversal_message("2026-11-06 15:40 KST", "2026-11-06", {"streak": 5, "streak_sum": 15000.0,
                             "streak_start": "2026-11-02", "close": 6000.0}, rule, 5000.0)
-    check("title prefix", t.startswith("[KOSBRK] SK하이닉스 11월 판단 되돌림 신호"), True)
+    check("title prefix", t.startswith("[KOSBRK] KOSPI SK하이닉스 11월 판단 되돌림 신호"), True)
     check("body has streak/sum/close", all(x in b for x in ("5거래일 연속 순매수", "합계 15,000억원", "종가 6,000.00")), True)
     check("no middle dot / em-dash", any(ch in t + b for ch in ("\u00b7", "\u2014")), False)
     print("SELFTEST", "PASS" if ok else "FAIL")

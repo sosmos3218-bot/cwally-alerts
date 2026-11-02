@@ -190,7 +190,7 @@ def main() -> int:
         status += f"삼성 {sam_c:,.0f}원({sam_d}) " if sam_c else "삼성 실패 "
         status += f"하이닉스 {hy_c:,.0f}원 " if hy_c else "하이닉스 실패 "
         status += f"카본 {ca_c:,.0f}원" if ca_c else "카본 실패"
-        publish(topic, "[MERAS] 설치 확인 | 매매 신호 아님",
+        publish(topic, "[MERAS] 005930/000660/017960 설치 확인 | 매매 신호 아님",
                 body(stamp, status, "설치 확인만. 이 알림으로 사거나 팔지 마세요.",
                      "직전 발송 대비 종목 ±10% 또는 미국10Y ±0.20%p, 그리고 월 첫 실행에 발송.", TRIM, "설치 확인을 매매 신호로 읽기."),
                 3, ["information_source"], server)
@@ -218,9 +218,9 @@ def main() -> int:
         if state.get("fetch_fail_date") != today:
             msg = f"MERAS 조회 실패: {', '.join(failed)}. 실패 항목은 이번 판정에서 빼고 다음 09:00 에 다시 봅니다."
             if dry:
-                print("DRY RUN would send (ops): [MERAS] 조회 실패 | 매매 신호 아님")
+                print("DRY RUN would send (ops): [MERAS] 005930/000660/017960 조회 실패 | 매매 신호 아님")
             else:
-                publish(resolve_topic("ops"), "[MERAS] 조회 실패 | 매매 신호 아님", msg, 3, ["warning"], server)
+                publish(resolve_topic("ops"), "[MERAS] 005930/000660/017960 조회 실패 | 매매 신호 아님", msg, 3, ["warning"], server)
                 state["fetch_fail_date"] = today
     reasons, status = evaluate(state, cur, days, now, cfg)
     if not reasons and mode != "force":
@@ -233,7 +233,7 @@ def main() -> int:
     rearm(state, cur, now)
     status = f"{status} | 발송 이유: {', '.join(reasons) or '수동 force'}"
 
-    title = "[MERAS] 메르 A/S 종합 점검 | 변동 확인"
+    title = "[MERAS] 005930/000660/017960 메르 A/S 종합 점검 | 변동 확인"
     action = "현재 수준만 확인. 추가 매수나 전량 매도는 별도 판단."
     msg = body(stamp, status, action, LATER, TRIM, AVOID)
     print(title)

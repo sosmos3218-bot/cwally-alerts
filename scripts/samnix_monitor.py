@@ -11,7 +11,7 @@ Toggle: first_tranche.enabled. Flip detection, dedupe and state are unchanged. J
 
 Weekly digest (approved in chat 2026-10-30, owner note pt24u): the daily 15:20 reference message is no longer sent.
 Each weekday 15:20 run records the preceding day's confirmed totals in state week_rows silently. The Friday 15:20 run
-(or, if Friday was missed, the next run whose last digest is 7+ days old) sends ONE p3 "[SAMNIX] 주간 수급 요약
+(or, if Friday was missed, the next run whose last digest is 7+ days old) sends ONE p3 "[SAMNIX] 005930/000660 주간 수급 요약
 (MM/DD~MM/DD)". Zero rows -> nothing sent (the digest clock still advances). The p4 foreign 3-day flip stays immediate.
 """
 from __future__ import annotations
@@ -184,9 +184,9 @@ def flip_message(now: datetime, name: str, ev: dict, ft: dict | None = None, kos
     run = ev["days"]
     met, ft_line = first_tranche_line(ft, kospi, run[-1]["day"])
     if met:
-        title = f"[SAMNIX] {ft.get('marker', '1차 조건 충족')} 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
+        title = f"[SAMNIX] 005930/000660 {ft.get('marker', '1차 조건 충족')} 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
     else:
-        title = f"[SAMNIX] 참고용 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
+        title = f"[SAMNIX] 005930/000660 참고용 외국인 순매수 전환 {name} {FLIP_RUN}일 연속"
     prio = int(ft.get("priority", 4)) if met else 4
     days = ", ".join(f"{ymd(r['day'])} 외국인 {fmt_opt(r.get('foreign'))} / 기관 {fmt_opt(r.get('organ'))}" for r in run)
     lines = [
@@ -274,7 +274,7 @@ def selftest() -> int:
     when = datetime(2026, 10, 27, 15, 20, tzinfo=KST)
     ev0 = flip_events(mk([-5] * 18 + [3, 2, 1]), {"armed": True})[0]
     t, m, p = flip_message(when, "SK하이닉스", ev0)
-    assert t == "[SAMNIX] 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and p == 4 and "1차 조건" not in m
+    assert t == "[SAMNIX] 005930/000660 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and p == 4 and "1차 조건" not in m
     assert "\u00b7" not in t + m and "\u2014" not in t + m and route_topic("cwally-port", t) == "cwally-port"
     assert "확인 불가" not in t and "조회 실패" not in t
     print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
@@ -299,8 +299,8 @@ def first_tranche_selftest(when: datetime, ev: dict) -> None:
         assert "\u00b7" not in t + m and "\u2014" not in t + m
         seen.append((t, p, m))
         print(f"-- first_tranche fixture: {label}\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
-    assert seen[0][0] == "[SAMNIX] 1차 조건 충족 외국인 순매수 전환 SK하이닉스 3일 연속" and seen[0][1] == 4
-    assert seen[1][0] == "[SAMNIX] 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and "코스피 5,500 미만, 1차 조건 미충족" in seen[1][2]
+    assert seen[0][0] == "[SAMNIX] 005930/000660 1차 조건 충족 외국인 순매수 전환 SK하이닉스 3일 연속" and seen[0][1] == 4
+    assert seen[1][0] == "[SAMNIX] 005930/000660 참고용 외국인 순매수 전환 SK하이닉스 3일 연속" and "코스피 5,500 미만, 1차 조건 미충족" in seen[1][2]
     assert seen[2][0] == seen[1][0] and "1차 조건 충족 여부는 표시하지 않습니다" in seen[2][2]
     # 다른 날짜 종가는 쓰지 않음
     t, m, _ = flip_message(when, "SK하이닉스", ev, ft, {"day": "20261001", "close": 6000.0})
@@ -374,7 +374,7 @@ def main(mode: str = "auto") -> int:
     print(f"{ymd(flow_day)} 외국인 합 {fmt_krw(foreign)} / 기관 합 {fmt_krw(organ)} ({signal_of(foreign, organ)[0]})")
     if mode == "test":
         t, m = digest_message(now, [row], now - timedelta(days=7))
-        t = t.replace("[SAMNIX] ", "[SAMNIX] 테스트 ", 1)
+        t = t.replace("[SAMNIX] 005930/000660 ", "[SAMNIX] 005930/000660 테스트 ", 1)
         print(t, "\n", m)
         ntfy(server, topic, t, m)
         print("TEST: state 변경 없음")
@@ -452,7 +452,7 @@ def digest_message(now: datetime, rows: list[dict], since: datetime) -> tuple[st
         per.append(f"{name} 외국인 {fmt_shares(fs)}, 기관 {fmt_shares(os_)}")
     sig, tone = signal_of(f_sum, o_sum)
     span = f"{ymd(rows[0]['flow_day'])[5:].replace('-', '/')}~{ymd(rows[-1]['flow_day'])[5:].replace('-', '/')}"
-    title = f"[SAMNIX] 주간 수급 요약 ({span}) | 참고용 {sig}"
+    title = f"[SAMNIX] 005930/000660 주간 수급 요약 ({span}) | 참고용 {sig}"
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | 삼성전자, SK하이닉스 주간 확정 수급 (주식 수 × 해당일 종가, 추정금액)",
         "이게 뭐 알림: 매일 15:20 에 모은 전 거래일 확정 수급을 금요일 15:20 에 1번 묶어 보내는 참고용 요약. 매매 신호가 아닙니다.",
@@ -480,7 +480,7 @@ def weekly_selftest() -> None:
     assert weekly_step(st, at("2026-11-05 15:25"), R("20261104", 2, -1), "20261105") == []  # same flow_day dedupe
     assert len(st["week_rows"]) == 4
     out = weekly_step(st, at("2026-11-06 15:20"), R("20261105", 3, 9), "20261106")
-    assert len(out) == 1 and out[0][0] == "[SAMNIX] 주간 수급 요약 (10/30~11/05) | 참고용 외국인+기관 순매수", out[0][0]
+    assert len(out) == 1 and out[0][0] == "[SAMNIX] 005930/000660 주간 수급 요약 (10/30~11/05) | 참고용 외국인+기관 순매수", out[0][0]
     t, m = out[0]
     assert "\u00b7" not in t + m and "\u2014" not in t + m
     assert [x.split(":")[0] for x in m.split("\n")[1:7]] == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]

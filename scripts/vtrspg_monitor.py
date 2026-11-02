@@ -127,7 +127,7 @@ def main() -> int:
         if state.get("fetch_fail_date") != today:
             alerts.append(
                 (
-                    "[VTRSPG] 시세 조회 실패 | 조건 미확인",
+                    "[VTRSPG] VTR/SPG 시세 조회 실패 | 조건 미확인",
                     body(
                         stamp,
                         f"VTR, SPG, 10년물 중 일부를 못 읽었습니다. {err or '빈 응답'}. 조건 미충족이 아닙니다.",
@@ -157,19 +157,19 @@ def main() -> int:
             print(f"baseline band={band} vtr={vz} spg={sz}; no first alert")
         elif band != prev_band:
             if band == "low":
-                title = "[VTRSPG] 10년물 4.5% 이하 | 성장 창 점검"
+                title = "[VTRSPG] VTR/SPG 10년물 4.5% 이하 | 성장 창 점검"
                 action = "VTR 성장 조건을 점검하세요. 배수가 19배 위면 아직 비쌉니다. 실적 전 비중 확정은 보류."
                 later = "SHOP 점유와 NOI가 가이던스를 넘고 배수가 유지될 때만 성장 쪽으로 옮기세요."
             elif band == "mid":
-                title = "[VTRSPG] 10년물 4.5~5.0% | 관망"
+                title = "[VTRSPG] VTR/SPG 10년물 4.5~5.0% | 관망"
                 action = "SPG 인컴 유지를 기본으로 두세요. VTR은 실적 확인 전 비중을 늘리지 마세요."
                 later = "4.5% 아래로 내려가면 성장 창, 5.0% 위로 올라가면 인컴 고수로 다시 알립니다."
             elif band == "high":
-                title = "[VTRSPG] 10년물 5%대 | 인컴 유지"
+                title = "[VTRSPG] VTR/SPG 10년물 5%대 | 인컴 유지"
                 action = "신규 매수는 SPG 버퍼가 더 큽니다. VTR 추격 매수는 하지 마세요."
                 later = "5.5% 이상이면 하향 성장 가정에서 국채가 앞섭니다."
             else:
-                title = "[VTRSPG] 10년물 5.5% 이상 | 국채 우선"
+                title = "[VTRSPG] VTR/SPG 10년물 5.5% 이상 | 국채 우선"
                 action = "추가매수를 보류하세요. 성장이 하향이면 VTR과 SPG 모두 국채 대비 초과가 없습니다."
                 later = "5.0% 아래로 돌아오거나 FFO 가이던스가 올라올 때 다시 보세요."
             alerts.append(
@@ -192,7 +192,7 @@ def main() -> int:
         if state.get("vtr_zone") not in (None, vz):
             alerts.append(
                 (
-                    f"[VTRSPG] VTR 배수 {vz} | 성장 베팅 재점검",
+                    f"[VTRSPG] VTR/SPG VTR 배수 {vz} | 성장 베팅 재점검",
                     body(
                         stamp,
                         status,
@@ -207,7 +207,7 @@ def main() -> int:
         if state.get("spg_zone") not in (None, sz):
             alerts.append(
                 (
-                    f"[VTRSPG] SPG 배수 {sz} | 인컴 가격 재점검",
+                    f"[VTRSPG] VTR/SPG SPG 배수 {sz} | 인컴 가격 재점검",
                     body(
                         stamp,
                         status,
@@ -233,7 +233,7 @@ def main() -> int:
     if today == earn["vtr"] and "vtr" not in sent:
         alerts.append(
             (
-                "[VTRSPG] VTR 실적일 | 성장 조건 확인",
+                "[VTRSPG] VTR/SPG VTR 실적일 | 성장 조건 확인",
                 body(
                     stamp,
                     "VTR 3분기 실적일 2026-10-27. 자동 판정 없음.",
@@ -249,7 +249,7 @@ def main() -> int:
     if earn["spg_from"] <= today <= earn["spg_to"] and "spg" not in sent:
         alerts.append(
             (
-                "[VTRSPG] SPG 실적 창 | 인컴 조건 확인",
+                "[VTRSPG] VTR/SPG SPG 실적 창 | 인컴 조건 확인",
                 body(
                     stamp,
                     "SPG 실적 창 2026-11-02~05. 날짜가 바뀌면 공시를 우선하세요. 자동 판정 없음.",

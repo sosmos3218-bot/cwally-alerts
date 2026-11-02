@@ -91,7 +91,7 @@ def problem(cfg: dict, state: dict, now: datetime, kind: str, detail: str, dry: 
     if state.get("last_problem_key") == key:
         print(f"problem already reported: {kind}")
         return
-    title = f"[TRUEN] 3Q {kind} | 비중 유지"
+    title = f"[TRUEN] 417790 3Q {kind} | 비중 유지"
     lines = [
         "이게 뭐 알림: 트루엔 417790 2026년 3분기 공시를 찾는 알림의 운영 안내입니다. 매매 신호 아님.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST.",
@@ -121,7 +121,7 @@ def result_message(cfg: dict, item: dict, rows: list[dict], now: datetime) -> tu
     over_txt = " / ".join(over).rstrip(".") if over else "공시 본문에서 수출 또는 해외 숫자를 못 읽음. 원문 확인"
     rel_txt = " / ".join(rel) if rel else f"{cfg['related_since']} 이후 자사주 소각 또는 배당 관련 새 공시 없음"
     base = cfg["baseline"]
-    title = "[TRUEN] 3Q 공시 나옴 | 확인 3가지"
+    title = "[TRUEN] 417790 3Q 공시 나옴 | 확인 3가지"
     lines = [
         "이게 뭐 알림: 트루엔 417790 2026년 3분기 공시가 나오면 해외 매출 비중, 자사주 소각과 배당, 순현금 쓰임을 확인하라고 알려주는 점검 알림입니다. 매매 신호 아님.",
         (

@@ -169,7 +169,7 @@ def status_line(row: dict, f: dict, lv: dict, corrected: bool, st: dict) -> str:
 def build_msg(cfg: dict, stamp: str, ev: str, row: dict, f: dict, corrected: bool, st: dict) -> tuple[str, str, int, list[str]]:
     lv, word = cfg["levels"], EV[ev][0]
     pri = cfg["priority"][EV[ev][1]]
-    title = f"{TAG} LG엔솔 외국인 지분율 {word} {row['ratio']:.2f}% ({md(row['date'])})"
+    title = f"{TAG} 373220 LG엔솔 외국인 지분율 {word} {row['ratio']:.2f}% ({md(row['date'])})"
     if ev == "release":
         what = (f"LG에너지솔루션 외국인 지분율이 이탈 뒤 {lv['release_at_or_above_pct']:.2f}% 이상으로 회복해 경고를 풀고 "
                 f"두 선(5.50%, 5.45%)을 다시 무장했다는 알림. 매매 신호 아님.")
@@ -220,7 +220,7 @@ def evaluate(cfg: dict, st: dict, rows: list[dict], stamp: str) -> list[tuple[st
 
 
 def ops_msg(cfg: dict, stamp: str, title_tail: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} {title_tail}",
+    return (f"{TAG} 373220 {title_tail}",
             body(stamp, "LG엔솔 외국인 지분율 데이터 수집 안내. 매매 신호 아님.", status,
                  "할 일 없음. 다음 19:00 실행 때 다시 확인합니다.", "같은 안내가 며칠 이어지면 데이터 출처 점검 필요.",
                  "이 안내로 비중을 바꾸지 않기.", "데이터 없음을 조건 미충족(안전)으로 읽기."))

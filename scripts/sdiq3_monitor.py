@@ -139,7 +139,7 @@ def problem(cfg: dict, state: dict, now: datetime, kind: str, detail: str, dry: 
     if state.get("last_problem_key") == key:
         print(f"problem already reported: {kind}")
         return
-    title = f"[SDI] 삼성SDI 3Q {kind} | 관망 유지"
+    title = f"[SDI] 006400 삼성SDI 3Q {kind} | 관망 유지"
     lines = [
         "이게 뭐 알림: 삼성SDI 006400 2026년 3분기 잠정 영업이익에서 AMPC를 뺀 값을 1,600억원과 비교하는 알림의 운영 안내.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST. 공시: {DISCLOSURES}",
@@ -167,7 +167,7 @@ def result_message(cfg: dict, item: dict, p: dict, now: datetime) -> tuple[str, 
     else:
         comp_text = "보상금 공시 없음"
     sales = f"매출 {p['sales']:,}억원, " if p["sales"] is not None else ""
-    title = f"[SDI] 삼성SDI 3Q {verdict} | AMPC 제외 {core:,}억원"
+    title = f"[SDI] 006400 삼성SDI 3Q {verdict} | AMPC 제외 {core:,}억원"
     if verdict == "관망 상향":
         action = "관망 상향. 추가 매수 신호는 아닙니다. 컨퍼런스콜에서 4분기 가이던스를 확인하세요."
     else:
@@ -524,7 +524,7 @@ def q4_result_message(q: dict, item: dict, p: dict, status: str, now: datetime, 
         action = ("관망 상향. 추가 매수 신호는 아닙니다." if verdict == "관망 상향" else "관망 유지. 비중을 바꾸지 마세요.")
     sales = f"매출 {p['sales']:,}억원, " if p["sales"] is not None else ""
     basis = "4분기 분기 표" if status == "q4" else "연간 공시 안 '26.4Q 당해실적 열"
-    head = f"[SDI] 삼성SDI 4Q {'후속 ' + follow if follow else '잠정'} | AMPC 제외 {core:,}억원, {verdict}"
+    head = f"[SDI] 006400 삼성SDI 4Q {'후속 ' + follow if follow else '잠정'} | AMPC 제외 {core:,}억원, {verdict}"
     lines = [
         "이게 뭐 알림: 삼성SDI 006400 2026년 4분기(10/1~12/31) 잠정 실적. 공시된 영업이익, AMPC, 영업이익-AMPC와 보상/정산 금액을 따로 보여줍니다."
         + (f" 후속: {follow}." if follow else ""),
@@ -545,7 +545,7 @@ def q4_result_message(q: dict, item: dict, p: dict, status: str, now: datetime, 
 
 
 def q4_problem_lines(q: dict, kind: str, detail: str, now: datetime) -> tuple[str, list[str]]:
-    title = f"[SDI] 삼성SDI 4Q {kind} | 관망 유지"
+    title = f"[SDI] 006400 삼성SDI 4Q {kind} | 관망 유지"
     lines = [
         "이게 뭐 알림: 삼성SDI 006400 2026년 4분기 잠정 실적 확인 알림의 운영 안내. 매매 신호가 아닙니다.",
         f"지금 결과/상태: {kind}. {detail}. {now:%Y-%m-%d %H:%M} KST. 공시: {DISCLOSURES}",
@@ -785,7 +785,7 @@ def selftest() -> int:
     st4: dict = {}
     check("미게시 at end", run_q4(cfg, st4, datetime(2027, 3, 31, 15, 20, tzinfo=KST), "auto", lambda: [q3real], send, lambda: None), ["problem:미게시"])
     check("after window silent", run_q4(cfg, {}, datetime(2027, 4, 1, 9, 0, tzinfo=KST), "auto", lambda: rows, send, lambda: None), ["outside"])
-    check("route ops titles", route_topic("cwally-port", "[SDI] 삼성SDI 4Q 숫자 미확인 | 관망 유지"), "cwally-ops")
+    check("route ops titles", route_topic("cwally-port", "[SDI] 006400 삼성SDI 4Q 숫자 미확인 | 관망 유지"), "cwally-ops")
     check("--as-of rejected outside dry", _parse_args(["auto", "--as-of", "2027-01-28 09:00"])[0], "error")
     check("--part q4 parse", _parse_args(["auto", "--part", "q4"])[:2], ("auto", "q4"))
     check("default part q3", _parse_args(["auto"])[:2], ("auto", "q3"))

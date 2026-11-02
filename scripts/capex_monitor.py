@@ -346,7 +346,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             st["fail_runs"][tk] = int(st["fail_runs"].get(tk, 0)) + 1
             print(f"{tk}: SEC 조회 실패 {st['fail_runs'][tk]}회 연속: {type(exc).__name__}: {exc}")
             if st["fail_runs"][tk] >= int(cfg["sec"]["ops_fail_after_runs"]) and st["fail_notice"].get(tk) != today:
-                send(mode, OPS, f"[MEMWATCH] capex {tk} SEC 조회 실패 {st['fail_runs'][tk]}회 연속 | 판정 보류",
+                send(mode, OPS, f"[MEMWATCH] {tk} capex SEC 조회 실패 {st['fail_runs'][tk]}회 연속 | 판정 보류",
                      body([f"{now:%Y-%m-%d %H:%M KST} | MEMWATCH capex | {tk} SEC EDGAR 조회 실패",
                            f"이게 뭐 알림: 운영 알림. 매매 신호 아님. 사유: {type(exc).__name__}: {str(exc)[:200]}",
                            "지금 할 일: 없음. 다음 07:30 실행에서 같은 공시를 다시 봅니다 (본 것으로 표시 안 함)."]), 3, cfg, ["warning"])
@@ -420,7 +420,7 @@ def selftest(cfg: dict) -> int:
         assert "\u00b7" not in tt + mm and "\u2014" not in tt + mm, tt
         assert "확인 불가" not in tt and "조회 실패" not in tt and route_topic(PORT, tt) == PORT, tt
         assert [x.split(":")[0] for x in mm.split("\n")[1:7]] == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"], mm
-    assert route_topic(PORT, "[MEMWATCH] capex MSFT SEC 조회 실패 3회 연속 | 판정 보류") == OPS
+    assert route_topic(PORT, "[MEMWATCH] MSFT capex SEC 조회 실패 3회 연속 | 판정 보류") == OPS
     assert season_of("2027-01-28") == season_of("2027-02-05") == "2027-Q1" and season_of("2027-04-25") == "2027-Q2"
     for tt, mm, pp in ((t, m, p), (t2, m2, p2), (t3, m3, p3)):
         print(f"-- sample (가짜 숫자)\nTITLE: {tt}\nPRIORITY: {pp}\n{mm}\n")
@@ -446,7 +446,7 @@ def main() -> int:
             st = load_state()
             today = now.strftime("%Y-%m-%d")
             if st["fail_notice"].get("_script") != today:
-                publish(OPS, "[MEMWATCH] capex 스크립트 오류 | 이번 실행 판정 못 함",
+                publish(OPS, "[MEMWATCH] MSFT/GOOGL/META/AMZN capex 스크립트 오류 | 이번 실행 판정 못 함",
                         clean(f"{now:%Y-%m-%d %H:%M KST} | MEMWATCH capex 스크립트 오류: {type(exc).__name__}: {str(exc)[:300]}"),
                         3, ["warning"], resolve_server(cfg.get("ntfy_server")), config_name=NAME)
                 st["fail_notice"]["_script"] = today

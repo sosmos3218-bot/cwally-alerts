@@ -123,9 +123,9 @@ def main() -> int:
         send = monday or (zone_changed and z in EVENT_ZONES)
 
     title_act = ZONE_KO.get(z, z)
-    title = f"[2UB] {title_act}"
+    title = f"[2UB] 005387/005380 {title_act}"
     if monday:
-        title = f"[2UB] 주간 | {title_act}"
+        title = f"[2UB] 005387/005380 주간 | {title_act}"
 
     px = f"{pref:,.0f}원" if pref is not None else "시세 없음"
     cx = f"{common:,.0f}원" if common is not None else "시세 없음"
