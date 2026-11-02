@@ -1,6 +1,6 @@
 {
   "name": "aptrt",
-  "display": "[APT-RT] 관심 아파트 매매 실거래 주간 요약",
+  "display": "[APT-RT] 관심 아파트 매매, 전세 실거래 주간 요약",
   "approval": "사용자 채팅 승인 2026-11-02 (기본안: 주 1회 월요일 09:00 morning 슬롯, 새 cron 없음)",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
@@ -10,14 +10,84 @@
   "priority": 3,
   "api": "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade",
   "api_note": "국토교통부 아파트 매매 실거래가 자료(data.go.kr). serviceKey = GitHub secret DATA_GO_KR_KEY. 매주 이번 달 + 지난 달 계약분을 읽음(신고 기한 30일). 첫 실행은 지난 12개월 + 이번 달을 읽어 기준과 12개월 최고가 이력만 기록",
+  "rent_api": "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent",
+  "rent_note": "2026-11-02 추가(사용자 요청 pt23u): 국토교통부 아파트 전월세 실거래가(같은 키, 활용신청 완료). 전세 = monthlyRent 0 만, 계약일, 층, 보증금, 신규/갱신(contractType, 갱신이면 종전 보증금). 월세는 건수만. 단지별 전세가율 = 최근 3개월 전세 보증금 중앙값 / 최근 3개월 매매 중앙값. 전세 첫 실행은 지난 6개월 이력만. 전세 API 실패는 cwally-ops, 매매 요약은 그대로",
+  "rent_history_months": 6,
   "history_months": 12,
   "complexes": [
-    {"key": "gw_e2", "name": "광교2차e편한세상", "lawd": ["41117"], "umd": "이의동", "jibun": "1200", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
-    {"key": "gw_hy", "name": "광교한양수자인", "lawd": ["41117"], "umd": "이의동", "jibun": "1211", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
-    {"key": "gw_hb", "name": "광교웰빙타운호반베르디움", "lawd": ["41117"], "umd": "이의동", "jibun": "1184", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
-    {"key": "gw_dk", "name": "광교대광로제비앙", "lawd": ["41117"], "umd": "이의동", "jibun": "1182", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
-    {"key": "suji_cip", "name": "수지센트럴아이파크", "lawd": ["41465"], "umd": "상현동", "jibun": "842", "area_min": 101.5, "area_max": 102.5, "area_label": "101.98㎡"},
-    {"key": "dt_hs", "name": "힐스테이트동탄", "lawd": ["41597", "41590"], "umd": "목동", "jibun": "491", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"}
+    {
+      "key": "gw_e2",
+      "name": "광교2차e편한세상",
+      "lawd": [
+        "41117"
+      ],
+      "umd": "이의동",
+      "jibun": "1200",
+      "area_min": 84.0,
+      "area_max": 85.0,
+      "area_label": "84㎡"
+    },
+    {
+      "key": "gw_hy",
+      "name": "광교한양수자인",
+      "lawd": [
+        "41117"
+      ],
+      "umd": "이의동",
+      "jibun": "1211",
+      "area_min": 84.0,
+      "area_max": 85.0,
+      "area_label": "84㎡"
+    },
+    {
+      "key": "gw_hb",
+      "name": "광교웰빙타운호반베르디움",
+      "lawd": [
+        "41117"
+      ],
+      "umd": "이의동",
+      "jibun": "1184",
+      "area_min": 84.0,
+      "area_max": 85.0,
+      "area_label": "84㎡"
+    },
+    {
+      "key": "gw_dk",
+      "name": "광교대광로제비앙",
+      "lawd": [
+        "41117"
+      ],
+      "umd": "이의동",
+      "jibun": "1182",
+      "area_min": 84.0,
+      "area_max": 85.0,
+      "area_label": "84㎡"
+    },
+    {
+      "key": "suji_cip",
+      "name": "수지센트럴아이파크",
+      "lawd": [
+        "41465"
+      ],
+      "umd": "상현동",
+      "jibun": "842",
+      "area_min": 101.5,
+      "area_max": 102.5,
+      "area_label": "101.98㎡"
+    },
+    {
+      "key": "dt_hs",
+      "name": "힐스테이트동탄",
+      "lawd": [
+        "41597",
+        "41590"
+      ],
+      "umd": "목동",
+      "jibun": "491",
+      "area_min": 84.0,
+      "area_max": 85.0,
+      "area_label": "84㎡"
+    }
   ],
   "complexes_note": "단지는 법정동(umdNm) + 지번(jibun)으로 맞춤(같은 이름 광교호반베르디움 원천동 606 같은 다른 단지 제외). 화성시는 2026-02-01 동탄구(41597) 신설, 그 전 자료는 41590 이라 둘 다 읽음",
   "max_lines_per_complex": 6,
