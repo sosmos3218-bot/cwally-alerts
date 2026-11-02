@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-02T17:23:42+09:00",
+  "generated_at": "2026-11-02T17:34:27+09:00",
   "trade_date": "2026-11-02",
   "demo": false,
   "params": {
@@ -15,7 +15,7 @@
     "max_stop_distance_pct": 10,
     "panic_enabled": true,
     "panic_pct": 12,
-    "ma_window": 20,
+    "ma_window": 50,
     "ma_arm_gain_pct": 8,
     "chase_max_distance_pct": 5,
     "liquidity_avg_days": 20,
@@ -37,7 +37,7 @@
     "breadth_min_pct": 30,
     "download_min_marcap_krw": 0,
     "download_min_amount_krw": 0,
-    "ntfy_enabled": false
+    "ntfy_enabled": true
   },
   "data_status": {
     "source": "FinanceDataReader 0.9.202 KRX 일봉 (종목코드 기본 경로는 Naver 일봉)",

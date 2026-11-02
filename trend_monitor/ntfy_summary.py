@@ -1,8 +1,8 @@
-"""ntfy 요약. 기본은 꺼져 있고 이 모듈은 발송하지 않습니다.
+"""ntfy 요약. 실행 1회에 요약 1통.
 
-제목은 [TREND] 로 시작하고, 관련 종목코드를 넣습니다.
-종목이 없으면 지수 티커 KOSPI 를 넣습니다.
-본문 순서는 저장소 알림 문안과 같습니다.
+토픽은 cwally-port 로 고정합니다. 서버는 https://ntfy.sh 입니다.
+저장소에 ntfy 토큰 시크릿은 없고, scripts/ntfy_util.publish 를 그대로 씁니다.
+제목에 관련 종목코드와 이름이 들어갑니다. 해당 종목이 없으면 KOSPI 가 들어갑니다.
 """
 
 from __future__ import annotations
@@ -11,66 +11,141 @@ from pathlib import Path
 
 from trend_monitor.config import Config
 
+_BAD = ("·", "・", "—", "–")
 
-def _tickers(payload: dict) -> list[str]:
-    found = []
-    for row in payload.get("holdings") or []:
-        if row.get("signal") != "hold" and row.get("ticker") not in found:
-            found.append(row["ticker"])
-    for row in payload.get("candidates") or []:
-        if row.get("status") == "ok" and row.get("ticker") not in found:
-            found.append(row["ticker"])
-    return found
+
+def assert_plain_korean(text: str) -> None:
+    for mark in _BAD:
+        if mark in text:
+            raise ValueError(f"금지 문자가 있습니다: {mark}")
+
+
+def _md(trade_date: str) -> str:
+    parts = str(trade_date).split("-")
+    if len(parts) == 3 and all(part.isdigit() for part in parts):
+        return f"{int(parts[1]):02d}/{int(parts[2]):02d}"
+    return str(trade_date)
+
+
+def _breadth_text(payload: dict) -> str:
+    risk = payload.get("risk") or {}
+    value = risk.get("breadth_pct_above_ma50")
+    if value is None:
+        return "없음"
+    return f"{float(value):.1f}%"
+
+
+def _named(rows: list[dict]) -> list[str]:
+    out = []
+    seen = set()
+    for row in rows:
+        ticker = str(row.get("ticker") or "")
+        name = str(row.get("name") or "").strip()
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        out.append(f"{ticker} {name}".strip())
+    return out
 
 
 def build_title(payload: dict) -> str:
-    tickers = _tickers(payload)
-    tail = " ".join(tickers) if tickers else "KOSPI"
-    sells = sum(1 for row in payload.get("holdings") or [] if row.get("signal") != "hold")
-    fresh = sum(1 for row in payload.get("candidates") or [] if row.get("status") == "ok")
-    if sells or fresh:
-        action = f"매도 {sells} 신규 {fresh}"
+    sells = [row for row in payload.get("holdings") or [] if row.get("signal") != "hold"]
+    fresh = [row for row in payload.get("candidates") or [] if row.get("status") == "ok"]
+    named = _named(sells + fresh)
+    if not named:
+        title = (
+            f"[TREND] KOSPI 추세점검 {_md(payload.get('trade_date') or '')}: "
+            f"후보 0, 시장폭 {_breadth_text(payload)}"
+        )
     else:
-        action = "보유 유지, 신규 없음"
-    prefix = "[TREND] DEMO" if payload.get("demo") else "[TREND]"
-    return f"{prefix} {action} | {tail}"
+        title = "[TREND] " + ", ".join(named)
+    assert_plain_korean(title)
+    return title
 
 
 def build_body(payload: dict, cfg: Config) -> str:
-    day = payload["trade_date"]
-    sells = [row for row in payload["holdings"] if row["signal"] != "hold"]
-    oks = [row for row in payload["candidates"] if row["status"] == "ok"]
-    sell_text = ", ".join(f"{row['ticker']} {row['signal']} {row['sell_qty']}주" for row in sells) or "없음"
-    new_text = ", ".join(f"{row['ticker']} {row['qty']}주" for row in oks[:5]) or "없음"
-    demo = "DEMO. 실매매 신호가 아닙니다. " if payload.get("demo") else ""
-    lines = [
-        f"이게 뭐 알림: {demo}추세 추종 일일 점검입니다. 종가 기준으로 보유와 신규 돌파를 계산했습니다. 기준일 {day}.",
-        f"지금 결과/상태: 매도 {len(sells)}건 ({sell_text}). 신규 적정 {len(oks)}건 ({new_text}). 시장 폭 {payload['risk'].get('breadth_pct_above_ma50')}%.",
-        "지금 할 일: 매도 수량은 다음 거래일에 줄이고, 신규는 status 가 ok 인 수량만 봅니다.",
-        "나중에: 클라이맥스 다음은 평단과 이평 중 높은 값이 방어선입니다. 상태 저장은 사람이 --apply-state 를 준 때만 합니다.",
-        "익절/줄일 때: 손절, 패닉, 이평 이탈은 잔량 전부. 클라이맥스만 절반.",
-        "하지 말 것: 장중 저가로 끊지 마세요. 돌파가보다 5% 넘게 오른 종목은 사지 마세요. 미수, 신용은 쓰지 마세요.",
-    ]
+    sells = [row for row in payload.get("holdings") or [] if row.get("signal") != "hold"]
+    fresh = [row for row in payload.get("candidates") or [] if row.get("status") == "ok"]
+    breadth = (payload.get("risk") or {}).get("breadth_pct_above_ma50")
+    halved = breadth is not None and float(breadth) < cfg.breadth_min_pct
+    label = {
+        "stop": "손절",
+        "ma_break": f"{cfg.ma_window}일선 이탈",
+        "climax_half": "클라이맥스 50%",
+        "panic": "패닉",
+    }
+    lines = []
+    if payload.get("demo"):
+        lines.append("DEMO. 실매매 신호가 아닙니다.")
+    lines.append("매도")
+    if not sells:
+        lines.append("보유 매도 신호 없음.")
+    for row in sells:
+        kind = label.get(row.get("signal"), row.get("signal"))
+        lines.append(
+            f"{row['ticker']} {row.get('name') or ''} {kind}, 매도 {row.get('sell_qty')}주, "
+            f"종가 {row.get('close')}, 방어선 {row.get('defense_line')}."
+        )
+    lines.append("신규")
+    if not fresh:
+        lines.append("신규 후보 없음.")
+    for row in fresh:
+        extra = ""
+        if halved:
+            extra = " 시장폭 30% 미만이라 1R 수량을 절반으로 줄였습니다."
+        lines.append(
+            f"{row['ticker']} {row.get('name') or ''} 진입 {row.get('close')}, "
+            f"손절 {row.get('stop')}, 1R {row.get('qty')}주.{extra}"
+        )
+    lines.append(f"시장폭 {_breadth_text(payload)}. 시가총액 상위 종목 중 50일선 위 비율입니다.")
     end = "종료일 없음" if not cfg.ends_kst else f"{cfg.ends_kst} KST"
     note = f" ({cfg.ends_note})" if cfg.ends_note else ""
     lines.append(f"꺼지는 때: {end}{note}")
-    return "\n".join(lines)
+    body = "\n".join(lines)
+    assert_plain_korean(body)
+    return body
 
 
 def build_message(payload: dict, cfg: Config) -> tuple[str, str]:
     return build_title(payload), build_body(payload, cfg)
 
 
+def delay_message(trade_date: str, detail: str) -> tuple[str, str]:
+    title = f"[TREND] KOSPI 시세 지연 {_md(trade_date)}"
+    body = "\n".join(
+        [
+            f"기준일 {trade_date} 의 마지막 봉이 그 날짜가 아닙니다.",
+            detail,
+            "이 메시지는 매매 신호가 아닙니다. 봉 날짜가 기준일과 같아지기 전에는 추세 요약을 보내지 않습니다.",
+            "꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
+        ]
+    )
+    assert_plain_korean(title)
+    assert_plain_korean(body)
+    return title, body
+
+
 def maybe_publish(payload: dict, cfg: Config, allow_send: bool = False, sender=None) -> dict:
-    """allow_send 가 아니면 네트워크를 호출하지 않습니다. CLI 는 이 값을 넘기지 않습니다."""
+    """allow_send 가 아니면 네트워크를 호출하지 않습니다."""
     title, body = build_message(payload, cfg)
-    if not cfg.ntfy_enabled or not allow_send:
+    if not allow_send:
+        return {"sent": False, "reason": "발송하지 않음", "title": title, "body": body}
+    if not cfg.ntfy_enabled:
         return {"sent": False, "reason": "ntfy 가 꺼져 있습니다.", "title": title, "body": body}
-    if cfg.ntfy_topic not in {"cwally-port", "cwally-ops"}:
-        return {"sent": False, "reason": "허용되지 않은 토픽입니다.", "title": title, "body": body}
+    topic = "cwally-port"
     if sender is None:
         sender = _repo_publish
-    sender(cfg.ntfy_topic, title, body, cfg.ntfy_priority, cfg)
+    sender(topic, title, body, cfg.ntfy_priority, cfg)
+    return {"sent": True, "reason": "", "title": title, "body": body}
+
+
+def publish_delay(trade_date: str, detail: str, allow_send: bool = False, sender=None) -> dict:
+    title, body = delay_message(trade_date, detail)
+    if not allow_send:
+        return {"sent": False, "reason": "발송하지 않음", "title": title, "body": body}
+    if sender is None:
+        sender = _repo_publish
+    sender("cwally-ops", title, body, 3, Config())
     return {"sent": True, "reason": "", "title": title, "body": body}
 
 
@@ -88,6 +163,7 @@ def _repo_publish(topic: str, title: str, body: str, priority: int, cfg: Config)
         body,
         priority=priority,
         tags=["chart_with_upwards_trend"],
+        server="https://ntfy.sh",
         config={
             "name": "trend",
             "title_prefix": "[TREND]",

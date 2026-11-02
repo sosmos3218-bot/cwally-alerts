@@ -4,7 +4,3 @@ trend_monitor/cache/
 trend_monitor/state/
 trend_monitor/holdings.csv
 trend_monitor/watchlist.csv
-trend_monitor/output/*
-!trend_monitor/output/.gitkeep
-!trend_monitor/output/sample-no-holdings.json
-!trend_monitor/output/backtest-summary.json

@@ -53,7 +53,14 @@ def load_live(cfg: Config, target: date, source: str, holding_list, cache_dir: P
             frames[ticker] = data_mod.load_bars(ticker, start, target, source, cache_dir)
         except TrendDataError as exc:
             raise TrendDataError(f"필수 종목 {ticker} 시세를 읽지 못했습니다. {exc}") from exc
-    refs = data_mod.require_reference(frames, cfg.reference_tickers, target)
+    refs_ok = True
+    try:
+        refs = data_mod.require_reference(frames, cfg.reference_tickers, target)
+    except TrendDataError as exc:
+        if "마지막 봉" not in str(exc):
+            raise
+        warnings.append(str(exc))
+        return frames, pd.DataFrame(), warnings, str(exc)
     if len(refs) < len(cfg.reference_tickers):
         warnings.append("일부 기준 종목 봉이 기준일과 다릅니다. 맞는 종목: " + ", ".join(refs))
 
@@ -84,7 +91,7 @@ def load_live(cfg: Config, target: date, source: str, holding_list, cache_dir: P
             "다운로드 전 시가총액 또는 당일 거래대금 하한을 적용했습니다. "
             "하한을 0으로 두면 보통주 전체를 받습니다."
         )
-    return frames, universe, warnings
+    return frames, universe, warnings, None
 
 
 def _entry_atr(df: pd.DataFrame, buy: date, ticker: str) -> tuple[float, date]:

@@ -1,9 +1,11 @@
-# trend_monitor 수동 실행. 스케줄은 일부러 없습니다.
-# 평일 15:40 KST 를 나중에 붙이는 방법은 trend_monitor/README.md 에 있습니다.
+# 평일 15:40 KST. 승인 2026-11-02. UTC cron 40 6 * * 1-5.
+# 휴장이면 스크립트가 종료코드 0 으로 끝나고 알림을 보내지 않습니다.
 
 name: trend-monitor
 
 on:
+  schedule:
+    - cron: "40 6 * * 1-5"
   workflow_dispatch:
     inputs:
       date:
@@ -21,15 +23,27 @@ on:
         required: false
         default: false
         type: boolean
+      dry_run:
+        description: "ntfy 본문만 출력하고 보내지 않음"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: cwally-trend-monitor
+  cancel-in-progress: false
 
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
 
       - uses: actions/setup-python@v6
         with:
@@ -41,9 +55,12 @@ jobs:
       - name: Run trend monitor
         env:
           OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
           INPUT_DATE: ${{ inputs.date }}
           INPUT_DEMO: ${{ inputs.demo }}
           INPUT_PARTIAL: ${{ inputs.allow_partial }}
+          INPUT_DRY: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           args=()
@@ -56,11 +73,36 @@ jobs:
           if [ "${INPUT_PARTIAL}" = "true" ]; then
             args+=(--allow-partial)
           fi
+          if [ "${INPUT_DRY}" = "true" ]; then
+            args+=(--dry-run)
+          fi
           python -m trend_monitor "${args[@]}"
 
-      - name: Upload output
-        uses: actions/upload-artifact@v4
-        with:
-          name: trend-monitor-output
-          path: trend_monitor/output/
-          if-no-files-found: warn
+      - name: Commit output to main
+        if: success() && (github.event_name == 'schedule' || (inputs.demo != true && inputs.dry_run != true))
+        run: |
+          set -euo pipefail
+          git config user.name "cwally-alerts-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add trend_monitor/output/latest.json trend_monitor/output/*.json trend_monitor/output/*.md trend_monitor/output/*.csv
+          if git diff --staged --quiet; then echo unchanged; exit 0; fi
+          git commit -m "chore: update trend monitor output"
+          ok=0
+          for i in 1 2 3 4; do
+            if git pull --rebase origin main; then
+              ok=1
+              break
+            fi
+            sleep $((i * 5))
+          done
+          if [ "$ok" != "1" ]; then
+            echo "rebase failed"
+            exit 1
+          fi
+          git push origin HEAD:main
+
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python3 scripts/ops_notify.py trend-monitor trend

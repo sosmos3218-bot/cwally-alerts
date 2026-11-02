@@ -26,8 +26,14 @@ def test_stop_mode_choices():
     assert raised
 
 
+def test_holiday_skips_without_alert(capsys):
+    assert main(["--date", "2026-11-01"]) == 0
+    out = capsys.readouterr().out
+    assert "휴장" in out
+    assert "NTFY TITLE" not in out
+
+
 def test_bad_date_and_partial_exit_codes(monkeypatch):
-    assert main(["--date", "2026-11-01"]) == 2
     kst = ZoneInfo("Asia/Seoul")
     monkeypatch.setattr("trend_monitor.cli.now_kst", lambda clock=None: datetime(2026, 11, 2, 15, 0, tzinfo=kst))
     assert main(["--date", "2026-11-02"]) == 2
@@ -108,10 +114,20 @@ def test_demo_offline_schema_and_ntfy_disabled(tmp_path, monkeypatch, capsys):
     notice = maybe_publish(payload, load_config(), allow_send=False, sender=lambda *a: sent.append(a))
     assert notice["sent"] is False
     assert sent == []
-    assert "900001" in notice["title"] or "KOSPI" in notice["title"]
-    title = build_title({"holdings": [], "candidates": [], "demo": False, "trade_date": "2026-11-02"})
-    assert title.endswith("KOSPI")
+    assert "900001" in notice["title"]
+    assert "데모돌파" in notice["title"]
+    title = build_title(
+        {
+            "holdings": [],
+            "candidates": [],
+            "demo": False,
+            "trade_date": "2026-11-02",
+            "risk": {"breadth_pct_above_ma50": 13.0},
+        }
+    )
+    assert "KOSPI" in title
     assert title.startswith("[TREND]")
+    assert "13.0%" in title
 
 
 def test_apply_state_only_when_asked(tmp_path):

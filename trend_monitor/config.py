@@ -36,7 +36,7 @@ class Config:
     climax_body_pct: float = -4.5
     climax_range_atr: float = 2.0
     climax_sell_fraction: float = 0.5
-    ma_window: int = 20
+    ma_window: int = 50
     ma_arm_gain_pct: float = 8.0
     chase_max_distance_pct: float = 5.0
     liquidity_avg_days: int = 20
@@ -62,11 +62,13 @@ class Config:
     sector_breadth_enabled: bool = False
     sector_breadth_min_ratio: float = 0.5
     sector_groups: list[SectorGroup] = field(default_factory=list)
-    ntfy_enabled: bool = False
+    ntfy_enabled: bool = True
     ntfy_topic: str = "cwally-port"
     ntfy_priority: int = 3
     ends_kst: str | None = None
-    ends_note: str = "스케줄 없음. 수동 실행만."
+    ends_note: str = "평일 15:40 KST. 휴장일은 알림 없음."
+    cron_approved: str | None = "2026-11-02"
+    cron_utc: str | None = "40 6 * * 1-5"
 
     def exit_params(self):
         from trend_monitor.rules import ExitParams

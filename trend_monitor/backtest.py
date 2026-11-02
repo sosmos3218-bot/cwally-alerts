@@ -11,6 +11,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -267,13 +268,9 @@ def simulate(ready: dict, signals: list[dict], cfg, start: date, end: date) -> d
 
 def run_backtest(cfg, frames, names, markets, start: date, end: date) -> dict:
     ready, signals = collect(frames, names, markets, cfg, start, end)
-    ma20 = simulate(ready, signals, cfg, start, end)
-    ma50_cfg = cfg
-    from dataclasses import replace
-
-    ma50_cfg = replace(cfg, ma_window=50)
-    ma50 = simulate(ready, signals, ma50_cfg, start, end)
-    return {"ma20": ma20, "ma50": ma50, "signals": len(signals)}
+    ma20 = simulate(ready, signals, replace(cfg, ma_window=20), start, end)
+    ma50 = simulate(ready, signals, replace(cfg, ma_window=50), start, end)
+    return {"ma20": ma20, "ma50": ma50, "signals": len(signals), "default_exit": "MA50"}
 
 
 def _parse_day(text: str | None, fallback: date) -> date:

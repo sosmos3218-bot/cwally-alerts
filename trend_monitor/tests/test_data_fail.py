@@ -71,5 +71,5 @@ def test_stale_reference(monkeypatch):
     monkeypatch.setattr("trend_monitor.engine.data_mod.load_bars", fake_load)
     from trend_monitor.engine import load_live
 
-    with pytest.raises(TrendDataError, match="마지막 봉"):
-        load_live(Config(), date(2026, 11, 2), "fdr", [])
+    frames, _universe, _warnings, stale = load_live(Config(), date(2026, 11, 2), "fdr", [])
+    assert stale and "마지막 봉" in stale

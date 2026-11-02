@@ -129,7 +129,7 @@ def build_climax(days: list[date]) -> pd.DataFrame:
 
 def write_fixtures() -> None:
     long_days = sessions_ending(DEMO_DAY, 280)
-    short_days = long_days[-40:]
+    short_days = long_days[-80:]
     OHLCV.mkdir(parents=True, exist_ok=True)
     frames = {
         "900001": build_breakout(long_days),

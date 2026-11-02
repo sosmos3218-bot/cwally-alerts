@@ -13,7 +13,7 @@ climax_min_gain_pct: 20
 climax_body_pct: -4.5
 climax_range_atr: 2
 climax_sell_fraction: 0.5
-ma_window: 20
+ma_window: 50
 ma_arm_gain_pct: 8
 chase_max_distance_pct: 5
 liquidity_avg_days: 20
@@ -41,8 +41,10 @@ dart_min_interval_sec: 0.25
 sector_breadth_enabled: false
 sector_breadth_min_ratio: 0.5
 sector_groups: []
-ntfy_enabled: false
+ntfy_enabled: true
 ntfy_topic: cwally-port
 ntfy_priority: 3
 ends_kst: null
-ends_note: "스케줄 없음. 수동 실행만."
+ends_note: "평일 15:40 KST. 휴장일은 알림 없음."
+cron_approved: "2026-11-02"
+cron_utc: "40 6 * * 1-5"

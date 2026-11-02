@@ -1,4 +1,4 @@
-"""명령줄. ntfy 는 보내지 않습니다."""
+"""명령줄. 휴장이 아니면 요약 1통을 보냅니다. --dry-run 은 출력만 합니다."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 from trend_monitor import holdings as holdings_mod
 from trend_monitor import ntfy_summary
 from trend_monitor import report as report_mod
-from trend_monitor.calendar_krx import assert_session_ready, default_trade_date, now_kst, parse_trade_date
+from trend_monitor.calendar_krx import assert_session_ready, default_trade_date, is_trading_day, now_kst, parse_trade_date
 from trend_monitor.config import apply_cli, load_config
 from trend_monitor.engine import OUTPUT_DIR, STATE_PATH, build_payload, load_live
 from trend_monitor.errors import TrendError
@@ -35,6 +35,7 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--source", choices=("fdr", "pykrx"), default="fdr")
     p.add_argument("--apply-state", action="store_true", help="이번 매도 제안을 상태 JSON 에 반영")
     p.add_argument("--workers", type=int, default=None)
+    p.add_argument("--dry-run", action="store_true", help="ntfy 제목과 본문만 출력하고 보내지 않습니다.")
     p.add_argument("--output-dir", default=None)
     return p
 
@@ -78,7 +79,16 @@ def _run(args) -> int:
         watch_items = load_watchlist(resolve_watchlist_path(args.watchlist))
     else:
         now = now_kst()
-        target = parse_trade_date(args.date) if args.date else default_trade_date(now)
+        if args.date:
+            target = parse_trade_date(args.date)
+        elif not is_trading_day(now.date()):
+            print(f"{now.date().isoformat()} 은 KRX 휴장입니다. 알림을 보내지 않습니다.", flush=True)
+            return 0
+        else:
+            target = default_trade_date(now)
+        if not is_trading_day(target):
+            print(f"{target.isoformat()} 은 KRX 휴장입니다. 알림을 보내지 않습니다.", flush=True)
+            return 0
         note = assert_session_ready(target, now, args.allow_partial)
         warnings = []
         if note:
@@ -91,10 +101,17 @@ def _run(args) -> int:
         state_path = STATE_PATH
         state_notes = holdings_mod.apply_state(holdings, holdings_mod.load_state(state_path))
         warnings.extend(state_notes)
-        frames, universe, live_warnings = load_live(
+        frames, universe, live_warnings, stale = load_live(
             cfg, target, args.source, holdings, extra_codes=[item.ticker for item in watch_items]
         )
         warnings.extend(live_warnings)
+        if stale:
+            notice = ntfy_summary.publish_delay(
+                target.isoformat(), stale, allow_send=not args.dry_run
+            )
+            _print_notice(notice, skipped=bool(args.dry_run))
+            print("최신 봉이 기준일과 다릅니다. 추세 요약은 보내지 않습니다.", flush=True)
+            return 0
         source = "FinanceDataReader" if args.source == "fdr" else "pykrx"
         if args.source == "fdr":
             source = "FinanceDataReader 0.9.202 KRX 일봉 (종목코드 기본 경로는 Naver 일봉)"
@@ -118,7 +135,9 @@ def _run(args) -> int:
         watch_items=watch_items,
     )
     paths = report_mod.write_outputs(payload, output_dir)
-    notice = ntfy_summary.maybe_publish(payload, cfg, allow_send=False)
+    allow_send = (not args.dry_run) and (not args.demo) and cfg.ntfy_enabled
+    notice = ntfy_summary.maybe_publish(payload, cfg, allow_send=allow_send)
+    _print_notice(notice, skipped=not allow_send)
     if args.demo:
         print("DEMO 실매매 신호가 아닙니다. 오프라인 픽스처입니다.", flush=True)
     print(
@@ -126,18 +145,19 @@ def _run(args) -> int:
         f"시장폭 {payload['risk']['breadth_pct_above_ma50']}",
         flush=True,
     )
-    print(f"ntfy: {notice['reason']} 제목 예시: {notice['title']}", flush=True)
-    shown = [c for c in payload["candidates"] if c["status"] == "ok"][:5]
-    if not shown:
-        shown = payload["candidates"][:5]
-    for row in shown:
-        print(
-            f"- {row['ticker']} {row['name']} {row['market']} 종가 {row['close']} 돌파 {row['breakout_price']} "
-            f"거리 {row['distance_pct']}% 수량 {row['qty']} 상태 {row['status']}",
-            flush=True,
-        )
     print(f"JSON {paths['latest']}", flush=True)
     return 0
+
+
+def _print_notice(notice: dict, skipped: bool) -> None:
+    print("NTFY TITLE", flush=True)
+    print(notice["title"], flush=True)
+    print("NTFY BODY", flush=True)
+    print(notice["body"], flush=True)
+    if skipped:
+        print("발송하지 않음", flush=True)
+    else:
+        print("ntfy 1통 발송", flush=True)
 
 
 if __name__ == "__main__":
