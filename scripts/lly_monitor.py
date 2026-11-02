@@ -712,9 +712,12 @@ def selftest(cfg: dict) -> int:
     samples.append(f"TITLE: {r[0][0]} (p{r[0][2]})\n{r[0][1]}")
 
     # price line: seed 1,373.70 armed, fire <= 1,200 once, re-arm > 1,212
-    st = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {}
-    check("seed state armed at 1373.70 on 2026-10-29", ((st.get("price") or {}).get("armed"), (st.get("price") or {}).get("last_close"), (st.get("price") or {}).get("last_date")), (True, 1373.7, "2026-10-29"))
-    st = {"price": {"armed": True, "last_close": 1373.7, "last_date": "2026-10-29"}}
+    # fixture seed pinned to the config seed, never the committed state/lly.json (the daily run moves it)
+    pl = cfg["price_line"]
+    st = {"price": {"armed": True, "fired": None, "last_close": pl["seed_close"], "last_date": pl["seed_date"], "fail_day": None}}
+    check("config seed 1373.70 on 2026-10-29 is above the line (armed, silent)",
+          (pl["seed_close"], pl["seed_date"], pl["seed_close"] > pl["rearm_above"], len(price_check(cfg, copy.deepcopy(st), pl["seed_close"], pl["seed_date"], stamp))),
+          (1373.7, "2026-10-29", True, 0))
     seq = [(1373.7, 0), (1250.0, 0), (1200.0, 1), (1150.0, 0), (1212.0, 0), (1190.0, 0), (1212.5, 0), (1199.99, 1), (1300.0, 0)]
     got = [len(price_check(cfg, st, px, "2026-11-0x", stamp)) for px, _ in seq]
     check("hysteresis 1373.7, 1250, 1200*, 1150, 1212(no rearm), 1190, 1212.5(rearm), 1199.99*, 1300", got, [x for _, x in seq])
