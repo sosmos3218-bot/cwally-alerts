@@ -686,6 +686,7 @@ jobs:
             python scripts/genpact_monitor.py auto
             python scripts/nke_monitor.py auto
             python scripts/lly_monitor.py auto
+            python scripts/ihi_monitor.py auto
             python scripts/lrcx_monitor.py auto
             python scripts/xbi_monitor.py auto
             python scripts/hwm_monitor.py auto

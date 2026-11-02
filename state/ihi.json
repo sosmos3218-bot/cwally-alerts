@@ -1,0 +1,30 @@
+{
+  "updated_at": "2026-11-02T13:40:00+09:00",
+  "rs": {
+    "armed": true,
+    "on": false,
+    "last_date": "2026-10-30",
+    "fired": null,
+    "fail_day": null,
+    "last": {
+      "date": "2026-10-30",
+      "close": 54.59,
+      "sma": 53.5458,
+      "ret_ihi": 0.7,
+      "ret_bench": 13.95,
+      "gap_pp": -13.25,
+      "cond_rs": false,
+      "cond_ma": true
+    }
+  },
+  "sec_fail_day": null,
+  "guidance": {
+    "seen": {},
+    "results": {},
+    "fail": {},
+    "check_sent": null,
+    "verdict": null,
+    "mdt_base": null
+  },
+  "seed_note": "2026-11-02 설치 시드: 10/30 종가 기준 신호 꺼짐, 무장 상태. 발송 없음."
+}

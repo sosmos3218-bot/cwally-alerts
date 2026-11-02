@@ -1,0 +1,64 @@
+{
+  "name": "ihi",
+  "title_prefix": "[IHI]",
+  "ticker": "IHI",
+  "display": "iShares 미국 의료기기 ETF",
+  "as_of": "2026-11-02",
+  "approval": "사용자 채팅 승인 2026-11-02 (\"네 소신껏 진행. ISRG는 정리했어.\", 추천 설계대로)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 번들(lly 옆)에 run 한 줄로 붙임. 미국 정규장 일봉 종가(Yahoo chart v8, LLY 와 같은 출처)로 판정, 데이터 거래일로 중복 방지. SEC 는 2027-01-01 ~ 03-31 판정 기간에만 읽음(MDT 직전 가이던스 기준값은 2026-11, 12월에 조용히 갱신).",
+  "holding": null,
+  "footer": "보유 없음 (ISRG 2026-11 정리), 미국 상장이라 ISA 불가, 해외계좌, 보수 0.37%",
+  "context": {
+    "date": "2026-10-30",
+    "close": 54.59,
+    "ihi_ytd_pct": -12.0,
+    "xlv_ytd_pct": 20.9,
+    "note": "10/30 종가 기준 IHI 54.59달러, 연초 대비 -12%, XLV 연초 대비 +20.9%(배당 포함)."
+  },
+  "rs_signal": {
+    "benchmark": "XLV",
+    "lookback": 63,
+    "sma": 200,
+    "rule": "최신 미국 정규장 종가 기준 (1) IHI 63거래일 가격 수익률 > XLV 63거래일 가격 수익률, (2) IHI 종가 > IHI 200일 단순이동평균. 둘 다 참이 되는 첫 종가에 1번(p4). 둘 중 하나라도 거짓인 종가에서 재무장. 수익률은 수정 전 종가(close[t] / close[t-63] - 1). 두 종목 최신 거래일이 다르거나 종가 비거나 이력이 모자라면 판단 보류, 발송 없음, 재무장 없음, cwally-ops 하루 1번.",
+    "meaning": "추세 전환 확인, 신규 분할 매수 검토 시점"
+  },
+  "guidance_2027": {
+    "months": ["2027-01", "2027-02"],
+    "deadline": "2027-02-28",
+    "seed_after": "2026-11-02",
+    "estimate_downgrade_manual": false,
+    "estimate_note": "애널리스트 선행 추정치 하향은 믿을 만한 무료 자동 출처가 없어 수동 입력. 확인되면 estimate_downgrade_manual 을 true 로 바꾸면 약세 판정.",
+    "tolerance": {"growth_pp": 0.25, "abt_eps_growth_pp": 0.5, "mdt_eps_usd": 0.005},
+    "companies": {
+      "ABT": {
+        "cik": "0000001800",
+        "kind": "abt",
+        "label": "2027",
+        "baseline": {"sales_growth_mid": 7.0, "eps_growth_mid": 10.0, "source": "2026-01-22 8-K EX-99.1: 2026 organic sales growth 6.5%~7.5%, adjusted diluted EPS 5.55~5.80달러(중간값 성장 10%)"}
+      },
+      "ISRG": {
+        "cik": "0001035267",
+        "kind": "isrg",
+        "label": "2027",
+        "baseline": {"proc_growth_mid": 14.0, "source": "2026-01-14, 01-22 8-K EX-99.1: 2026 worldwide da Vinci procedure growth 13%~15%"}
+      },
+      "MDT": {
+        "cik": "0001613103",
+        "kind": "mdt",
+        "label": "FY27",
+        "baseline": {"sales_growth_mid": 7.5, "eps_mid": 5.97, "date": "2026-09-01", "source": "2026-09-01 8-K EX-99.1(FQ1 FY27): FY27 organic revenue growth 7.25%~7.75%, non-GAAP EPS 5.94~6.00달러. 2026-11, 12월 새 FQ2 실적 8-K 가 나오면 state 에 자동 갱신"}
+      }
+    },
+    "rule": "회사별 핵심 가이던스 중간값을 기준과 비교. ABT: 2027 organic(또는 comparable) sales growth 중간값 vs 2026 첫 가이던스 7.0%(+-0.25%p), adjusted EPS 중간값 성장률 vs 10%(+-0.5%p). ISRG: 2027 worldwide da Vinci procedure growth 중간값 vs 2026 첫 가이던스 14.0%(+-0.25%p), ISRG 는 EPS 가이던스를 안 줌. MDT(회계연도 5월~4월, FQ3 실적 2월 중하순): FY27 organic revenue growth 중간값과 non-GAAP EPS 중간값 vs 직전 가이던스(같은 보도자료의 prior guidance 문구 우선, 없으면 직전 실적 8-K 값). 항목 하나라도 하향이면 회사 하향, 하향 없이 하나라도 상향이면 상향, 아니면 유지, 하나도 못 읽으면 확인 필요. 종합: 2곳 이상 하향 또는 추정치 하향(수동) = 약세, 관망 연장 / 2곳 이상 상향 + 상대강도 신호 켜짐 = 강세, 신규 분할 매수 전환 / 못 읽은 회사 때문에 결론이 바뀔 수 있으면 확인 필요 / 나머지 중립. 세 곳 모두 읽히면 판정, 2027-02-28 까지 다 안 나오면 3월 첫 실행에 읽힌 회사만으로 판정. 1번만."
+  },
+  "sources": {
+    "ihi": "https://query1.finance.yahoo.com/v8/finance/chart/IHI?interval=1d&range=2y",
+    "xlv": "https://query1.finance.yahoo.com/v8/finance/chart/XLV?interval=1d&range=2y",
+    "sec": "https://data.sec.gov/submissions/CIK{cik}.json"
+  },
+  "ends_kst": "2027-03-31 23:59",
+  "ends_note": "평일 09:00 IHI 상대강도 전환 신호, ABT, ISRG, MDT 2027 가이던스 판정 1번. 2027-03-31 이후 발송 없음"
+}
