@@ -71,17 +71,18 @@
     "2026-W41": "2026-10-07",
     "2026-W42": "2026-10-08",
     "2026-W43": "2026-10-20",
-    "2026-W44": "2026-10-23"
+    "2026-W44": "2026-10-23",
+    "2026-W45": "2026-10-30"
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-10-29",
-    "pref_close": 94500.0,
+    "session": "2026-10-30",
+    "pref_close": 95000.0,
     "common_close": 256000.0,
-    "discount_pct": 63.09,
-    "liq_median_value_eok": 5.72,
-    "avg5_volume": 5274,
-    "dps": 2973.0
+    "discount_pct": 62.89,
+    "liq_median_value_eok": 5.45,
+    "avg5_volume": 5060,
+    "dps": 3052.0
   },
-  "updated_at": "2026-10-30T09:07:17+09:00"
+  "updated_at": "2026-11-02T09:06:57+09:00"
 }

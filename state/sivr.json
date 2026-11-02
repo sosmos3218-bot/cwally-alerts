@@ -1,8 +1,10 @@
 {
-  "updated_at": "2026-10-30T09:07:17.676984+09:00",
-  "last_bar_date": "2026-10-28",
-  "last_close": 51.59000015258789,
-  "fired": {},
+  "updated_at": "2026-11-02T09:06:57.008833+09:00",
+  "last_bar_date": "2026-10-30",
+  "last_close": 46.880001068115234,
+  "fired": {
+    "t50": true
+  },
   "upper_on": false,
   "fetch_fail_date": null
 }

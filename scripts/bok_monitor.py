@@ -29,6 +29,7 @@ CFG_PATH = ROOT / "configs" / f"{NAME}.json"
 KR_CFG_PATH = ROOT / "configs" / "krrate.json"
 STATE_PATH = ROOT / "state" / f"{NAME}.json"
 DEC_KO = {"hold": "동결", "cut": "인하", "hike": "인상"}
+IDX = "KOSPI"  # 2026-10-31 전역 규칙: 종목 없는 알림은 제목에 지수 티커
 READY_HM = (10, 30)  # 결정 발표(보통 10시 전후) 뒤에만 판정
 
 
@@ -70,20 +71,20 @@ def message(cfg: dict, d: str, dec: dict, reached_before: bool, nxt: str, cross:
           f"출처: {dec.get('source', '확인 불가')}. {cross}." + (f" 소수의견: {dec['dissent']}." if dec.get("dissent") else ""))
     later = f"다음 회의 {nxt}. 2027-03-31 19:00 까지 회의마다 1번."
     if rate >= th - 1e-9 and not reached_before:
-        head = f"{TAG} KOSPI 기준금리 {rate:.2f}% {dk}, {th:.2f}% 도달" if dec["decision"] != "hold" else f"{TAG} KOSPI 기준금리 {rate:.2f}% 동결, {th:.2f}% 이상"
+        head = f"{TAG} {IDX} 기준금리 {rate:.2f}% {dk}, {th:.2f}% 도달" if dec["decision"] != "hold" else f"{TAG} {IDX} 기준금리 {rate:.2f}% 동결, {th:.2f}% 이상"
         return (head, body(stamp, f"{th:.2f}% 도달", WHAT, st,
                            "금리 민감 보유분(채권 ETF, 리츠, 고배당, 성장주) 점검. 대출 금리 변동분 확인.",
                            later + " 도달 알림은 이번 1번만, 다음 회의부터는 결과만 p3.",
                            "금리 상단 근처 판단은 결정문과 다음 회의 신호 문구([KR-RATE] 요약)로 따로 확인.",
                            "이 알림만으로 매수, 매도 결정하기."), cfg["priority"]["reach"], True)
     tail = f"{th:.2f}% 이상 유지" if rate >= th - 1e-9 else f"{th:.2f}% 미도달"
-    return (f"{TAG} KOSPI {d[5:7]}/{d[8:]} 금통위 기준금리 {rate:.2f}% {dk} | {tail}",
+    return (f"{TAG} {IDX} {d[5:7]}/{d[8:]} 금통위 기준금리 {rate:.2f}% {dk} | {tail}",
             body(stamp, "금통위 결과", WHAT, st, "확인만 하세요. 할 일 없음.", later,
                  "해당 없음.", "이 결과 알림을 매매 신호로 보기."), cfg["priority"]["result"], False)
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    return (f"{TAG} KOSPI 금통위 결정 확인 실패 | 판정 보류",
+    return (f"{TAG} {IDX} 금통위 결정 확인 실패 | 판정 보류",
             body(stamp, "출처 읽기 실패", "기준금리 3.25% 알림의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.", status,
                  "한국은행 홈페이지 통화정책방향 보도자료에서 결정을 직접 보세요.",
                  "다음 19:00 슬롯에서 다시 시도합니다(결정일 뒤 3일까지).",
@@ -91,10 +92,10 @@ def ops_msg(stamp: str, status: str) -> tuple[str, str]:
 
 
 def install_message(stamp: str) -> tuple[str, str]:
-    return (f"{TAG} KOSPI 설치 확인 | 매매 신호 아님",
+    return (f"{TAG} {IDX} 설치 확인 | 매매 신호 아님",
             body(stamp, "설치 확인", "한국은행 기준금리 3.25% 도달 알림 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.",
                  "현재 기준금리 3.00%(2026-08-27 인상, 10/22 동결, 한은 기준금리 표). 다음 금통위 2026-11-26. "
-                 "결정일 19:00 KST 에 새 기준금리가 3.25% 이상이면 p4 1번, 아니면 결과 p3 1번.",
+                 "결정일 19:00 KST 에 새 기준금리가 3.25% 이상이면 p4 1번만. 동결, 인하, 미도달은 알림 없음(조회 실패만 cwally-ops).",
                  "알림이 도착했는지 확인만 하세요.",
                  "2027년 회의는 한은 일정 발표 뒤 자동 반영. 2027-03-31 19:00 에 끝납니다.",
                  "해당 없음.", "이 메시지를 매매 신호로 해석하기."))
@@ -208,7 +209,7 @@ def run(mode: str, now: datetime, cfg: dict, kcfg: dict, pub=publish, sched_fn=N
 def selftest() -> int:
     global STATE_PATH
     import tempfile
-    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    cfg = {**json.loads(CFG_PATH.read_text(encoding="utf-8")), "notify_result_below": True}
     sched = lambda k, y: (["2026-10-22", "2026-11-26", "2027-01-15"], [])  # noqa: E731
     ecos = lambda a, b: {}  # noqa: E731
     sent = []

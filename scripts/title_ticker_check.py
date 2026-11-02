@@ -47,7 +47,7 @@ NON_SYMBOL = {
 }
 
 KR_RE = re.compile(r"(?<![A-Z0-9])(\d{6}|\d{4}[A-Z][A-Z0-9])(?![A-Z0-9])")
-PLACE_RE = re.compile(r"\{ticker\}|\{co\[['\"]code['\"]\]\}|\[['\"]code['\"]\]")
+PLACE_RE = re.compile(r"\{ticker\}|\{tk\}|join\(tks\)|\{co\[['\"]code['\"]\]\}|\[['\"]code['\"]\]")
 OPEN_RE = re.compile(r"""(?<![\'\"])(?P<pre>f?['\"])\[(?P<inner>[^\]]+)\]""")
 VAR_RE = re.compile(r"""f(?P<q>['\"])\{(?P<var>TAG|NAME|PREFIX|P|prefix)\}""")
 CFG_RE = re.compile(r"""f(?P<q>['\"])\{cfg\[['\"]title_prefix['\"]\]\}""")

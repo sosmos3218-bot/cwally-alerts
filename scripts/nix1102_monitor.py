@@ -80,19 +80,35 @@ def pct(v: float | None, digits: int = 2) -> str:
 
 
 # ---------------- 조회 ----------------
-def naver_daily(code: str) -> dict[str, dict]:
-    """{YYYY-MM-DD: {open, high, low, close}} 최근 60거래일, KRX 일별 시세."""
-    import naver_api
+DAUM_DAYS = "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page={page}&perPage=100&pagination=true"
+KRX_CLOSE_HM = (15, 40)
 
-    raw = naver_api.get_json(f"https://m.stock.naver.com/api/stock/{code}/price?pageSize=60&page=1")
+
+def daum_daily(code: str, now: datetime, min_rows: int = 61, max_pages: int = 3) -> dict[str, dict]:
+    """{YYYY-MM-DD: {open, high, low, close}} Daum KRX 정규장 일별 시세 (NXT 제외, 네이버 일별은 NXT 섞임이라 안 씀).
+    오늘 행은 KST 15:40 이후에만 확정으로 받는다."""
+    today = now.strftime("%Y-%m-%d")
+    after_close = (now.hour, now.minute) >= KRX_CLOSE_HM
+    headers = {"User-Agent": "Mozilla/5.0", "Referer": f"https://finance.daum.net/quotes/A{code}"}
     out: dict[str, dict] = {}
-    for r in raw if isinstance(raw, list) else []:
-        if not isinstance(r, dict):
-            continue
-        d = norm_day(r.get("localTradedAt"))
-        row = {k: naver_api.num(r.get(f"{k}Price")) for k in ("open", "high", "low", "close")}
-        if d and all(row[k] is not None for k in row):
-            out[d] = row
+    for page in range(1, max_pages + 1):
+        req = urllib.request.Request(DAUM_DAYS.format(code=code, page=page), headers=headers)
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            raw = json.loads(resp.read().decode("utf-8"))
+        rows = raw.get("data") or []
+        for r in rows:
+            if str(r.get("symbolCode")) != "A" + code:
+                raise ValueError("종목 코드 불일치")
+            d = str(r.get("date") or "")[:10]
+            if len(d) != 10 or d > today or (d == today and not after_close):
+                continue
+            row = {"open": r.get("openingPrice"), "high": r.get("highPrice"), "low": r.get("lowPrice"), "close": r.get("tradePrice")}
+            if all(row[k] for k in row):
+                out[d] = {k: float(v) for k, v in row.items()}
+        if len(out) >= min_rows or not rows:
+            break
+    if not out:
+        raise ValueError("KRX 일별 시세 없음")
     return dict(sorted(out.items()))
 
 
@@ -131,13 +147,13 @@ def yahoo_closes(ticker: str) -> list[tuple[str, float]]:
     return bars
 
 
-def fetch_all(cfg: dict) -> dict:
+def fetch_all(cfg: dict, now: datetime) -> dict:
     data: dict = {"stocks": {}, "adr": None, "fx": None, "errors": []}
     for s in cfg["stocks"]:
         code = s["code"]
         item: dict = {"daily": {}, "foreign": {}}
         try:
-            item["daily"] = naver_daily(code)
+            item["daily"] = daum_daily(code, now)
         except Exception as exc:  # noqa: BLE001
             data["errors"].append(f"{s['name']} 일별 시세: {exc}")
         try:
@@ -306,7 +322,7 @@ def stock_lines(res: dict, cfg: dict) -> list[str]:
 
 def build_message(cfg: dict, results: list[dict], now: datetime) -> tuple[str, str, int]:
     verdicts = {r["code"]: r["verdict"] for r in results}
-    title = cfg["title_prefix"] + " 000660/005930 " + " | ".join(f"{r['short']} {r['verdict']}" for r in results)
+    title = cfg["title_prefix"] + " 000660/005930 " + " | ".join(f"{r['short']}({r['code']}) {r['verdict']}" for r in results)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     do_now = []
     later = []
@@ -324,7 +340,7 @@ def build_message(cfg: dict, results: list[dict], now: datetime) -> tuple[str, s
                 why.append(r["support"])
             if not r["foreign_ok"]:
                 why.append(r["foreign_txt"])
-            if r.get("adr") is not None and not r["adr_ok"]:
+            if r.get("adr") is not None and not r["adr_ok"] and r["adr"]["dev_pct"] is not None:
                 why.append("ADR 괴리 조건 미충족")
             if r["missing"]:
                 why.append("미확인 항목 있음")
@@ -365,7 +381,7 @@ def run(mode: str, now: datetime | None = None, data: dict | None = None) -> int
         return 0
     final_from = datetime.strptime(cfg["final_from_kst"], "%Y-%m-%d %H:%M").replace(tzinfo=KST)
     final = mode == "force" or now >= final_from
-    data = data if data is not None else fetch_all(cfg)
+    data = data if data is not None else fetch_all(cfg, now)
     for e in data["errors"]:
         print("fetch:", e)
     results = [judge_stock(cfg, s, data["stocks"].get(s["code"], {"daily": {}, "foreign": {}}), data) for s in cfg["stocks"]]
@@ -395,7 +411,7 @@ def run(mode: str, now: datetime | None = None, data: dict | None = None) -> int
                 [
                     f"{now.strftime('%Y-%m-%d %H:%M KST')} | NIX1102",
                     "이게 뭐 알림: 11/2 장 마감 후 점검에 필요한 일봉을 받지 못했습니다. 매매 신호가 아닙니다.",
-                    "지금 상태: 일봉 없음 " + ", ".join(no_candle) + (". 오류: " + " / ".join(data["errors"]) if data["errors"] else ""),
+                    "지금 상태: KRX 일봉 없음 " + ", ".join(no_candle) + (". 오류: " + " / ".join(data["errors"]) if data["errors"] else ""),
                     "지금 할 일: HTS에서 직접 11/2 종가와 10/30 저가를 비교하세요.",
                     "나중에: 필요하면 job=nix1102 를 oneoff_mode=auto 로 다시 실행.",
                     "익절/줄일 때: 해당 없음.",
@@ -445,11 +461,52 @@ def selftest() -> int:
         "break": (_fake(base * 0.90, base * 0.88, base * 0.95, -6000, -5000, base), _fake(219000, 218000, 226000, -1500, -900, 230000)),
         "no_foreign": (_fake(base * 0.965, base * 0.94, base * 0.97, None, -5000, base), _fake(226000, 221000, 227000, None, -900, 230000)),
     }
+    expect = {
+        "support_ok": ("1차 분할 진입 검토", "1차 분할 진입 검토"),
+        "break": ("진입 보류", "관망"),
+        "no_foreign": ("관망", "관망"),
+    }
+    cfg = load_cfg()
+    now = datetime(2026, 11, 2, 18, 20, tzinfo=KST)
     for name, (hy, sam) in cases.items():
         print(f"===== case {name}")
         data = {"stocks": {"000660": hy, "005930": sam}, "adr": adr, "fx": fx, "errors": []}
-        run("selftest", datetime(2026, 11, 2, 18, 20, tzinfo=KST), data)
+        run("selftest", now, data)
+        results = [judge_stock(cfg, s, data["stocks"][s["code"]], data) for s in cfg["stocks"]]
+        got = tuple(r["verdict"] for r in results)
+        assert got == expect[name], f"{name}: {got} != {expect[name]}"
+        title, body, _ = build_message(cfg, results, now)
+        assert "(000660)" in title and "(005930)" in title, title
+        assert "\u00b7" not in title + body and "\u2014" not in title + body, "middle dot or em-dash"
+    # 15:40 gate: today's row before close is not a bar
+    assert "2026-11-02" not in _gate_rows(datetime(2026, 11, 2, 15, 39, tzinfo=KST))
+    assert "2026-11-02" in _gate_rows(datetime(2026, 11, 2, 15, 40, tzinfo=KST))
+    print("SELFTEST OK")
     return 0
+
+
+def _gate_rows(now: datetime) -> dict:
+    fake = {"data": [
+        {"symbolCode": "A000660", "date": "2026-11-02 00:00:00", "openingPrice": 1, "highPrice": 2, "lowPrice": 1, "tradePrice": 2},
+        {"symbolCode": "A000660", "date": "2026-10-30 00:00:00", "openingPrice": 1, "highPrice": 2, "lowPrice": 1, "tradePrice": 2},
+    ]}
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps(fake).encode()
+
+    orig = urllib.request.urlopen
+    urllib.request.urlopen = lambda *a, **k: _Resp()
+    try:
+        return daum_daily("000660", now, min_rows=1)
+    finally:
+        urllib.request.urlopen = orig
 
 
 def main() -> int:
