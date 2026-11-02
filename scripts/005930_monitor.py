@@ -1210,7 +1210,14 @@ def _selftest(name: str, orig: dict) -> int:
     def at(d: str, h: int = 19) -> datetime:
         return datetime.fromisoformat(d).replace(hour=h, tzinfo=KST)
 
-    seed = load_state(cfg)  # committed seed must not fire on its own closes
+    # the config seed must not fire on its own closes. Pinned to default_state + the config seed (never the committed
+    # state/<name>.json; audit 2026-11-02); a line the seed close is already across starts disarmed, as at seeding.
+    seed = default_state(cfg)
+    seed.update(seeded=True, last_day=cfg["seed"]["day"], last_close=float(cfg["seed"]["close"]))
+    for ln in cfg["lines"]:
+        seed["lines"][ln["key"]]["armed"] = not hit(ln, seed["last_close"])
+    for ln in cfg.get("extra_lines") or []:
+        seed["extra"][ln["key"]]["armed"] = not hit(ln, seed["last_close"])
     st = copy.deepcopy(seed)
     rows = [{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}]
     check("seed close re-run silent", [s[0] for s in plan_sends(cfg, st, {"rows": rows}, [], at(cfg["seed"]["day"]), lambda c, d: None)], [])
