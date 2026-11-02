@@ -516,7 +516,7 @@ def mpc_run(mode: str, now: datetime, cfg: dict, st: dict, dec_fn, mkt_fn, pub=N
         why = "unconfirmed, retry next slot"
     for t, b, p, tp in out:
         assert not any(ch in t + b for ch in "\u00b7\u318d\u2014") and "매수" not in t and "신호" not in t, t
-        print(f"{'WOULD SEND' if mode != 'auto' else 'SEND'} p{p} -> {tp}: {t}\n{b}")
+        print(f"{'WOULD SEND' if mode != 'auto' else ('SEND' if pub is None else 'SELFTEST FAKE SEND (not published)')} p{p} -> {tp}: {t}\n{b}")
     if mode != "auto":
         return st, out, why
     server = resolve_server(cfg.get("ntfy_server"))
