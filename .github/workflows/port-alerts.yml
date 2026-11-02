@@ -638,7 +638,11 @@ jobs:
           # ccrev and fig retired 2026-10-26 (docs/retired-alerts.md)
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "shinwon" ]; then
             MODE=event
-            [ "$JOB" = "shinwon" ] && MODE=force
+            # 2026-11-02 (t34u): manual job=shinwon is selftest + dry (no ntfy, no state) unless oneoff_mode=auto (then force, as before)
+            if [ "$JOB" = "shinwon" ]; then
+              MODE=dry
+              if [ "$IREN_ONEOFF" = "auto" ]; then MODE=force; else python scripts/shinwon_monitor.py selftest; fi
+            fi
             python scripts/shinwon_monitor.py "$MODE"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "protec" ]; then
