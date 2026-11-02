@@ -104,8 +104,8 @@ def selftest() -> int:
     def rows(*pairs):
         return [{"day": d, "close": float(c)} for d, c in pairs]
 
-    committed = engine.load_state(cfg)
-    check("committed state: seeded, cursors set", (committed["seeded"], bool(committed["last_day"]), bool(committed["ratio"]["last_day"])), (True, True, True))
+    # The committed-state check (seeded, cursors set) was dropped 2026-11-02 (selftest audit): the selftest no longer
+    # reads state/0220wl_close.json at all.
     # The checks below are written against the config seed day (2026-10-27). The committed state moves on with every
     # 19:00 run, so use a fresh state pinned to the config seed (same fix as the engine selftest, 2026-10-26).
     seed = engine.default_state(cfg)

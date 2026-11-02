@@ -358,7 +358,10 @@ def selftest() -> int:
 
     # full runs with fakes
     now = datetime(2026, 10, 27, 9, 0, tzinfo=KST)
-    seed = load_state()
+    # fixed fixture = the original 10/23 seed (commit e2544a7), never the committed state/iefa.json that the
+    # 09:00 runs move on (audit 2026-11-02)
+    seed = {"initialized": True, "band": "BELOW", "last_date": "2026-10-23", "last_close": 95.68, "last_sma200": 96.21,
+            "pe_armed": True, "pe_last_asof": "2026-10-23", "pe_last_value": 18.42, "fail_day": None, "pe_fail_day": None}
     bars_ok = mk(hist + [101.0])
     last = str(bars_ok[-1][0])
     st0 = dict(seed, last_date=str(bars_ok[-2][0]), band="BELOW")

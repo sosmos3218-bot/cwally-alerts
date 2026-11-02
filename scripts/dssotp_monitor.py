@@ -459,8 +459,18 @@ def install(cfg: dict, now: datetime) -> None:
     send(cfg, "[DSSOTP] 000150 설치 확인 | 매매 신호 아님", body, 3, False)
 
 
+VALID_ARGS = {"auto", "dry", "force", "install"}
+
+
 def main() -> int:
     args = [a.lower() for a in sys.argv[1:]]
+    # Only these arguments exist (flow-alerts.yml runs it with none = auto). Anything else, e.g. "selftest" or a
+    # typo, must never fall through to auto (audit 2026-11-02).
+    unknown = [a for a in args if a not in VALID_ARGS]
+    if unknown:
+        print(f"dssotp: unknown argument(s) {' '.join(unknown)}; valid: (none)=auto, {', '.join(sorted(VALID_ARGS))}. "
+              "There is no offline selftest mode; dry runs the live parse check without ntfy or state.", file=sys.stderr)
+        return 2
     cfg = load_json(CFG_PATH, {})
     now = datetime.now(KST)
     state = load_json(STATE_PATH, DEFAULT_STATE)

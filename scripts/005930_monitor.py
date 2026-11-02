@@ -1287,14 +1287,21 @@ def _selftest(name: str, orig: dict) -> int:
 
 def _selftest_extra(name, check, at) -> None:
     full = load_cfg(name)
-    seed = load_state(full)
+    # Pinned to the config seed, never the committed state/<name>.json (the 19:00 runs move it on; audit 2026-11-02).
+    # Armed flags come from the config: a line the seed close is already across starts disarmed, as at migration.
+    seed = default_state(full)
+    seed.update(seeded=True, last_day=full["seed"]["day"], last_close=float(full["seed"]["close"]))
+    for ln in full["lines"]:
+        seed["lines"][ln["key"]]["armed"] = not hit(ln, seed["last_close"])
+    for ln in full["extra_lines"]:
+        seed["extra"][ln["key"]]["armed"] = not hit(ln, seed["last_close"])
     nxt = (date.fromisoformat(seed["last_day"]) + timedelta(days=1)).isoformat()
     st = copy.deepcopy(seed)
     ev = eval_lines(full, st, [{"day": nxt, "close": seed["last_close"]}], nxt, at(nxt))
-    check("extra: committed state, same close next day is silent", [e["key"] for e in ev], [])
+    check("extra: config seed state, same close next day is silent", [e["key"] for e in ev], [])
     for ln in full["extra_lines"]:
         if hit(ln, seed["last_close"]):
-            check(f"extra {ln['key']}: already across at migration, disarmed", seed["extra"][ln["key"]]["armed"], False)
+            check(f"extra {ln['key']}: already across at the config seed, disarmed", seed["extra"][ln["key"]]["armed"], False)
         f = float(ln.get("rearm_pct", full.get("rearm_pct", 1.0))) / 100
         lvl = ln["level"]
         on = lvl if ln["op"] in ("le", "ge") else lvl - 1
@@ -1480,7 +1487,11 @@ def _selftest_earn(name, check, at) -> None:
     bio = {"transcript": lambda e, y, qq, url=None: (EARN_FIX["ok"], url), "china": no_china}
     with tempfile.TemporaryDirectory() as tmp:
         sp = Path(tmp) / f"{name}.json"
-        sp.write_text(json.dumps(load_state(cfg), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        # pinned to the config seed, never the committed state (it already holds earn_auto[2026Q3] since the real
+        # 2026-10-30 backfill; audit 2026-11-02)
+        bseed = default_state(cfg)
+        bseed.update(seeded=True, last_day=cfg["seed"]["day"], last_close=float(cfg["seed"]["close"]))
+        sp.write_text(json.dumps(bseed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         before = sp.read_text(encoding="utf-8")
         g["state_path"] = lambda n: sp
         g["publish"] = lambda *a, **k: sent.append(a[1])
