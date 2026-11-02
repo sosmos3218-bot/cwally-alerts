@@ -1,0 +1,32 @@
+{
+  "name": "nixeps",
+  "display": "[NIX-EPS] SK하이닉스(000660) 2027E EPS 컨센서스 4주 하향",
+  "approval": "사용자 채팅 요청 '[NIX-EPS] 알림을 2027E EPS 4주 5% 하향 조건으로 만들어 줘.' (2026-11-02 KST). 사용자는 SK하이닉스 미보유, 신규 진입 관찰용",
+  "code": "000660",
+  "corp": "SK하이닉스",
+  "yahoo_symbol": "000660.KS",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule": "기존 평일 19:00 KST k203780 슬롯(KRX 거래일). 새 cron 없음. 컨센서스 기준일이 바뀐 날만 스냅샷 추가와 판정",
+  "target_year": "2027",
+  "context_year": "2026",
+  "window_days": 28,
+  "cut_pct": 5.0,
+  "rearm_within_pct": 2.0,
+  "step_pct": 5.0,
+  "priority": {"cut": 4, "step": 3},
+  "stale_days": 10,
+  "plausible_eps": {"min": 1000, "max": 5000000},
+  "sources": {
+    "consensus_page": "https://navercomp.wisereport.co.kr/v2/company/c1050001.aspx?cmp_cd={code}",
+    "consensus_table": "https://navercomp.wisereport.co.kr/v2/company/ajax/c1050001_data.aspx?flag=2&cmp_cd={code}&finGubun=MAIN&frq=0&sDT={dt}&chartType=svg",
+    "consensus_trend": "https://navercomp.wisereport.co.kr/v2/company/ajax/cF5001.aspx?cmp_cd={code}&dt={dt}&yymm={yymm}&frq=Y&acc_cd=122700&fingubun=MAIN&chartType=svg",
+    "overview_page": "https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={code}",
+    "yahoo_chart": "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1mo&interval=1d",
+    "note": "WiseReport(FnGuide) 컨센서스 = 최근 3개월 증권사 추정 평균, 지배주주 연결. 2027E EPS = c1050001_data '2027.12(E)' 행. 추정기관수는 c1010001 투자의견 컨센서스 표(1년차 기준). 첫 실행 백필 = cF5001 월말 EPS 추이(2027/12) 최근 3개월 점. 가격은 Yahoo 000660.KS KRX 정규장 종가(네이버 일별은 NXT 섞여서 안 씀)"
+  },
+  "overlap_note": "[000660] 은 가격 계획선(매수, 축소, 손절, 상방 레벨), [MEMWATCH] 는 D램/낸드 계약가와 CXMT HBM 인증 감시. EPS 컨센서스 감시는 이 알림만",
+  "window_start": "2026-11-02",
+  "ends_kst": "2027-03-31 19:00",
+  "ends_note": "2027-03-31 19:00 슬롯이 마지막. 그 뒤 조용히 종료"
+}
