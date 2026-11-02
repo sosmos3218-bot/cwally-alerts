@@ -4,19 +4,63 @@
   "ticker": "XLU",
   "display": "SPDR 유틸리티 ETF",
   "as_of": "2026-11-02",
-  "approval": "2026-11-02 채팅 승인 (\"[XLU] 알림을 09:00 묶음에 추가하고, 판단이 바뀔 때만 보내게 해 줘. 2027-02-26에 끝내 줘.\")",
+  "approval": "2026-11-02 채팅 승인 (\"[XLU] 알림을 09:00 묶음에 추가하고, 판단이 바뀔 때만 보내게 해 줘. 2027-02-26에 끝내 줘.\"); 2026-11-02 채팅 승인: 목표 비중 5%, 12월 FOMC 앞뒤 분할 지정가 가격대(price_bands)",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
   "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry.",
   "holding": false,
-  "holding_note": "보유 없음, 목표 비중 미정. 가격 매수 구간은 아직 없음.",
-  "price_bands": null,
-  "price_bands_note": "나중에 목표 비중이 정해지면 여기에 구간을 넣는다(예: [{\"key\": \"z1\", \"lo\": 41.0, \"hi\": 42.0}]). 지금 코드는 이 칸을 읽지 않는다.",
+  "holding_note": "보유 없음. 목표 비중 총자산 5% (1차 2%, 2차 2%, 3차 1%). 해외 계좌, ISA 아님.",
+  "price_bands": [
+    {
+      "key": "t1",
+      "label": "1차",
+      "lo": 41.7,
+      "hi": 42.0,
+      "pct": 2.0,
+      "shares": 71,
+      "budget_krw": 4000000,
+      "active_until_kst": "2026-12-09",
+      "phase": "FOMC 전",
+      "filled": false,
+      "basis": "10/30 종가 기준 50일선 41.75 (내림 41.70) ~ 20일선 41.95 (올림 42.00). 10/13~10/21 종가 41.36~42.21 박스와 겹침. 10/6 갭(10/5 고가 40.21 ~ 10/6 저가 40.41)은 더 아래라 3차 쪽 지지로 둠. 71주 = 400만원 / 1,345.40원 / 41.85달러"
+    },
+    {
+      "key": "t2",
+      "label": "2차",
+      "lo": 42.4,
+      "hi": 43.0,
+      "pct": 2.0,
+      "shares": 69,
+      "budget_krw": 4000000,
+      "active_from_kst": "2026-12-10",
+      "needs_fomc": [
+        "hold",
+        "cut"
+      ],
+      "phase": "FOMC 후 동결 또는 인하 확인 시",
+      "filled": false,
+      "basis": "고정 가격대. 10/22 돌파 뒤 10/23~10/28 저가 42.39~42.51 (하단 42.40), 같은 기간 종가 42.49~42.87 (상단 43.00 올림). 돌파 자리 되돌림 지지. 1차 위, 10/30 종가 43.43 아래. 69주 = 400만원 / 1,345.40원 / 42.70달러"
+    },
+    {
+      "key": "t3",
+      "label": "3차",
+      "lo": 39.5,
+      "hi": 40.0,
+      "pct": 1.0,
+      "shares": 37,
+      "budget_krw": 2000000,
+      "active_from_kst": "2026-12-10",
+      "phase": "FOMC 후 인상 시 또는 깊은 되돌림",
+      "filled": false,
+      "basis": "9/23~10/5 바닥 종가 39.25~39.97 의 위쪽 절반, 52주 저점(장중 39.03, 종가 39.25) 바로 위, 10/6 갭 하단 40.21 아래. 37주 = 200만원 / 1,345.40원 / 39.75달러"
+    }
+  ],
+  "price_bands_note": "가격대에 들어오면 1번, 경계 밖으로 0.3% 넘게 벗어나면 이탈 1번(XLU 데이터 날짜로 중복 방지). 체결 뒤 해당 가격대 filled 를 true 로, position.shares 를 체결 수량으로 고치면 그 가격대 알림은 완료로 꺼짐. 1차는 2026-12-09 뒤 조용히 끝, 2차는 12/10부터 12월 FOMC 동결 또는 인하일 때만, 3차는 12/10부터. 판단이 부정이면 2차 보류, 분할 일시 중지 문구.",
   "baseline": {
     "close_1030": 43.43,
     "low_52w": 39.03,
-    "high_52w": 47.80,
+    "high_52w": 47.8,
     "ten_0930": 5.29,
     "ten_1029": 4.98,
     "ten_note": "FRED DGS10",
@@ -26,20 +70,30 @@
   },
   "dividend_usd": 1.21,
   "rules": {
-    "pos_below": 4.50,
+    "pos_below": 4.5,
     "pos_days": 3,
-    "pos_exit_at_or_above": 4.60,
-    "neg_above": 5.30,
-    "neg_exit_below": 5.20,
+    "pos_exit_at_or_above": 4.6,
+    "neg_above": 5.3,
+    "neg_exit_below": 5.2,
     "note": "긍정: 10년물 종가 4.50% 미만 3거래일 연속 + 12월 FOMC 동결(인상 없음). 12월 FOMC 전이면 중립 유지 + 대기 안내 1번(p3). 부정: 10년물 종가 5.30% 초과 또는 12월 FOMC 인상(그 뒤 1월 FOMC 인상도 같음). 부정에서 벗어나려면 종가 5.20% 미만, 긍정에서 벗어나려면 종가 4.60% 이상 또는 그 뒤 인상. 그 밖은 중립."
   },
   "fomc": {
     "verified": "federalreserve.gov/monetarypolicy/fomccalendars.htm 2026-11-02 확인: 2026 December 8-9, 2027 January 26-27",
     "meetings": [
-      {"key": "2026-12", "decision_et": "2026-12-09", "known_kst": "2026-12-10 04:00", "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20261209a.htm"},
-      {"key": "2027-01", "decision_et": "2027-01-27", "known_kst": "2027-01-28 04:00", "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20270127a.htm"}
+      {
+        "key": "2026-12",
+        "decision_et": "2026-12-09",
+        "known_kst": "2026-12-10 04:00",
+        "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20261209a.htm"
+      },
+      {
+        "key": "2027-01",
+        "decision_et": "2027-01-27",
+        "known_kst": "2027-01-28 04:00",
+        "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20270127a.htm"
+      }
     ],
-    "upper_before": 4.00,
+    "upper_before": 4.0,
     "source_note": "결정: 성명서 원문의 'decided to raise / maintain / lower the target range' 문장, 못 읽으면 FRED DFEDTARU(목표 범위 상단) 결정일 다음 날 값과 4.00 비교."
   },
   "sources": {
@@ -49,5 +103,30 @@
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/XLU?interval=1d&range=1mo"
   },
   "ends_kst": "2027-02-26 23:59",
-  "ends_note": "이후 자동 발송 없음"
+  "ends_note": "이후 자동 발송 없음",
+  "position": {
+    "shares": 0,
+    "account": "해외 계좌 (ISA 아님)",
+    "total_assets_krw": 200000000,
+    "total_assets_note": "총자산 약 2억원 (configs/isrg.json position.total_assets_krw 2026-10-28 마지막 값, xbi budget_note 도 약 2억원). 바뀌면 이 숫자와 아래 shares 를 다시 계산.",
+    "fx_ref": 1345.4,
+    "fx_ref_note": "USD/KRW 1,345.40 (네이버 2026-11-02 13:23 KST). 주식 수 = 자산 x 비중 / 환율 / 가격대 중간값, 내림.",
+    "target_weight_pct": 5.0,
+    "tax_note": "해외 계좌: 미국 배당 원천징수 15%, 매매차익 연 250만원 넘는 부분 22% 양도세."
+  },
+  "price_levels": {
+    "review_below": 39.0,
+    "review_note": "종가 39.00 미만 (52주 장중 저점 39.03 이탈): 분할 중단, 판단 재검토",
+    "nochase_at": 45.5,
+    "nochase_note": "종가 45.50 이상: 200일선 44.30 의 약 +2.7%, 52주 고점 종가 47.73 ~ 저점 종가 39.25 폭의 61.8%(44.49)와 78.6%(45.92) 되돌림 사이, 10/30 종가 대비 약 +4.8%. 그 위는 고점 47.80 까지 남은 폭 대비 손익비가 나빠 추격 금지",
+    "hysteresis_pct": 0.3,
+    "ma_ref": {
+      "date": "2026-10-30",
+      "close": 43.43,
+      "ma20": 41.95,
+      "ma50": 41.75,
+      "ma200": 44.3,
+      "source": "Yahoo XLU 일봉 1년"
+    }
+  }
 }

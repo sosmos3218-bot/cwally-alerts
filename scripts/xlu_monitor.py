@@ -9,6 +9,10 @@
   중립  그 밖
   여유  부정에서 벗어나려면 종가 5.20% 미만, 긍정에서 벗어나려면 종가 4.60% 이상 또는 그 뒤 인상
 FOMC 결과: 성명서 원문 'decided to raise / maintain / lower', 못 읽으면 FRED DFEDTARU.
+분할 지정가 가격대(configs/xlu.json price_bands, 2026-11-02 승인, 목표 비중 5%):
+  1차 41.70~42.00 (2%, FOMC 전, 2026-12-09 까지) / 2차 42.40~43.00 (2%, 12/10부터 12월 동결 또는 인하일 때)
+  3차 39.50~40.00 (1%, 12/10부터) / 재검토 종가 39.00 미만 / 추격 금지 종가 45.50 이상
+  들어오면 1번, 경계 밖 0.3% 넘게 벗어나면 이탈 1번 (XLU 데이터 날짜로 중복 방지). filled=true 면 그 가격대 끝.
 판단이 바뀔 때만 p4. 안내와 조회 실패는 p3 (실패는 cwally-ops, 하루 1번). 10년물 데이터 날짜로 중복 방지.
 첫 실행은 오늘 판단을 조용히 저장. 2027-02-26 23:59 KST 이후 침묵.
 modes: auto | dry (발송 없음, state 안 씀) | selftest (가짜 값, 네트워크 없음)
@@ -223,6 +227,137 @@ def advance(st: dict, series: list[tuple[str, float]], dec: dict, r: dict) -> tu
     return st, None
 
 
+# ---------- price bands (pure) ----------
+
+def band_items(cfg: dict) -> list[dict]:
+    lv = cfg["price_levels"]
+    items = [dict(b, kind="band") for b in cfg.get("price_bands") or []]
+    items.append({"key": "review", "kind": "review", "line": lv["review_below"]})
+    items.append({"key": "nochase", "kind": "nochase", "line": lv["nochase_at"]})
+    return items
+
+
+def band_active(b: dict, today: str, dec_dec: str | None) -> bool:
+    if b["kind"] != "band":
+        return True
+    if b.get("filled"):
+        return False
+    if b.get("active_until_kst") and today > b["active_until_kst"]:
+        return False
+    if b.get("active_from_kst") and today < b["active_from_kst"]:
+        return False
+    if b.get("needs_fomc") and dec_dec not in b["needs_fomc"]:
+        return False
+    return True
+
+
+def inside(b: dict, c: float) -> bool:
+    if b["kind"] == "review":
+        return c < b["line"]
+    if b["kind"] == "nochase":
+        return c >= b["line"]
+    return b["lo"] <= c <= b["hi"]
+
+
+def far_out(b: dict, c: float, h: float) -> bool:
+    k = h / 100
+    if b["kind"] == "review":
+        return c >= b["line"] * (1 + k)
+    if b["kind"] == "nochase":
+        return c < b["line"] * (1 - k)
+    return c < b["lo"] * (1 - k) or c > b["hi"] * (1 + k)
+
+
+def advance_bands(bst: dict | None, day: str, close: float, today: str, dec_dec: str | None, cfg: dict) -> tuple[dict, list[dict]]:
+    """가격대 진입/이탈. bst None 이면 조용히 시작(설치). 같은 데이터 날짜는 건너뜀."""
+    seed = bst is None
+    bst = {"date": None, "in": {}} if seed else {"date": bst.get("date"), "in": dict(bst.get("in") or {})}
+    if bst["date"] and day <= bst["date"]:
+        return bst, []
+    h = cfg["price_levels"]["hysteresis_pct"]
+    events = []
+    for b in band_items(cfg):
+        was = bool(bst["in"].get(b["key"]))
+        if not band_active(b, today, dec_dec):
+            if was:
+                bst["in"][b["key"]] = False  # 기간 끝, 체결 완료: 조용히 끔
+            continue
+        if not was and inside(b, close):
+            bst["in"][b["key"]] = True
+            if not seed:
+                events.append({"kind": "band", "item": b, "dir": "in"})
+        elif was and far_out(b, close, h):
+            bst["in"][b["key"]] = False
+            if not seed:
+                events.append({"kind": "band", "item": b, "dir": "out"})
+    bst["date"] = day
+    return bst, events
+
+
+def band_table(cfg: dict, today: str, dec_dec: str | None) -> str:
+    parts = []
+    for b in cfg["price_bands"]:
+        if b.get("filled"):
+            st = "체결 완료"
+        elif band_active(dict(b, kind="band"), today, dec_dec):
+            st = "유효"
+        elif b.get("active_until_kst") and today > b["active_until_kst"]:
+            st = "기간 끝"
+        else:
+            st = "대기"
+        parts.append(f"{b['label']} {b['lo']:.2f}~{b['hi']:.2f} ({b['pct']:g}%, {b['shares']}주, {b['phase']}, {st})")
+    lv = cfg["price_levels"]
+    return "가격대: " + ", ".join(parts) + f". 재검토 종가 {lv['review_below']:.2f} 미만, 추격 금지 {lv['nochase_at']:.2f} 이상"
+
+
+def band_message(cfg: dict, ev: dict, zone: str, xlu: tuple[float, str], today: str, dec_dec: str | None,
+                 now: datetime) -> tuple[str, str, int]:
+    b, d = ev["item"], ev["dir"]
+    px, pday = xlu
+    lv = cfg["price_levels"]
+    neg = zone == NEG
+    if b["kind"] == "band":
+        rng = f"{b['lo']:.2f}~{b['hi']:.2f}"
+        if d == "in":
+            title, pri = f"[XLU] {b['label']} 분할 가격대 진입 ({rng}, 자산 {b['pct']:g}%)", 4
+            what = f"종가 {px:.2f}달러가 {b['label']} 가격대 {rng} 안 ({b['phase']})"
+            todo = ("분할 일시 중지. 판단이 부정이라 지정가를 넣지 말고 기다림." if neg else
+                    f"{b['label']} 지정가 {rng}달러에 {b['shares']}주(약 {b['budget_krw'] // 10000}만원, 자산 {b['pct']:g}%)만 넣기.")
+        else:
+            title, pri = f"[XLU] {b['label']} 분할 가격대 이탈 ({rng})", 3
+            what = f"종가 {px:.2f}달러가 {b['label']} 가격대 {rng} 밖으로 0.3% 넘게 벗어남"
+            todo = f"{b['label']} 미체결 지정가는 그대로 두거나 취소, 따라가지 않기."
+    elif b["kind"] == "review":
+        if d == "in":
+            title, pri = f"[XLU] 종가 {lv['review_below']:.2f} 미만 | 분할 중단, 판단 재검토", 4
+            what = f"종가 {px:.2f}달러, 재검토선 {lv['review_below']:.2f} 아래 (52주 장중 저점 39.03 이탈)"
+            todo = "분할 중단, 판단 재검토. 남은 지정가 취소 검토."
+        else:
+            title, pri = f"[XLU] 종가 {lv['review_below']:.2f} 위 회복 | 재검토선 해제", 3
+            what = f"종가 {px:.2f}달러, 재검토선 위로 0.3% 넘게 회복"
+            todo = "재검토 결론 전까지 분할 재개 보류."
+    else:
+        if d == "in":
+            title, pri = f"[XLU] 종가 {lv['nochase_at']:.2f} 이상 | 추격 금지", 3
+            what = f"종가 {px:.2f}달러, 추격 금지선 {lv['nochase_at']:.2f} 이상"
+            todo = "추격 금지. 새로 담지 말고 가격대로 내려오기를 기다림."
+        else:
+            title, pri = f"[XLU] 종가 {lv['nochase_at']:.2f} 아래 | 추격 금지 해제", 3
+            what = f"종가 {px:.2f}달러, 추격 금지선 아래로 0.3% 넘게 내려옴"
+            todo = "추격 금지 해제. 가격대에 들어올 때까지 기다림."
+    lines = [f"{now.strftime('%Y-%m-%d %H:%M')} KST | XLU | 유틸리티 ETF 분할 가격대",
+             "이게 뭐 알림: 목표 비중 총자산 5%를 12월 FOMC 앞뒤로 나눠 담는 지정가 가격대 점검. 가격대 진입과 이탈 때만 보냄.",
+             f"지금 결과/상태: {what}.",
+             f"- XLU 종가 {px:.2f}달러 ({pday[5:].replace('-', '/')}), 52주 {cfg['baseline']['low_52w']:.2f}~{cfg['baseline']['high_52w']:.2f}",
+             "- " + band_table(cfg, today, dec_dec),
+             f"- 판단 {zone}" + (": 2차 보류, 분할 일시 중지" if neg else ""),
+             "- " + cfg["position"]["tax_note"]]
+    if b["kind"] == "band" and d == "in":
+        lines.append(f"- 체결 뒤 configs/xlu.json price_bands 의 {b['key']} filled 를 true 로, position.shares 를 체결 수량으로 고치면 이 알림은 완료로 꺼집니다.")
+    lines += [f"지금 할 일: {todo}", END_LINE, DISCLAIMER]
+    return title, "\n".join(lines), pri
+
+
 # ---------- message ----------
 
 def fomc_line(cfg: dict, dec: dict, src: dict) -> str:
@@ -274,6 +409,7 @@ def message(cfg: dict, ev: dict, series: list[tuple[str, float]], src10: str, xl
     for k in ev.get("new_hikes") or []:
         m = next(x for x in cfg["fomc"]["meetings"] if x["key"] == k)
         lines.append(f"- 추가 인상 시사 여부는 성명서/회견 원문 확인: {m['statement']}")
+    lines.append("- " + cfg["position"]["tax_note"])
     lines.append(f"지금 할 일: {TODO[ev['zone']]}")
     lines.append("판단 규칙: 긍정 = 10년물 4.5% 미만 3일 연속 + 12월 동결, 부정 = 10년물 5.3% 초과 또는 인상, 부정 해제 5.2% 미만, 긍정 해제 4.6% 이상 또는 인상.")
     lines += [END_LINE, DISCLAIMER]
@@ -333,6 +469,17 @@ def run(mode: str, now: datetime | None = None) -> int:
         print(f"XLU quote failed: {exc}")
         xlu = (None, None)
     new, ev = advance(st, series, dec, cfg["rules"])
+    band_out: list[tuple[str, str, int]] = []
+    if xlu[0] is not None:
+        bst, bevs = advance_bands(st.get("bands"), xlu[1], xlu[0], today, dec.get("2026-12"), cfg)
+        new["bands"] = bst
+        if st.get("bands") is None:
+            print(f"bands: seed silently at {xlu[0]:.2f} ({xlu[1]}), in={bst['in']}")
+        for bev in bevs:
+            bt, bm, bp = band_message(cfg, bev, new.get("zone"), xlu, today, dec.get("2026-12"), now)
+            check_text(bt, bm)
+            print(f"band priority={bp}\n{bt}\n{bm}")
+            band_out.append((bt, bm, bp))
     print(f"xlu: 10y {series[-1][1]:.3f}% ({series[-1][0]}, {src10}) xlu={xlu} fomc={dec} zone {st.get('zone')} -> {new.get('zone')} event={ev and ev['kind']}")
     if ev:
         t, m, pri = message(cfg, ev, series, src10, xlu, dec, src, now)
@@ -350,6 +497,8 @@ def run(mode: str, now: datetime | None = None) -> int:
     save_state(new, now)
     if ev:
         publish(cfg["ntfy_topic"], t, m, pri, ["electric_plug"], resolve_server(cfg.get("ntfy_server")), config_name="xlu")
+    for bt, bm, bp in band_out:
+        publish(cfg["ntfy_topic"], bt, bm, bp, ["electric_plug"], resolve_server(cfg.get("ntfy_server")), config_name="xlu")
     return 0
 
 
@@ -370,6 +519,10 @@ def preview(now: datetime | None = None) -> None:
     t, m, p = message(cfg, ev, series, src10, xlu, dec, src, now)
     check_text(t, m)
     print(f"--- preview (example only, 지금 숫자로 만든 변경 메시지 모양) priority={p}\n{t}\n{m}")
+    b1 = dict(cfg["price_bands"][0], kind="band")
+    bt, bm, bp = band_message(cfg, {"kind": "band", "item": b1, "dir": "in"}, NEU, (41.85, "2026-11-19"), now.strftime("%Y-%m-%d"), dec.get("2026-12"), now)
+    check_text(bt, bm)
+    print(f"--- band preview (example only, 1차 가격대에 41.85로 들어왔다고 가정) priority={bp}\n{bt}\n{bm}")
 
 
 # ---------- selftest ----------
@@ -463,6 +616,71 @@ def selftest() -> int:
     t, m = ops_message(datetime(2026, 11, 3, 9, tzinfo=KST), "10년물 조회 실패", ["x"])
     check_text(t, m)
     check("ops topic", route_topic("cwally-port", t), "cwally-ops")
+    # ---- price bands ----
+    pre, post = "2026-11-20", "2026-12-15"
+    # install seed: 43.43 is in no band, silent
+    bs, bev = advance_bands(None, "2026-10-30", 43.43, "2026-11-02", None, cfg)
+    check("band seed", (bev, any(bs["in"].values())), ([], False))
+    # dedupe same data date
+    check("band dedupe", advance_bands(bs, "2026-10-30", 41.8, pre, None, cfg)[1], [])
+    # t1 entry before FOMC
+    b1, bev = advance_bands(bs, "2026-11-19", 41.80, pre, None, cfg)
+    check("t1 in", [(e["item"]["key"], e["dir"]) for e in bev], [("t1", "in")])
+    # hysteresis: 42.10 (within 0.3% of 42.00) stays, 42.20 exits
+    b2, bev = advance_bands(b1, "2026-11-20", 42.10, pre, None, cfg)
+    check("t1 hyst stay", bev, [])
+    b3, bev = advance_bands(b2, "2026-11-23", 42.20, pre, None, cfg)
+    check("t1 out", [(e["item"]["key"], e["dir"]) for e in bev], [("t1", "out")])
+    # t2/t3 not active before FOMC: 42.70 and 39.80 silent
+    check("t2 wait", advance_bands(bs, "2026-11-19", 42.70, pre, None, cfg)[1], [])
+    check("t3 wait", advance_bands(bs, "2026-11-19", 39.80, pre, None, cfg)[1], [])
+    # t1 expires silently after 12/9 (while inside)
+    b4, bev = advance_bands(b1, "2026-12-10", 41.85, "2026-12-10", "hold", cfg)
+    check("t1 expiry silent", (bev, b4["in"]["t1"]), ([], False))
+    # t2 after hold, not after hike
+    check("t2 hold", [e["item"]["key"] for e in advance_bands(bs, "2026-12-14", 42.70, post, "hold", cfg)[1]], ["t2"])
+    check("t2 cut", [e["item"]["key"] for e in advance_bands(bs, "2026-12-14", 42.70, post, "cut", cfg)[1]], ["t2"])
+    check("t2 hike none", advance_bands(bs, "2026-12-14", 42.70, post, "hike", cfg)[1], [])
+    check("t2 unknown none", advance_bands(bs, "2026-12-14", 42.70, post, "unknown", cfg)[1], [])
+    # t3 after hike
+    check("t3 hike", [e["item"]["key"] for e in advance_bands(bs, "2026-12-14", 39.60, post, "hike", cfg)[1]], ["t3"])
+    # review below 39.00, exit needs >= 39.117
+    r1, bev = advance_bands(bs, "2026-12-14", 38.90, post, "hike", cfg)
+    check("review in", [(e["item"]["key"], e["dir"]) for e in bev], [("review", "in")])
+    check("review hyst", advance_bands(r1, "2026-12-15", 39.10, post, "hike", cfg)[1], [])
+    check("review out", [(e["item"]["key"], e["dir"]) for e in advance_bands(r1, "2026-12-15", 39.20, post, "hike", cfg)[1]], [("review", "out")])
+    # nochase
+    n1, bev = advance_bands(bs, "2026-11-19", 45.50, pre, None, cfg)
+    check("nochase in", [(e["item"]["key"], e["dir"]) for e in bev], [("nochase", "in")])
+    check("nochase hyst", advance_bands(n1, "2026-11-20", 45.40, pre, None, cfg)[1], [])
+    check("nochase out", [e["dir"] for e in advance_bands(n1, "2026-11-20", 45.30, pre, None, cfg)[1]], ["out"])
+    # filled flag turns a band off silently
+    import copy
+    cf = copy.deepcopy(cfg)
+    cf["price_bands"][0]["filled"] = True
+    check("filled none", advance_bands(bs, "2026-11-19", 41.80, pre, None, cf)[1], [])
+    check("filled off", advance_bands(b1, "2026-11-20", 41.80, pre, None, cf)[0]["in"]["t1"], False)
+    # messages
+    ev_in = advance_bands(bs, "2026-11-19", 41.80, pre, None, cfg)[1][0]
+    t, m, p = band_message(cfg, ev_in, NEU, (41.80, "2026-11-19"), pre, None, datetime(2026, 11, 20, 9, tzinfo=KST))
+    check_text(t, m)
+    check("band title", t, "[XLU] 1차 분할 가격대 진입 (41.70~42.00, 자산 2%)")
+    check("band pri", p, 4)
+    ls = m.splitlines()
+    check("band end", ls[-2:], [END_LINE, DISCLAIMER])
+    assert sum(1 for x in ls if x.startswith("지금 할 일: ")) == 1 and "71주" in m and "filled 를 true 로" in m and "원천징수 15%" in m and "22% 양도세" in m
+    t, m, p = band_message(cfg, ev_in, NEG, (41.80, "2026-11-19"), pre, None, datetime(2026, 11, 20, 9, tzinfo=KST))
+    check_text(t, m)
+    assert "2차 보류, 분할 일시 중지" in m and "지금 할 일: 분할 일시 중지" in m
+    for e in (advance_bands(b1, "2026-11-23", 42.20, pre, None, cfg)[1] + advance_bands(bs, "2026-12-14", 38.90, post, "hike", cfg)[1]
+              + advance_bands(r1, "2026-12-15", 39.20, post, "hike", cfg)[1] + advance_bands(bs, "2026-11-19", 45.60, pre, None, cfg)[1]
+              + advance_bands(n1, "2026-11-20", 45.30, pre, None, cfg)[1]):
+        t, m, p = band_message(cfg, e, NEU, (40.0, "2026-12-14"), post, "hike", datetime(2026, 12, 15, 9, tzinfo=KST))
+        check_text(t, m)
+        check("topic band", route_topic("cwally-port", t), "cwally-port")
+        assert m.splitlines()[-2:] == [END_LINE, DISCLAIMER]
+    check("review title", band_message(cfg, advance_bands(bs, "2026-12-14", 38.90, post, "hike", cfg)[1][0], NEU, (38.9, "2026-12-14"), post, "hike",
+                                       datetime(2026, 12, 15, 9, tzinfo=KST))[0], "[XLU] 종가 39.00 미만 | 분할 중단, 판단 재검토")
     # expiry: run returns before any network
     import contextlib
     import io
