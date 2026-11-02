@@ -1,0 +1,53 @@
+{
+  "name": "xlu",
+  "title_prefix": "[XLU]",
+  "ticker": "XLU",
+  "display": "SPDR 유틸리티 ETF",
+  "as_of": "2026-11-02",
+  "approval": "2026-11-02 채팅 승인 (\"[XLU] 알림을 09:00 묶음에 추가하고, 판단이 바뀔 때만 보내게 해 줘. 2027-02-26에 끝내 줘.\")",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, lly 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "holding": false,
+  "holding_note": "보유 없음, 목표 비중 미정. 가격 매수 구간은 아직 없음.",
+  "price_bands": null,
+  "price_bands_note": "나중에 목표 비중이 정해지면 여기에 구간을 넣는다(예: [{\"key\": \"z1\", \"lo\": 41.0, \"hi\": 42.0}]). 지금 코드는 이 칸을 읽지 않는다.",
+  "baseline": {
+    "close_1030": 43.43,
+    "low_52w": 39.03,
+    "high_52w": 47.80,
+    "ten_0930": 5.29,
+    "ten_1029": 4.98,
+    "ten_note": "FRED DGS10",
+    "dividend_usd": 1.21,
+    "dividend_yield_pct": 2.79,
+    "fed": "2026-09-16 인상 3.75~4.00%, 2026-10-28 동결"
+  },
+  "dividend_usd": 1.21,
+  "rules": {
+    "pos_below": 4.50,
+    "pos_days": 3,
+    "pos_exit_at_or_above": 4.60,
+    "neg_above": 5.30,
+    "neg_exit_below": 5.20,
+    "note": "긍정: 10년물 종가 4.50% 미만 3거래일 연속 + 12월 FOMC 동결(인상 없음). 12월 FOMC 전이면 중립 유지 + 대기 안내 1번(p3). 부정: 10년물 종가 5.30% 초과 또는 12월 FOMC 인상(그 뒤 1월 FOMC 인상도 같음). 부정에서 벗어나려면 종가 5.20% 미만, 긍정에서 벗어나려면 종가 4.60% 이상 또는 그 뒤 인상. 그 밖은 중립."
+  },
+  "fomc": {
+    "verified": "federalreserve.gov/monetarypolicy/fomccalendars.htm 2026-11-02 확인: 2026 December 8-9, 2027 January 26-27",
+    "meetings": [
+      {"key": "2026-12", "decision_et": "2026-12-09", "known_kst": "2026-12-10 04:00", "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20261209a.htm"},
+      {"key": "2027-01", "decision_et": "2027-01-27", "known_kst": "2027-01-28 04:00", "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20270127a.htm"}
+    ],
+    "upper_before": 4.00,
+    "source_note": "결정: 성명서 원문의 'decided to raise / maintain / lower the target range' 문장, 못 읽으면 FRED DFEDTARU(목표 범위 상단) 결정일 다음 날 값과 4.00 비교."
+  },
+  "sources": {
+    "tnx": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=1mo",
+    "dgs10": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd={start}",
+    "dfedtaru": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFEDTARU&cosd={start}",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/XLU?interval=1d&range=1mo"
+  },
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "이후 자동 발송 없음"
+}
