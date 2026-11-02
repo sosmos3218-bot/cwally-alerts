@@ -1,1 +1,13 @@
-{"sent": null, "attempts": [], "ops_sent": null}
+{
+  "sent": null,
+  "attempts": [
+    {
+      "at": "2026-11-02 18:20",
+      "missing": [
+        "SK하이닉스 11/2 외국인 수급",
+        "삼성전자 11/2 외국인 수급"
+      ]
+    }
+  ],
+  "ops_sent": null
+}
