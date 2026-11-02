@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-11-02T15:21:16.294455+09:00",
+  "updated_at": "2026-11-03T00:53:30.308727+09:00",
   "stop": false,
   "buy1_armed": true,
   "buy2_armed": true,
   "confirm_armed": true,
-  "last_price": 26460.0,
-  "last_inav": 26598.55,
-  "last_vn_day": "20261030",
-  "last_vn_close": 1741.62,
+  "last_price": 26300.0,
+  "last_inav": 26520.89,
+  "last_vn_day": "20261102",
+  "last_vn_close": 1710.72,
   "fetch_fail_date": null
 }
