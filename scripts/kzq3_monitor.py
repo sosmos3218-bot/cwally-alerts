@@ -396,6 +396,32 @@ def offline_selftest(cfg):
         check("last minute of window still fires", len(sent), 1)
         sent.clear()
 
+        # --- 11/7 23:00 KST: script window and publish() end gate both still send (ends_kst 2026-11-07 23:59 + 59m grace)
+        import ntfy_util
+        st = default_state()
+        run("auto", "2026-11-07 23:00", st)
+        check("11/7 23:00 KST result -> sends", [s[0] for s in sent], ["[KZ] 010130 상향 | 3분기 vs 추정"])
+        late = sent[0][0] if sent else "[KZ] 010130 상향 | 3분기 vs 추정"
+        gate = lambda when: ntfy_util.ends_skip_reason("cwally-port", late, config_name="kzq3", config=cfg,
+                                                       now=datetime.strptime(when, "%Y-%m-%d %H:%M").replace(tzinfo=KST))
+        check("publish end gate: 11/7 23:00 not blocked", gate("2026-11-07 23:00"), None)
+        check("publish end gate: 11/8 00:58 (23:59 + 59m) not blocked", gate("2026-11-08 00:58"), None)
+        check("publish end gate: 11/8 01:00 blocked", gate("2026-11-08 01:00") is not None, True)
+        sent.clear()
+
+        # --- user-facing text: every message kind, with the 꺼지는 때 line, has no middle dot, no em-dash, no 매리츠
+        texts = [cfg["explain"], ntfy_util.ends_line("kzq3") or ""]
+        for op in (4400, 4250, 3900, 3000):
+            fx.update(notices=[note(q3_ok["title"], q3_ok["datetime"], body(f"{op:,}", "13,000"))], quarter=quarter("Y"))
+            run("auto", "2026-11-05 16:10", default_state())
+        fx.update(notices=[], quarter=quarter("Y"))
+        run("auto", "2026-11-05 16:10", default_state())
+        check("text check covers 상향/기준/중립/하향/원문 없음", [s[0].split(" ")[2] for s in sent], ["상향", "기준", "중립", "하향", "원문"])
+        texts += [s[0] + "\n" + ntfy_util.append_ends(s[2], "kzq3") for s in sent]
+        bad = sorted({ch for t in texts for ch in ("\u00b7", "\u2014", "매리츠") if ch in t})
+        check("no middle dot, em-dash or 매리츠 in kzq3 text", bad, [])
+        sent.clear()
+
         # --- dry: no send, no save
         saved.clear()
         st = default_state()
