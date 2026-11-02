@@ -1,0 +1,36 @@
+{
+  "name": "credit",
+  "title_prefix": "[CREDIT]",
+  "ticker": "LQD",
+  "watch_symbols": [
+    {"symbol": "LQD", "note": "iShares 투자등급 회사채 ETF, 제목 티커 (BBB 스프레드 자체는 거래 종목이 아님)"},
+    {"symbol": "ORCL", "note": "오라클, S&P/Moody's BBB 하단 신용등급 확인 대상 (자동 등급 조회 없음)"}
+  ],
+  "display": "미국 BBB 회사채 스프레드 (ICE BofA BBB US Corporate Index OAS)",
+  "as_of": "2026-11-02",
+  "approval": "사용자 채팅 승인 2026-11-02 pt68u (\"네 소신껏.\"), 메모리 호황 전제의 돈줄 신호 (job=credit 수동 dispatch 와 단독 step 포함)",
+  "thesis": "오라클 BBB- 에서 투기등급 강등이나 BBB 스프레드 1.9%p 초과는 AI 설비투자 자금조달을 위협해 삼성전자/SK하이닉스 매수 관점을 흔드는 신호.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(ftnt 바로 뒤, xlu 앞)에 부착. FRED 최신 관측일로 중복 방지, 관측일이 그대로면 아무것도 안 함. 수동 job=credit 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "series": "BAMLC0A4CBBB",
+  "unit": "%p",
+  "sources": {
+    "fred_csv": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLC0A4CBBB",
+    "fred_page": "https://fred.stlouisfed.org/series/BAMLC0A4CBBB"
+  },
+  "lookback_days": 70,
+  "tiers": [
+    {"key": "t150", "level": 1.50, "priority": 3, "label": "주의", "meaning": "AI 인프라 자금조달 비용 상승 관찰"},
+    {"key": "t190", "level": 1.90, "priority": 4, "label": "경고", "meaning": "메모리 호황 전제 중 돈줄 조건 훼손, 삼성전자/SK하이닉스 신규 분할매수 보류 검토"},
+    {"key": "t250", "level": 2.50, "priority": 5, "label": "위험", "meaning": "분할매수 중단, 보유 비중 축소 검토"}
+  ],
+  "rearm_gap": 0.15,
+  "rearm_note": "단계마다 위로 넘을 때 1번. 값이 그 단계보다 0.15%p 아래(1.35 / 1.75 / 2.35 이하)로 내려가야 다시 무장.",
+  "relief": {"below": 1.50, "after_reaching": 1.90, "priority": 3, "meaning": "경고선 1.9%p 를 찍은 뒤 1.5%p 아래로 복귀, 돈줄 조건 회복 신호"},
+  "oracle_line": "오라클(ORCL) S&P/Moody's 신용등급 직접 확인 (자동 등급 조회 없음). BBB- 아래 투기등급 강등이면 스프레드와 별개로 경고 단계로 보기.",
+  "seed": {"date": "2026-10-29", "value": 1.10, "note": "설치 시 FRED 최신 관측 2026-10-29 1.10%p 로 seed. 모든 단계 아래라 전부 무장, 1.9 도달 기록 없음, 과거는 판정 안 함."},
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 미국 BBB 회사채 스프레드(FRED BAMLC0A4CBBB) 1.5/1.9/2.5%p 단계 점검. 2027-02-26 까지 (마지막 평일 실행 2027-02-26 09:00)"
+}

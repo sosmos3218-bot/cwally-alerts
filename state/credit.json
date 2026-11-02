@@ -1,0 +1,20 @@
+{
+  "tiers": {
+    "t150": {
+      "armed": true
+    },
+    "t190": {
+      "armed": true
+    },
+    "t250": {
+      "armed": true
+    }
+  },
+  "reached_190": false,
+  "last_date": "2026-10-29",
+  "last_value": 1.1,
+  "seeded": {
+    "at": "2026-11-02T16:55:00+09:00",
+    "note": "설치 시 FRED BAMLC0A4CBBB 최신 관측 2026-10-29 1.10%p 로 seed (모든 단계 아래, 전부 무장, 1.9 도달 기록 없음), 과거는 판정 안 함"
+  }
+}
