@@ -833,6 +833,10 @@ jobs:
           if [ "$JOB" = "afternoon" ]; then
             python scripts/shi_monitor.py auto
           fi
+          # [0085P0] 11/26 금통위 요약 one-shot, 1차 시도 (acts only on 2026-11-26 after 10:30; retry in the 19:00 k203780 slot; approved in chat 2026-11-02)
+          if [ "$JOB" = "afternoon" ]; then
+            python scripts/k0085p0_monitor.py mpc auto
+          fi
           python scripts/ntfy_archive.py
           exit $failed
       - name: Run SHI standalone (manual check; the weekday 15:20 afternoon bundle runs it in auto)
@@ -906,18 +910,26 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
           if [ "$MODE" = "dry" ]; then python scripts/xlu_monitor.py selftest; fi
           python scripts/xlu_monitor.py "$MODE"
-      - name: Run K0085P0 standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
+      - name: Run K0085P0 standalone (manual check; the weekday 09:00 morning bundle runs it in auto) + 11/26 MPC summary retry (k203780 19:00 slot)
         # approved in chat 2026-11-02 ("네 소신껏 진행"). job=k0085p0 dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
-        if: steps.pick.outputs.job == 'k0085p0'
+        # 2026-11-02 approval: on k203780 only `mpc` runs (one-shot 11/26 summary retry; does nothing on other days). ends 2027-02-26.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k0085p0' || steps.pick.outputs.job == 'k203780') }}
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=dry
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
-          if [ "$MODE" = "dry" ]; then python scripts/k0085p0_monitor.py selftest; fi
-          python scripts/k0085p0_monitor.py "$MODE"
+          if [ "$PICK_JOB" = "k203780" ]; then
+            if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then MODE=auto; fi
+            python scripts/k0085p0_monitor.py mpc "$MODE"
+          else
+            if [ "$MODE" = "dry" ]; then python scripts/k0085p0_monitor.py selftest; python scripts/k0085p0_monitor.py mpc dry; fi
+            python scripts/k0085p0_monitor.py "$MODE"
+          fi
       - name: Run APT-RT (apartment sale reports weekly summary; weekday 09:00 morning slot, Monday or the week's first weekday slot; 2026-11-02 ~ 2027-03-31)
         # approved in chat 2026-11-02. Attached to the existing morning slot, no new cron. MOLIT data.go.kr API (secret DATA_GO_KR_KEY); dedupe state/aptrt.json deals + last_week.
         # job=aptrt (or a manual morning) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
