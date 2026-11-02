@@ -78,7 +78,9 @@ def build_body(payload: dict, cfg: Config) -> str:
     if payload.get("demo"):
         lines.append("DEMO. 실매매 신호가 아닙니다.")
     lines.append("매도")
-    if not sells:
+    if not payload.get("holdings"):
+        lines.append("보유 없음.")
+    elif not sells:
         lines.append("보유 매도 신호 없음.")
     for row in sells:
         kind = label.get(row.get("signal"), row.get("signal"))

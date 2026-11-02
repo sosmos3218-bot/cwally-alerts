@@ -1,6 +1,6 @@
 """관심 종목. 예시 파일은 헤더만 있고 종목을 채우지 않습니다.
 
-실제 파일은 watchlist.csv 또는 TREND_WATCHLIST_PATH 입니다.
+실제 파일은 저장소의 watchlist.csv 또는 TREND_WATCHLIST_PATH 입니다.
 """
 
 from __future__ import annotations

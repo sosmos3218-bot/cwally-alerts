@@ -94,9 +94,9 @@ def _run(args) -> int:
         if note:
             warnings.append(note)
         path = holdings_mod.resolve_holdings_path(args.holdings)
-        if path is None:
-            warnings.append("보유 파일이 없습니다. 보유 점검은 비워 둡니다. holdings.example.csv 를 복사해 holdings.csv 를 만드세요.")
         holdings = holdings_mod.load_holdings(path, cfg.stop_mode)
+        if not holdings:
+            print("보유 없음", flush=True)
         watch_items = load_watchlist(resolve_watchlist_path(args.watchlist))
         state_path = STATE_PATH
         state_notes = holdings_mod.apply_state(holdings, holdings_mod.load_state(state_path))

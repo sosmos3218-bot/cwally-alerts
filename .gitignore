@@ -2,5 +2,3 @@ __pycache__/
 *.pyc
 trend_monitor/cache/
 trend_monitor/state/
-trend_monitor/holdings.csv
-trend_monitor/watchlist.csv

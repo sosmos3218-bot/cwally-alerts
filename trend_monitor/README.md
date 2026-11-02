@@ -56,15 +56,17 @@ EPS 를 다시 보려면 같은 명령을 한 번 더 실행하면 됩니다. �
 
 ## 보유
 
-예시 칸은 `trend_monitor/holdings.example.csv` 입니다. 실제 보유는 `trend_monitor/holdings.csv` 에 둡니다. 이 저장소는 비공개이지만 보유 수량은 민감하므로 `holdings.csv` 는 gitignore 입니다. 공개로 바뀌어도 수량이 커밋되지 않습니다.
+보유는 이 비공개 저장소의 `trend_monitor/holdings.csv` 에 있습니다. 관심 종목은 `trend_monitor/watchlist.csv` 입니다. 둘 다 헤더만 있으면 보유 없음, 관심 종목 없음으로 처리하고 오류로 보지 않습니다. 칸 이름은 `holdings.example.csv`, `watchlist.example.csv` 와 같습니다.
 
-다른 경로를 쓰려면 환경변수 `TREND_HOLDINGS_PATH` 에 파일 경로를 넣습니다. 경로가 없는데 변수가 있으면 멈추고, 빈 가격으로 채우지 않습니다.
+GitHub에서 보유를 고치려면 그 파일을 열고 연필(Edit this file)을 누른 뒤, 헤더 아래에 한 줄씩 적고 Commit changes 합니다. 다음 평일 15:40 실행이 저장소에 있는 그 파일을 읽습니다. 결과 파일을 main 에 올리는 단계는 holdings.csv 와 watchlist.csv 를 건드리지 않습니다.
+
+다른 경로를 쓰려면 환경변수 `TREND_HOLDINGS_PATH` 또는 `TREND_WATCHLIST_PATH` 에 파일 경로를 넣습니다. 경로가 없는데 변수가 있으면 멈추고, 빈 가격으로 채우지 않습니다.
 
 `entry_atr14` 가 비어 있으면 매수일까지의 일봉으로 ATR 을 계산해 그 값으로 고정합니다. 매도 판단에 오늘의 ATR 을 다시 넣지 않습니다.
 
 클라이맥스나 전량 매도 뒤 잔량 제안은 출력에만 있습니다. 상태 파일에 남기려면 같은 명령에 `--apply-state` 를 붙입니다. 플래그가 없으면 `trend_monitor/state/positions.json` 을 쓰지 않습니다.
 
-관심 종목 파일은 `trend_monitor/watchlist.example.csv` 입니다. 헤더만 있고 종목은 비어 있습니다. 종목을 넣으려면 `watchlist.csv` 로 복사합니다. 저장소가 비공개여도 개인 목록이 커밋되지 않도록 gitignore 입니다. 환경변수 `TREND_WATCHLIST_PATH` 로 다른 경로를 줄 수 있습니다. 파일이 있으면 종가가 피벗 이상인지, 손절 이하인지를 리포트와 `data_status.watchlist` 에 적습니다. 시세가 없으면 확인 불가로 적고 가격을 만들지 않습니다.
+관심 종목 파일이 있으면 종가가 피벗 이상인지, 손절 이하인지를 리포트와 `data_status.watchlist` 에 적습니다. 헤더만 있으면 관심 종목 없음입니다. 시세가 없으면 확인 불가로 적고 가격을 만들지 않습니다.
 
 시장 폭은 시가총액 상위 200종목(우선주, 스팩, ETF, ETN 제외) 가운데 종가가 50일선보다 높은 비율입니다. JSON `risk.breadth_pct_above_ma50` 에 넣습니다. 기본 30% 미만이면 신규 수량을 절반으로 줄이고 리포트에 표시합니다. 계산할 종목이 없으면 값은 null 이고 수량은 줄이지 않습니다.
 

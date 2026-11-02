@@ -76,6 +76,7 @@ jobs:
           if [ "${INPUT_DRY}" = "true" ]; then
             args+=(--dry-run)
           fi
+          # 보유와 관심 종목은 체크아웃된 trend_monitor/holdings.csv, watchlist.csv 를 읽습니다.
           python -m trend_monitor "${args[@]}"
 
       - name: Commit output to main
@@ -84,7 +85,12 @@ jobs:
           set -euo pipefail
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add trend_monitor/output/latest.json trend_monitor/output/*.json trend_monitor/output/*.md trend_monitor/output/*.csv
+          git checkout -- trend_monitor/holdings.csv trend_monitor/watchlist.csv
+          git add -- trend_monitor/output/latest.json trend_monitor/output/*.json trend_monitor/output/*.md trend_monitor/output/*.csv
+          if git diff --cached --name-only -- trend_monitor/holdings.csv trend_monitor/watchlist.csv | grep -q .; then
+            echo "refusing to commit holdings.csv or watchlist.csv"
+            exit 1
+          fi
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
           git commit -m "chore: update trend monitor output"
           ok=0

@@ -1,5 +1,9 @@
-from trend_monitor.config import Config
+from pathlib import Path
+
+from trend_monitor.config import ROOT, Config
+from trend_monitor.holdings import load_holdings
 from trend_monitor.ntfy_summary import assert_plain_korean, build_message, delay_message
+from trend_monitor.watchlist import load_watchlist
 
 
 def _payload():
@@ -61,6 +65,23 @@ def test_kospi_fallback_and_no_forbidden_marks():
     for mark in ("·", "・", "—", "–"):
         assert mark not in title
         assert mark not in body
+    assert "보유 없음." in body
+    assert "경고" not in body
     delay_title, delay_body = delay_message("2026-11-02", "마지막 봉 2026-10-30")
     assert "KOSPI" in delay_title
     assert_plain_korean(delay_title + delay_body)
+
+
+def test_repo_books_are_header_only():
+    holdings = ROOT / "holdings.csv"
+    watch = ROOT / "watchlist.csv"
+    assert holdings.is_file() and watch.is_file()
+    assert load_holdings(holdings, "pct") == []
+    assert load_watchlist(watch) == []
+    text = holdings.read_text(encoding="utf-8")
+    assert text.startswith("ticker,name,buy_date,avg_price,qty,breakout_price,")
+    assert "005930" not in text
+    readme = Path("trend_monitor/README.md").read_text(encoding="utf-8")
+    for mark in ("·", "・", "—", "–"):
+        assert mark not in readme
+

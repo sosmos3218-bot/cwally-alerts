@@ -1,6 +1,6 @@
 """보유 CSV 와 상태 JSON.
 
-실보유 파일은 holdings.csv (gitignore) 또는 환경변수 TREND_HOLDINGS_PATH 입니다.
+실보유 파일은 저장소의 holdings.csv 또는 환경변수 TREND_HOLDINGS_PATH 입니다.
 상태 파일은 --apply-state 일 때만 기록합니다.
 """
 
