@@ -115,8 +115,16 @@
       "latest_ratio": 5.5,
       "session_row": "5.50%",
       "live_foreignRate": 5.51
+    },
+    {
+      "run": "2026-11-02 19:01 KST",
+      "session": "2026-11-02",
+      "latest_date": "2026-10-30",
+      "latest_ratio": 5.5,
+      "session_row": "없음",
+      "live_foreignRate": 5.5
     }
   ],
   "events": [],
-  "last_run": "2026-10-31 01:33 KST"
+  "last_run": "2026-11-02 19:01 KST"
 }

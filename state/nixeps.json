@@ -1,1 +1,38 @@
-{}
+{
+ "history": [
+  {
+   "date": "2026-07-31",
+   "eps27": 452061,
+   "eps26": null,
+   "n_brokers": null,
+   "src": "WiseReport 월말 EPS 추이 백필"
+  },
+  {
+   "date": "2026-08-31",
+   "eps27": 450809,
+   "eps26": null,
+   "n_brokers": null,
+   "src": "WiseReport 월말 EPS 추이 백필"
+  },
+  {
+   "date": "2026-09-30",
+   "eps27": 463713,
+   "eps26": null,
+   "n_brokers": null,
+   "src": "WiseReport 월말 EPS 추이 백필"
+  },
+  {
+   "date": "2026-10-30",
+   "eps27": 529311.0,
+   "eps26": 355563.0,
+   "n_brokers": 20,
+   "src": "WiseReport 컨센서스 표",
+   "fetched": "2026-11-02 19:01 KST"
+  }
+ ],
+ "seeded_at": "2026-11-02 19:01 KST",
+ "episode": {
+  "active": false
+ },
+ "updated_at": "2026-11-02 19:01 KST"
+}
