@@ -1,0 +1,33 @@
+{
+  "name": "k227540",
+  "title_prefix": "[227540]",
+  "code": "227540",
+  "ticker": "227540",
+  "name_kr": "TIGER 200 헬스케어",
+  "as_of": "2026-11-02",
+  "approval": "사용자 채팅 승인 2026-11-02 (\"네 소신껏\"): 셀트리온 개별주 전량 매도 뒤 227540 으로 대체 보유.",
+  "holding": "보유 중, 평균가 미입력",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 평일 15:40 0090b0 슬롯(셀트리온이 쓰던 자리)에 부착. 15:30 마감 뒤 네이버 수정주가 일봉(fchart requestType=0) 확정 종가. 수동 job=k227540 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "low_line": 16900,
+  "low_note": "1년 종가 저점 16,900원(2026-11-02 기준). 종가 16,900원 이하면 p4 경고 1번. 16,900원 + 3% 위 종가로 회복해야 다시 무장.",
+  "low_rearm_pct": 3.0,
+  "low_priority": 4,
+  "ma_days": 200,
+  "ma_note": "200일 이동평균은 실행마다 확정 종가 200개로 계산(2026-11-02 약 20,240원). 종가가 200일선 이상이면 p3 추세 회복 1번(회복 첫날). 200일선 -3% 아래 종가로 내려가야 다시 무장.",
+  "ma_rearm_pct": 3.0,
+  "ma_priority": 3,
+  "avg_price": null,
+  "avg_lines_pct": [-10, -20],
+  "avg_note": "평균가(원)를 넣으면 평균가 대비 -10%, -20% 경고선(p4)이 켜짐. null 이면 꺼짐. 선 + 3% 위 종가로 회복해야 다시 무장. 처음 켜는 날은 조용히 시드.",
+  "avg_rearm_pct": 3.0,
+  "avg_priority": 4,
+  "reference_2026_11_02": "종가 18,130원, 1년 고점 25,655원, 저점 16,900원, 200일선 약 20,240원",
+  "sources": {
+    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=227540&timeframe=day&count=260&requestType=0 (수정주가 일봉)"
+  },
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "평일 15:40 확정 종가 점검, 2027-10-31 까지"
+}

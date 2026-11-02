@@ -10,10 +10,30 @@
   "schedule_kst": "15:40 (가격), 19:00 (공시)",
   "schedule_note": "새 cron 없음. 가격은 기존 평일 15:40 0090b0 슬롯에 부착(15:30 마감 뒤 확정 종가, 수정주가). 분기보고서와 4분기 잠정실적 점검은 기존 19:00 k203780 체인에 부착. 수동 job=celltrion 은 oneoff_mode=auto 가 아니면 selftest + dry.",
   "zones": [
-    {"key": "nochase", "lo": 200000, "hi": null, "priority": 3},
-    {"key": "z1", "lo": 181000, "hi": 185000, "priority": 3},
-    {"key": "z2", "lo": 173000, "hi": 176000, "priority": 4},
-    {"key": "z3", "lo": 159000, "hi": 168000, "priority": 4}
+    {
+      "key": "nochase",
+      "lo": 200000,
+      "hi": null,
+      "priority": 3
+    },
+    {
+      "key": "z1",
+      "lo": 181000,
+      "hi": 185000,
+      "priority": 3
+    },
+    {
+      "key": "z2",
+      "lo": 173000,
+      "hi": 176000,
+      "priority": 4
+    },
+    {
+      "key": "z3",
+      "lo": 159000,
+      "hi": 168000,
+      "priority": 4
+    }
   ],
   "buyback_avg_price": 182323,
   "rearm_pct": 3.0,
@@ -37,6 +57,8 @@
     "reports": "KIND 분기보고서 (krhcfile_monitor 의 kind_list, Book, analyze 재사용)",
     "prelim": "네이버 증권 종목 공시 API (naver_api.notices) 잠정실적 공정공시 본문"
   },
-  "ends_kst": "2027-02-27 23:59",
-  "ends_note": "평일 15:40 분할 매수 구간, 19:00 3분기 분기보고서와 4분기 잠정실적 점검. 2027-02-27 까지 (마지막 평일 실행 2027-02-26 15:40, 19:00)"
+  "ends_kst": "2026-11-02 00:00",
+  "ends_note": "2026-11-02 종료(사용자 전량 매도). 원래 2027-02-27 까지였음. 되살리려면 ends_kst 를 미래로 되돌리면 됨(코드, 구간, state 그대로 둠).",
+  "ended_reason": "2026-11-02 사용자 전량 매도, 227540(TIGER 200 헬스케어)으로 대체. 15:40 가격 구간과 19:00 3분기, 4분기 실적 점검 모두 종료. [KR-HC] 주간 비교(krhc)의 셀트리온 참고는 그대로.",
+  "ended_note": "ends_kst 뒤에는 celltrion_monitor.py auto/dry 가 조회 없이 조용히 끝남(가져오기 실패 cwally-ops 안내도 없음). selftest 는 그대로 돌아감."
 }

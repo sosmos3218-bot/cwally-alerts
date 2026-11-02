@@ -366,6 +366,11 @@ def main() -> int:
         print("usage: celltrion_monitor.py <auto|dry> <price|filing|all> | selftest")
         return 2
     now = datetime.now(KST)
+    # 2026-11-02 사용자 전량 매도로 종료(configs/celltrion.json ended_reason). ends_kst 뒤에는 조회도 ops 안내도 없이 끝남.
+    ends = cfg.get("ends_kst")
+    if ends and now > datetime.strptime(ends, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
+        print(f"celltrion ended {ends} KST ({cfg.get('ended_reason') or 'ends_kst'}); silent, no fetch, no ops notice")
+        return 0
     try:
         return run(mode, part, now, cfg)
     except Exception as exc:  # noqa: BLE001
