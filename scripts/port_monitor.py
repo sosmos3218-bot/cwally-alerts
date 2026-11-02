@@ -409,6 +409,27 @@ def iso_week(day: str | None) -> str | None:
         return None
 
 
+def event_short(e: dict, today: str) -> str:
+    """'12월 FOMC(점도표)' start 2026-12-09 -> '12월 9일 연준 회의(점도표)'. Date is config start (the US decision day for
+    FOMC, as the old fixed text '12월 9일 연준 회의' used). Another year than today's gets a '27년 ' prefix."""
+    y, m, d = (int(x) for x in e["start"].split("-"))
+    label = re.sub(r"^\d+월\s*", "", e.get("label") or e.get("id", "")).replace("(점도표 없음)", "").strip()
+    label = label.replace("FOMC", "연준 회의")
+    yr = f"{y % 100}년 " if str(y) != today[:4] else ""
+    return f"{yr}{m}월 {d}일 {label}"
+
+
+def later_line(today: str, cfg: dict) -> str:
+    """'나중에:' line from configs/port.json events not yet over (end >= today), nearest `later_events_n` (default 3) by
+    start (2026-11-02, owner note pt34u). Before, it was fixed 2026 text naming 10/22 금통위 ... 12/9 연준 회의."""
+    n = int(cfg.get("later_events_n") or 3)
+    ahead = sorted((e for e in cfg.get("events", []) if e["end"] >= today), key=lambda e: e["start"])[:n]
+    base = "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요."
+    if not ahead:
+        return f"{base} 예정된 일정 없음, config 일정 추가 필요."
+    return f"{base} " + ", ".join(event_short(e, today) for e in ahead) + "만 시나리오를 바꿉니다."
+
+
 def should_notify(policy: str, key: str, prev: dict, today: str, now: datetime, is_live: bool, halt: bool,
                   sig: str | None = None) -> tuple[bool, str]:
     """weekly_or_change: HALT/DCA_CANCEL always; otherwise only when the verdict key differs from the last sent one
@@ -467,6 +488,16 @@ def selftest() -> int:
     yr = {"last_sent_sig": "BASE", "last_sent_date": "2026-12-31"}
     check("ISO week rolls over year", should_notify("weekly_or_change", "BASE", yr, "2027-01-04", datetime(2027, 1, 4, 9, 0, tzinfo=KST), False, False, "BASE"), (True, "monday"))
     check("same ISO week across 1/1 silent", should_notify("weekly_or_change", "BASE", {"last_sent_sig": "BASE", "last_sent_date": "2026-12-28"}, "2027-01-01", datetime(2027, 1, 1, 9, 0, tzinfo=KST), False, False, "BASE"), (False, "same_as_last_sent"))
+    # 나중에 line from events (2026-11-02, pt34u)
+    lb = "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요. "
+    check("later 11/02", later_line("2026-11-02", ecfg), lb + "11월 26일 금통위, 12월 9일 연준 회의(점도표), 27년 1월 14일 금통위만 시나리오를 바꿉니다.")
+    check("later 11/27 (bok_nov end day still in)", later_line("2026-11-27", ecfg), lb + "11월 26일 금통위, 12월 9일 연준 회의(점도표), 27년 1월 14일 금통위만 시나리오를 바꿉니다.")
+    check("later 12/11", later_line("2026-12-11", ecfg), lb + "27년 1월 14일 금통위, 27년 1월 27일 연준 회의, 27년 2월 25일 금통위만 시나리오를 바꿉니다.")
+    check("later 12/31", later_line("2026-12-31", ecfg), lb + "27년 1월 14일 금통위, 27년 1월 27일 연준 회의, 27년 2월 25일 금통위만 시나리오를 바꿉니다.")
+    check("later 2027-01-20 same year no prefix", later_line("2027-01-20", ecfg), lb + "1월 27일 연준 회의, 2월 25일 금통위, 3월 17일 연준 회의(점도표)만 시나리오를 바꿉니다.")
+    check("later 2027-03-19 none left", later_line("2027-03-19", ecfg), lb + "예정된 일정 없음, config 일정 추가 필요.")
+    check("later n from config", later_line("2026-12-11", {**ecfg, "later_events_n": 1}), lb + "27년 1월 14일 금통위만 시나리오를 바꿉니다.")
+    check("later no dot/dash", any(ch in later_line(d, ecfg) for d in ("2026-11-02", "2026-12-11", "2027-03-19") for ch in "\u00b7\u2014"), False)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 
@@ -555,7 +586,7 @@ def main() -> int:
         lines = [
             *head,
             f"지금 할 일: {alloc.strip()}",
-            "나중에: 빈자리는 현금으로 둡니다. 새 종목은 넣지 마세요. 10월 22일 금통위, 10월 삼성 잠정, 확정, 10월 닉스 3Q, 12월 9일 연준 회의만 시나리오를 바꿉니다.",
+            later_line(today, cfg),
             *soon_lines,
             "익절/줄일 때: 조건이 2개면 주식 45. WTI 120 또는 연준이 0.50%포인트를 올리면 중지합니다.",
             "하지 말 것: 추격 매수, 신용, 미수, 8개 밖 종목, 당일 매매, 테마 반등으로 교체.",
