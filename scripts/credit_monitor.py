@@ -5,7 +5,10 @@
 데이터: FRED fredgraph.csv (키 없음), '.' 값은 건너뜀, 최신 관측값 하나로 판정. 최신 관측일이 state.last_date 와 같으면 아무것도 안 함.
 단계(configs/credit.json tiers): 1.50 p3 주의, 1.90 p4 경고, 2.50 p5 위험. 위로 넘을 때 1번(한 번에 여러 단계를 넘으면 가장 높은 단계
   1건, 넘은 단계는 모두 해제). 그 단계보다 rearm_gap(0.15%p) 아래(1.35 / 1.75 / 2.35 이하)로 내려가야 다시 무장.
+  재무장(2026-11-02 조정): 1.50 은 1.40 미만, 1.90 은 1.70 미만 (tiers.rearm_below), 2.50 은 2.35 이하 (rearm_gap).
 완화: 1.90 이상을 찍은 뒤 1.50 아래로 내려오면 p3 1번.
+급등(configs/credit.json jump): 최신값 - 5관측 전 값(FRED 영업일 기준, '.' 결측은 건너뜀) >= +0.25%p 이면 p3 1번, +0.10 미만에서 재무장.
+  같은 관측에 단계 돌파가 있으면 단계 메시지 한 줄로 합침. state.jump 가 없으면 그 실행에서 조용히 seed.
 조회 실패와 스크립트 오류는 cwally-ops 하루 1번. ends_kst(2027-02-26 23:59) 뒤에는 조용히 끝남.
 modes: auto | dry(발송 없음, state 안 씀) | selftest(가짜 값, 네트워크 없음)
 """
@@ -13,6 +16,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 import traceback
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -29,19 +33,27 @@ STATE_PATH = ROOT / "state" / "credit.json"
 UAS = ({"User-Agent": "Mozilla/5.0 (cwally-alerts; +mailto:sosmos3218@gmail.com)"}, {"User-Agent": "Python-urllib/3"})
 NA = "확인 불가"
 TAGS = ["bank"]
-HEAD = "LQD ORCL"
+HEAD = "LQD 000660 005930 ORCL"
+TK = "LQD 000660 005930"
 
 
-def fetch(url: str) -> str:
+def fetch(url: str, rounds: int = 2, wait: float = 8.0) -> str:
+    """UA 2개 x rounds 번 재시도 (라운드 사이 wait 초). 응답이 CSV 가 아니면 실패로 본다."""
     err: Exception | None = None
-    for ua in UAS:
-        try:
-            req = urllib.request.Request(url, headers=ua)
-            with urllib.request.urlopen(req, timeout=25) as resp:
-                return resp.read().decode("utf-8", errors="ignore")
-        except Exception as exc:  # noqa: BLE001
-            err = exc
-            print(f"fetch fail ({ua['User-Agent'][:20]}): {exc}")
+    for r in range(rounds):
+        for ua in UAS:
+            try:
+                req = urllib.request.Request(url, headers=ua)
+                with urllib.request.urlopen(req, timeout=25) as resp:
+                    txt = resp.read().decode("utf-8", errors="ignore")
+                if "," not in txt.split("\n", 1)[0]:
+                    raise ValueError("not a FRED csv")
+                return txt
+            except Exception as exc:  # noqa: BLE001
+                err = exc
+                print(f"fetch fail round {r + 1} ({ua['User-Agent'][:20]}): {exc}")
+        if r + 1 < rounds:
+            time.sleep(wait)
     raise RuntimeError(str(err))
 
 
@@ -92,21 +104,64 @@ def changes(series: list[tuple[str, float]]) -> dict:
     return {"w": (w[0], round(v - w[1], 2)) if w else None, "m": (m[0], round(v - m[1], 2)) if m else None}
 
 
-def seed_state(cfg: dict, d: str, v: float) -> dict:
+def jump_of(cfg: dict, series: list[tuple[str, float]]) -> tuple[str, float] | None:
+    """최신값 - n관측 전 값 (FRED 관측일 = 미국 영업일, 결측 '.' 은 이미 빠짐). 돌려줌: (기준일, 변화) 또는 None."""
+    n = int(cfg.get("jump", {}).get("obs", 5))
+    if len(series) <= n:
+        return None
+    d0, v0 = series[-1 - n]
+    return d0, round(series[-1][1] - v0, 2)
+
+
+def seed_jump(cfg: dict, series: list[tuple[str, float]]) -> dict:
+    j = jump_of(cfg, series)
+    lvl = float(cfg["jump"]["level"])
+    return {"armed": j is None or j[1] < lvl, "last_jump": j[1] if j else None}
+
+
+def seed_state(cfg: dict, d: str, v: float, series: list[tuple[str, float]] | None = None) -> dict:
     return {"tiers": {t["key"]: {"armed": v < t["level"]} for t in cfg["tiers"]},
-            "reached_190": v >= cfg["relief"]["after_reaching"], "last_date": d, "last_value": v}
+            "reached_190": v >= cfg["relief"]["after_reaching"], "last_date": d, "last_value": v,
+            "jump": seed_jump(cfg, series or [(d, v)])}
+
+
+def rearm_ok(cfg: dict, t: dict, v: float) -> bool:
+    if "rearm_below" in t:
+        return v < float(t["rearm_below"])
+    return v <= round(t["level"] - float(cfg["rearm_gap"]), 4)
+
+
+def rearm_text(cfg: dict, t: dict) -> str:
+    if "rearm_below" in t:
+        return f"{float(t['rearm_below']):.2f}%p 미만"
+    return f"{t['level'] - float(cfg['rearm_gap']):.2f}%p 이하"
+
+
+def judge_jump(cfg: dict, st: dict, series: list[tuple[str, float]]) -> tuple[str, float] | None:
+    """5영업일 급등. 위로 넘을 때 1번, rearm_below 미만에서 재무장. st 를 고친다. 돌려줌: 발동 시 (기준일, 변화)."""
+    jc = cfg["jump"]
+    s = st.setdefault("jump", {"armed": True})
+    j = jump_of(cfg, series)
+    if j is None:
+        return None
+    s["last_jump"] = j[1]
+    if s.get("armed", True) and j[1] >= float(jc["level"]):
+        s["armed"] = False
+        return j
+    if not s.get("armed", True) and j[1] < float(jc["rearm_below"]):
+        s["armed"] = True
+    return None
 
 
 def judge(cfg: dict, st: dict, v: float) -> dict:
     """값 하나를 판정한다. st 를 고친다. 돌려줌: {"tier": 넘은 가장 높은 단계 dict 또는 None, "crossed": [키], "relief": bool, "rearmed": [키]}"""
-    gap = float(cfg["rearm_gap"])
     crossed, rearmed = [], []
     for t in cfg["tiers"]:
         s = st["tiers"].setdefault(t["key"], {"armed": True})
         if s["armed"] and v >= t["level"]:
             s["armed"] = False
             crossed.append(t)
-        elif not s["armed"] and v <= round(t["level"] - gap, 4):
+        elif not s["armed"] and rearm_ok(cfg, t, v):
             s["armed"] = True
             rearmed.append(t["key"])
     rel = cfg["relief"]
@@ -139,16 +194,22 @@ def body(stamp: str, what: str, status: str, action: str, later: str, trim: str,
 
 
 def status_line(cfg: dict, d: str, v: float, ch: dict, meaning: str) -> str:
-    return (f"{d} BBB 회사채 스프레드 {v:.2f}%p (FRED {cfg['series']}). {fmt_chg(ch['w'], '1주')}, {fmt_chg(ch['m'], '1개월')}. "
+    j = ch.get("j")
+    jt = f"5영업일 {j[1]:+.2f}%p ({j[0]} 대비)" if j else f"5영업일 비교값 {NA}"
+    return (f"{d} BBB 회사채 스프레드 {v:.2f}%p (FRED {cfg['series']}). {jt}, {fmt_chg(ch['w'], '1주')}, {fmt_chg(ch['m'], '1개월')}. "
             f"단계: {current_tier(cfg, v)}. 의미: {meaning}.")
 
 
 def tier_title(t: dict, v: float) -> str:
-    return f"[CREDIT] LQD ORCL | BBB 회사채 스프레드 {v:.2f}%p, {t['level']:g}%p {t['label']}선 돌파"
+    return f"[CREDIT] LQD 000660 005930 | BBB 회사채 스프레드 {v:.2f}%p, {t['level']:g}%p {t['label']}선 돌파"
 
 
 def relief_title(cfg: dict, v: float) -> str:
-    return f"[CREDIT] LQD ORCL | BBB 회사채 스프레드 {v:.2f}%p, {cfg['relief']['below']:g}%p 아래로 복귀 (경고 해제)"
+    return f"[CREDIT] LQD 000660 005930 | BBB 회사채 스프레드 {v:.2f}%p, {cfg['relief']['below']:g}%p 아래로 복귀 (경고 해제)"
+
+
+def jump_title(v: float, j: tuple[str, float]) -> str:
+    return f"[CREDIT] LQD 000660 005930 | BBB 회사채 스프레드 5영업일 {j[1]:+.2f}%p 급등, {v:.2f}%p"
 
 
 ACTIONS = {
@@ -166,11 +227,12 @@ ACTIONS = {
 def tier_msg(cfg: dict, j: dict, d: str, v: float, ch: dict, stamp: str) -> tuple[str, str, int]:
     t = j["tier"]
     act, later, trim, avoid = ACTIONS[t["key"]]
-    gap = float(cfg["rearm_gap"])
     extra = ""
     if len(j["crossed"]) > 1:
         extra = " 한 번에 여러 단계를 넘어 가장 높은 단계로 1건만 보냅니다."
-    later = f"{later} 같은 단계는 {t['level'] - gap:.2f}%p 이하로 내려갔다가 다시 넘을 때만 다시 옵니다.{extra}"
+    if j.get("jump"):
+        extra += f" 같은 관측에 5영업일 {j['jump'][1]:+.2f}%p 급등도 발생 (급등 알림은 이 메시지에 합침)."
+    later = f"{later} 같은 단계는 {rearm_text(cfg, t)}으로 내려갔다가 다시 넘을 때만 다시 옵니다.{extra}"
     what = f"미국 BBB 회사채 스프레드가 {t['level']:g}%p {t['label']}선을 넘었다는 알림. 메모리 호황 전제의 돈줄 신호. 매매 지시가 아닙니다."
     return (tier_title(t, v), body(stamp, what, status_line(cfg, d, v, ch, t["meaning"]), act, later, trim, avoid, cfg["oracle_line"]), t["priority"])
 
@@ -186,8 +248,20 @@ def relief_msg(cfg: dict, d: str, v: float, ch: dict, stamp: str) -> tuple[str, 
             rel["priority"])
 
 
+def jump_msg(cfg: dict, jv: tuple[str, float], d: str, v: float, ch: dict, stamp: str) -> tuple[str, str, int]:
+    jc = cfg["jump"]
+    what = (f"미국 BBB 회사채 스프레드가 5영업일 만에 {float(jc['level']):.2f}%p 이상 벌어졌다는 조기 경보. 메모리 호황 전제의 돈줄 신호. "
+            "매매 지시가 아닙니다.")
+    return (jump_title(v, jv),
+            body(stamp, what, status_line(cfg, d, v, ch, jc["meaning"]),
+                 "삼성전자/SK하이닉스 계획은 그대로. 다음 며칠 스프레드가 1.5%p, 1.9%p 쪽으로 이어지는지 확인.",
+                 f"5영업일 변화가 +{float(jc['rearm_below']):.2f}%p 미만으로 내려갔다가 다시 +{float(jc['level']):.2f}%p 이상 벌어질 때만 다시 옵니다.",
+                 "급등 알림 하나로는 줄이지 않기.", "급등 하루로 메모리 비중 정리, 공포 매도.", cfg["oracle_line"]),
+            int(jc["priority"]))
+
+
 def ops_msg(stamp: str, title_tail: str, status: str, oracle: str) -> tuple[str, str, int]:
-    return (f"[CREDIT] LQD ORCL | {title_tail}",
+    return (f"[CREDIT] LQD 000660 005930 | {title_tail}",
             body(stamp, "BBB 회사채 스프레드 알림 데이터 수집 안내. 매매 신호 아님.", status, "필요하면 FRED BAMLC0A4CBBB 를 직접 보세요.",
                  "다음 평일 09:00 에 다시 봅니다.", "이 안내로 비중을 바꾸지 않기.", "조회 실패를 스프레드 안정으로 읽기.", oracle), 3)
 
@@ -196,22 +270,33 @@ def evaluate(cfg: dict, st: dict, series: list[tuple[str, float]], stamp: str) -
     """최신 관측값으로 판정. 돌려줌: (메시지, state 바뀜 여부). 관측일이 그대로(또는 과거)면 ([], False)."""
     d, v = series[-1]
     if "tiers" not in st:
-        st.update(seed_state(cfg, d, v))
+        st.update(seed_state(cfg, d, v, series))
         print(f"seeded at {d} {v:.2f}%p (판정 없음): {st}")
         return [], True
     if st.get("last_date") and d <= st["last_date"]:
         print(f"latest observation {d} {v:.2f}%p unchanged since last run ({st['last_date']}): nothing to do")
         return [], False
     ch = changes(series)
+    ch["j"] = jump_of(cfg, series)
     j = judge(cfg, st, v)
+    if "jump" not in st:
+        st["jump"] = seed_jump(cfg, series)
+        jv = None
+        print(f"jump state seeded silently: {st['jump']}")
+    else:
+        jv = judge_jump(cfg, st, series)
+    j["jump"] = jv
     out = []
     if j["tier"]:
         out.append(tier_msg(cfg, j, d, v, ch, stamp))
+    elif jv:
+        out.append(jump_msg(cfg, jv, d, v, ch, stamp))
     if j["relief"]:
         out.append(relief_msg(cfg, d, v, ch, stamp))
     st["last_date"], st["last_value"] = d, v
     print(f"{d} {v:.2f}%p -> {current_tier(cfg, v)}, crossed={j['crossed']}, rearmed={j['rearmed']}, relief={j['relief']}, "
-          f"armed={ {k: s['armed'] for k, s in st['tiers'].items()} }, reached_190={st.get('reached_190')}")
+          f"armed={ {k: s['armed'] for k, s in st['tiers'].items()} }, reached_190={st.get('reached_190')}, jump={ch['j']} fired={bool(jv)} "
+          f"jump_armed={st['jump'].get('armed')}")
     return out, True
 
 
@@ -231,7 +316,7 @@ def load_state() -> dict:
 
 def check_text(t: str, m: str) -> None:
     assert "\u00b7" not in t + m and "\u2014" not in t + m, t
-    assert t.startswith("[CREDIT] LQD ORCL"), t
+    assert t.startswith(f"[CREDIT] LQD 000660 005930 |"), t
 
 
 def run(mode: str, now: datetime, cfg: dict) -> int:
@@ -291,15 +376,17 @@ def selftest(cfg: dict) -> int:
     out, changed = evaluate(cfg, st, s, stamp)
     assert out == [] and not changed
     print("seed 1.10: 모두 무장, 같은 관측일 재실행은 아무것도 안 함")
-    # 단계 순서: (값, 기대 단계 키 또는 None, 완화)
+    # 단계 순서: (값, 기대 단계 키 또는 None, 완화). 급등 판정은 따로 시험하므로 여기서는 끈다(level 99).
+    full_cfg, cfg = cfg, {**cfg, "jump": {**cfg["jump"], "level": 99}}
     st = seed_state(cfg, "2026-10-29", 1.10)
     seq = [
-        (1.49, None, False), (1.50, "t150", False), (1.60, None, False), (1.36, None, False), (1.52, None, False),
-        (1.35, None, False), (1.50, "t150", False),                       # 1.35 이하로 내려가야 재무장
-        (1.93, "t190", False), (1.80, None, False), (1.95, None, False), (1.76, None, False), (1.91, None, False), (1.75, None, False), (1.90, "t190", False),
-        (2.49, None, False), (2.50, "t250", False), (2.40, None, False), (2.60, None, False),
+        (1.49, None, False), (1.50, "t150", False), (1.60, None, False), (1.40, None, False), (1.52, None, False),
+        (1.39, None, False), (1.50, "t150", False),                       # 1.40 미만으로 내려가야 재무장 (1.40 은 아님)
+        (1.93, "t190", False), (1.80, None, False), (1.95, None, False), (1.70, None, False), (1.91, None, False), (1.69, None, False), (1.90, "t190", False),
+        (2.49, None, False), (2.50, "t250", False), (2.40, None, False), (2.60, None, False),   # 2.5 는 2.35 이하에서 재무장
         (1.49, None, True), (1.60, None, False), (1.45, None, False),     # 완화는 1.9 를 다시 찍기 전까지 1번
         (1.30, None, False), (2.55, "t250", False), (1.40, None, True),   # 한 번에 세 단계: 가장 높은 단계 1건
+        (1.50, None, False),                                              # 1.40 은 1.5 재무장 아님 -> 1.50 재돌파 조용
     ]
     day = date(2026, 11, 2)
     series = [("2026-10-29", 1.10)]
@@ -318,12 +405,55 @@ def selftest(cfg: dict) -> int:
             check_text(t_, m_)
             assert route_topic("cwally-port", t_) == "cwally-port" and "조회 실패" not in t_ and NA not in t_, t_
             assert "1주" in m_ and "1개월" in m_ and "오라클 등급:" in m_ and "단계:" in m_, m_
-    print(f"tier seq ok: {len(seq)} 관측, 1.5/1.9/2.5 각 1번, 0.15%p 아래 재무장(1.35/1.75/2.35 이하), 완화 1번, 여러 단계 동시 돌파는 1건")
+    print(f"tier seq ok: {len(seq)} 관측, 1.5/1.9/2.5 각 1번, 재무장 1.40 미만 / 1.70 미만 / 2.35 이하, 완화 1번, 여러 단계 동시 돌파는 1건")
+    cfg = full_cfg
+    # 5영업일 급등: (값, 급등 알림 기대). 기준 1.10 다섯 개 뒤부터.
+    st = seed_state(cfg, "2026-10-29", 1.10)
+    base = [(f"2026-10-{d:02d}", 1.10) for d in (23, 26, 27, 28, 29)]
+    st = seed_state(cfg, base[-1][0], 1.10, base)
+    assert st["jump"] == {"armed": True, "last_jump": None}, st
+    jseq = [(1.20, False), (1.34, False), (1.35, True), (1.40, False), (1.45, False),   # +0.24 조용, +0.25 발동, 유지 중 조용
+            (1.44, False), (1.42, False), (1.45, False),                                 # 5일 변화 +0.10 이상 유지: 무장 안 됨
+            (1.46, False), (1.47, False), (1.50, "t150"),                                # 1.50 은 단계 메시지 (급등 아님, 무장도 아님)
+            (1.48, False), (1.47, False), (1.49, False), (1.50, False), (1.45, False),  # 변화 +0.10 미만 -> 재무장 (1.45 vs 1.46 = -0.01)
+            (1.60, False), (1.72, True)]                                                 # 1.72 vs 5관측 전 1.47 = +0.25 재발동
+    series = list(base)
+    day = date(2026, 11, 2)
+    fired = 0
+    for v, want in jseq:
+        while day.weekday() >= 5:
+            day += timedelta(days=1)
+        series.append((day.isoformat(), v))
+        day += timedelta(days=1)
+        out, _ = evaluate(cfg, st, list(series), stamp)
+        jm = [m for m in out if "급등" in m[0]]
+        tm = [m for m in out if "돌파" in m[0]]
+        if want == "t150":
+            assert len(tm) == 1 and not jm, (v, out)
+        else:
+            assert len(jm) == (1 if want else 0) and not tm, (v, [m[0] for m in out], st["jump"], jump_of(cfg, series))
+        for t_, m_, p_ in jm:
+            fired += 1
+            check_text(t_, m_)
+            assert p_ == 3 and route_topic("cwally-port", t_) == "cwally-port" and "5영업일" in m_, (t_, p_)
+    assert fired == 2, fired
+    print(f"jump seq ok: +0.25%p 이상 1번, +0.10 미만에서 재무장, 재발동 1번 (예: {jump_title(1.35, ('2026-10-23', 0.25))})")
+    # 급등과 단계 돌파가 같은 관측: 단계 메시지 1건에 합침, 급등도 해제
+    st = seed_state(cfg, base[-1][0], 1.10, base)
+    o, _ = evaluate(cfg, st, base + [("2026-11-02", 1.52)], stamp)
+    assert len(o) == 1 and "1.5%p 주의선 돌파" in o[0][0] and "급등도 발생" in o[0][1] and not st["jump"]["armed"], o
+    print("tier + jump same observation: 1건(단계), 본문에 급등 한 줄")
+    # 예전 state(jump 키 없음): 첫 새 관측에서 조용히 seed (급등이어도 안 보냄), 단계 판정은 정상
+    st = seed_state(cfg, base[-1][0], 1.10, base)
+    del st["jump"]
+    o, _ = evaluate(cfg, st, base + [("2026-11-02", 1.45)], stamp)
+    assert o == [] and st["jump"] == {"armed": False, "last_jump": 0.35}, (o, st)
+    print("legacy state without jump: silent seed (armed False at +0.35)")
     # 샘플 출력
     st = seed_state(cfg, "2026-10-29", 1.10)
     base = [("2026-09-29", 1.40), ("2026-10-26", 1.70), ("2026-11-02", 1.93)]
     out, _ = evaluate(cfg, st, base, stamp)
-    assert out[0][0] == "[CREDIT] LQD ORCL | BBB 회사채 스프레드 1.93%p, 1.9%p 경고선 돌파" and out[0][2] == 4, out
+    assert out[0][0] == "[CREDIT] LQD 000660 005930 | BBB 회사채 스프레드 1.93%p, 1.9%p 경고선 돌파" and out[0][2] == 4, out
     print(f"-- sample\nTITLE: {out[0][0]}\nPRIORITY: {out[0][2]}\n{out[0][1]}\n")
     for v in (1.55, 2.61):
         st = seed_state(cfg, "2026-10-29", 1.10)
