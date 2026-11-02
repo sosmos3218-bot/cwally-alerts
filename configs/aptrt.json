@@ -1,0 +1,27 @@
+{
+  "name": "aptrt",
+  "display": "[APT-RT] 관심 아파트 매매 실거래 주간 요약",
+  "approval": "사용자 채팅 승인 2026-11-02 (기본안: 주 1회 월요일 09:00 morning 슬롯, 새 cron 없음)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "index_ticker": "KOSPI",
+  "index_ticker_note": "2026-10-31 전역 규칙: 종목 없는 알림은 제목에 지수 티커",
+  "schedule": "기존 평일 09:00 KST morning 슬롯. 월요일에 1번, 월요일을 놓치면 그 주 첫 평일 슬롯에서 따라잡기",
+  "priority": 3,
+  "api": "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade",
+  "api_note": "국토교통부 아파트 매매 실거래가 자료(data.go.kr). serviceKey = GitHub secret DATA_GO_KR_KEY. 매주 이번 달 + 지난 달 계약분을 읽음(신고 기한 30일). 첫 실행은 지난 12개월 + 이번 달을 읽어 기준과 12개월 최고가 이력만 기록",
+  "history_months": 12,
+  "complexes": [
+    {"key": "gw_e2", "name": "광교2차e편한세상", "lawd": ["41117"], "umd": "이의동", "jibun": "1200", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
+    {"key": "gw_hy", "name": "광교한양수자인", "lawd": ["41117"], "umd": "이의동", "jibun": "1211", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
+    {"key": "gw_hb", "name": "광교웰빙타운호반베르디움", "lawd": ["41117"], "umd": "이의동", "jibun": "1184", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
+    {"key": "gw_dk", "name": "광교대광로제비앙", "lawd": ["41117"], "umd": "이의동", "jibun": "1182", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"},
+    {"key": "suji_cip", "name": "수지센트럴아이파크", "lawd": ["41465"], "umd": "상현동", "jibun": "842", "area_min": 101.5, "area_max": 102.5, "area_label": "101.98㎡"},
+    {"key": "dt_hs", "name": "힐스테이트동탄", "lawd": ["41597", "41590"], "umd": "목동", "jibun": "491", "area_min": 84.0, "area_max": 85.0, "area_label": "84㎡"}
+  ],
+  "complexes_note": "단지는 법정동(umdNm) + 지번(jibun)으로 맞춤(같은 이름 광교호반베르디움 원천동 606 같은 다른 단지 제외). 화성시는 2026-02-01 동탄구(41597) 신설, 그 전 자료는 41590 이라 둘 다 읽음",
+  "max_lines_per_complex": 6,
+  "window_start": "2026-11-02",
+  "ends_kst": "2027-03-31 09:00",
+  "ends_note": "2027-03-31 09:00 슬롯이 마지막(이 작업 묶음의 다른 알림과 같은 끝, 사용자가 바꿀 수 있음). 그 뒤 조용히 종료"
+}
