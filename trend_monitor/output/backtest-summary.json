@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "start": "2024-11-02",
+  "end": "2026-11-02",
+  "account_krw": 100000000,
+  "universe": 2586,
+  "fetch_failures": 0,
+  "signals": 146,
+  "survivorship": "현재 상장 종목만 사용했습니다. 상장폐지 종목은 빠져 있습니다.",
+  "fill": "신호 다음 거래일 시가에 진입하고, 청산 신호 다음 거래일 시가에 팝니다.",
+  "costs": "수수료, 세금, 슬리피지는 넣지 않았습니다.",
+  "lookahead": "신호와 청산 판단은 그날 종가까지의 봉만 사용합니다.",
+  "ma20": {
+    "trades": 35,
+    "win_rate_pct": 34.29,
+    "avg_r": 0.3264,
+    "max_drawdown_pct": 12.46,
+    "open_positions": 0,
+    "ending_equity": 114776555.0
+  },
+  "ma50": {
+    "trades": 28,
+    "win_rate_pct": 42.86,
+    "avg_r": 0.6541,
+    "max_drawdown_pct": 12.4,
+    "open_positions": 0,
+    "ending_equity": 118073637.0
+  }
+}

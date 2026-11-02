@@ -1,0 +1,9 @@
+# 고정 버전. 깨끗한 클론에서 이 파일만 설치하면 같은 환경이 됩니다.
+# FinanceDataReader 의 배포 이름은 finance-datareader, import 이름은 FinanceDataReader 입니다.
+finance-datareader==0.9.202
+exchange-calendars==4.13.2
+pandas==3.1.0
+numpy==2.5.4
+PyYAML==6.0.1
+requests==2.34.2
+pytest==9.2.0

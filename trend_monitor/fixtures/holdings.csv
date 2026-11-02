@@ -1,0 +1,4 @@
+ticker,name,buy_date,avg_price,qty,breakout_price,entry_atr14,stop_mode,climax_taken,remaining_qty,notes
+900010,데모보유,2026-09-01,10000,10,10000,200,pct,N,10,데모 보유
+900011,데모손절,2026-09-01,10000,8,10000,200,pct,N,8,데모 손절
+900012,데모클라이맥스,2026-10-12,10000,10,10000,200,pct,N,10,데모 클라이맥스

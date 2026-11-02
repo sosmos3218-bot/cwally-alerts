@@ -1,0 +1,2 @@
+ticker,name,buy_date,avg_price,qty,breakout_price,entry_atr14,stop_mode,climax_taken,remaining_qty,notes
+005930,예시종목,2026-09-01,70000,10,72000,,pct,N,,예시입니다. 실제 보유는 holdings.csv 또는 TREND_HOLDINGS_PATH 에 적습니다. entry_atr14 가 비면 매수일까지의 일봉으로 계산합니다.

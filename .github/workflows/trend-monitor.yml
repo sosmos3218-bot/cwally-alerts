@@ -1,0 +1,66 @@
+# trend_monitor 수동 실행. 스케줄은 일부러 없습니다.
+# 평일 15:40 KST 를 나중에 붙이는 방법은 trend_monitor/README.md 에 있습니다.
+
+name: trend-monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준일 YYYY-MM-DD 또는 YYYYMMDD. 비우면 서울 기준 최근 마감 거래일"
+        required: false
+        default: ""
+        type: string
+      demo:
+        description: "데모 픽스처만 사용"
+        required: false
+        default: false
+        type: boolean
+      allow_partial:
+        description: "15:30 이전 미완성 봉 허용"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned requirements
+        run: python -m pip install -r trend_monitor/requirements.txt
+
+      - name: Run trend monitor
+        env:
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          INPUT_DATE: ${{ inputs.date }}
+          INPUT_DEMO: ${{ inputs.demo }}
+          INPUT_PARTIAL: ${{ inputs.allow_partial }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ "${INPUT_DEMO}" = "true" ]; then
+            args+=(--demo)
+          fi
+          if [ -n "${INPUT_DATE}" ]; then
+            args+=(--date "${INPUT_DATE}")
+          fi
+          if [ "${INPUT_PARTIAL}" = "true" ]; then
+            args+=(--allow-partial)
+          fi
+          python -m trend_monitor "${args[@]}"
+
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-monitor-output
+          path: trend_monitor/output/
+          if-no-files-found: warn
