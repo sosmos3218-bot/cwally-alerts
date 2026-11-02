@@ -361,11 +361,12 @@ def apply_rules(hist, fx, wti, ktb3, ktb10):
 
 def event_blocks(today: str, cfg: dict) -> tuple[list[str], list[str], bool, str | None, str | None]:
     live = [e for e in cfg.get("events", []) if e["start"] <= today <= e["end"]]
-    soon = [
-        e
-        for e in cfg.get("events", [])
-        if today < e["start"] <= (datetime.strptime(today, "%Y-%m-%d") + timedelta(days=21)).strftime("%Y-%m-%d")
-    ]
+    # sorted by start (2026-11-02): config order is not chronological (bok_nov sits after fomc_dec, 2027 rows after both)
+    soon = sorted(
+        (e for e in cfg.get("events", [])
+         if today < e["start"] <= (datetime.strptime(today, "%Y-%m-%d") + timedelta(days=21)).strftime("%Y-%m-%d")),
+        key=lambda e: e["start"],
+    )
     live_lines: list[str] = []
     vtitle = None
     vkey = None
@@ -453,6 +454,19 @@ def selftest() -> int:
     check("new ISO week -> weekly send", sn("EVENT:DCA_WAIT", "EVENT:DCA_WAIT|hynix_earn", n=datetime(2026, 11, 2, 9, 0, tzinfo=KST)), (True, "monday"))
     check("event -> base is a change", sn("BASE", "BASE"), (True, "zone_change"))
     check("legacy last_sent_key only", should_notify("weekly_or_change", "BASE", {"last_sent_key": "BASE", "last_sent_date": "2026-10-28"}, "x", now, False, False, "BASE"), (False, "same_as_last_sent"))
+    # year rollover with the real event list (2026-11-02, 2027 Q1 금통위/FOMC added)
+    ecfg = json.loads((ROOT / "configs" / "port.json").read_text(encoding="utf-8"))
+    soon_of = lambda d: event_blocks(d, ecfg)[1]  # noqa: E731
+    live_of = lambda d: event_blocks(d, ecfg)[2]  # noqa: E731
+    check("soon sorted by start", soon_of("2026-11-20"), ["21일 안 일정: 11월 금통위 2026-11-26, 12월 FOMC(점도표) 2026-12-09"])
+    check("soon across new year", soon_of("2026-12-28"), ["21일 안 일정: 1월 금통위 2027-01-14"])
+    check("2027 live start", live_of("2027-01-14"), True)
+    check("2027 live end (KST decision morning)", live_of("2027-03-18"), True)
+    check("after end not live", live_of("2027-03-19"), False)
+    check("gap day not live", live_of("2026-12-31"), False)
+    yr = {"last_sent_sig": "BASE", "last_sent_date": "2026-12-31"}
+    check("ISO week rolls over year", should_notify("weekly_or_change", "BASE", yr, "2027-01-04", datetime(2027, 1, 4, 9, 0, tzinfo=KST), False, False, "BASE"), (True, "monday"))
+    check("same ISO week across 1/1 silent", should_notify("weekly_or_change", "BASE", {"last_sent_sig": "BASE", "last_sent_date": "2026-12-28"}, "2027-01-01", datetime(2027, 1, 1, 9, 0, tzinfo=KST), False, False, "BASE"), (False, "same_as_last_sent"))
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 

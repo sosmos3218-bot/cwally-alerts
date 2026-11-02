@@ -606,8 +606,11 @@ jobs:
             PTM=auto
             if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then PTM=dry; python scripts/port_monitor.py selftest >/dev/null; fi
             python scripts/port_monitor.py "$PTM"
-            python scripts/brk10_monitor.py event
-            python scripts/googl_monitor.py event
+            # 2026-11-02: brk10/googl have no dry mode, so a dry port dispatch skips them (no real send from a dry check)
+            if [ "$PTM" != "dry" ]; then
+              python scripts/brk10_monitor.py event
+              python scripts/googl_monitor.py event
+            fi
           fi
           if [ "$JOB" = "portlight" ]; then
             python scripts/portlight_monitor.py auto
