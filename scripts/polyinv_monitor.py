@@ -277,8 +277,10 @@ def macro_ko_title(ev: dict, cfg: dict, cat: dict, us: bool) -> str:
     return ("미국 " if us else "") + word + (f" {year.group(1)}년" if year else "")
 
 
-def pick_macro_pin(events: list[dict], cfg: dict, state: dict, now: datetime) -> dict | None:
-    """작은 거시 시장 1개 (macro_pin). 조건 충족 후보가 없으면 None."""
+def pick_macro_pin(events: list[dict], cfg: dict, state: dict, now: datetime,
+                   snap: dict | None = None) -> dict | None:
+    """작은 거시 시장 1개 (macro_pin). 조건 충족 후보가 없으면 None. snap 에 후보 시장 확률을 기록."""
+    snap = {} if snap is None else snap
     mp = cfg.get("macro_pin") or {}
     if not mp:
         return None
@@ -307,6 +309,8 @@ def pick_macro_pin(events: list[dict], cfg: dict, state: dict, now: datetime) ->
             if not ok:
                 continue
             rows = []
+            for m in allm:                            # 거시 후보 시장 전체 기록 (다음 주 저장값 비교용)
+                snap[str(m.get("id"))] = {"p": round(m["_p"], 4), "at": now.isoformat(timespec="minutes")}
             for m in ok:
                 ch, basis = weekly_change(str(m.get("id")), m["_p"], m, state, now, th)
                 rows.append({"m": m, "ch": ch, "basis": basis})
@@ -342,14 +346,17 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
         cat = classify(ev, cfg)
         if not cat:
             continue
+        fed = is_fed_event(ev, cat, cfg)
+        opened = open_markets(ev, th, now, 0 if fed else None)
+        # 거래대금 기준 미달 이벤트도 확률은 기록: 다음 주 기준을 넘으면 저장값(지난주 대비)으로 비교
+        for m in opened:
+            snapshot[str(m.get("id"))] = {"p": round(m["_p"], 4), "at": now.isoformat(timespec="minutes")}
         if (fnum(ev.get("volume1wk")) or 0) < cat.get("min_event_volume_1wk", th["min_event_volume_1wk"]):
             continue
-        fed = is_fed_event(ev, cat, cfg)
         allm = []
-        for m in open_markets(ev, th, now, 0 if fed else None):
+        for m in opened:
             mid = str(m.get("id"))
             p = m["_p"]
-            snapshot[mid] = {"p": round(p, 4), "at": now.isoformat(timespec="minutes")}
             ch, basis = weekly_change(mid, p, m, state, now, th)
             allm.append({"m": m, "p": p, "ch": ch, "basis": basis})
         if not allm:
@@ -394,13 +401,14 @@ def build_items(events: list[dict], cfg: dict, state: dict, now: datetime) -> tu
         pinned = [nxt]
     for it in pinned:
         it["pinned"] = True
-    macro = pick_macro_pin(events, cfg, state, now)
+    macro = pick_macro_pin(events, cfg, state, now, snapshot)
     if macro:
         snapshot[macro["market_id"]] = {"p": round(macro["p"], 4), "at": now.isoformat(timespec="minutes")}
         pinned = pinned + [macro]
         items = [it for it in items if it["event_id"] != macro["event_id"] and it["group"] != macro["group"]]
     items = dedupe_items(items)
-    items.sort(key=lambda it: (-(abs(it["ch"]) if it["ch"] is not None else -1), -it["vol"]))
+    # 표시 단위(0.1%p)로 반올림해 정렬: 부동소수 오차로 같은 변화폭의 거래대금 순서가 뒤집히지 않게
+    items.sort(key=lambda it: (-(round(abs(it["ch"]), 1) if it["ch"] is not None else -1), -it["vol"]))
     picked, per_cat = list(pinned), {}
     for it in items:
         if len(picked) >= th["max_items"]:
