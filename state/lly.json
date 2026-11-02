@@ -1,20 +1,20 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-11-02T09:06:40.696262+09:00",
   "price": {
     "armed": true,
     "fired": null,
-    "last_close": 1373.7,
-    "last_date": "2026-10-29",
+    "last_close": 1417.54,
+    "last_date": "2026-10-30",
     "fail_day": null
   },
+  "sec_fail_day": null,
+  "expiry_sent": null,
+  "reminders": {},
   "guidance": {
     "seed_after": "2026-10-30",
     "seen": [],
     "verdict": null,
     "fail": {},
     "items": {}
-  },
-  "sec_fail_day": null,
-  "expiry_sent": null,
-  "reminders": {}
+  }
 }

@@ -1,9 +1,10 @@
 {
-  "updated_at": "2026-10-30 09:00 KST",
-  "price": 26.25,
+  "updated_at": "2026-11-02 09:00 KST",
+  "price": 23.95,
   "tag": "REVIEW",
   "last_event_ids": [
-    "h24"
+    "h24",
+    "midterm"
   ],
   "seen_ids": [
     "https://finance.yahoo.com/m/e7396a5f-59db-30ad-b0ed-49dbca81119f/why-gartner-ai-outlook-sent.html?.tsrc=rss",
@@ -125,9 +126,13 @@
     "https://stocktwits.com/news-articles/markets/equity/crwv-nbis-iren-apld-stocks-drop-after-microsoft-capex-falls-short-on-delayed-third-party-capacity/cZUQeHWR9bT?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/nebius-vs-iren-ai-infrastructure-130000823.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/iren-limited-iren-expected-beat-130030024.html?.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss"
+    "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss",
+    "https://www.tikr.com/blog/b-rileys-64-target-says-irens-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261030-4f8m8346&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-sees-modest-171422114.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/crypto/articles/mstr-q3-earnings-beat-estimates-133900070.html?.tsrc=rss"
   ],
-  "last_digest_at": "2026-10-30 09:00 KST",
+  "last_digest_at": "2026-11-02 09:00 KST",
   "pending_news": [],
-  "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive"
+  "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
+  "last_digest_items": 1
 }

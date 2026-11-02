@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-30T15:20:48.679959+09:00",
+  "updated_at": "2026-11-02T09:01:09.864047+09:00",
   "phase": "idle",
   "date_notified": false,
   "results_notified": false,
@@ -7,5 +7,5 @@
   "source": null,
   "snippet": null,
   "parsed": null,
-  "fetch_fails": 0
+  "fetch_fails": 1
 }

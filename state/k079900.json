@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-31T01:32:58.278016+09:00",
-  "last_day": "2026-10-30",
+  "updated_at": "2026-11-02T09:09:12.257787+09:00",
+  "last_day": "2026-11-02",
   "zone": {
-    "armed": true,
-    "fired_day": null
+    "armed": false,
+    "fired_day": "2026-11-02"
   },
   "break": {
     "armed": true,

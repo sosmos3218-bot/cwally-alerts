@@ -1,8 +1,8 @@
 {
-  "weekly_sent_week": "2026-W44",
+  "weekly_sent_week": "2026-W45",
   "fail_sent_week": null,
   "last_pick": "Grok 4.7 medium|GPT-6 Astra medium|Plus Work/Codex Astra medium",
-  "updated_at": "2026-10-26T09:01:58.544064+09:00",
+  "updated_at": "2026-11-02T09:01:57.296079+09:00",
   "last_snapshot": {
     "kind": "OK",
     "pick": "Grok 4.7 medium|GPT-6 Astra medium|Plus Work/Codex Astra medium",
