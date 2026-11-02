@@ -396,6 +396,24 @@ def offline_selftest(cfg):
         check("last minute of window still fires", len(sent), 1)
         sent.clear()
 
+        # --- 11/7 18:10 extra run (approved 2026-11-02 pt35u): final at 09:10 -> 18:10 silent; only 원문 없음 at 09:10 -> 18:10 sends
+        check("oneshot_kst has 11/7 09:10 and 18:10", [x for x in cfg["oneshot_kst"] if x.startswith("2026-11-07")], ["2026-11-07 09:10", "2026-11-07 18:10"])
+        fx.update(notices=[q3_ok], quarter=quarter("Y"))
+        st = default_state()
+        run("auto", "2026-11-07 09:10", st)
+        sent.clear()
+        run("auto", "2026-11-07 18:10", st)
+        check("11/7: final sent at 09:10 -> 18:10 silent", (sent, st["final_notified"]), ([], True))
+        fx.update(notices=[], quarter=quarter("Y"))
+        st = default_state()
+        run("auto", "2026-11-07 09:10", st)
+        check("11/7 09:10: no result -> 원문 없음 only", [s[0] for s in sent], ["[KZ] 010130 원문 없음 | 보유 유지"])
+        sent.clear()
+        fx.update(notices=[q3_ok])
+        run("auto", "2026-11-07 18:10", st)
+        check("11/7 18:10: result found -> final send, no second 원문 없음", [s[0] for s in sent], ["[KZ] 010130 상향 | 3분기 vs 추정"])
+        sent.clear()
+
         # --- 11/7 23:00 KST: script window and publish() end gate both still send (ends_kst 2026-11-07 23:59 + 59m grace)
         import ntfy_util
         st = default_state()

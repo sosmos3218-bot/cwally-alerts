@@ -160,10 +160,11 @@ on:
     - cron: "10 11 29 10 *"
     - cron: "40 14 29 10 *"
     - cron: "20 20 29 10 *"
-    # kzq3 oneshot_kst (KST→UTC): 2026-11-05 16:10, 11-06 09:10, 11-07 09:10. 고려아연 3분기 실적 창 (on-time = cron-job.org)
+    # kzq3 oneshot_kst (KST→UTC): 2026-11-05 16:10, 11-06 09:10, 11-07 09:10, 11-07 18:10 (18:10 approved in chat 2026-11-02 pt35u). 고려아연 3분기 실적 창 (on-time = cron-job.org)
     - cron: "10 7 5 11 *"
     - cron: "10 0 6 11 *"
     - cron: "10 0 7 11 *"
+    - cron: "10 9 7 11 *"
     # kica oneshot_kst (KST→UTC): 2026-11-12 18:00, 11-13 18:00, 11-16 18:00. 한국정보인증 3분기 분기보고서 확인 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "0 9 12 11 *"
     - cron: "0 9 13 11 *"
@@ -432,7 +433,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 23 28 10 *" ] || [ "${{ github.event.schedule }}" = "40 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 2 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 7 29 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "16 0 3 11 *" ]; then JOB=secq3
             elif [ "${{ github.event.schedule }}" = "42 23 11 10 *" ] || [ "${{ github.event.schedule }}" = "42 7 29 10 *" ]; then JOB=q3flow
             elif [ "${{ github.event.schedule }}" = "10 11 29 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 29 10 *" ] || [ "${{ github.event.schedule }}" = "20 20 29 10 *" ]; then JOB=llyq3
-            elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ]; then JOB=kzq3
+            elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ] || [ "${{ github.event.schedule }}" = "10 9 7 11 *" ]; then JOB=kzq3
             elif [ "${{ github.event.schedule }}" = "0 0 28 10 *" ]; then JOB=manh
             elif [ "${{ github.event.schedule }}" = "5 0 5 11 *" ]; then JOB=figq3
             elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
