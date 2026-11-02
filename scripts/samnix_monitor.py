@@ -13,6 +13,14 @@ Weekly digest (approved in chat 2026-10-30, owner note pt24u): the daily 15:20 r
 Each weekday 15:20 run records the preceding day's confirmed totals in state week_rows silently. The Friday 15:20 run
 (or, if Friday was missed, the next run whose last digest is 7+ days old) sends ONE p3 "[SAMNIX] 005930/000660 주간 수급 요약
 (MM/DD~MM/DD)". Zero rows -> nothing sent (the digest clock still advances). The p4 foreign 3-day flip stays immediate.
+
+Two-week foreign net buy (2026-11-02, owner approval pt17u, extends [SAMNIX], no new alert/slot/topic/input):
+per stock, the last 10 confirmed KRX trading days (Naver stock trend foreignerPureBuyQuant = KRX regular-session
+confirmed net shares, rows <= flow_day) split into two 5-day blocks (days 1-5 older, 6-10 newer). Condition = 10-day sum > 0
+AND older 5-day sum > 0 AND newer 5-day sum > 0. Fires once (priority 3) when the condition turns true while armed;
+re-arms only after a day whose newer 5-day sum is < 0 (a net-selling week). Judged per data trading day in order
+(state["twowk"][code]["last_date"]), a gap (None) in the window stops judging until the next run. First sight of a stock seeds
+silently (armed = condition false). Toggle: configs/samnix.json foreign_two_week.enabled.
 """
 from __future__ import annotations
 
@@ -150,6 +158,101 @@ def seed_flip(rows: list[dict], now: datetime) -> dict:
     return st
 
 
+TW_BLOCK = 5
+
+
+def two_week_window(rows: list[dict], i: int) -> dict | None:
+    """rows oldest first. 10 confirmed days ending at rows[i] -> sums (shares) or None if short or a value is missing."""
+    if i + 1 < 2 * TW_BLOCK:
+        return None
+    win = rows[i + 1 - 2 * TW_BLOCK:i + 1]
+    if any(r.get("foreign") is None for r in win):
+        return None
+    a, b = win[:TW_BLOCK], win[TW_BLOCK:]
+    sa, sb = sum(r["foreign"] for r in a), sum(r["foreign"] for r in b)
+    return {"a": sa, "b": sb, "total": sa + sb, "a_from": a[0]["day"], "a_to": a[-1]["day"], "b_from": b[0]["day"], "b_to": b[-1]["day"],
+            "met": sa + sb > 0 and sa > 0 and sb > 0}
+
+
+def seed_two_week(rows: list[dict], now: datetime) -> dict:
+    """마지막 확정일 기준 조건이 이미 참이면 무장 해제(진행 중인 상태는 알리지 않음). 지난 날짜는 판정 안 함."""
+    st = {"armed": True}
+    if rows:
+        w = two_week_window(rows, len(rows) - 1)
+        st["armed"] = not (w and w["met"])
+        st["last_date"] = rows[-1]["day"]
+    st["seeded"] = {"at": now.isoformat(), "upto": st.get("last_date"), "note": "seed 이전 날짜는 판정 안 함"}
+    return st
+
+
+def two_week_events(rows: list[dict], st: dict) -> list[dict]:
+    """rows oldest first, confirmed only. Updates st (last_date, armed, last); returns fired windows."""
+    out = []
+    for i, r in enumerate(rows):
+        if st.get("last_date") and r["day"] <= st["last_date"]:
+            continue
+        if r.get("foreign") is None:
+            break
+        w = two_week_window(rows, i)
+        if w is None:
+            if i + 1 >= 2 * TW_BLOCK:
+                break  # 창 안에 빈 값: 다음 실행에서 다시
+            st["last_date"] = r["day"]
+            continue
+        st["last_date"] = r["day"]
+        st["last"] = {k: w[k] for k in ("a", "b", "total", "met")}
+        if w["met"] and st.get("armed", True):
+            st["armed"] = False
+            out.append(w)
+        elif not st.get("armed", True) and w["b"] < 0:
+            st["armed"] = True
+    return out
+
+
+def two_week_message(now: datetime, code: str, name: str, w: dict, prio: int = 3) -> tuple[str, str, int]:
+    title = f"[SAMNIX] 005930/000660 참고용 외국인 2주 연속 순매수 {name}({code})"
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | {name}({code}) 외국인 2주(10거래일) 순매수 (확정 수급, 주식 수)",
+        f"이게 뭐 알림: {name} 외국인이 최근 10거래일을 5일씩 나눈 두 주 모두 순매수했다는 참고용 알림. 외부 분석이 말한 바닥 신호(외국인 2주 연속 순매수) 점검용이며 매매 신호가 아닙니다.",
+        f"지금 결과/상태: 1주차 {ymd(w['a_from'])}~{ymd(w['a_to'])} 외국인 {fmt_shares(w['a'])}, 2주차 {ymd(w['b_from'])}~{ymd(w['b_to'])} 외국인 {fmt_shares(w['b'])}, "
+        f"10거래일 합계 {fmt_shares(w['total'])}. 기준: KRX 정규장 확정 수급(네이버 증권 종목별 투자자), 달력 주가 아니라 거래일 5일 묶음.",
+        "지금 할 일: 수급 바닥 신호 하나가 켜졌다는 사실만 확인. 2차 분할 조건([SAMNIX] 3일 연속 전환 또는 20일선 회복)과 개별 종목 계획을 함께 보세요.",
+        "나중에: 최근 5거래일 외국인 합계가 순매도(0 미만)로 돌아선 날 다시 무장되고, 그 뒤 다시 2주 연속 순매수가 되면 다시 옵니다.",
+        "익절/줄일 때: 이 알림만으로 매매하지 말고 개별 종목 조건을 따르세요.",
+        "하지 말 것: 2주 순매수만 보고 바닥 확정으로 단정하고 한 번에 매수, 신용/미수.",
+    ]
+    return title, "\n".join(lines), prio
+
+
+def two_week_check(mode: str, now: datetime, code: str, name: str, rows: list[dict], state: dict, cfg: dict) -> None:
+    tw_cfg = cfg.get("foreign_two_week") or {}
+    if not tw_cfg.get("enabled"):
+        return
+    tw = state.setdefault("twowk", {})
+    st = tw.get(code)
+    if st is None:
+        st = seed_two_week(rows, now)
+        print(f"twowk {name}: seeded silently {st}")
+        if mode == "auto":
+            tw[code] = st
+        return
+    work = json.loads(json.dumps(st))
+    events = two_week_events(rows, work)
+    w = two_week_window(rows, len(rows) - 1) if rows else None
+    cur = f"1주차 {fmt_shares(w['a'])}, 2주차 {fmt_shares(w['b'])}, 합 {fmt_shares(w['total'])}, 조건 {'충족' if w['met'] else '미충족'}" if w else NA
+    print(f"twowk {name}: 최근 10거래일 {cur}, armed={work.get('armed')}, last_date={work.get('last_date')}, 새 발동 {len(events)}건")
+    for ev in events[-1:]:  # 밀린 날이 여러 개여도 가장 최근 1건만
+        title, message, prio = two_week_message(now, code, name, ev, int(tw_cfg.get("priority", 3)))
+        assert route_topic("cwally-port", title) == "cwally-port", title
+        print(title, "\n", message)
+        if mode == "auto":
+            ntfy(cfg.get("ntfy_server") or "https://ntfy.sh", cfg.get("ntfy_topic") or "cwally-port", title, message, prio)
+            work.setdefault("fired", []).append({"date": ev["b_to"], "at": now.isoformat()})
+            work["fired"] = work["fired"][-10:]
+    if mode == "auto":
+        tw[code] = work
+
+
 def first_tranche_line(ft: dict | None, kospi: dict | None, day: str) -> tuple[bool, str]:
     """(1차 조건 충족 여부, 본문 줄). ft = configs/samnix.json first_tranche, kospi = {"day","close"} or None."""
     if not ft or not ft.get("enabled"):
@@ -235,6 +338,7 @@ def flip_check(mode: str, now: datetime, flow_day: str, state: dict) -> None:
                 work["fired"] = work["fired"][-10:]
         if mode == "auto":
             flip[code] = work
+        two_week_check(mode, now, code, name, rows, state, cfg)
     if mode == "auto":
         save_state(state)
     else:
@@ -279,9 +383,58 @@ def selftest() -> int:
     assert "확인 불가" not in t and "조회 실패" not in t
     print(f"-- sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
     first_tranche_selftest(when, ev0)
+    two_week_selftest(when)
     weekly_selftest()
     print("SELFTEST OK: no network, no publish, no state")
     return 0
+
+
+def two_week_selftest(when: datetime) -> None:
+    """외국인 2주 연속 순매수 (2026-11-02). 가짜 숫자, 네트워크 없음."""
+    def mk(seq):
+        return [{"day": f"2026{(i // 28) + 9:02d}{(i % 28) + 1:02d}", "foreign": v, "organ": 0, "close": 1.0} for i, v in enumerate(seq)]
+    # 9일만 있으면 판정 없음, 10일째 두 주 모두 + -> 1건
+    rows = mk([-1] * 3 + [5, 5, -2, 5, 5] + [1, 1, 1, -1, 1])  # 13일
+    st = {"armed": True}
+    assert two_week_events(rows[:9], st) == [] and st["last_date"] == rows[8]["day"], st
+    ev = two_week_events(rows, st)
+    got = [(e["a"], e["b"], e["b_to"]) for e in ev]
+    # 창 끝 index 9: a=rows[0:5]=-1-1-1+5+5=7, b=rows[5:10]=-2+5+5+1+1=10 -> 발동
+    assert got == [(7, 10, rows[9]["day"])] and st["armed"] is False, (got, st)
+    assert two_week_events(rows, st) == []  # 같은 날짜 두 번 판정 안 함
+    # 발동 뒤 조건이 잠깐 깨졌다 다시 맞아도 최근 5일 합이 0 미만이 아니면 재발동 없음
+    rows2 = rows + mk([0] * 13 + [-1, -1, -1, 1, 1])[13:]  # 5일 합 -1 -> 재무장
+    st2 = dict(st)
+    assert two_week_events(rows2, st2) == [] and st2["armed"] is True, st2
+    rows3 = rows2 + mk([0] * 18 + [3] * 10)[18:]  # 다시 10일 순매수 -> 1건
+    ev3 = two_week_events(rows3, st2)
+    assert len(ev3) == 1 and st2["armed"] is False, (ev3, st2)
+    # 10일 합 + 지만 한 주가 - 면 미충족
+    w = two_week_window(mk([10, 10, 10, 10, 10, -1, -1, -1, -1, 1]), 9)
+    assert w["total"] > 0 and w["b"] < 0 and not w["met"], w
+    # 0 인 주는 순매수 아님
+    assert not two_week_window(mk([1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), 9)["met"]
+    # 창 안 빈 값: 판정 멈춤, 다음 실행에서 이어감
+    rows4 = mk([1] * 9 + [None])
+    st4 = {"armed": True}
+    assert two_week_events(rows4, st4) == [] and st4["last_date"] == rows4[8]["day"], st4
+    rows4[9]["foreign"] = 1
+    assert len(two_week_events(rows4, st4)) == 1
+    # seed: 이미 충족 중이면 무장 해제(알림 없음), 미충족이면 무장
+    assert seed_two_week(mk([1] * 10), when)["armed"] is False
+    assert seed_two_week(mk([1] * 5 + [-1] * 5), when)["armed"] is True
+    # 실제 10/19~10/30 숫자 (삼성전자): 2주차 -1,117주 -> 미충족
+    real = [{"day": d, "foreign": v} for d, v in (("20261019", 1241581), ("20261020", 1801659), ("20261021", 2055241), ("20261022", -585787),
+            ("20261023", -868997), ("20261026", -984399), ("20261027", 1052520), ("20261028", 1522344), ("20261029", -518762), ("20261030", -1072820))]
+    w = two_week_window(real, 9)
+    assert w["a"] == 3643697 and w["b"] == -1117 and not w["met"], w
+    t, m, p = two_week_message(when, "000660", "SK하이닉스", ev[0])
+    assert t == "[SAMNIX] 005930/000660 참고용 외국인 2주 연속 순매수 SK하이닉스(000660)" and p == 3, t
+    assert "\u00b7" not in t + m and "\u2014" not in t + m and route_topic("cwally-port", t) == "cwally-port"
+    assert "확인 불가" not in t and "조회 실패" not in t
+    assert [x.split(":")[0] for x in m.split("\n")[1:7]] == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]
+    print(f"-- two_week sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
+    print("two_week selftest OK")
 
 
 def first_tranche_selftest(when: datetime, ev: dict) -> None:

@@ -63,5 +63,37 @@
     }
   ],
   "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
-  "digest_after": "20261029"
+  "digest_after": "20261029",
+  "twowk": {
+    "005930": {
+      "armed": true,
+      "last_date": "20261030",
+      "last": {
+        "a": 3643697.0,
+        "b": -1117.0,
+        "total": 3642580.0,
+        "met": false
+      },
+      "seeded": {
+        "at": "2026-11-02T17:33:00+09:00",
+        "upto": "20261030",
+        "note": "seed 이전 날짜는 판정 안 함"
+      }
+    },
+    "000660": {
+      "armed": true,
+      "last_date": "20261030",
+      "last": {
+        "a": -724381.0,
+        "b": -107904.0,
+        "total": -832285.0,
+        "met": false
+      },
+      "seeded": {
+        "at": "2026-11-02T17:33:00+09:00",
+        "upto": "20261030",
+        "note": "seed 이전 날짜는 판정 안 함"
+      }
+    }
+  }
 }
