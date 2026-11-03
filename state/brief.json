@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-02T08:12:11.159574+09:00",
+  "updated_at": "2026-11-03T20:09:25.511653+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -81,6 +81,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-02T08:12:11.159574+09:00"
+    },
+    "20261103-010950-monthly.json#8251b5fd6d3f8509": {
+      "file": "20261103-010950-monthly.json",
+      "title": "[BRIEF] 010950 S-Oil 월간 점검 | 매력도 유지",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-03T20:09:25.511653+09:00"
     }
   },
   "rejected": {},
