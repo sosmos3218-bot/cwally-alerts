@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-02T17:34:27+09:00",
-  "trade_date": "2026-11-02",
+  "generated_at": "2026-11-03T23:36:44+09:00",
+  "trade_date": "2026-11-03",
   "demo": false,
   "params": {
     "account_krw": 100000000,
@@ -43,9 +43,7 @@
     "source": "FinanceDataReader 0.9.202 KRX 일봉 (종목코드 기본 경로는 Naver 일봉)",
     "ok": true,
     "warnings": [
-      "보유 파일이 없습니다. 보유 점검은 비워 둡니다. holdings.example.csv 를 복사해 holdings.csv 를 만드세요.",
-      "OPENDART_API_KEY 가 없습니다. EPS 전년비는 unknown 으로 두고 가격 조건만 계산합니다. 키는 저장소 시크릿 OPENDART_API_KEY 로 넣으세요. README 를 보세요.",
-      "시가총액 상위 200종목 중 50일선을 계산한 200종목에서 26종목(13.0%)이 50일선 위입니다. 30% 미만이라 신규 수량을 절반으로 줄입니다."
+      "시가총액 상위 200종목 중 50일선을 계산한 200종목에서 28종목(14.0%)이 50일선 위입니다. 30% 미만이라 신규 수량을 절반으로 줄입니다."
     ],
     "watchlist": []
   },
@@ -55,6 +53,6 @@
     "total_open_risk_pct": 0.0,
     "cash_after": 100000000,
     "exposure_pct": 0.0,
-    "breadth_pct_above_ma50": 13.0
+    "breadth_pct_above_ma50": 14.0
   }
 }
