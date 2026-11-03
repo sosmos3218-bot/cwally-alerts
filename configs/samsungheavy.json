@@ -1,0 +1,38 @@
+{
+  "name": "samsungheavy",
+  "title_prefix": "[010140]",
+  "code": "010140",
+  "display": "삼성중공업 (KOSPI 010140) 종가 15,200원 2차 분할 매수, 14,500원 2일 연속 손절, 16,500원 거래량 돌파 감시",
+  "short": "삼성중공업",
+  "approval": "사용자 채팅 승인 2026-11-03 (새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음, 새 cron-job.org 작업 없음)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계, [089860] 롯데렌탈 감시와 같은 시간. 정규장 확정 종가(scripts/krx_close.py, 그날 15:40 이후 행 또는 앞선 날짜 행)만 쓰고, 데이터 날짜(price.last_date)보다 새 날짜만 날짜순으로 판정. 19:00 에 당일 행이 아직 없으면 그날은 판정하지 않고 다음 실행에서 이어서 판정(state price.pending 기록). 수동 job=samsungheavy 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀). 같은 종목의 [SHI] 15:20 감시(14,500 이탈 1일, 18,000 돌파)와는 별개.",
+  "daily_window": {"start": "2026-11-03", "end": "2027-02-26"},
+  "price_source": "정규장 종가와 거래량 scripts/krx_close.py (Daum A010140 days, 실패 시 네이버 15:30 분봉)",
+  "z2": {
+    "level": 15200,
+    "priority": 3,
+    "rearm_above": 15800,
+    "note": "종가 15,200원 이하면 1번(2차 분할 매수 검토 구간). 종가가 15,800원 넘게 회복한 뒤에야 다시 무장."
+  },
+  "stop": {
+    "level": 14500,
+    "days": 2,
+    "priority": 4,
+    "note": "종가 14,500원 미만이 2거래일 연속이면 1번(손절 기준 도달). 종가가 14,500원 이상으로 돌아온 뒤에야 다시 무장."
+  },
+  "trend": {
+    "enabled": true,
+    "level": 16500,
+    "vol_mult": 1.5,
+    "vol_days": 20,
+    "priority": 3,
+    "note": "종가 16,500원 초과 + 그날 거래량이 직전 20거래일 평균 거래량의 1.5배 이상이면 1번만(추세 전환 확인). 다시 무장하지 않음."
+  },
+  "stale_trading_days": 2,
+  "seed": {"day": "2026-11-03", "close": 17280, "volume": 3829123, "vol_avg20_prior": 3519795, "note": "11/3 정규장 확정 종가 17,280원(Daum, 네이버 일봉은 시간외 포함 17,380원), 거래량 3,829,123주, 직전 20거래일 평균 3,519,795주(1.09배). 이 날짜까지는 판정하지 않음, 다음 거래일부터 판정."},
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "KRX 거래일 19:00, 2027-02-26까지. 뒤에는 조용히 끝남"
+}
