@@ -1453,6 +1453,21 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/064400_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/064400_monitor.py "$MODE" || rc=1
           exit "$rc"
+      - name: Run 326030 (SK Biopharm watch, close lines 68,000/83,400/91,600, opakalim/RISE3 filing watch, 3Q verdict 11/5~11/12; 005930 engine, k203780 19:00 slot)
+        # approved in chat 2026-11-03 (t37u). attached to the existing k203780 slot, no new cron. Crash guard inside the script (ops notice, exit 0).
+        # Dedupe: state/326030.json last_day + armed, notice_seen, earn_q3. Ends 2026-12-31 23:59 KST. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry).
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/326030_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/326030_monitor.py "$MODE" || rc=1
+          exit "$rc"
       - name: Run 0220WL close (Hanwha M&S 3우B close lines 2,040/2,000, common/pref discount 60%/75%, 10/29 Vision 3Q, 11/2~11/4 tender result, payout filings; same engine as 005930, k203780 19:00 slot)
         # approved in chat 2026-10-28. attached to the existing k203780 slot, no new cron. Separate from the 15:20 0220wl alert (afternoon).
         # Dedupe: state/0220wl_close.json last_day + armed, ratio.last_day + armed, notice_done, notice_seen.
