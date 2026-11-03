@@ -1,0 +1,36 @@
+{
+  "name": "VCP",
+  "title_prefix": "[VCP]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "21:00",
+  "schedule_note": "일요일 21:00 KST. 새 cron 없이 기존 portlight 슬롯(cron-job.org 8723329 dispatch, GitHub 백업 `0 12 * * 0`)에 붙은 별도 스텝. 월요일 백업은 not_sunday로 조용히 끝나고 같은 주 재실행은 state/vcp.json weekly_done_week(ISO 주)로 막는다.",
+  "approved": "2026-11-03",
+  "approval_text": "B2에 KOSPI 200일선 위 조건을 붙인 버전을 2010~2017년 데이터로 검증하고, 통과하면 일요일 21:00 [VCP] KOSPI 알림으로 추가해 줘.",
+  "alert_policy": "sunday_weekly",
+  "silent_when": [
+    "KOSPI 종가 <= 200일 단순이평 (로그만)",
+    "통과 0종목 (로그만)"
+  ],
+  "rules": {
+    "variant": "B2R",
+    "universe": "KOSPI, KOSDAQ 시가총액 상위 각 200 (우선주, 스팩 제외)",
+    "minervini_c7_mult": 0.75,
+    "rs_min": 70,
+    "rs_weights": "0.4 r63 + 0.2 r126 + 0.2 r189 + 0.2 r252, 같은 날 유니버스 내 백분위",
+    "base_len": 65,
+    "depth_min_pct": 5,
+    "depth_max_pct": 40,
+    "close_vs_base_mid": ">=",
+    "min_bars_since_peak": 10,
+    "regime": "KS11 종가 > 200일 단순이평 (기준일까지 데이터)"
+  },
+  "backtest": {
+    "check_2010_2017": "필터 켜진 283주, 주간 초과(같은 날 유니버스 대비) +0.92%p, NW t 2.13, 0.3%p 비용 차감 +0.62%p, 통과",
+    "pooled_2010_2026": "N 6577, 주간 초과 +1.08%p, NW t 2.83, 비용 차감 +0.78%p",
+    "horizon": "신호일 종가 진입, 20거래일 보유",
+    "note": "2012, 2014 두 해가 우위를 크게 만들었고 2011은 음수, 2017은 0. 관찰 목록이며 매매 신호 아님."
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 일요일 21:00"
+}

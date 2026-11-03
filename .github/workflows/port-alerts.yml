@@ -2027,6 +2027,17 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k453810_monitor.py selftest; fi
           python scripts/k453810_monitor.py "$MODE"
+      - name: Run VCP (B2R weekly KOSPI/KOSDAQ watchlist; portlight Sunday 21:00)
+        # approved in chat 2026-11-03 after the 2010~2017 B2R check passed. Attached to the existing portlight slot, no new cron.
+        # Silent (log only) when KS11 close <= its 200-day SMA or when nothing passes. Dedupe: state/vcp.json weekly_done_week.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'portlight' }}
+        timeout-minutes: 12
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          pip install -q finance-datareader==0.9.202 pandas==3.1.0 numpy==2.5.4
+          python scripts/vcp_monitor.py auto
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py
