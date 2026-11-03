@@ -75,6 +75,14 @@ TSLA price mode, CRONJOB_ACTION=register_tsla (approved 2026-10-29, configs/tsla
   09:00 and 16:30 ticks are outside the cash session; tsla_monitor.py stays silent. DST follows the NY timezone.
   Skips (exit 10) if that title or the same NY 30-minute schedule already exists. Delete mode refuses it.
 
+Trend mode, CRONJOB_ACTION=register_trend (2026-11-03, docs/ontime-dispatch.md):
+  Creates the ONE recurring job TREND_TITLE: Asia/Seoul, minute 40, hour 15, Mon-Fri, no expiry, body
+  {"ref":"main","inputs":{}}, URL is the trend-monitor.yml dispatch (not port-alerts, not flow-alerts).
+  Headers are copied from the morning template job. Does not PATCH any existing job.
+  Skips (exit 10) if TREND_TITLE already exists (enabled or not), or if a trend-monitor.yml job
+  already has the weekday 15:40 schedule or would fire at the next weekday 15:40. A port-alerts or
+  flow-alerts job at 15:40 is a different URL and is left alone. Delete mode refuses it.
+
 exit 0 = created / deleted (or dry run passed), 10 = already registered (skip),
      2 = bad input, 3 = template check failed, 4 = cron-job.org API error, 1 = crash.
 Output is the job ID and the KST time only. Response bodies and header values are never printed.
@@ -131,6 +139,11 @@ PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
 PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight"}}
 PORTLIGHT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [21],
                       "mdays": [-1], "months": [-1], "wdays": [0]}
+TREND_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/trend-monitor.yml/dispatches"
+TREND_TITLE = "cwally trend-monitor (15:40 KST)"
+TREND_BODY = {"ref": "main", "inputs": {}}
+TREND_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [40], "hours": [15],
+                  "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 
 SKIP = 10
 BAD_INPUT = 2
@@ -351,8 +364,8 @@ def run_delete() -> int:
             continue
         problems = oneshot_problems(j)
         title_now = (j.get("title") or "").strip()
-        if title_now in (PULSE_TITLE,) + PULSE_OLD_TITLES + (TSLA_TITLE, TSLASPCX_TITLE, PORTLIGHT_TITLE) or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
-            problems.append("recurring job (mktpulse, after-close, tslaspcx, portlight, or tsla); never deleted here")
+        if title_now in (PULSE_TITLE,) + PULSE_OLD_TITLES + (TSLA_TITLE, TSLASPCX_TITLE, PORTLIGHT_TITLE, TREND_TITLE) or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
+            problems.append("recurring job (mktpulse, after-close, tslaspcx, portlight, tsla, or trend-monitor); never deleted here")
         if problems:
             refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
     if refused:
@@ -711,6 +724,106 @@ def run_register_tsla(now: datetime) -> int:
     return 0
 
 
+def next_trend_fire(now: datetime) -> datetime:
+    """Next weekday 15:40 KST strictly after `now` (Saturday and Sunday roll to Monday)."""
+    nxt = now.astimezone(KST).replace(hour=15, minute=40, second=0, microsecond=0)
+    if nxt <= now:
+        nxt += timedelta(days=1)
+    while nxt.weekday() >= 5:
+        nxt += timedelta(days=1)
+    return nxt
+
+
+def is_trend_schedule(sched: dict) -> bool:
+    sc = sched or {}
+    try:
+        minutes = sorted(int(m) for m in (sc.get("minutes") or []))
+        hours = sorted(int(h) for h in (sc.get("hours") or []))
+        wdays = sorted(int(w) for w in (sc.get("wdays") or []))
+        mdays = [int(x) for x in (sc.get("mdays") or [])]
+        months = [int(x) for x in (sc.get("months") or [])]
+    except (TypeError, ValueError):
+        return False
+    return (sc.get("timezone") == TIMEZONE
+            and minutes == [40]
+            and hours == [15]
+            and wdays == [1, 2, 3, 4, 5]
+            and mdays == [-1]
+            and months == [-1])
+
+
+def trend_duplicate_reason(j: dict, at: datetime) -> str | None:
+    """Why this cron-job.org job already covers trend-monitor, or None.
+
+    Matches the trend title (even when disabled) and the trend-monitor.yml URL only.
+    port-alerts.yml and flow-alerts.yml jobs at 15:40 are different URLs and are not matches.
+    """
+    if (j.get("title") or "").strip() == TREND_TITLE:
+        return "title"
+    if (j.get("url") or "").rstrip("/") != TREND_URL:
+        return None
+    sched = j.get("schedule") or {}
+    exp = int(sched.get("expiresAt") or 0)
+    if exp and exp < int(at.strftime("%Y%m%d%H%M%S")):
+        return None
+    if is_trend_schedule(sched) or (j.get("enabled") and fires_at(sched, at)):
+        return "url"
+    return None
+
+
+def run_register_trend(now: datetime) -> int:
+    """Weekday 15:40 KST trend-monitor.yml dispatch. Does not touch other 15:40 jobs."""
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    nxt = next_trend_fire(now)
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
+    for j in res.get("jobs") or []:
+        reason = trend_duplicate_reason(j, nxt)
+        if reason is None:
+            continue
+        print(f"skip: trend job already exists ({reason}):")
+        print_job(j)
+        return SKIP
+    template = load_template(key)
+    job = {
+        "enabled": True,
+        "title": TREND_TITLE,
+        "saveResponses": True,
+        "url": TREND_URL,
+        "requestMethod": POST,
+        "requestTimeout": template.get("requestTimeout", 30),
+        "redirectSuccess": False,
+        "folderId": template.get("folderId", 0),
+        "schedule": dict(TREND_SCHEDULE),
+        "extendedData": {
+            "headers": dict(template["extendedData"]["headers"]),
+            "body": json.dumps(TREND_BODY, separators=(",", ":")),
+        },
+    }
+    if isinstance(template.get("notification"), dict):
+        job["notification"] = template["notification"]
+    if env("CRONJOB_DRY_RUN") == "1":
+        print(f"dry run ok: would create {TREND_TITLE!r} Mon-Fri 15:40 Asia/Seoul, "
+              f"url trend-monitor.yml, body {json.dumps(TREND_BODY)}, first {nxt:%Y-%m-%d %H:%M} KST")
+        return 0
+    job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
+    if not job_id:
+        raise Stop(API_ERROR, "cron-job.org returned no jobId")
+    got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
+    try:
+        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == TREND_BODY
+    except ValueError:
+        body_ok = False
+    url_ok = (got.get("url") or "").rstrip("/") == TREND_URL
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok} url_ok={url_ok}")
+    return 0
+
+
 def run_register_portlight(now: datetime) -> int:
     """Existing portlight slot (AGENTS.md Repeating slots, Sunday 21:00 KST, GitHub cron 0 12 * * 0)."""
     key = env("CRONJOB_API_KEY")
@@ -780,8 +893,10 @@ def main() -> int:
             return run_register_portlight(now)
         if action == "register_tsla":
             return run_register_tsla(now)
+        if action == "register_trend":
+            return run_register_trend(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

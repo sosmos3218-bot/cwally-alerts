@@ -1,4 +1,6 @@
-# 평일 15:40 KST. 승인 2026-11-02. UTC cron 40 6 * * 1-5.
+# 평일 15:40 KST. 승인 2026-11-02. UTC cron 40 6 * * 1-5 는 늦은 백업.
+# 정시 실행은 cron-job.org 가 workflow_dispatch 로 호출한다 (docs/ontime-dispatch.md, register_trend).
+# 같은 KST 날에 이미 돌았거나 그날 output 이 main 에 있으면 조용히 끝난다.
 # 휴장이면 스크립트가 종료코드 0 으로 끝나고 알림을 보내지 않습니다.
 
 name: trend-monitor
@@ -28,6 +30,11 @@ on:
         required: false
         default: false
         type: boolean
+      force:
+        description: "같은 KST 날에 이미 돌았어도 다시 실행"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -52,7 +59,36 @@ jobs:
       - name: Install pinned requirements
         run: python -m pip install -r trend_monitor/requirements.txt
 
+      - name: Slot guard
+        id: guard
+        run: |
+          set -euo pipefail
+          # demo, dry_run, and a hand-picked date do not consume today's slot.
+          if [ "${{ inputs.demo }}" = "true" ] || [ "${{ inputs.dry_run }}" = "true" ] || [ -n "${{ inputs.date }}" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+            echo "mark=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ inputs.force }}" = "true" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+            echo "mark=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          RUN=1
+          git fetch -q origin main
+          git show origin/main:state/slots/trend.json > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+          if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check trend; then
+            RUN=0
+          fi
+          day=$(TZ=Asia/Seoul date +%F)
+          if git cat-file -e "origin/main:trend_monitor/output/${day}.json" 2>/dev/null; then
+            echo "output ${day}.json already on main; skip"
+            RUN=0
+          fi
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+          echo "mark=$RUN" >> "$GITHUB_OUTPUT"
       - name: Run trend monitor
+        if: steps.guard.outputs.run == '1'
         env:
           OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
           NTFY_TOPIC: cwally-port
@@ -63,6 +99,9 @@ jobs:
           INPUT_DRY: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
+          if [ "${{ steps.guard.outputs.mark }}" = "1" ]; then
+            python scripts/slot_guard.py mark trend
+          fi
           args=()
           if [ "${INPUT_DEMO}" = "true" ]; then
             args+=(--demo)
@@ -80,13 +119,16 @@ jobs:
           python -m trend_monitor "${args[@]}"
 
       - name: Commit output to main
-        if: success() && (github.event_name == 'schedule' || (inputs.demo != true && inputs.dry_run != true))
+        if: ${{ always() && !cancelled() && steps.guard.outputs.run == '1' && (github.event_name == 'schedule' || (inputs.demo != true && inputs.dry_run != true)) }}
         run: |
           set -euo pipefail
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -- trend_monitor/holdings.csv trend_monitor/watchlist.csv
           git add -- trend_monitor/output/latest.json trend_monitor/output/*.json trend_monitor/output/*.md trend_monitor/output/*.csv
+          if [ -f state/slots/trend.json ]; then
+            git add -- state/slots/trend.json
+          fi
           if git diff --cached --name-only -- trend_monitor/holdings.csv trend_monitor/watchlist.csv | grep -q .; then
             echo "refusing to commit holdings.csv or watchlist.csv"
             exit 1
