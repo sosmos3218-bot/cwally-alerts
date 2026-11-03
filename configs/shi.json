@@ -9,7 +9,7 @@
   "schedule_kst": "15:20",
   "schedule_note": "새 cron 없음. 평일 15:20 KST afternoon 묶음(samnix 옆). 15:20 은 장 마감 전이라 samnix 처럼 확정 종가(직전 거래일까지)만 판정, 데이터 날짜로 중복 방지. 그래서 당일 종가 이탈은 다음 거래일 15:20 에 알림(하루 지연). 수동 job=shi 는 oneoff_mode=auto 가 아니면 dry.",
   "lines": {
-    "low": {"level": 14500, "priority": 4, "title": "[SHI] 010140 14,500 이탈 | 비중 축소 검토"},
+    "low": {"enabled": false, "disabled_note": "2026-11-03 사용자 승인으로 끔. 14,500 손절은 [010140] samsungheavy 2일 연속 하회 기준(19:00)만 사용.", "level": 14500, "priority": 4, "title": "[SHI] 010140 14,500 이탈 | 비중 축소 검토"},
     "high": {"level": 18000, "priority": 3, "title": "[SHI] 010140 18,000 돌파 | 부분 차익 검토"}
   },
   "rearm_pct": 3,

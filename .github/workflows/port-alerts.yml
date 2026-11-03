@@ -851,7 +851,7 @@ jobs:
           if [ "$JOB" = "afternoon" ]; then
             python scripts/samnix_monitor.py auto
           fi
-          # [SHI] 삼성중공업 010140 confirmed-close lines 14,500 / 18,000 (approved in chat 2026-10-30, ends 2027-02-26)
+          # [SHI] 삼성중공업 010140 confirmed-close line 18,000 (approved in chat 2026-10-30, ends 2027-02-26); 14,500 low line off since 2026-11-03 (lines.low.enabled=false), [010140] samsungheavy covers the stop
           if [ "$JOB" = "afternoon" ]; then
             python scripts/shi_monitor.py auto
           fi

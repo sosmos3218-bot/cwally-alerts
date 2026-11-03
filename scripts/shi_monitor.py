@@ -64,13 +64,18 @@ def judge(cfg: dict, st: dict, rows: list[dict], now: datetime) -> list[tuple[st
     lo, hi = cfg["lines"]["low"]["level"], cfg["lines"]["high"]["level"]
     r = cfg["rearm_pct"] / 100
     arm = st.setdefault("armed", {"low": True, "high": True})
+    low_on = cfg["lines"]["low"].get("enabled", True)
+    if not low_on:
+        print("low(14,500) 조건 꺼짐(config lines.low.enabled=false): 판정 안 함, [010140] 2일 연속 기준이 손절 담당")
     fired = []
     for row in rows:
         d = row["day"]
         if d <= st.get("last_date", "") or d > today or (d == today and not after_close):
             continue
         c = row["close"]
-        if c < lo and arm["low"]:
+        if not low_on:
+            pass
+        elif c < lo and arm["low"]:
             arm["low"] = False
             fired.append(("low", row))
         elif c > lo * (1 + r) and not arm["low"]:
