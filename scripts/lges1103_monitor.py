@@ -73,7 +73,7 @@ def eok(text: str, pattern: str) -> int | None:
 
 
 def grab(text: str, label: str) -> int | None:
-    return eok(text, label + r"[^0-9\-]{0,24}(-?[\d,]+)\s*(억원|백만원)")
+    return eok(text, r"(?:" + label + r")[^0-9\-]{0,24}(-?[\d,]+)\s*(억원|백만원)")
 
 
 def is_final(item: dict) -> bool:
