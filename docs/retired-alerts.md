@@ -174,3 +174,15 @@ Sent messages stay in state/archive.json (until rotated) and in cwally-ntfy-arch
 | name | prefix | added | end (KST) | what it did |
 |---|---|---|---|---|
 | isrg | `[ISRG]` | 2026-10-26 | retired 2026-11-02 (was 2027-02-06 09:00) | 인튜이티브 서지컬(ISRG) 보유분 감시: 가격 구간, 1회차 매수 구간, 비중 축소, 2027 가이던스 3조건 판정. 사용자 요청 삭제 |
+
+## 2026-11-03 grabpx merged into grab
+
+Removed configs/grabpx.json, scripts/grabpx_monitor.py, state/grabpx.json, the `Run GRAB-PX` step and the
+`grabpx` job option; `[GRAB-PX]` title prefix retired. Its lines (2.85~2.95 / 2.73 / 2.67) and earnings-date
+reminders moved into `[GRAB]` (grab_monitor.py), which also moved from the 09:00 morning bundle to the tsla
+US-hours slot (the old `Run GRAB standalone` step and the morning `grab_monitor.py auto` line were removed).
+No [GRAB-PX] message was ever sent (dry dispatch only, run 41638102466).
+
+| name | prefix | added | window (KST) | what it did |
+|---|---|---|---|---|
+| grabpx | `[GRAB-PX]` | 2026-11-03 | never sent | GRAB 2.85~2.95 / 2.73 / 2.67 intraday lines + earnings date reminders |

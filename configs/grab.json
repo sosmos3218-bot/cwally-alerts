@@ -3,49 +3,152 @@
   "title_prefix": "[GRAB]",
   "ticker": "GRAB",
   "display": "그랩 홀딩스",
+  "currency": "USD",
   "as_of": "2026-11-03",
-  "approval": "사용자 요청 2026-11-03 21:30 KST (GRAB 적정가 4.15, 최악 3.20, 인도네시아 배달 수수료 상한 뉴스). job=grab 수동 dispatch 와 단독 step 포함",
+  "approval": "사용자 요청 2026-11-03: [GRAB](4.15/3.20, Komdigi 뉴스)와 [GRAB-PX](2.85~2.95/2.73/2.67, 실적 일정)를 하나로 합침 (pt1u). 기존 tsla 슬롯 부착, 새 cron 없음",
   "holding_note": "보유 여부 미기재. 매매 지시 아님.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(ftnt 바로 뒤)에 부착. 미국 전일 정규장 완료 일봉(종가, 고가, 저가)으로 판정, 데이터 거래일로 중복 방지. 뉴스도 같은 실행에서 1번. 수동 job=grab 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "job_id": "grab",
+  "schedule_kst": "미국 정규장 30분마다 (09:30-16:00 America/New_York, 평일). 기존 tsla 슬롯에 부착, 새 cron 없음",
+  "schedule_note": "port-alerts.yml 의 job=tsla 실행(cron-job.org 뉴욕 30분 잡 + GitHub 백업 */30 13-21 * * 1-5 UTC)에 Run GRAB 단계로 붙는다. 가격은 정규장 실행마다, 실적 일정과 Komdigi 뉴스는 뉴욕 날짜마다 첫 정규장 실행에서 한 번. job=grab 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "alert_policy": "once_per_crossing",
+  "dedupe_note": "state/grab.json price.armed 에 선마다 무장 여부. 선을 넘을 때 한 번, 반대로 rearm_pct 넘게 되돌아가면 재무장(구간 2.82 미만 또는 2.98 초과, 2.73 선은 2.76 이상, 2.67 선은 2.70 이상, 3.20 선은 3.10 미만, 4.15 선은 4.03 미만). 이미 넘어 있는 선은 현재가로 시드해서 설치만으로는 안 울림. 하락 쪽(구간, 2.73, 2.67)과 상승 쪽(3.20, 4.15) 각각 한 실행에 가장 깊은 선 하나만. 실적 일정은 earn.<분기>, 뉴스는 news.seen(링크와 정규화 제목), events_day 로 하루 한 번.",
   "thesis": {
     "fair_value": 4.15,
-    "worst_case": 3.20,
-    "premarket_ref": 3.16,
+    "worst_case": 3.2,
     "note": "분석 기준 적정가 4.15달러(장전 3.16달러 대비 +31%), 최악 시나리오(인도네시아 8% 수수료 상한이 음식/물품 배달까지 확대) 약 3.20달러. 가장 큰 위험은 Komdigi/Perpres 후속 규정의 배달 확대."
   },
-  "lines": [
-    {"key": "up415", "side": "ge", "price": 4.15, "rearm_close_below": 4.03, "priority": 4,
-     "label": "적정가 4.15달러 도달", "action": "추격 매수 금지, 보유분 일부 익절 검토",
-     "basis": "종가 또는 장중 고가가 4.15달러 이상이면 진입. 종가가 4.03달러(4.15의 3% 아래) 미만이면 재무장."},
-    {"key": "dn320", "side": "le", "price": 3.20, "rearm_close_above": 3.30, "priority": 4,
-     "label": "최악 시나리오 3.20달러 이하", "action": "인도네시아 배달 수수료 규제 확인",
-     "basis": "종가 또는 장중 저가가 3.20달러 이하이면 진입. 종가가 3.30달러(3.20의 3% 위) 초과이면 재무장."}
-  ],
-  "seed_note": "2026-11-03 설치 시 두 선 모두 armed, last_date 2026-11-02(종가 2.86) 로 시드. 11/3 미국장 봉부터 판정하므로 11/3 저가가 3.20 이하이면 11/4 09:00 에 1번 발송.",
+  "levels": {
+    "zone": {
+      "kind": "zone",
+      "low": 2.85,
+      "high": 2.95,
+      "rearm_pct": 1.0,
+      "priority": 4,
+      "title": "[GRAB] 1차 매수 구간 진입 2.85~2.95달러 | 분할 매수 검토",
+      "status": "GRAB 현재가가 1차 매수 구간 2.85~2.95달러 안에 들어왔습니다.",
+      "todo": "1차 분할 매수를 검토하세요. 지정가로 나눠서, 계획한 1차 금액 안에서만.",
+      "later": "2.73달러 아래로 내려가면 DBS 약세 목표가 알림, 2.67달러 아래면 52주 저점 이탈 알림이 따로 옵니다.",
+      "trim": "이 알림은 매도 신호가 아닙니다. 4.15달러(적정가) 도달 때 일부 익절 검토 알림이 따로 옵니다."
+    },
+    "bear": {
+      "kind": "below",
+      "level": 2.73,
+      "rearm_pct": 1.0,
+      "priority": 4,
+      "title": "[GRAB] 2.73달러 하회 DBS 약세 목표가 | 추가 매수 보류 점검",
+      "status": "GRAB 현재가가 DBS 약세 시나리오 목표가 2.73달러 아래로 내려왔습니다.",
+      "todo": "추가 매수는 잠시 멈추고, 3분기 실적 내용과 인도네시아 수수료 규제 영향을 다시 확인하세요.",
+      "later": "2.67달러(52주 저점, 2026-10-26) 아래로 내려가면 이탈 알림이 따로 옵니다. 2.76달러 위로 돌아오면 이 선은 다시 무장합니다.",
+      "trim": "배달 수수료 상한 확대가 확정되면 비중 축소 검토."
+    },
+    "low52": {
+      "kind": "below",
+      "level": 2.67,
+      "rearm_pct": 1.0,
+      "priority": 5,
+      "title": "[GRAB] 52주 저점 2.67달러 이탈 | 신규 매수 중단 재점검",
+      "status": "GRAB 현재가가 52주 저점 2.67달러(2026-10-26) 아래로 내려왔습니다. 신저가 구간입니다.",
+      "todo": "신규 매수를 멈추고 매수 논리(이익 개선, 인도네시아 규제 영향)를 다시 점검하세요.",
+      "later": "2.70달러 위로 돌아오면 이 선은 다시 무장합니다. 저점 아래에서 반등 확인 전까지는 관망.",
+      "trim": "배달 수수료 상한 확대가 확정되고 저점 아래에서 반등이 없으면 비중 축소 검토."
+    },
+    "rec320": {
+      "kind": "above",
+      "level": 3.2,
+      "rearm_pct": 3.0,
+      "priority": 3,
+      "title": "[GRAB] 3.20달러 회복 최악 시나리오 가격 위로 | 규제 뉴스 재확인",
+      "status": "GRAB 현재가가 최악 시나리오 가치 3.20달러 위로 올라왔습니다. 시장이 최악 가정을 덜 반영하기 시작했다는 뜻입니다.",
+      "todo": "1차 매수분이 있으면 유지. 추격 매수는 하지 말고, 인도네시아 배달 수수료 규제가 넓어지지 않았는지 확인하세요.",
+      "later": "4.15달러(적정가)에 닿으면 일부 익절 검토 알림이 옵니다. 3.10달러(3.20의 3% 아래) 밑으로 내려가면 이 선은 다시 무장합니다.",
+      "trim": "이 알림은 매도 신호가 아닙니다."
+    },
+    "up415": {
+      "kind": "above",
+      "level": 4.15,
+      "rearm_pct": 3.0,
+      "priority": 4,
+      "title": "[GRAB] 적정가 4.15달러 도달 | 추격 금지, 일부 익절 검토",
+      "status": "GRAB 현재가가 분석 기준 적정가 4.15달러에 닿았습니다.",
+      "todo": "새로 사지 말고, 4.15달러 위에서 근거(실적 상향, 규제 완화)가 새로 나왔는지 확인하세요.",
+      "later": "4.03달러(4.15의 3% 아래) 밑으로 내려가면 이 선은 다시 무장합니다.",
+      "trim": "보유분이 있으면 한 번에 다 팔기보다 나눠서 일부 익절 검토."
+    }
+  },
+  "low52_set": "2026-10-26",
+  "earnings": {
+    "ir_rss": "https://investors.grab.com/rss/pressrelease.aspx",
+    "ir_json": "https://investors.grab.com/feed/PressRelease.svc/GetPressReleaseList?LanguageId=1&bodyType=0&pressReleaseDateFilter=3&categoryId=1cb807d2-208f-4bc3-9133-6a9ad45ac3b0&pageSize=20&pageNumber=0&tagList=&includeTags=true&year=-1&excludeSelection=1",
+    "last_reported": {
+      "quarter": "Q3 2026",
+      "ny_date": "2026-11-02"
+    },
+    "next_estimate": {
+      "quarter": "Q4 2026",
+      "ny_date": "2027-02-10",
+      "basis": "추정일. 작년 4분기 실적은 2026-02-11(미국 장 마감 후) 발표, 일정 공지는 2026-01-13."
+    },
+    "remind_days": [
+      7,
+      1
+    ],
+    "priority": 3
+  },
   "news": {
     "lookback_hours": 96,
     "max_items": 5,
     "queries": [
-      {"q": "aturan turunan Perpres ojol", "hl": "id", "gl": "ID", "ceid": "ID:id"},
-      {"q": "Perpres ojol kurir komisi", "hl": "id", "gl": "ID", "ceid": "ID:id"},
-      {"q": "komisi 8% GoFood GrabFood", "hl": "id", "gl": "ID", "ceid": "ID:id"},
-      {"q": "komisi 8% kurir pengantaran makanan", "hl": "id", "gl": "ID", "ceid": "ID:id"},
-      {"q": "Komdigi komisi aplikator", "hl": "id", "gl": "ID", "ceid": "ID:id"},
-      {"q": "Indonesia commission cap food delivery Grab GoTo", "hl": "en-US", "gl": "US", "ceid": "US:en"}
+      {
+        "q": "aturan turunan Perpres ojol",
+        "hl": "id",
+        "gl": "ID",
+        "ceid": "ID:id"
+      },
+      {
+        "q": "Perpres ojol kurir komisi",
+        "hl": "id",
+        "gl": "ID",
+        "ceid": "ID:id"
+      },
+      {
+        "q": "komisi 8% GoFood GrabFood",
+        "hl": "id",
+        "gl": "ID",
+        "ceid": "ID:id"
+      },
+      {
+        "q": "komisi 8% kurir pengantaran makanan",
+        "hl": "id",
+        "gl": "ID",
+        "ceid": "ID:id"
+      },
+      {
+        "q": "Komdigi komisi aplikator",
+        "hl": "id",
+        "gl": "ID",
+        "ceid": "ID:id"
+      },
+      {
+        "q": "Indonesia commission cap food delivery Grab GoTo",
+        "hl": "en-US",
+        "gl": "US",
+        "ceid": "US:en"
+      }
     ],
     "rule_re": "komisi|potongan|commission|\\bcap\\b|Perpres|Permen|Peraturan Menteri|aturan turunan|Komdigi|Kemenhub|regulasi|regulation",
     "scope_re": "makanan|food|GrabFood|GoFood|ShopeeFood|kurir|courier|barang|pengantaran|delivery|logistik|aturan turunan|Permen|Peraturan Menteri",
     "delivery_re": "makanan|food|GrabFood|GoFood|ShopeeFood|kurir|courier|barang|pengantaran|delivery|logistik",
     "cap_re": "8\\s*%|8 persen|komisi|potongan|commission|\\bcap\\b",
-    "note": "소음 줄이기: 제목이 규제 단어(rule_re) AND 범위 단어(scope_re: 배달/물품/후속 규정) 둘 다 있어야 함. 배달 단어(delivery_re)와 수수료 단어(cap_re)가 같이 있으면 p4 '배달 수수료 상한' 제목, 아니면 p3 '후속 규정' 제목. 실행마다 새 기사만 한 묶음(최대 5건 표시). 중복 방지: 링크와 정규화한 제목(출처 꼬리 제거). 첫 실행은 그때 기사를 seen 으로 시드(발송 없음)."
+    "note": "소음 줄이기: 제목이 규제 단어(rule_re) AND 범위 단어(scope_re: 배달/물품/후속 규정) 둘 다 있어야 함. 배달 단어(delivery_re)와 수수료 단어(cap_re)가 같이 있으면 p4 '배달 수수료 상한' 제목, 아니면 p3 '후속 규정' 제목. 하루 한 번 새 기사만 한 묶음(최대 5건 표시). 중복 방지: 링크와 정규화한 제목(출처 꼬리 제거). 첫 실행은 그때 기사를 seen 으로 시드(발송 없음)."
   },
   "sources": {
-    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/GRAB?interval=1d&range=10d",
+    "last": "https://query1.finance.yahoo.com/v8/finance/chart/GRAB?interval=1m&range=1d",
+    "ir": "https://investors.grab.com/rss/pressrelease.aspx",
     "quote_page": "https://finance.yahoo.com/quote/GRAB/"
   },
+  "explain": "그랩 홀딩스(GRAB, 나스닥) 현재가가 매수 구간, 하방 경고선, 회복선, 적정가를 지나는지 미국 정규장에 30분마다 보고, 실적 일정과 인도네시아 규제 뉴스를 하루 한 번 보는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
   "ends_kst": "2027-02-26 23:59",
-  "ends_note": "평일 09:00 GRAB 적정가 4.15/최악 3.20 가격선과 인도네시아 배달 수수료 상한 뉴스 감시, 2027-02-26 까지 (4분기 실적 뒤 재검토)"
+  "ends_note": "GRAB 가격선, 실적 일정, 인도네시아 배달 수수료 뉴스 감시, 2027-02-26 까지 (4분기 실적 뒤 재검토)"
 }

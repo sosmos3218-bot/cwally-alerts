@@ -1,14 +1,21 @@
 {
-  "armed": {
-    "up415": true,
-    "dn320": true
+  "price": {
+    "armed": {
+      "zone": false,
+      "bear": true,
+      "low52": true,
+      "rec320": true,
+      "up415": true
+    },
+    "last_price": 2.86,
+    "last_at": "2026-11-03 21:50 KST"
   },
-  "last_date": "2026-11-02",
-  "last_bar": {
-    "date": "2026-11-02",
-    "close": 2.86,
-    "high": 2.93,
-    "low": 2.75
+  "earn": {},
+  "news": {
+    "seen": []
   },
-  "seed_note": "2026-11-03 21:30 KST 설치 시드(발송 없음). 두 선 모두 armed, 11/3 미국장 봉부터 판정."
+  "events_day": null,
+  "fail_day": null,
+  "seed_note": "2026-11-03 21:50 KST 합병 시드(발송 없음): 현재가 2.86(11/2 종가). 이미 구간 안이라 zone 해제, 나머지 무장. 뉴스는 첫 실행에서 기준만 기록.",
+  "updated_at": null
 }
