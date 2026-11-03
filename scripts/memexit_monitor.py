@@ -423,6 +423,7 @@ def build(cfg: dict, st: dict, evs: list[dict], stamp: str, today: str, monthly:
              f"{stamp} | {CODES} | SK하이닉스, 삼성전자"]
     st_lines = status + [stock_line(cfg, st, c) for c in cfg["stocks"]]
     if monthly:
+        st_lines += monthly.get("hi_ref", [])
         st_lines += [foreign_line(cfg, st, c, monthly["fym"]) for c in cfg["stocks"]]
         st_lines.append(monthly["per_ref"])
     lines.append("지금 결과/상태: " + " / ".join(x for x in st_lines if x))
@@ -507,6 +508,7 @@ def run(mode: str, now: datetime, cfg: dict, io: dict | None = None) -> tuple[li
     fails: list[tuple[str, str]] = []
     evs: list[dict] = []
     f_closes = io.get("closes", lambda c: closes(cfg, c, now))
+    f_c52 = io.get("closes52", lambda c: closes(cfg, c, now, 270))  # 월간 참고 줄 전용(52주 종가 고점), 판정에는 안 씀
     f_eps = io.get("eps", lambda c, y: wise_eps(cfg, c, y))
     f_nm = io.get("naver_month", lambda c, m: naver_month(cfg, c, m))
     f_dm = io.get("daum_months", lambda c, ms: daum_months(cfg, c, ms))
@@ -612,9 +614,21 @@ def run(mode: str, now: datetime, cfg: dict, io: dict | None = None) -> tuple[li
                 per_ref.append(f"{cfg['stocks'][code]['short']} 네이버 추정PER {n.get('cnsPer', '?')}, 후행 PER {n.get('per', '?')}")
             except Exception:  # noqa: BLE001
                 per_ref.append(f"{cfg['stocks'][code]['short']} 네이버 PER 확인 불가")
+        hi_ref = []
+        for code in cfg["stocks"]:
+            nm = cfg["stocks"][code]["short"]
+            try:
+                rows = f_c52(code)
+                cut = (date.fromisoformat(today) - timedelta(days=365)).isoformat()
+                rows = [r for r in rows if r[0] >= cut]
+                hd, hc = max(rows, key=lambda r: (r[1], r[0]))
+                ld, lc = rows[-1]
+                hi_ref.append(f"참고, 경고 기준 아님: {nm} 52주 종가 고점 {won(hc)}원({hd}) 대비 {(lc / hc - 1) * 100:+.1f}% ({ymd(ld)} 종가)")
+            except Exception:  # noqa: BLE001
+                hi_ref.append(f"참고, 경고 기준 아님: {nm} 52주 종가 고점 확인 불가")
         eps_ref = ", ".join(f"{cfg['stocks'][c]['short']} 12M fwd EPS {won(st.get('eps', {}).get(c, {}).get('fwd'))}원" for c in cfg["stocks"])
         monthly = {"ym": ym, "fym": fym, "news_raw": raw, "news": news_text(raw, cfg["monthly"]["news_per_group"]),
-                   "per_ref": "PER 참고(계획서 3배 주장): " + ", ".join(per_ref) + f" ({eps_ref}, WiseReport 컨센서스)", "mw": memwatch_ref()}
+                   "hi_ref": hi_ref, "per_ref": "PER 참고(계획서 3배 주장): " + ", ".join(per_ref) + f" ({eps_ref}, WiseReport 컨센서스)", "mw": memwatch_ref()}
     out = []
     if (evs or monthly) and not seeding:
         t, b, p = build(cfg, st, evs, stamp, today, monthly)
@@ -751,6 +765,7 @@ def selftest(cfg: dict) -> int:
           "closes": lambda c: days, "eps": lambda c, y: {"y0": 30.0, "y1": 40.0, "year": y, "base": "2026-11-02"},
           "naver_month": lambda c, m: {"shares": -10, "amt": -1000, "days": trading_days_in(m)},
           "daum_months": lambda c, ms: {m: -9 for m in ms}, "ir": lambda c: {},
+          "closes52": lambda c: [("2025-11-01", 999.0), ("2026-06-22", 200.0), ("2026-12-01", 70.0)],
           "news": lambda q, m: [("CXMT 증설 기사 제목 예시 \u00b7 끝", "01 Nov 2026")] * 3, "naver_per": lambda c: {"per": "9.9배", "cnsPer": "4.8배"}}
     out, st = run("dry", datetime(2026, 11, 3, 19, 0, tzinfo=KST), cfg, io)
     check("seed silent", out, [])
@@ -770,6 +785,8 @@ def selftest(cfg: dict) -> int:
     check("no buy wording in warning", [w for w in BAD_WORDS if w in b], [])
     check("monthly mentions phase + manual", ("Phase 1 (자동 판정 아님)" in b, "분기 점검(수동)" in b, "LTA 비중" in b), (True, True, True))
     check("under 4KB", len(b.encode()) <= cfg["monthly"]["max_bytes"], True)
+    check("52w high reference line (older than 365d ignored)", "참고, 경고 기준 아님: 하이닉스 52주 종가 고점 200원(2026-06-22) 대비 -65.0% (12/1 종가)" in b, True)
+    check("dd basis unchanged (peak 100 since 11/2)", st["dd"]["000660"]["peak"], 100.0)
     io["state"] = st
     out, st = run("dry", datetime(2026, 12, 2, 19, 0, tzinfo=KST), cfg, io)
     check("12/2 silent (no repeats)", out, [])
