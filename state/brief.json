@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-03T20:09:25.511653+09:00",
+  "updated_at": "2026-11-04T08:04:07.382108+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -90,6 +90,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-03T20:09:25.511653+09:00"
+    },
+    "20261104-frde-event.json#84c5cc08e13f1432": {
+      "file": "20261104-frde-event.json",
+      "title": "[FR-DE] 하원 PLF 1부 표결 연기 | 영향 제한",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-04T08:04:07.382108+09:00"
     }
   },
   "rejected": {},
