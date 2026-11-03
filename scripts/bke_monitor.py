@@ -17,6 +17,13 @@ Two parts, both on the weekday 09:00 KST morning bundle (no new repeating cron):
          body). Re-arm only when a close is >= 41.00 (1.00 buffer). First run seeds from the latest
          completed close, armed, no send. Dedupe by bar date.
 
+  sdiv   Special dividend (approved in chat 2026-11-03 t39u). 8-Ks filed 2026-12-01 .. 2027-01-31 with Item 8.01
+         (primary) or Item 7.01 (robustness) whose Exhibit 99 text has 'special' + 'dividend' -> ONE p4 message per
+         accession: special per share, record/payment/ex-date, regular dividend in the same release, special yield
+         and (1.40 + special) yield at the latest close, vs prior year 3.00, 8-K link. Amount not parsed -> link +
+         '원문 확인'. Regular-only releases are recorded as seen and not sent. None by 2027-01-31 -> ONE p3
+         '특별배당 공시 없음(1/31까지)' notice (first run from 2027-02-01 00:00 KST) and this part stops.
+
 Modes: auto | dry (print only, no ntfy, never writes state) | selftest. Not investment advice.
 """
 from __future__ import annotations
@@ -40,7 +47,7 @@ CFG = ROOT / "configs" / "bke.json"
 STATE = ROOT / "state" / "bke.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 NAME = "[BKE]"
-BANNED_CHARS = ("\u00b7", "\u2014", "\u318d")
+BANNED_CHARS = ("\u00b7", "\u2014", "\u318d", "\u3186")
 TITLE_BANNED = ("매수", "신호")
 DRY = False
 
@@ -66,7 +73,7 @@ def save_state(st: dict, dry: bool) -> None:
 
 def clean(text: str) -> str:
     """Korean output rule: no middle dot, no hangul middle dot, no em-dash (also inside quoted English)."""
-    return text.replace("\u2014", "-").replace("\u2013", "-").replace("\u00b7", " ").replace("\u318d", " ")
+    return text.replace("\u2014", "-").replace("\u2013", "-").replace("\u00b7", " ").replace("\u318d", " ").replace("\u3186", " ")
 
 
 def send(kind: str, title: str, body: str, prio: int, tags: list[str], dry: bool) -> None:
@@ -507,13 +514,197 @@ def run_earn(cfg: dict, st: dict, bars, now: datetime, dry: bool, fetch_sub, get
     return False
 
 
+# ---------- special dividend (pure parse + message) ----------
+
+MONTHS = {m: i for i, m in enumerate(["January", "February", "March", "April", "May", "June", "July", "August",
+                                       "September", "October", "November", "December"], 1)}
+_DATE = r"((?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4})"
+
+
+def iso_date(text: str | None) -> str | None:
+    if not text:
+        return None
+    m = re.fullmatch(r"([A-Za-z]+) (\d{1,2}), (\d{4})", text.strip())
+    if not m or m.group(1) not in MONTHS:
+        return None
+    return f"{int(m.group(3)):04d}-{MONTHS[m.group(1)]:02d}-{int(m.group(2)):02d}"
+
+
+def mentions_special(text: str) -> bool:
+    """'special' as a word (not 'specialty retailer' in the boilerplate) within one sentence of 'dividend'."""
+    t = text or ""
+    return bool(re.search(r"\bspecial\b[^.]{0,120}\bdividends?\b|\bdividends?\b[^.]{0,120}\bspecial\b", t, flags=re.I))
+
+
+def parse_special(text: str) -> dict:
+    t = text or ""
+    out: dict = {"mentions": mentions_special(t)}
+    m = re.search(r"\$([\d.]+) per share special (?:cash )?dividend", t, flags=re.I)
+    if m:
+        out["special"] = float(m.group(1))
+    m = re.search(r"\$([\d.]+) per share (?:regular )?quarterly (?:cash )?dividend", t, flags=re.I)
+    if m:
+        out["regular"] = float(m.group(1))
+    m = re.search(r"special (?:cash )?dividend[^.]*?of record at the close of business on " + _DATE, t, flags=re.I) \
+        or re.search(r"of record (?:at the close of business )?on " + _DATE, t, flags=re.I)
+    if m:
+        out["record"] = iso_date(m.group(1))
+    m = re.search(r"(?:are|is|will be) payable on " + _DATE, t, flags=re.I) or re.search(r"payment date of " + _DATE, t, flags=re.I) \
+        or re.search(r"to be paid on " + _DATE, t, flags=re.I)
+    if m:
+        out["payment"] = iso_date(m.group(1))
+    m = re.search(r"ex-dividend date (?:is|of|will be|for [^.]*? (?:is|will be)) " + _DATE, t, flags=re.I)
+    if m:
+        out["ex"] = iso_date(m.group(1))
+    return out
+
+
+def sdiv_message(cfg: dict, f: dict, links: str, p: dict, close: tuple[str, float] | None, now: datetime) -> tuple[str, str, int]:
+    sd = cfg["sdiv"]
+    prior = float(sd["prior_special"])
+    reg_ann = float(cfg["price"]["annual_regular_div"])
+    if p.get("special") is None:
+        title = f"{NAME} 특별배당 공시 나옴 | 원문 확인"
+        state = (f"{f['date']} 8-K(Item {f['items']}, 접수번호 {f['acc']})에 특별배당 문구가 있지만 금액을 자동으로 못 읽었습니다(원문 확인). {links}.")
+        todo = "원문 확인: 주당 특별배당, 기록일, 지급일, 배당락일, 같은 공시의 정기배당(기준 0.35달러)을 직접 확인."
+    else:
+        sp = p["special"]
+        diff = sp - prior
+        cmp_ = "작년과 같음" if abs(diff) < 1e-9 else f"작년 {prior:.2f}달러보다 {diff:+.2f}달러({(sp / prior - 1) * 100:+.1f}%)"
+        title = f"{NAME} 특별배당 {sp:.2f}달러 공시 | " + ("작년과 같음, 일정 확인" if abs(diff) < 1e-9 else ("작년보다 많음, 일정 확인" if diff > 0 else "작년보다 적음, 일정 확인"))
+        reg = p.get("regular")
+        regtxt = (f"같은 공시 정기배당 {reg:.2f}달러" + (" (기준 0.35 그대로)." if abs(reg - 0.35) < 1e-9 else f" (기준 0.35에서 변경).")) if reg is not None \
+            else "같은 공시에 정기배당 언급 없음."
+        ex = p.get("ex") or "보도자료에 명시 없음(보통 기록일과 같은 날, 브로커에서 확인)"
+        if close:
+            cd, cc = close
+            yl = (f"최근 종가 {cc:.2f}달러({cd}) 기준 특별배당 수익률 {sp / cc * 100:.2f}%, "
+                  f"정기 연 {reg_ann:.2f} + 특별 {sp:.2f} = {reg_ann + sp:.2f}달러 기준 {(reg_ann + sp) / cc * 100:.2f}%.")
+        else:
+            yl = "수익률: 최근 종가 조회 안 됨."
+        state = (f"{f['date']} 8-K(Item {f['items']}, 접수번호 {f['acc']}). 주당 특별배당 {sp:.2f}달러, {cmp_}. "
+                 f"기록일 {p.get('record') or '못 읽음'}, 지급일 {p.get('payment') or '못 읽음'}, 배당락일 {ex}. {regtxt} {yl} {links}.")
+        todo = "보유 중이면 기록일까지 보유해야 받습니다. 배당락일에 주가가 배당만큼 내려가는 것은 정상. 특별배당만 보고 비중을 늘리지 않기."
+    lines = [
+        header(now, "특별배당"),
+        "이게 뭐 알림: 버클(BKE) 특별배당 공시(SEC 8-K, Item 8.01 또는 보도자료에 특별배당 문구가 있는 7.01)를 공시마다 1번 보내는 알림. " + cfg["source_note"],
+        "지금 결과/상태: " + state,
+        "지금 할 일: " + todo + " 작년 기준: " + sd["prior_note"],
+        "나중에: 2027-01-31 까지 평일 09:00 에 다른 특별배당 공시가 있는지 계속 봅니다. 종가 40달러선 점검도 계속.",
+        "익절/줄일 때: 특별배당 지급 뒤 주가가 배당락 이상으로 밀리고 실적도 약하면 비중 축소 검토.",
+        "하지 말 것: 배당만 노리고 기록일 직전 추격, 신용/미수, 배당락 하락을 악재로 오해해 급히 정리, 이 알림만 보고 주문. 투자 권유 아님.",
+    ]
+    return title, "\n".join(lines), int(sd["priority"])
+
+
+def sdiv_missing_message(cfg: dict, now: datetime) -> tuple[str, str, int]:
+    sd = cfg["sdiv"]
+    title = f"{NAME} 특별배당 공시 없음(1/31까지) | 정기배당만 기준"
+    lines = [
+        header(now, "특별배당"),
+        "이게 뭐 알림: 2026-12-01 ~ 2027-01-31 에 SEC 에 버클 특별배당 8-K 가 안 보여 1번 오는 안내. 특별배당 감시는 여기서 멈춥니다. " + cfg["source_note"],
+        "지금 결과/상태: EDGAR(CIK 0000885245)에 그 기간 특별배당 문구가 있는 8-K(Item 8.01/7.01) 없음. 작년 기준: " + sd["prior_note"],
+        "지금 할 일: 배당수익률은 정기배당(분기 0.35달러, 연 1.40달러)만으로 보세요. 버클 IR 보도자료에서 배당 공지를 한 번 직접 확인.",
+        "나중에: 특별배당 자동 감시는 더 하지 않습니다. 종가 40달러선 점검은 2027-02-26 까지 평일 09:00 에 계속.",
+        "익절/줄일 때: 해당 없음.",
+        "하지 말 것: 특별배당을 기대한 추가 비중, 신용/미수. 투자 권유 아님.",
+    ]
+    return title, "\n".join(lines), int(sd["missing_priority"])
+
+
+def sdiv_candidates(cfg: dict, filings: list[dict], seen: set[str]) -> list[dict]:
+    sd = cfg["sdiv"]
+    return [f for f in sorted(filings, key=lambda x: x["date"])
+            if f["form"] == "8-K" and sd["window_from"] <= f["date"] <= sd["window_to"]
+            and any(i in _items(f) for i in sd["items"]) and f["acc"] not in seen]
+
+
+def run_sdiv(cfg: dict, st: dict, bars, now: datetime, dry: bool, fetch_sub, get) -> bool:
+    sd = cfg["sdiv"]
+    ss = st.setdefault("sdiv", {})
+    if ss.get("done"):
+        print(f"sdiv: done ({ss['done']})")
+        return False
+    if now < kst(sd["poll_start_kst"]):
+        print("sdiv: before window")
+        return False
+    day = now.strftime("%Y-%m-%d")
+    try:
+        filings = recent_filings(fetch_sub())
+    except Exception as exc:  # noqa: BLE001
+        print(f"sdiv: EDGAR fetch failed: {exc}")
+        if ss.get("fail_day") == day:
+            return False
+        send("ops", f"{NAME} EDGAR 조회 실패 | 다음 09:00 재시도",
+             f"SEC EDGAR submissions 조회 실패(특별배당 감시): {type(exc).__name__} {exc}"[:300] + ". 다음 실행에서 다시 봅니다.", 3, ["warning"], dry)
+        ss["fail_day"] = day
+        return True
+    changed = False
+    seen = set(ss.get("seen") or [])
+    close = (str(bars[-1][0]), bars[-1][1]) if bars else None
+    for f in sdiv_candidates(cfg, filings, seen):
+        _, index_url, main_url = filing_urls(cfg, f)
+        ex_url, text, note = exhibit_text(cfg, f, get)
+        if text is None:
+            print(f"sdiv: {f['acc']} text fetch failed; retry next run")
+            if ss.get("fail_day") != day:
+                send("ops", f"{NAME} 8-K 본문 조회 실패 | 다음 09:00 재시도", f"{f['date']} 8-K {f['acc']} 본문 조회 실패. {note}"[:300], 3, ["warning"], dry)
+                ss["fail_day"] = day
+                changed = True
+            continue
+        p = parse_special(text)
+        if not p["mentions"]:
+            print(f"sdiv: {f['acc']} (Item {f['items']}) no special dividend text; recorded, not sent")
+            ss.setdefault("skipped", []).append({"acc": f["acc"], "date": f["date"], "items": f["items"], "regular": p.get("regular")})
+            seen.add(f["acc"])
+            changed = True
+            continue
+        links = f"8-K 목록 {index_url}" + (f", 보도자료(Exhibit 99) {ex_url}" if ex_url else f", 8-K 본문 {main_url}")
+        if note:
+            links += f" ({note.strip()})"
+        t, b, pr = sdiv_message(cfg, f, links, p, close, now)
+        send("port", t, b, pr, ["moneybag"], dry)
+        ss.setdefault("found", []).append({"acc": f["acc"], "date": f["date"], "items": f["items"], "special": p.get("special"),
+                                           "regular": p.get("regular"), "record": p.get("record"), "payment": p.get("payment"),
+                                           "sent_at": now.strftime("%Y-%m-%d %H:%M KST")})
+        seen.add(f["acc"])
+        changed = True
+    ss["seen"] = sorted(seen)
+    if now >= kst(sd["deadline_kst"]):
+        if not ss.get("found"):
+            t, b, pr = sdiv_missing_message(cfg, now)
+            send("port", t, b, pr, ["hourglass"], dry)
+            ss["done"] = "missing"
+            ss["missing_sent"] = now.strftime("%Y-%m-%d %H:%M KST")
+        else:
+            ss["done"] = "found"
+        changed = True
+    return changed
+
+
+def memo(fn):
+    box: dict = {}
+
+    def wrapped():
+        if "v" not in box:
+            try:
+                box["v"] = (fn(), None)
+            except Exception as exc:  # noqa: BLE001
+                box["v"] = (None, exc)
+        v, e = box["v"]
+        if e is not None:
+            raise e
+        return v
+    return wrapped
+
+
 def run(cfg: dict, dry: bool, now: datetime, bars_fn=fetch_bars, fetch_sub=None, get=None) -> int:
     if now > ends_at(cfg):
         print(f"ended (ends_kst {cfg['ends_kst']}); silent")
         return 0
     st = load_state()
     get = get or (lambda u: edgar_get(cfg, u))
-    fetch_sub = fetch_sub or (lambda: json.loads(edgar_get(cfg, cfg["edgar"]["submissions"])))
+    fetch_sub = memo(fetch_sub or (lambda: json.loads(edgar_get(cfg, cfg["edgar"]["submissions"]))))
     changed = False
     try:
         bars = bars_fn(cfg, now.astimezone(NY))
@@ -526,6 +717,7 @@ def run(cfg: dict, dry: bool, now: datetime, bars_fn=fetch_bars, fetch_sub=None,
             st["px_fail_day"] = day
             changed = True
     changed |= run_earn(cfg, st, bars, now, dry, fetch_sub, get)
+    changed |= run_sdiv(cfg, st, bars, now, dry, fetch_sub, get)
     changed |= run_px(cfg, st, bars, now, dry)
     if changed:
         save_state(st, dry)
@@ -572,6 +764,21 @@ FIX_Q3_2025 = (  # trimmed verbatim from the real 2025-11-21 Exhibit 99.1 (acces
     "costs) 166,931 153,547 472,804 445,188 Gross profit 153,906 140,071 425,891 393,302 "
     "CURRENT ASSETS: Cash and cash equivalents $ 316,152 $ 266,929 $ 301,958 Short-term investments 23,993 23,801 23,482 Receivables 8,222 "
     "6,758 7,901 Inventory 165,779 120,789 149,351 Prepaid expenses and other assets 24,977 LONG-TERM INVESTMENTS 31,157 28,116 27,261 OTHER"
+)
+FIX_SDIV_2025 = (  # trimmed verbatim from the real 2025-12-09 Exhibit 99.1 (accession 0000885245-25-000111, Items 8.01, 9.01)
+    "THE BUCKLE, INC. ANNOUNCES A $3.00 PER SHARE SPECIAL CASH DIVIDEND, A $0.35 PER SHARE QUARTERLY DIVIDEND, AND THE APPOINTMENT OF "
+    "ASHLEY L. ANDREAS AS VICE PRESIDENT OF HUMAN RESOURCES KEARNEY, NE -- (BUSINESS WIRE) -- The Buckle, Inc. (NYSE: BKE) announced that "
+    "at its quarterly meeting of the Board of Directors, held on December 8, 2025, the Board authorized a $3.00 per share special cash "
+    "dividend to be paid to shareholders of record at the close of business on January 15, 2026. The Board also authorized a $0.35 per "
+    "share quarterly dividend to be paid to shareholders of record at the close of business on January 15, 2026. Both the $3.00 per share "
+    "special cash dividend and the $0.35 per share quarterly dividend ($3.35 per share in total) are payable on January 29, 2026 and will "
+    "be paid together. About Buckle Buckle is a specialty retailer focused on delivering exceptional service and style."
+)
+FIX_REG_ONLY = (  # trimmed verbatim from the real 2026-09-15 Exhibit 99.1 (Items 8.01, 9.01): regular dividend only
+    "THE BUCKLE, INC. REPORTS QUARTERLY DIVIDEND KEARNEY, NE -- (BUSINESS WIRE) -- The Buckle, Inc. (NYSE: BKE) announced that at its "
+    "quarterly meeting of the Board of Directors, held on September 14, 2026, the Board authorized a $0.35 per share quarterly dividend to "
+    "be paid to shareholders of record at the close of business on October 15, 2026, with a payment date of October 29, 2026. About Buckle "
+    "Buckle is a specialty retailer focused on delivering exceptional service and style through unforgettable experiences."
 )
 FIX_DIV = ("THE BUCKLE, INC. ANNOUNCES A $3.00 PER SHARE SPECIAL CASH DIVIDEND ... the Board authorized a $3.00 per share special cash "
            "dividend to be paid ... The Board also authorized a $0.35 per share quarterly dividend to be paid")
@@ -665,7 +872,7 @@ def selftest() -> int:
     check("px p4 title", (pr, t), (4, "[BKE] 종가 39.99달러, 40달러 아래 | Hold 판단 재점검"))
     check("px body: 52w low, yield, buffer", ("52주 저점 39.44달러" in b, "배당수익률 3.50%" in b, "41.00달러 이상(완충 1달러)" in b), (True, True, True))
     check("px under 52w low title", msgs["px_low"][0], "[BKE] 종가 39.00달러, 40달러 아래 | 52주 저점도 이탈, 판단 재점검")
-    check("clean() strips em-dash/dots", clean("a\u2014b\u00b7c\u318dd"), "a-b c d")
+    check("clean() strips em-dash/dots", clean("a\u2014b\u00b7c\u318dd\u3186e"), "a-b c d e")
 
     # --- runs with a temp state ---
     def sub(extra=()):
@@ -761,6 +968,115 @@ def selftest() -> int:
             check("end minute still active", len(sent) >= 1, True)
     finally:
         STATE, DRY = old, False
+    # --- special dividend (sdiv) ---
+    ps = parse_special(FIX_SDIV_2025)
+    check("real 2025-12-09: special/regular/record/payment", (ps.get("special"), ps.get("regular"), ps.get("record"), ps.get("payment"), ps["mentions"]),
+          (3.0, 0.35, "2026-01-15", "2026-01-29", True))
+    pr_ = parse_special(FIX_REG_ONLY)
+    check("real 2026-09-15 regular only: no special ('specialty retailer' ignored)", (pr_["mentions"], pr_.get("special"), pr_.get("regular")), (False, None, 0.35))
+    check("ex-date parsed when stated", parse_special("a $4.00 per share special cash dividend. The ex-dividend date is January 14, 2027.").get("ex"), "2027-01-14")
+    fs = {"form": "8-K", "date": "2026-12-08", "acc": "0000885245-26-000060", "items": "8.01,9.01", "doc": "bke-20261208.htm"}
+    m_ok = sdiv_message(cfg, fs, "8-K 목록 https://x/i.html", ps, ("2026-12-07", 47.31), now)
+    m_fail = sdiv_message(cfg, fs, "8-K 목록 https://x/i.html", parse_special("The Board declared a special dividend, amount to follow."), None, now)
+    m_miss = sdiv_missing_message(cfg, now)
+    for n, (t, b, pr) in {"sdiv_ok": m_ok, "sdiv_fail": m_fail, "sdiv_missing": m_miss}.items():
+        rules(n, t, b)
+    t, b, pr = m_ok
+    check("sdiv_ok p4 title", (pr, t), (4, "[BKE] 특별배당 3.00달러 공시 | 작년과 같음, 일정 확인"))
+    check("sdiv_ok body figures", all(x in b for x in ("주당 특별배당 3.00달러, 작년과 같음", "기록일 2026-01-15", "지급일 2026-01-29", "배당락일 보도자료에 명시 없음",
+                                                     "정기배당 0.35달러 (기준 0.35 그대로)", "특별배당 수익률 6.34%", "= 4.40달러 기준 9.30%", "https://x/i.html")), True)
+    check("sdiv vs prior: more", sdiv_message(cfg, fs, "", {"special": 3.5, "mentions": True}, None, now)[0], "[BKE] 특별배당 3.50달러 공시 | 작년보다 많음, 일정 확인")
+    check("sdiv parse fail -> 원문 확인 p4", (m_fail[0], "원문 확인" in m_fail[1], m_fail[2]), ("[BKE] 특별배당 공시 나옴 | 원문 확인", True, 4))
+    check("sdiv missing p3 title", (m_miss[0], m_miss[2]), ("[BKE] 특별배당 공시 없음(1/31까지) | 정기배당만 기준", 3))
+
+    def subd(rows):
+        rows = sorted([("8-K", "2026-09-15", "0000885245-26-000039", "8.01,9.01", "bke-20260915.htm")] + list(rows), key=lambda r: r[1], reverse=True)
+        return {"filings": {"recent": {"form": [r[0] for r in rows], "filingDate": [r[1] for r in rows],
+                                       "accessionNumber": [r[2] for r in rows], "items": [r[3] for r in rows],
+                                       "primaryDocument": [r[4] for r in rows]}}}
+
+    def acc(n):
+        return f"0000885245-26-0000{n}"
+    texts = {"61": FIX_SDIV_2025, "62": FIX_REG_ONLY, "63": FIX_SDIV_2025.replace("$3.00", "$3.50"),
+             "64": "<p>The Board declared a special dividend; the amount will be announced later.</p>", "65": FIX_SDIV_2025, "66": FIX_SDIV_2025,
+             "39": FIX_REG_ONLY}
+
+    def getd(u):
+        folder, name = u.split("/")[-2], u.split("/")[-1]
+        n = folder[-2:]
+        if name == "index.json":
+            return json.dumps({"directory": {"item": [{"name": f"bke-{n}.htm"}, {"name": f"bke{n}8-kdivex.htm"}, {"name": "R1.htm"}]}})
+        return "<p>" + texts[n] + "</p>"
+    r801 = ("8-K", "2026-12-08", acc(61), "8.01,9.01", "bke-61.htm")
+    rreg = ("8-K", "2026-12-08", acc(62), "8.01,9.01", "bke-62.htm")
+    r701 = ("8-K", "2026-12-09", acc(63), "7.01,9.01", "bke-63.htm")
+    rbad = ("8-K", "2026-12-10", acc(64), "8.01,9.01", "bke-64.htm")
+    rold = ("8-K", "2026-11-30", acc(65), "8.01,9.01", "bke-65.htm")
+    rlate = ("8-K", "2027-02-01", acc(66), "8.01,9.01", "bke-66.htm")
+    old = STATE
+    sent2: list[tuple[str, str, int]] = []
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            STATE = Path(td) / "bke.json"
+            seed2 = {"px": {"initialized": True, "armed": True, "last_date": "2026-12-07", "last_close": 47.31}, "earn": {"done": "found"}, "sdiv": {}}
+
+            def reset2():
+                STATE.write_text(json.dumps(seed2), encoding="utf-8")
+                sent2.clear()
+
+            def go2(ts, rows, dry=False):
+                global DRY
+                DRY = dry
+                with mock.patch(f"{__name__}.publish", side_effect=lambda topic, t, b, pr, **k: sent2.append((topic, t, pr))), \
+                        redirect_stdout(io.StringIO()):
+                    run(cfg, dry, kst(ts), bars_fn=lambda c, n: [(date(2026, 12, 7), 47.31)], fetch_sub=lambda: subd(rows), get=getd)
+                DRY = False
+            reset2()
+            before = STATE.read_bytes()
+            go2("2026-12-09 09:00", [r801, r701, rbad], dry=True)
+            go2("2027-02-01 09:00", [], dry=True)
+            check("sdiv dry: state unchanged, nothing sent", (STATE.read_bytes() == before, sent2), (True, []))
+            go2("2026-11-30 09:00", [r801])
+            check("sdiv before 12/01 window: silent", sent2, [])
+            reset2()
+            go2("2026-12-09 09:00", [r801])
+            go2("2026-12-10 09:00", [r801])
+            check("8.01 special: one p4, dedupe by accession", [(x[1], x[2]) for x in sent2], [("[BKE] 특별배당 3.00달러 공시 | 작년과 같음, 일정 확인", 4)])
+            reset2()
+            go2("2026-12-09 09:00", [rreg])
+            stj = json.loads(STATE.read_text())
+            check("8.01 regular only: not sent, recorded as seen", (sent2, acc(62) in stj["sdiv"]["seen"], stj["sdiv"]["skipped"][0]["regular"]), ([], True, 0.35))
+            reset2()
+            go2("2026-12-10 09:00", [r701])
+            check("7.01 with special text: sent", [x[1] for x in sent2], ["[BKE] 특별배당 3.50달러 공시 | 작년보다 많음, 일정 확인"])
+            reset2()
+            go2("2026-12-11 09:00", [rbad])
+            check("special text, amount not parsed: 원문 확인", [x[1] for x in sent2], ["[BKE] 특별배당 공시 나옴 | 원문 확인"])
+            reset2()
+            go2("2027-01-29 09:00", [rold, rreg])
+            check("outside window filings (11/30) ignored", sent2, [])
+            go2("2027-02-01 09:00", [rold, rreg, rlate])
+            go2("2027-02-02 09:00", [rold, rreg, rlate, r801])
+            check("none by 1/31: one p3 notice, then stops (2/1 filing ignored)", [(x[1], x[2]) for x in sent2], [("[BKE] 특별배당 공시 없음(1/31까지) | 정기배당만 기준", 3)])
+            reset2()
+            go2("2026-12-09 09:00", [r801])
+            go2("2027-02-01 09:00", [r801])
+            check("found before deadline: no missing notice", len(sent2), 1)
+            reset2()
+            boom = lambda: (_ for _ in ()).throw(OSError("edgar down"))  # noqa: E731
+            DRY = False
+            with mock.patch(f"{__name__}.publish", side_effect=lambda topic, t, b, pr, **k: sent2.append((topic, t, pr))), redirect_stdout(io.StringIO()):
+                run(cfg, False, kst("2026-12-09 09:00"), bars_fn=lambda c, n: [(date(2026, 12, 7), 47.31)], fetch_sub=boom, get=getd)
+                run(cfg, False, kst("2026-12-09 09:10"), bars_fn=lambda c, n: [(date(2026, 12, 7), 47.31)], fetch_sub=boom, get=getd)
+            check("sdiv EDGAR fail: one ops notice per day", [(x[0], x[1]) for x in sent2], [("cwally-ops", "[BKE] EDGAR 조회 실패 | 다음 09:00 재시도")])
+            reset2()
+            go2("2027-02-27 00:00", [r801])
+            check("after ends_kst: sdiv silent", sent2, [])
+    finally:
+        STATE, DRY = old, False
+    print("\n=== sample special dividend ===")
+    print(m_ok[2], m_ok[0])
+    print(m_ok[1])
     print("\n=== sample summary ===")
     print(msgs["earn_ok"][2], msgs["earn_ok"][0])
     print(msgs["earn_ok"][1])

@@ -9,8 +9,10 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 묶음(정시 cron-job.org morning 잡, GitHub 0 0 * * 1-5 백업)에 부착. morning 은 토요일에 돌지 않으므로 11/20(금) 미 동부 장 전 실적(한국 11/20 20:30~21:00 무렵)은 oneshot_kst 2026-11-21 09:00 원샷(job=oneshot, picker 가 scripts/bke_monitor.py auto 실행)으로 받고, 11/23(월) 09:00 morning 이 예비. state/bke.json earn.done 으로 1번만. job=bke 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
-  "oneshot_kst": ["2026-11-21 09:00"],
+  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 묶음(정시 cron-job.org morning 잡, GitHub 0 0 * * 1-5 백업)에 부착. morning 은 토요일에 돌지 않으므로 11/20(금) 미 동부 장 전 실적(한국 11/20 20:30~21:00 무렵)은 oneshot_kst 2026-11-21 09:00 원샷(job=oneshot, picker 가 scripts/bke_monitor.py auto 실행)으로 받고, 11/23(월) 09:00 morning 이 예비. state/bke.json earn.done 으로 1번만. job=bke 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry. 특별배당 감시(sdiv): 2026-12-01 ~ 2027-01-31 제출 8-K, 평일 09:00 morning 묶음, 새 cron 없음.",
+  "oneshot_kst": [
+    "2026-11-21 09:00"
+  ],
   "oneshot_note": "11/20(금) 미 동부 장 전 3분기 실적 8-K 를 토요일 09:00 KST 에 요약. on-time = cron-job.org 원샷 job 8781512 'cwally oneshot 09:00 KST (Nov 21) bke'(job=oneshot, cronjob-register.yml action=register, 2026-11-03 15:00 KST 등록, 만료 09:59:59), GitHub 백업 cron 0 0 21 11 * (oneshot_pick check-cron 으로 중복 방지).",
   "edgar": {
     "cik": "0000885245",
@@ -58,9 +60,30 @@
   "sources": {
     "bars": "https://query1.finance.yahoo.com/v8/finance/chart/BKE?range=1mo&interval=1d"
   },
-  "seed": {"as_of": "2026-11-03", "last_date": "2026-11-02", "last_close": 47.31, "source": "Yahoo chart v8 BKE 1d, 2026-11-03 14:39 KST 조회"},
+  "seed": {
+    "as_of": "2026-11-03",
+    "last_date": "2026-11-02",
+    "last_close": 47.31,
+    "source": "Yahoo chart v8 BKE 1d, 2026-11-03 14:39 KST 조회"
+  },
   "source_note": "기준값 출처: 2026-11-03 검증(SEC 10-Q/8-K, 회사 월간 매출 보도자료, MarketBeat 컨센서스). 참고용, 투자 권유 아님.",
-  "explain": "더 버클(BKE) 3분기 실적 8-K 가 나오면 한 번 요약하고, 미국 종가가 40달러 아래로 새로 내려가면 한 번 알리는 알림입니다. 자동 주문 아님.",
+  "explain": "더 버클(BKE) 3분기 실적 8-K 가 나오면 한 번 요약하고, 12월~1월 특별배당 공시가 나오면 공시마다 한 번, 미국 종가가 40달러 아래로 새로 내려가면 한 번 알리는 알림입니다. 자동 주문 아님.",
   "ends_kst": "2027-02-26 23:59",
-  "ends_note": "평일 09:00 BKE 종가 40달러선 점검, 3분기 실적 요약 1번, 2027-02-26 종료"
+  "ends_note": "평일 09:00 BKE 종가 40달러선 점검, 3분기 실적 요약 1번, 특별배당 공시 감시(1/31까지), 2027-02-26 종료",
+  "sdiv": {
+    "approval": "2026-11-03 채팅 승인 t39u (\"[BKE]에 12월 특별배당 공시(8-K Item 8.01) 감지를 추가해 줘.\")",
+    "window_from": "2026-12-01",
+    "window_to": "2027-01-31",
+    "poll_start_kst": "2026-12-01 00:00",
+    "deadline_kst": "2027-02-01 00:00",
+    "items": [
+      "8.01",
+      "7.01"
+    ],
+    "items_note": "기본은 Item 8.01(사용자 요청). 견고성용으로 Item 7.01 8-K 도 Exhibit 99 본문에 special + dividend 문구가 있으면 특별배당으로 봄. 문구가 없는 공시(정기배당만)는 seen 에 기록만 하고 보내지 않음.",
+    "priority": 4,
+    "missing_priority": 3,
+    "prior_special": 3.0,
+    "prior_note": "2025-12-09 8-K(Item 8.01): 특별 3.00달러 + 정기 0.35달러, 기록일 2026-01-15, 지급일 2026-01-29. 그 전해는 2024-12-10 8-K(Item 8.01) 특별 2.50달러(지급 2025-01-29), 2023-12-05 특별 2.50달러."
+  }
 }
