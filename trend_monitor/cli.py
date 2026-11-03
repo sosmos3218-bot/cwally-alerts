@@ -138,6 +138,9 @@ def _run(args) -> int:
     allow_send = (not args.dry_run) and (not args.demo) and cfg.ntfy_enabled
     notice = ntfy_summary.maybe_publish(payload, cfg, allow_send=allow_send)
     _print_notice(notice, skipped=not allow_send)
+    recovery = ntfy_summary.maybe_publish_recovery(payload, cfg, output_dir, allow_send=allow_send)
+    if recovery:
+        _print_notice(recovery, skipped=not allow_send)
     if args.demo:
         print("DEMO 실매매 신호가 아닙니다. 오프라인 픽스처입니다.", flush=True)
     print(
