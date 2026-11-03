@@ -255,7 +255,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1090,6 +1090,25 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/k227540_monitor.py auto
+      - name: Run KAL (대한항공 003490 watchlist; 15:40 0090b0 slot)
+        # 2026-11-03: built on judgment from the user's pasted 대한항공 analysis. Same slot, no new cron.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/kal_monitor.py auto
+      - name: Run KAL standalone (manual check)
+        # job=kal dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'kal'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/kal_monitor.py selftest; fi
+          python scripts/kal_monitor.py "$MODE"
       - name: Run 227540 standalone (manual check)
         # job=k227540 dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'k227540'

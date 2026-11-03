@@ -1,0 +1,49 @@
+{
+  "name": "kal",
+  "title_prefix": "[KAL]",
+  "code": "003490",
+  "ticker": "003490",
+  "name_kr": "대한항공",
+  "as_of": "2026-11-03",
+  "approval": "사용자가 2026-11-02~03 기준 대한항공 분석을 붙여 넣음(지시 없음). 판단에 맡김: 관심 종목(미보유) 알림으로 설치. 우선주 003495 는 유동성이 낮아 가격 알림 없음.",
+  "holding": "미보유(관심 종목)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 평일 15:40 0090b0 슬롯(k227540 과 같은 자리)에 부착. 15:30 마감 뒤 네이버 수정주가 일봉 확정 종가. 수동 job=kal 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "price_lines": [
+    {"key": "d26500", "kind": "down", "level": 26500, "rearm": 27300, "priority": 3,
+     "label": "26,500 재이탈, 반등 실패", "note": "11/2 급반등 직전 기반(10/29 종가 26,550, 10/16 급락일 종가 26,500). 200일선(약 26,240)과도 거의 같은 자리."},
+    {"key": "d24000", "kind": "down", "level": 24000, "rearm": 24700, "priority": 4,
+     "label": "24,000 이탈, 투자 논리 약화 경고", "note": "10월 저점 종가 25,250 아래. 유가 또는 실적 악화 반영 의심."},
+    {"key": "u32500", "kind": "up", "level": 32500, "rearm": 31500, "priority": 3,
+     "label": "52주 고점 32,500 돌파", "note": "52주 장중 고점 32,500(종가 고점 32,050, 9/30)."},
+    {"key": "u38500", "kind": "up", "level": 38500, "rearm": 37000, "priority": 3,
+     "label": "컨센서스 목표가 38,500 도달", "note": "애널리스트 평균 목표가 약 38,500(일부 Hold 32,000)."}
+  ],
+  "rearm_note": "선마다 1번. 아래 선은 rearm 이상 종가로 회복해야, 위 선은 rearm 미만 종가로 내려가야 다시 무장.",
+  "fuel": {
+    "symbol": "HO=F",
+    "label": "제트유 대용 지표(뉴욕 난방유 선물 HO=F, 달러/갤런)",
+    "baseline": null,
+    "baseline_note": "설치 때 state 에 시드한 HO=F 시세를 기준으로 씀(state/kal.json fuel.baseline). 이 칸에 숫자를 넣으면 그 값이 우선.",
+    "up_pct": 10.0, "up_rearm_pct": 5.0,
+    "down_pct": -15.0, "down_rearm_pct": -10.0,
+    "priority": 3,
+    "note": "기준 대비 +10% 이상이면 유가 부담 확대 p3, +5% 아래로 내려와야 다시 무장. -15% 이하면 유가 안정 신호 p3, -10% 위로 올라와야 다시 무장. 15:40 KST 실행 시점 Yahoo 시세(regularMarketPrice), 월물 교체 때 몇 % 틈이 생길 수 있음."
+  },
+  "events": {
+    "asiana": {"start": "2026-12-01", "end": "2027-01-31", "reminder": "2027-01-05", "priority": 3,
+               "rule": "네이버 종목 공시(003490) 제목에 '합병'이 있고 제목이나 본문에 '아시아나'가 있거나, 제목에 '합병등종료보고서'가 있으면 1번. 2027-01-05 까지 못 찾으면 그날 확인 안내 1번."},
+    "q4": {"reminder": "2027-01-14", "watch_start": "2027-01-04", "watch_end": "2027-02-28", "priority": 3,
+           "rule": "4분기 잠정실적은 최근 1월 중순(2026-01-15, 다음 예상 2027-01-15, 다음 금융 일정)이라 전날 2027-01-14 에 안내 1번(그 전에 공시가 나왔으면 생략). 2027-01-04~02-28 '영업(잠정)실적' 공시가 나오면 1번."}
+  },
+  "reference_2026_11_03": "11/2 네이버 확정 종가 28,700(+8.10%, 전일 26,300). 52주 21,000~32,500. 200일선 약 26,240. PBR 약 0.96. 목표가 컨센서스 약 38,500.",
+  "sources": {
+    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=003490&timeframe=day&count=260&requestType=0 (수정주가 일봉)",
+    "fuel": "https://query1.finance.yahoo.com/v8/finance/chart/HO=F",
+    "notices": "naver_api.notices('003490')"
+  },
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "평일 15:40 확정 종가, 제트유 대용, 합병과 4분기 실적 점검. 2027-10-31 까지"
+}
