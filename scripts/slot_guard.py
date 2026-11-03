@@ -22,6 +22,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import kr_calendar
+
 KST = timezone(timedelta(hours=9))
 DIR = Path(__file__).resolve().parents[1] / "state" / "slots"
 
@@ -31,7 +33,9 @@ def main() -> int:
         print(__doc__)
         return 2
     cmd, slot = sys.argv[1], sys.argv[2]
-    today = datetime.now(KST).strftime("%Y-%m-%d")
+    # KRX session day, not the calendar date: a late GitHub backup cron after midnight (before 06:00 KST)
+    # still belongs to the previous day, so it must not mark (and consume) the next day's slot.
+    today = kr_calendar.session_day(datetime.now(KST)).strftime("%Y-%m-%d")
     path = DIR / f"{slot}.json"
     if cmd == "check":
         src = Path(os.environ["SLOT_FILE"]) if os.environ.get("SLOT_FILE") else path
