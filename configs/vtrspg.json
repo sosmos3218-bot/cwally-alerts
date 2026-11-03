@@ -17,9 +17,11 @@
     "vtr_ffo_note": "2026 Normalized FFO 가이던스 중간값. 실적 후 수동 갱신.",
     "spg_price": 201.76,
     "spg_ffo": 13.25,
-    "spg_ffo_note": "2026 Real Estate FFO 가이던스 중간값. 실적 후 수동 갱신.",
+    "spg_ffo_note": "2026 Real Estate FFO 가이던스 중간값. 배수 구간과 진입 단계가 함께 씀. 실적 후 수동 갱신.",
     "vtr_spread": -0.0057,
-    "spg_spread": 0.0126
+    "spg_spread": 0.0126,
+    "spg_dividend_annual": 9.0,
+    "spg_dividend_note": "분기 배당 x 4. 2026-08-10 선언 3분기 2.25달러 기준. 실적(2026-11-05 ET, 11-06 KST) 뒤 새 분기 배당 x 4로 수동 갱신."
   },
   "thresholds": {
     "yield_low": 4.5,
@@ -28,7 +30,10 @@
     "vtr_mult_cheap": 19.0,
     "vtr_mult_rich": 23.0,
     "spg_mult_cheap": 14.0,
-    "spg_mult_rich": 17.0
+    "spg_mult_rich": 17.0,
+    "spg_entry_yield": 4.5,
+    "spg_entry_mult": 15.0,
+    "spg_entry_rearm_pct": 3.0
   },
   "earnings": {
     "vtr": "2026-10-27",
@@ -45,5 +50,9 @@
     "5년 총수익 표는 스프레드 고정 가정. 이 알림은 그 가정을 재계산하지 않음"
   ],
   "ends_kst": "2031-10-06 09:00",
-  "ends_note": "평일 09:00 VTR/SPG 상태 변화 때만 발송, 이후 자동 종료"
+  "ends_note": "평일 09:00 VTR/SPG 상태 변화 때만 발송, 이후 자동 종료",
+  "spg_entry": {
+    "approved": "2026-11-03 chat",
+    "note": "진입가 = min(연 배당 / 4.5%, 15 x RE FFO 중간값). 가격을 고정하지 않고 baseline.spg_dividend_annual, baseline.spg_ffo 에서 매번 계산. SPG 정규장 종가가 진입가 이하면 p4 1번(에피소드당). 종가가 진입가 x 1.03 위로 올라오면 재무장. 17배 rich, 14배 cheap 구간과 [SPG] 150/160달러, 10년물 구간은 그대로."
+  }
 }

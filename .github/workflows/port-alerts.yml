@@ -255,7 +255,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -555,6 +555,18 @@ jobs:
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
+      - name: Run VTRSPG manual check (job=vtrspg dispatch only; scheduled run stays in the 09:00 morning bundle)
+        # 2026-11-03 chat: SPG entry step added to [VTRSPG]. No new cron. job=vtrspg is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'vtrspg' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/vtrspg_monitor.py selftest; fi
+          python scripts/vtrspg_monitor.py "$MODE"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + shinwon + protec + 2ub + pltr + addstop + sec
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:

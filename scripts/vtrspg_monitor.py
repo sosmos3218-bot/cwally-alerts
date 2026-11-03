@@ -82,10 +82,112 @@ def mult_zone(mult: float, cheap: float, rich: float) -> str:
     return "base"
 
 
+def spg_entry_level(base: dict, th: dict) -> tuple[float, str, float, float]:
+    """Stricter (lower) of the 4.5% dividend-yield price and 15x RE FFO midpoint."""
+    div = float(base["spg_dividend_annual"])
+    ffo = float(base["spg_ffo"])
+    y = float(th["spg_entry_yield"])
+    m = float(th["spg_entry_mult"])
+    by_yield = round(div / (y / 100.0), 2)
+    by_mult = round(m * ffo, 2)
+    if by_mult <= by_yield:
+        return by_mult, f"{m:g}배 (RE FFO {ffo:g}달러 x {m:g})", by_yield, by_mult
+    return by_yield, f"배당 {y:g}% (연 {div:g}달러 / {y:g}%)", by_yield, by_mult
+
+
+def spg_entry_check(spg: float, state_entry: dict | None, base: dict, th: dict) -> tuple[bool, dict]:
+    level = spg_entry_level(base, th)[0]
+    st = dict(state_entry or {"armed": True})
+    rearm = level * (1 + float(th["spg_entry_rearm_pct"]) / 100.0)
+    fire = False
+    if st.get("armed", True):
+        if spg <= level:
+            fire = True
+            st["armed"] = False
+    elif spg > rearm:
+        st["armed"] = True
+    st["level"] = level
+    st["rearm_above"] = round(rearm, 2)
+    return fire, st
+
+
+def spg_entry_alert(stamp: str, spg: float, y10: float | None, base: dict, th: dict, install: bool = False) -> tuple[str, str]:
+    level, leg, by_yield, by_mult = spg_entry_level(base, th)
+    ffo = float(base["spg_ffo"])
+    div = float(base["spg_dividend_annual"])
+    cheap = float(th["spg_mult_cheap"]) * ffo
+    rearm = level * (1 + float(th["spg_entry_rearm_pct"]) / 100.0)
+    ytxt = f"{y10:.2f}%" if y10 is not None else "미확인"
+    status = (
+        f"SPG 정규장 종가 {spg:.2f}달러, 진입가 {level:.2f}달러(더 낮은 쪽: {leg}). "
+        f"배당 4.5% 가격 {by_yield:.2f}달러, 15배 가격 {by_mult:.2f}달러. "
+        f"P/FFO {spg / ffo:.2f}배, 배당수익률 {div / spg * 100:.2f}%, 미국 10년물 {ytxt}. "
+        f"14배 cheap 구간 {cheap:.2f}달러까지 {(cheap / spg - 1) * 100:+.1f}%."
+    )
+    if install:
+        title = "[VTRSPG] SPG 진입 단계 설치 확인 | 매매 신호 아님 | SPG"
+        status = "설치 확인용 1회 발송입니다. " + status
+    else:
+        title = f"[VTRSPG] SPG ${spg:.2f}, 진입 단계 도달 (15배, 배당 4.5%) | SPG"
+    msg = "\n".join(
+        [
+            f"{stamp} | VTR SPG | SPG 진입 단계",
+            "이게 뭐 알림: SPG 종가가 진입가(배당 4.5% 가격과 RE FFO 15배 가격 중 낮은 쪽) 이하로 처음 내려오면 1번 보내는 알림입니다. 분할 매수 1차 검토 구간, 투자 권유 아님.",
+            f"지금 결과/상태: {status}",
+            "지금 할 일: 분할 매수 1차 검토 구간입니다. 한 번에 다 사지 말고 1차 분량만 검토하세요. 자동 주문은 아닙니다.",
+            f"나중에: 14배 {cheap:.2f}달러 아래면 cheap 구간 알림이 따로 옵니다. 종가가 {rearm:.2f}달러(진입가 +3%) 위로 올라가면 다시 무장합니다. 실적 뒤 배당과 가이던스가 바뀌면 진입가도 바뀝니다.",
+            "익절/줄일 때: 17배(rich) 위로 올라가면 인컴 우위가 줄어듭니다. 그때 비중을 다시 보세요.",
+            "하지 말 것: 신용, 미수, 한 번에 전량 매수. 이 알림을 FFO 가이던스 유지 확인으로 쓰기.",
+        ]
+    )
+    return title, msg
+
+
+def selftest() -> int:
+    base = {"spg_dividend_annual": 9.0, "spg_ffo": 13.25}
+    th = {"spg_entry_yield": 4.5, "spg_entry_mult": 15.0, "spg_entry_rearm_pct": 3.0, "spg_mult_cheap": 14.0}
+    lv, leg, by, bm = spg_entry_level(base, th)
+    assert (lv, by, bm) == (198.75, 200.0, 198.75) and "15" in leg, (lv, leg)
+    lv2 = spg_entry_level({"spg_dividend_annual": 8.8, "spg_ffo": 13.4}, th)
+    assert lv2[0] == 195.56 and "4.5" in lv2[1], lv2
+    f, st = spg_entry_check(221.73, None, base, th)
+    assert not f and st["armed"]
+    f, st = spg_entry_check(198.75, st, base, th)
+    assert f and not st["armed"]
+    f, st = spg_entry_check(190.0, st, base, th)
+    assert not f and not st["armed"]
+    f, st = spg_entry_check(204.0, st, base, th)
+    assert not f and not st["armed"]
+    f, st = spg_entry_check(205.0, st, base, th)
+    assert not f and st["armed"]
+    f, st = spg_entry_check(198.0, st, base, th)
+    assert f
+    t, m = spg_entry_alert("x", 198.0, 4.9, base, th)
+    assert t.startswith("[VTRSPG] SPG $198.00, 진입 단계 도달") and t.endswith("| SPG"), t
+    keys = ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]
+    pos = [m.index(k + ":") for k in keys]
+    assert pos == sorted(pos), pos
+    assert "\u00b7" not in m + t and "\u2014" not in m + t
+    print("selftest ok")
+    return 0
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     dry = mode == "dry" or os.environ.get("VTRSPG_DRY") == "1"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    if mode == "install":
+        b, t = cfg["baseline"], cfg["thresholds"]
+        spg_i = price_of(cfg["sources"]["spg"])
+        tnx = price_of(cfg["sources"]["tnx"])
+        y_i = None if tnx is None else (tnx / 10.0 if tnx > 20 else tnx)
+        title, msg = spg_entry_alert(datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"), spg_i, y_i, b, t, install=True)
+        print(title)
+        print(msg)
+        publish(resolve_topic("port", cfg.get("ntfy_topic")), title, msg, 3, ["white_check_mark"], resolve_server(cfg.get("ntfy_server")))
+        return 0
     state = load_json(
         STATE_PATH,
         {
@@ -219,6 +321,14 @@ def main() -> int:
                     3,
                 )
             )
+        fire, est = spg_entry_check(spg, state.get("spg_entry"), base, th)
+        print(f"spg entry: close {spg:.2f} vs entry {est['level']:.2f} ({spg_entry_level(base, th)[1]}), armed={est['armed']}, fire={fire}")
+        if fire:
+            t_e, m_e = spg_entry_alert(stamp, spg, y10, base, th)
+            alerts.append((t_e, m_e, 4))
+            est["fired_on"] = today
+            est["fired_close"] = round(spg, 2)
+        state["spg_entry"] = est
         state["yield_band"] = band
         state["vtr_zone"] = vz
         state["spg_zone"] = sz
@@ -275,6 +385,9 @@ def main() -> int:
     if not alerts:
         print("no alert")
 
+    if dry:
+        print("DRY RUN: no publish, state not written")
+        return 0
     state["updated_at"] = now.isoformat()
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
