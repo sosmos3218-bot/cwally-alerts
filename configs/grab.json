@@ -1,0 +1,51 @@
+{
+  "name": "grab",
+  "title_prefix": "[GRAB]",
+  "ticker": "GRAB",
+  "display": "그랩 홀딩스",
+  "as_of": "2026-11-03",
+  "approval": "사용자 요청 2026-11-03 21:30 KST (GRAB 적정가 4.15, 최악 3.20, 인도네시아 배달 수수료 상한 뉴스). job=grab 수동 dispatch 와 단독 step 포함",
+  "holding_note": "보유 여부 미기재. 매매 지시 아님.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(ftnt 바로 뒤)에 부착. 미국 전일 정규장 완료 일봉(종가, 고가, 저가)으로 판정, 데이터 거래일로 중복 방지. 뉴스도 같은 실행에서 1번. 수동 job=grab 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "thesis": {
+    "fair_value": 4.15,
+    "worst_case": 3.20,
+    "premarket_ref": 3.16,
+    "note": "분석 기준 적정가 4.15달러(장전 3.16달러 대비 +31%), 최악 시나리오(인도네시아 8% 수수료 상한이 음식/물품 배달까지 확대) 약 3.20달러. 가장 큰 위험은 Komdigi/Perpres 후속 규정의 배달 확대."
+  },
+  "lines": [
+    {"key": "up415", "side": "ge", "price": 4.15, "rearm_close_below": 4.03, "priority": 4,
+     "label": "적정가 4.15달러 도달", "action": "추격 매수 금지, 보유분 일부 익절 검토",
+     "basis": "종가 또는 장중 고가가 4.15달러 이상이면 진입. 종가가 4.03달러(4.15의 3% 아래) 미만이면 재무장."},
+    {"key": "dn320", "side": "le", "price": 3.20, "rearm_close_above": 3.30, "priority": 4,
+     "label": "최악 시나리오 3.20달러 이하", "action": "인도네시아 배달 수수료 규제 확인",
+     "basis": "종가 또는 장중 저가가 3.20달러 이하이면 진입. 종가가 3.30달러(3.20의 3% 위) 초과이면 재무장."}
+  ],
+  "seed_note": "2026-11-03 설치 시 두 선 모두 armed, last_date 2026-11-02(종가 2.86) 로 시드. 11/3 미국장 봉부터 판정하므로 11/3 저가가 3.20 이하이면 11/4 09:00 에 1번 발송.",
+  "news": {
+    "lookback_hours": 96,
+    "max_items": 5,
+    "queries": [
+      {"q": "aturan turunan Perpres ojol", "hl": "id", "gl": "ID", "ceid": "ID:id"},
+      {"q": "Perpres ojol kurir komisi", "hl": "id", "gl": "ID", "ceid": "ID:id"},
+      {"q": "komisi 8% GoFood GrabFood", "hl": "id", "gl": "ID", "ceid": "ID:id"},
+      {"q": "komisi 8% kurir pengantaran makanan", "hl": "id", "gl": "ID", "ceid": "ID:id"},
+      {"q": "Komdigi komisi aplikator", "hl": "id", "gl": "ID", "ceid": "ID:id"},
+      {"q": "Indonesia commission cap food delivery Grab GoTo", "hl": "en-US", "gl": "US", "ceid": "US:en"}
+    ],
+    "rule_re": "komisi|potongan|commission|\\bcap\\b|Perpres|Permen|Peraturan Menteri|aturan turunan|Komdigi|Kemenhub|regulasi|regulation",
+    "scope_re": "makanan|food|GrabFood|GoFood|ShopeeFood|kurir|courier|barang|pengantaran|delivery|logistik|aturan turunan|Permen|Peraturan Menteri",
+    "delivery_re": "makanan|food|GrabFood|GoFood|ShopeeFood|kurir|courier|barang|pengantaran|delivery|logistik",
+    "cap_re": "8\\s*%|8 persen|komisi|potongan|commission|\\bcap\\b",
+    "note": "소음 줄이기: 제목이 규제 단어(rule_re) AND 범위 단어(scope_re: 배달/물품/후속 규정) 둘 다 있어야 함. 배달 단어(delivery_re)와 수수료 단어(cap_re)가 같이 있으면 p4 '배달 수수료 상한' 제목, 아니면 p3 '후속 규정' 제목. 실행마다 새 기사만 한 묶음(최대 5건 표시). 중복 방지: 링크와 정규화한 제목(출처 꼬리 제거). 첫 실행은 그때 기사를 seen 으로 시드(발송 없음)."
+  },
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/GRAB?interval=1d&range=10d",
+    "quote_page": "https://finance.yahoo.com/quote/GRAB/"
+  },
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 GRAB 적정가 4.15/최악 3.20 가격선과 인도네시아 배달 수수료 상한 뉴스 감시, 2027-02-26 까지 (4분기 실적 뒤 재검토)"
+}
