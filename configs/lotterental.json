@@ -1,0 +1,32 @@
+{
+  "name": "lotterental",
+  "title_prefix": "[089860]",
+  "code": "089860",
+  "display": "롯데렌탈 (KOSPI 089860) 종가 45,000원 분할 지정가 검토선 감시",
+  "short": "롯데렌탈",
+  "approval": "사용자 채팅 승인 2026-11-03 (새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음, 새 cron-job.org 작업 없음)",
+  "stance": "미보유. 11/2 종가 기준 신규 매수 보류. 45,000원(2026E PER 약 12배, PBR 약 1.0배)이 분할 지정가 검토선, 55,000원 위는 신규 매수 근거 없음.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계, [0219B0] [0163Y0] 가격 감시와 같은 시간. 네이버 일별 시세의 확정 종가(그날 15:40 이후 행 또는 앞선 날짜 행)만 쓰고, 데이터 날짜(price.last_date)보다 새 날짜만 날짜순으로 판정. 19:00 에 당일 행이 아직 없으면 그날은 판정하지 않고 다음 실행에서 이어서 판정(state price.pending 기록). 수동 job=lotterental 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "daily_window": {"start": "2026-11-03", "end": "2027-02-26"},
+  "price_source": "https://m.stock.naver.com/api/stock/089860/price?pageSize=20&page=1",
+  "buy": {
+    "level": 45000,
+    "priority": 4,
+    "rearm_above": 47000,
+    "note": "종가 45,000원 이하면 1번. 종가가 47,000원 넘게 회복한 뒤에야 다시 무장."
+  },
+  "above": {
+    "enabled": true,
+    "level": 55000,
+    "priority": 3,
+    "note": "종가 55,000원 초과가 처음 나오면 1번만(신규 매수 근거 없음 구간 안내). 다시 무장하지 않음."
+  },
+  "reminder": "11/5 3분기 실적(영업이익 900억원 이상, 배당 숫자 상향) 확인 후 분할 지정가, 일반계좌.",
+  "stale_trading_days": 2,
+  "seed": {"day": "2026-11-02", "close": 51100, "note": "11/2 네이버 확정 종가 51,100원(요청서의 51,000원은 반올림 값). 설치일 11/3 장중 행은 15:40 전이라 판정하지 않음, 11/3 확정 종가부터 판정."},
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "KRX 거래일 19:00, 2027-02-26까지. 뒤에는 조용히 끝남"
+}
