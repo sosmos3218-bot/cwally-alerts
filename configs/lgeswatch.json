@@ -78,7 +78,8 @@
       {"key": "inquiry", "re": "조회공시|풍문|해명|불성실공시", "label": "조회공시/불성실공시", "priority": 4},
       {"key": "prelim", "re": "영업\\(잠정\\)실적", "label": "영업(잠정)실적", "priority": 4},
       {"key": "embezzle", "re": "횡령|배임", "label": "횡령/배임", "priority": 5},
-      {"key": "contract", "re": "단일판매|공급계약", "label": "단일판매/공급계약 체결", "priority": 3},
+      {"key": "contract", "re": "단일판매|공급계약", "label": "단일판매/공급계약 체결", "priority": 3,
+       "ess_large": {"ess_re": "(?<![A-Za-z])B?ESS(?![A-Za-z])|에너지\\s*저장|Energy\\s*Storage|전력망|그리드|계통\\s*(?:연계|안정)|Grid", "min_amount_won": 1000000000000, "min_ratio_pct": 5.0, "priority": 5, "note": "2026-11-03 채팅 요청: 제목 또는 본문(계약명, 계약내용, 기타 투자판단 사항)에 ESS 언급 AND (계약금액(해지금액) 1조원 이상 OR 최근 매출액 대비 5% 이상)이면 p5 'ESS 대형 수주' 제목(정정/해지 표시). 나머지 공급계약 공시는 p3 그대로. KIND 본문 조회나 금액 파싱 실패, 금액 유보면 대형 아님으로 보고 본문에 '금액 확인 필요' (공시는 버리지 않음)."}},
       {"key": "major", "re": "주요사항보고서", "label": "주요사항보고서", "priority": 4},
       {"key": "invest", "re": "투자판단관련주요경영사항", "label": "투자판단 관련 주요경영사항", "priority": 4, "from": "lges [LG] LG엔솔 사업 관련 해명/주요경영사항"},
       {"key": "periodic", "re": "분기보고서|반기보고서|사업보고서", "label": "분기/반기/사업보고서", "priority": 3}

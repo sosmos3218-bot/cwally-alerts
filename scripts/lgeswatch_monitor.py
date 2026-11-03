@@ -12,6 +12,9 @@
    2026-11-03: px350 line (<= 350,000, LG화학 EB 교환가 337,700 / PRS 347,500) uses basis "low": the zone test
    takes min(close, day low) so an intraday trade at/below the line also counts; re-arms on a day whose low is above.
    First run seeds the current list without sending.
+   2026-11-03: contract filings fetch the KIND body; ESS-related AND large (amount >= 1조원 or >= 5% of 최근 매출액,
+   filings.rules contract.ess_large) -> p5 'ESS 대형 수주 (정정/해지) 공시' title. Everything else stays p3. Body fetch or
+   amount parse failure = not large, body says '금액 확인 필요' (fail open, the filing is still sent).
 3. Q4 2026 checklist: a new 영업(잠정)실적 filing inside q4.window (2027-01-01..02-28) also sends the
    checklist once (q4_checklist_sent).
 
@@ -189,6 +192,104 @@ def line_text(lv: dict) -> str:
     return f"{won(lv['price'])} {'이상' if lv['op'] == 'ge' else '이하' if lv['op'] == 'le' else '미만'}"
 
 
+def kind_body(acpt: str) -> str:
+    """KIND filing body text (same 3-step viewer request as secdiv/steelre kind_body)."""
+    viewer = http(cfg_view(acpt))
+    m = re.search(r"<option value='(\d+)\|Y'", viewer) or re.search(r"<option value='(\d+)\|", viewer)
+    if not m:
+        raise RuntimeError("KIND 본문 문서번호 없음")
+    sc = http(f"{KIND}/common/disclsviewer.do?method=searchContents&docNo={m.group(1)}")
+    p = re.search(r"setPath\('[^']*','([^']+\.htm)'", sc)
+    if not p:
+        raise RuntimeError("KIND 본문 경로 없음")
+    return text_of(http(p.group(1), timeout=60))
+
+
+def cfg_view(acpt: str) -> str:
+    return f"{KIND}/common/disclsviewer.do?method=search&acptno={acpt}"
+
+
+def _num(tok: str | None) -> float | None:
+    if tok is None or tok.strip() in {"-", ""}:
+        return None
+    try:
+        return float(tok.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def parse_contract(text: str) -> dict | None:
+    """단일판매/공급계약 체결 or 해지 body -> amount/sales/ratio/name/party/period. Uses the LAST form section
+    (a 정정 body repeats the corrected full form after the 정정사항 table). None = not parseable."""
+    t = re.sub(r"\s+", " ", text or "")
+    anchors = [m.start() for m in re.finditer(r"단일판매\s*[\u318d\u00b7]?\s*공급계약\s*(?:체결|해지)\s*1\.\s*판매", t)]
+    if not anchors:
+        return None
+    s = t[anchors[-1]:]
+
+    def g(pat: str) -> str | None:
+        m = re.search(pat, s)
+        return m.group(1).strip() if m else None
+    out = {
+        "kind": "해지" if re.match(r"단일판매\s*[\u318d\u00b7]?\s*공급계약\s*해지", s) else "체결",
+        "name": g(r"(?:체결|해지)계약명\s*(.+?)\s*2\.\s*(?:계약|해지)내역"),
+        "amount_raw": g(r"(?:계약|해지)금액\s*\(원\)\s*(-|[\d,]+)"),
+        "sales": _num(g(r"최근\s*매출액\s*\(원\)\s*(-|[\d,]+)")),
+        "ratio": _num(g(r"매출액\s*대비\s*\(%\)\s*(-|[\d.]+)")),
+        "party": g(r"3\.\s*계약상대(?:방)?\s*(.+?)\s*-\s*회사와(?:의)?\s*관계"),
+        "start": g(r"계약기간\s*시작일\s*(\S+)"), "end": g(r"계약기간\s*시작일\s*\S+\s*종료일\s*(\S+)"),
+    }
+    out["amount"] = _num(out["amount_raw"])
+    if out["ratio"] is None and out["amount"] and out["sales"]:
+        out["ratio"] = round(out["amount"] / out["sales"] * 100, 1)
+    if out["amount"] is None and out["name"] is None and out["party"] is None:
+        return None
+    return out
+
+
+def contract_info(cfg: dict, title: str, body: str | None, err: str | None = None) -> dict:
+    """ESS/large verdict for one contract filing. Fail open: no body or no amount -> not large + 금액 확인 필요."""
+    rule = next(r for r in cfg["filings"]["rules"] if r["key"] == "contract")
+    el = rule["ess_large"]
+    p = parse_contract(body) if body else None
+    ess = bool(re.search(el["ess_re"], (title or "") + " " + (body or ""), re.I))
+    amt, ratio = (p or {}).get("amount"), (p or {}).get("ratio")
+    large = bool(amt is not None and (amt >= float(el["min_amount_won"]) or (ratio is not None and ratio >= float(el["min_ratio_pct"]))))
+    if p is None:
+        why = err or ("본문 없음" if not body else "본문 파싱 실패")
+    elif amt is None:
+        why = "계약금액 유보 또는 미기재"
+    else:
+        why = None
+    corr = "정정" in (title or "")
+    kind = "해지" if ("해지" in (title or "") or (p or {}).get("kind") == "해지") else "체결"
+    return {"p": p, "ess": ess, "large": large, "ess_large": ess and large, "check_amount": why,
+            "corr": corr, "kind": kind, "priority": int(el["priority"]) if ess and large else int(rule["priority"])}
+
+
+def big_won(v: float) -> str:
+    return f"{v / 1e12:.2f}조원" if v >= 1e12 else f"{v / 1e8:,.0f}억원"
+
+
+def contract_line(cfg: dict, ci: dict) -> str:
+    el = next(r for r in cfg["filings"]["rules"] if r["key"] == "contract")["ess_large"]
+    p = ci["p"] or {}
+    parts = []
+    if p.get("name"):
+        parts.append(f"계약명 {p['name']}")
+    if p.get("amount") is not None:
+        parts.append(f"{'해지' if ci['kind'] == '해지' else '계약'}금액 {big_won(p['amount'])}" + (f"(최근 매출액 대비 {p['ratio']}%)" if p.get("ratio") is not None else ""))
+    if p.get("party") and p["party"] not in {"-", ""}:
+        parts.append(f"계약상대 {p['party']}")
+    if p.get("start") and p.get("end"):
+        parts.append(f"기간 {p['start']}~{p['end']}")
+    parts.append("ESS 언급 있음" if ci["ess"] else "ESS 언급 없음")
+    parts.append(f"대형 기준({float(el['min_amount_won']) / 1e12:g}조원 이상 또는 매출액 대비 {el['min_ratio_pct']:g}% 이상) {'충족' if ci['large'] else '미충족'}")
+    if ci["check_amount"]:
+        parts.append(f"금액 확인 필요({ci['check_amount']}), 원문에서 직접 확인")
+    return ", ".join(parts) + "."
+
+
 def classify(cfg: dict, title: str) -> dict | None:
     for r in cfg["filings"]["rules"]:
         if re.search(r["re"], title):
@@ -231,7 +332,7 @@ def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float |
     return title, "\n".join(lines), int(top["priority"])
 
 
-def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
+def filing_msg(cfg: dict, f: dict, rule: dict, ci: dict | None = None) -> tuple[str, str, int]:
     t = clean(f["title"])
     link = cfg["sources"]["kind_view"].format(acpt=f["acptno"])
     extra = {
@@ -243,16 +344,26 @@ def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
         "periodic": "AMPC 제외 이익, ESS 수주 잔고, 우발채무 주석을 확인.",
     }.get(rule["key"], "원문을 확인.")
     title = f"[LGES] 373220 LG에너지솔루션 새 공시 {rule['label']} | 원문 확인"
+    prio = int(rule["priority"])
+    status_extra = ""
+    if ci is not None:
+        status_extra = " " + contract_line(cfg, ci)
+        prio = ci["priority"]
+        if ci["ess_large"]:
+            tag = "해지 " if ci["kind"] == "해지" else "정정 " if ci["corr"] else ""
+            title = f"[LGES] 373220 LG에너지솔루션 ESS 대형 수주 {tag}공시 {big_won(ci['p']['amount'])} | 원문 확인"
+            extra = ("ESS 대형 계약 해지: 해지 사유, 잔여 금액, 수주 잔고 영향을 확인." if ci["kind"] == "해지" else
+                     "ESS 대형 수주: 계약상대, 기간, GWh 규모, 연간 ESS 수주 90GWh 목표 대비 비중을 원문으로 확인.")
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {f['filed']} 공시 '{t}' (KIND 접수번호 {f['acptno']}). {link}",
+        f"지금 결과/상태: {f['filed']} 공시 '{t}' (KIND 접수번호 {f['acptno']}).{status_extra} {link}",
         "지금 할 일: " + extra,
         "나중에: 같은 공시는 다시 보내지 않습니다. 정정 공시는 새 접수번호라 1번 더 옵니다.",
         "익절/줄일 때: 횡령/배임 금액이 크거나 거래정지, 불성실공시법인 지정이 나오면 비중 축소 검토.",
         "하지 말 것: 제목만 보고 주문, 장중 급변동 추격. 투자 권유 아님.",
     ]
-    return title, "\n".join(lines), int(rule["priority"])
+    return title, "\n".join(lines), prio
 
 
 def q4_msg(cfg: dict, f: dict) -> tuple[str, str, int]:
@@ -353,6 +464,49 @@ def selftest() -> int:
     for t, want in cases.items():
         r = classify(cfg, t)
         check(f"classify {t[:20]}", r["key"] if r else None, want)
+    # ESS large contract samples (shapes copied from real KIND bodies 20261001000119 / 20251208000031 / 20251226000706)
+    D = "\u318d"
+    form = ("단일판매" + D + "공급계약 체결 1. 판매" + D + "공급계약 구분 기타 판매" + D + "공급계약 - 체결계약명 {name} 2. 계약내역 "
+            "계약금액(원) {amt} 최근매출액(원) 33,745,469,740,463 매출액대비(%) {ratio} 대규모법인여부 해당 3. 계약상대 {party} - 회사와의 관계 - "
+            "4. 판매" + D + "공급지역 미국 5. 계약기간 시작일 2026-11-03 종료일 2029-12-31 6. 주요 계약조건 9. 기타 투자판단과 관련한 중요사항 가. {etc} ※ 관련공시 -")
+    ess_big = form.format(name="ESS 배터리 공급계약", amt="2,060,100,000,000", ratio="6.1", party="Tesla Energy", etc="총 20GWh 규모 ESS(Energy Storage System) 배터리")
+    ess_small = form.format(name="ESS 배터리 공급계약", amt="400,000,000,000", ratio="1.2", party="Hanwha Q CELLS USA Corp", etc="총 1.5GWh 규모 ESS 배터리")
+    ev_big = form.format(name="전기차 배터리 공급계약", amt="5,944,227,336,000", ratio="17.6", party="-", etc="글로벌 지역 LFP 배터리 공급")
+    ess_held = form.format(name="ESS 배터리 공급계약", amt="-", ratio="-", party="-", etc="에너지저장장치용 배터리, 금액은 유보기한 종료 후 공시")
+    ratio_only = form.format(name="전력망 저장장치용 배터리 공급계약", amt="1,700,000,000,000".replace("1,700", "0,900"), ratio="-", party="-", etc="그리드 저장 프로젝트")
+    term = ("단일판매" + D + "공급계약 해지 1. 판매" + D + "공급계약 해지 구분 기타 판매" + D + "공급계약 - 해지계약명 ESS 배터리 공급계약 2. 해지내역 "
+            "해지금액(원) 3,921,711,000,000 최근매출액(원) 33,745,469,740,463 매출액대비(%) 11.6 대규모법인여부 해당 3. 계약상대 Freudenberg - 회사와의 관계 - 4. 계약기간 시작일 2024-04-01 종료일 2031-12-31")
+    T, TC, TT = "단일판매" + D + "공급계약체결", "[정정] 단일판매" + D + "공급계약체결", "단일판매" + D + "공급계약 해지"
+    crule = classify(cfg, T)
+    ff = {"acptno": "20261103000999", "filed": "2026-11-03 16:00", "title": T}
+    c1 = contract_info(cfg, T, ess_big)
+    check("ESS large: ess+large p5", (c1["ess"], c1["large"], c1["priority"]), (True, True, 5))
+    t1, b1, p1 = filing_msg(cfg, ff, crule, c1)
+    check("ESS large title", t1, "[LGES] 373220 LG에너지솔루션 ESS 대형 수주 공시 2.06조원 | 원문 확인")
+    check("ESS large body amount/ratio", "계약금액 2.06조원(최근 매출액 대비 6.1%)" in b1 and "금액 확인 필요" not in b1, True)
+    c2 = contract_info(cfg, T, ess_small)
+    check("ESS small: p3, normal title", (c2["ess"], c2["large"], c2["priority"], filing_msg(cfg, ff, crule, c2)[0]),
+          (True, False, 3, "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 체결 | 원문 확인"))
+    c3 = contract_info(cfg, T, ev_big)
+    check("non-ESS large: p3", (c3["ess"], c3["large"], c3["priority"]), (False, True, 3))
+    c4 = contract_info(cfg, T, None, "KIND 본문 조회 실패: timeout")
+    t4, b4, p4 = filing_msg(cfg, ff, crule, c4)
+    check("body fetch failure: fail open p3 + 금액 확인 필요", (p4, "금액 확인 필요(KIND 본문 조회 실패: timeout)" in b4, "새 공시" in t4), (3, True, True))
+    c5 = contract_info(cfg, T, "알 수 없는 형식의 본문 ESS")
+    check("parse failure: ESS but not large, 금액 확인 필요", (c5["ess"], c5["large"], c5["priority"], c5["check_amount"]), (True, False, 3, "본문 파싱 실패"))
+    c6 = contract_info(cfg, T, ess_held)
+    check("amount withheld: not large + 금액 확인 필요", (c6["ess"], c6["priority"], c6["check_amount"]), (True, 3, "계약금액 유보 또는 미기재"))
+    c7 = contract_info(cfg, T, ratio_only)
+    check("ratio computed 0.9조/33.7조 = 2.7% -> not large", (c7["ess"], c7["large"], c7["p"]["ratio"]), (True, False, 2.7))
+    c8 = contract_info(cfg, TC, ess_big)
+    check("정정 ESS large title", filing_msg(cfg, {**ff, "title": TC}, crule, c8)[:3:2], ("[LGES] 373220 LG에너지솔루션 ESS 대형 수주 정정 공시 2.06조원 | 원문 확인", 5))
+    c9 = contract_info(cfg, TT, term)
+    check("해지 ESS large title", filing_msg(cfg, {**ff, "title": TT}, crule, c9)[:3:2], ("[LGES] 373220 LG에너지솔루션 ESS 대형 수주 해지 공시 3.92조원 | 원문 확인", 5))
+    check("PROCESS/BUSINESS do not count as ESS", contract_info(cfg, T, ev_big.replace("LFP", "PROCESS BUSINESS LFP"))["ess"], False)
+    check("no-contract rule unchanged (ci None)", filing_msg(cfg, ff, crule)[2], 3)
+    for t, b, _ in (filing_msg(cfg, ff, crule, c) for c in (c1, c2, c3, c4, c5, c6, c8, c9)):
+        check(f"contract text no dot/dash: {t[:40]}", any(ch in t + b for ch in "\u00b7\u2014\u318d"), False)
+        print(t)
     check("q4 window in", in_q4(cfg, "2027-01-08 08:30"), True)
     check("q4 window out", in_q4(cfg, "2026-10-08 08:34"), False)
     f = {"acptno": "20270108000055", "filed": "2027-01-08 08:30", "title": "연결재무제표기준영업(잠정)실적(공정공시)"}
@@ -474,7 +628,17 @@ def main() -> int:
             for f in sorted((x for x in fl if x["acptno"] not in seen), key=lambda x: x["acptno"]):
                 rule = classify(cfg, f["title"])
                 if rule:
-                    t, m, p = filing_msg(cfg, f, rule)
+                    ci = None
+                    if rule["key"] == "contract":
+                        body, berr = None, None
+                        try:
+                            body = kind_body(f["acptno"])
+                        except Exception as exc:  # noqa: BLE001  fail open: still send at p3
+                            berr = f"KIND 본문 조회 실패: {exc}"
+                            print(berr)
+                        ci = contract_info(cfg, f["title"], body, berr)
+                        print(f"contract {f['acptno']}: ess={ci['ess']} large={ci['large']} prio={ci['priority']} check={ci['check_amount']}")
+                    t, m, p = filing_msg(cfg, f, rule, ci)
                     send(dry, port, t, m, p, ["page_facing_up"])
                     if rule["key"] == "prelim" and in_q4(cfg, f["filed"]) and not st.get("q4_checklist_sent"):
                         t, m, p = q4_msg(cfg, f)
