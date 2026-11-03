@@ -12,6 +12,9 @@
 구간은 이력 250거래일을 매번 다시 재생해 정한다(빠진 실행에 강함). 알림은 구간이 바뀔 때만.
 주간 점검(ISO 주 첫 실행, p2): 가격, 이동평균, 구간 경계, 최근 범위, PLTR 대 QQQ 1년 달러 수익률, 밸류에이션(Yahoo).
 실적 판정은 [PLTR] 알림이 한다. 여기서는 참조 한 줄만. 조회 실패는 cwally-ops 하루 1번.
+매수 재검토 가격(2026-11-03 추가, configs/pltr25.json review_levels): 판단 '유보'를 바꿀 조건 중 가격 조건.
+  미국 정규장 확정 종가 <= 137.8 -> p4 '매수 재검토 가격 도달' (145 초과 종가에서 다시 무장)
+  종가 <= 150 -> p3 조기 경보 (158 초과 종가에서 다시 무장). 세션 날짜로 중복 제거, 첫 실행은 조용히 기준만.
 modes: auto | dry (ntfy 없음, state 안 씀) | selftest (가짜 값, 네트워크 없음)
 """
 from __future__ import annotations
@@ -55,6 +58,7 @@ DEFAULT_STATE = {
     "valuation": None,
     "last_weekly": None,
     "fetch_fail_date": None,
+    "review": None,
 }
 
 
@@ -76,6 +80,16 @@ def parse_yahoo(text: str, now_ts: float | None = None) -> list[tuple[date, floa
         if ts[-1] >= reg["start"] and now_ts < reg["end"]:
             out = out[:-1]  # 장중 막대는 종가가 아니다
     return sorted(dict(out).items())
+
+
+def parse_meta(text: str) -> dict | None:
+    """차트 meta 의 정규장 가격(regularMarketPrice)과 시각. 교차 확인용."""
+    m = (json.loads(text)["chart"]["result"][0].get("meta") or {})
+    p, t = m.get("regularMarketPrice"), m.get("regularMarketTime")
+    end = ((m.get("currentTradingPeriod") or {}).get("regular") or {}).get("end")
+    if not isinstance(p, (int, float)) or not t:
+        return None
+    return {"price": float(p), "date": datetime.fromtimestamp(t, ET).date().isoformat(), "after_end": bool(end and t >= end)}
 
 
 def valuation() -> dict | None:
@@ -232,6 +246,89 @@ def title_for(zone: str, r: dict) -> str:
     return f"[PLTR25] ${r['close']:.2f} {tag} | {ZONE_COPY[zone][0]}"
 
 
+# ---------------- 매수 재검토 가격 ----------------
+def rv_body(stamp: str, status: str, action: str, later: str, avoid: str) -> str:
+    return "\n".join([
+        f"{stamp} | PLTR 매수 재검토 가격",
+        "이게 뭐 알림: 팔란티어(PLTR) 판단 '유보'를 바꿀 수 있는 조건 3개 중 가격 조건 알림입니다. 미국 정규장 확정 종가 기준(장중, 시간외 제외). 보유 없음. 매수 지시가 아닙니다.",
+        f"지금 결과/상태: {status}",
+        f"지금 할 일: {action}",
+        f"나중에: {later}",
+        "익절/줄일 때: 보유 없음, 해당 없음.",
+        f"하지 말 것: {avoid}",
+    ])
+
+
+def review_step(cfg: dict, state: dict, bars: list[tuple[date, float]], meta: dict | None, stamp: str) -> list[tuple[str, str, str, int]]:
+    rc = cfg.get("review_levels")
+    if not rc or not bars:
+        return []
+    levels = rc["levels"]
+    last_d, last_c = bars[-1]
+    if meta and meta.get("date") == last_d.isoformat() and meta.get("after_end"):
+        gap = abs(meta["price"] / last_c - 1) * 100
+        if gap > rc.get("cross_check_pct", 0.5):
+            print(f"review: hold, daily close {last_c:.2f} vs regularMarketPrice {meta['price']:.2f} ({gap:.2f}%)")
+            return []
+    rv = state.get("review")
+    if not rv or not rv.get("last_session"):
+        state["review"] = {"last_session": last_d.isoformat(), "close": round(last_c, 2),
+                           "armed": {lv["key"]: last_c > lv["at"] for lv in levels}, "fired": {}}
+        return []  # 첫 실행은 조용히 기준만
+    if last_d.isoformat() <= rv["last_session"]:
+        return []  # 같은 세션은 다시 판정하지 않는다
+    armed = dict(rv.get("armed") or {})
+    fired = dict(rv.get("fired") or {})
+    hits: dict[str, tuple[date, float]] = {}
+    for d, c in bars:
+        if d.isoformat() <= rv["last_session"]:
+            continue
+        for lv in levels:
+            k = lv["key"]
+            on = armed.get(k, c > lv["at"])
+            if on and c <= lv["at"]:
+                armed[k] = False
+                hits[k] = (d, c)
+                fired[k] = d.isoformat()
+            elif not on and c > lv["rearm_above"]:
+                armed[k] = True
+            else:
+                armed[k] = on
+    state["review"] = {"last_session": last_d.isoformat(), "close": round(last_c, 2), "armed": armed, "fired": fired}
+    if not hits:
+        return []
+    top = max((lv for lv in levels if lv["key"] in hits), key=lambda lv: lv["priority"])
+    d, c = hits[top["key"]]
+    ref = rc.get("reference_close")
+    refl = f" 기준가 ${ref:.2f} 대비 {(c / ref - 1) * 100:+.1f}%." if ref else ""
+    later_txt = " ".join(f"({i + 1}) {t}." for i, t in enumerate(rc.get("other_conditions", [])))
+    rev = next(lv for lv in levels if lv["key"] == "review")
+    lastl = f" 마지막 확정 종가 ${last_c:.2f} (미국 {last_d.isoformat()})." if d != last_d else ""
+    if top["key"] == "review":
+        status = (f"미국 {d.isoformat()} 정규장 종가 ${c:.2f}, 매수 재검토 가격 ${rev['at']:.2f} 이하.{refl}{lastl} "
+                  "매수 재검토 조건 중 가격 조건만 충족, 2027 가이던스와 TCV는 별도 확인.")
+        action = "판단은 아직 '유보'입니다. 가격만 보고 사지 말고 매수 재검토 메모를 열어 나머지 두 조건부터 확인하세요."
+        later = f"남은 조건: {later_txt} 종가가 ${rev['rearm_above']:.2f} 위로 올라가면 이 알림이 다시 무장됩니다."
+        avoid = "장중 가격이나 시간외 가격으로 판단하기. 가격 조건 하나만으로 한 번에 다 사기."
+    else:
+        gap = (1 - rev["at"] / c) * 100
+        status = (f"미국 {d.isoformat()} 정규장 종가 ${c:.2f}, 조기 경보 ${top['at']:.2f} 이하. 매수 재검토 가격 ${rev['at']:.2f}까지 {gap:.1f}% 남음.{refl}{lastl} "
+                  "아직 가격 조건 미충족. 2027 가이던스와 TCV는 별도 확인.")
+        action = "판단 '유보' 그대로. 매수 재검토 메모와 나머지 두 조건을 미리 다시 읽어 두세요."
+        later = f"종가 ${rev['at']:.2f} 이하면 p4 '매수 재검토 가격 도달' 알림이 옵니다. 남은 조건: {later_txt} 종가가 ${top['rearm_above']:.2f} 위로 올라가면 경보가 다시 무장됩니다."
+        avoid = "조기 경보를 매수 신호로 읽기. 장중 가격이나 시간외 가격으로 판단하기."
+    title = f"[PLTR25] PLTR 종가 ${c:.2f} | {top['label']}"
+    return [("port", title, rv_body(stamp, status, action, later, avoid), top["priority"])]
+
+
+def review_line(state: dict, cfg: dict) -> str:
+    rc, rv = cfg.get("review_levels"), state.get("review")
+    if not rc or not rv:
+        return ""
+    parts = [f"${lv['at']:.2f} {'대기' if (rv.get('armed') or {}).get(lv['key'], True) else '발동됨'}" for lv in rc["levels"]]
+    return " 매수 재검토 가격: " + ", ".join(parts) + "."
+
+
 # ---------------- evaluate ----------------
 def evaluate(cfg: dict, state: dict, data: dict, now: datetime) -> list[tuple[str, str, str, int]]:
     z = cfg["zones"]
@@ -264,6 +361,7 @@ def evaluate(cfg: dict, state: dict, data: dict, now: datetime) -> list[tuple[st
     if data.get("valuation"):
         state["valuation"] = dict(data["valuation"], date=today.isoformat())
     el = earnings_line(cfg, today)
+    alerts.extend(review_step(cfg, state, data["pltr"], data.get("pltr_meta"), stamp))
     prev = state.get("zone_sent")
     if prev is None:
         state["zone_sent"] = r["zone"]  # 첫 실행은 조용히 기준만 잡는다
@@ -293,7 +391,7 @@ def evaluate(cfg: dict, state: dict, data: dict, now: datetime) -> list[tuple[st
         pend = f" 확인 중: {r['pending']['zone']} {r['pending']['n']}일째." if r["pending"] else ""
         _, _, act, later, avoid = ZONE_COPY[r["zone"]]
         alerts.append(("port", f"[PLTR25] 주간 점검 | ${r['close']:.2f}, {r['zone']}", body(
-            stamp, f"구간 {r['zone']}.{pend} {level_line(r)} {pq}{vl}{el}", act, later, "보유 없음, 해당 없음.",
+            stamp, f"구간 {r['zone']}.{pend} {level_line(r)} {pq}{vl}{review_line(state, cfg)}{el}", act, later, "보유 없음, 해당 없음.",
             "주간 점검을 매수 신호로 읽기. " + avoid), 2))
         state["last_weekly"] = wk
     return alerts
@@ -317,7 +415,10 @@ def gather(cfg: dict) -> dict:
     data: dict = {}
     for key in ("pltr", "qqq"):
         try:
-            data[key] = parse_yahoo(fetch(cfg["sources"][key]))
+            text = fetch(cfg["sources"][key])
+            data[key] = parse_yahoo(text)
+            if key == "pltr":
+                data["pltr_meta"] = parse_meta(text)
         except Exception as exc:
             print(f"yahoo {key} fail: {exc}")
             data[key] = None
@@ -340,7 +441,8 @@ def main() -> int:
     data = gather(cfg)
     alerts = evaluate(cfg, state, data, now)
     print(f"close={state.get('close')} ({state.get('last_date')}) ma50={state.get('ma50')} ma200={state.get('ma200')} "
-          f"levels={state.get('levels')} zone={state.get('zone')} pending={state.get('pending')} valuation={state.get('valuation')}")
+          f"levels={state.get('levels')} zone={state.get('zone')} pending={state.get('pending')} valuation={state.get('valuation')} "
+          f"review={state.get('review')}")
     port = resolve_topic("port", cfg.get("ntfy_topic"))
     server = resolve_server(cfg.get("ntfy_server"))
     for kind, title, msg, pri in alerts:
@@ -376,6 +478,8 @@ def selftest(cfg: dict) -> int:
     ok, fails = 0, []
     copies = [CFG_PATH.read_text(encoding="utf-8")]
     z = cfg["zones"]
+    full_cfg = cfg
+    cfg = {k: v for k, v in cfg.items() if k != "review_levels"}  # 구간 테스트는 재검토 가격 없이
 
     def check(label, got, want=True):
         nonlocal ok
@@ -516,6 +620,72 @@ def selftest(cfg: dict) -> int:
                                                         "priceToSalesTrailing12Months": {"raw": 76.8}}, "defaultKeyStatistics": {}}]}}
     check("parse valuation", parse_valuation(qs), {"fwd_pe": 84.2, "trail_pe": 169.7, "ps": 76.8})
     check("parse valuation empty", parse_valuation({"quoteSummary": {"result": [{}]}}), None)
+
+    # 매수 재검토 가격 (review_levels)
+    rc = full_cfg["review_levels"]
+    check("review config thresholds", [(lv["key"], lv["at"], lv["rearm_above"], lv["priority"]) for lv in rc["levels"]],
+          [("review", 137.8, 145.0, 4), ("warn", 150.0, 158.0, 3)])
+    stamp = "2026-11-04 09:00 KST"
+
+    def rb(pairs):
+        return [(date.fromisoformat(d), c) for d, c in pairs]
+    srv: dict = {}
+    hist = rb([("2026-10-30", 184.11), ("2026-11-02", 178.34)])
+    al = review_step(full_cfg, srv, hist, None, stamp)
+    check("review seeds silently", (al, srv["review"]["armed"], srv["review"]["last_session"]),
+          ([], {"review": True, "warn": True}, "2026-11-02"))
+    check("review same session dedupe", review_step(full_cfg, srv, hist, None, stamp), [])
+    h2 = hist + rb([("2026-11-03", 151.0)])
+    check("151 no alert", review_step(full_cfg, srv, h2, None, stamp), [])
+    h3 = h2 + rb([("2026-11-04", 150.0)])
+    al = review_step(full_cfg, srv, h3, None, stamp)
+    check("150 -> p3 early warning", [(a[0], a[3], a[1]) for a in al], [("port", 3, "[PLTR25] PLTR 종가 $150.00 | 매수 재검토 가격 접근")])
+    copies.extend(a[1] + a[2] for a in al)
+    check("p3 body mentions remaining gap", bool(al and "137.80까지 8.1% 남음" in al[0][2]))
+    check("p3 same session no repeat", review_step(full_cfg, srv, h3, None, stamp), [])
+    h4 = h3 + rb([("2026-11-05", 149.0), ("2026-11-06", 155.0)])
+    check("p3 no re-fire below rearm (155 < 158)", review_step(full_cfg, srv, h4, None, stamp), [])
+    check("warn still disarmed at 155", srv["review"]["armed"]["warn"], False)
+    h5 = h4 + rb([("2026-11-09", 158.5)])
+    review_step(full_cfg, srv, h5, None, stamp)
+    check("warn re-armed above 158", srv["review"]["armed"]["warn"], True)
+    h6 = h5 + rb([("2026-11-10", 137.8)])
+    al = review_step(full_cfg, srv, h6, None, stamp)
+    check("gap to 137.8 -> one p4 only", [(a[3], a[1]) for a in al], [(4, "[PLTR25] PLTR 종가 $137.80 | 매수 재검토 가격 도달")])
+    copies.extend(a[1] + a[2] for a in al)
+    check("p4 body context", bool(al and "매수 재검토 조건 중 가격 조건만 충족, 2027 가이던스와 TCV는 별도 확인" in al[0][2]))
+    check("p4 body six-item order", [ln.split(":")[0] for ln in al[0][2].splitlines()[1:]] if al else None,
+          ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    check("both disarmed after gap", srv["review"]["armed"], {"review": False, "warn": False})
+    h7 = h6 + rb([("2026-11-11", 144.0), ("2026-11-12", 136.0)])
+    check("p4 no re-fire under 145", review_step(full_cfg, srv, h7, None, stamp), [])
+    h8 = h7 + rb([("2026-11-13", 146.0), ("2026-11-16", 137.0)])
+    al = review_step(full_cfg, srv, h8, None, stamp)
+    check("p4 re-arm >145 then re-fire", [a[3] for a in al], [4])
+    # 빠진 실행: 사이 세션도 판정, 마지막 종가 줄 추가
+    srv2 = {"review": {"last_session": "2026-11-02", "armed": {"review": True, "warn": True}, "fired": {}}}
+    al = review_step(full_cfg, srv2, hist + rb([("2026-11-03", 149.0), ("2026-11-04", 152.0)]), None, stamp)
+    check("missed run catches past session", [(a[3], "$149.00" in a[1], "마지막 확정 종가 $152.00" in a[2]) for a in al], [(3, True, True)])
+    # 교차 확인: 같은 세션 meta 가격이 0.5% 넘게 다르면 보류, 상태 그대로
+    srv3 = {"review": {"last_session": "2026-11-02", "armed": {"review": True, "warn": True}, "fired": {}}}
+    hx = hist + rb([("2026-11-03", 136.0)])
+    al = review_step(full_cfg, srv3, hx, {"price": 140.0, "date": "2026-11-03", "after_end": True}, stamp)
+    check("cross-check mismatch holds", (al, srv3["review"]["last_session"]), ([], "2026-11-02"))
+    al = review_step(full_cfg, srv3, hx, {"price": 136.1, "date": "2026-11-03", "after_end": True}, stamp)
+    check("cross-check ok fires", [a[3] for a in al], [4])
+    # 첫 실행이 이미 아래면 무장 해제로 시드(첫날 침묵)
+    srv4: dict = {}
+    check("seed below level silent + disarmed", (review_step(full_cfg, srv4, rb([("2026-11-02", 140.0)]), None, stamp),
+                                                 srv4["review"]["armed"]), ([], {"review": True, "warn": False}))
+    # evaluate 경로: 기존 state(review 없음)는 조용히 시드
+    st8 = dict(DEFAULT_STATE, last_weekly="2026-W44")
+    run_full = evaluate(full_cfg, st8, {"pltr": b_wait, "qqq": None}, now)
+    check("evaluate seeds review silently", (run_full, bool(st8["review"])), ([], True))
+    check("review key survives load_state", "review" in DEFAULT_STATE)
+    tm = int(datetime(2026, 11, 2, 21, 0, tzinfo=timezone.utc).timestamp())
+    mj = json.dumps({"chart": {"result": [{"meta": {"regularMarketPrice": 178.34, "regularMarketTime": tm,
+                                                    "currentTradingPeriod": {"regular": {"start": tm - 23400, "end": tm}}}}]}})
+    check("parse meta", parse_meta(mj), {"price": 178.34, "date": "2026-11-02", "after_end": True})
 
     # 금지 문자, 본문 순서
     copies.extend(f"{k}{v}" for k, v in ZONE_COPY.items())
