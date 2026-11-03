@@ -1,0 +1,45 @@
+{
+  "last_dates": {
+    "etf": "2026-11-02",
+    "brent": "2026-11-02",
+    "nifty": "2026-11-02",
+    "inr": "2026-11-02"
+  },
+  "armed": {
+    "etf10800": true,
+    "etf10500": true,
+    "etf52wlow": true,
+    "etf12000": true,
+    "brent85": true,
+    "brent80": true,
+    "brent120": true,
+    "nifty23000": true,
+    "nifty24000": true,
+    "inr93": true,
+    "inr100": true
+  },
+  "seeded": "2026-11-03",
+  "last_values": {
+    "etf": [
+      "2026-11-02",
+      11040.0
+    ],
+    "brent": [
+      "2026-11-02",
+      104.7699966430664
+    ],
+    "nifty": [
+      "2026-11-02",
+      23440.80078125
+    ],
+    "inr": [
+      "2026-11-02",
+      94.90499877929688
+    ]
+  },
+  "brent_streak": {
+    "le85": 0,
+    "ge120": 0
+  },
+  "updated_at": "2026-11-03 14:52 KST"
+}

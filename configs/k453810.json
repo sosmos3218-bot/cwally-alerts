@@ -1,0 +1,61 @@
+{
+  "name": "k453810",
+  "title_prefix": "[453810]",
+  "code": "453810",
+  "ticker": "453810",
+  "name_kr": "KODEX 인도Nifty50",
+  "as_of": "2026-11-03",
+  "approval": "사용자가 2026-11-03 453810 ISA 3회 분할 매수 계획을 붙여 넣음(판단에 맡김). 미보유. 1차 약 360만원은 11월 안 시간 기반.",
+  "holding": "미보유, 평균가 미입력",
+  "fund": "삼성자산운용, 기초지수 Nifty 50 Index(Price Return), 총보수 연 0.19%, 상장 2023-04-21, 분기 분배(지급기준일 1, 4, 7, 10월 마지막 영업일)",
+  "plan": {
+    "account": "ISA",
+    "tranches": "1차 30% 약 360만원(11월, 시간 기반), 2차 35% 약 420만원(12~1월, 조건부), 3차 35% 약 420만원(2~3월, 확인 매수)",
+    "tranche2_any": "Brent 85 이하 2주 유지, Nifty 23,000 이상 유지, ETF 10,800 이하, FII 월간 순매수 전환(자동 점검 안 함) 중 하나",
+    "tranche3_any": "Brent 80 이하, USD/INR 93 이하, Nifty 24,000 이상 회복(PE 17 이하는 자동 점검 안 함), ETF 10,500 이하 또는 12,000 이상 중 하나",
+    "fallback": "어느 조건도 안 맞으면 1개월 연기 후 재점검, 3개월 연속 미충족 시 2차 금액의 절반만 시간 기반",
+    "order_hints": "지정가는 iNAV 대비 -0.3~0.5%, 괴리율 +1% 이상이면 보류, 10시 이후"
+  },
+  "not_automated": "Nifty 50 PE(17배, 25배 기준)와 FII 자금 흐름은 믿을 만한 무료 데이터가 없어 자동 점검하지 않음. 리마인더 때 직접 확인.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST port-alerts morning 슬롯에 부착. 09:00 이면 ETF 전일 KRX 확정 종가, Nifty 전일 종가, Brent 전일 미국 시간 정산가, USD/INR 전일 종가가 모두 확정된 같은 기준이고, 사용자가 주문하는 10시 전에 알림이 옴. 수동 job=k453810 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "lines": [
+    {"key": "etf10800", "src": "etf", "op": "le", "level": 10800, "rearm_op": "ge", "rearm": 11100, "priority": 3, "warn": false, "label": "10,800 이하, 2차 트리거(ETF 가격 조건)"},
+    {"key": "etf10500", "src": "etf", "op": "le", "level": 10500, "rearm_op": "ge", "rearm": 10800, "priority": 3, "warn": false, "label": "10,500 이하, 3차 저가 확대 트리거"},
+    {"key": "etf52wlow", "src": "etf", "op": "lt", "level": 10315, "rearm_op": "ge", "rearm": 10600, "priority": 4, "warn": true, "label": "10,315 하회, 52주 신저가 경신, 추가 매수 중단 관망"},
+    {"key": "etf12000", "src": "etf", "op": "ge", "level": 12000, "rearm_op": "lt", "rearm": 11700, "priority": 3, "warn": false, "label": "12,000 이상, 3차 추세 확인 경로"},
+    {"key": "brent85", "src": "brent", "op": "le", "level": 85, "days": 10, "rearm_op": "gt", "rearm": 88, "priority": 3, "warn": false, "label": "Brent 85 이하 2주(10거래일) 유지, 2차 트리거"},
+    {"key": "brent80", "src": "brent", "op": "le", "level": 80, "rearm_op": "gt", "rearm": 83, "priority": 3, "warn": false, "label": "Brent 80 이하, 3차 조건"},
+    {"key": "brent120", "src": "brent", "op": "ge", "level": 120, "days": 10, "rearm_op": "lt", "rearm": 115, "priority": 4, "warn": true, "label": "Brent 120 이상 2주(10거래일) 유지, 전량 손절 검토 조건"},
+    {"key": "nifty23000", "src": "nifty", "op": "lt", "level": 23000, "rearm_op": "ge", "rearm": 23300, "priority": 3, "warn": true, "label": "Nifty 23,000 하회, 2차 지지 조건 이탈"},
+    {"key": "nifty24000", "src": "nifty", "op": "ge", "level": 24000, "rearm_op": "lt", "rearm": 23700, "priority": 3, "warn": false, "label": "Nifty 24,000 이상, 3차 추세 전환 확인"},
+    {"key": "inr93", "src": "inr", "op": "le", "level": 93, "rearm_op": "gt", "rearm": 94, "priority": 3, "warn": false, "label": "USD/INR 93 이하, 루피 강세 전환, 3차 조건"},
+    {"key": "inr100", "src": "inr", "op": "ge", "level": 100, "rearm_op": "lt", "rearm": 98, "priority": 4, "warn": true, "label": "USD/INR 100 이상, 환율 악화 가속, 환손실 한도 판단"}
+  ],
+  "avg_price": null,
+  "avg_line": {"pct": -20, "rearm_pct": 3.0, "priority": 4, "note": "avg_price(원)를 넣으면 평균가 -20% 이하 종가 p4 '비중 축소 검토'가 켜짐(선 +3% 위에서 재무장). null 이면 꺼짐. 처음 켜지는 날은 조용히 시드."},
+  "markets": {
+    "brent": {"symbol": "BZ=F", "close_hm": "15:00", "label": "Brent(BZ=F 근월물, 달러/배럴)"},
+    "nifty": {"symbol": "^NSEI", "close_hm": "15:45", "label": "Nifty 50"},
+    "inr": {"symbol": "INR=X", "close_hm": "23:59", "label": "USD/INR"}
+  },
+  "market_note": "모두 Yahoo 일봉의 확정 종가(거래소 시간대 기준 끝난 날)만 씀. Brent 는 근월물 연속 시세 그대로(교체일 보정 없음): 기준이 절대 가격이라 그날 거래되는 근월물이 시장 기준이고, 10거래일 연속 조건이 교체일 하루 튐을 거름. 값이 빈 날(None)은 거래일로 세지 않고 연속도 끊지 않음.",
+  "reminders": [
+    {"key": "r1127", "date": "2026-11-27", "only_if_no_avg": true, "label": "1차 매수 시한 점검", "text": "11월 안 시간 기반 1차 약 360만원(약 327주) 집행 여부 점검. 이미 샀다면 config avg_price 를 알려 주세요(평균가 -20% 선이 켜짐)."},
+    {"key": "r1215", "date": "2026-12-15", "label": "2차 트리거 점검", "text": "2차(약 420만원) 조건 중 하나라도 맞는지 점검. 하나도 안 맞으면 1개월 연기."},
+    {"key": "r0115", "date": "2027-01-15", "label": "2차 재점검", "text": "2차 조건 재점검. 다음 분배 지급기준일 2027-01-29(분배락 1/28 예정), 기준일 직후 매수가 유리."},
+    {"key": "r0215", "date": "2027-02-15", "label": "3차 트리거 점검", "text": "3차(약 420만원) 조건 중 하나라도 맞는지 점검(저가 확대 또는 추세 확인 경로)."},
+    {"key": "r0315", "date": "2027-03-15", "label": "3차 마감 점검", "text": "3차 마감 점검. 3개월 연속 미충족 시 2차 금액의 절반만 시간 기반 규칙 적용 여부 판단."}
+  ],
+  "reminder_note": "원래 11/28 은 토요일이라 평일 09:00 슬롯이 돌지 않아 금요일 11/27 로 당김. 날짜가 지난 뒤 첫 실행에서 1번(놓친 날은 다음 실행에서).",
+  "distribution": "분기 분배, 지급기준일 1, 4, 7, 10월 마지막 영업일(계획의 설명이 맞음). 최근 2026-10-30 기준 43원(11/3 지급), 다음 예상 기준일 2027-01-29.",
+  "reference_2026_11_03": "ETF 11/2 확정 종가 11,040, 11/3 장중 11,155~11,160. 52주 종가 저점 10,315(2026-10-08), 장중 저점 10,276(10/13), 종가 고점 14,548(2025-11-20). Nifty 11/2 23,440.80. Brent 1월물 11/2 104.77. USD/INR 94.9.",
+  "sources": {
+    "etf": "https://fchart.stock.naver.com/sise.nhn?symbol=453810&timeframe=day&count=30&requestType=0",
+    "markets": "https://query1.finance.yahoo.com/v8/finance/chart/<symbol>?range=3mo&interval=1d"
+  },
+  "ends_kst": "2027-04-30 23:59",
+  "ends_note": "평일 09:00 전일 확정 종가 점검, 2027-04-30 까지(3차 마감 뒤 한 달)"
+}
