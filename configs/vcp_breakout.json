@@ -1,0 +1,26 @@
+{
+  "name": "VCP_BREAKOUT",
+  "title_prefix": "[VCP]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "평일 15:40 KST. 새 cron 없이 기존 0090b0 슬롯(port-alerts.yml, GitHub `40 6 * * 1-5` + cron-job.org 정시 dispatch, slot_guard 하루 1회)에 붙은 별도 스텝. KRX 휴장일은 조용히 끝남.",
+  "approved": "2026-11-03",
+  "approval_text": "첫 점검에서 관심 유지로 남은 종목은 돌파가 나오면 ntfy로 알려 줘.",
+  "approval_note": "슬롯은 사용자 위임(\"네 소신껏\", 2026-11-03)으로 기존 평일 15:40 슬롯을 선택.",
+  "alert_policy": "watchlist_breakout",
+  "watchlist_format": "{\"code\": \"098120\", \"name\": \"마이크로컨텍솔\", \"market\": \"KOSDAQ\", \"added_kst\": \"2026-11-08\", \"source\": \"2026-11-08 주간 VCP 점검 관심 유지\"} (선택: \"expire_trading_days\": 60)",
+  "watchlist": [],
+  "rules": {
+    "pivot_days": 20,
+    "vol_avg_days": 50,
+    "vol_mult": 1.5,
+    "breakout": "오늘 정규장 종가 > 오늘 제외 직전 20거래일 고가, 오늘 거래량 >= 오늘 제외 직전 50거래일 평균의 1.5배",
+    "close_source": "Daum 일별(krx_close, 정규장), prevClosingPrice 수정주가, 오늘 행은 네이버 15:30 분봉으로 대조",
+    "cooldown_trading_days": 20,
+    "expire_trading_days": 60,
+    "expire_note": "added_kst 다음 거래일부터 센 거래일 수. 만료 종목은 state/vcp_breakout.json expired 에만 기록하고 config 는 그대로 둠"
+  },
+  "ends_kst": null,
+  "ends_note": "관심 목록이 비거나 수동으로 끌 때까지 평일 15:40"
+}

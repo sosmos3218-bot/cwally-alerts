@@ -1132,6 +1132,18 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/k487240_monitor.py auto
+      - name: Run VCP breakout (watchlist from the Sunday VCP review; 15:40 0090b0 slot)
+        # approved in chat 2026-11-03 ("첫 점검에서 관심 유지로 남은 종목은 돌파가 나오면 ntfy로 알려 줘"; slot chosen on "네 소신껏"). Same slot, no new cron.
+        # Watchlist in configs/vcp_breakout.json (config-only edits). Empty watchlist: no install, no fetch. Dedupe/cooldown: state/vcp_breakout.json.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        timeout-minutes: 8
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: |
+          if [ "$(jq '.watchlist | length' configs/vcp_breakout.json)" = "0" ]; then echo "vcp_breakout: watchlist empty; silent"; exit 0; fi
+          pip install -q finance-datareader==0.9.202 pandas==3.1.0 numpy==2.5.4
+          python scripts/vcp_breakout_monitor.py auto
       - name: Run KAL standalone (manual check)
         # job=kal dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'kal'
