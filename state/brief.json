@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-04T08:04:07.382108+09:00",
+  "updated_at": "2026-11-04T08:12:26.230057+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -99,6 +99,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-04T08:04:07.382108+09:00"
+    },
+    "20261104-earn-pcor-q3.json#7dc4b78a18ce439c": {
+      "file": "20261104-earn-pcor-q3.json",
+      "title": "[EARN] PCOR 3분기 재평가",
+      "topic": "cwally-port",
+      "parts": 2,
+      "parts_done": 2,
+      "done": true,
+      "at": "2026-11-04T08:12:26.230057+09:00"
     }
   },
   "rejected": {},
