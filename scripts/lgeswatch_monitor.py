@@ -290,6 +290,16 @@ def contract_line(cfg: dict, ci: dict) -> str:
     return ", ".join(parts) + "."
 
 
+def contract_label(rule: dict, title: str) -> str:
+    """Title label. The contract rule covers 체결, 해지 and their 정정; say which one (2026-11-03 fix: a p3 해지
+    filing used to read '단일판매/공급계약 체결'). Other rules keep their label."""
+    if rule.get("key") != "contract":
+        return rule["label"]
+    t = title or ""
+    base = "단일판매/공급계약 해지" if "해지" in t else "단일판매/공급계약 체결"
+    return base + (" 정정" if "정정" in t else "")
+
+
 def classify(cfg: dict, title: str) -> dict | None:
     for r in cfg["filings"]["rules"]:
         if re.search(r["re"], title):
@@ -343,14 +353,14 @@ def filing_msg(cfg: dict, f: dict, rule: dict, ci: dict | None = None) -> tuple[
         "major": "유상증자, 사채 발행, 자산 양수도 같은 결정인지 확인.",
         "periodic": "AMPC 제외 이익, ESS 수주 잔고, 우발채무 주석을 확인.",
     }.get(rule["key"], "원문을 확인.")
-    title = f"[LGES] 373220 LG에너지솔루션 새 공시 {rule['label']} | 원문 확인"
+    title = f"[LGES] 373220 LG에너지솔루션 새 공시 {contract_label(rule, f['title'])} | 원문 확인"
     prio = int(rule["priority"])
     status_extra = ""
     if ci is not None:
         status_extra = " " + contract_line(cfg, ci)
         prio = ci["priority"]
         if ci["ess_large"]:
-            tag = "해지 " if ci["kind"] == "해지" else "정정 " if ci["corr"] else ""
+            tag = ("해지 " if ci["kind"] == "해지" else "") + ("정정 " if ci["corr"] else "")
             title = f"[LGES] 373220 LG에너지솔루션 ESS 대형 수주 {tag}공시 {big_won(ci['p']['amount'])} | 원문 확인"
             extra = ("ESS 대형 계약 해지: 해지 사유, 잔여 금액, 수주 잔고 영향을 확인." if ci["kind"] == "해지" else
                      "ESS 대형 수주: 계약상대, 기간, GWh 규모, 연간 ESS 수주 90GWh 목표 대비 비중을 원문으로 확인.")
@@ -504,6 +514,23 @@ def selftest() -> int:
     check("해지 ESS large title", filing_msg(cfg, {**ff, "title": TT}, crule, c9)[:3:2], ("[LGES] 373220 LG에너지솔루션 ESS 대형 수주 해지 공시 3.92조원 | 원문 확인", 5))
     check("PROCESS/BUSINESS do not count as ESS", contract_info(cfg, T, ev_big.replace("LFP", "PROCESS BUSINESS LFP"))["ess"], False)
     check("no-contract rule unchanged (ci None)", filing_msg(cfg, ff, crule)[2], 3)
+    TCT = "[정정] 단일판매" + D + "공급계약 해지"
+    for ttl, ci_x, want in (
+        (T, c2, "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 체결 | 원문 확인"),
+        (TT, contract_info(cfg, TT, term.replace("ESS 배터리", "전기차 배터리").replace("3,921,711,000,000", "300,000,000,000").replace("11.6", "0.9")),
+         "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 해지 | 원문 확인"),
+        (TC, c2, "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 체결 정정 | 원문 확인"),
+        (TCT, None, "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 해지 정정 | 원문 확인"),
+        (TT, c4, "[LGES] 373220 LG에너지솔루션 새 공시 단일판매/공급계약 해지 | 원문 확인"),
+    ):
+        tx, bx, px = filing_msg(cfg, {**ff, "title": ttl}, crule, ci_x)
+        check(f"p3 label {ttl}", (tx, px), (want, 3))
+        check(f"p3 label no dot/dash {ttl}", any(ch in tx + bx for ch in "\u00b7\u2014\u318d"), False)
+        print(tx)
+    check("p5 해지 정정 title", filing_msg(cfg, {**ff, "title": TCT}, crule, contract_info(cfg, TCT, term))[:3:2],
+          ("[LGES] 373220 LG에너지솔루션 ESS 대형 수주 해지 정정 공시 3.92조원 | 원문 확인", 5))
+    check("other rule label unchanged", filing_msg(cfg, {**ff, "title": "투자판단관련주요경영사항"}, classify(cfg, "투자판단관련주요경영사항"))[0],
+          "[LGES] 373220 LG에너지솔루션 새 공시 투자판단 관련 주요경영사항 | 원문 확인")
     for t, b, _ in (filing_msg(cfg, ff, crule, c) for c in (c1, c2, c3, c4, c5, c6, c8, c9)):
         check(f"contract text no dot/dash: {t[:40]}", any(ch in t + b for ch in "\u00b7\u2014\u318d"), False)
         print(t)
