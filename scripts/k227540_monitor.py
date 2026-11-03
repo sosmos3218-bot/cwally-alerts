@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """[227540] TIGER 200 헬스케어 확정 종가 선 알림 (2026-11-02 승인, 셀트리온 개별주 대체 보유).
 
-평일 15:40 KST (0090b0 슬롯에 부착). 네이버 수정주가 일봉(fchart requestType=0) 확정 종가, 데이터 거래일로 중복 방지.
+평일 15:40 KST (0090b0 슬롯에 부착). 정규장 확정 종가(Daum 일별, 실패 시 15:30 분봉). 데이터 거래일로 중복 방지.
 선(모두 상태가 바뀔 때만 1번):
   low   : 종가 <= 16,900원(1년 저점) -> p4 경고. 16,900 + 3% 위 종가로 회복해야 다시 무장.
   ma200 : 종가 >= 200일 이동평균(매번 계산) -> p3 추세 회복(회복 첫날). 200일선 -3% 아래 종가로 내려가야 다시 무장.
@@ -13,9 +13,7 @@ usage: k227540_monitor.py <auto|dry> | selftest | confirm
 from __future__ import annotations
 
 import json
-import re
 import sys
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -37,12 +35,8 @@ def won(v: float) -> str:
 
 
 def fetch_rows(code: str, count: int) -> list[tuple[str, float]]:
-    url = f"https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count={count}&requestType=0"
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as resp:
-        raw = resp.read().decode("euc-kr", errors="ignore")
-    rows = [(f"{d[:4]}-{d[4:6]}-{d[6:]}", float(c))
-            for d, c in re.findall(r'item data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', raw)]
-    return sorted(rows)
+    import krx_close
+    return [(b.day, b.close) for b in krx_close.regular_bars(code, count)]
 
 
 def confirmed(rows: list[tuple[str, float]], now: datetime) -> list[tuple[str, float]]:
@@ -108,7 +102,7 @@ def message(cfg: dict, fired: list[dict], day: str, p: float, ma: float | None, 
     gap = f" (이격 {(p / ma - 1) * 100:+.1f}%)" if ma else ""
     avg = cfg.get("avg_price")
     what = "+".join(line_title(x, p).split(" | ")[0] for x in fired)
-    status = (f"{day} 확정 종가 {won(p)}원 (수정주가). 걸린 선: {what}. 200일선 {won(ma) if ma else '계산 불가'}원{gap}, "
+    status = (f"{day} 확정 종가 {won(p)}원 (정규장). 걸린 선: {what}. 200일선 {won(ma) if ma else '계산 불가'}원{gap}, "
               f"1년 저점 {won(cfg['low_line'])}원, 평균가 {won(avg) + '원' if avg else '미입력(평균가 경고선 꺼짐)'}.")
     if down:
         action = "추가 매수 보류. 포트폴리오에서 헬스케어 비중이 계획보다 커졌는지만 점검하세요. 상위 편입 종목(셀트리온, 삼성바이오로직스 등) 실적과 공시를 확인하세요."
@@ -152,7 +146,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             body = "\n".join([
                 "이게 뭐 알림: 227540 알림의 종가 조회 실패 안내. 매매 신호 아님.",
                 f"{stamp} | 227540 | TIGER 200 헬스케어",
-                f"지금 결과/상태: 네이버 수정주가 일봉 확인 불가 ({err}).",
+                f"지금 결과/상태: 정규장 종가 확인 불가 ({err}).",
                 "지금 할 일: 필요하면 네이버 증권에서 227540 종가를 직접 보세요.",
                 "나중에: 다음 평일 15:40 에 다시 봅니다.",
                 "익절/줄일 때: 이 안내로 비중을 바꾸지 않기.",

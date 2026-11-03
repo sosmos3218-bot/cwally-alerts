@@ -28,7 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kr_calendar import is_trading_day, prev_trading_day  # noqa: E402
-from naver_api import get_json, notices, stock_trend  # noqa: E402
+from naver_api import get_json, notices  # noqa: E402
 from ntfy_util import publish, resolve_server  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -80,20 +80,22 @@ def expected_session(now: datetime) -> date:
 
 
 def fetch_close(code: str, session: date) -> float | None:
-    key = session.strftime("%Y%m%d")
-    for r in stock_trend(code, 10):
-        if r.get("day") == key:
-            return r.get("close")
+    import krx_close
+    key = session.isoformat()
+    for b in krx_close.regular_bars(code, 12):
+        if b.day == key:
+            return b.close
     return None
 
 
 def fetch_latest_close(code: str, before: date) -> tuple[date, float] | None:
-    key = before.strftime("%Y%m%d")
-    rows = [r for r in stock_trend(code, 10) if r.get("day") and r["day"] <= key and r.get("close") is not None]
-    if not rows:
+    import krx_close
+    key = before.isoformat()
+    bars = [b for b in krx_close.regular_bars(code, 12) if b.day <= key]
+    if not bars:
         return None
-    r = max(rows, key=lambda x: x["day"])
-    return datetime.strptime(r["day"], "%Y%m%d").date(), r["close"]
+    b = bars[-1]
+    return date.fromisoformat(b.day), b.close
 
 
 def finance(code: str, period: str) -> tuple[list[tuple[str, bool]], dict]:

@@ -53,7 +53,7 @@
   "distribution": "분기 분배, 지급기준일 1, 4, 7, 10월 마지막 영업일(계획의 설명이 맞음). 최근 2026-10-30 기준 43원(11/3 지급), 다음 예상 기준일 2027-01-29.",
   "reference_2026_11_03": "ETF 11/2 확정 종가 11,040, 11/3 장중 11,155~11,160. 52주 종가 저점 10,315(2026-10-08), 장중 저점 10,276(10/13), 종가 고점 14,548(2025-11-20). Nifty 11/2 23,440.80. Brent 1월물 11/2 104.77. USD/INR 94.9.",
   "sources": {
-    "etf": "https://fchart.stock.naver.com/sise.nhn?symbol=453810&timeframe=day&count=30&requestType=0",
+    "etf": "정규장 종가 scripts/krx_close.py (Daum A453810 days, 실패 시 15:30 분봉)",
     "markets": "https://query1.finance.yahoo.com/v8/finance/chart/<symbol>?range=3mo&interval=1d"
   },
   "ends_kst": "2027-04-30 23:59",

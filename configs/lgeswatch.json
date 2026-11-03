@@ -106,7 +106,7 @@
   },
   "stale_days": 6,
   "sources": {
-    "bars": "https://m.stock.naver.com/api/stock/373220/price?pageSize=20&page=1",
+    "bars": "정규장 OHLC scripts/krx_close.py (Daum A373220 days). 네이버 일별은 시간외 시가/종가가 섞임",
     "kind": "https://kind.krx.co.kr/disclosure/details.do",
     "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}",
     "stock_page": "https://m.stock.naver.com/domestic/stock/373220/total"

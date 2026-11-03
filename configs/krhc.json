@@ -24,7 +24,7 @@
   ],
   "user_view": "2~3년 기준 248270 우선 검토",
   "sources": {
-    "price": "네이버 m.stock.naver.com/api/stock/{code}/price (일별 종가, 주간 등락 = 그 주 마지막 거래일 종가 / 직전 주 마지막 거래일 종가)",
+    "price": "정규장 종가 scripts/krx_close.py (Daum days). 주간 등락 = 그 주 마지막 거래일 종가 / 직전 주 마지막 거래일 종가",
     "nav": "미래에셋 기준가격 표(price.ajax, 날짜 있음, GitHub 러너에서는 403) -> 네이버 integration etfKeyIndicator nav (날짜 없음, 괴리율로 역산한 종가가 그 거래일 종가와 맞을 때만 그날 NAV로 인정, 203780과 같은 방식). 마지막 거래일 NAV가 아직 없으면 직전 거래일 NAV로 같은 확인을 하고 날짜를 표시",
     "fx": "네이버 front-api marketIndex FX_USDKRW (하나은행 고시 매매기준율)"
   },

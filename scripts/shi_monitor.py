@@ -38,15 +38,17 @@ def num(v) -> float | None:
 
 
 def price_rows(cfg: dict) -> list[dict]:
-    out = []
-    for r in get(cfg["sources"]["price"]):
-        c = num(r.get("closePrice"))
-        if c:
-            out.append({"day": str(r.get("localTradedAt", ""))[:10], "close": c, "chg": num(r.get("compareToPreviousClosePrice")),
-                        "pct": num(r.get("fluctuationsRatio"))})
-    if not out:
+    import krx_close
+    bars = krx_close.regular_bars(cfg["code"], 15)
+    rows, prev = [], None
+    for b in bars:
+        chg = None if prev is None else b.close - prev
+        pct = None if not prev else (b.close / prev - 1) * 100
+        rows.append({"day": b.day, "close": b.close, "chg": chg, "pct": pct})
+        prev = b.close
+    if not rows:
         raise RuntimeError("시세 0건")
-    return sorted(out, key=lambda x: x["day"])
+    return rows
 
 
 def foreign_by_day(cfg: dict) -> dict:

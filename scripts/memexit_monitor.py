@@ -67,10 +67,8 @@ def ymd(d: str) -> str:
 # ---------- 데이터 ----------
 def closes(cfg: dict, code: str, now: datetime, n: int = 40) -> list[tuple[str, float]]:
     """KRX 정규장 확정 종가 [(YYYY-MM-DD, close)]. 당일 행은 15:31 이후만."""
-    raw = get(cfg["sources"]["price"].format(code=code, n=n)).decode("euc-kr", "ignore")
-    rows = sorted((f"{d[:4]}-{d[4:6]}-{d[6:]}", float(c)) for d, c in re.findall(r'item data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', raw))
-    today = now.strftime("%Y-%m-%d")
-    return [r for r in rows if r[0] < today or (r[0] == today and (now.hour, now.minute) >= (15, 31))]
+    import krx_close
+    return [(b.day, b.close) for b in krx_close.completed(krx_close.regular_bars(code, n), now)]
 
 
 def month_bounds(ym: str) -> tuple[date, date]:

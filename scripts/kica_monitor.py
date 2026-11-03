@@ -107,16 +107,10 @@ def fail_once(state: dict, cfg: dict, now: datetime, note: str, dry: bool) -> No
 
 
 def krx_bars(cfg: dict, now: datetime) -> list[dict]:
-    url = cfg["sources"]["daily"].format(
-        start=(now - timedelta(days=20)).strftime("%Y%m%d"), end=now.strftime("%Y%m%d")
-    )
-    text = fetch(url)
-    rows = re.findall(r'\["(\d{8})",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)', text)
-    bars = [
-        {"day": f"{d[:4]}-{d[4:6]}-{d[6:]}", "close": int(c), "volume": int(v)}
-        for d, o, h, lo, c, v in rows
-    ]
-    return sorted(bars, key=lambda b: b["day"], reverse=True)
+    import krx_close
+    code = str(cfg.get("ticker") or cfg.get("code") or "053300")
+    bars = list(reversed(krx_close.completed(krx_close.regular_bars(code, 15), now, (15, 35))))
+    return [{"day": b.day, "close": int(round(b.close)), "volume": int(b.volume or 0)} for b in bars]
 
 
 def valuation(cfg: dict) -> tuple[str, float | None]:

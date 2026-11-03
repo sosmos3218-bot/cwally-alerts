@@ -36,13 +36,13 @@ def http_get(url: str, timeout: int = 20) -> str:
 
 def naver_session(code: str):
     sys.path.insert(0, str(ROOT / "scripts"))
-    import naver_api
+    import krx_close
 
-    rows = [r for r in naver_api.stock_trend(code, 5) if r["close"] is not None]
-    if not rows:
+    bars = krx_close.completed(krx_close.regular_bars(code, 6), datetime.now(KST))
+    if not bars:
         return None, None
-    d = rows[0]["day"]
-    return f"{d[:4]}-{d[4:6]}-{d[6:8]}", rows[0]["close"]
+    b = bars[-1]
+    return b.day, b.close
 
 
 def yahoo_session(ticker: str):

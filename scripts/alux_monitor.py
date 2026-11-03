@@ -63,12 +63,10 @@ def body_lines(now: str, what: str, status: str, todo: str, later: str, reduce: 
 
 # ---------------------------------------------------------------- price
 def completed_closes(code: str, now: datetime, size: int = 30) -> list[dict]:
-    """Newest first. Today's row counts only after 15:40 KST."""
-    rows = [r for r in naver_api.stock_trend(code, size) if r.get("day") and r.get("close") is not None]
-    rows.sort(key=lambda r: r["day"], reverse=True)
-    today = now.strftime("%Y%m%d")
-    after_close = now.hour * 60 + now.minute >= 15 * 60 + 40
-    return [r for r in rows if r["day"] < today or (r["day"] == today and after_close)]
+    """Newest first. Today's row counts only after 15:40 KST. Regular-session close and volume."""
+    import krx_close
+    bars = list(reversed(krx_close.completed(krx_close.regular_bars(code, size), now, (15, 40))))
+    return [{"day": b.day.replace("-", ""), "close": b.close, "volume": b.volume} for b in bars]
 
 
 def volume_ratio(rows: list[dict]) -> float | None:

@@ -31,7 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kr_calendar import is_trading_day, prev_trading_day  # noqa: E402
-from naver_api import get_json, notices, stock_trend  # noqa: E402
+from naver_api import get_json, notices  # noqa: E402
 from ntfy_util import publish, resolve_server  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -90,11 +90,12 @@ def expected_session(now: datetime) -> date:
 
 
 def fetch_rows(code: str, session: date, size: int = 30) -> list[dict]:
-    """Rows newest first, only sessions <= `session`, close and volume both numeric."""
-    key = session.strftime("%Y%m%d")
-    rows = [r for r in stock_trend(code, size)
-            if r.get("day") and r["day"] <= key and r.get("close") is not None and r.get("volume") is not None]
-    return sorted(rows, key=lambda r: r["day"], reverse=True)
+    """Rows newest first, only sessions <= `session`. Regular-session close and volume."""
+    import krx_close
+    key = session.isoformat()
+    bars = [b for b in krx_close.regular_bars(code, size + 2) if b.day <= key and b.volume is not None]
+    bars = bars[-size:]
+    return [{"day": b.day.replace("-", ""), "close": b.close, "volume": b.volume} for b in reversed(bars)]
 
 
 def finance(code: str, period: str) -> tuple[list[tuple[str, bool]], dict]:

@@ -101,14 +101,9 @@ def load_state() -> dict:
 
 # ---------------- 가격 ----------------
 def naver_rows(code: str) -> list[dict]:
-    raw = json.loads(http(f"https://m.stock.naver.com/api/stock/{code}/price?pageSize=20&page=1"))
-    rows = []
-    for r in raw if isinstance(raw, list) else []:
-        d = str(r.get("localTradedAt") or "")[:10]
-        low, close = num(r.get("lowPrice")), num(r.get("closePrice"))
-        if len(d) == 10 and low and close:
-            rows.append({"day": d, "low": low, "close": close, "high": num(r.get("highPrice"))})
-    rows.sort(key=lambda x: x["day"])
+    """정규장 OHLC. 이름은 기존 호출부(rfm0219b0)를 유지한다."""
+    import krx_close
+    rows = [{"day": b.day, "low": b.low, "close": b.close, "high": b.high} for b in krx_close.regular_bars(code, 20)]
     if not rows:
         raise RuntimeError("시세 0건")
     return rows

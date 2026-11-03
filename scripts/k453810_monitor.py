@@ -2,7 +2,7 @@
 """[453810] KODEX 인도Nifty50 ISA 3회 분할 매수 계획 점검 (2026-11-03, 사용자 계획 붙여 넣기, 판단 위임).
 
 평일 09:00 KST (port-alerts morning 슬롯에 부착). 전일 확정 종가 기준:
-  ETF 453810 (네이버 수정주가 일봉), Brent BZ=F, Nifty 50 ^NSEI, USD/INR INR=X (Yahoo 일봉, 거래소 시간대 기준 끝난 날만).
+  ETF 453810 (정규장 종가), Brent BZ=F, Nifty 50 ^NSEI, USD/INR INR=X (Yahoo 일봉, 거래소 시간대 기준 끝난 날만).
 config lines: 선마다 상태가 바뀔 때만 1번, rearm 으로 재무장. Brent 85, 120 선은 10거래일 연속 조건.
 avg_price 가 들어오면 평균가 -20% p4 '비중 축소 검토' 선이 켜짐. 리마인더는 날짜가 지난 첫 실행에서 1번.
 같은 실행에서 걸린 것은 한 건으로 묶음. 첫 실행(또는 새 선)은 조용히 시드. 데이터 조회 실패는 하루 1번 cwally-ops.
@@ -12,7 +12,6 @@ usage: k453810_monitor.py <auto|dry> | selftest | confirm
 from __future__ import annotations
 
 import json
-import re
 import sys
 import urllib.parse
 import urllib.request
@@ -39,8 +38,8 @@ def get(url: str) -> bytes:
 
 
 def etf_rows(code: str, now: datetime) -> list[tuple[str, float]]:
-    raw = get(f"https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=30&requestType=0").decode("euc-kr", "ignore")
-    rows = sorted((f"{d[:4]}-{d[4:6]}-{d[6:]}", float(c)) for d, c in re.findall(r'item data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', raw))
+    import krx_close
+    rows = [(b.day, b.close) for b in krx_close.regular_bars(code, 30)]
     today = now.strftime("%Y-%m-%d")
     return [r for r in rows if r[0] < today or (r[0] == today and (now.hour, now.minute) >= (15, 31))]
 

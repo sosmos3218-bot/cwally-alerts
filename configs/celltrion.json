@@ -53,7 +53,7 @@
     "rule": "4분기 연결 영업(잠정)실적 공정공시(네이버 공시 본문): 매출 전년동기대비 15% 미만 또는 영업이익률 25% 미만이면 무효화 p4, 아니면 확인 p3. 공시마다 1번."
   },
   "sources": {
-    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=068270&timeframe=day&count=10&requestType=0 (수정주가 일봉)",
+    "price": "정규장 종가 scripts/krx_close.py (Daum A068270 days, 실패 시 15:30 분봉)",
     "reports": "KIND 분기보고서 (krhcfile_monitor 의 kind_list, Book, analyze 재사용)",
     "prelim": "네이버 증권 종목 공시 API (naver_api.notices) 잠정실적 공정공시 본문"
   },

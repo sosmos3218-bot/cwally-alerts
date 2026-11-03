@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """[SHINWON] 신원(009270) 190주 감시. 평일 09:00 morning, 15:20 afternoon 슬롯 (새 cron 없음).
 가격 구간: Yahoo 현재가로 898원 이하(STOP898), 1,200~1,230원(SELL1), 1,270원 이상(SELL2), 11/13 시간손절(TIME).
-1,000원 손절(STOP1000)은 2026-11-02 승인(t34u)부터 KRX 정규장 확정 종가 < 1,000원 (Daum KRX 일별, 실패 시 네이버 fchart).
+1,000원 손절(STOP1000)은 2026-11-02 승인(t34u)부터 KRX 정규장 확정 종가 < 1,000원 (Daum KRX 일별, 실패 시 15:30 분봉).
   오늘 행은 15:40 KST 뒤에만 확정 종가로 씀(09:00 은 전날 종가, 15:20 은 장중이라 제외). 종가 >= 1,000원이면 해제(여유폭 없음).
 동전주 카운트: 2026-07-01 이후 Daum KRX 종가 < 1,000원 연속 거래일 수. 10, 20일 p3, 25, 30일 p4 1번씩(연속 구간별),
   종가 >= 1,000원이면 0으로 리셋. 카운트는 Daum 이력으로만 계산(네이버는 NXT 포함 통합시세라 카운트에 안 씀).
@@ -149,13 +149,12 @@ def daum_closes(code: str) -> dict:
 
 
 def naver_closes(code: str) -> dict:
-    txt = http_get(f"https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=10&requestType=0")
-    out = {}
-    for d, c in re.findall(r'data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', txt):
-        out[f"{d[:4]}-{d[4:6]}-{d[6:]}"] = float(c)
-    if not out:
-        raise ValueError("네이버 일별 시세 없음")
-    return dict(sorted(out.items()))
+    """Daum이 실패했을 때. 15:30 분봉 종가. 네이버 일봉 종가는 시간외가 섞여 쓰지 않는다."""
+    import krx_close
+    bars = krx_close.minute_bars(code, 10)
+    if not bars:
+        raise ValueError("15:30 분봉 종가 없음")
+    return {b.day: b.close for b in bars}
 
 
 def confirmed(closes: dict, now: datetime) -> dict:

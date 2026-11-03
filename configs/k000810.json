@@ -44,7 +44,7 @@
     "list": "KIND 상세검색 searchDetailsSub(키 없음, [SEC-DIV] 와 같은 방식), 실패하면 네이버 KRX 공시 피드 https://stock.naver.com/api/domestic/detail/notice?itemCode=000810",
     "body": "KIND 공시뷰어 원문, 실패하면 같은 날 네이버 피드 본문",
     "link": "KIND 공시뷰어 링크, 네이버 피드만 읽힌 경우 네이버 공시 목록",
-    "price": "https://m.stock.naver.com/api/stock/000810/price?pageSize=20&page=1",
+    "price": "정규장 종가 scripts/krx_close.py (Daum A000810 days)",
     "pref_now": "https://m.stock.naver.com/api/stock/000815/basic",
     "pref_note": "우선주 현재가는 메시지 참고 한 줄에만 씀(네이버 현재가, 판단에 안 씀)"
   },

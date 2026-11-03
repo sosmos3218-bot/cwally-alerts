@@ -10,7 +10,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "새 cron 없음. 기존 평일 15:40 0090b0 슬롯(셀트리온이 쓰던 자리)에 부착. 15:30 마감 뒤 네이버 수정주가 일봉(fchart requestType=0) 확정 종가. 수동 job=k227540 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 15:40 0090b0 슬롯(셀트리온이 쓰던 자리)에 부착. 15:30 마감 뒤 정규장 확정 종가(Daum 일별, 실패 시 15:30 분봉). 수동 job=k227540 은 oneoff_mode=auto 가 아니면 selftest + dry.",
   "low_line": 16900,
   "low_note": "1년 종가 저점 16,900원(2026-11-02 기준). 종가 16,900원 이하면 p4 경고 1번. 16,900원 + 3% 위 종가로 회복해야 다시 무장.",
   "low_rearm_pct": 3.0,
@@ -26,7 +26,7 @@
   "avg_priority": 4,
   "reference_2026_11_02": "종가 18,130원, 1년 고점 25,655원, 저점 16,900원, 200일선 약 20,240원",
   "sources": {
-    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=227540&timeframe=day&count=260&requestType=0 (수정주가 일봉)"
+    "price": "정규장 종가 scripts/krx_close.py (Daum finance.daum.net/api/quote/A227540/days, 실패 시 15:30 분봉). 네이버 fchart 일봉은 시간외가 섞여 쓰지 않음"
   },
   "ends_kst": "2027-10-31 23:59",
   "ends_note": "평일 15:40 확정 종가 점검, 2027-10-31 까지"

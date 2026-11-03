@@ -76,21 +76,10 @@ def yld(dps: float, px: float) -> str:
 # ---------- price ----------
 
 def fetch_closes(cfg: dict, now: datetime) -> list[tuple[str, float]]:
-    """Completed daily closes [(YYYY-MM-DD, close)] ascending. Today's row only after close_ready_kst."""
-    rows = naver_api.get_json(cfg["sources"]["price"])
-    if isinstance(rows, dict):
-        rows = rows.get("result") or []
+    """Completed regular closes [(YYYY-MM-DD, close)] ascending. Today's row only after close_ready_kst."""
+    import krx_close
     hh, mm = (int(x) for x in cfg.get("close_ready_kst", "15:40").split(":"))
-    closed = now.hour * 60 + now.minute >= hh * 60 + mm
-    today = now.strftime("%Y-%m-%d")
-    out = {}
-    for r in rows or []:
-        d = str(r.get("localTradedAt") or "")[:10]
-        c = naver_api.num(r.get("closePrice"))
-        if not d or c is None or (d == today and not closed):
-            continue
-        out[d] = float(c)
-    return sorted(out.items())
+    return [(b.day, b.close) for b in krx_close.completed(krx_close.regular_bars(cfg["code"], 15), now, (hh, mm))]
 
 
 def hit(lv: dict, close: float) -> bool:
