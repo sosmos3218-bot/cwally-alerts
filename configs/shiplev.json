@@ -1,0 +1,33 @@
+{
+  "name": "shiplev",
+  "title_prefix": "[SHIPLEV]",
+  "display": "466920 SOL 조선TOP3플러스 20일선 3거래일 회복(p3, 1회) + 클락슨 신조선가지수 3개월 연속 하락(p3, 월 1회). 0080Y0 2배 단기 검토 보조",
+  "approval": "사용자 채팅 승인 2026-11-03: [SHIPLEV]를 평일 15:20 묶음에 추가, 466920 20일선 3거래일 회복 p3, 신조선가 3개월 연속 하락 월 1회",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:20",
+  "schedule_note": "새 cron 없음. 평일 15:20 KST afternoon 묶음(shi 옆). 15:20 은 장 마감 전이라 오늘 행은 항상 빼고 직전 거래일까지 확정 종가만 판정. 수동 job=shiplev 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "etf": {"code": "466920", "name": "SOL 조선TOP3플러스"},
+  "lev": {"code": "0080Y0", "name": "SOL 조선TOP3플러스레버리지"},
+  "ma": {"days": 20, "above_days": 3, "rearm_below_days": 2, "priority": 3,
+         "rule": "20일선 = 그날 종가 포함 20거래일 단순평균. 종가 > 20일선(같으면 위 아님) 3거래일 연속이면 p3 1번. 종가 < 20일선 2거래일 연속이면 재무장. 종가 = 20일선인 날은 두 연속 카운트를 모두 0으로."},
+  "vol": {"days": 20, "annualize": 252, "fee_half_year_pct": 0.25,
+          "rule": "20일 단순수익률 표본표준편차 x sqrt(252). 2배 6개월 횡보 감쇠율 = sigma^2/2 + 0.25%(보수 0.5%의 반년)"},
+  "nbi": {
+    "priority": 3,
+    "down_months": 3,
+    "query": "클락슨 신조선가지수",
+    "missing_after_day": 15,
+    "rule": "직전 달 값이 새로 들어온 날만 판정. 전월보다 낮은 달이 3개월 연속(값 4개 필요)이면 그 달 키로 p3 1번. 기사 파싱 실패는 새 달로 보지 않음. 15일 이후에도 직전 달 값이 없으면 cwally-ops 하루 1번.",
+    "overlap_note": "[KSHIP] 메시지의 '신조선가 3개월 연속 하락이면 이벤트 25' 는 월말 비중 안내 문구일 뿐 데이터 수집이나 판정이 없음. [SHIPLEV] 가 실제 월간 값으로 판정. KSHIP 은 바꾸지 않음."
+  },
+  "sources": {
+    "price": "Daum KRX 일별 시세(scripts/krx_close.py _daum_bars) 우선, 실패 시 Naver siseJson",
+    "fx": "https://m.stock.naver.com/front-api/marketIndex/prices?category=exchange&reutersCode=FX_USDKRW&page=1&pageSize=5 (하나은행 고시, 오늘 행 제외, 정보용)",
+    "nbi": "https://search.naver.com/search.naver?where=news&sort=1&query=클락슨 신조선가지수 (연합뉴스 등 클락슨 인용 월간 수주 기사)"
+  },
+  "footer": "투자 참고용 정보이며 매매 권유가 아닙니다.",
+  "ends_kst": null,
+  "ends_note": "사용자가 종료일을 정하지 않음. 수동 해제 전까지 평일 15:20"
+}
