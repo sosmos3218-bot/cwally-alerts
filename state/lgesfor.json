@@ -2,7 +2,7 @@
   "warn_armed": false,
   "extra_armed": true,
   "last_date": "2026-11-02",
-  "last_ratio": 5.48,
+  "last_ratio": 5.47,
   "seeded": {
     "at": "2026-10-24 KST",
     "source": "네이버 trend",
@@ -34,7 +34,7 @@
     "2026-10-28": 5.5,
     "2026-10-29": 5.51,
     "2026-10-30": 5.5,
-    "2026-11-02": 5.48
+    "2026-11-02": 5.47
   },
   "obs": [
     {
@@ -132,6 +132,14 @@
       "latest_ratio": 5.48,
       "session_row": "5.48%",
       "live_foreignRate": 5.5
+    },
+    {
+      "run": "2026-11-03 19:01 KST",
+      "session": "2026-11-03",
+      "latest_date": "2026-11-02",
+      "latest_ratio": 5.47,
+      "session_row": "없음",
+      "live_foreignRate": 5.47
     }
   ],
   "events": [
@@ -142,5 +150,5 @@
       "at": "2026-11-03 04:59 KST"
     }
   ],
-  "last_run": "2026-11-03 04:59 KST"
+  "last_run": "2026-11-03 19:01 KST"
 }

@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-03T04:59:00.851086+09:00",
+  "updated_at": "2026-11-03T19:00:51.771924+09:00",
   "seeded": true,
-  "last_day": "2026-11-02",
-  "last_close": 229000.0,
+  "last_day": "2026-11-03",
+  "last_close": 219500.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -40,7 +40,7 @@
   },
   "extra": {
     "up220k": {
-      "armed": false,
+      "armed": true,
       "fired_day": "2026-10-27"
     },
     "up230k": {

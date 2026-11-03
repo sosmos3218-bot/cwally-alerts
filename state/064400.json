@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-03T04:59:02.874718+09:00",
+  "updated_at": "2026-11-03T19:00:53.647939+09:00",
   "seeded": true,
-  "last_day": "2026-11-02",
-  "last_close": 78000.0,
+  "last_day": "2026-11-03",
+  "last_close": 74100.0,
   "last_fail_day": null,
   "lines": {
     "buy3": {
@@ -47,6 +47,8 @@
       "fired_day": null
     }
   },
+  "notice_done": {},
+  "notice_seen": [],
   "seed_note": "2026-10-26 시드. 2026-10-23 종가 72,800원 기준(Yahoo 064400.KS). 그때 이미 켜진 조건: 없음, 모든 선 무장. 판단은 10/26 종가부터",
   "extra_seed_note": "2026-10-26 extra_lines migration from lgcns zone SPLIT (price 72200.0, 2026-10-26T15:20:37+09:00). engine last close 73,500.0 (2026-10-26). armed: ['z60_dn', 'z80_up', 'z90_up']"
 }

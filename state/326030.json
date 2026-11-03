@@ -1,0 +1,30 @@
+{
+  "updated_at": "2026-11-03T19:00:54.917174+09:00",
+  "seeded": true,
+  "last_day": "2026-11-03",
+  "last_close": 79300.0,
+  "last_fail_day": null,
+  "lines": {
+    "low68": {
+      "armed": true,
+      "fired_day": null
+    },
+    "hold83": {
+      "armed": true,
+      "fired_day": null
+    },
+    "deal91": {
+      "armed": true,
+      "fired_day": null
+    }
+  },
+  "earn_done": {},
+  "notice_done": {},
+  "notice_seen": [],
+  "earn_q3": {
+    "sent": null,
+    "empty_sent": null,
+    "result": null
+  },
+  "seed_note": "config seed 2026-11-02 close 77,500"
+}

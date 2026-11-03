@@ -1,10 +1,11 @@
 {
   "price": {
-    "last_date": "2026-11-02",
-    "last_close": 51100.0,
+    "last_date": "2026-11-03",
+    "last_close": 52700.0,
     "buy_armed": true,
     "above_sent": null,
     "pending": null,
-    "seed_note": "설치 seed 2026-11-03 KST: 마지막 확정 종가 2026-11-02 51,100원(네이버 일별). 이 날짜까지는 판정하지 않음."
+    "seed_note": "설치 seed 2026-11-03 KST: 마지막 확정 종가 2026-11-02 51,100원(네이버 일별). 이 날짜까지는 판정하지 않음.",
+    "last_judged_at": "2026-11-03 19:01 KST"
   }
 }
