@@ -3,7 +3,7 @@
   "title_prefix": "[LGES]",
   "code": "373220",
   "name_kr": "LG에너지솔루션",
-  "display": "LG에너지솔루션 가격 구간, 공시, 4분기 체크리스트",
+  "display": "LG에너지솔루션 가격 구간(35만원 선 포함), 공시, 4분기 체크리스트",
   "created_at": "2026-10-26T16:30:00+09:00",
   "ntfy_topic": "cwally-port",
   "ntfy_ops_topic": "cwally-ops",
@@ -56,9 +56,20 @@
       "label": "2년 목표 구간 진입",
       "note": "2년 목표 55만원 이상(옛 [LGESH] 에서 옮김). 추가 익절 검토.",
       "from": "lgeshold target2"
+    },
+    {
+      "key": "px350",
+      "op": "le",
+      "price": 350000,
+      "basis": "low",
+      "priority": 4,
+      "label": "35만원 선 구간 진입",
+      "note": "LG화학 교환사채 교환가 337,700원, PRS 기준가 347,500원 근처 구간. 교환/PRS 물량 부담과 오버행 뉴스를 먼저 확인하고, 사더라도 분할로만.",
+      "basis_note": "종가 또는 장중 저가(네이버 일별 lowPrice)가 350,000원 이하이면 진입. 저가가 350,000원 위인 거래일이 나오면 조용히 재무장. 19:00 슬롯에서 하루 1번 판정(장중 즉시 알림 아님).",
+      "from": "2026-11-03 채팅 요청 (LG화학 교환가 337,700원, PRS 기준가 347,500원)"
     }
   ],
-  "levels_note": "2026-10-26 채팅 승인(LG 알림 정리): 옛 [LGESH] lgeshold 의 손절 30만, 추가매수 36만~40만, 목표 50만/55만 구간을 여기로 합침. lgeshold 는 zone_alerts=false 로 꺼짐.",
+  "levels_note": "2026-10-26 채팅 승인(LG 알림 정리): 옛 [LGESH] lgeshold 의 손절 30만, 추가매수 36만~40만, 목표 50만/55만 구간을 여기로 합침. lgeshold 는 zone_alerts=false 로 꺼짐. 2026-11-03: px350(35만원 이하, 종가 또는 장중 저가 기준) 추가, 11/2 종가 357,500원 기준 armed=true 로 시드(그 뒤 첫 진입에 1번 발송).",
   "rearm_note": "선마다 구간에 들어갈 때 1번만 보냄. 종가가 구간을 벗어나면 조용히 재무장(완충 없음). 첫 실행은 현재 종가로 상태만 초기화. [FIG-PX] 와 같은 방식.",
   "filings": {
     "source": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별 전체 공시 목록, 키 없음). DART OpenAPI 키(OPENDART) secret 은 이 저장소에 없음.",
@@ -96,10 +107,11 @@
   "sources": {
     "bars": "https://m.stock.naver.com/api/stock/373220/price?pageSize=20&page=1",
     "kind": "https://kind.krx.co.kr/disclosure/details.do",
-    "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}"
+    "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}",
+    "stock_page": "https://m.stock.naver.com/domestic/stock/373220/total"
   },
   "valid_until": "2027-10-31",
-  "explain": "LG에너지솔루션(373220) 종가가 가격 구간(33만원 이하 매수 매력, 30만원 이하 손절/재검토, 36만~40만원 추가매수, 50만원/55만원 이상 목표)에 새로 들어갈 때, 중요한 새 공시(조회공시, 잠정실적, 횡령/배임, 공급계약, 주요사항, 정기보고서)가 올라올 때, 4분기 잠정실적이 나올 때 체크리스트를 보내는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "explain": "LG에너지솔루션(373220) 종가가 가격 구간(35만원 이하, 장중 저가 포함, LG화학 교환가 337,700원/PRS 기준가 347,500원 근처, 33만원 이하 매수 매력, 30만원 이하 손절/재검토, 36만~40만원 추가매수, 50만원/55만원 이상 목표)에 새로 들어갈 때, 중요한 새 공시(조회공시, 잠정실적, 횡령/배임, 공급계약, 주요사항, 정기보고서)가 올라올 때, 4분기 잠정실적이 나올 때 체크리스트를 보내는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
   "ends_kst": "2027-10-31 23:59",
   "ends_note": "LGES 가격 구간과 공시 감시, 12개월(연장은 채팅 승인)"
 }

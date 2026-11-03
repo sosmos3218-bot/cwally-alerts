@@ -6,8 +6,10 @@
     "stop300": true,
     "add360": true,
     "tgt500": true,
-    "tgt550": true
+    "tgt550": true,
+    "px350": true
   },
+  "px350_seed_note": "2026-11-03 KST px350 추가 시 armed=true 시드(발송 없음). 다음 판정에서 11/3 이후 봉의 종가 또는 저가가 350,000원 이하면 1번 발송.",
   "last_date": "2026-11-02",
   "last_close": 356500.0,
   "init_note": "initialized from 2026-10-26 close 374,000, no send",

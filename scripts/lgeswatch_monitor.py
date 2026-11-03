@@ -9,6 +9,8 @@
 2. Filing watch: KIND company disclosure list (kind.krx.co.kr, no API key; same request as k079900).
    Sends titles matching configs filings.rules (조회공시/풍문/해명/불성실공시, 영업(잠정)실적, 횡령/배임,
    단일판매/공급계약, 주요사항보고서, 분기/반기/사업보고서). Dedupe by KIND receipt number (seen_acptno).
+   2026-11-03: px350 line (<= 350,000, LG화학 EB 교환가 337,700 / PRS 347,500) uses basis "low": the zone test
+   takes min(close, day low) so an intraday trade at/below the line also counts; re-arms on a day whose low is above.
    First run seeds the current list without sending.
 3. Q4 2026 checklist: a new 영업(잠정)실적 filing inside q4.window (2027-01-01..02-28) also sends the
    checklist once (q4_checklist_sent).
@@ -39,6 +41,7 @@ CFG = ROOT / "configs" / "lgeswatch.json"
 STATE = ROOT / "state" / "lgeswatch.json"
 UA = "Mozilla/5.0 (X11; Linux x86_64) cwally-alerts"
 KIND = "https://kind.krx.co.kr"
+LOWS: dict[str, float] = {}  # KST date -> day low, filled by fetch_bars (for basis "low" lines)
 
 
 def load_cfg() -> dict:
@@ -105,8 +108,11 @@ def fetch_bars(cfg: dict, now: datetime) -> list[tuple[str, float]]:
     for r in raw if isinstance(raw, list) else []:
         d = str(r.get("localTradedAt") or "")[:10]
         c = str(r.get("closePrice") or "").replace(",", "")
+        lo = str(r.get("lowPrice") or "").replace(",", "")
         if len(d) == 10 and c.replace(".", "").isdigit():
             out[d] = float(c)
+            if lo.replace(".", "").isdigit() and float(lo) > 0:
+                LOWS[d] = float(lo)
     if not out:
         raise RuntimeError("시세 0건")
     hh, mm = map(int, cfg.get("market_close_kst", "15:40").split(":"))
@@ -143,7 +149,9 @@ def kind_list(cfg: dict, since: str, until: str) -> list[dict]:
 
 # ---------- core (pure) ----------
 
-def hit(level: dict, close: float) -> bool:
+def hit(level: dict, close: float, low: float | None = None) -> bool:
+    if level.get("basis") == "low" and low is not None:
+        close = min(float(close), float(low))  # close OR intraday trade at/below the line
     op = level["op"]
     if op == "between":
         return float(level["low"]) <= close <= float(level["high"])
@@ -151,9 +159,9 @@ def hit(level: dict, close: float) -> bool:
     return close <= p if op == "le" else close >= p if op == "ge" else close < p
 
 
-def step(level: dict, armed: bool | None, close: float) -> tuple[bool, bool]:
+def step(level: dict, armed: bool | None, close: float, low: float | None = None) -> tuple[bool, bool]:
     """One line: (new armed, fired). armed None = first run: init only."""
-    inside = hit(level, round(float(close), 2))
+    inside = hit(level, round(float(close), 2), low)
     if armed is None:
         return (not inside), False
     if armed and inside:
@@ -163,12 +171,12 @@ def step(level: dict, armed: bool | None, close: float) -> tuple[bool, bool]:
     return armed, False
 
 
-def step_all(levels: list[dict], armed: dict | None, close: float) -> tuple[dict, list[str]]:
+def step_all(levels: list[dict], armed: dict | None, close: float, low: float | None = None) -> tuple[dict, list[str]]:
     new, fired = {}, []
     for lv in levels:
-        a, f = step(lv, None if armed is None else armed.get(lv["key"]), close)
+        a, f = step(lv, None if armed is None else armed.get(lv["key"]), close, low)
         if armed is not None and lv["key"] not in armed:
-            a, f = step(lv, None, close)  # line added later: init quietly
+            a, f = step(lv, None, close, low)  # line added later: init quietly
         new[lv["key"]] = a
         if f:
             fired.append(lv["key"])
@@ -199,23 +207,24 @@ def won(v: float) -> str:
 
 BUY_LEAN = "논리가 그대로면 계획 금액을 나눠서만 검토"
 STOP_TODO = "추가매수 보류, AMPC 제외 영업이익과 ESS 수주부터 재확인해 투자 논리 점검."
-ACTION = {"buy330": "논리 확인 뒤 분할", "stop300": "비중 재평가", "add360": "분할만, 추격 금지", "tgt500": "일부 익절 검토", "tgt550": "추가 익절 검토"}
+ACTION = {"buy330": "논리 확인 뒤 분할", "stop300": "비중 재평가", "add360": "분할만, 추격 금지", "tgt500": "일부 익절 검토", "tgt550": "추가 익절 검토", "px350": "교환가/PRS 기준가 근접, 분할만"}
 
 
-def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float | None) -> tuple[str, str, int]:
+def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float | None, low: float | None = None) -> tuple[str, str, int]:
     lvs = {x["key"]: x for x in cfg["levels"]}
     top = max((lvs[k] for k in fired), key=lambda x: (x["priority"], x["key"] == "stop300"))  # stop wins a tie
     ref = cfg["reference"]
     chg = f", 전 거래일 대비 {(close / prev - 1) * 100:+.1f}%" if prev else ""
     labels = " + ".join(lvs[k]["label"] for k in fired)
-    title = f"[LGES] 373220 종가 {won(close)} {top['label']} | {ACTION.get(top['key'], '확인')}"
+    low_txt = f", 장중 저가 {won(low)}" if low is not None and any(lvs[k].get("basis") == "low" for k in fired) else ""
+    title = f"[LGES] 373220 LG에너지솔루션 종가 {won(close)} {top['label']} | {ACTION.get(top['key'], '확인')}"
     all_lines = ", ".join(f"{x['label'].replace(' 구간 진입', '')} {line_text(x)}" for x in cfg["levels"])
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {labels}. KRX 종가 {won(close)}({day}{chg}). 선: {all_lines}. 52주 최고 {won(ref['high_52w'])}.",
+        f"지금 결과/상태: {labels}. KRX 종가 {won(close)}({day}{chg}{low_txt}). 선: {all_lines}. 52주 최고 {won(ref['high_52w'])}. {cfg['sources'].get('stock_page', '')}".rstrip(),
         "지금 할 일: " + (STOP_TODO if "stop300" in fired else " ".join(lvs[k]["note"] for k in fired) + " 논리가 그대로면 계획 금액을 나눠서만 검토."),
-        "나중에: 같은 선은 종가가 그 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. 4분기 잠정실적(2027년 1월 초)에서 AMPC 제외 영업이익 3,000억원 이상인지 확인.",
+        "나중에: 같은 선은 종가가 그 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다(35만원 선은 저가가 350,000원 위인 날이 나온 뒤). 4분기 잠정실적(2027년 1월 초)에서 AMPC 제외 영업이익 3,000억원 이상인지 확인.",
         "익절/줄일 때: AMPC 요건 강화/FEOC 규정, ESS 수주나 마진 미달이면 비중 축소 검토.",
         "하지 말 것: 실적 악화로 빠진 하락을 싼 가격으로 읽기, 일괄 매수, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님.",
     ]
@@ -233,7 +242,7 @@ def filing_msg(cfg: dict, f: dict, rule: dict) -> tuple[str, str, int]:
         "major": "유상증자, 사채 발행, 자산 양수도 같은 결정인지 확인.",
         "periodic": "AMPC 제외 이익, ESS 수주 잔고, 우발채무 주석을 확인.",
     }.get(rule["key"], "원문을 확인.")
-    title = f"[LGES] 373220 새 공시 {rule['label']} | 원문 확인"
+    title = f"[LGES] 373220 LG에너지솔루션 새 공시 {rule['label']} | 원문 확인"
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
@@ -298,12 +307,28 @@ def selftest() -> int:
     for i, (c, want) in enumerate(walk):
         a, f = step(lv, a, c)
         check(f"walk{i} {c}", f, want)
-    A0 = {"buy330": True, "stop300": True, "add360": False, "tgt500": True, "tgt550": True}
+    A0 = {"buy330": True, "stop300": True, "add360": False, "tgt500": True, "tgt550": True, "px350": True}
     check("all init 374000 (inside 36~40 band, no send)", step_all(L, None, 374000), (A0, []))
     check("401000 leaves band, nothing fires", step_all(L, A0, 401000)[1], [])
     a1, _ = step_all(L, A0, 401000)
     check("back to 399000 -> add360", step_all(L, a1, 399000)[1], ["add360"])
-    check("gap to 295000 -> buy330 + stop300", step_all(L, A0, 295000)[1], ["buy330", "stop300"])
+    check("gap to 295000 -> buy330 + stop300 + px350", step_all(L, A0, 295000)[1], ["buy330", "stop300", "px350"])
+    p350 = next(x for x in L if x["key"] == "px350")
+    check("px350 close 350001 low 351000 nothing", step(p350, True, 350001, 351000), (True, False))
+    check("px350 close 350000 fires (<=)", step(p350, True, 350000, 349000), (False, True))
+    check("px350 close 357500 but low 349500 fires (trades at/below)", step(p350, True, 357500, 349500), (False, True))
+    check("px350 low missing -> close only", step(p350, True, 357500, None), (True, False))
+    check("px350 inside, low 349000 stays inside (no repeat)", step(p350, False, 352000, 349000), (False, False))
+    check("px350 low 350500 re-arms quietly", step(p350, False, 356000, 350500), (True, False))
+    check("buy330 ignores low (close basis)", step(lv, True, 335000, 329000), (True, False))
+    a_new, f_new = step_all(L, {k: v for k, v in A0.items() if k != "px350"}, 339000, 335500)
+    check("px350 added to old state inits quietly", (a_new["px350"], f_new), (False, []))
+    check("seeded px350 armed + 339000 -> px350 only", step_all(L, A0, 339000, 335500)[1], ["px350"])
+    t350, b350, pr350 = price_msg(cfg, ["px350"], 339000, "2026-11-03", 357500, 335500)
+    check("px350 title has ticker + name", "373220 LG에너지솔루션" in t350, True)
+    check("px350 body has low + link", ("장중 저가 335,500원" in b350, "m.stock.naver.com/domestic/stock/373220" in b350), (True, True))
+    check("px350 priority 4", pr350, 4)
+    print(pr350, t350)
     check("560000 -> tgt500 + tgt550", step_all(L, A0, 560000)[1], ["tgt500", "tgt550"])
     check("legacy state key missing inits quietly", step_all(L, {"buy330": True}, 374000)[1], [])
     check("priority buy330 alone 4", price_msg(cfg, ["buy330"], 329000, "d", None)[2], 4)
@@ -394,7 +419,7 @@ def main() -> int:
         if (now.date() - date.fromisoformat(last_d)).days > int(cfg.get("stale_days", 6)):
             print(f"stale bar {last_d}; price skip")
         elif not st.get("initialized"):
-            armed, _ = step_all(L, None, last_c)
+            armed, _ = step_all(L, None, last_c, LOWS.get(last_d))
             st.update({"initialized": True, "armed": armed, "last_date": last_d, "last_close": last_c,
                        "init_note": f"initialized from {last_d} close {last_c:,.0f}, no send"})
             print(f"init from {last_d} close {last_c:,.0f}: armed={armed} (no send)")
@@ -408,8 +433,8 @@ def main() -> int:
                 armed = {"buy330": True if armed is None else bool(armed)}
             fired_all, prev_close = [], st.get("last_close")
             for d, c in new:
-                armed, fired = step_all(L, armed, c)
-                print(f"bar {d} close {c:,.0f} -> fired={fired} armed={armed}")
+                armed, fired = step_all(L, armed, c, LOWS.get(d))
+                print(f"bar {d} close {c:,.0f} low {LOWS.get(d)} -> fired={fired} armed={armed}")
                 fired_all += [k for k in fired if k not in fired_all]
             if new:
                 d, c = new[-1]
@@ -418,7 +443,7 @@ def main() -> int:
                 for lv in L:
                     print(f"  line {line_text(lv)} ({lv['label']}): {'armed' if armed[lv['key']] else 'inside zone'}")
                 if fired_all:
-                    t, m, p = price_msg(cfg, fired_all, c, d, prev_close)
+                    t, m, p = price_msg(cfg, fired_all, c, d, prev_close, LOWS.get(d))
                     send(dry, port, t, m, p, ["chart_with_downwards_trend"])
                 else:
                     print("no zone entry; silent")
