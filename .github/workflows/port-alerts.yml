@@ -241,6 +241,8 @@ on:
     # nix1102 oneshot_kst (KST->UTC): 2026-11-02 18:20, 2026-11-03 08:20. 11/2 장 마감 후 삼전닉스 지지, 외국인 수급, ADR 괴리 점검 1회 (requested in chat 2026-10-31; GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "20 9 2 11 *"
     - cron: "20 23 2 11 *"
+    # bke oneshot_kst (KST->UTC): 2026-11-21 09:00 (Sat). BKE 3분기 실적 8-K 요약 (approved in chat 2026-11-03 t38u; morning does not run Saturday; GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "0 0 21 11 *"
     # k203780 daily KRX trading days 19:00 KST (after Mirae daily NAV). repeating cron approved 2026-10-22, moved from 0 9 to 0 10 (approved 2026-10-22 18:29 KST). GitHub backup; on-time = cron-job.org job 8698629
     - cron: "0 10 * * 1-5"
     # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
@@ -255,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -455,6 +457,7 @@ jobs:
             elif printf '%s\n' "0 1 29 10 *" "0 1 30 10 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=secdiv
             elif echo "0 9 19 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=steelre
             elif printf '%s\n' "20 9 2 11 *" "20 23 2 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=nix1102
+            elif echo "0 0 21 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=bke
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then JOB=tsla
@@ -1926,6 +1929,23 @@ jobs:
           SLOT=morning; [ "$PICK_JOB" = "k203780" ] && SLOT=evening
           python scripts/amtmearn_monitor.py "$SLOT" "$MODE" || rc=1
           if [ "$PICK_JOB" != "k203780" ]; then python scripts/amtmpx_monitor.py "$MODE" || rc=1; fi
+          exit "$rc"
+      - name: Run BKE (close < 40.00 once, re-arm >= 41.00; Q3 8-K Item 2.02 summary once from 2026-11-20, 11/27 09:00 미발견 notice; morning 09:00 + 11/21 one-shot)
+        # approved in chat 2026-11-03 t38u. Attached to the morning slot, no new repeating cron. Sat 2026-11-21 09:00 runs via job=oneshot
+        # (picker runs scripts/bke_monitor.py auto; fallback cron 0 0 21 11 * -> JOB=bke). Dedupe: state/bke.json px last_date + armed,
+        # earn done/seen. Ends 2027-02-26 23:59 KST. job=bke dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'bke') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/bke_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/bke_monitor.py "$MODE" || rc=1
           exit "$rc"
       - name: Run MKIF (088980 close lines 8,950/8,300/11,300 on morning 09:00; disclosure watch + expected-distribution reminders on k203780 19:00)
         # approved in chat 2026-10-29. Attached to existing slots, no new cron. Dedupe: state/mkif.json last_date + armed (fire on zone entry,

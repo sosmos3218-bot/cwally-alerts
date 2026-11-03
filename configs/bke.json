@@ -1,0 +1,66 @@
+{
+  "name": "bke",
+  "title_prefix": "[BKE]",
+  "symbol": "BKE",
+  "display": "더 버클(BKE, NYSE): 3분기 실적 8-K 요약 1번 + 종가 40달러 하회 알림",
+  "created_at": "2026-11-03T15:30:00+09:00",
+  "approval": "2026-11-03 채팅 승인 t38u (\"[BKE] 알림을 09:00 묶음에 추가해 줘. 11/20 3분기 실적 8-K가 나오면 요약하고, 종가가 40달러 아래로 내려가면 알려 줘. 2027-02-26에 끝내 줘.\"). 기존 morning 09:00 묶음에 부착, 새 반복 cron/워크플로/저장소 없음. 11/21(토) 09:00 원샷 1개(oneshot_kst)만 추가.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 묶음(정시 cron-job.org morning 잡, GitHub 0 0 * * 1-5 백업)에 부착. morning 은 토요일에 돌지 않으므로 11/20(금) 미 동부 장 전 실적(한국 11/20 20:30~21:00 무렵)은 oneshot_kst 2026-11-21 09:00 원샷(job=oneshot, picker 가 scripts/bke_monitor.py auto 실행)으로 받고, 11/23(월) 09:00 morning 이 예비. state/bke.json earn.done 으로 1번만. job=bke 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "oneshot_kst": ["2026-11-21 09:00"],
+  "oneshot_note": "11/20(금) 미 동부 장 전 3분기 실적 8-K 를 토요일 09:00 KST 에 요약. on-time = cron-job.org 원샷(job=oneshot, cronjob-register.yml action=register), GitHub 백업 cron 0 0 21 11 * (oneshot_pick check-cron 으로 중복 방지).",
+  "edgar": {
+    "cik": "0000885245",
+    "submissions": "https://data.sec.gov/submissions/CIK0000885245.json",
+    "archive_base": "https://www.sec.gov/Archives/edgar/data/885245",
+    "user_agent": "cwally-alerts sosmos3218@gmail.com",
+    "form": "8-K",
+    "item": "2.02",
+    "dividend_item": "8.01",
+    "min_filing_date": "2026-11-15"
+  },
+  "earn": {
+    "quarter": "FY2026 3분기(2026-11-01 무렵 끝난 13주)",
+    "expected": "2026-11-20(금) 미 동부 장 전, 콜 10:00 ET(한국 11/21 00:00). 회사 확정 공지 아님(과거 일정 기준 추정).",
+    "poll_start_kst": "2026-11-20 00:00",
+    "deadline_kst": "2026-11-27 09:00",
+    "priority": 4,
+    "missing_priority": 3,
+    "consensus_eps": 0.91,
+    "consensus_src": "MarketBeat 2026-11-02 (컨센서스 EPS 0.91달러, 매출 3.322억달러)",
+    "prior_eps": 0.96,
+    "prior_sales_musd": 320.8,
+    "prior_comps_pct": 8.3,
+    "baseline": {
+      "ttm_eps": 4.34,
+      "sept_comps_pct": 0.5,
+      "ytd_comps_pct": 2.8,
+      "regular_div": 0.35,
+      "view": "Hold(보통)",
+      "note": "TTM EPS 4.34달러(SEC XBRL, 2분기까지), 9월 동일점 +0.5%, 35주 누계 동일점 +2.8%(10/8 회사 보도자료), 정기배당 분기 0.35달러, 판단 Hold(보통)."
+    }
+  },
+  "price": {
+    "key": "lt40",
+    "op": "lt",
+    "line": 40.0,
+    "rearm": 41.0,
+    "priority": 4,
+    "low_52w": 39.44,
+    "low_52w_date": "2026-09-15",
+    "annual_regular_div": 1.4,
+    "stale_days": 6,
+    "rule": "미국 정규장 완료 종가 < 40.00달러면 1번(p4). 종가 >= 41.00달러(완충 1달러)가 되면 조용히 재무장. 40.00 정확히는 발송 안 함."
+  },
+  "sources": {
+    "bars": "https://query1.finance.yahoo.com/v8/finance/chart/BKE?range=1mo&interval=1d"
+  },
+  "seed": {"as_of": "2026-11-03", "last_date": "2026-11-02", "last_close": 47.31, "source": "Yahoo chart v8 BKE 1d, 2026-11-03 14:39 KST 조회"},
+  "source_note": "기준값 출처: 2026-11-03 검증(SEC 10-Q/8-K, 회사 월간 매출 보도자료, MarketBeat 컨센서스). 참고용, 투자 권유 아님.",
+  "explain": "더 버클(BKE) 3분기 실적 8-K 가 나오면 한 번 요약하고, 미국 종가가 40달러 아래로 새로 내려가면 한 번 알리는 알림입니다. 자동 주문 아님.",
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 BKE 종가 40달러선 점검, 3분기 실적 요약 1번, 2027-02-26 종료"
+}
