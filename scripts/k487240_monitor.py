@@ -128,6 +128,36 @@ def message(cfg: dict, fired: list[dict], day: str, p: float, ma20: float | None
     return title, body, max(x["priority"] for x in fired)
 
 
+def due_reminders(cfg: dict, st: dict, today: str) -> list[dict]:
+    """Dated one-shot reminders: first run on or after the date, once; skipped silently if more than stale_days late."""
+    sent = st.setdefault("reminders_sent", {})
+    out = []
+    for r in cfg.get("reminders") or []:
+        if r["key"] in sent or today < r["date"]:
+            continue
+        late = (datetime.fromisoformat(today) - datetime.fromisoformat(r["date"])).days
+        if late > int(r.get("stale_days", 7)):
+            sent[r["key"]] = f"skip(stale) {today}"
+            continue
+        out.append(r)
+    return out
+
+
+def reminder_message(cfg: dict, r: dict, st: dict, stamp: str) -> tuple[str, str, int]:
+    lc = st.get("last_close") or ["?", None]
+    ma20 = st.get("ma20")
+    body = "\n".join([
+        f"이게 뭐 알림: {r['what']} 매매 지시 아님.",
+        f"{stamp} | 487240 298040 | KODEX AI전력핵심설비, 효성중공업",
+        f"지금 결과/상태: 487240 최근 확정 종가 {lc[0]} {won(lc[1])}원, 20일선 {won(ma20)}원. 확인할 곳: {r['where']}",
+        f"지금 할 일: {r['todo']}",
+        f"나중에: 가격 선(25,000, 22,000, 20,700, 20일선 2일)은 그대로 상태가 바뀔 때만 옵니다. {r['rule']}",
+        "익절/줄일 때: 아직 보유 없음, 해당 없음.",
+        f"하지 말 것: {r['dont']}",
+    ])
+    return f"{TAG} 487240 {r['title']}", body, int(r.get("priority", 3))
+
+
 def run(mode: str, now: datetime, cfg: dict, rows_fn=None, state: dict | None = None) -> tuple[list, dict]:
     dry = mode == "dry"
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -169,6 +199,9 @@ def run(mode: str, now: datetime, cfg: dict, rows_fn=None, state: dict | None = 
             out.append(message(cfg, fired, day, p, ma20, ma200, stamp))
         st.update(last_date=day, last_close=[day, p], ma20=round(ma20, 2) if ma20 else None, ma200=round(ma200, 2) if ma200 else None)
         print(f"close {day} {won(p)} ma20 {won(ma20)} ma200 {won(ma200)} new_days={len(new)} armed={armed}")
+    for r in due_reminders(cfg, st, stamp[:10]):
+        out.append(reminder_message(cfg, r, st, stamp))
+        st["reminders_sent"][r["key"]] = stamp
     st["updated_at"] = stamp
     if state is not None:
         return out, st
@@ -250,6 +283,25 @@ def selftest(cfg: dict) -> int:
     check("next day fires l25000", [o[0] for o in out], ["[487240] 487240 종가 24,800 | 1차 매수 검토"])
     out, st = run("dry", datetime(2026, 11, 4, 15, 45, tzinfo=KST), cfg, lambda: rows2, st)
     check("same day re-run silent", out, [])
+    # dated reminder (관세청 10월 확정치)
+    r0 = cfg["reminders"][0]
+    check("customs reminder date", r0["date"], "2026-11-16")
+    rs: dict = {}
+    check("not due before date", due_reminders(cfg, rs, "2026-11-13"), [])
+    check("due on date", [r["key"] for r in due_reminders(cfg, rs, "2026-11-16")], ["customs_oct_2026"])
+    rs["reminders_sent"]["customs_oct_2026"] = "x"
+    check("no repeat", due_reminders(cfg, rs, "2026-11-17"), [])
+    rs2: dict = {}
+    check("stale skip", (due_reminders(cfg, rs2, "2026-11-30"), "customs_oct_2026" in rs2["reminders_sent"]), ([], True))
+    tr, br, pr = reminder_message(cfg, r0, {"last_close": ["2026-11-16", 24000.0], "ma20": 26000.0}, "2026-11-16 15:40 KST")
+    check("reminder title tickers + p3", ("487240" in tr and "298040" in tr, pr), (True, 3))
+    check("reminder body HS codes, site, funding rule", all(k in br for k in ("HS 8504", "8535", "8537", "tradedata.go.kr", "MEMEXIT", "2차 대체 트리거")), True)
+    check("reminder six parts", [x.split(":")[0] for x in br.split("\n")[2:]], ["지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    check("reminder no buy push / dot / dash", ([w for w in BUY_WORDS if w in br and w != "매수 검토"], any(ch in br + tr for ch in "\u00b7\u2014")), ([], False))
+    out, st = run("dry", datetime(2026, 11, 16, 15, 40, tzinfo=KST), cfg, lambda: rows2, st)
+    check("run sends reminder once on 11/16", [o[0] for o in out], [tr])
+    out, st = run("dry", datetime(2026, 11, 17, 15, 40, tzinfo=KST), cfg, lambda: rows2, st)
+    check("run no repeat 11/17", out, [])
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 

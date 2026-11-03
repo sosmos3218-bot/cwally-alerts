@@ -372,7 +372,7 @@ def later_line(cfg: dict, st: dict, today: str) -> str:
             tag = "확정" if all(g["confirmed"].values()) else "추정"
             items.append(f"{g['label']} 실적 리마인더 {g['due']}({tag})")
             break
-    for o in cfg["oneoffs"]:
+    for o in sorted(cfg["oneoffs"], key=lambda o: o["date"]):
         if o["date"] > today and o["key"] not in st.get("oneoff_sent", {}):
             items.append(f"{o['title']} {o['date']}")
             break
@@ -810,6 +810,18 @@ def selftest(cfg: dict) -> int:
         out, io2["state"] = run("dry", datetime(2026, 12, d, 19, 0, tzinfo=KST), cfg, io2)
         r.append(len(out))
     check("soft fail ops only on 3rd straight run", r, [0, 0, 1])
+    # 2027-01-25 삼성 이사회 단발
+    io3 = dict(io, state=json.loads(json.dumps(st)))
+    io3["state"]["monthly_sent"] = "2027-01"
+    out, s3 = run("dry", datetime(2027, 1, 22, 19, 0, tzinfo=KST), cfg, io3)
+    check("board oneoff not before 1/25", [o[0] for o in out if "이사회" in o[0]], [])
+    io3["state"] = s3
+    out, s3 = run("dry", datetime(2027, 1, 25, 19, 0, tzinfo=KST), cfg, io3)
+    check("board oneoff on 1/25 p3", len(out) == 1 and "[MEMEXIT] 000660 005930 삼성전자 1월 말 이사회 잔여 주주환원 점검" == out[0][0] and out[0][2] == 3, True)
+    check("board body", all(k in out[0][1] for k in ("55~75조원", "-5.17%", "소각 비중", "10곳 계약", "10% 중후반", "소각 10조원")), True)
+    io3["state"] = s3
+    out, _ = run("dry", datetime(2027, 1, 26, 19, 0, tzinfo=KST), cfg, io3)
+    check("board oneoff no repeat", [o[0] for o in out if "이사회" in o[0]], [])
     print("selftest " + ("PASS" if not bad else f"FAIL ({len(bad)})"))
     return 0 if not bad else 1
 
