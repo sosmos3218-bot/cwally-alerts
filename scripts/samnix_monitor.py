@@ -27,6 +27,14 @@ configs/samnix.json nix_second. For codes (005930), from start_day to until_kst,
 their 20-day SMA: previous close < previous SMA20 and close >= SMA20 on a data trading day -> one p4 alert. If the foreign
 3-day flip for that code already fired on/after start_day, the SMA20 alert is skipped (first condition wins, no double alert).
 Once either fires the watch ends for that code (state["nix2"][code]["done"]). The flip message gets one NIX1102 line too.
+
+NIX1102 1차 조건 000660 자동 재판정 (2026-11-03, owner delegation pt19u, extends [SAMNIX], no new alert/slot/topic/input):
+configs/samnix.json nix_first. Each 15:20 run re-applies the [NIX1102] first-tranche rules to SK하이닉스 on every confirmed
+data trading day from start_day: Daum KRX close >= support_low (10/30 low 1,381,000) and >= that day's (high+low)/2,
+foreign net shares >= 0 or a net sell <= 50% of the 10/30 net sell (-300,349), SKHY ADR gap vs its 20-day median <= +2%
+(Yahoo SKHY and KRW=X via nix1102_monitor.adr_gap; no ADR data = not passed, said so). First pass -> one p4 alert and the
+code is armed for the 2차 watch above (20-day line reclaim + the flip body line) from the next day (state["nix1"][code]
+second_start). Armed = 1차 never judged again. Toggle nix_first.enabled (also stops the armed 000660 2차 watch).
 """
 from __future__ import annotations
 
@@ -336,9 +344,7 @@ def flip_check(mode: str, now: datetime, flow_day: str, state: dict) -> None:
             ft = cfg.get("first_tranche")
             kospi = kospi_close(ev["days"][-1]["day"]) if ft and ft.get("enabled") else None
             title, message, prio = flip_message(now, name, ev, ft, kospi)
-            nst = (state.get("nix2") or {}).get(code) or {}
-            if nix_active(cfg.get("nix_second"), code, now) and not nst.get("done") and ev["days"][-1]["day"] >= (cfg["nix_second"].get("start_day") or ""):
-                message = message.replace("\n지금 할 일:", "\n" + nix_flip_line(code) + "\n지금 할 일:", 1)
+            message = apply_nix_flip_line(message, cfg, state, code, now, ev["days"][-1]["day"])
             assert route_topic("cwally-port", title) == "cwally-port", title
             print(title, "\n", message)
             if mode == "auto":
@@ -394,6 +400,7 @@ def selftest() -> int:
     first_tranche_selftest(when, ev0)
     two_week_selftest(when)
     nix_second_selftest(when)
+    nix_first_selftest(when)
     weekly_selftest()
     print("SELFTEST OK: no network, no publish, no state")
     return 0
@@ -458,6 +465,33 @@ def nix_active(ns: dict | None, code: str, now: datetime) -> bool:
     return not until or now.strftime("%Y-%m-%d %H:%M") <= until
 
 
+def nix_first_on(cfg: dict, now: datetime) -> bool:
+    nf = cfg.get("nix_first") or {}
+    until = nf.get("until_kst")
+    return bool(nf.get("enabled")) and (not until or now.strftime("%Y-%m-%d %H:%M") <= until)
+
+
+def second_targets(cfg: dict, state: dict, now: datetime) -> dict[str, str]:
+    """2차 감시 대상 {code: start_day}. 설정 codes(005930) + nix_first 통과로 무장된 종목(000660, 다음 날부터)."""
+    ns = cfg.get("nix_second") or {}
+    out = {c: ns.get("start_day", "20261103") for c in (ns.get("codes") or []) if nix_active(ns, c, now)}
+    until = ns.get("until_kst")
+    if ns.get("enabled") and (not until or now.strftime("%Y-%m-%d %H:%M") <= until) and nix_first_on(cfg, now):
+        for code, st in (state.get("nix1") or {}).items():
+            if code in ((cfg.get("nix_first") or {}).get("codes") or []) and st.get("second_start") and code not in out:
+                out[code] = st["second_start"]
+    return out
+
+
+def apply_nix_flip_line(message: str, cfg: dict, state: dict, code: str, now: datetime, flip_day: str) -> str:
+    """외국인 3일 전환 본문에 [NIX1102] 2차 조건 줄 (그 종목 2차 감시가 무장돼 있고 아직 안 끝났을 때만)."""
+    targets = second_targets(cfg, state, now)
+    nst = (state.get("nix2") or {}).get(code) or {}
+    if code in targets and not nst.get("done") and flip_day >= targets[code]:
+        return message.replace("\n지금 할 일:", "\n" + nix_flip_line(code) + "\n지금 할 일:", 1)
+    return message
+
+
 def daum_closes(code: str) -> list[dict]:
     """Daum KRX 정규장 일별 종가 [{day: YYYYMMDD, close}] 오래된 순 (NXT 제외)."""
     import urllib.request
@@ -492,17 +526,17 @@ def ma20_events(rows: list[dict], st: dict, start_day: str) -> list[dict]:
     return out
 
 
-def ma20_message(now: datetime, code: str, name: str, ev: dict, broke: dict | None, prio: int = 4) -> tuple[str, str, int]:
+def ma20_message(now: datetime, code: str, name: str, ev: dict, broke: dict | None, prio: int = 4, stop_low: float | None = None) -> tuple[str, str, int]:
     title = f"[SAMNIX] {code} NIX1102 2차 조건 종가 20일선 회복 {name}({code})"
     stop_line = (f"주의: {ymd(broke['day'])} 종가 {broke['close']:,.0f}원이 10/30 저가 {broke['level']:,.0f}원 아래였습니다. "
                  "[NIX1102] 계획상 추가 진입 중단 상태라 2차 진입 근거로 쓰지 마세요.") if broke else ""
     lines = [
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | {name}({code}) 종가 20일선 회복 (KRX 정규장 확정 종가)",
-        f"이게 뭐 알림: [NIX1102]가 {name} 1차 분할 진입 검토로 판정한 뒤, 2차 1/3 조건 두 가지(외국인 3일 연속 순매수 전환, 종가 20일선 회복) 중 20일선 회복이 먼저 왔다는 알림. 매수 지시가 아닙니다.",
+        f"이게 뭐 알림: {name}가 [NIX1102] 기준 1차 분할 진입 검토로 판정된 뒤, 2차 1/3 조건 두 가지(외국인 3일 연속 순매수 전환, 종가 20일선 회복) 중 20일선 회복이 먼저 왔다는 알림. 매수 지시가 아닙니다.",
         f"지금 결과/상태: {ymd(ev['day'])} 종가 {ev['close']:,.0f}원, 20일선 {ev['sma20']:,.0f}원 (전일 종가 {ev['prev_close']:,.0f}원, 전일 20일선 {ev['prev_sma20']:,.0f}원). 기준: Daum KRX 정규장 종가, NXT 제외.",
         "지금 할 일: 계획 비중의 2차 1/3 분할 진입 검토. 지정가로 나눠서, 한 번에 다 사지 않기." if not broke else "지금 할 일: 추가 진입 중단 상태 유지. 계획을 다시 정한 뒤에만 진입 검토.",
         "나중에: 3차 1/3은 10/30 시가 회복 또는 1월 실적 확인. 이 2차 조건 감시는 이번 1번으로 끝납니다.",
-        "익절/줄일 때: 10/30 저가 216,500원 종가 이탈 시 1차분 정리 검토, 추가 진입 중단.",
+        f"익절/줄일 때: 10/30 저가 {stop_low:,.0f}원 종가 이탈 시 1차분 정리 검토, 추가 진입 중단." if stop_low else "익절/줄일 때: 10/30 저가 종가 이탈 시 1차분 정리 검토, 추가 진입 중단.",
         "하지 말 것: 하루 회복만 보고 전량 진입, 신용과 미수, 장중 가격으로 판단.",
     ]
     if stop_line:
@@ -520,15 +554,12 @@ def nix_second_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: 
     ns = cfg.get("nix_second") or {}
     sent = []
     store = state.setdefault("nix2", {})
-    for code in ns.get("codes") or []:
-        if not nix_active(ns, code, now):
-            continue
+    for code, start in second_targets(cfg, state, now).items():
         name = CODES.get(code, code)
         st = json.loads(json.dumps(store.get(code) or {}))
         if st.get("done"):
             print(f"nix2 {name}: 이미 끝남 ({st.get('reason')})")
             continue
-        start = ns.get("start_day", "20261103")
         flips = [f for f in (state.get("flip", {}).get(code, {}).get("fired") or []) if f.get("date", "") >= start]
         if flips:
             st.update(done=True, reason=f"flip {flips[0]['date']} 먼저", at=now.isoformat())
@@ -548,7 +579,7 @@ def nix_second_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: 
             print(f"nix2 {name}: last={st.get('last')} last_date={st.get('last_date')} 새 회복 {len(events)}건")
             if events:
                 ev = events[0]
-                title, msg, prio = ma20_message(now, code, name, ev, broke, int(ns.get("priority", 4)))
+                title, msg, prio = ma20_message(now, code, name, ev, broke, int(ns.get("priority", 4)), lvl)
                 assert route_topic("cwally-port", title) == "cwally-port", title
                 print(title, "\n", msg)
                 sent.append((title, msg, prio))
@@ -560,6 +591,271 @@ def nix_second_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: 
     if mode == "auto":
         save_state(state)
     return sent
+
+
+# ---------------- NIX1102 1차 조건 000660 자동 재판정 (2026-11-03) ----------------
+def next_day(day: str) -> str:
+    return (datetime.strptime(day, "%Y%m%d") + timedelta(days=1)).strftime("%Y%m%d")
+
+
+def nix_first_fetch(code: str, now: datetime, nf: dict) -> dict:
+    """Daum KRX 일봉(15:40 전 오늘 행 제외), 네이버 외국인 확정 순매수 주식 수, (ADR 대상이면) Yahoo SKHY, KRW=X."""
+    import naver_api
+    import nix1102_monitor as nx
+    data = {"daily": nx.daum_daily(code, now), "adr": None, "fx": None, "errors": []}
+    data["foreign"] = {r["day"]: r.get("foreign") for r in naver_api.stock_trend(code, 20) if r.get("day")}
+    if code in (nf.get("adr_codes") or []):
+        for key, tk in (("adr", nf["adr"]["ticker"]), ("fx", nf["adr"]["fx_ticker"])):
+            try:
+                data[key] = nx.yahoo_closes(tk)
+            except Exception as exc:  # noqa: BLE001
+                data["errors"].append(f"{tk}: {exc}")
+    return data
+
+
+def nix_first_eval(nf: dict, code: str, day: str, data: dict) -> dict:
+    """[NIX1102] 1차 규칙으로 하루(day=YYYYMMDD) 판정. 자료가 없으면 그 항목은 미통과(추정 안 함)."""
+    import nix1102_monitor as nx
+    d = ymd(day)
+    daily = {k: v for k, v in (data.get("daily") or {}).items() if k <= d}
+    t = daily.get(d)
+    lvl = float(nf["support_low"][code])
+    f_r = float(nf["ref_foreign"][code])
+    res = {"day": day, "t": t, "support_low": lvl, "f_r": f_r}
+    if not t:
+        res.update(support="일봉 없음", support_ok=False, mid=None)
+    else:
+        res["support"] = nx.support_state(t, lvl)
+        res["mid"] = (t["high"] + t["low"]) / 2
+        res["support_ok"] = res["support"] == "지지 확인"
+    f_t = (data.get("foreign") or {}).get(day)
+    res["f_t"] = f_t
+    res["foreign_txt"], res["foreign_ok"] = nx.foreign_state(f_t, f_r, float(nf.get("foreign_shrink_ratio", 0.5)))
+    res["adr"], res["adr_ok"], res["adr_txt"] = None, True, ""
+    if code in (nf.get("adr_codes") or []):
+        a = nx.adr_gap(nf, daily, data.get("adr"), data.get("fx"), d) if t else {"dev_pct": None, "why": "국내 종가 없음"}
+        res["adr"] = a
+        cap = float(nf["adr"]["premium_max_pct"])
+        if a["dev_pct"] is None:
+            res["adr_ok"] = False
+            res["adr_txt"] = f"ADR 괴리 미확인({a['why']}), ADR 조건 미통과로 봄"
+        else:
+            res["adr_ok"] = a["dev_pct"] <= cap
+            res["adr_txt"] = (f"ADR 괴리 20일 중앙값 대비 {a['dev_pct']:+.2f}% (기준 +{cap:.1f}% 이하 {'통과' if res['adr_ok'] else '초과'}"
+                              + (f", SKHY {ymd(a['adr_day'].replace('-', ''))} 등락 {a['adr_ret_pct']:+.2f}%" if a.get("adr_day") and a.get("adr_ret_pct") is not None else "")
+                              + (f", 원달러 {a['fx_ret_pct']:+.2f}%" if a.get("fx_ret_pct") is not None else "") + ")")
+    res["passed"] = bool(res["support_ok"] and res["foreign_ok"] and res["adr_ok"])
+    res["verdict"] = "1차 분할 진입 검토" if res["passed"] else ("진입 보류" if res["support"] == "지지 이탈" else "관망")
+    return res
+
+
+def nix_first_summary(res: dict) -> str:
+    t = res["t"]
+    px = (f"종가 {t['close']:,.0f}원, 고가 {t['high']:,.0f}원, 저가 {t['low']:,.0f}원, 중간 {res['mid']:,.0f}원, "
+          f"10/30 저가 {res['support_low']:,.0f}원 -> {res['support']}") if t else "KRX 일봉 없음"
+    fr = f"외국인 {fmt_opt(res['f_t'])} (10/30 {fmt_shares(res['f_r'])}) -> {res['foreign_txt']}"
+    return f"{ymd(res['day'])} {res['verdict']}: {px}. {fr}." + (f" {res['adr_txt']}." if res["adr_txt"] else "")
+
+
+def nix_first_message(now: datetime, code: str, name: str, res: dict, nf: dict) -> tuple[str, str, int]:
+    title = f"[SAMNIX] {code} NIX1102 1차 분할 진입 검토 {name}({code})"
+    t, lvl, nd = res["t"], res["support_low"], next_day(res["day"])
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | {name}({code}) NIX1102 1차 조건 통과 ({ymd(res['day'])} KRX 정규장 확정 종가)",
+        f"이게 뭐 알림: 11/2 [NIX1102] 판정에서 관망이던 {name}가 같은 1차 규칙(지지 확인, 외국인 수급 개선"
+        + (", ADR 괴리 +2% 이하" if res["adr"] is not None else "") + f")을 {ymd(res['day'])}에 처음 모두 통과했다는 알림. 매수 지시가 아닙니다.",
+        f"지금 결과/상태: 일봉: {ymd(res['day'])} 종가 {t['close']:,.0f}원, 고가 {t['high']:,.0f}원, 저가 {t['low']:,.0f}원, 중간 {res['mid']:,.0f}원. "
+        f"10/30 저가 {lvl:,.0f}원 위이고 범위 위쪽 절반이라 지지 확인.",
+        f"수급: 외국인 {fmt_opt(res['f_t'])}, 10/30 {fmt_shares(res['f_r'])} 대비 {res['foreign_txt']}.",
+    ]
+    if res["adr"] is not None:
+        lines.append(f"{res['adr_txt']}.")
+    lines += [
+        "기준: Daum KRX 정규장 종가(NXT 제외), 네이버 종목별 투자자 외국인 확정 수급(주식 수)" + (", Yahoo SKHY와 KRW=X." if res["adr"] is not None else "."),
+        "지금 할 일: 계획 비중의 1/3까지만 1차 분할 진입 검토. 지정가로 나눠서, 한 번에 다 사지 않기.",
+        f"나중에: 2차 1/3 감시를 지금 무장했습니다. {ymd(nd)} 이후 종가 20일선 회복([SAMNIX] 2차 조건 알림) 또는 외국인 3일 연속 순매수 전환 중 먼저 오는 것. "
+        f"3차 1/3은 10/30 시가 회복 또는 1월 실적 확인. 1차 판정은 이번 1번으로 끝납니다({str(nf.get('until_kst', ''))[:10]}까지 감시).",
+        f"익절/줄일 때: 10/30 저가 {lvl:,.0f}원 종가 이탈 시 1차분 정리 검토, 추가 진입 중단.",
+        "하지 말 것: 한 번에 전량 진입, 신용과 미수, 장중 가격이나 NXT 가격으로 판단.",
+    ]
+    return title, "\n".join(lines), int(nf.get("priority", 4))
+
+
+def nix_first_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: dict, fetch=None) -> list[tuple[str, str, int]]:
+    """확정 데이터 거래일(<= flow_day, >= start_day)마다 1차 규칙 판정. 처음 통과한 날 1번 알리고 2차 감시 무장. auto 만 발송/저장."""
+    nf = cfg.get("nix_first") or {}
+    sent: list[tuple[str, str, int]] = []
+    if not nix_first_on(cfg, now):
+        return sent
+    if mode == "dry":
+        print("DRY RUN nix1: 판정만 출력, ntfy/state 없음")
+    store = state.setdefault("nix1", {})
+    for code in nf.get("codes") or []:
+        name = CODES.get(code, code)
+        st = json.loads(json.dumps(store.get(code) or {}))
+        if st.get("armed_day"):
+            print(f"nix1 {name}: 이미 1차 통과 {st['armed_day']}, 2차 감시 {st.get('second_start')}부터 (재판정 안 함)")
+            continue
+        try:
+            data = (fetch or nix_first_fetch)(code, now, nf)
+        except Exception as exc:  # noqa: BLE001
+            print(f"nix1 {code} 조회 실패: {exc}")
+            continue
+        for e in data.get("errors") or []:
+            print(f"nix1 {code} 자료: {e}")
+        days = sorted(k.replace("-", "") for k in (data.get("daily") or {}) if k.replace("-", "") <= flow_day)
+        if days:
+            print(f"nix1 {name} 최근 확정일 참고 판정: {nix_first_summary(nix_first_eval(nf, code, days[-1], data))}")
+        start = nf.get("start_day", "20261103")
+        for day in days:
+            if day < start or (st.get("last_date") and day <= st["last_date"]):
+                continue
+            if (data.get("foreign") or {}).get(day) is None:
+                print(f"nix1 {name}: {ymd(day)} 외국인 확정 수급 아직 없음, 다음 실행에서 다시 판정")
+                break
+            res = nix_first_eval(nf, code, day, data)
+            st["last_date"] = day
+            st["last"] = {"verdict": res["verdict"], "close": (res["t"] or {}).get("close"), "support": res["support"],
+                          "foreign": res["f_t"], "foreign_ok": res["foreign_ok"],
+                          "adr_dev_pct": None if not res["adr"] or res["adr"].get("dev_pct") is None else round(res["adr"]["dev_pct"], 2),
+                          "adr_ok": res["adr_ok"]}
+            print(f"nix1 {name} 판정: {nix_first_summary(res)}")
+            if res["passed"]:
+                title, msg, prio = nix_first_message(now, code, name, res, nf)
+                assert route_topic("cwally-port", title) == "cwally-port", title
+                print(title, "\n", msg)
+                sent.append((title, msg, prio))
+                if mode == "auto":
+                    ntfy(cfg.get("ntfy_server") or "https://ntfy.sh", cfg.get("ntfy_topic") or "cwally-port", title, msg, prio)
+                st.update(armed_day=day, armed_at=now.isoformat(), second_start=next_day(day))
+                break
+        if mode == "auto":
+            store[code] = st
+    if mode == "auto":
+        save_state(state)
+    return sent
+
+
+def nix_first_selftest(when: datetime) -> None:
+    """000660 1차 자동 재판정과 2차 무장. 가짜 숫자, 네트워크/발송/state 파일 없음."""
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    nf = dict(cfg["nix_first"], enabled=True)
+    ns = dict(cfg["nix_second"], enabled=True)
+    cfg = {"nix_first": nf, "nix_second": ns}
+    assert nf["support_low"]["000660"] == 1381000 and nf["ref_foreign"]["000660"] == -300349 and ns["stop_low"]["000660"] == 1381000
+
+    def cal(n0: str, n: int) -> list[str]:
+        d, out = datetime.strptime(n0, "%Y%m%d"), []
+        while len(out) < n:
+            if d.weekday() < 5:
+                out.append(d.strftime("%Y%m%d"))
+            d += timedelta(days=1)
+        return out
+    hist = cal("20260915", 40)  # 9/15 ~ 11/09 평일
+    base = 1_450_000.0
+
+    def mkdata(bars: dict, foreign: dict, adr_ok: bool = True) -> dict:
+        daily = {ymd(d): {"open": base, "high": base * 1.01, "low": base * 0.99, "close": base} for d in hist if d < "20261103"}
+        daily["2026-10-30"] = {"open": 1_480_000.0, "high": 1_490_000.0, "low": 1_381_000.0, "close": 1_391_000.0}
+        for d, (h, lo, c) in bars.items():
+            daily[ymd(d)] = {"open": c, "high": h, "low": lo, "close": c}
+        series = [(ymd(d), 100.0) for d in hist]
+        return {"daily": dict(sorted(daily.items())), "foreign": foreign, "adr": series if adr_ok else None,
+                "fx": [(ymd(d), 1400.0) for d in hist] if adr_ok else None, "errors": [] if adr_ok else ["SKHY: down"]}
+
+    g = globals()
+    saved = {k: g[k] for k in ("ntfy", "save_state")}
+    pub: list = []
+    g["ntfy"] = lambda server, topic, title, msg, prio=3: pub.append((topic, title, prio))
+    g["save_state"] = lambda st: None
+    try:
+        # 1) 아직 미통과: 11/3 지지 확인이지만 외국인 순매도 -200,000 (10/30의 67%) -> 관망, 발송 없음
+        d1 = mkdata({"20261103": (1_430_000, 1_390_000, 1_420_000)}, {"20261103": -200000.0})
+        st: dict = {}
+        out = nix_first_check("auto", when, "20261103", st, cfg, lambda c, n, f: d1)
+        assert out == [] and pub == [] and st["nix1"]["000660"]["last_date"] == "20261103" and "armed_day" not in st["nix1"]["000660"], st
+        assert st["nix1"]["000660"]["last"]["verdict"] == "관망" and st["nix1"]["000660"]["last"]["foreign_ok"] is False
+        assert "000660" not in second_targets(cfg, st, when)
+        # 지지 이탈일: 종가 1,370,000 < 1,381,000 이면 외국인 순매수여도 1차 없음
+        d0 = mkdata({"20261103": (1_400_000, 1_360_000, 1_370_000)}, {"20261103": 50000.0})
+        st0: dict = {}
+        assert nix_first_check("auto", when, "20261103", st0, cfg, lambda c, n, f: d0) == []
+        assert st0["nix1"]["000660"]["last"]["verdict"] == "진입 보류"
+        # ADR 자료 없음 -> ADR 미통과로 보고 문구에 씀
+        da = mkdata({"20261103": (1_430_000, 1_390_000, 1_420_000)}, {"20261103": 10000.0}, adr_ok=False)
+        ra = nix_first_eval(nf, "000660", "20261103", da)
+        assert not ra["passed"] and not ra["adr_ok"] and "ADR 조건 미통과로 봄" in ra["adr_txt"], ra
+        assert nix_first_check("auto", when, "20261103", {}, cfg, lambda c, n, f: da) == []
+        # 범위 아래쪽 절반(지지 시험 중) -> 관망
+        rb = nix_first_eval(nf, "000660", "20261103", mkdata({"20261103": (1_450_000, 1_385_000, 1_400_000)}, {"20261103": 10000.0}))
+        assert rb["support"] == "지지 시험 중" and not rb["passed"]
+        # ADR 괴리 초과 (+3.4%) -> 관망
+        rc = nix_first_eval(nf, "000660", "20261103", mkdata({"20261103": (1_510_000, 1_480_000, 1_500_000)}, {"20261103": 10000.0}))
+        assert rc["support_ok"] and rc["foreign_ok"] and not rc["adr_ok"] and not rc["passed"], rc["adr_txt"]
+        # 외국인 값이 아직 없는 날은 판정 보류 (last_date 안 넘김)
+        st_n: dict = {}
+        nix_first_check("auto", when, "20261103", st_n, cfg, lambda c, n, f: mkdata({"20261103": (1_430_000, 1_390_000, 1_420_000)}, {}))
+        assert "last_date" not in st_n["nix1"]["000660"]
+        # 2) 통과 + 무장: 11/4 외국인 -100,000 (10/30의 33%), ADR 괴리 -2% -> p4 1번, 2차 11/5 부터
+        d2 = mkdata({"20261103": (1_430_000, 1_390_000, 1_420_000), "20261104": (1_430_000, 1_390_000, 1_420_000)},
+                    {"20261103": -200000.0, "20261104": -100000.0})
+        out = nix_first_check("auto", when, "20261104", st, cfg, lambda c, n, f: d2)
+        assert len(out) == 1 and out[0][0] == "[SAMNIX] 000660 NIX1102 1차 분할 진입 검토 SK하이닉스(000660)" and out[0][2] == 4, out
+        assert pub == [("cwally-port", out[0][0], 4)], pub
+        n1 = st["nix1"]["000660"]
+        assert n1["armed_day"] == "20261104" and n1["second_start"] == "20261105", n1
+        t, m, _ = out[0]
+        assert "\u00b7" not in t + m and "\u2014" not in t + m and route_topic("cwally-port", t) == "cwally-port"
+        assert "확인 불가" not in t and "조회 실패" not in t
+        heads = [x.split(":")[0] for x in m.split("\n")[1:]]
+        order = [h for h in heads if h in ("이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것")]
+        assert order == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"], heads
+        assert "1,381,000원" in m and "-300,349주" in m and "10/30의 33%" in m and "2026-11-05 이후" in m, m
+        print(f"-- nix1 sample (가짜 숫자)\nTITLE: {t}\n{m}\n")
+        assert second_targets(cfg, st, when) == {"005930": "20261103", "000660": "20261105"}
+        # 3) 중복 없음: 같은 날, 다음 날 통과여도 다시 안 보냄
+        d3 = mkdata({"20261103": (1_430_000, 1_390_000, 1_420_000), "20261104": (1_430_000, 1_390_000, 1_420_000),
+                     "20261105": (1_430_000, 1_390_000, 1_425_000)}, {"20261103": -200000.0, "20261104": -100000.0, "20261105": 90000.0})
+        assert nix_first_check("auto", when, "20261105", st, cfg, lambda c, n, f: d3) == [] and len(pub) == 1
+        assert st["nix1"]["000660"]["armed_day"] == "20261104"
+        # dry 는 state 를 안 바꿈
+        st_dry: dict = {}
+        assert len(nix_first_check("dry", when, "20261104", st_dry, cfg, lambda c, n, f: d2)) == 1 and st_dry == {"nix1": {}} and len(pub) == 1
+        # 토글 꺼짐 -> 판정 없음, 000660 2차 대상 아님
+        off = dict(cfg, nix_first=dict(nf, enabled=False))
+        assert nix_first_check("auto", when, "20261104", {}, off, lambda c, n, f: d2) == []
+        assert "000660" not in second_targets(off, st, when)
+        # 기간 끝 (2027-02-01) -> 판정 없음
+        assert nix_first_check("auto", datetime(2027, 2, 1, 15, 20, tzinfo=KST), "20261104", {}, cfg, lambda c, n, f: d2) == []
+    finally:
+        g.update(saved)
+
+    # 4) 무장 뒤 2차 20일선 회복 (000660). 무장 전에는 000660 2차 알림 없음
+    def mk(seq):
+        return [{"day": f"202610{i + 1:02d}" if i < 30 else f"202611{i - 29:02d}", "close": float(v)} for i, v in enumerate(seq)]
+    rows = mk([1_450_000] * 20 + [1_400_000] * 15 + [1_500_000])  # 11/06 회복
+    flat = mk([200_000] * 36)
+    fn = (lambda c: rows if c == "000660" else flat)
+    assert nix_second_check("dry", when, "20261106", {}, cfg, fn) == []  # 무장 전
+    armed = {"nix1": {"000660": {"armed_day": "20261104", "second_start": "20261105"}}}
+    out = nix_second_check("dry", when, "20261106", armed, cfg, fn)
+    assert len(out) == 1 and out[0][0] == "[SAMNIX] 000660 NIX1102 2차 조건 종가 20일선 회복 SK하이닉스(000660)" and out[0][2] == 4, out
+    assert "1,381,000원" in out[0][1] and "216,500" not in out[0][1] and "주의" not in out[0][1], out[0][1]
+    assert "\u00b7" not in out[0][1] and "\u2014" not in out[0][1]
+    # 무장일 이전 돌파는 무시 (second_start 11/07 이면 11/06 회복은 대상 아님)
+    assert nix_second_check("dry", when, "20261106", {"nix1": {"000660": {"armed_day": "20261106", "second_start": "20261107"}}}, cfg, fn) == []
+    # 외국인 전환이 무장 뒤 먼저 왔으면 20일선 알림 없음
+    armed_f = dict(armed, flip={"000660": {"fired": [{"date": "20261106"}]}})
+    assert nix_second_check("dry", when, "20261106", armed_f, cfg, fn) == []
+    # 5) 외국인 3일 전환 본문 2차 줄: 무장 뒤에만
+    body = "머리\n판단 조건: x\n지금 할 일: y"
+    assert apply_nix_flip_line(body, cfg, {}, "000660", when, "20261110") == body
+    got = apply_nix_flip_line(body, cfg, armed, "000660", when, "20261110")
+    assert "[NIX1102] 2차 조건: 000660" in got and got.index("[NIX1102]") < got.index("지금 할 일"), got
+    assert apply_nix_flip_line(body, cfg, armed, "000660", when, "20261104") == body  # 무장일 이전 전환
+    assert apply_nix_flip_line(body, cfg, dict(armed, nix2={"000660": {"done": True}}), "000660", when, "20261110") == body
+    assert "[NIX1102] 2차 조건: 005930" in apply_nix_flip_line(body, cfg, {}, "005930", when, "20261110")  # 005930 은 그대로
+    print("nix1 selftest OK")
 
 
 def nix_second_selftest(when: datetime) -> None:
@@ -659,6 +955,8 @@ def main(mode: str = "auto") -> int:
     topic = cfg.get("ntfy_topic") or "cwally-port"
     server = cfg.get("ntfy_server") or "https://ntfy.sh"
     state = read_state()
+    if mode in ("auto", "dry"):
+        nix_first_check(mode, now, flow_day, state, cfg)
     flip_check(mode, now, flow_day, state)
     if mode in ("auto", "dry"):
         nix_second_check(mode, now, flow_day, state, cfg)
