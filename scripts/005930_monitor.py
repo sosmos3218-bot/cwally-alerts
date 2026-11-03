@@ -35,14 +35,21 @@ Events
             a late slot catches up within catch_up_days. Filing detection: Naver stock notice feed
             (KRX/DART disclosure mirror, no key) for a 영업(잠정)실적 title on/after the day before;
             not found or feed failed -> "공시 확인 필요". (005930 used this up to 2026 Q3; still used by 000660/064400.)
-  earn_auto optional configs "earn_auto" (2026-10-30, 005930 only): quarterly earnings auto-check with no hardcoded date.
+  earn_auto optional configs "earn_auto" (2026-10-30 005930; 2026-11-03 also 000660, t46u): quarterly earnings auto-check
+            with no hardcoded date. Any config with an earn_auto block gets it (title uses its own title_prefix).
             The Naver notice feed gives the quarter (latest 영업(잠정)실적 filing month: Jan-Mar = previous Q4, Apr-Jun Q1,
             Jul-Sep Q2, Oct-Dec Q3) and the results day (기업설명회(IR) 개최 안내공시 일시, else the quarter's second results
             filing). On/after the results day: one filing notice (실적 체크), then on every KRX trading-day 19:00 run the
-            디일렉 transcript "삼성전자 YYYY년 N분기 실적발표 컨퍼런스콜 전문" is looked up (scripts/earncall_lib.py, shared
+            디일렉 transcript ("삼성전자 / SK하이닉스 YYYY년 N분기 실적발표 컨퍼런스콜 전문", earn_auto.transcript.title_re)
+            is looked up (scripts/earncall_lib.py, shared
             with secq3) and the 3 checks are judged 문제없음/경계/확인 불가 with a quoted sentence; one result per quarter
             (state earn_auto[YYYYQn].sent). No transcript within wait_trading_days -> one 확인 불가 message. Quarters before
-            start_quarter are never sent automatically; mode backfill sends earn_auto.backfill (2026Q3) once.
+            start_quarter are never sent automatically; mode backfill sends earn_auto.backfill (2026Q3) once (005930 only).
+            Optional per-config keys (absent = the 005930 behavior, unchanged): ir_lookback_days (default 1; how many days
+            before the first results filing an IR 안내공시 may be filed; 000660 files it ~2 weeks ahead and files only one
+            잠정실적 on the call day) and item3.asp_subject_carry (SK하이닉스 transcripts say "낸드는 ... 감소했지만 ASP는 ..."
+            or put "ASP는 ..." in the sentence after "낸드는 ..."; the ASP sentence is rewritten as "낸드 ASP는 ..." for
+            the item 3 ASP parser only, carrying the D램/낸드 subject up to 3 sentences).
 Data: judgment uses only the KRX regular-session close from Yahoo chart <code>.KS (chart close +
 regularMarketPrice stamped at/after 15:30 KST). Hold on failure: if Yahoo fails or has no regular close for
 the session, nothing is judged from any other source; a 조회 실패 notice goes to cwally-ops (once a day) and
@@ -819,7 +826,7 @@ def earn_quarter(cfg: dict, rows: list[dict]) -> dict | None:
     first = qf[0]["datetime"][:10] if qf else None
     rd, src = (ov.get("results_day"), "설정값") if ov.get("quarter") and ov.get("results_day") else (None, None)
     if not rd and first:
-        lo = (date.fromisoformat(first) - timedelta(days=1)).isoformat()
+        lo = (date.fromisoformat(first) - timedelta(days=int(ea.get("ir_lookback_days", 1)))).isoformat()
         hi = (date.fromisoformat(first) + timedelta(days=int(ea.get("ir_max_days", 45)))).isoformat()
         for r in rows:
             if ea["ir_keyword"] in r["title"] and r["datetime"][:10] >= lo:
@@ -834,10 +841,32 @@ def earn_quarter(cfg: dict, rows: list[dict]) -> dict | None:
             "results_src": src, "filings": qf, "url": ov.get("transcript_url") if ov.get("quarter") else None}
 
 
+def asp_subject_carry(text: str) -> str:
+    """For the item 3 ASP parser only (configs earn_auto.item3.asp_subject_carry, 000660): an ASP sentence gets the
+    D램/낸드 subject written right before its ASP word, taken from earlier in the same sentence or carried from the
+    last subject sentence (up to 3 sentences back). '낸드는 ... 감소했지만 ASP는 20% 중반 상승했다' -> '낸드 ASP는 20% 중반
+    상승했다'. Sentences without an ASP word are unchanged."""
+    out, subj, left = [], None, 0
+    for x in ec.sentences(text):
+        pos = [x.find(w) for w in ec.ASP_WORDS if w in x]
+        a = min(pos) if pos else -1
+        found = re.findall(r"D램|낸드|DRAM|NAND", x[:a] if a >= 0 else x)
+        if a >= 0 and (found or (subj and left > 0)):
+            out.append(f"{found[-1] if found else subj} {x[a:]}")
+        else:
+            out.append(x)
+        if found:
+            subj, left = found[-1], 3
+        else:
+            left -= 1
+    return "\n".join(out)
+
+
 def earn_judge(ea: dict, text: str | None, now: datetime, china_fn=None) -> dict:
     i1 = ec.judge_item1(text, ea["item1"])
     i2 = ec.judge_item2(text, ea["item2"])
-    asp = ec.judge_asp(text, float(ea["item3"]["asp_drop_pct"]))
+    asp_text = asp_subject_carry(text) if text and ea["item3"].get("asp_subject_carry") else text
+    asp = ec.judge_asp(asp_text, float(ea["item3"]["asp_drop_pct"]))
     china = (china_fn or EARN_IO["china"])(ea["item3"]["china"], now)
     i3 = ec.judge_item3(asp, china)
     if not text:  # no transcript: every item is 확인 불가; the China keyword count is shown only as 참고
@@ -1120,6 +1149,9 @@ def run(name: str, argv: list[str]) -> int:
     if mode in {"backfill", "backfill-dry"}:
         if not cfg.get("earn_auto"):
             print(f"{name}: no earn_auto in config; nothing to backfill")
+            return 1
+        if not cfg["earn_auto"].get("backfill"):
+            print(f"{name}: no earn_auto.backfill in config; nothing to backfill")
             return 1
         return earn_backfill(cfg, dry=mode == "backfill-dry")
     if mode == "earn-dry":
@@ -1496,25 +1528,26 @@ def _selftest_earn(name, check, at) -> None:
     check("conclusion: China keyword only -> 보류", ec.conclusion(j["items"], trims)[0], "추가 매수 보류, 중국 기사 확인")
     check("conclusion: counts_as_negative -> 중단", ec.conclusion(j["items"], trims, True)[0], "추가 매수 중단, 비중 축소 검토")
     jw = earn_judge(ea, EARN_FIX["warn"], now, no_china)
-    check("conclusion: 경계 -> 추가 매수 중단, 축소선 언급", (ec.conclusion(jw["items"], trims)[0], "260,000원 30%" in ec.conclusion(jw["items"], trims)[1]),
+    check("conclusion: 경계 -> 추가 매수 중단, 축소선 언급", (ec.conclusion(jw["items"], trims)[0], trims.split(", ")[0] in ec.conclusion(jw["items"], trims)[1]),
           ("추가 매수 중단, 비중 축소 검토", True))
     jn = earn_judge(ea, EARN_FIX["neg"], now, no_china)
     check("conclusion: 확인 불가 mixed -> names items, 보류", ec.conclusion(jn["items"], trims), ("추가 매수 보류", ec.conclusion(jn["items"], trims)[1]))
     check("conclusion: 확인 불가 names 2, 3", "확인 불가 2, 3번" in ec.conclusion(jn["items"], trims)[1], True)
     check("conclusion: all ok -> 기존 계획 유지", ec.conclusion(earn_judge(ea, EARN_FIX["ok"], now, no_china)["items"], trims)[0], "기존 계획 유지")
-    # quarter detection from the notice feed
-    ir = {"no": "3", "title": "삼성전자(주) 기업설명회(IR) 개최(안내공시)", "datetime": "2026-10-08 08:05",
+    # quarter detection from the notice feed (corp: the Naver title name; 000660 files as 에스케이하이닉스(주))
+    corp = {"000660": "에스케이하이닉스(주)"}.get(name, cfg["short"] + "(주)")
+    ir = {"no": "3", "title": f"{corp} 기업설명회(IR) 개최(안내공시)", "datetime": "2026-10-08 08:05",
           "contents": "<style>.x{}</style><td>1. 일시 및 장소</td><td>일시</td><td>2026-10-29</td><td>10:00</td>"}
-    rows_q3 = [{"no": "5", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""},
-               {"no": "4", "title": "삼성전자(주) (정정)연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""}, ir,
-               {"no": "2", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-08 07:44", "contents": ""},
-               {"no": "1", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-07-30 06:50", "contents": ""}]
+    rows_q3 = [{"no": "5", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""},
+               {"no": "4", "title": f"{corp} (정정)연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-29 06:50", "contents": ""}, ir,
+               {"no": "2", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-08 07:44", "contents": ""},
+               {"no": "1", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-07-30 06:50", "contents": ""}]
     q = earn_quarter(cfg, rows_q3)
     check("quarter: Oct filings -> 2026Q3, results day from IR notice", (q["key"], q["first_day"], q["results_day"], q["results_src"]),
           ("2026Q3", "2026-10-08", "2026-10-29", "IR 개최 안내공시"))
     q = earn_quarter(cfg, [r for r in rows_q3 if r is not ir])
     check("quarter: no IR -> second results filing day", (q["results_day"], q["results_src"]), ("2026-10-29", "두 번째 실적 공시"))
-    pre = {"no": "6", "title": "삼성전자(주) 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2027-01-07 07:40", "contents": ""}
+    pre = {"no": "6", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2027-01-07 07:40", "contents": ""}
     ir4 = dict(ir, no="7", datetime="2027-01-07 08:05", contents="일시 2027-01-28 10:00")
     q4 = earn_quarter(cfg, [ir4, pre] + rows_q3)
     check("quarter: Jan 2027 prelim -> 2026Q4 (label, next)", (q4["key"], q4["label"], q4["results_day"], ec.next_quarter(q4["y"], q4["q"])),
@@ -1524,9 +1557,16 @@ def _selftest_earn(name, check, at) -> None:
     ov = dict(cfg, earn_auto=dict(ea, override={"quarter": "2027Q1", "results_day": "2027-04-30", "transcript_url": "u"}))
     check("quarter: config override", (earn_quarter(ov, rows_q3)["key"], earn_quarter(ov, rows_q3)["results_day"], earn_quarter(ov, rows_q3)["url"]),
           ("2027Q1", "2027-04-30", "u"))
-    check("title_re: comma variant and the real title", [bool(re.search(ec.title_re_for(ea["transcript"]["title_re"], 2026, 3), t)) for t in
-          ("삼성전자 2026년 3분기 실적발표 컨퍼런스콜 전문", "삼성전자, 2026년 3분기 실적발표 컨퍼런스콜 전문", "SK하이닉스 2026년 3분기 실적발표 컨퍼런스콜 전문",
-           "삼성전자 2026년 2분기 실적발표 컨퍼런스콜 전문")], [True, True, False, False])
+    if name == "000660":  # real 디일렉 titles (checked 2026-11-03): 64413, 2024 Q2 comma form 29281; other company and quarter must not match
+        tt = ("SK하이닉스 2026년 3분기 실적발표 컨퍼런스콜 전문", "SK하이닉스, 2026년 3분기 실적발표 컨퍼런스콜 전문", "삼성전자 2026년 3분기 실적발표 컨퍼런스콜 전문",
+              "SK하이닉스 2026년 2분기 실적발표 컨퍼런스콜 전문")
+    else:
+        tt = ("삼성전자 2026년 3분기 실적발표 컨퍼런스콜 전문", "삼성전자, 2026년 3분기 실적발표 컨퍼런스콜 전문", "SK하이닉스 2026년 3분기 실적발표 컨퍼런스콜 전문",
+              "삼성전자 2026년 2분기 실적발표 컨퍼런스콜 전문")
+    check("title_re: comma variant and the real title", [bool(re.search(ec.title_re_for(ea["transcript"]["title_re"], 2026, 3), t)) for t in tt],
+          [True, True, False, False])
+    if name == "000660":
+        _selftest_earn_660(cfg, check, at, corp, no_china)
     # flow: Q4 2026 (start_quarter) on the 19:00 slots
     found = {"text": None}
     io = {"notices": lambda c: [ir4, pre] + rows_q3,
@@ -1574,6 +1614,75 @@ def _selftest_earn(name, check, at) -> None:
     check("earn messages: under 3,700 bytes with the end line", [t for t, m, _ in msgs if len(append_ends(m, name).encode("utf-8")) > 3700], [])
     check("earn messages: China part says keyword-based, manual", all("키워드" in m and "직접" in m for _, m, _ in msgs[:5]), True)
     check("earn no-transcript message says 확인 불가 and 보류", ("확인 불가" in msgs[3][1], "보류" in msgs[3][0]), (True, True))
+    if ea.get("backfill"):
+        _selftest_earn_backfill(name, cfg, check, now, no_china)
+    else:
+        check("no earn_auto.backfill: backfill mode refuses (rc 1, nothing sent)", run(name, ["x", "backfill-dry"]), 1)
+    check("2026Q3 backfill mark also blocks the automatic path", earn_auto_step(dict(cfg, earn_auto=dict(ea, start_quarter="2026Q3")),
+          {"earn_auto": {"2026Q3": {"sent": "x"}}}, at("2026-10-30"), "x", None, io_q3), [])
+    # secq3 keeps the same functions (moved, not changed)
+    import secq3_monitor as sq
+    check("secq3 uses the shared parser objects", (sq.asp_pick is ec.asp_pick, sq.judge_check2 is ec.judge_check2, sq.transcript_body is ec.transcript_body), (True, True, True))
+
+
+def _selftest_earn_660(cfg, check, at, corp, no_china) -> None:
+    """000660 earn_auto (2026-11-03, t46u): SK하이닉스 filing pattern and transcript phrasing. Fixtures are short quotes
+    of the real 디일렉 transcripts (2026 Q3 idxno 64413, 2026 Q2 60209) and the real Naver filing pattern of 2026 Q3."""
+    ea = cfg["earn_auto"]
+    q3 = ("일반 D램 가격 강세가 이어지고 이전 제품보다 가격이 높은 HBM4 판매 비중이 확대되면서 D램 평균판매단가(ASP)는 전분기와 비슷한 20% 후반 수준의 높은 상승률을 기록했다. "
+          "낸드는 321단 TLC 엔터프라이즈 SSD 등 고부가 제품 위주로 판매를 조정하면서 전분기 대비 소폭 출하량이 감소했지만 ASP는 전반적인 가격 강세와 SSD 비중 확대로 20% 중반 상승했다.")
+    q2 = ("D램은 제한된 공급 여력 내에서 HBM3E와 AI용 서버 D램 제품을 중심으로 판매를 확대하면서 한 자릿수 후반 출하량 증가를 기록했다. "
+          "평균 판매 단가(ASP)는 일반 D램 가격 강세가 지속되면서 약 30% 상승했다. "
+          "낸드는 1분기 출하량 감소에 따른 기저 효과로 10% 중반의 출하량 증가를 기록했다. 당사 엔터프라이즈 SSD 매출은 지난 분기 대비 두 배 이상 증가했다. "
+          "ASP는 모든 제품의 가격 강세에 힘입어 50% 중반 상승했다.")
+    drop = ("낸드는 고객 재고 조정으로 출하량이 줄었다. ASP는 전분기 대비 10% 초반 하락했다. "
+            "D램은 출하량이 늘었다. 평균판매가격(ASP)은 한 자릿수 초반 상승했다.")
+    asp = lambda t, carry=True: ec.judge_asp(asp_subject_carry(t) if carry else t, float(ea["item3"]["asp_drop_pct"]))  # noqa: E731
+    check("660 config: asp_subject_carry on, item1~3 settings same as 005930",
+          (ea["item3"].get("asp_subject_carry"), all(ea[k] == load_cfg("005930")["earn_auto"][k] for k in ("item1", "item2")),
+           {k: v for k, v in ea["item3"].items() if not k.startswith("asp_subject")} == load_cfg("005930")["earn_auto"]["item3"]), (True, True, True))
+    a3, a2 = asp(q3), asp(q2)
+    check("660 ASP 2026 Q3 phrasing: D램 +28, 낸드 +25 -> 문제없음", (a3["status"], a3["dram"]["pct"], a3["nand"]["pct"]), (ec.OK, 28.0, 25.0))
+    check("660 ASP 2026 Q2 phrasing (subject in an earlier sentence): D램 +30, 낸드 +55", (a2["status"], a2["dram"]["pct"], a2["nand"]["pct"]), (ec.OK, 30.0, 55.0))
+    check("660 ASP without the carry: 낸드 unread -> 확인 불가 (why the setting exists)", (asp(q3, False)["status"], asp(q3, False)["nand"]), (ec.UNK, None))
+    ad = asp(drop)
+    check("660 ASP 낸드 -12% via carried subject -> 경계", (ad["status"], ad["nand"]["pct"], ad["dram"]["pct"]), (ec.WARN, -12.0, 2.0))
+    check("660 carry leaves non-ASP sentences unchanged", asp_subject_carry("낸드는 출하가 줄었다. 영업이익은 늘었다."), "낸드는 출하가 줄었다.\n영업이익은 늘었다.")
+    check("660 carry expires after 3 sentences", ec.judge_asp(asp_subject_carry("낸드는 줄었다. 가. 나. 다. ASP는 10% 하락했다."), -10.0)["nand"], None)
+    # filing pattern: IR 안내공시 ~2 weeks ahead, one 잠정실적 on the call day 06:50 (2026 Q3: 10/14 IR, 10/28 잠정)
+    ir = {"no": "9", "title": f"{corp} 기업설명회(IR) 개최(안내공시)", "datetime": "2027-01-12 06:50",
+          "contents": "<td>1. 일시 및 장소</td><td>일시</td><td>2027-01-28</td><td>09:00</td>"}
+    pre = {"no": "10", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2027-01-28 06:50", "contents": ""}
+    old = {"no": "8", "title": f"{corp} 연결재무제표기준영업(잠정)실적(공정공시)", "datetime": "2026-10-28 06:50", "contents": ""}
+    q = earn_quarter(cfg, [pre, ir, old])
+    check("660 quarter: IR filed 16 days before the only 잠정실적 -> results day from IR (ir_lookback_days 30)",
+          (q["key"], q["first_day"], q["results_day"], q["results_src"]), ("2026Q4", "2027-01-28", "2027-01-28", "IR 개최 안내공시"))
+    q1 = earn_quarter(dict(cfg, earn_auto=dict(ea, ir_lookback_days=1)), [pre, ir, old])
+    check("660 quarter: with the 005930 default lookback the IR is missed (results day unknown)", q1["results_day"], None)
+    check("660 quarter: before the Jan filing the feed says 2026Q3 (before start_quarter)", earn_quarter(cfg, [ir, old])["key"], "2026Q3")
+    text = {"t": None}
+    io = {"notices": lambda c: [pre, ir, old], "china": no_china,
+          "transcript": lambda e, y, qq, url=None: (text["t"], "https://www.thelec.kr/news/articleView.html?idxno=2" if text["t"] else None)}
+    s: dict = {}
+
+    def step(d, h=19):
+        return [t for t, *_ in earn_auto_step(cfg, s, at(d, h), f"{d} {h}:00 KST", None, io)]
+    check("660 flow: 2027-01-27 (IR filed, no 잠정 yet) silent", [t for t, *_ in earn_auto_step(cfg, s, at("2027-01-27"), "x", None, dict(io, notices=lambda c: [ir, old]))], [])
+    text["t"] = q3 + "\n2027년 HBM 공급 물량은 고객과 협의를 완료했다."
+    check("660 flow: call day, transcript up the same day -> filing notice (공시 확인됨) and the judged result in one run",
+          step("2027-01-28"), ["[000660] 2026년 4분기 실적 체크 | 공시 확인됨", "[000660] 2026년 4분기 실적 자동 점검 | 추가 매수 보류"])
+    check("660 flow: state earn_auto[2026Q4] judged, item3 문제없음", (s["earn_auto"]["2026Q4"]["kind"], s["earn_auto"]["2026Q4"]["verdict"]["3"]), ("judged", ec.OK))
+    check("660 flow: next day silent", step("2027-01-29"), [])
+    qi = earn_quarter(cfg, [pre, ir, old])
+    t, m, _ = build_earn_result(cfg, qi, earn_judge(ea, text["t"], at("2027-01-28"), no_china), "https://x", "2027-01-28 19:00 KST")
+    check("660 result message: SK하이닉스, its trim lines, ASP values", ("SK하이닉스 2026년 4분기" in m, trims_short(cfg) in m, "D램 20% 후반 상승, 낸드 20% 중반 상승" in m),
+          (True, True, True))
+    t2, m2, _ = build_earn_notice(cfg, qi, pre, "2027-01-28 19:00 KST")
+    check("660 notice message: no '(수동 확인)' left in the checklist, no forbidden chars",
+          ("수동 확인" in m2, any(c in t + m + t2 + m2 for c in FORBIDDEN)), (False, False))
+
+
+def _selftest_earn_backfill(name, cfg, check, now, no_china) -> None:
     # backfill: dry writes nothing; real send writes only earn_auto[2026Q3] once; missing transcript sends nothing
     g = globals()
     import tempfile
@@ -1604,11 +1713,6 @@ def _selftest_earn(name, check, at) -> None:
             check("backfill again: silent", (rc, len(sent)), (0, 1))
         finally:
             g.update(keep)
-    check("2026Q3 backfill mark also blocks the automatic path", earn_auto_step(dict(cfg, earn_auto=dict(ea, start_quarter="2026Q3")),
-          {"earn_auto": {"2026Q3": {"sent": "x"}}}, at("2026-10-30"), "x", None, io_q3), [])
-    # secq3 keeps the same functions (moved, not changed)
-    import secq3_monitor as sq
-    check("secq3 uses the shared parser objects", (sq.asp_pick is ec.asp_pick, sq.judge_check2 is ec.judge_check2, sq.transcript_body is ec.transcript_body), (True, True, True))
 
 
 def _selftest_ladder(check, feed, lv) -> None:
