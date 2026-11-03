@@ -167,9 +167,9 @@ def parse_nbi(text: str, today: date) -> list[tuple[str, float]]:
     return out
 
 
-def search_items(query: str) -> list[tuple[str, str]]:
+def _naver_items(query: str, fetch) -> list[tuple[str, str]]:
     url = "https://search.naver.com/search.naver?where=news&sort=1&query=" + urllib.parse.quote(query)
-    t = _get(url).decode("utf-8", "ignore")
+    t = fetch(url).decode("utf-8", "ignore")
     items = []
     for m in re.finditer(r"<a\b([^>]*)>(.*?)</a>", t, flags=re.S):
         txt = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", m.group(2))))
@@ -177,6 +177,62 @@ def search_items(query: str) -> list[tuple[str, str]]:
         if h and "신조선" in txt:
             items.append((html.unescape(h.group(1)), txt))
     return items
+
+
+def _page_text(raw: bytes) -> str:
+    t = raw.decode("utf-8", "ignore")
+    t = re.sub(r"<script.*?</script>|<style.*?</style>", " ", t, flags=re.S | re.I)
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", t)))
+
+
+def _bing_items(queries: list[str], fetch, now: datetime, max_pages: int = 8) -> list[tuple[str, str]]:
+    """Bing News RSS (date sorted) -> publisher URLs within 45 days -> fetch article text."""
+    urls, items = [], []
+    for q in queries:
+        rss = fetch("https://www.bing.com/news/search?format=rss&qft=sortbydate%3d%221%22&q=" + urllib.parse.quote(q)).decode("utf-8", "ignore")
+        for it in re.findall(r"<item>(.*?)</item>", rss, flags=re.S):
+            link = html.unescape((re.search(r"<link>(.*?)</link>", it) or re.search(r"()", "")).group(1))
+            u = urllib.parse.parse_qs(urllib.parse.urlparse(link).query).get("url", [link])[0]
+            pd = re.search(r"<pubDate>(.*?)</pubDate>", it)
+            try:
+                when = datetime.strptime(pd.group(1)[:25].strip(), "%a, %d %b %Y %H:%M:%S") if pd else None
+            except ValueError:
+                when = None
+            if when and (now.replace(tzinfo=None) - when).days > 45:
+                continue
+            desc = re.search(r"<description>(.*?)</description>", it, flags=re.S)
+            if desc:
+                items.append((u, re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", desc.group(1))))))
+            if u.startswith("http") and u not in urls:
+                urls.append(u)
+    for u in urls[:max_pages]:
+        try:
+            items.append((u, _page_text(fetch(u))))
+        except Exception as exc:  # noqa: BLE001
+            print(f"bing page skip {u[:80]}: {type(exc).__name__}")
+    return items
+
+
+def search_items(query: str, fetch=None, now: datetime | None = None, bing_queries: list[str] | None = None) -> list[tuple[str, str]]:
+    """Naver news search first; on error or nothing usable, Bing News RSS + article pages. Raises only if both fail."""
+    fetch = fetch or _get
+    now = now or datetime.now(KST)
+    errs = []
+    try:
+        items = _naver_items(query, fetch)
+        if any(parse_nbi(x, now.date()) for _, x in items):
+            return items
+        print(f"naver search: {len(items)} items, no parsable value; trying bing")
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"naver {type(exc).__name__} {str(exc)[:60]}")
+        print(f"naver search fail: {exc}; trying bing")
+    try:
+        return _bing_items(bing_queries or [query, "클락슨리서치 선박 수주 신조선가지수"], fetch, now)
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"bing {type(exc).__name__} {str(exc)[:60]}")
+    if len(errs) == 2:
+        raise RuntimeError("; ".join(errs))
+    return []
 
 
 def collect_nbi(items: list[tuple[str, str]], today: date) -> dict[str, dict]:
@@ -567,6 +623,39 @@ def selftest() -> int:
             lambda q: [("https://yna/x", "10월 말 클락슨 신조선가지수는 185.90으로")], write=False)
     check("run nbi fire", [t for t, _, _ in o], [TITLE_NBI])
     check("source stored", st["nbi"]["months"]["2026-10"]["sources"], ["https://yna/x"])
+
+    # search fallback: naver 403 -> bing rss + article page; both fail -> raise
+    rss = ("<rss><item><link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;url=https%3a%2f%2fwww.yna.co.kr%2fview%2fA1</link>"
+           "<pubDate>Wed, 07 Oct 2026 00:48:00 GMT</pubDate><description>9월 한국 선박 수주 반등</description></item>"
+           "<item><link>http://www.bing.com/news/apiclick.aspx?url=https%3a%2f%2fold.example%2fz</link>"
+           "<pubDate>Mon, 05 Jan 2026 00:00:00 GMT</pubDate><description>x</description></item></rss>")
+
+    def fetch_ok(url):
+        if "search.naver.com" in url:
+            raise RuntimeError("HTTP Error 403: Forbidden")
+        if "bing.com" in url:
+            return rss.encode()
+        if "yna.co.kr/view/A1" in url:
+            return "<html><p>9월말 클락슨 신조선가지수는 186.59로 전월보다 0.25포인트 상승</p></html>".encode()
+        raise AssertionError(f"unexpected fetch {url}")
+    its = search_items("q", fetch_ok, datetime(2026, 10, 8, 15, 20, tzinfo=KST))
+    got = collect_nbi(its, date(2026, 10, 8))
+    check("bing fallback value", got.get("2026-09", {}).get("value"), 186.59)
+    check("bing fallback source", got.get("2026-09", {}).get("sources"), ["https://www.yna.co.kr/view/A1"])
+
+    def fetch_bad(url):
+        raise RuntimeError("down")
+    try:
+        search_items("q", fetch_bad, datetime(2026, 10, 8, 15, 20, tzinfo=KST))
+        check("both fail raises", False, True)
+    except RuntimeError:
+        check("both fail raises", True, True)
+
+    def fetch_naver_ok(url):
+        if "search.naver.com" in url:
+            return '<a href="https://n/1">9월 말 클락슨 신조선가지수는 186.59로</a>'.encode()
+        raise AssertionError("bing must not be called")
+    check("naver first", collect_nbi(search_items("q", fetch_naver_ok, datetime(2026, 10, 8, 15, 20, tzinfo=KST)), date(2026, 10, 8))["2026-09"]["sources"], ["https://n/1"])
 
     # text rules on every title
     for t in (TITLE_MA, TITLE_NBI) + tuple(msg_ops(k, "d", "t", cfg)[0] for k in ("price", "search", "missing")):
