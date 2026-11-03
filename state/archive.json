@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-03 23:37 KST",
+  "updated_at": "2026-11-04 00:00 KST",
   "items": [
+    {
+      "id": "viOUFbo52dTy",
+      "topic": "cwally-port",
+      "title": "[TREND] KOSPI 추세점검 11/03: 후보 0, 시장폭 14.0%",
+      "message": "매도\n보유 없음.\n신규\n신규 후보 없음.\n시장폭 14.0%. 시가총액 상위 종목 중 50일선 위 비율입니다.\n꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1793716936
+    },
     {
       "id": "DSyV5fFW9Q06",
       "topic": "cwally-port",
@@ -4459,17 +4470,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1792972845
-    },
-    {
-      "id": "ov0emKxhDkVX",
-      "topic": "cwally-port",
-      "title": "[POLYINV] 주간 확률 변화 10개 | 가장 큰 변화: 원자재: US imports Russia +54.0%p | 참고 지표 (1/2)",
-      "message": "2026-10-26 00:56 KST | 투자자용 폴리마켓 주간\n1) 이게 뭐 알림: 금리, 물가, 경기, 관세, 지정학, 미국 정치/재정, 가상자산, 빅테크 관련 폴리마켓 확률의 1주 변화. 확률은 참고 지표, 매매 신호 아님.\n2) 지금 결과 (연준 고정 표시 먼저, 나머지는 |변화| 큰 순):\n1. [금리] 연준 10월 금리 결정 [동결] (고정 표시)\n   예 94.5% (1주 +8.0%p*), 1주 거래 $18.6M, 마감 2026-10-29\n   관련 자산: 미국채, 원달러, 나스닥, S&P500, 금\n   https://polymarket.com/event/fed-decision-in-october-20260617190323537\n2. [금리] 연준 12월 금리 결정 [25bp 인상] (고정 표시)\n   예 76.5% (1주 +1.0%p*), 1주 거래 $729K, 마감 2026-12-10\n   관련 자산: 미국채, 원달러, 나스닥, S&P500, 금\n   https://polymarket.com/event/fed-decision-in-december-20260729232808632\n3. [금리] 연준 1월 금리 결정 [동결] (고정 표시)\n   예 68.0% (1주 +5.5%p*), 1주 거래 $301K, 마감 2027-01-28\n   관련 자산: 미국채, 원달러, 나스닥, S&P500, 금\n   https://polymarket.com/event/fed-decision-in-january-20260729233815502\n4. [원자재] 원자재: US imports Russian diesel by...? [11/30까지]\n   예 82.5% (1주 +54.0%p*), 1주 거래 $240K, 마감 2026-12-01\n   관련 자산: 유가, 에너지주(XLE), 금, 원달러\n   https://polymarket.com/event/us-imports-russian-diesel-by-october-31\n5. [지정학] 러시아-우크라이나 외교 회담 [11/30까지]\n   예 70.0% (1주 +51.0%p*), 1주 거래 $483K, 마감 2026-12-01\n   관련 자산: 유가, 금, 원달러, 방산\n   https://polymarket.com/event/russia-x-ukraine-peace-talks-byptptpt-20260609012540716\n6. [원자재] WTI 유가 10월 도달 가격 [↓ $95]\n   예 26.5% (1주 -35.0%p*), 1주 거래 $1.3M, 마감 2026-11-01\n   관련 자산: 유가, 에너지주(XLE), 금, 원달러\n   https://polymarket.com/event/what-price-will-wti-hit-in-october-2026\n7. [지정학] 지정학: Saudi Arabia military action against Yemen on.... [10/31까지]\n   예 87.5% (1주 +29.5%p*), 1주 거래 $215K, 마감 2026-11-01\n   관련 자산: 유가, 금, 원달러, 방산\n   https://polymarket.com/event/saudi-arabia-military-action-against-yemen-on-october-2026\n8. [가상자산] 가상자산: What price will XRP hit in October? [↓ 1.20]\n   예 31.5% (1주 -26.5%p*), 1주 거래 $117K, 마감 2026-11-01\n   관련 자산: 비트코인, 이더리움, 코인베이스(COIN)\n   https://polymarket.com/event/what-price-will-xrp-hit-in-october-2026\n9. [가상자산] 비트코인 10월 도달 가격 [↑ 85,000]\n   예 26.5% (1주 -21.0%p*), 1주 거래 $2.5M, 마감 2026-11-01\n   관련 자산: 비트코인, 이더리움, 코인베이스(COIN)\n   https://polymarket.com/event/what-price-will-bitcoin-hit-in-october-2026\n10. [가상자산] 이더리움 10월 도달 가격 [↑ 2,600]\n   예 15.5% (1주 -18.5%p*), 1주 거래 $551K, 마감 2026-11-01\n   관련 자산: 비트코인, 이더리움, 코인베이스(COIN)\n   https://polymarket.com/event/what-price-will-ethereum-hit-in-october-2026\n꺼지는 때: 종료일 없음 (투자자용 주간 폴리마켓 확률 변화 (수동 해제 전까지))",
-      "priority": 3,
-      "tags": [
-        "bar_chart"
-      ],
-      "time": 1792943815
     }
   ]
 }
