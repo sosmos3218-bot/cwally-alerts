@@ -11,7 +11,7 @@
   "schedule_kst": "09:00",
   "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 묶음(정시 cron-job.org morning 잡, GitHub 0 0 * * 1-5 백업)에 부착. morning 은 토요일에 돌지 않으므로 11/20(금) 미 동부 장 전 실적(한국 11/20 20:30~21:00 무렵)은 oneshot_kst 2026-11-21 09:00 원샷(job=oneshot, picker 가 scripts/bke_monitor.py auto 실행)으로 받고, 11/23(월) 09:00 morning 이 예비. state/bke.json earn.done 으로 1번만. job=bke 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
   "oneshot_kst": ["2026-11-21 09:00"],
-  "oneshot_note": "11/20(금) 미 동부 장 전 3분기 실적 8-K 를 토요일 09:00 KST 에 요약. on-time = cron-job.org 원샷(job=oneshot, cronjob-register.yml action=register), GitHub 백업 cron 0 0 21 11 * (oneshot_pick check-cron 으로 중복 방지).",
+  "oneshot_note": "11/20(금) 미 동부 장 전 3분기 실적 8-K 를 토요일 09:00 KST 에 요약. on-time = cron-job.org 원샷 job 8781512 'cwally oneshot 09:00 KST (Nov 21) bke'(job=oneshot, cronjob-register.yml action=register, 2026-11-03 15:00 KST 등록, 만료 09:59:59), GitHub 백업 cron 0 0 21 11 * (oneshot_pick check-cron 으로 중복 방지).",
   "edgar": {
     "cik": "0000885245",
     "submissions": "https://data.sec.gov/submissions/CIK0000885245.json",
