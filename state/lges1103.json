@@ -1,5 +1,10 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
-  "last_problem_key": null
+  "last_problem_key": null,
+  "last_key": "177152048",
+  "verdict": "관망",
+  "confirmed_op_eok": 7560,
+  "confirmed_ex_eok": null,
+  "updated_at": "2026-11-03T17:10:20+09:00"
 }
