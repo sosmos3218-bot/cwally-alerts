@@ -255,11 +255,36 @@
       "sent_hi": false,
       "sent_lo": false,
       "at": "2026-11-02T09:09:16.196912+09:00"
+    },
+    "2026-11": {
+      "start": "2026-11-01 00:00 UTC",
+      "end": "2026-11-03 00:10 UTC",
+      "ledgers": [
+        108033758,
+        108077500
+      ],
+      "released_xrp": 1000000000,
+      "relocked_xrp": 700000000,
+      "rate_pct": 70.0,
+      "released_rows": [
+        "r9UUEX 500백만",
+        "rB3WNZ 500백만"
+      ],
+      "relocked_rows": [
+        "rNASJd 500백만(~2029-06)",
+        "rU9qmG 100백만(~2029-06)",
+        "rU9qmG 100백만(~2029-07)"
+      ],
+      "learned": [],
+      "final": false,
+      "sent_hi": false,
+      "sent_lo": false,
+      "at": "2026-11-03T09:10:45.537381+09:00"
     }
   },
   "learned_accounts": [
     "rN8pqRwLYuuvY7pUHurybPC8P6rLqVsu6o"
   ],
-  "updated_at": "2026-11-02T09:09:16.196912+09:00",
+  "updated_at": "2026-11-03T09:10:45.537381+09:00",
   "seed_note": "2026-10-22 seed: 2026-01~09 온체인 계산(모두 70.0%, xrp-insights 월별 표와 일치). 2025-10~12 는 그때 쓰던 계정이 목록에 없어 해제/재잠금이 덜 잡혀 기록에서 뺌. 발송 없음."
 }

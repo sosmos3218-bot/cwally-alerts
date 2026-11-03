@@ -1,11 +1,11 @@
 {
   "stocks": {
     "005930": {
-      "status": "signal",
-      "signal_date": "2026-10-19",
-      "entry_close": 223500,
-      "entry_foreign_shares": 1243370,
-      "day3_sent": true,
+      "status": "idle",
+      "signal_date": null,
+      "entry_close": null,
+      "entry_foreign_shares": null,
+      "day3_sent": false,
       "ntfy_entry_id": "uRtD3iy64xtc"
     },
     "000660": {
@@ -19,8 +19,8 @@
   "last_weekly_iso": "2026-W45",
   "missing_streak": 0,
   "last_missing_notice_day": null,
-  "last_data_day": "2026-10-30",
-  "last_title": "[MEMSWING] 주간 요약 2026-W45 | 상태 점검",
-  "updated_at": "2026-11-02T09:00:56+09:00",
+  "last_data_day": "2026-11-02",
+  "last_title": "[MEMSWING] 005930/000660 삼성 10거래일 만료 | 청산 검토",
+  "updated_at": "2026-11-03T09:01:03+09:00",
   "note": "초기신호: 삼성 10/19 외인 +1,243,370주 종가 223,500 (ntfy uRtD3iy64xtc). 하이닉스 idle (10/16 -63,914, 10/19 -140,212, 종가 1,304,000)."
 }

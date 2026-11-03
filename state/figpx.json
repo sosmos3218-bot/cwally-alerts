@@ -1,15 +1,15 @@
 {
   "initialized": true,
   "armed": {
-    "buy22": false,
+    "buy22": true,
     "bear166": true,
     "base284": true
   },
-  "last_date": "2026-10-30",
-  "last_close": 21.65,
+  "last_date": "2026-11-02",
+  "last_close": 22.2,
   "init_note": "initialized from 2026-10-23 close 24.64 (Yahoo), no send. All three zones armed.",
   "fail_notified": false,
-  "updated_at": "2026-11-02T09:09:35+09:00",
+  "updated_at": "2026-11-03T09:11:09+09:00",
   "sec_seen": [
     "0000000000-25-004957",
     "0000000000-25-006040",
@@ -378,5 +378,5 @@
     "9999999995-25-002410"
   ],
   "sec_seed_note": "seeded 365 accession numbers from EDGAR submissions at install 2026-10-29 10:59 KST, no send",
-  "sec_checked": "2026-11-02T09:09:35+09:00"
+  "sec_checked": "2026-11-03T09:11:08+09:00"
 }

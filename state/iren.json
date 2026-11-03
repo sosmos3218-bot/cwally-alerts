@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-02 09:00 KST",
-  "price": 23.95,
+  "updated_at": "2026-11-03 09:00 KST",
+  "price": 22.02,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24",
@@ -129,10 +129,34 @@
     "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss",
     "https://www.tikr.com/blog/b-rileys-64-target-says-irens-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261030-4f8m8346&.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-sees-modest-171422114.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/crypto/articles/mstr-q3-earnings-beat-estimates-133900070.html?.tsrc=rss"
+    "https://finance.yahoo.com/markets/crypto/articles/mstr-q3-earnings-beat-estimates-133900070.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/crypto/articles/iren-nasdaqgs-iren-objects-tokenized-221036130.html?.tsrc=rss",
+    "https://www.tikr.com/blog/cipher-digital-falls-5-on-q3-revenue-miss-as-first-hpc-lease-revenue-arrives?ref=yahoofinance&tlnk=yf-261102-vfpc362f&.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/02/cipher-digital-falls-5-on-revenue-miss-and-keefe-bruyette-target-cut-terawulf-and-iren-drop-4/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/why-did-rddt-iren-mbly-stocks-tumble-to-52-week-lows-last-week/cNG9lEaR92L?.tsrc=rss",
+    "https://finance.yahoo.com/video/nvidia-microsoft-jpmorgan-object-okxice-203000548.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/02/applied-digital-slumps-8-as-ceo-says-800-mw-still-needs-financing-nebius-and-coreweave-fall-6/?.tsrc=rss",
+    "https://www.fool.com/coverage/better-buy/2026/11/02/applied-digital-vs-iren-which-technology-stock-is-a-better-buy-for-2027/?.tsrc=rss",
+    "https://decrypt.co/382348/nvidia-nike-biggest-wave-yet-tokenized-stock-objections?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-02 09:00 KST",
-  "pending_news": [],
+  "pending_news": [
+    {
+      "title": "Cipher Digital Falls 5% on Q3 Revenue Miss as First HPC Lease Revenue Arrives",
+      "url": "https://www.tikr.com/blog/cipher-digital-falls-5-on-q3-revenue-miss-as-first-hpc-lease-revenue-arrives?ref=yahoofinance&tlnk=yf-261102-vfpc362f&.tsrc=rss",
+      "seen_at": "2026-11-03 09:00 KST"
+    },
+    {
+      "title": "Nvidia, Microsoft, and JPMorgan object to OKXICE tokenized stocks",
+      "url": "https://finance.yahoo.com/video/nvidia-microsoft-jpmorgan-object-okxice-203000548.html?.tsrc=rss",
+      "seen_at": "2026-11-03 09:00 KST"
+    },
+    {
+      "title": "Nvidia and Nike Lead Biggest Wave Yet of Tokenized Stock Objections",
+      "url": "https://decrypt.co/382348/nvidia-nike-biggest-wave-yet-tokenized-stock-objections?.tsrc=rss",
+      "seen_at": "2026-11-03 09:00 KST"
+    }
+  ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
   "last_digest_items": 1
 }
