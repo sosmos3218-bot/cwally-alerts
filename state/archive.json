@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-03 09:22 KST",
+  "updated_at": "2026-11-03 11:01 KST",
   "items": [
+    {
+      "id": "Tb8XVmOz17BQ",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts oneshot",
+      "message": "2026-11-03 09:22 KST | OPS | port-alerts / oneshot\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/41552334107",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1793665339
+    },
     {
       "id": "c0hr953jYF7p",
       "topic": "cwally-port",
@@ -4456,18 +4467,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1792714011
-    },
-    {
-      "id": "HilTSDUASkqg",
-      "topic": "cwally-port",
-      "title": "[455850] 청산 | 잔량 정리",
-      "message": "2026-10-23 09:06 KST | 455850 | 세션 2026-10-22\n이게 뭐 알림: SOL AI반도체소부장 조건부 손절 점검이다.\n지금 결과/상태: ETF 22,730원 / 한미 191,200원 / 주성 187,900원 | T1, T2 | 주성 외국인 -188.6억 | 3단계\n지금 할 일: 잔량을 정리한다. 나누면 당일 종가와 다음날 시가 두 번만 쓴다.\n나중에: 재가동은 455850 종가 2거래일 연속 25,000원 위, 한미 222,500원 위, 주성 외국인 200억 매도 없음, 이수 외국인·기관 동시 순매수가 모두 나올 때만이다.\n익절/줄일 때: 지금 잔량을 비운다.\n하지 말 것: 반등만 보고 규칙을 끄지 않는다. 신용·미수로 물타기하지 않는다.\n꺼지는 때: 2026-12-31 09:00 KST (평일 09:00 수준 변화 때만 발송, 2026년 말 종료)",
-      "priority": 5,
-      "tags": [
-        "warning",
-        "chart_with_downwards_trend"
-      ],
-      "time": 1792714002
     }
   ]
 }
