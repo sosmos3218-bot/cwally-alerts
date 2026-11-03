@@ -1,0 +1,64 @@
+{
+  "px": {
+    "armed": true,
+    "above_streak": 0,
+    "below_streak": 29,
+    "last_date": "2026-11-03",
+    "last_close": 19655.0,
+    "last_ma20": 21278.75,
+    "source": "daum",
+    "seeded_at": "2026-11-03 21:50 KST, 11/3 확정 종가까지"
+  },
+  "nbi": {
+    "months": {
+      "2026-04": {
+        "value": 183.41,
+        "sources": [
+          "https://www.todayenergy.kr/news/articleView.html?idxno=298842"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)",
+        "note": "5월 기사 속 '4월 183.41보다'"
+      },
+      "2026-05": {
+        "value": 185.01,
+        "sources": [
+          "https://www.todayenergy.kr/news/articleView.html?idxno=298842"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)"
+      },
+      "2026-06": {
+        "value": 185.15,
+        "sources": [
+          "https://view.asiae.co.kr/article/2026071317481339027"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)"
+      },
+      "2026-07": {
+        "value": 185.49,
+        "sources": [
+          "https://view.asiae.co.kr/article/2026090411373148933"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)",
+        "note": "8월 기사 속 '전월 185.49'"
+      },
+      "2026-08": {
+        "value": 186.34,
+        "sources": [
+          "https://view.asiae.co.kr/article/2026090411373148933",
+          "https://www.ksg.co.kr/news/main_newsView.jsp?pNum=148219"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)"
+      },
+      "2026-09": {
+        "value": 186.59,
+        "sources": [
+          "https://www.yna.co.kr/view/AKR20261007053400003"
+        ],
+        "added": "2026-11-03 seed (기사 원문 확인)"
+      }
+    },
+    "sent": [],
+    "note": "2026-01~03 은 'N월 말' 원문 확인 못 해 비움"
+  },
+  "ops": {}
+}
