@@ -229,6 +229,7 @@ def selftest(cfg: dict) -> int:
     t4, b4, p4 = message(cfg, [{"key": "ma20", "title": cfg["ma"]["title"], "priority": 3, "warn": False}], "2027-01-05", 29000, 28000, 34000, "s")
     check("l25000 title/pri", (t1, p1), ("[487240] 487240 종가 24,950 | 1차 매수 검토", 3))
     check("l25000 checklist", all(k in b1 for k in ("중간선거", "Eaton", "산일전기", "200만~330만원", "일반계좌")), True)
+    check("l25000 funding rule first", ("(1) 자금 원칙: 하이닉스와 삼성 합산 43%" in b1, "MEMEXIT 매도 자금이 있을 때만" in b1), (True, True))
     check("l22000 alt trigger", "효성중공업 4분기 이연매출" in message(cfg, [l["l22000"]], "d", 21900, 24000, 35000, "s")[1], True)
     check("ma20 mentions 200일선 재평가", "200일선" in b4 and "재평가" in b4 and t4.endswith("3차 매수 검토 (20일선 회복)"), True)
     check("stop title/pri", (t2, p2), ("[487240] 487240 종가 20,600 | 추가 매수 중단선 (52주 저점 -5%)", 4))
