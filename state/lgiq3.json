@@ -1,7 +1,7 @@
 {
   "result_notified": true,
-  "empty_notified": false,
+  "empty_notified": true,
   "fail_notified": false,
-  "last_key": "{\"act\": \"\\ucd94\\uac00\\ub9e4\\uc218\", \"fx\": \"\\uc0c1\\ud68c\", \"op\": 7819.0}",
-  "updated_at": "2026-10-29T09:10:32.144944+09:00"
+  "last_key": "{\"act\": \"\\uc720\\ubcf4\", \"fx\": \"\\ud655\\uc778 \\ubd88\\uac00\", \"op\": null}",
+  "updated_at": "2026-11-03T09:11:57.399591+09:00"
 }

@@ -1,11 +1,16 @@
 {
-  "updated_at": "2026-10-27T09:09:48.287117+09:00",
-  "last_price": 18.81,
-  "zone": "above",
-  "entry_alerted": false,
+  "updated_at": "2026-11-03T09:11:56.383711+09:00",
+  "last_price": 19.75,
+  "zone": "mid",
   "div_alerted": false,
+  "fetch_fail_date": null,
+  "ir_fail_date": null,
+  "q3_date": null,
+  "q3_date_sent": false,
+  "q3_fingerprint": null,
+  "q3_verdict": null,
+  "entry_alerted": false,
   "last_filing": "2026-09-10",
   "earnings_fingerprint": null,
-  "fetch_fail_date": null,
   "sec_fail_date": null
 }
