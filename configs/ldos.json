@@ -1,0 +1,79 @@
+{
+  "name": "ldos",
+  "title_prefix": "[LDOS]",
+  "ticker": "LDOS",
+  "display": "Leidos Holdings (NYSE: LDOS)",
+  "as_of": "2026-11-03",
+  "holding": "미보유 관심 종목. 매수 계획(금액, 비중) 아직 없음.",
+  "approval": "사용자 분석 붙여 넣기 2026-11-03 (pt53u)",
+  "thesis": "방어적 품질과 합리적 밸류에이션, 단기 업사이드 제한. 11/2 종가 144.16, TTM PER 13.4, fwd PER 약 11.5~12, P/FCF 약 8.3. 3분기(11/3 발표): 매출 46.3억달러 하회, Non-GAAP EPS 3.62 상회, 연간 매출 가이던스 180~182억달러로 하향(SES JV), EPS 가이던스 12.50~12.70 상향. 백로그 496억달러, B/B 1.2. 컨센서스 목표가 약 152.",
+  "change_conditions": {
+    "up": "대형 신규 수주, 가이던스 추가 상향, 마진 개선, 방산 예산 가시화, Health 회복",
+    "down": "정부 지출 지연, 계약 타이밍 차질, 부채 증가, 성장 둔화 지속"
+  },
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST port-alerts morning 슬롯에 부착. Yahoo LDOS 일봉 중 뉴욕 시간 16:00 이후 끝난 날만(전일 미국 정규장 종가). 수동 job=ldos 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "close_hm": "16:00",
+  "lines": [
+    {
+      "key": "up152",
+      "op": "ge",
+      "level": 152.0,
+      "rearm_op": "lt",
+      "rearm": 146.0,
+      "priority": 3,
+      "warn": false,
+      "title": "컨센서스 목표가 도달, 추격 보류"
+    },
+    {
+      "key": "dn130",
+      "op": "le",
+      "level": 130.0,
+      "rearm_op": "ge",
+      "rearm": 134.0,
+      "priority": 3,
+      "warn": false,
+      "title": "관심 가격 검토 (fwd PER 약 10배대)"
+    },
+    {
+      "key": "rebound_giveback",
+      "op": "le",
+      "level": 117.74,
+      "rearm_op": "ge",
+      "rearm": 122.45,
+      "priority": 3,
+      "warn": true,
+      "title": "반등분 전액 반납, 논리 재점검"
+    }
+  ],
+  "rebound_note": "반등 시작점 = 11/2 의 약 한 달 전 2026-10-02 종가 117.74(Yahoo). 11/2 144.16 은 그 대비 +22.4%. 재무장은 +4%(122.45). 10월 저점 종가는 10/7 113.55.",
+  "earnings": {
+    "label": "4분기 FY2026 실적",
+    "cik": "0001336920",
+    "window": [
+      "2027-02-01",
+      "2027-03-15"
+    ],
+    "expected": "2027-02-16 (추정: FY2025 4분기는 2026-02-17 화 장 전 발표, 1월 중순에 일정 공지)",
+    "rule": "창 안에서 SEC EDGAR 제출 목록(data.sec.gov submissions)에 8-K 의 items 에 2.02 가 있는 새 제출이 보이면 다음 평일 09:00 KST 에 p3 1번. 창이 끝날 때(2027-03-16 이후 첫 실행)까지 못 찾으면 '직접 확인' p3 1번.",
+    "checklist": [
+      "FY2027 가이던스 vs 2026 Non-GAAP EPS 12.50~12.70 기준",
+      "분기와 TTM book-to-bill (1 이상인지)",
+      "Health 부문 매출 추세(3분기 -12%)",
+      "부채(약 60억달러)와 순부채 변화, 자사주 매입",
+      "정부 예산, 셧다운, 계약 타이밍 언급"
+    ],
+    "user_agent": "cwally-alerts ldos watch sosmos3218@gmail.com",
+    "priority": 3
+  },
+  "guidance_8k_watch": "생략: Item 7.01/8.01 8-K 는 투자자 발표 자료, 인수 등에도 자주 나와(예 2026-10-05 1.01, 7.01) 가이던스 변경만 골라내려면 본문 해석이 필요하고 오탐이 많음. 가이던스는 분기 실적(2.02) 리마인더에서 봄.",
+  "reference_2026_11_02": "종가 144.16, 52주 고점 205.77(장중), 1년 종가 고점 199.55(2025-11-04), 52주 저점 98.86(장중), 종가 저점 100.00(2026-06-25)",
+  "sources": {
+    "price": "https://query1.finance.yahoo.com/v8/finance/chart/LDOS?range=3mo&interval=1d",
+    "sec": "https://data.sec.gov/submissions/CIK{cik}.json"
+  },
+  "ends_kst": "2027-05-31 23:59",
+  "ends_note": "평일 09:00 전일 미국 종가 점검, 2027-05-31 까지"
+}

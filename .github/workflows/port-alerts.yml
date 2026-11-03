@@ -257,7 +257,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, xbi, hwm, ftnt, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, ldos]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -2069,6 +2069,20 @@ jobs:
           python scripts/irenearn_monitor.py "$SLOT" "$MODE" || rc=1
           if [ "$PICK_JOB" != "k203780" ]; then python scripts/irenpx_monitor.py "$MODE" || rc=1; fi
           exit "$rc"
+      - name: Run LDOS (Leidos watchlist close lines $152/$130/$117.74 on the prior US close + Q4 FY2026 8-K 2.02 reminder; morning 09:00 slot)
+        # 2026-11-03 user analysis (pt53u). Attached to the morning slot, no new cron. Dedupe state/ldos.json last_date + armed, earn.sent. Ends 2027-05-31.
+        # job=ldos dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'ldos') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/ldos_monitor.py selftest | tail -1; fi
+          python scripts/ldos_monitor.py "$MODE"
       - name: Run 453810 (KODEX 인도Nifty50 ISA tranche plan; morning 09:00 on prior confirmed closes)
         # 2026-11-03: built on judgment from the user's pasted 453810 plan. Attached to the morning slot, no new cron.
         # job=k453810 dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.

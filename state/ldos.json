@@ -1,0 +1,15 @@
+{
+  "armed": {
+    "up152": true,
+    "dn130": true,
+    "rebound_giveback": true
+  },
+  "last_date": "2026-11-02",
+  "last_close": [
+    "2026-11-02",
+    144.16000366210938
+  ],
+  "earn": {},
+  "fail_streak": {},
+  "updated_at": "2026-11-03 21:41 KST"
+}
