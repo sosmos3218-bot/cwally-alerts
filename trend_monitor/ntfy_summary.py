@@ -7,9 +7,13 @@
 
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 
 from trend_monitor.config import Config
+
+_DATE_FILE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.json$")
 
 _BAD = ("·", "・", "—", "–")
 
@@ -138,6 +142,79 @@ def maybe_publish(payload: dict, cfg: Config, allow_send: bool = False, sender=N
     if sender is None:
         sender = _repo_publish
     sender(topic, title, body, cfg.ntfy_priority, cfg)
+    return {"sent": True, "reason": "", "title": title, "body": body}
+
+
+def previous_breadth(trade_date: str, output_dir) -> tuple[str, float] | None:
+    """기준일보다 앞선 가장 가까운 날짜 JSON 의 시장폭. 데모와 값 없는 파일은 건너뜁니다."""
+    files = []
+    for path in Path(output_dir).glob("*.json"):
+        match = _DATE_FILE.match(path.name)
+        if match and match.group(1) < str(trade_date):
+            files.append((match.group(1), path))
+    for day, path in sorted(files, reverse=True):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if data.get("demo"):
+            continue
+        value = (data.get("risk") or {}).get("breadth_pct_above_ma50")
+        if value is None:
+            continue
+        return day, float(value)
+    return None
+
+
+def recovery_message(payload: dict, cfg: Config, prev: tuple[str, float] | None) -> tuple[str, str] | None:
+    """직전 값이 기준 미만이고 오늘 값이 기준 이상일 때만 만듭니다."""
+    if payload.get("demo") or prev is None:
+        return None
+    value = (payload.get("risk") or {}).get("breadth_pct_above_ma50")
+    if value is None:
+        return None
+    now_pct = float(value)
+    prev_day, prev_pct = prev
+    limit = float(cfg.breadth_min_pct)
+    if not (prev_pct < limit <= now_pct):
+        return None
+    day = payload.get("trade_date") or ""
+    title = (
+        f"[TREND] 시장폭 {limit:g}% 회복 {_md(day)}: "
+        f"{now_pct:.1f}% ({_md(prev_day)} {prev_pct:.1f}%)"
+    )
+    end = "종료일 없음" if not cfg.ends_kst else f"{cfg.ends_kst} KST"
+    note = f" ({cfg.ends_note})" if cfg.ends_note else ""
+    body = "\n".join(
+        [
+            f"시가총액 상위 {int(cfg.breadth_top_n)}종목 중 {int(cfg.breadth_ma_window)}일선 위 비율이 "
+            f"{_md(prev_day)} {prev_pct:.1f}%에서 {_md(day)} {now_pct:.1f}%로 {limit:g}% 이상이 됐습니다.",
+            "신규 수량 절반 규칙이 풀리는 구간입니다. 매매 신호가 아니라 시장 국면 확인용입니다.",
+            "반등이 하루짜리인지는 다음 거래일에도 이 값이 유지되는지로 확인하세요.",
+            f"꺼지는 때: {end}{note}",
+        ]
+    )
+    assert_plain_korean(title)
+    assert_plain_korean(body)
+    return title, body
+
+
+def maybe_publish_recovery(
+    payload: dict, cfg: Config, output_dir, allow_send: bool = False, sender=None
+) -> dict | None:
+    """회복이 아니면 None. 회복이면 1통. allow_send 가 아니면 네트워크를 호출하지 않습니다."""
+    prev = previous_breadth(payload.get("trade_date") or "", output_dir)
+    message = recovery_message(payload, cfg, prev)
+    if message is None:
+        return None
+    title, body = message
+    if not allow_send:
+        return {"sent": False, "reason": "발송하지 않음", "title": title, "body": body}
+    if not cfg.ntfy_enabled:
+        return {"sent": False, "reason": "ntfy 가 꺼져 있습니다.", "title": title, "body": body}
+    if sender is None:
+        sender = _repo_publish
+    sender("cwally-port", title, body, cfg.ntfy_priority, cfg)
     return {"sent": True, "reason": "", "title": title, "body": body}
 
 
