@@ -388,6 +388,9 @@ def notice_rows(cfg: dict, code: str) -> list[dict]:
     return out
 
 
+_NOTICE_ROWS = notice_rows  # the real parser; selftest() stubs the global with an empty feed
+
+
 def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None) -> list[dict]:
     """notice_events (dated checks) and notice_watch (keyword filings, dedupe by filing no). Mutates st and fails."""
     out = []
@@ -409,6 +412,10 @@ def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None
     w = cfg.get("notice_watch")
     if w:
         seen = st.setdefault("notice_seen", [])
+        # Titles are scrubbed in notice_rows (ㆍ -> ", "), so keywords get the same scrub: a config can keep the exact
+        # Naver form name (단일판매ㆍ공급계약체결). Optional "exclude" (e.g. 정정) drops a title. Both added 2026-11-03.
+        kws = [scrub(k) for k in w["keywords"]]
+        excl = [scrub(x) for x in w.get("exclude") or []]
         for code in w["codes"]:
             try:
                 rows = (rows_fn or notice_rows)(cfg, code)
@@ -416,7 +423,8 @@ def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None
                 fails.append(f"{code} 공시 목록 (네이버 {str(exc)[:60]}; 다음 실행에서 다시 확인)")
                 continue
             for r in sorted(rows, key=lambda x: x["datetime"]):
-                if r["no"] and r["no"] not in seen and r["datetime"][:10] >= w["since"] and any(k in r["title"] for k in w["keywords"]):
+                if (r["no"] and r["no"] not in seen and r["datetime"][:10] >= w["since"] and any(k in r["title"] for k in kws)
+                        and not any(x in r["title"] for x in excl)):
                     seen.append(r["no"])
                     out.append({"kind": "notice_watch", "filing": r})
     return out
@@ -675,11 +683,13 @@ def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | No
         short_title = short_title.replace(x, "")
     short_title = re.sub(r"\s+", " ", short_title).strip()
     title = f"{cfg['title_prefix']} {w['title']} | {short_title[:40]}"
+    # optional "todo_by": [{"match", "todo"}], first match in the title wins (064400: 결산실적공시 예고 -> set Q4 date)
+    todo = next((x["todo"] for x in w.get("todo_by") or [] if scrub(x["match"]) in f["title"]), w["todo"])
     msg = "\n".join([
         head(cfg, stamp),
         f"이게 뭐 알림: {w['what']} 매수 지시가 아닙니다.",
         f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px} 공시 목록: {cfg['sources']['notice_page'].format(code=f['code'])}",
-        f"지금 할 일: {w['todo']}",
+        f"지금 할 일: {todo}",
         f"나중에: {w['later']}",
         "익절/줄일 때: " + w.get("trim", "공시 제목만으로 줄이지 마세요."),
         "하지 말 것: " + w.get("dont", "제목만 보고 추격 매매, 신용 및 미수."),
@@ -1183,12 +1193,13 @@ def run(name: str, argv: list[str]) -> int:
 # ---------- offline self-test ----------
 def selftest(name: str) -> int:
     g = globals()
-    orig = {k: g[k] for k in ("nxt_ref", "yahoo_rows", "naver_rows", "get_json")}
+    orig = {k: g[k] for k in ("nxt_ref", "yahoo_rows", "naver_rows", "get_json", "notice_rows")}
 
     def no_net(*a, **k):
         raise RuntimeError("offline selftest")
     g["nxt_ref"] = lambda c, rows, now: f"{c['short']} NXT 정보 없음"
     g["yahoo_rows"] = g["naver_rows"] = g["get_json"] = no_net
+    g["notice_rows"] = lambda c, code: []  # notice_watch configs (064400): empty feed unless a check passes rows_fn
     try:
         return _selftest(name, orig)
     finally:
@@ -1288,8 +1299,85 @@ def _selftest(name: str, orig: dict) -> int:
         _selftest_extra(name, check, at)
     if load_cfg(name).get("earn_auto"):
         _selftest_earn(name, check, at)
+    if load_cfg(name).get("notice_watch"):
+        _selftest_notice_watch(name, check, at)
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
+
+
+def _selftest_notice_watch(name, check, at) -> None:
+    """notice_watch (064400, 2026-11-03): new matching filing once, 정정 and pre-since filings silent, repeat silent,
+    feed failure held, title prefix, no forbidden chars. Fixtures use the raw Naver titles (ㆍ) through notice_rows."""
+    from ntfy_util import route_topic
+    full = load_cfg(name)
+    w = full["notice_watch"]
+    g = globals()
+    pfx = full["title_prefix"]
+    corp = "(주)엘지씨엔에스 "
+    raw = [  # raw feed rows as Naver returns them (newest first), parsed by the real notice_rows
+        {"no": 900001, "title": corp + "단일판매\u318d공급계약체결", "datetime": "2026-11-04T06:50:41"},
+        {"no": 900002, "title": corp + "(정정)단일판매\u318d공급계약체결", "datetime": "2026-11-04T06:50:40"},
+        {"no": 900003, "title": corp + "기업설명회(IR) 개최(안내공시)", "datetime": "2026-11-04T06:50:39"},
+        {"no": 157009804, "title": corp + "단일판매\u318d공급계약체결", "datetime": "2026-10-15T06:50:41"},
+        {"no": 156737141, "title": corp + "결산실적공시 예고(안내공시)", "datetime": "2026-10-15T06:50:22"},
+        {"no": 129715587, "title": corp + "유형자산 취득결정", "datetime": "2026-09-11T06:52:16"},
+        {"no": 99325378, "title": corp + "투자판단 관련 주요경영사항", "datetime": "2026-08-10T06:51:38"},
+    ]
+    feed = {"rows": list(raw)}
+    saved = g["get_json"]
+    g["get_json"] = lambda url: feed["rows"]
+    try:
+        rows_fn = orig_notice_rows = _NOTICE_ROWS
+        st = default_state(full)
+        st.update(seeded=True, last_day="2026-11-03", last_close=73700.0)
+        for ln in full["lines"]:
+            st["lines"][ln["key"]]["armed"] = not hit(ln, 73700.0)
+        for ln in full.get("extra_lines") or []:
+            st["extra"][ln["key"]]["armed"] = not hit(ln, 73700.0)
+        st["earn_done"] = {full["earnings"]["date"]: "x"}
+        data = {"rows": [{"day": "2026-11-04", "close": 73000.0}], "src": "Yahoo 정규장"}
+        ref = lambda c, rows, now: f"{c['short']} NXT 정보 없음"  # noqa: E731
+
+        def run_(d, h=19):
+            return plan_sends(full, st, data, [], at(d, h), lambda c, x: None, ref, rows_fn)
+        check("notice rows: raw ㆍ title scrubbed", orig_notice_rows(full, "064400")[0]["title"], corp + "단일판매, 공급계약체결")
+        s1 = run_("2026-11-04")
+        t1 = [t for t, *_ in s1]
+        check("notice_watch: new 공급계약 fires once (정정, IR, pre-11/3 filings silent)", t1, [f"{pfx} {w['title']} | 단일판매, 공급계약체결"])
+        check("notice_watch: seen = new filing only", st["notice_seen"], ["900001"])
+        check("notice_watch: pre-since filings never re-announced", any(n in st["notice_seen"] for n in ("157009804", "156737141", "129715587", "99325378")), False)
+        check("notice_watch: same run again silent", run_("2026-11-04", 22), [])
+        check("notice_watch: next day repeat silent", [t for t, *_ in plan_sends(full, st, {"rows": [], "src": "Yahoo 정규장"}, [], at("2026-11-05"), lambda c, x: None, ref, rows_fn)], [])
+        feed["rows"] = [{"no": 900010, "title": corp + "결산실적공시 예고(안내공시)", "datetime": "2027-01-15T06:50:22"},
+                        {"no": 900011, "title": corp + "타법인주식및출자증권취득결정", "datetime": "2027-01-15T06:51:00"},
+                        {"no": 900012, "title": corp + "[기재정정]투자판단 관련 주요경영사항", "datetime": "2027-01-15T06:52:00"},
+                        {"no": 900013, "title": corp + "유형자산 취득결정", "datetime": "2027-01-15T06:53:00"},
+                        {"no": 900014, "title": corp + "투자판단 관련 주요경영사항", "datetime": "2027-01-15T06:54:00"}]
+        s2 = plan_sends(full, st, {"rows": [], "src": "Yahoo 정규장"}, [], at("2027-01-15"), lambda c, x: None, ref, rows_fn)
+        t2 = [t for t, *_ in s2]
+        check("notice_watch: 결산실적 예고, 타법인주식, 유형자산, 투자판단 fire once each, 기재정정 silent", t2,
+              [f"{pfx} {w['title']} | 결산실적공시 예고(안내공시)", f"{pfx} {w['title']} | 타법인주식및출자증권취득결정",
+               f"{pfx} {w['title']} | 유형자산 취득결정", f"{pfx} {w['title']} | 투자판단 관련 주요경영사항"])
+        m_pre = s2[0][1]
+        check("notice_watch: 결산실적 예고 -> set Q4 earnings date", ("4분기 실적 날짜" in m_pre, "earnings.date" in m_pre), (True, True))
+        check("notice_watch: other filings keep the generic todo", ("earnings.date" in s2[1][1], w["todo"] in s2[1][1]), (False, True))
+        check("notice_watch: repeat of all silent", plan_sends(full, st, {"rows": [], "src": "Yahoo 정규장"}, [], at("2027-01-18"), lambda c, x: None, ref, rows_fn), [])
+        allm = s1 + s2
+        check("notice_watch: every title starts with prefix", all(t.startswith(pfx + " ") for t, *_ in allm), True)
+        check("notice_watch: no forbidden chars (· — ㆍ) in titles and bodies", any(ch in t + m for t, m, *_ in allm for ch in FORBIDDEN), False)
+        check("notice_watch: message names the filing as 단일판매, 공급계약체결", "단일판매, 공급계약체결" in s1[0][1], True)
+        check("notice_watch: notice routed to the port topic", route_topic("cwally-port", s1[0][0]), "cwally-port")
+
+        def down(url):
+            raise RuntimeError("HTTP 503")
+        g["get_json"] = down
+        st2 = copy.deepcopy(st)
+        s3 = plan_sends(full, st2, {"rows": [], "src": "Yahoo 정규장"}, [], at("2027-01-19"), lambda c, x: None, ref, rows_fn)
+        check("notice_watch: feed down -> one ops fail notice, nothing marked seen", ([t for t, *_ in s3], st2["notice_seen"] == st["notice_seen"]),
+              ([f"{pfx} 조회 실패 | 조건 판단 보류"], True))
+        check("notice_watch: fail notice -> cwally-ops", route_topic("cwally-port", s3[0][0]), "cwally-ops")
+    finally:
+        g["get_json"] = saved
 
 
 def _selftest_extra(name, check, at) -> None:
