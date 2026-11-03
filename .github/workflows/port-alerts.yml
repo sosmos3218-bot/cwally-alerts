@@ -388,7 +388,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: verify-shiplev2
           fetch-depth: 0
           persist-credentials: true
       - uses: actions/setup-python@v6
@@ -2136,7 +2136,7 @@ jobs:
         if: always()
         run: python scripts/ntfy_archive.py
       - name: Persist state
-        if: always()
+        if: false
         run: |
           git config user.name "cwally-alerts-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -2149,7 +2149,7 @@ jobs:
           fi
           git push origin HEAD:main
       - name: Notify ops on failure
-        if: failure()
+        if: false
         env:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/ops_notify.py port-alerts "${{ steps.pick.outputs.job }}"
