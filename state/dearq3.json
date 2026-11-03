@@ -1,5 +1,14 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
-  "last_problem_key": null
+  "last_problem_key": null,
+  "last_key": "177390034",
+  "parsed": {
+    "sales": 228.4,
+    "op": 92.0,
+    "ni": -74.3,
+    "subs": null,
+    "opm": 40.3
+  },
+  "updated_at": "2026-11-03T16:26:21+09:00"
 }
