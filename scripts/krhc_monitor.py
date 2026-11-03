@@ -73,14 +73,8 @@ def target_week(now: datetime, close_hm: str) -> tuple[date, date] | None:
 
 # ---------------- 데이터 ----------------
 def daily_closes(code: str) -> dict[str, float]:
-    raw = json.loads(get(f"https://m.stock.naver.com/api/stock/{code}/price?pageSize=20&page=1"))
-    out: dict[str, float] = {}
-    for r in raw if isinstance(raw, list) else []:
-        d = str(r.get("localTradedAt") or "")[:10]
-        c = num(r.get("closePrice"))
-        if len(d) == 10 and c:
-            out[d] = c
-    return out
+    import krx_close
+    return {b.day: b.close for b in krx_close.regular_bars(code, 25)}
 
 
 def weekly(code: str, last: date, prev_last: date) -> tuple[dict, dict[str, float]]:

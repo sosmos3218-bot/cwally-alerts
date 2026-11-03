@@ -287,15 +287,11 @@ def earn_step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], f
 
 # ---------- 가격 ----------
 def fetch_rows(cfg: dict) -> list[dict]:
-    raw = json.loads(sd.http(cfg["sources"]["price"]))
-    rows = []
-    for r in raw if isinstance(raw, list) else []:
-        d, c = str(r.get("localTradedAt") or "")[:10], _n(r.get("closePrice"))
-        if len(d) == 10 and c:
-            rows.append({"day": d, "close": c})
+    import krx_close
+    rows = [{"day": b.day, "close": b.close} for b in krx_close.regular_bars(cfg["code"], 25)]
     if not rows:
         raise RuntimeError("시세 0건")
-    return sorted(rows, key=lambda x: x["day"])
+    return rows
 
 
 def confirmed(rows: list[dict], today: str, now: datetime) -> list[dict]:

@@ -6,7 +6,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. KRX 정규장 종가(siseJson) 기준. 평소엔 침묵하고 조건일 때만 발송.",
+  "schedule_note": "새 cron 없음. 기존 flow 슬롯 평일 15:40 KST(UTC 06:40) 재사용. KRX 정규장 종가(Daum 일별, 실패 시 15:30 분봉) 기준. 평소엔 침묵하고 조건일 때만 발송.",
   "oneshot_kst": [
     "2026-11-12 18:00",
     "2026-11-13 18:00",
@@ -44,7 +44,7 @@
     "expire_date": "2027-03-19"
   },
   "sources": {
-    "daily": "https://api.finance.naver.com/siseJson.naver?symbol=053300&requestType=1&startTime={start}&endTime={end}&timeframe=day",
+    "daily": "정규장 종가 scripts/krx_close.py (Daum A053300 days). siseJson 일봉은 시간외가 섞여 쓰지 않음",
     "integration": "https://m.stock.naver.com/api/stock/053300/integration",
     "quarter": "https://m.stock.naver.com/api/stock/053300/finance/quarter",
     "annual": "https://m.stock.naver.com/api/stock/053300/finance/annual"

@@ -32,7 +32,6 @@ KST = timezone(timedelta(hours=9))
 NAME = "remed"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
 STATE_PATH = ROOT / "state" / f"{NAME}.json"
-CHART = "https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=40&requestType=0"
 CLOSE_READY = "15:40"  # KRX 정규장 15:30 마감 + 종가 반영 여유
 
 
@@ -48,15 +47,9 @@ def load_state() -> dict:
 
 
 def daily_bars(code: str) -> list[dict]:
-    req = urllib.request.Request(CHART.format(code=code), headers=naver_api.UA)
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        text = resp.read().decode("euc-kr", errors="ignore")
-    out = []
-    for m in re.finditer(r'data="(\d{8})\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)"', text):
-        d, o, h, lo, c, v = m.groups()
-        out.append({"day": d, "open": float(o), "high": float(h), "low": float(lo), "close": float(c), "volume": float(v)})
-    out.sort(key=lambda r: r["day"])
-    return out
+    import krx_close
+    return [{"day": b.day.replace("-", ""), "open": b.open, "high": b.high, "low": b.low,
+             "close": b.close, "volume": float(b.volume or 0)} for b in krx_close.regular_bars(code, 50)]
 
 
 def raw_zone(close: float, vol_ok: bool, low_line: float, reclaim: float, trend: float) -> int:

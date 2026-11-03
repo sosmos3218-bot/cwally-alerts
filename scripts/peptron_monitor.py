@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kr_calendar import is_trading_day  # noqa: E402
-from naver_api import get_json, notices, num, stock_trend  # noqa: E402
+from naver_api import get_json, notices, num  # noqa: E402
 from ntfy_util import publish, resolve_server  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -114,11 +114,12 @@ def fetch_latest_actual(code: str) -> dict | None:
 
 
 def fetch_close(code: str) -> tuple[str, float] | None:
-    rows = [r for r in stock_trend(code, 5) if r.get("day") and r.get("close") is not None]
-    if not rows:
+    import krx_close
+    bars = krx_close.completed(krx_close.regular_bars(code, 6), datetime.now(krx_close.KST))
+    if not bars:
         return None
-    r = max(rows, key=lambda x: x["day"])
-    return r["day"], r["close"]
+    b = bars[-1]
+    return b.day.replace("-", ""), b.close
 
 
 # ---------- judgment (pure) ----------

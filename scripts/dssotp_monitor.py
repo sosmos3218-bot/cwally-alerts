@@ -142,18 +142,16 @@ def find_result(cfg: dict, period_end: str, since: str) -> dict | None:
 # ---------- 시세 ----------
 
 def krx_close(cfg: dict, code: str, now: datetime) -> tuple[str, float]:
-    url = cfg["sources"]["krx_daily"].format(
-        code=code, start=(now - timedelta(days=20)).strftime("%Y%m%d"), end=now.strftime("%Y%m%d")
-    )
-    rows = re.findall(r'\["(\d{8})",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)', fetch(url))
-    bars = sorted(((d, float(c)) for d, o, h, lo, c in rows), reverse=True)
-    today = now.strftime("%Y%m%d")
-    if bars and bars[0][0] == today and now.strftime("%H:%M") < "15:35":
-        bars = bars[1:]  # 장중 막대는 종가가 아니다
+    """정규장 종가. 네이버 siseJson 일봉은 시간외/NXT가 섞여 쓰지 않는다."""
+    import krx_close as kx
+    bars = kx.regular_bars(str(code), 12)
+    today = now.strftime("%Y-%m-%d")
+    if bars and bars[-1].day == today and now.strftime("%H:%M") < "15:35":
+        bars = bars[:-1]
     if not bars:
         raise RuntimeError(f"{code} 시세 없음")
-    d, c = bars[0]
-    return f"{d[:4]}-{d[4:6]}-{d[6:]}", c
+    b = bars[-1]
+    return b.day, float(b.close)
 
 
 def tw_live(items: list[dict]) -> dict:

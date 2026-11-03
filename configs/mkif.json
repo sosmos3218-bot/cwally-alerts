@@ -36,7 +36,7 @@
   ],
   "rearm_note": "구간에 들어갈 때 1번만 보냄. 종가가 구간을 벗어나면 조용히 재무장(le: 선 위 종가, ge: 선 아래 종가). 첫 실행은 현재 종가로 상태만 초기화. 8,300원과 8,950원이 같이 걸리면 경고만 보냄. 최근 분배금 340원 이하 또는 비엔씨티 재구조화 플래그가 있으면 8,950원 알림은 보류 전용 문구.",
   "sources": {
-    "price": "https://m.stock.naver.com/api/stock/088980/price?pageSize=10&page=1",
+    "price": "정규장 종가 scripts/krx_close.py (Daum A088980 days)",
     "notices": "https://stock.naver.com/api/domestic/detail/notice?itemCode=088980&page=1&pageSize=30",
     "notices_note": "DART OpenAPI 키가 저장소에 없어 네이버 KRX 공시 피드(본문 포함)를 쓴다. 공시 번호(no)로 중복 방지."
   },

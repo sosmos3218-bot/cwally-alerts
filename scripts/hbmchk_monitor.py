@@ -96,6 +96,24 @@ def expected_us_day(now: datetime) -> date:
 KR_FINAL_KST = time(18, 0)
 
 
+def with_regular_close(rows: list[dict], code: str) -> list[dict]:
+    """Replace Naver daily closePrice with the regular-session close. Foreign flow stays."""
+    import krx_close
+    bars = {krx_close.ymd(b.day): b.close for b in krx_close.regular_bars(code, 45)}
+    out, missing = [], 0
+    for r in rows or []:
+        nr = dict(r) if isinstance(r, dict) else r
+        key = str((r or {}).get("day") or "").replace("-", "")[:8]
+        if key in bars and isinstance(nr, dict):
+            nr["close"] = bars[key]
+        else:
+            missing += 1
+        out.append(nr)
+    if missing:
+        print(f"krx_close {code} trend rows without regular close: {missing}", file=sys.stderr)
+    return out
+
+
 def completed_kr(rows: list[dict], now: datetime, kr_calendar, need_close: int = 20) -> list[dict]:
     if not isinstance(rows, list) or not rows:
         raise ValueError("Naver 일봉 응답이 비었음")
@@ -237,7 +255,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
     for code in ("005930", "000660"):
         name = cfg["kr"]["stocks"][code]["name"]
         try:
-            done = completed_kr(naver.stock_trend(code, size=40), now, kr_calendar, cfg["kr"]["ma_days"])
+            done = completed_kr(with_regular_close(naver.stock_trend(code, size=40), code), now, kr_calendar, cfg["kr"]["ma_days"])
             result = kr_flow_result(done, cfg["kr"]["ma_days"])
             print(f"KR {code} {result}")
             old = bool(state["kr_flow_active"].get(code, False))
@@ -249,7 +267,7 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
         except Exception as exc:
             errors.append((f"kr-{code}", name, str(exc)))
     if flow_candidates:
-        details = [f"- {name} Naver {r['date']} 종가 {r['close']:,.0f}원, MA20 {r['ma20']:,.0f}원, 외국인 최근3일 {', '.join(f'{v:+,.0f}주' for v in r['foreign'])}"
+        details = [f"- {name} 정규장 {r['date']} 종가 {r['close']:,.0f}원, MA20 {r['ma20']:,.0f}원, 외국인 최근3일 {', '.join(f'{v:+,.0f}주' for v in r['foreign'])}"
                    for _, name, r in flow_candidates]
         ev = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK 수급 회복 관찰 | 실적/계약 확인 전 신규매수 보류", body(
             stamp, "삼성전자와 SK하이닉스의 완료 일봉 수급 및 MA20 관찰입니다. 매수 신호가 아닙니다.",
@@ -271,14 +289,14 @@ def run(dry_run: bool = False, now: datetime | None = None) -> int:
             print(f"publish failed flow: {exc}", file=sys.stderr)
     try:
         code, spec = "475300", cfg["kr"]["stocks"]["475300"]
-        done = completed_kr(naver.stock_trend(code, size=40), now, kr_calendar, 1)
+        done = completed_kr(with_regular_close(naver.stock_trend(code, size=40), code), now, kr_calendar, 1)
         close, day, line = done[0]["close"], done[0]["day"], float(spec["risk_line"])
         hit, old = close < line, bool(state.get("sol_below_line", False))
         print(f"KR {code} date={day} close={close} below={hit}")
         if hit and not old:
             ev = event("[HBMCHK] 005930/000660/475300/NVDA/SNDK 신규진입 보류/보유 위험 점검", body(
                 stamp, "SOL 475300의 기존 25,000원 위험선 완료 일봉 점검입니다.",
-                f"Naver {day} 종가 {close:,.0f}원, 25,000원 미만.",
+                f"정규장 {day} 종가 {close:,.0f}원, 25,000원 미만.",
                 "신규진입을 보류하고 보유 중인 경우에만 사람의 위험 검토를 하세요.",
                 "다음 완료 KRX 일봉에서 25,000원 회복 여부를 다시 봅니다.",
                 "자동 매도 알림이 아닙니다. 보유 여부와 손실 허용 범위를 직접 확인하세요.",

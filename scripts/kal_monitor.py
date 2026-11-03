@@ -2,7 +2,7 @@
 """[KAL] 대한항공 003490 관심 종목 알림 (2026-11-03 설치, 같은 날 11:45 사용자 분석으로 갱신).
 
 평일 15:40 KST (0090b0 슬롯에 부착). 모두 상태가 바뀔 때만 1번, 같은 실행에서 걸린 것은 한 건으로 묶음.
-  price : 네이버 수정주가 일봉 확정 종가. 26,500 이하 '1차 지정가 검토 구간'(매수 검토, 조건 1 점검표와 규모),
+  price : 정규장 확정 종가. 26,500 이하 '1차 지정가 검토 구간'(매수 검토, 조건 1 점검표와 규모),
           24,000 비관 시나리오 p4, 32,500 기본 시나리오 구간 진입 p3, 40,000 낙관 시나리오 p3. 선마다 rearm.
   pref  : 우선주 003495 할인율 = 1 - 우선주/보통주(같은 날 확정 종가). 28% 이상 p3, 25% 아래 재무장.
   wti   : CL=F 미국장 정산가(매 실행 chartPreviousClose 를 state 에 쌓음) 2일 연속 110 이상 p3, 105 아래 재무장.
@@ -45,9 +45,8 @@ def get(url: str) -> bytes:
 
 
 def price_rows(code: str) -> list[tuple[str, float]]:
-    raw = get(f"https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=260&requestType=0").decode("euc-kr", "ignore")
-    return sorted((f"{d[:4]}-{d[4:6]}-{d[6:]}", float(c))
-                  for d, c in re.findall(r'item data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', raw))
+    import krx_close
+    return [(b.day, b.close) for b in krx_close.regular_bars(code, 260)]
 
 
 def confirmed(rows: list[tuple[str, float]], now: datetime) -> list[tuple[str, float]]:

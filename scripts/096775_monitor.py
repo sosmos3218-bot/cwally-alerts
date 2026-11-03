@@ -24,7 +24,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kr_calendar import is_trading_day, prev_trading_day  # noqa: E402
-from naver_api import stock_trend  # noqa: E402
 from ntfy_util import publish, resolve_server  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -64,11 +63,11 @@ def expected_session(now: datetime) -> date:
 
 
 def fetch_close(code: str, session: date) -> tuple[float | None, str | None]:
-    rows = stock_trend(code, 5)
-    key = session.strftime("%Y%m%d")
-    for r in rows:
-        if r.get("day") == key and r.get("close") is not None:
-            return r["close"], r.get("day")
+    import krx_close
+    key = session.isoformat()
+    for b in krx_close.regular_bars(code, 8):
+        if b.day == key:
+            return b.close, b.day.replace("-", "")
     return None, None
 
 

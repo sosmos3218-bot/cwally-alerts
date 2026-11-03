@@ -94,10 +94,10 @@
   },
   "reference_2026_11_03": "11/2 네이버 확정 종가 보통주 28,700(+8.10%), 우선주 21,650(할인율 24.6%). 11/3 장중 보통주 29,850, 우선주 23,500~24,200. 200일선 약 26,240. WTI 12월물 11/2 정산 96.46, 브렌트 1월물 104.77, 원달러 1,343.8.",
   "sources": {
-    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=003490&timeframe=day&count=260&requestType=0 (수정주가 일봉)",
+    "price": "정규장 종가 scripts/krx_close.py (Daum A003490 days, 200일선 포함, 실패 시 15:30 분봉)",
     "fuel": "https://query1.finance.yahoo.com/v8/finance/chart/HO=F",
     "notices": "naver_api.notices('003490')",
-    "preferred": "https://fchart.stock.naver.com/sise.nhn?symbol=003495&timeframe=day&count=10&requestType=0",
+    "preferred": "정규장 종가 scripts/krx_close.py (Daum A003495 days)",
     "wti": "https://query1.finance.yahoo.com/v8/finance/chart/CL=F?range=1d&interval=5m (chartPreviousClose)",
     "dart": "https://dart.fss.or.kr/dsab007/detailSearch.ax (textCrpCik=00113526, 최근 30일 목록)"
   },

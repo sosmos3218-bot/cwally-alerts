@@ -19,7 +19,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
-import naver_api  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 NAME = "meras"
@@ -54,15 +53,16 @@ def fetch_us10y() -> tuple[float | None, str | None]:
         return None, str(e)
 
 def last_close(code: str, today: str) -> tuple[str | None, float | None, str | None]:
+    import krx_close
+    iso = f"{today[:4]}-{today[4:6]}-{today[6:]}" if len(str(today)) == 8 else str(today)[:10]
     try:
-        rows = naver_api.stock_trend(code, 5)
+        bars = [b for b in krx_close.regular_bars(code, 8) if b.day < iso]
     except Exception as exc:
         return None, None, str(exc)
-    done = [r for r in rows if r.get("day") and r["day"] < today and r.get("close")]
-    if not done:
+    if not bars:
         return None, None, "완료 종가 없음"
-    top = max(done, key=lambda r: r["day"])
-    return top["day"], float(top["close"]), None
+    b = bars[-1]
+    return b.day.replace("-", ""), float(b.close), None
 
 def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str) -> str:
     return "\n".join([

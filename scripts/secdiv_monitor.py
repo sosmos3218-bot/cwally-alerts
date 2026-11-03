@@ -173,9 +173,12 @@ def dart_link(cfg: dict, filed_day: str) -> str | None:
 
 def last_close(code: str) -> tuple[float | None, str | None]:
     try:
-        raw = json.loads(http(f"https://m.stock.naver.com/api/stock/{code}/price?pageSize=2&page=1", tries=2))
-        r = raw[0]
-        return float(str(r["closePrice"]).replace(",", "")), str(r["localTradedAt"])
+        import krx_close
+        bars = krx_close.completed(krx_close.regular_bars(code, 5), datetime.now(KST))
+        if not bars:
+            return None, None
+        b = bars[-1]
+        return b.close, b.day
     except Exception as exc:
         print(f"price fetch failed {code}: {exc}")
         return None, None

@@ -240,8 +240,9 @@ def main() -> int:
     price = None
     perr = None
     try:
-        rows = stock_trend(cfg["ticker"], 3)
-        price = rows[0]["close"] if rows else None
+        import krx_close
+        bars = krx_close.completed(krx_close.regular_bars(cfg["ticker"], 5), now)
+        price = bars[-1].close if bars else None
     except Exception as exc:
         perr = type(exc).__name__
     filing = None

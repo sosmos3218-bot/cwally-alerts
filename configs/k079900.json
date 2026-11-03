@@ -28,7 +28,7 @@
     "note": "분기/반기/사업보고서(정정 포함) 새 제출 시 1회. KIND 접수번호로 중복 방지. 분기 단독 영업이익률(가능하면) 18% 이상 회복 지속, 15% 미만 매수 보류 검토, 사이 중립. 2026-10-22 기준 이미 제출된 보고서는 state 에 시드(알림 없음)."
   },
   "sources": {
-    "price": "네이버 m.stock.naver.com/api/stock/079900/price (일별 시가/고가/저가/종가, 오늘 행은 장중 실시간)",
+    "price": "정규장 OHLC scripts/krx_close.py (Daum A079900 days, 장중에는 당일 진행 봉, 15:31 이후 정규장 종가)",
     "reports": "KIND kind.krx.co.kr/disclosure/details.do searchDetailsSub (회사별 공시 목록) + disclsviewer 원문(연결/별도 포괄손익계산서)",
     "dart_link": "DART dart.fss.or.kr/dsab007/detailSearch.ax (같은 보고서 rcpNo 찾기, 실패 시 KIND 뷰어 링크)"
   },

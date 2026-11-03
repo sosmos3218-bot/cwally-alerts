@@ -11,7 +11,7 @@
   "schedule_kst": "19:00",
   "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계, [0219B0] [0163Y0] 가격 감시와 같은 시간. 네이버 일별 시세의 확정 종가(그날 15:40 이후 행 또는 앞선 날짜 행)만 쓰고, 데이터 날짜(price.last_date)보다 새 날짜만 날짜순으로 판정. 19:00 에 당일 행이 아직 없으면 그날은 판정하지 않고 다음 실행에서 이어서 판정(state price.pending 기록). 수동 job=lotterental 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
   "daily_window": {"start": "2026-11-03", "end": "2027-02-26"},
-  "price_source": "https://m.stock.naver.com/api/stock/089860/price?pageSize=20&page=1",
+  "price_source": "정규장 종가 scripts/krx_close.py (Daum A089860 days)",
   "buy": {
     "level": 45000,
     "priority": 4,

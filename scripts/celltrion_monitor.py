@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """[셀트리온] 068270 분할 매수 구간 + 3분기 분기보고서, 4분기 잠정실적 무효화 점검.
 
-price  : 평일 15:40 KST (0090b0 슬롯에 부착). 네이버 수정주가 일봉(fchart requestType=0) 확정 종가.
+price  : 평일 15:40 KST (0090b0 슬롯에 부착). 정규장 확정 종가(Daum 일별, 실패 시 15:30 분봉).
          구간에 들어오면 1번 알림, 경계 밖으로 rearm_pct(3%) 넘게 벗어난 뒤 다시 들어오면 다시 알림. 데이터 거래일로 중복 방지.
 filing : 평일 19:00 KST (k203780 체인에 부착).
          3분기 분기보고서(KIND, krhcfile_monitor 의 kind_list/Book/analyze 재사용) 3개월 단독 매출, 영업이익 vs 잠정. 1번.
@@ -89,7 +89,7 @@ def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str) -> tuple[str, s
         n = {"z2": "2", "z3": "3"}[k]
         title = f"{TAG} 068270 {n}차 분할 매수 구간 진입 | 종가 {won(p)}원 ({won(z['lo'])}~{won(z['hi'])})"
         action = f"계획한 {n}차 분할만. 무효화 알림이 왔으면 멈추기."
-    status = (f"{day} 확정 종가 {won(p)}원 (수정주가). 회사 자사주 평균 매입가 {won(cfg['buyback_avg_price'])}원. "
+    status = (f"{day} 확정 종가 {won(p)}원 (정규장). 회사 자사주 평균 매입가 {won(cfg['buyback_avg_price'])}원. "
               "구간: 추격 금지 200,000원 이상, 1차 181,000~185,000, 2차 173,000~176,000, 3차 159,000~168,000.")
     msg = body(stamp, "셀트리온 종가가 미리 정한 분할 매수 구간이나 추격 금지선에 들어왔다는 알림. 매매 지시가 아닙니다.", status, action,
                f"같은 구간은 종가가 경계 밖으로 {cfg['rearm_pct']:g}% 넘게 벗어났다가 다시 들어올 때만 다시 옵니다. 분기보고서와 4분기 잠정실적 점검은 19:00 에 따로 옵니다.",
@@ -104,11 +104,8 @@ def ops_msg(stamp: str, tail: str, status: str) -> tuple[str, str, int]:
 
 # ---------- 가격 ----------
 def price_rows(code: str) -> list[tuple[str, float]]:
-    raw = fetch(f"https://fchart.stock.naver.com/sise.nhn?symbol={code}&timeframe=day&count=10&requestType=0")
-    out = []
-    for d, c in re.findall(r'item data="(\d{8})\|[^|]*\|[^|]*\|[^|]*\|([\d.]+)\|', raw):
-        out.append((f"{d[:4]}-{d[4:6]}-{d[6:]}", float(c)))
-    return sorted(out)
+    import krx_close
+    return [(b.day, b.close) for b in krx_close.regular_bars(code, 10)]
 
 
 def confirmed_close(rows: list[tuple[str, float]], now: datetime) -> tuple[str, float] | None:
@@ -127,7 +124,7 @@ def price_part(cfg: dict, st: dict, now: datetime, stamp: str) -> list[tuple[str
     if not lc:
         if st.get("price_fail") != stamp[:10]:
             st["price_fail"] = stamp[:10]
-            out.append(ops_msg(stamp, "종가 조회 실패 | 구간 판정 못 함", f"네이버 수정주가 일봉 {NA} ({err})."))
+            out.append(ops_msg(stamp, "종가 조회 실패 | 구간 판정 못 함", f"정규장 종가 {NA} ({err})."))
         return out
     day, p = lc
     if "zones" not in st:

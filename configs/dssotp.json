@@ -63,7 +63,7 @@
     ]
   },
   "sources": {
-    "krx_daily": "https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=1&startTime={start}&endTime={end}&timeframe=day",
+    "krx_daily": "정규장 종가 scripts/krx_close.py (Daum days). siseJson 일봉은 시간외가 섞여 쓰지 않음",
     "notice": "stock.naver.com/api/domestic/detail/notice (naver_api.notices)",
     "tw_live": "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={chans}",
     "twse_day": "https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={yyyymm01}&stockNo={code}",

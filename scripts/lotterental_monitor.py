@@ -34,14 +34,8 @@ CLOSE_HM = (15, 40)
 
 
 def fetch_rows(cfg: dict) -> list[dict]:
-    raw = json.loads(k79.http(cfg["price_source"]))
-    rows = []
-    for r in raw if isinstance(raw, list) else []:
-        d = str(r.get("localTradedAt") or "")[:10]
-        c = k79.num(r.get("closePrice"))
-        if len(d) == 10 and c:
-            rows.append({"day": d, "close": c})
-    rows.sort(key=lambda x: x["day"])
+    import krx_close
+    rows = [{"day": b.day, "close": b.close} for b in krx_close.regular_bars(cfg["code"], 25)]
     if not rows:
         raise RuntimeError("시세 0건")
     return rows

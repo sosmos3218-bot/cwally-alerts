@@ -105,23 +105,17 @@ def clean(t: str) -> str:
 # ---------- data ----------
 
 def fetch_bars(cfg: dict, now: datetime) -> list[tuple[str, float]]:
-    """Completed daily closes (KST date, close), ascending. Today's bar only after market_close_kst."""
-    raw = json.loads(http(cfg["sources"]["bars"]))
-    out: dict[str, float] = {}
-    for r in raw if isinstance(raw, list) else []:
-        d = str(r.get("localTradedAt") or "")[:10]
-        c = str(r.get("closePrice") or "").replace(",", "")
-        lo = str(r.get("lowPrice") or "").replace(",", "")
-        if len(d) == 10 and c.replace(".", "").isdigit():
-            out[d] = float(c)
-            if lo.replace(".", "").isdigit() and float(lo) > 0:
-                LOWS[d] = float(lo)
-    if not out:
+    """Completed regular-session closes, ascending. Today's bar only after market_close_kst."""
+    import krx_close
+    hh, mm = map(int, str(cfg.get("market_close_kst", "15:40")).split(":"))
+    bars = krx_close.completed(krx_close.regular_bars(cfg["code"], 25), now, (hh, mm))
+    if not bars:
         raise RuntimeError("시세 0건")
-    hh, mm = map(int, cfg.get("market_close_kst", "15:40").split(":"))
-    today = now.strftime("%Y-%m-%d")
-    after = (now.hour, now.minute) >= (hh, mm)
-    return sorted((d, c) for d, c in out.items() if d < today or (d == today and after))
+    LOWS.clear()
+    for b in bars:
+        if b.low and b.low > 0:
+            LOWS[b.day] = float(b.low)
+    return [(b.day, b.close) for b in bars]
 
 
 def kind_list(cfg: dict, since: str, until: str) -> list[dict]:
