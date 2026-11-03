@@ -18,6 +18,8 @@
     "breakout": "오늘 정규장 종가 > 오늘 제외 직전 20거래일 고가, 오늘 거래량 >= 오늘 제외 직전 50거래일 평균의 1.5배",
     "close_source": "Daum 일별(krx_close, 정규장), prevClosingPrice 수정주가, 오늘 행은 네이버 15:30 분봉으로 대조",
     "cooldown_trading_days": 20,
+    "followup_trading_days": 5,
+    "followup": "돌파 알림 1건마다 5번째 KRX 거래일(돌파일 = 0) 정규장 종가로 피벗 위 유지 여부 1회 알림. 관심 목록에서 빠지거나 만료돼도 보냄. 놓친 날은 다음 실행에서 실제 날짜를 적어 1회",
     "expire_trading_days": 60,
     "expire_note": "added_kst 다음 거래일부터 센 거래일 수. 만료 종목은 state/vcp_breakout.json expired 에만 기록하고 config 는 그대로 둠"
   },
