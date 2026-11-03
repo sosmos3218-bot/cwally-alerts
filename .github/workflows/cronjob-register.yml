@@ -16,6 +16,10 @@ name: cwally-cronjob-register
 # action=register_tsla (approved 2026-10-29, configs/tsla.json) creates only
 # "cwally tsla US regular 30min (NY)" (America/New_York, minutes 0 and 30, hours 9-16, Mon-Fri,
 # body job=tsla oneoff_mode=auto); skips if it exists. The monitor gates 09:30-16:00.
+# action=register_trend (2026-11-03, docs/ontime-dispatch.md) creates only
+# "cwally trend-monitor (15:40 KST)": weekdays 15:40 Asia/Seoul, URL trend-monitor.yml,
+# body {"ref":"main","inputs":{}}. Skips if that title or that URL at 15:40 already exists.
+# Does not modify the port-alerts or flow-alerts 15:40 jobs.
 # New workflow file approved in chat 2026-10-06. workflow_dispatch only: no schedule, no ntfy alert
 # except the ops notice on failure. See scripts/cronjob_register.py for the checks.
 
@@ -27,9 +31,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
         type: choice
-        options: [register, register_slot, update_slot, delete, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla]
+        options: [register, register_slot, update_slot, delete, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"

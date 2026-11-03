@@ -7,6 +7,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | morning | 09:00 | 11:42 ~ 13:31 |
 | afternoon | 15:20 | 20:38 ~ 22:57 |
 | flow | 15:40 | 21:00 ~ 다음날 00:13 |
+| trend | 15:40 | 2026-11-03 은 큐에 잡히지 않음 (0 runs) |
 
 정시 실행은 외부 cron 서비스가 `workflow_dispatch`를 호출해서 맡고, GitHub cron은 **백업**으로 남긴다.
 새 GitHub cron 시간은 추가하지 않는다. (이 프로젝트에는 별도 서버가 없다.)
@@ -25,6 +26,7 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | morning | 09:00 | 00:00 | `port-alerts.yml` | `{"job":"morning"}` |
 | afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon"}` |
 | flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
+| trend | 15:40 | 06:40 | `trend-monitor.yml` | 없음 (반복 잡 "cwally trend-monitor (15:40 KST)", `action=register_trend`. 잡 번호는 머지 후 등록할 때 생김) |
 | 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 11:00 (~11/05, 2026-10-26부터 하루 1회) | 02:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 11 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인, 2026-10-26 승인으로 11시만) |
@@ -103,6 +105,23 @@ Body: {"ref":"main","inputs":{"job":"morning"}}
 - `job=tsla` 수동 dispatch 는 `oneoff_mode=auto` 가 아니면 dry(selftest 와 가격 305, 295 출력, 발송과 state 없음).
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
+## 추세 점검 평일 15:40 반복 잡 (trend-monitor, 2026-11-03)
+
+2026-11-03 15:40 KST 에 `trend-monitor.yml` 의 GitHub schedule 이 큐에 잡히지 않았다 (runs 0). 같은 시각 port-alerts 는 돌았다. GitHub cron `40 6 * * 1-5` 는 늦은 백업으로 둔다.
+
+- 정시: cron-job.org 반복 잡 1개 "cwally trend-monitor (15:40 KST)". 시간대 Asia/Seoul, 분 40, 시 15, 월~금(wdays 1~5), 만료 없음(`expiresAt` 0).
+  URL 은 `trend-monitor.yml` 의 workflow_dispatch 이다. port-alerts.yml, flow-alerts.yml 과 주소가 다르다.
+  헤더는 템플릿 잡 8588894(morning)에서 복사하고, body 는 `{"ref":"main","inputs":{}}` (date, demo, dry_run, allow_partial, force 는 워크플로 기본값).
+- 만든 방법: 머지 후 Actions 에서 워크플로 `cwally-cronjob-register` 를 고르고 `action=register_trend` 로 실행한다. `dry_run` 을 켜면 만들기 전에 검사만 한다.
+  같은 제목이 이미 있으면(꺼져 있어도) skip 한다. 같은 trend-monitor.yml 주소가 평일 15:40 일정이거나, 다음 평일 15:40 에 울리면 skip 한다 (exit 10, 워크플로는 성공).
+  15:40 flow-alerts 잡과 15:41 port-alerts(0090b0) 잡은 URL 이 달라서 건너뛰지 않고, 고치지도 않는다. 이 액션은 새 잡만 PUT 하고 기존 잡을 덮어쓰지 않는다.
+- 중복: concurrency 그룹 `cwally-trend-monitor` 라서 두 번째 실행은 첫 실행이 끝난 뒤에 시작한다.
+  시작 전에 origin/main 의 `state/slots/trend.json` 을 본다. 같은 KST 날이면 스크립트를 돌리지 않고 끝난다.
+  `trend_monitor/output/YYYY-MM-DD.json` (서울 날짜)이 이미 main 에 있어도 끝난다.
+  실제 실행(스케줄, 또는 date/demo/dry_run 없이 온 dispatch)은 스크립트보다 먼저 슬롯을 표시한다. 실패해도 그 표시를 push 해서 늦은 cron 이 같은 날 요약을 다시 보내지 않는다.
+  demo, dry_run, 날짜를 직접 넣은 실행은 슬롯을 표시하지 않고 소모하지도 않는다. 같은 날 다시 돌리려면 dispatch 입력 `force=true`.
+- 끄기: 콘솔에서 직접. `action=delete` 는 원샷 제목만 지우므로 이 반복 잡은 거절한다.
+
 ## 원샷 (`job=oneshot`)
 
 원샷도 외부 cron으로 정시에 돌린다. 원샷 시각마다 일회성 job을 하나 등록하고, 내용은 모두 같다.
@@ -131,6 +150,7 @@ Body: {"ref":"main","inputs":{"job":"oneshot"}}
 - 두 워크플로 모두 concurrency 그룹이 있어서 두 번째 실행은 첫 실행이 push를 마친 뒤 시작한다.
 - 슬롯 파일은 슬롯마다 따로라서 port-alerts와 flow-alerts의 state push가 서로 충돌하지 않는다.
 - 같은 날 일부러 다시 돌리려면: port-alerts는 `job=all` 또는 개별 job id, flow-alerts는 `force=true`.
+- trend-monitor 도 같다. 슬롯 파일은 `state/slots/trend.json` 이고, 서울 날짜의 `trend_monitor/output/YYYY-MM-DD.json` 이 main 에 있으면 그것도 건너뛴다. 다시 돌리려면 `force=true`.
 - 스크립트들도 대부분 자체 하루 1회 dedupe(state)를 갖고 있어 이중 안전장치가 된다.
 
 ## 휴장일
