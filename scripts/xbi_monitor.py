@@ -109,6 +109,28 @@ def fomc_text(cfg: dict, now: datetime) -> str:
     return f"최근 FOMC({f['meeting']}): {f['decision']}, 표결 {f['vote']}, 반대 {f['dissent']}. 다음 회의 {f['next_meeting']}."
 
 
+def ext_msg(cfg: dict, st: dict, now: datetime, stamp: str) -> tuple[str, str, int]:
+    e = cfg["ext_check"]
+    end = cfg["ends_kst"][:10]
+    names = {"nochase": "추격 금지", "z1": "1차", "z2": "2차", "z3": "3차"}
+    zs = ", ".join(f"{names.get(k, k)} {'무장' if v.get('armed') else '알림 보냄(재진입 대기)'}" for k, v in (st.get("zones") or {}).items())
+    lc = st.get("last_close") or ["기록 없음", None]
+    px = f"${lc[1]:.2f}" if lc[1] is not None else "?"
+    done = st.get("executed_manwon")
+    exe = (f"계획 1,000만원 중 기록된 체결 {done}만원." if done is not None
+           else "계획 1,000만원 중 실제 체결 금액은 알림이 모릅니다(체결 기록 없음). 얼마를 샀는지 알려 주세요.")
+    fm = fomc_text(cfg, now)
+    fresh = "FOMC 블록 최신." if "갱신 필요" not in fm else "FOMC 블록이 오래됨, 연장하면 먼저 갱신 필요."
+    msg = body(stamp, f"XBI 분할 매수 구간 알림이 {end} 에 끝나기 2주 전 연장 여부 점검(1번만). 매매 신호가 아닙니다.",
+               f"종료일 {end}. 최근 종가 {lc[0]} {px}. 구간 상태: {zs}. {exe} {fm} {fresh} 구간: {zone_table(cfg)}.",
+               "점검: 1) 계획 유지 여부, 2) 구간 재설정 필요 여부(현재가, 10년물, 52주 고점 기준), 3) 연장 기간. "
+               f"연장하려면 이렇게 보내세요: \"[XBI] 알림을 {e['suggest_until']}까지 연장해 줘\"",
+               f"연장하면 다음 FOMC({e['next_fomc_after_end']}) 뒤 FOMC 블록을 갱신하는 루틴도 같이 정하기. 답이 없으면 {end} 에 그대로 끝납니다.",
+               "이 점검 알림으로 비중을 바꾸지 않기.",
+               "점검 없이 그대로 연장, 종료 직전에 남은 금액 한꺼번에 넣기.")
+    return f"[XBI] 알림 종료 2주 전 | 연장 여부 점검 ({end} 종료)", msg, int(e.get("priority", 3))
+
+
 def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str, extra: str = "") -> tuple[str, str, int]:
     dd = (p / cfg["high_52w"] - 1) * 100
     k = z["key"]
@@ -303,6 +325,11 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
         src = st.get("last_close") if any(ln["series"] == "xbi" for ln in pend_lines) and st.get("last_close") else st.get("tnx_last")
         meta[len(out)] = ((src or [stamp[:10]])[0], "+".join(ln["key"] for ln in pend_lines))
         out.append(line_msg(cfg, pend_lines, {"xbi": st.get("last_close"), "tnx": st.get("tnx_last")}, stamp, nochase_merged))
+    ec = cfg.get("ext_check")
+    if ec and not st.get("ext_check_sent") and ec["date"] <= stamp[:10] <= cfg["ends_kst"][:10]:
+        meta[len(out)] = (stamp[:10], ec["id"])
+        out.append(ext_msg(cfg, st, now, stamp))
+        st["ext_check_sent"] = stamp
     topic, server = resolve_topic("port", cfg.get("ntfy_topic")), resolve_server(cfg.get("ntfy_server"))
     for i, (t, m, p) in enumerate(out):
         assert "\u00b7" not in t + m and "\u2014" not in t + m, t
@@ -438,6 +465,34 @@ def selftest(cfg: dict) -> int:
         assert not any("조회 실패" in x["title"] for x in fh), fh
         assert {"z1", "z2"} <= {x["key"] for x in fh} and any(k in x["key"] for x in fh for k in ("hi52", "below3", "tnx_low5", "tnx_hi")), fh
         print(f"ok fired history in auto sim: {len(fh)} sends recorded, ops notices not recorded, keys {sorted({x['key'] for x in fh})}")
+        # --- 2027-02-12 연장 점검: not before, fires once, catch-up, no repeat
+        ET_ = "[XBI] 알림 종료 2주 전 | 연장 여부 점검 (2027-02-26 종료)"
+        go(("2027-02-10", 157.5), T6, datetime(2027, 2, 11, 9, 0, tzinfo=KST))
+        assert not any(s[1] == ET_ for s in sent), sent
+        go(("2027-02-11", 157.5), T6, datetime(2027, 2, 12, 9, 0, tzinfo=KST))
+        e = [s for s in sent if s[1] == ET_]
+        assert len(e) == 1 and e[0][3] == 3 and e[0][0] == "cwally-port", sent
+        m = e[0][2]
+        for k in ("종료일 2027-02-26", "최근 종가 2027-02-11 $157.50", "실제 체결 금액은 알림이 모릅니다", "FOMC 정보 갱신 필요 (마지막 반영 10/28)",
+                  "계획 유지 여부", "구간 재설정 필요 여부", "연장 기간", "[XBI] 알림을 2027-0X-XX까지 연장해 줘", "2027-03-16~17"):
+            assert k in m, (k, m)
+        assert not any(w in m for w in ("만원만 검토", "매수 기회", "저가 매수")), m
+        go(("2027-02-12", 157.5), T6, datetime(2027, 2, 15, 9, 0, tzinfo=KST))
+        assert not any(s[1] == ET_ for s in sent), sent
+        print("ok ext check: silent 2/11, once on 2/12, no repeat 2/15")
+        st = json.loads(g["STATE_PATH"].read_text(encoding="utf-8"))
+        st.pop("ext_check_sent")
+        g["STATE_PATH"].write_text(json.dumps(st), encoding="utf-8")
+        go(("2027-02-15", 157.5), T6, datetime(2027, 2, 16, 9, 0, tzinfo=KST))
+        assert [s[1] for s in sent if s[1] == ET_] == [ET_], sent
+        go(("2027-02-16", 157.5), T6, datetime(2027, 2, 17, 9, 0, tzinfo=KST))
+        assert not any(s[1] == ET_ for s in sent)
+        st = json.loads(g["STATE_PATH"].read_text(encoding="utf-8"))
+        st.pop("ext_check_sent")
+        g["STATE_PATH"].write_text(json.dumps(st), encoding="utf-8")
+        go(("2027-02-26", 157.5), T6, datetime(2027, 2, 27, 9, 0, tzinfo=KST))
+        assert not any(s[1] == ET_ for s in sent)
+        print("ok ext check: missed 2/12 -> catch-up once on next run, nothing after the end date")
     finally:
         g.update(keep)
     fst: dict = {}
