@@ -1,0 +1,31 @@
+{
+  "name": "sntholdings",
+  "title_prefix": "[036530]",
+  "code": "036530",
+  "display": "SNT홀딩스 (KOSPI 036530) 종가 42,000원 1차 매수 구간, 38,000원 이탈 경고와 4주 유지 손절 검토 감시",
+  "short": "SNT홀딩스",
+  "approval": "사용자 채팅 승인 2026-11-04 (새 알림, 보유 없음, 분할 매수 계획 보조, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음, 새 cron-job.org 작업 없음)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인(cron-job.org 정시 + GitHub 0 10 * * 1-5 백업)의 같은 단계, [010140] 삼성중공업 감시 바로 뒤. 정규장 확정 종가(scripts/krx_close.py, 그날 15:40 이후 행 또는 앞선 날짜 행)만 쓰고, 데이터 날짜(price.last_date)보다 새 날짜만 날짜순으로 판정. 19:00 에 당일 행이 아직 없으면 그날은 판정하지 않고 다음 실행에서 이어서 판정(state price.pending 기록). 수동 job=sntholdings 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "daily_window": {"start": "2026-11-04", "end": "2027-03-31"},
+  "price_source": "정규장 종가와 거래량 scripts/krx_close.py (Daum A036530 days, 실패 시 네이버 15:30 분봉). 네이버 일봉은 시간외 포함이라 안 씀",
+  "buy1": {
+    "level": 42000,
+    "priority": 3,
+    "rearm_above": 44000,
+    "note": "종가 42,000원 이하면 1번(1차 매수 구간: 목표 비중의 1/3, 42,000원 이하 지정가, 배당락 전 탐색 매수). 종가가 44,000원 넘게 회복한 뒤에야 다시 무장."
+  },
+  "stop": {
+    "level": 38000,
+    "days": 20,
+    "warn_priority": 3,
+    "hold_priority": 4,
+    "note": "종가 38,000원 이하 첫날 p3 이탈 경고 1번. 종가 38,000원 이하가 20거래일 연속이면 p4 4주 유지 1차분 손절 검토 1번. 종가 38,000원 초과가 한 번이라도 나오면 연속 일수 0, 둘 다 다시 무장."
+  },
+  "stale_trading_days": 2,
+  "seed": {"day": "2026-11-03", "close": 43700, "volume": 9647, "note": "11/3 정규장 확정 종가 43,700원(Daum, 네이버 일봉은 시간외 포함 43,950원), 거래량 9,647주. 42,000원 위, 38,000원 위라 두 조건 모두 무장. 이 날짜까지는 판정하지 않음, 다음 거래일부터 판정."},
+  "ends_kst": "2027-03-31 23:59",
+  "ends_note": "KRX 거래일 19:00, 2027-03-31까지. 뒤에는 조용히 끝남"
+}
