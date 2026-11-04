@@ -35,7 +35,30 @@ async function chart(symbol) {
 }
 const pct = (x) => (x == null ? "없음" : `${(x * 100).toFixed(1)}%`);
 
+// 하루 한 번 발송 보호 (scripts/ntfy_util.py dup_guard_skip 과 같은 규칙): 오늘 00:00 KST 이후 같은 제목이 이미 있으면 건너뜀.
+// poll 실패는 fail-open (기록 후 발송). NTFY_DUP_GUARD=0 이면 끔.
+async function dupGuardSkip(title) {
+  if (["0", "false", "no", "off"].includes((process.env.NTFY_DUP_GUARD || "").trim().toLowerCase())) return false;
+  const since = Math.floor((Date.parse(kstDay() + "T00:00:00+09:00")) / 1000);
+  try {
+    const r = await fetch(`${server}/${topic}/json?poll=1&since=${since}`, { headers: { "User-Agent": "cwally-alerts-dup-guard" }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const lines = (await r.text()).split("\n").filter((x) => x.trim());
+    for (const line of lines) {
+      const m = JSON.parse(line);
+      if ((m.event || "message") === "message" && m.title === title) {
+        console.log(`dup-guard skip: ${topic} same title already sent today (ntfy poll): ${title}`);
+        return true;
+      }
+    }
+  } catch (e) {
+    console.log(`dup-guard poll failed (${e.message}); fail-open, send`);
+  }
+  return false;
+}
+
 async function ntfy(title, message, priority) {
+  if (await dupGuardSkip(title)) return;
   const res = await fetch(server, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

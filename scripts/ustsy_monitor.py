@@ -77,6 +77,8 @@ def ntfy_publish(server: str, topic: str, title: str, message: str, priority: in
         "priority": priority,
         "tags": tags.split(","),
     }).encode()
+    if __import__("ntfy_util").dup_guard_skip_payload(server, payload):  # 하루 한 번 발송 보호 (같은 제목 오늘 이미 발송)
+        return
     req = urllib.request.Request(server.rstrip("/"), data=payload, method="POST", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as resp:
         print(resp.read().decode())

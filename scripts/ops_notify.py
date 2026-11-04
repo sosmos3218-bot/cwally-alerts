@@ -39,14 +39,25 @@ def main() -> int:
         except Exception as exc:  # never fail the job because the notice failed
             print(f"ops notify failed: {exc}", file=sys.stderr)
         return 0
-    msg = "\n".join([
-        f"{now} | OPS | {wf} / {job}",
-        "이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.",
-        "지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.",
-        f"지금 할 일: 로그에서 ::error:: 줄을 확인하세요. {url}",
-    ])
+    artifact = (os.environ.get("STATE_ARTIFACT") or "").strip()
+    if artifact:  # persist_state.sh gave up after its retries (pt13u)
+        msg = "\n".join([
+            f"{now} | OPS | {wf} / {job}",
+            "이게 뭐 알림: state 저장(git push)이 5번 재시도 후에도 실패했습니다. 매매 신호가 아닙니다.",
+            f"지금 상태: 이번 실행의 state/ 폴더를 실행 artifact {artifact} 로 올렸습니다(7일 보관). 하루 한 번 발송 보호가 있어 같은 제목 재발송은 막힙니다.",
+            f"지금 할 일: 다음 실행 전에 artifact 의 state 파일을 main 에 반영하세요. {url}",
+        ])
+        title = f"[OPS] 워크플로 실패 | {wf} {job} state 저장 실패, artifact 보관"
+    else:
+        msg = "\n".join([
+            f"{now} | OPS | {wf} / {job}",
+            "이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.",
+            "지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.",
+            f"지금 할 일: 로그에서 ::error:: 줄을 확인하세요. {url}",
+        ])
+        title = f"[OPS] 워크플로 실패 | {wf} {job}"
     try:
-        publish("cwally-ops", f"[OPS] 워크플로 실패 | {wf} {job}", msg, priority=3, tags=["warning"])
+        publish("cwally-ops", title, msg, priority=4 if artifact else 3, tags=["warning"])
     except Exception as exc:  # never fail the job because the notice failed
         print(f"ops notify failed: {exc}", file=sys.stderr)
     return 0

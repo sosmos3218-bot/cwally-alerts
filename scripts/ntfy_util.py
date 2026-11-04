@@ -248,6 +248,94 @@ def ends_skip_reason(topic: str, title: str | None, config_name: str | None = No
         return None
 
 
+# 하루 한 번 발송 보호 (dup-guard, 2026-11-04 사용자 요청 pt13u).
+# state 저장(git push)이 실패해도 늦은 백업 실행이 같은 알림을 다시 보내지 않게, cwally-port 로 보내기 직전에
+# 오늘(KST 00:00 이후) 같은 topic 에 제목이 완전히 같은 메시지가 이미 있으면 보내지 않는다.
+# 확인 출처: 1) ntfy 서버 poll (<server>/<topic>/json?poll=1&since=<오늘 00:00 KST unix>, git 과 무관)
+#            2) state/archive.json (Archive ntfy 단계가 쌓는 사본, ntfy.sh 캐시 12시간보다 오래된 오늘 발송 대비)
+# poll 실패는 fail-open: 기록하고 그대로 보낸다(알림을 놓치는 쪽이 더 나쁘고, 1차 중복 방지는 각 알림 state 가 함).
+# 끄기: 환경변수 NTFY_DUP_GUARD=0. cwally-ops 는 보호하지 않는다(장애 안내는 매번).
+DUP_GUARD_TOPICS = {"cwally-port"}
+ARCHIVE_PATH = Path(__file__).resolve().parents[1] / "state" / "archive.json"
+DUP_GUARD_LOG: list[str] = []
+
+
+def _kst_midnight_unix(now: datetime | None = None) -> int:
+    now = (now or _now_kst()).astimezone(KST)
+    return int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+
+
+def _dup_poll(server: str, topic: str, since: int) -> list[dict]:
+    url = f"{server.rstrip('/')}/{topic}/json?poll=1&since={since}"
+    req = urllib.request.Request(url, headers={"User-Agent": "cwally-alerts-dup-guard"})
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        raw = resp.read().decode("utf-8", errors="replace")
+    out = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        msg = json.loads(line)
+        if msg.get("event", "message") == "message":
+            out.append(msg)
+    return out
+
+
+def _dup_archive(topic: str, since: int, path: Path | None = None) -> list[dict]:
+    try:
+        data = json.loads((path or ARCHIVE_PATH).read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    items = data.get("items") if isinstance(data, dict) else data
+    out = []
+    for m in items or []:
+        try:
+            if m.get("topic") == topic and int(m.get("time") or 0) >= since:
+                out.append(m)
+        except (TypeError, ValueError, AttributeError):
+            continue
+    return out
+
+
+def _dup_log(line: str) -> None:
+    DUP_GUARD_LOG.append(line)
+    print(line)
+
+
+def dup_guard_skip(topic: str, title: str | None, server: str | None = None, *, now: datetime | None = None,
+                   poll=None, archive=None) -> bool:
+    """True = same title already published to this topic today (KST); caller must not send."""
+    if (os.environ.get("NTFY_DUP_GUARD") or "").strip().lower() in {"0", "false", "no", "off"}:
+        return False
+    if topic not in DUP_GUARD_TOPICS or not title:
+        return False
+    since = _kst_midnight_unix(now)
+    poll = poll or _dup_poll
+    archive = archive or _dup_archive
+    try:
+        if any(m.get("title") == title for m in poll(server or resolve_server(), topic, since)):
+            _dup_log(f"dup-guard skip: {topic} same title already sent today (ntfy poll): {title}")
+            return True
+    except Exception as exc:  # fail-open
+        _dup_log(f"dup-guard poll failed ({type(exc).__name__}: {exc}); fail-open, archive check then send")
+    try:
+        if any(m.get("title") == title for m in archive(topic, since)):
+            _dup_log(f"dup-guard skip: {topic} same title already sent today (state/archive.json): {title}")
+            return True
+    except Exception as exc:
+        _dup_log(f"dup-guard archive check failed ({type(exc).__name__}); send")
+    return False
+
+
+def dup_guard_skip_payload(server: str | None, payload: bytes) -> bool:
+    """For scripts that build their own ntfy JSON payload (topic/title keys) and POST it directly."""
+    try:
+        obj = json.loads(payload.decode("utf-8") if isinstance(payload, (bytes, bytearray)) else payload)
+    except Exception:
+        return False
+    return dup_guard_skip(str(obj.get("topic") or ""), obj.get("title"), server)
+
+
 def publish(
     topic: str,
     title: str,
@@ -266,6 +354,10 @@ def publish(
         print(skip)
         LAST_PUBLISH.clear()
         LAST_PUBLISH.update({"sent": False, "reason": skip, "title": title})
+        return None
+    if dup_guard_skip(topic, title, server):
+        LAST_PUBLISH.clear()
+        LAST_PUBLISH.update({"sent": True, "dup": True, "reason": "dup-guard: already published today", "title": title})
         return None
     ends_name = config_name if config_name and config is None and (CONFIGS_DIR / f"{config_name}.json").is_file() else None
     if append_end:  # False only for legacy callers whose body never had the end line (hce)
@@ -306,6 +398,54 @@ def record_fired(st: dict, day: str, key: str, priority: int, title: str, now: d
     lst.append({"date": day, "key": key, "priority": priority, "title": title, "sent_at": when.isoformat()})
     st["fired"] = lst[-cap:] if cap > 0 else []
     return True
+
+
+def _dup_guard_selftest(check) -> int:
+    """dup-guard checks with fake poll/archive; nothing touches the network."""
+    from unittest import mock
+    before = 0
+    now = datetime(2026, 11, 4, 22, 30, tzinfo=KST)
+    mid = _kst_midnight_unix(now)
+    assert mid == int(datetime(2026, 11, 4, 0, 0, tzinfo=KST).timestamp())
+    today = [{"event": "message", "time": mid + 19 * 3600, "title": "[203780] 11/04 일일 요약 | 특이사항 없음, 매매 신호 아님"}]
+    seen_since = []
+
+    def poll_ok(server, topic, since):
+        seen_since.append(since)
+        return [m for m in today if m["time"] >= since]
+
+    def poll_bad(server, topic, since):
+        raise OSError("unresolvable")
+
+    no_arch = lambda topic, since: []  # noqa: E731
+    env = {"NTFY_DUP_GUARD": "1"}
+    with mock.patch.dict(os.environ, env, clear=False):
+        t = today[0]["title"]
+        check("dup-guard same title today -> skip", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_ok, archive=no_arch), True)
+        check("dup-guard poll since = today 00:00 KST", seen_since[-1] == mid, True)
+        check("dup-guard different title -> send", dup_guard_skip("cwally-port", t + " 2", "x", now=now, poll=poll_ok, archive=no_arch), False)
+        nxt = datetime(2026, 11, 5, 19, 0, tzinfo=KST)
+        check("dup-guard yesterday's title -> send", dup_guard_skip("cwally-port", t, "x", now=nxt, poll=poll_ok, archive=no_arch), False)
+        check("dup-guard poll failure -> fail-open send", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_bad, archive=no_arch), False)
+        check("dup-guard poll failure logged", any("fail-open" in x for x in DUP_GUARD_LOG[-2:]), True)
+        arch = lambda topic, since: [m for m in today if m["time"] >= since]  # noqa: E731
+        check("dup-guard poll failure + archive has title -> skip", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_bad, archive=arch), True)
+        check("dup-guard ops topic never guarded", dup_guard_skip("cwally-ops", t, "x", now=now, poll=poll_ok, archive=no_arch), False)
+        with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "0"}):
+            check("dup-guard NTFY_DUP_GUARD=0 off", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_ok, archive=no_arch), False)
+        pl = json.dumps({"topic": "cwally-port", "title": t}).encode()
+        with mock.patch(f"{__name__}._dup_poll", side_effect=poll_ok), mock.patch(f"{__name__}._now_kst", return_value=now), mock.patch(f"{__name__}._dup_archive", side_effect=no_arch):
+            check("dup-guard payload helper (direct posters) -> skip", dup_guard_skip_payload("x", pl), True)
+            posted = []
+            with mock.patch("urllib.request.urlopen", side_effect=lambda req, timeout=20: posted.append(req) or (_ for _ in ()).throw(AssertionError("network"))):
+                publish("cwally-port", t, "본문", 3, ["x"], "https://ntfy.invalid")
+            check("dup-guard publish() skips POST and marks delivered", (not posted, LAST_PUBLISH.get("sent"), LAST_PUBLISH.get("dup")), (True, True, True))
+        tmp = Path(os.environ.get("RUNNER_TEMP") or "/tmp") / "dupguard_archive_test.json"
+        tmp.write_text(json.dumps({"items": [{"topic": "cwally-port", "time": mid + 60, "title": "A"}, {"topic": "cwally-port", "time": mid - 60, "title": "B"}]}), encoding="utf-8")
+        got = [m["title"] for m in _dup_archive("cwally-port", mid, tmp)]
+        tmp.unlink()
+        check("dup-guard archive reader keeps only today", got, ["A"])
+    return before
 
 
 def _self_test() -> int:
@@ -354,7 +494,7 @@ def _self_test() -> int:
         sent.clear()
         sys.argv = [argv0]
         buf = io.StringIO()
-        with mock.patch.dict(os.environ, env or {}, clear=False), mock.patch("urllib.request.urlopen", side_effect=lambda req, timeout=20: _Resp(req)), mock.patch(f"{__name__}._now_kst", return_value=now), redirect_stdout(buf):
+        with mock.patch.dict(os.environ, dict(env or {}, NTFY_DUP_GUARD="0"), clear=False), mock.patch("urllib.request.urlopen", side_effect=lambda req, timeout=20: _Resp(req)), mock.patch(f"{__name__}._now_kst", return_value=now), redirect_stdout(buf):
             os.environ.pop("CWALLY_ALERT_NAME", None)
             if env and "CWALLY_ALERT_NAME" in env:
                 os.environ["CWALLY_ALERT_NAME"] = env["CWALLY_ALERT_NAME"]
@@ -423,6 +563,7 @@ def _self_test() -> int:
         check("record_fired cap 60", len(st["fired"]) == 60 and st["fired"][-1]["date"] == "d69" and st["fired"][0]["date"] == "d10", True)
         LAST_PUBLISH.clear()
         LAST_PUBLISH.update(keep_lp)
+        failures += _dup_guard_selftest(check)
     finally:
         CONFIGS_DIR, sys.argv = old_dir, old_argv
     print("SELF-TEST " + ("PASS" if not failures else f"FAIL ({failures})"))

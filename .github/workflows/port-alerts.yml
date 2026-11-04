@@ -2173,21 +2173,22 @@ jobs:
         if: always()
         run: python scripts/ntfy_archive.py
       - name: Persist state
+        id: persist
         if: always()
+        # retry pull --rebase + push 5 times (5/15/30/60 s), state conflicts keep this run's state (pt13u)
         run: |
-          git config user.name "cwally-alerts-bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add state
-          if git diff --staged --quiet; then echo unchanged; exit 0; fi
-          git commit -m "chore: update alert state"
-          if ! git pull --rebase origin main; then
-            git checkout --ours state/archive.json && python scripts/ntfy_archive.py && git add state/archive.json
-            GIT_EDITOR=true git rebase --continue
-          fi
-          git push origin HEAD:main
+          bash scripts/persist_state.sh "chore: update alert state" state
+      - name: Upload state artifact (persist failed)
+        if: failure() && steps.persist.outputs.persist_failed == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: state-${{ github.run_id }}-${{ github.run_attempt }}
+          path: state/
+          retention-days: 7
       - name: Notify ops on failure
         if: failure()
         env:
           NTFY_SERVER: https://ntfy.sh
+          STATE_ARTIFACT: ${{ steps.persist.outputs.persist_failed == '1' && format('state-{0}-{1}', github.run_id, github.run_attempt) || '' }}
         run: python scripts/ops_notify.py port-alerts "${{ steps.pick.outputs.job }}"
 
