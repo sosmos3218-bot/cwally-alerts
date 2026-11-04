@@ -937,8 +937,9 @@ def nix_first_selftest(when: datetime) -> None:
         off = dict(cfg, nix_first=dict(nf, enabled=False))
         assert nix_first_check("auto", when, "20261104", {}, off, lambda c, n, f, s=None: d2) == []
         assert "000660" not in second_targets(off, st, when)
-        # 기간 끝 (2027-02-01) -> 판정 없음
-        assert nix_first_check("auto", datetime(2027, 2, 1, 15, 20, tzinfo=KST), "20261104", {}, cfg, lambda c, n, f, s=None: d2) == []
+        # 기간 끝 (until_kst 2027-02-28 23:59: 2/28 은 켜짐, 3/1 은 판정 없음)
+        assert nix_first_on(cfg, datetime(2027, 2, 28, 23, 59, tzinfo=KST)) and not nix_first_on(cfg, datetime(2027, 3, 1, 0, 0, tzinfo=KST))
+        assert nix_first_check("auto", datetime(2027, 3, 1, 15, 20, tzinfo=KST), "20261104", {}, cfg, lambda c, n, f, s=None: d2) == []
     finally:
         g.update(saved)
 
