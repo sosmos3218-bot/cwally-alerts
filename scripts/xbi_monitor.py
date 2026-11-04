@@ -83,7 +83,32 @@ def zone_table(cfg: dict) -> str:
             f"2차 {zs['z2']['lo']:g}~{zs['z2']['hi']:g}({zs['z2']['budget_manwon']}만원), 3차 {zs['z3']['lo']:g}~{zs['z3']['hi']:g}({zs['z3']['budget_manwon']}만원)")
 
 
-def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str) -> tuple[str, str, int]:
+def tnx_text(rows: list | None) -> str:
+    """1차 body: latest completed ^TNX close, change vs 5 sessions ago, position vs the plan lines 4.50 / 5.20."""
+    if not rows:
+        return "10년물 조회 실패."
+    d, v = rows[-1]
+    ch = f", 5거래일 전({rows[-6][0]} {rows[-6][1]:.2f}%) 대비 {(v - rows[-6][1]) * 100:+.0f}bp" if len(rows) >= 6 else ""
+    if v <= 4.5:
+        pos = "4.50% 이하(긍정 조건 쪽, 5거래일 연속이면 판단 긍정 전환 조건 점검)"
+    elif v >= 5.2:
+        pos = "5.20% 이상(주의, 구간 한 단계 낮추는 검토 조건)"
+    else:
+        pos = f"4.50%(긍정 조건)과 5.20%(주의, 구간 한 단계 낮추는 검토) 사이, 4.50%까지 {(v - 4.5) * 100:.0f}bp, 5.20%까지 {(5.2 - v) * 100:.0f}bp"
+    return f"10년물(^TNX) {d} {v:.2f}%{ch}. 위치: {pos}."
+
+
+def fomc_text(cfg: dict, now: datetime) -> str:
+    f = cfg.get("fomc") or {}
+    if not f:
+        return "FOMC 정보 없음."
+    m = f["meeting"][5:].replace("-", "/").lstrip("0")
+    if now >= datetime.strptime(f["next_decision_kst"], "%Y-%m-%d %H:%M").replace(tzinfo=KST):
+        return f"FOMC 정보 갱신 필요 (마지막 반영 {m})."
+    return f"최근 FOMC({f['meeting']}): {f['decision']}, 표결 {f['vote']}, 반대 {f['dissent']}. 다음 회의 {f['next_meeting']}."
+
+
+def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str, extra: str = "") -> tuple[str, str, int]:
     dd = (p / cfg["high_52w"] - 1) * 100
     k = z["key"]
     if k == "nochase":
@@ -93,7 +118,7 @@ def zone_msg(cfg: dict, z: dict, day: str, p: float, stamp: str) -> tuple[str, s
         n = {"z1": "1", "z2": "2", "z3": "3"}[k]
         title = f"[XBI] {n}차 분할 매수 구간 진입 | 종가 ${p:.2f} ({z['lo']:g}~{z['hi']:g}, 고점 대비 {dd:.1f}%)"
         action = f"계획한 {n}차 {z['budget_manwon']}만원만 검토. 한 번에 다 사지 않기. 해외 계좌 기준 (ISA 는 XBI 불가)."
-    status = f"{day} 미국 종가 ${p:.2f}, 52주 고점 ${cfg['high_52w']:g} 대비 {dd:.1f}%. 구간: {zone_table(cfg)}."
+    status = f"{day} 미국 종가 ${p:.2f}, 52주 고점 ${cfg['high_52w']:g} 대비 {dd:.1f}%. 구간: {zone_table(cfg)}." + (f" {extra}" if extra else "")
     msg = body(stamp, "XBI 종가가 미리 정한 분할 매수 구간이나 추격 금지선에 들어왔다는 알림. 매매 지시가 아닙니다.", status, action,
                f"같은 구간은 종가가 경계 밖으로 {cfg['rearm_pct']:g}% 넘게 벗어났다가 다시 들어올 때만 다시 옵니다. 미 10년물 5.2% 초과나 추가 인상 신호가 나오면 구간을 낮추는 검토.",
                "해외 양도세 22%(연 250만원 공제)와 환율을 같이 보기. 구간 알림만으로 비중을 줄이지 않기.",
@@ -200,6 +225,15 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
     st = load_state()
     out: list[tuple[str, str, int]] = []
     pend_lines: list[dict] = []
+    tnx_res: list | None = None
+    tnx_err = ""
+    if cfg.get("lines") or cfg.get("fomc"):
+        try:
+            tnx_res = tnx_rows(cfg["sources"]["tnx"], now) or None
+            if not tnx_res:
+                tnx_err = "확정 종가 없음"
+        except Exception as exc:  # noqa: BLE001
+            tnx_err = str(exc)[:150]
     nochase_merged = False
     try:
         lc = last_close(cfg["sources"]["quote"], now)
@@ -225,7 +259,8 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             merge = any(ln["key"] == "hi52" for ln in fired) and any(z["key"] == "nochase" for z in zf)
             for z in zf:
                 if not (merge and z["key"] == "nochase"):
-                    out.append(zone_msg(cfg, z, day, p, stamp))
+                    extra = f"{tnx_text(tnx_res)} {fomc_text(cfg, now)}" if z["key"] == "z1" else ""
+                    out.append(zone_msg(cfg, z, day, p, stamp, extra))
             pend_lines.extend(fired)
             nochase_merged = merge
             st["last_date"] = day
@@ -236,13 +271,10 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
         st["quote_fail"] = stamp[:10]
     tl = [ln for ln in cfg.get("lines") or [] if ln["series"] == "tnx"]
     if tl:
-        try:
-            rows = tnx_rows(cfg["sources"]["tnx"], now)
-            if not rows:
-                raise ValueError("확정 종가 없음")
-        except Exception as exc:  # noqa: BLE001
+        rows = tnx_res
+        if not rows:
             if st.get("tnx_fail") != stamp[:10]:
-                out.append(ops_msg(stamp, "10년물 조회 실패 | 금리 선 판정 못 함", f"Yahoo ^TNX {NA} ({str(exc)[:150]})."))
+                out.append(ops_msg(stamp, "10년물 조회 실패 | 금리 선 판정 못 함", f"Yahoo ^TNX {NA} ({tnx_err})."))
                 st["tnx_fail"] = stamp[:10]
         else:
             lst = st.setdefault("lines", {})
@@ -362,6 +394,30 @@ def selftest(cfg: dict) -> int:
         print("ok 10Y fetch fail -> one ops notice, XBI zones still judged")
         for _, t, m, _ in sent:
             assert t.startswith("[XBI]") and "\u00b7" not in t + m and "\u2014" not in t + m
+        # --- 1차 body: 10Y and FOMC (normal, fetch fail, stale)
+        T6 = [("2026-10-27", 4.993)] + T
+        go(("2026-11-29", 157.5), T6)  # z1 fired 11/30 above: re-arm first
+        r = go(("2026-12-01", 149.0), T6)
+        m = next(s[2] for s in sent if s[1].startswith("[XBI] 1차"))
+        assert "10년물(^TNX) 2026-11-03 4.95%, 5거래일 전(2026-10-27 4.99%) 대비 -4bp" in m, m
+        assert "4.50%(긍정 조건)과 5.20%(주의, 구간 한 단계 낮추는 검토) 사이" in m and "표결 10 대 2, 반대 Cook, Hammack 2명 25bp 인상 주장" in m, m
+        assert "계획한 1차 300만원만 검토" in m, m
+        print("ok 1차 body: 10Y level, 5-session change, position, FOMC dissent")
+        go(("2026-12-02", 157.5), T6)
+        r = go(("2026-12-03", 149.5), lambda: (_ for _ in ()).throw(OSError("HTTP 500")))
+        m = next(s[2] for s in sent if s[1].startswith("[XBI] 1차"))
+        assert "10년물 조회 실패." in m, m  # ops notice already sent once today in the earlier fail case
+        print("ok 10Y fetch fail -> 1차 still sent with '10년물 조회 실패'")
+        go(("2026-12-04", 157.5), T6)
+        go(("2026-12-10", 149.5), T6, datetime(2026, 12, 10, 9, 0, tzinfo=KST))
+        m = next(s[2] for s in sent if s[1].startswith("[XBI] 1차"))
+        assert "FOMC 정보 갱신 필요 (마지막 반영 10/28)." in m and "Cook" not in m, m
+        print("ok stale FOMC after 12/10 04:00 KST -> 갱신 필요, no stale dissent")
+        go(("2026-12-11", 157.5), T6)
+        go(("2026-12-14", 143.0), T6)
+        m = next(s[2] for s in sent if s[1].startswith("[XBI] 2차"))
+        assert "Cook" not in m and "10년물(^TNX)" not in m, m
+        print("ok 2차 body unchanged")
     finally:
         g.update(keep)
     print("SELFTEST OK: fixtures only, no network, no publish, no state")
