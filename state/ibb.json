@@ -1,0 +1,6 @@
+{
+  "last_date": "2026-11-03",
+  "last_close": ["2026-11-03", 215.47],
+  "armed": {"buy1": true, "buy2": true, "buy3": true, "stop": true},
+  "seeded": {"at": "2026-11-04T22:00:00+09:00", "note": "설치 시 2026-11-03 종가 $215.47 (Yahoo 일봉 확인) 로 seed, 모두 무장, 과거 판정 없음"}
+}

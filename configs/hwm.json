@@ -11,7 +11,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi 바로 뒤)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=hwm 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, ibb 바로 뒤)에 부착. 미국 전일 종가로 판정, 데이터 거래일로 중복 방지. 수동 job=hwm 은 oneoff_mode=auto 가 아니면 selftest + dry.",
   "eps_2026_guide": 5.50,
   "eps_2027_consensus": 6.45,
   "eps_note": "2026 조정 EPS 가이던스 5.50달러 (8-K 0001104659-26-119857 EX-99.1, 10/29). 2027 컨센서스 6.45달러는 MarketBeat (제3자, 미검증)",

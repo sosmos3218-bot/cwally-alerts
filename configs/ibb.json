@@ -1,0 +1,28 @@
+{
+  "name": "ibb",
+  "title_prefix": "[IBB]",
+  "ticker": "IBB",
+  "display": "iShares 바이오테크 ETF",
+  "as_of": "2026-11-04",
+  "approval": "사용자 채팅 승인 2026-11-04 (pt97u, \"IBB 알림 설계안대로 cwally-alerts에 소신껏 만들어 줘.\")",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi 바로 뒤, hwm 앞)에 부착. 미국 전일 정규장 종가로 판정, 밀린 거래일은 순서대로 따라잡음, 데이터 거래일로 중복 방지. 수동 job=ibb 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "lines": {
+    "buy1": {"le": 212, "rearm_gt": 218, "priority": 3, "once": false},
+    "buy2": {"le": 205, "priority": 3, "once": true},
+    "buy3": {"le": 201, "priority": 3, "once": true},
+    "stop": {"lt": 200, "priority": 4, "once": true}
+  },
+  "ten_year": {"buy_up_below": 4.6, "wait_above": 5.2, "source_note": "xlu_monitor.ten_series 재사용 (Yahoo ^TNX, 실패 시 FRED DGS10)"},
+  "plan_note": "바이오 비중 2억원의 3~5%를 3회 지정가 분할, 해외계좌.",
+  "xbi_overlap_note": "같은 날 XBI 종가가 configs/xbi.json 구간 안이면 IBB 본문에 XBI 상태 한 줄. XBI 알림 동작은 그대로.",
+  "seed": {"date": "2026-11-03", "close": 215.47, "note": "Yahoo 일봉 2026-11-03 종가 $215.47 로 seed (모두 무장), 과거는 판정 안 함"},
+  "sources": {
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/IBB?interval=1d&range=1mo",
+    "xbi_quote": "https://query1.finance.yahoo.com/v8/finance/chart/XBI?interval=1d&range=1mo"
+  },
+  "ends_kst": "2027-02-26 23:59",
+  "ends_note": "평일 09:00 IBB 분할 매수 가격선 점검. 2027-02-26 까지, 그 뒤 실행은 아무것도 안 함"
+}

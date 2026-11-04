@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""[HWM] 하우멧 에어로스페이스 분할 매수 구간, 손절, 일부 익절 + 2027 매출 가이던스 무효화 점검. 평일 09:00 KST morning 묶음 (xbi 뒤).
+"""[HWM] 하우멧 에어로스페이스 분할 매수 구간, 손절, 일부 익절 + 2027 매출 가이던스 무효화 점검. 평일 09:00 KST morning 묶음 (xbi, ibb 뒤).
 
 가격: 미국 전일 종가(Yahoo 일봉). 데이터 거래일(state.last_date)로 중복 방지.
 구간(configs/hwm.json zones): 들어오면 1번 알림, 경계 밖으로 rearm_pct(3%) 넘게 벗어난 뒤 다시 들어오면 다시 알림.
