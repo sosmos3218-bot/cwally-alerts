@@ -183,6 +183,66 @@
       "source": null
     },
     "manual_note": "A 확정은 자동으로 안 함(기사 제목으로는 확정과 검토를 확실히 구분 못 함). 확정이면 status confirmed, on 규정 확정일 YYYY-MM-DD, source 규정 또는 기사 링크. 오보 후보를 끄려면 status rejected. 비우면(null) 자동 후보 기록만 씀.",
-    "b_note": "SEC 6-K 실적 보도자료의 Business Outlook 표(Group Revenue, Adjusted EBITDA 범위와 (Previous: ...))를 읽어 중간값이 이전보다 낮으면 하향. Previous 가 없으면 state 에 저장한 지난 가이던스와 비교. 표를 못 읽으면 원문 링크로 수동 확인 알림. 첫 실행은 최신 보도자료로 시드(발송 없음)."
+    "b_note": "SEC 6-K 실적 보도자료의 Business Outlook 표(Group Revenue, Adjusted EBITDA 범위와 (Previous: ...))를 읽어 중간값이 이전보다 낮으면 하향. Previous 가 없으면 state 에 저장한 지난 가이던스와 비교. 표를 못 읽으면 원문 링크로 수동 확인 알림. 첫 실행은 최신 보도자료로 시드(발송 없음).",
+    "jdih": {
+      "enabled": true,
+      "approval": "사용자 요청 2026-11-04 (pt4u)",
+      "min_date": "2026-01-01",
+      "max_docs": 6,
+      "title_re": "komisi|potongan|biaya (?:aplikasi|jasa|sewa|layanan)|pesan antar|kurir|angkutan sewa khusus|sepeda motor|ojek|pengantaran|layanan pos|berbasis aplikasi|platform digital|transportasi daring|aplikator",
+      "pct8_re": "\\b8\\s?%|\\b8 persen|delapan persen|\\(delapan\\)",
+      "fee_re": "komisi|potongan|biaya (?:aplikasi|jasa|sewa|penggunaan aplikasi|layanan)|bagi hasil|paling (?:tinggi|besar)|maksimal",
+      "delivery_re": "pesan antar|kurir|pengantaran|antar barang|pengiriman barang|makanan|layanan pos|logistik|delivery",
+      "sources": [
+        {
+          "name": "Kemenhub",
+          "base": "https://jdih.dephub.go.id",
+          "search": "https://jdih.dephub.go.id/peraturan/index?PencarianPeraturanForm%5BkataKunci%5D={q}&pencarian-cepat-button=Cari",
+          "link_re": "href=\"(/peraturan/detail\\?data=[^\"]+)\"",
+          "pdf_re": "href=\"([^\"]+)\"[^>]*>Download</a>",
+          "keywords": [
+            "aplikasi",
+            "pesan antar",
+            "kurir",
+            "angkutan sewa khusus",
+            "biaya jasa",
+            "komisi"
+          ]
+        },
+        {
+          "name": "Komdigi",
+          "base": "https://jdih.komdigi.go.id",
+          "search": "https://jdih.komdigi.go.id/produk_hukum/pencarian?tentang={q}&kategori=&tahun=",
+          "link_re": "href=\"((?:https://jdih\\.komdigi\\.go\\.id)?/produk_hukum/view/id/\\d+/t/[^\"]+)\"",
+          "title_from_url": true,
+          "keywords": [
+            "aplikasi",
+            "pesan antar",
+            "kurir",
+            "komisi",
+            "potongan",
+            "biaya aplikasi"
+          ]
+        },
+        {
+          "name": "Kemendag",
+          "base": "https://jdih.kemendag.go.id",
+          "search": "https://jdih.kemendag.go.id/peraturan",
+          "link_re": "href=\"(https://jdih\\.kemendag\\.go\\.id/peraturan/[a-z0-9-]+nomor[a-z0-9-]+)\"",
+          "title_from_url": true,
+          "pdf_re": "href=\"(https://jdih\\.kemendag\\.go\\.id/uploads/peraturan/[^\"]+\\.pdf)\"",
+          "keywords": [
+            "terbaru"
+          ]
+        }
+      ],
+      "probe_only": [
+        "https://peraturan.go.id/",
+        "https://jdihn.go.id/",
+        "https://peraturan.bpk.go.id/"
+      ],
+      "note": "매일 1번(뉴스 확인과 같은 실행). 검색 결과 제목이 title_re 에 맞는 새 문서만 상세 페이지를 엽니다. 번호와 제정일(Tanggal Penetapan/Pengundangan)이 있고 Rancangan 이 아니며 min_date 이후인 문서만 판정. 제목 또는 PDF 본문(pdftotext)에서 8% 와 수수료 단어, 배달 단어가 400자 안에 같이 있으면 A 자동 확정(p4 공포 확인). 관련 규정인데 8% 나 배달 범위를 못 읽으면 후보 + p4 수동 확인. Komdigi 는 PDF 가 봇에 막혀(403) 제목만 봅니다. peraturan.go.id, jdihn.go.id 는 응답 없음, peraturan.bpk.go.id 는 Cloudflare 차단이라 dry run 에서 연결만 점검. 소스 전체 실패는 일일 운영 알림 한 번. cap8.manual status rejected 가 언제나 우선.",
+      "scope_title_re": "aplikasi|pesan antar|kurir|pengantaran|angkutan|ojek|sepeda motor|daring|platform|aplikator"
+    }
   }
 }

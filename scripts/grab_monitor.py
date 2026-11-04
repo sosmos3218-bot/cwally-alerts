@@ -738,6 +738,8 @@ def cap8_status(cfg: dict, cst: dict) -> tuple[str | None, str | None]:
     if man.get("status") == "confirmed" and man.get("on"):
         return "confirmed", man["on"]
     a = cst.get("a") or {}
+    if a.get("status") == "confirmed" and a.get("since"):
+        return "confirmed", a["since"]
     if a.get("status") == "candidate":
         return "candidate", a.get("since")
     return None, None
@@ -862,6 +864,212 @@ def cap8_b_message(cfg: dict, kind: str, a_status: str | None, a_links: list[str
     return title, append_ends("\n".join(lines), "grab"), pri
 
 
+# ---------- A auto-confirm from Indonesian legal databases (JDIH) ----------
+
+JDIH_UA = {"User-Agent": "Mozilla/5.0 (cwally-alerts grab jdih watch)"}
+
+
+def jdih_get(url: str, timeout: int = 25, binary: bool = False):
+    with urllib.request.urlopen(urllib.request.Request(url, headers=JDIH_UA), timeout=timeout) as resp:
+        raw = resp.read()
+    return raw if binary else raw.decode("utf-8", "replace")
+
+
+def jdih_search(src: dict, kw: str) -> list[dict]:
+    """[{'url', 'title'}] from one source search/listing page."""
+    q = urllib.parse.quote_plus(kw)
+    page = jdih_get(src["search"].format(q=q))
+    out, seen = [], set()
+    for m in re.finditer(src["link_re"], page):
+        href = html.unescape(m.group(1))
+        url = href if href.startswith("http") else src["base"] + href
+        url = re.sub(r"[?&]search=[^&]*$", "", url)
+        if url in seen:
+            continue
+        seen.add(url)
+        tail = page[m.end(): m.end() + 900]
+        title = html_to_text(tail)[:300]
+        if src.get("title_from_url"):
+            title = url.rsplit("/", 1)[-1].replace("-", " ").replace("+", " ") + " " + title
+        out.append({"url": url, "title": title})
+    return out
+
+
+def jdih_meta(text: str) -> dict:
+    def f(label: str) -> str | None:
+        m = re.search(rf"{label}\s*:?\s*([^\n]{{0,60}}?)(?=\s+(?:Tanggal|Tempat|Sumber|Status|Lokasi|Bahasa|Jenis|Singkatan|Nomor|Bidang|$))", text)
+        v = (m.group(1).strip() if m else "") or None
+        return None if v in {None, "-"} else v
+    judul = re.search(r"Judul\s+(.{10,500}?)\s+(?:Tajuk Entri|T\.E\.U|Nomor Peraturan|Nomor [\w./ -]{1,30} Tahun \d{4} Tanggal)", text)
+    return {"judul": judul.group(1) if judul else None, "nomor": f("Nomor(?: Peraturan)?"),
+            "ditetapkan": f("Tanggal Penetapan"), "diundangkan": f("Tanggal Pengundangan"),
+            "rancangan": bool(re.search(r"\bRancangan\b", (judul.group(1) if judul else text[:400]), re.I))}
+
+
+MONTHS_ID = {"januari": 1, "februari": 2, "maret": 3, "april": 4, "mei": 5, "juni": 6, "juli": 7, "agustus": 8,
+             "september": 9, "oktober": 10, "november": 11, "desember": 12, "january": 1, "february": 2, "march": 3,
+             "may": 5, "june": 6, "july": 7, "august": 8, "october": 10, "december": 12}
+
+
+def id_date(s: str | None) -> str | None:
+    if not s:
+        return None
+    m = re.search(r"(\d{1,2})-(\d{1,2})-(\d{4})", s)
+    if m:
+        return f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}"
+    m = re.search(r"(\d{1,2}) ([A-Za-z]+) (\d{4})", s)
+    if m and m.group(2).lower() in MONTHS_ID:
+        return f"{m.group(3)}-{MONTHS_ID[m.group(2).lower()]:02d}-{int(m.group(1)):02d}"
+    return None
+
+
+def cap8_in_text(cfg: dict, text: str) -> tuple[bool, bool, str]:
+    """(has_8pct_cap, tied_to_delivery, snippet). Cap = 8% near a commission/fee word; delivery word within the same window."""
+    j = cfg["cap8"]["jdih"]
+    t = re.sub(r"\s+", " ", text)
+    for m in re.finditer(j["pct8_re"], t, re.I):
+        win = t[max(0, m.start() - 400): m.end() + 400]
+        if not re.search(j["fee_re"], win, re.I):
+            continue
+        return True, bool(re.search(j["delivery_re"], win, re.I)), win[200:600]
+    return False, False, ""
+
+
+def jdih_judge(cfg: dict, meta: dict, title: str, doc_text: str | None) -> tuple[str, str]:
+    """('confirm' | 'manual' | 'draft' | 'skip', why)."""
+    if meta.get("rancangan") or not meta.get("nomor"):
+        return "draft", "번호 없음 또는 Rancangan(초안)"
+    when = id_date(meta.get("ditetapkan")) or id_date(meta.get("diundangkan"))
+    if not when:
+        return "draft", "제정일/공포일 없음"
+    if when < cfg["cap8"]["jdih"]["min_date"]:
+        return "skip", f"오래된 규정 {when}"
+    text = f"{title} {meta.get('judul') or ''} {doc_text or ''}"
+    has8, deliv, snip = cap8_in_text(cfg, text)
+    if has8 and deliv:
+        return "confirm", f"제정 {when}, 본문: {snip[:220]}"
+    j = cfg["cap8"]["jdih"]
+    title_all = f"{title} {meta.get('judul') or ''}"
+    if not has8 and not (re.search(j["fee_re"], title_all, re.I) and re.search(j["scope_title_re"], title_all, re.I)):
+        return "skip", f"제정 {when}, 수수료 규정 아님"
+    if has8:
+        return "manual", f"제정 {when}, 8% 상한은 있으나 배달 범위 확인 안 됨(차량 호출 전용일 수 있음)"
+    if doc_text is None:
+        return "manual", f"제정 {when}, 원문 PDF 를 못 받아 8% 확인 안 됨"
+    return "manual", f"제정 {when}, 원문에서 8% 배달 상한 문구를 못 찾음"
+
+
+def pdf_text(raw: bytes) -> str | None:
+    if not raw.startswith(b"%PDF"):
+        return None
+    import subprocess
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as fh:
+        fh.write(raw)
+        fh.flush()
+        try:
+            out = subprocess.run(["pdftotext", "-q", fh.name, "-"], capture_output=True, timeout=60).stdout.decode("utf-8", "replace")
+        except Exception:  # noqa: BLE001
+            return None
+    return out if len(out.strip()) > 200 else None
+
+
+def jdih_fetch_doc(src: dict, url: str) -> tuple[dict, str | None]:
+    page = jdih_get(url)
+    meta = jdih_meta(html_to_text(page))
+    doc = None
+    if src.get("pdf_re"):
+        m = re.search(src["pdf_re"], page)
+        if m:
+            href = html.unescape(m.group(1))
+            try:
+                doc = pdf_text(jdih_get(href if href.startswith("http") else src["base"] + href, 60, binary=True))
+            except Exception as exc:  # noqa: BLE001
+                print(f"jdih pdf fail {url}: {exc.__class__.__name__}")
+    return meta, doc
+
+
+def jdih_confirm_message(item: dict, stamp: str) -> tuple[str, str, int]:
+    lines = [
+        "이게 뭐 알림: 인도네시아 법령 DB(JDIH)에서 배달 수수료 8% 상한 규정이 번호와 제정일을 달고 공포된 것을 찾았습니다. 복합 규칙의 A 조건을 확정으로 바꿨습니다.",
+        f"지금 결과/상태: {item['title'][:160]}. {item['why']}. 원문: {item['url']}. 시각 {stamp}.",
+        "지금 할 일: 원문에서 시행일과 음식/물품 배달 포함 여부를 한 번 더 확인. 오판이면 configs/grab.json 의 cap8.manual status 를 rejected 로.",
+        "나중에: 이 알림은 한 번만 옵니다. 이후(또는 이미 나온) 실적 가이던스 하향이 겹치면 비중 절반 축소 검토(p5)가 옵니다.",
+        "익절/줄일 때: 이것만으로는 줄이지 않습니다. 가이던스 하향과 겹칠 때 절반 축소 검토.",
+        "하지 말 것: 공포 소식만으로 전량 매도.",
+    ]
+    return "[GRAB] 8% 상한 규정 공포 확인 | 가이던스 하향 대기", append_ends("\n".join(lines), "grab"), 4
+
+
+def jdih_manual_message(item: dict, stamp: str) -> tuple[str, str, int]:
+    lines = [
+        "이게 뭐 알림: 인도네시아 법령 DB(JDIH)에 배달, 앱 수수료 관련 규정이 공포됐는데 8% 배달 상한인지 자동으로 확인하지 못했습니다. A 는 후보로만 둡니다.",
+        f"지금 결과/상태: {item['title'][:160]}. {item['why']}. 원문: {item['url']}. 시각 {stamp}.",
+        "지금 할 일: 원문에서 8%(delapan persen) 상한과 음식/물품 배달(pesan antar, kurir) 범위를 확인. 맞으면 cap8.manual 을 status confirmed, on 날짜, source 링크로. 아니면 그대로 두기.",
+        "나중에: 같은 규정으로는 다시 보내지 않습니다.",
+        "익절/줄일 때: 확인 전에는 줄이지 않습니다.",
+        "하지 말 것: 제목만 보고 확정 처리.",
+    ]
+    return "[GRAB] 배달 수수료 규정 공포, 8% 자동 확인 안 됨 | 원문에서 직접 확인", append_ends("\n".join(lines), "grab"), 4
+
+
+def run_jdih(cfg: dict, cst: dict, stamp: str, dry: bool) -> list[str]:
+    j = (cfg.get("cap8") or {}).get("jdih") or {}
+    if not j.get("enabled"):
+        return []
+    js = cst.setdefault("jdih", {})
+    seen = set(js.get("seen") or [])
+    a = cst.setdefault("a", {})
+    problems, new_seen = [], []
+    if dry:
+        for u in j.get("probe_only") or []:
+            try:
+                jdih_get(u, 15)
+                print(f"jdih probe {u}: ok")
+            except Exception as exc:  # noqa: BLE001
+                print(f"jdih probe {u}: {exc.__class__.__name__} {str(exc)[:60]}")
+    for src in j["sources"]:
+        ok = 0
+        cands: dict[str, str] = {}
+        for kw in src["keywords"]:
+            try:
+                for it in jdih_search(src, kw):
+                    cands.setdefault(it["url"], it["title"])
+                ok += 1
+            except Exception as exc:  # noqa: BLE001
+                print(f"jdih {src['name']} search fail ({kw}): {exc.__class__.__name__}")
+        if not ok:
+            problems.append(f"JDIH {src['name']}")
+            continue
+        rel = {u: t for u, t in cands.items() if re.search(j["title_re"], t, re.I) and u not in seen}
+        print(f"jdih {src['name']}: {len(cands)} hits, {len(rel)} new relevant")
+        for url, title in list(rel.items())[: int(j.get("max_docs", 6))]:
+            try:
+                meta, doc = jdih_fetch_doc(src, url)
+            except Exception as exc:  # noqa: BLE001
+                print(f"jdih doc fail {url}: {exc.__class__.__name__}")
+                continue
+            verdict, why = jdih_judge(cfg, meta, title, doc)
+            print(f"jdih {verdict}: {title[:90]} | {why[:120]}")
+            if verdict in {"skip", "draft"}:
+                if verdict == "skip":
+                    new_seen.append(url)
+                continue  # drafts are re-checked later (they may get a number)
+            item = {"title": meta.get("judul") or title, "url": url, "why": why}
+            if verdict == "confirm" and a.get("status") != "confirmed":
+                if _emit(*jdih_confirm_message(item, stamp), resolve_topic("port"), dry, ["scroll"]) and not dry:
+                    when = id_date(meta.get("ditetapkan")) or id_date(meta.get("diundangkan"))
+                    a.update({"status": "confirmed", "since": when, "source": url, "by": "jdih", "at": stamp})
+            elif verdict == "manual":
+                if _emit(*jdih_manual_message(item, stamp), resolve_topic("port"), dry, ["mag"]) and not dry and a.get("status") != "confirmed":
+                    a.update({"status": "candidate", "since": a.get("since") or stamp[:10]})
+            new_seen.append(url)
+    if not dry and new_seen:
+        js["seen"] = sorted(seen | set(new_seen))
+        js["at"] = stamp
+    return problems
+
+
 def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: float | None, dry: bool, news_seeded: bool) -> list[str]:
     c = cfg.get("cap8") or {}
     if not c.get("enabled"):
@@ -872,12 +1080,13 @@ def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: f
     # A: candidate from new news titles (news check already de-duplicates articles)
     hits = [p for p in new_picks if cap8_candidate(cfg, p["title"])] if news_seeded else []
     if hits:
-        if a.get("status") != "candidate":
+        if a.get("status") not in {"candidate", "confirmed"}:
             t, b, p = cap8_candidate_message(cfg, hits, stamp)
             if _emit(t, b, p, resolve_topic("port"), dry, ["warning"]) and not dry:
                 a.update({"status": "candidate", "since": today})
         if not dry:
             a["links"] = (a.get("links") or []) + [h["link"] for h in hits if h["link"]][:10]
+    problems = run_jdih(cfg, cst, stamp, dry)
     status, since = cap8_status(cfg, cst)
     print(f"cap8 A status={status} since={since}")
     # B: new earnings releases on SEC
@@ -885,7 +1094,7 @@ def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: f
         rels = sec_earnings_releases(cfg, cst.get("last_filed"))
     except Exception as exc:  # noqa: BLE001
         print(f"cap8 sec fail: {exc}", file=sys.stderr)
-        return ["SEC 6-K"]
+        return problems + ["SEC 6-K"]
     seed = cst.get("last_filed") is None
     stored = cst.get("outlook") or {}
     for fd, url, text in rels:
@@ -900,7 +1109,8 @@ def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: f
         elif cuts:
             a_on = status and since and fd >= since
             if a_on and not cst.get("compound"):
-                msg = cap8_b_message(cfg, "compound", status, (a.get("links") or []) + ([c["manual"]["source"]] if status == "confirmed" and c["manual"].get("source") else []), cuts, url, stamp, price)
+                links = (a.get("links") or []) + [x for x in (a.get("source"), (c.get("manual") or {}).get("source")) if x and status == "confirmed"]
+                msg = cap8_b_message(cfg, "compound", status, links, cuts, url, stamp, price)
                 key = "compound"
             elif not a_on and not cst.get("b_only"):
                 msg = cap8_b_message(cfg, "b_only", None, [], cuts, url, stamp, price)
@@ -910,12 +1120,23 @@ def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: f
             sent = _emit(*msg[:2], msg[2], resolve_topic("port"), dry, ["chart_with_downwards_trend"])
             if sent and not dry and cuts:
                 cst[key] = {"at": stamp, "filed": fd, "url": url, "a": status, "cuts": cuts}
+        if not dry and sent and cuts and not seed:
+            cst.setdefault("cut_hist", []).append({"filed": fd, "url": url, "cuts": cuts})
         if not dry and sent:
             for k, v in ol.items():
                 stored[k] = {"lo": v["lo"], "hi": v["hi"], "filed": fd}
             cst["outlook"] = stored
             cst["last_filed"] = fd
-    return []
+    # A confirmed (or became candidate) after a cut that was already reported: fire the compound now
+    if status and since and not cst.get("compound"):
+        late = [h for h in cst.get("cut_hist") or [] if h["filed"] >= since]
+        if late:
+            h = late[0]
+            links = (a.get("links") or []) + [x for x in (a.get("source"), (c.get("manual") or {}).get("source")) if x]
+            msg = cap8_b_message(cfg, "compound", status, links, h["cuts"], h["url"], stamp, price)
+            if _emit(*msg[:2], msg[2], resolve_topic("port"), dry, ["chart_with_downwards_trend"]) and not dry:
+                cst["compound"] = {"at": stamp, "filed": h["filed"], "url": h["url"], "a": status, "cuts": h["cuts"]}
+    return problems
 
 
 # ---------- run ----------
@@ -936,9 +1157,9 @@ def _emit(title: str, body: str, priority: int, topic: str, dry: bool, tags: lis
 
 
 def ops_message(stamp: str, what: str) -> tuple[str, str]:
-    title = "[GRAB] 일정/실적/뉴스 조회 실패 | 매매 신호 아님"
+    title = "[GRAB] 일정/실적/뉴스/법령 조회 실패 | 매매 신호 아님"
     lines = [
-        f"이게 뭐 알림: 그랩 실적 일정, 실적 원문(SEC) 또는 인도네시아 규제 뉴스를 읽지 못했습니다({what}). 매매 신호가 아닙니다.",
+        f"이게 뭐 알림: 그랩 실적 일정, 실적 원문(SEC), 인도네시아 규제 뉴스 또는 법령 DB(JDIH)를 읽지 못했습니다({what}). 매매 신호가 아닙니다.",
         f"지금 결과/상태: 조회 실패. 시각 {stamp}.",
         "지금 할 일: 없음. 가격선 알림은 그대로 돕니다.",
         "나중에: 다음 미국 거래일 첫 실행에서 다시 읽습니다.",
@@ -1282,7 +1503,8 @@ def selftest() -> int:
     check("cap8 candidate p4 clean", (p, "8% 상한 확정 가능성" in t, "https://n/1" in b, route_ok(t), any(ch in t + b for ch in FORBIDDEN)), (4, True, True, True, False))
     # end-to-end with stubs: seed, B only, candidate, compound, once
     g = globals()
-    real_sec, real_emit = g["sec_earnings_releases"], g["_emit"]
+    real_sec, real_emit, real_jdih = g["sec_earnings_releases"], g["_emit"], g["run_jdih"]
+    g["run_jdih"] = lambda *a, **k: []
     sent: list = []
     feed: list = []
     g["sec_earnings_releases"] = lambda cfg_, after: [x for x in feed if not after or x[0] > after]
@@ -1316,7 +1538,60 @@ def selftest() -> int:
         run_cap8(cfg2, s2, [], "2027-05-06 00:00 KST", None, False, True)
         check("e2e manual confirmed compound", (sent[-1][0], "확정에" in sent[-1][1]), (5, True))
     finally:
-        g["sec_earnings_releases"], g["_emit"] = real_sec, real_emit
+        g["sec_earnings_releases"], g["_emit"], g["run_jdih"] = real_sec, real_emit, real_jdih
+
+    # ---- JDIH auto-confirm of A ----
+    met = {"judul": "Peraturan Menteri Perhubungan Nomor 5 Tahun 2027", "nomor": "5", "ditetapkan": "12 Maret 2027", "diundangkan": None, "rancangan": False}
+    body8 = ("Pasal 10 (1) Perusahaan aplikasi dapat menetapkan biaya penggunaan aplikasi untuk layanan pesan antar makanan dan pengiriman barang "
+             "oleh kurir paling tinggi 8% (delapan persen) dari tarif.")
+    v, why = jdih_judge(cfg, met, "Biaya Jasa Layanan Pesan Antar Berbasis Aplikasi", body8)
+    check("jdih confirmed regulation", (v, "2027-03-12" in why), ("confirm", True))
+    v, _ = jdih_judge(cfg, met, "Biaya Jasa Layanan Pesan Antar Berbasis Aplikasi", body8.replace("8% (delapan persen)", "10% (sepuluh persen)"))
+    check("jdih 10% not confirmed", v, "manual")
+    ride = "Pasal 7 biaya sewa penggunaan aplikasi untuk angkutan sepeda motor penumpang paling tinggi 8% (delapan persen)."
+    v, why = jdih_judge(cfg, met, "Biaya Jasa Penggunaan Sepeda Motor Dengan Aplikasi", ride)
+    check("jdih ride-hailing only manual", (v, "배달 범위" in why), ("manual", True))
+    v, _ = jdih_judge(cfg, {**met, "judul": "Rancangan Peraturan Menteri Perhubungan", "rancangan": True}, "Rancangan biaya pesan antar", body8)
+    check("jdih draft ignored", v, "draft")
+    v, _ = jdih_judge(cfg, {**met, "nomor": None}, "biaya pesan antar", body8)
+    check("jdih no number ignored", v, "draft")
+    v, _ = jdih_judge(cfg, met, "Biaya Jasa Layanan Pesan Antar Berbasis Aplikasi", None)
+    check("jdih no pdf manual", v, "manual")
+    v, _ = jdih_judge(cfg, met, "Pedoman Pelaksanaan Anggaran", "anggaran 2027")
+    check("jdih unrelated skip", v, "skip")
+    check("id_date forms", (id_date("17-03-2026"), id_date("29 October 2026 / -"), id_date("7 September 2022")), ("2026-03-17", "2026-10-29", "2022-09-07"))
+    for fn in (jdih_confirm_message, jdih_manual_message):
+        t, b, p = fn({"title": "x", "url": "https://jdih/x", "why": "y"}, stamp)
+        check(f"{fn.__name__} clean", (p, route_ok(t), t.startswith("[GRAB] "), any(ch in t + b for ch in FORBIDDEN), "https://jdih/x" in b), (4, True, True, False, True))
+    g = globals()
+    keep = {k: g[k] for k in ("jdih_search", "jdih_fetch_doc", "_emit", "sec_earnings_releases")}
+    sent2: list = []
+    try:
+        g["_emit"] = lambda t, b, p, topic, dry, tags: sent2.append((p, t)) or True
+        g["jdih_search"] = lambda src, kw: [{"url": f"https://{src['name']}/1", "title": "Biaya Jasa Layanan Pesan Antar Berbasis Aplikasi"}]
+        g["jdih_fetch_doc"] = lambda src, url: (met, body8)
+        cfgj = json.loads(json.dumps(cfg))
+        cfgj["cap8"]["jdih"]["sources"] = cfgj["cap8"]["jdih"]["sources"][:1]
+        cfgj["cap8"]["jdih"]["probe_only"] = []
+        cst: dict = {"last_filed": "2027-05-05", "outlook": {}, "cut_hist": [{"filed": "2027-05-05", "url": "https://sec/q1", "cuts": ["2027 Adjusted EBITDA cut"]}], "b_only": {"x": 1}}
+        g["sec_earnings_releases"] = lambda cfg_, after: []
+        stw = {"cap8": cst}
+        run_cap8(cfgj, stw, [], "2027-05-20 00:00 KST", None, False, True)
+        check("jdih auto-confirm then late compound", [p for p, _ in sent2], [4, 5])
+        check("jdih state confirmed", (cst["a"]["status"], cst["a"]["since"], cst["a"]["by"]), ("confirmed", "2027-03-12", "jdih"))
+        check("jdih compound says 확정", "8% 상한 확정에" in sent2[-1][1], True)
+        run_cap8(cfgj, stw, [], "2027-05-21 00:00 KST", None, False, True)
+        check("jdih fires once", len(sent2), 2)
+        cfgr = json.loads(json.dumps(cfgj))
+        cfgr["cap8"]["manual"]["status"] = "rejected"
+        check("manual rejected wins over jdih", cap8_status(cfgr, cst), (None, None))
+        def boom(src, kw):
+            raise OSError("timeout")
+        g["jdih_search"] = boom
+        cst2: dict = {"last_filed": "2027-05-05"}
+        check("jdih unreachable -> ops problem, no send", (run_cap8(cfgj, {"cap8": cst2}, [], "2027-05-22 00:00 KST", None, False, True), len(sent2)), (["JDIH Kemenhub"], 2))
+    finally:
+        g.update(keep)
 
     def walk(obj) -> None:
         nonlocal fails
