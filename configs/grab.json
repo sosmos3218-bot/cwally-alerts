@@ -169,5 +169,20 @@
       "note": "FY2026 실적(Q4 2026, 2027년 2월 예상) 보도자료 Business Outlook 의 '2027 Adjusted EBITDA $X million - $Y million' 중간값이 9.3억 달러 미만이면 조기 경고 p4, 이상이면 참고 p2, 못 읽으면 원문 참고 p3. 한 번만."
     },
     "parse_note": "SEC EDGAR 6-K 의 실적 보도자료 원문(HTML)에서 본문 'Adjusted EBITDA for the full year was $N million/billion' 과 조정표 'Adjusted EBITDA 분기 분기 연간 연간 Regional corporate costs' 의 연간 숫자를 읽음. 둘 다 있으면 일치해야 함. 숫자가 여러 개, 서로 다름, 못 찾음이면 추측 없이 원문 링크와 함께 '자동 판독 안 됨' p4. IR 에 발표됐는데 SEC 원문이 4일 안에 없으면 같은 수동 확인 알림."
+  },
+  "cap8": {
+    "enabled": true,
+    "approval": "사용자 요청 2026-11-04 (pt3u)",
+    "rule": "A 배달(음식, 물품) 수수료 8% 상한 확정 + B 그 뒤 첫 실적 보도자료에서 연간 매출 또는 조정 EBITDA 가이던스 하향이면 p5 비중 절반 축소 검토. B 만이면 p3 참고. 각각 한 번.",
+    "pct_re": "8\\s*%|8 persen|delapan persen",
+    "confirm_re": "ditetapkan|diteken|ditandatangani|diterbitkan|\\bterbit|resmi|berlaku|disahkan|diundangkan|signed|issues|issued|enacted|takes effect|in effect|finali[sz]ed|officially",
+    "proposal_re": "usul|wacana|rencana|draf|rancangan|kaji|bakal|wacanakan|tolak|batal|tunda|proposed|proposal|plan|draft|consider|mull|could|may\\b|reject|delay",
+    "manual": {
+      "status": null,
+      "on": null,
+      "source": null
+    },
+    "manual_note": "A 확정은 자동으로 안 함(기사 제목으로는 확정과 검토를 확실히 구분 못 함). 확정이면 status confirmed, on 규정 확정일 YYYY-MM-DD, source 규정 또는 기사 링크. 오보 후보를 끄려면 status rejected. 비우면(null) 자동 후보 기록만 씀.",
+    "b_note": "SEC 6-K 실적 보도자료의 Business Outlook 표(Group Revenue, Adjusted EBITDA 범위와 (Previous: ...))를 읽어 중간값이 이전보다 낮으면 하향. Previous 가 없으면 state 에 저장한 지난 가이던스와 비교. 표를 못 읽으면 원문 링크로 수동 확인 알림. 첫 실행은 최신 보도자료로 시드(발송 없음)."
   }
 }

@@ -721,6 +721,203 @@ def run_fy_rule(cfg: dict, state: dict, today: date, stamp: str, price: float | 
     return problems
 
 
+# ---------- compound rule: 8% delivery commission cap (A) + guidance cut (B) ----------
+
+def cap8_candidate(cfg: dict, title: str) -> bool:
+    """News title that LOOKS like the 8% delivery cap became final. Never treated as confirmed by itself."""
+    c = cfg["cap8"]
+    return bool(re.search(c["pct_re"], title, re.I) and re.search(cfg["news"]["delivery_re"], title, re.I)
+                and re.search(c["confirm_re"], title, re.I) and not re.search(c["proposal_re"], title, re.I))
+
+
+def cap8_status(cfg: dict, cst: dict) -> tuple[str | None, str | None]:
+    """(status, since) where status is confirmed / candidate / None. Manual flag in configs/grab.json wins."""
+    man = cfg["cap8"].get("manual") or {}
+    if man.get("status") == "rejected":
+        return None, None
+    if man.get("status") == "confirmed" and man.get("on"):
+        return "confirmed", man["on"]
+    a = cst.get("a") or {}
+    if a.get("status") == "candidate":
+        return "candidate", a.get("since")
+    return None, None
+
+
+def cap8_candidate_message(cfg: dict, hits: list[dict], stamp: str) -> tuple[str, str, int]:
+    shown = hits[:5]
+    lines = [
+        "이게 뭐 알림: 배달 수수료 8% 상한이 확정(서명, 공포, 시행)됐다고 읽히는 기사 알림입니다. 기사 제목만으로는 확정과 검토를 확실히 구분할 수 없어 후보로만 기록합니다.",
+        f"지금 결과/상태: 8%, 배달, 확정 단어가 함께 있고 검토/제안 단어가 없는 새 제목 {len(hits)}건. A 조건을 후보로 기록. 시각 {stamp}.",
+        *[f"- {h['when']:%m/%d %H:%M} {h['title'][:120]} {h['link']}" for h in shown],
+        "지금 할 일: 원문에서 규정 번호(Permen, Perpres), 서명/공포 날짜, 음식/물품 배달 포함 여부 확인. 확정이면 봇에게 '8% 상한 확정'이라고 말하거나 configs/grab.json 의 cap8.manual 을 status confirmed, on 날짜, source 링크로 바꿉니다. 오보면 status rejected.",
+        "나중에: 이 후보 알림은 한 번만 옵니다. 이후 실적에서 가이던스가 내려가면 비중 절반 축소 검토 알림(p5)이 옵니다.",
+        "익절/줄일 때: 후보 단계에서는 줄이지 않습니다. 확정과 가이던스 하향이 겹칠 때 절반 축소 검토.",
+        "하지 말 것: 제목만 보고 확정으로 읽기, 이 알림만으로 매도.",
+    ]
+    return "[GRAB] 배달 수수료 8% 상한 확정 가능성 | 원문 확인 필요", append_ends("\n".join(lines), "grab"), 4
+
+
+OUTLOOK_M = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)?"
+
+
+def parse_outlook(text: str) -> dict:
+    """Business Outlook rows -> {'2026 Adjusted EBITDA': {'lo','hi','mid','prev': [lo, hi] or None}} in US$ million."""
+    i = text.find("Business Outlook")
+    if i < 0:
+        return {}
+    sect = text[i: i + 2500]
+    j = sect.find("Segment Financial")
+    sect = sect[:j] if j > 0 else sect
+    rng = rf"{OUTLOOK_M}\s*(?:-|to|\u2013)\s*{OUTLOOK_M}"
+    out = {}
+    for m in re.finditer(rf"(?<!Segment )(20\d\d) (Group Revenue|Revenue|Adjusted EBITDA) {rng}(?:[^()$]{{0,80}}?\(Previous: {rng})?", sect):
+        def pair(a: int) -> list[float] | None:
+            if not m.group(a):
+                return None
+            u = m.group(a + 1) or m.group(a + 3)
+            u2 = m.group(a + 3) or m.group(a + 1)
+            if not u:
+                return None
+            return [round(to_musd(m.group(a), u), 1), round(to_musd(m.group(a + 2), u2), 1)]
+        cur = pair(3)
+        if not cur:
+            continue
+        metric = "Revenue" if "Revenue" in m.group(2) else "Adjusted EBITDA"
+        out[f"{m.group(1)} {metric}"] = {"lo": cur[0], "hi": cur[1], "mid": sum(cur) / 2, "prev": pair(7)}
+    return out
+
+
+def outlook_cuts(new: dict, stored: dict) -> list[str]:
+    """Rows whose midpoint is below the previous outlook (inline 'Previous:' first, else the stored one)."""
+    cuts = []
+    for k, v in new.items():
+        ref = v.get("prev") or ([stored[k]["lo"], stored[k]["hi"]] if k in stored else None)
+        if not ref:
+            continue
+        rmid = sum(ref) / 2
+        if v["mid"] < rmid * 0.999:
+            cuts.append(f"{k} {v['lo']:g}~{v['hi']:g}백만 달러 (이전 {ref[0]:g}~{ref[1]:g}백만 달러)")
+    return cuts
+
+
+def sec_earnings_releases(cfg: dict, after: str | None) -> list[tuple[str, str, str]]:
+    """[(filingDate, url, text)] one per filing date (fullest copy), earnings 6-Ks filed after `after`, oldest first."""
+    sc = cfg["fy_rule"]["sec"]
+    ua = {"User-Agent": sc["user_agent"]}
+
+    def get(url: str) -> str:
+        time.sleep(0.3)
+        with urllib.request.urlopen(urllib.request.Request(url, headers=ua), timeout=30) as resp:
+            return resp.read().decode("utf-8", "replace")
+
+    r = json.loads(get(f"https://data.sec.gov/submissions/CIK{int(sc['cik']):010d}.json"))["filings"]["recent"]
+    best: dict[str, tuple[str, str]] = {}
+    n = 0
+    for i in range(len(r["form"])):
+        fd = r["filingDate"][i]
+        if r["form"][i] != "6-K" or not re.search(r"earning", r["primaryDocument"][i], re.I):
+            continue
+        if after and fd <= after:
+            continue
+        n += 1
+        if n > 4 or (after is None and best and fd not in best):
+            break  # seed run: newest release only
+        base = f"https://www.sec.gov/Archives/edgar/data/{int(sc['cik'])}/{r['accessionNumber'][i].replace('-', '')}/"
+        for it in json.loads(get(base + "index.json"))["directory"]["item"]:
+            name = it["name"]
+            if name.lower().endswith(".htm") and name != r["primaryDocument"][i] and "index" not in name:
+                text = html_to_text(get(base + name))
+                if len(text) > len(best.get(fd, ("", ""))[1]):
+                    best[fd] = (base + name, text)
+    return [(fd, u, t) for fd, (u, t) in sorted(best.items())]
+
+
+def cap8_b_message(cfg: dict, kind: str, a_status: str | None, a_links: list[str], cuts: list[str], url: str, stamp: str, price: float | None) -> tuple[str, str, int]:
+    px = f" 현재가 {price:.2f}달러." if price else ""
+    ev = " ".join(a_links[:3])
+    if kind == "manual":
+        title = "[GRAB] 실적 가이던스 자동 판독 안 됨 | 원문에서 하향 여부 직접 확인"
+        status = f"새 실적 보도자료에서 Business Outlook 가이던스를 읽지 못했습니다. 원문: {url}{px}"
+        todo = "원문 Business Outlook 에서 연간 매출, 조정 EBITDA 가이던스가 이전보다 내려갔는지 확인." + (f" 8% 상한 A 조건은 {'확정' if a_status == 'confirmed' else '후보'} 상태라 하향이면 비중 절반 축소 검토." if a_status else "")
+        pri = 4 if a_status else 3
+    elif kind == "compound":
+        word = "확정" if a_status == "confirmed" else "확정 가능성(수동 확인 전)"
+        title = f"[GRAB] 8% 상한 {'확정' if a_status == 'confirmed' else '확정 가능성'}에 가이던스 하향 | 비중 절반 축소 검토"
+        status = f"A 배달 수수료 8% 상한 {word}, 근거 {ev}. B 가이던스 하향: {'; '.join(cuts)}. 원문: {url}{px}"
+        todo = "보유 비중 절반 축소를 검토하세요. 다음 미국 정규장에서 지정가로 나눠서." + ("" if a_status == "confirmed" else " A 는 아직 후보라 규정 원문 확인을 먼저.")
+        pri = 5
+    else:
+        title = "[GRAB] 실적 가이던스 하향, 8% 상한 확정 전 | 참고"
+        status = f"B 가이던스 하향: {'; '.join(cuts)}. A 배달 수수료 8% 상한은 확정/후보 기록 없음. 원문: {url}{px}"
+        todo = "하향 이유(인도네시아 규제, 경쟁, 환율)만 확인. 이것만으로는 비중 축소 신호 아님."
+        pri = 3
+    lines = [
+        "이게 뭐 알림: 복합 규칙입니다. A 배달 수수료 8% 상한 확정 + B 그 뒤 실적에서 가이던스 하향이면 비중 절반 축소 검토. B 만이면 참고 알림.",
+        f"지금 결과/상태: {status} 시각 {stamp}.",
+        f"지금 할 일: {todo}",
+        "나중에: 복합 알림과 B 단독 알림은 각각 한 번만 옵니다. FY2027 9.3억 달러 기준과 가격선 알림은 그대로 돕니다.",
+        "익절/줄일 때: 절반 축소 뒤 남은 절반은 FY2027 조정 EBITDA 기준으로 판단.",
+        "하지 말 것: 한 번에 전량 시장가 매도, 기사 제목만으로 A 확정 처리.",
+    ]
+    return title, append_ends("\n".join(lines), "grab"), pri
+
+
+def run_cap8(cfg: dict, state: dict, new_picks: list[dict], stamp: str, price: float | None, dry: bool, news_seeded: bool) -> list[str]:
+    c = cfg.get("cap8") or {}
+    if not c.get("enabled"):
+        return []
+    cst = state.setdefault("cap8", {})
+    a = cst.setdefault("a", {})
+    today = stamp[:10]
+    # A: candidate from new news titles (news check already de-duplicates articles)
+    hits = [p for p in new_picks if cap8_candidate(cfg, p["title"])] if news_seeded else []
+    if hits:
+        if a.get("status") != "candidate":
+            t, b, p = cap8_candidate_message(cfg, hits, stamp)
+            if _emit(t, b, p, resolve_topic("port"), dry, ["warning"]) and not dry:
+                a.update({"status": "candidate", "since": today})
+        if not dry:
+            a["links"] = (a.get("links") or []) + [h["link"] for h in hits if h["link"]][:10]
+    status, since = cap8_status(cfg, cst)
+    print(f"cap8 A status={status} since={since}")
+    # B: new earnings releases on SEC
+    try:
+        rels = sec_earnings_releases(cfg, cst.get("last_filed"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"cap8 sec fail: {exc}", file=sys.stderr)
+        return ["SEC 6-K"]
+    seed = cst.get("last_filed") is None
+    stored = cst.get("outlook") or {}
+    for fd, url, text in rels:
+        ol = parse_outlook(text)
+        cuts = outlook_cuts(ol, stored)
+        print(f"cap8 B {fd} {url} outlook={ {k: (v['lo'], v['hi']) for k, v in ol.items()} } cuts={cuts}")
+        msg = None
+        if seed:
+            print("cap8 B seed (no send)")
+        elif not ol:
+            msg = cap8_b_message(cfg, "manual", status, a.get("links") or [], [], url, stamp, price)
+        elif cuts:
+            a_on = status and since and fd >= since
+            if a_on and not cst.get("compound"):
+                msg = cap8_b_message(cfg, "compound", status, (a.get("links") or []) + ([c["manual"]["source"]] if status == "confirmed" and c["manual"].get("source") else []), cuts, url, stamp, price)
+                key = "compound"
+            elif not a_on and not cst.get("b_only"):
+                msg = cap8_b_message(cfg, "b_only", None, [], cuts, url, stamp, price)
+                key = "b_only"
+        sent = True
+        if msg:
+            sent = _emit(*msg[:2], msg[2], resolve_topic("port"), dry, ["chart_with_downwards_trend"])
+            if sent and not dry and cuts:
+                cst[key] = {"at": stamp, "filed": fd, "url": url, "a": status, "cuts": cuts}
+        if not dry and sent:
+            for k, v in ol.items():
+                stored[k] = {"lo": v["lo"], "hi": v["hi"], "filed": fd}
+            cst["outlook"] = stored
+            cst["last_filed"] = fd
+    return []
+
+
 # ---------- run ----------
 
 def _emit(title: str, body: str, priority: int, topic: str, dry: bool, tags: list[str]) -> bool:
@@ -768,11 +965,15 @@ def run_events(cfg: dict, state: dict, now_ny: datetime, stamp: str, price: floa
     try:
         items = fetch_news(cfg)
         print(f"news items={len(items)}")
+        seeded = bool(state["news"].get("seeded"))
+        new_picks = pick_news(cfg, items, set(state["news"].get("seen") or []), now_ny.astimezone(KST))
         for title, body, pri in step_news(cfg, state, items, now_ny.astimezone(KST), stamp, price, dry):
             _emit(title, body, pri, resolve_topic("port"), dry, ["motor_scooter"])
     except Exception as exc:  # noqa: BLE001
         print(f"news fail: {exc}", file=sys.stderr)
         problems.append("뉴스 피드")
+        seeded, new_picks = False, []
+    problems += run_cap8(cfg, state, new_picks, stamp, price, dry, seeded)
     return problems
 
 
@@ -1044,6 +1245,78 @@ def selftest() -> int:
         t, b, pri, kind = guidance_message(cfg, 2027, mid, "x", "u", stamp)
         check(f"guid {want}", kind, want)
         check(f"guid {want} clean", any(ch in t + b for ch in FORBIDDEN) or not t.startswith("[GRAB] ") or not route_ok(t), False)
+
+    # ---- compound rule: 8% cap (A) + guidance cut (B) ----
+    for ttl, want in (
+        ("Permen Komdigi ditetapkan, komisi ojol dan kurir makanan maksimal 8 persen mulai berlaku", True),
+        ("Indonesia issues regulation capping food delivery commission at 8%", True),
+        ("Pemerintah usulkan komisi GoFood GrabFood 8 persen", False),
+        ("Rancangan aturan komisi kurir 8% masih dikaji", False),
+        ("Indonesia may cap food delivery commission at 8%", False),
+        ("Aturan komisi ojol 8 persen resmi berlaku", False),
+        ("Komisi 10 persen kurir makanan ditetapkan", False),
+    ):
+        check(f"cap8 cand {ttl[:40]}", cap8_candidate(cfg, ttl), want)
+    q3 = ("Business Outlook Financial Measure Guidance FY 2026 Outlook 2026 Group Revenue $4.15 billion - $4.20 billion 23% - 25% growth YoY "
+          "(Previous: $4.10 billion - $4.15 billion 22% - 23% growth YoY) 2026 Adjusted EBITDA $790 million - $800 million 58% - 60% growth YoY "
+          "(Previous: $720 million - $740 million 44% - 48% growth YoY) The above guidance ... Segment Financial and Operational Highlights Segment Adjusted EBITDA 123 78")
+    ol = parse_outlook(q3)
+    check("outlook real Q3 2026 rows", sorted(ol), ["2026 Adjusted EBITDA", "2026 Revenue"])
+    check("outlook ebitda mid", ol["2026 Adjusted EBITDA"]["mid"], 795.0)
+    check("outlook revenue billion", (ol["2026 Revenue"]["lo"], ol["2026 Revenue"]["prev"]), (4150.0, [4100.0, 4150.0]))
+    check("raise is not a cut", outlook_cuts(ol, {}), [])
+    cut = q3.replace("$790 million - $800 million", "$700 million - $720 million")
+    check("cut vs inline Previous", len(outlook_cuts(parse_outlook(cut), {})), 1)
+    q4 = "Business Outlook Financial Measure Guidance 2027 Group Revenue $4.6 billion to $4.7 billion 2027 Adjusted EBITDA $1.00 billion - $1.05 billion Segment Financial"
+    check("new year no previous, no cut", outlook_cuts(parse_outlook(q4), {}), [])
+    q1 = "Business Outlook 2027 Group Revenue $4.6 billion - $4.7 billion 2027 Adjusted EBITDA $950 million - $980 million Segment Financial"
+    st = {k: {"lo": v["lo"], "hi": v["hi"]} for k, v in parse_outlook(q4).items()}
+    check("cut vs stored outlook", [x.split(" ")[1] for x in outlook_cuts(parse_outlook(q1), st)], ["Adjusted"])
+    check("unparseable outlook", parse_outlook("Grab Reports First Quarter 2027 Results. Revenue grew 20%."), {})
+    for kind, ast in (("compound", "confirmed"), ("compound", "candidate"), ("b_only", None), ("manual", "candidate"), ("manual", None)):
+        t, b, p = cap8_b_message(cfg, kind, ast, ["https://example.com/a"], ["2027 Adjusted EBITDA x"], "https://sec/x", stamp, 3.0)
+        check(f"cap8 {kind} {ast} prio", p, {"compound": 5, "b_only": 3}.get(kind, 4 if ast else 3))
+        check(f"cap8 {kind} {ast} clean", any(ch in t + b for ch in FORBIDDEN) or not t.startswith("[GRAB] ") or not route_ok(t) or "https://sec/x" not in b, False)
+    check("compound says 절반", "비중 절반 축소 검토" in cap8_b_message(cfg, "compound", "candidate", [], ["x"], "u", stamp, None)[0], True)
+    t, b, p = cap8_candidate_message(cfg, [{"when": datetime(2027, 3, 1, tzinfo=KST), "title": "x", "link": "https://n/1"}], stamp)
+    check("cap8 candidate p4 clean", (p, "8% 상한 확정 가능성" in t, "https://n/1" in b, route_ok(t), any(ch in t + b for ch in FORBIDDEN)), (4, True, True, True, False))
+    # end-to-end with stubs: seed, B only, candidate, compound, once
+    g = globals()
+    real_sec, real_emit = g["sec_earnings_releases"], g["_emit"]
+    sent: list = []
+    feed: list = []
+    g["sec_earnings_releases"] = lambda cfg_, after: [x for x in feed if not after or x[0] > after]
+    g["_emit"] = lambda t, b, p, topic, dry, tags: sent.append((p, t)) or True
+    try:
+        s: dict = {}
+        feed[:] = [("2027-02-10", "u1", q4)]
+        run_cap8(cfg, s, [], "2027-02-11 00:00 KST", None, False, True)
+        check("e2e seed silent", sent, [])
+        feed.append(("2027-05-05", "u2", q1))
+        run_cap8(cfg, s, [], "2027-05-06 00:00 KST", None, False, True)
+        check("e2e B only p3", [p for p, _ in sent], [3])
+        pick = {"when": datetime(2027, 6, 1, tzinfo=KST), "title": "Permen Komdigi ditetapkan, komisi kurir makanan maksimal 8 persen", "link": "https://n/2"}
+        run_cap8(cfg, s, [pick], "2027-06-01 00:00 KST", None, False, True)
+        check("e2e candidate p4", [p for p, _ in sent], [3, 4])
+        q2 = q1.replace("$950 million - $980 million", "$900 million - $930 million")
+        feed.append(("2027-08-04", "u3", q2))
+        run_cap8(cfg, s, [], "2027-08-05 00:00 KST", None, False, True)
+        check("e2e compound p5", [p for p, _ in sent], [3, 4, 5])
+        check("e2e compound says 가능성", "확정 가능성" in sent[-1][1], True)
+        feed.append(("2027-11-03", "u4", q2.replace("$900 million - $930 million", "$850 million - $880 million")))
+        run_cap8(cfg, s, [], "2027-11-04 00:00 KST", None, False, True)
+        check("e2e once each", len(sent), 3)
+        feed.append(("2028-02-10", "u5", "Grab Reports Fourth Quarter 2027 Results"))
+        run_cap8(cfg, s, [], "2028-02-11 00:00 KST", None, False, True)
+        check("e2e unparseable manual p4", [p for p, _ in sent][-1], 4)
+        s2: dict = {"cap8": {"last_filed": "2027-02-10", "outlook": st}}
+        cfg2 = json.loads(json.dumps(cfg))
+        cfg2["cap8"]["manual"] = {"status": "confirmed", "on": "2027-04-01", "source": "https://jdih/x"}
+        feed[:] = [("2027-05-05", "u2", q1)]
+        run_cap8(cfg2, s2, [], "2027-05-06 00:00 KST", None, False, True)
+        check("e2e manual confirmed compound", (sent[-1][0], "확정에" in sent[-1][1]), (5, True))
+    finally:
+        g["sec_earnings_releases"], g["_emit"] = real_sec, real_emit
 
     def walk(obj) -> None:
         nonlocal fails
