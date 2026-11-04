@@ -34,6 +34,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from naver_api import html_text, notices  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+from earnings_parse import GUIDANCE_WEAK, classify_guidance, parse_results, quote, unwrap_pdf  # noqa: E402  shared parser
+from earnings_parse import safe_parse as ep_safe_parse  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "lges1103.json"
@@ -59,23 +61,6 @@ def send(cfg: dict, title: str, lines: list[str]) -> None:
     )
 
 
-def eok(text: str, pattern: str) -> int | None:
-    hit = re.search(pattern, text, re.I)
-    if not hit:
-        return None
-    raw = int(hit.group(1).replace(",", ""))
-    unit = hit.group(2)
-    if unit.startswith("백만"):
-        raw = raw // 100
-    if not -200000 < raw < 300000:
-        return None
-    return raw
-
-
-def grab(text: str, label: str) -> int | None:
-    return eok(text, r"(?:" + label + r")[^0-9\-]{0,24}(-?[\d,]+)\s*(억원|백만원)")
-
-
 def is_final(item: dict) -> bool:
     title = item.get("title", "")
     body = item.get("text", "")
@@ -87,27 +72,52 @@ def is_final(item: dict) -> bool:
     return bool(re.search(r"실적|기업설명회|컨퍼런스|영업이익", title + body[:400]))
 
 
+LGES_EXTRA = {"comp": r"보상금|위약금|최소구매", "ev": r"전기차|EV", "ess": r"ESS|에너지저장",
+              "ocf": r"영업활동현금흐름|영업현금흐름"}
+
+
 def parse(item: dict) -> dict:
     text = item.get("title", "") + "\n" + item.get("text", "")
-    op = grab(text, r"영업이익")
-    sales = grab(text, r"매출액")
-    net = grab(text, r"당기순이익|순이익")
-    ampc = grab(text, r"AMPC|세액공제")
-    comp = grab(text, r"보상금|위약금|최소구매")
-    ev = grab(text, r"전기차|EV")
-    ess = grab(text, r"ESS|에너지저장")
-    ocf = grab(text, r"영업활동현금흐름|영업현금흐름")
-    ex = None
-    if op is not None and ampc is not None:
-        ex = op - ampc
-    return {
-        "sales": sales, "op": op, "net": net, "ampc": ampc, "comp": comp,
-        "ev": ev, "ess": ess, "ocf": ocf, "ex": ex,
-    }
+    return parse_results(text, extra=LGES_EXTRA)
+
+
+def safe_parse(cfg: dict, state: dict, now: datetime, item: dict, mode: str) -> dict | None:
+    """parse() must never take the bundle down: one cwally-ops notice per day, then skip this part."""
+    dry = mode == "dry"
+
+    def notify(detail: str) -> None:
+        title = f"[OPS] LG엔솔 확정실적 파싱 실패 [{cfg.get('ticker', '373220')}] | 판정 유보"
+        lines = [
+            f"{now:%Y-%m-%d %H:%M} KST | OPS | lges1103 확정실적",
+            "이게 뭐 알림: 확정 실적 공시는 찾았지만 숫자 읽기(parse)에서 오류가 났습니다. 투자 판단 알림이 아닙니다.",
+            f"지금 상태: 공시 {item.get('id')}, 오류 {detail}. 이번 실행의 확정실적 판정만 건너뛰었고 다른 묶음 단계는 계속 진행합니다.",
+            f"지금 할 일: 로그의 ::error:: 줄과 공시 원문을 확인하세요. {DISCLOSURES}",
+        ]
+        if dry:
+            print(title, *lines, "dry-run; no ntfy", sep="\n")
+        else:
+            send_call(cfg, "ops", title, lines, 3)
+
+    before = state.get("ops_parse_day")
+    out = ep_safe_parse(lambda: parse(item), state=state, day=now.strftime("%Y-%m-%d"),
+                        ops_notify=notify, dry=dry, label="lges1103 parse")
+    if not dry and state.get("ops_parse_day") != before:
+        save_state(state, now)
+    return out
 
 
 def fmt(v: int | None) -> str:
     return "확인 불가" if v is None else f"{v:+,}억원"
+
+
+def fmt_pl(v: int | None, gain: str, loss: str) -> str:
+    if v is None:
+        return f"{gain} 확인 불가"
+    return f"{loss} {-v:,}억원" if v < 0 else f"{gain} {v:,}억원"
+
+
+# 제목에는 "매수"를 쓰지 않는다(본문 판정명은 그대로).
+TITLE_LABEL = {"매수 검토": "검토 가능"}
 
 
 def verdict(p: dict, prelim: dict) -> tuple[str, str, str]:
@@ -138,6 +148,8 @@ def verdict(p: dict, prelim: dict) -> tuple[str, str, str]:
         missing.append("사업부 손익")
     if p["net"] is None:
         missing.append("순이익")
+    elif p["net"] < 0:
+        missing.append("당기순손실")
     if p["ocf"] is None:
         missing.append("현금흐름")
     gap = ", ".join(missing) if missing else "보상금 차감 후 2,000억 미만"
@@ -204,16 +216,19 @@ def results_part(cfg: dict, state: dict, now: datetime, mode: str) -> dict | Non
             print("final disclosure not posted; silent")
         return None
     item = matches[0]
-    p = parse(item)
+    p = safe_parse(cfg, state, now, item, mode)
+    if p is None:
+        return None
     label, why, action = verdict(p, cfg["prelim"])
-    title = f"[LGESF] 373220 LG엔솔 3Q 확정 {label}"
+    title = f"[LGESF] 373220 LG엔솔 3Q 확정 {TITLE_LABEL.get(label, label)}"
+    margin = f" (영업이익률 {p['ex_margin']:.1f}%)" if p.get("ex_margin") is not None else ""
     lines = [
         "이게 뭐 알림: 373220 2026년 3분기 확정 실적에서 보상금, 사업부 손익, 순이익, 현금흐름을 분리해 신규 매수 여부를 봅니다. 미보유, 참고용, 투자 권유 아님.",
         (
             f"지금 결과/상태: 판정 {label}. {why} "
             f"매출 {fmt(p['sales'])}, 영업이익 {fmt(p['op'])}, AMPC {fmt(p['ampc'])}, "
-            f"AMPC 제외 {fmt(p['ex'])}, 보상금 {fmt(p['comp'])}, EV {fmt(p['ev'])}, ESS {fmt(p['ess'])}, "
-            f"순이익 {fmt(p['net'])}, 영업현금흐름 {fmt(p['ocf'])}. "
+            f"AMPC 제외 {fmt(p['ex'])}{margin}, 보상금 {fmt(p['comp'])}, EV {fmt(p['ev'])}, ESS {fmt(p['ess'])}, "
+            f"{fmt_pl(p.get('pretax'), '세전이익', '세전손실')}, {fmt_pl(p.get('net'), '당기순이익', '당기순손실')}, 영업현금흐름 {fmt(p['ocf'])}. "
             f"잠정은 매출 96,434억원, 영업이익 7,560억원, AMPC 제외 3,391억원. "
             f"공시 {item.get('id')}. 조회 {now:%Y-%m-%d %H:%M} KST. {DISCLOSURES}"
         ),
@@ -252,20 +267,6 @@ ATTRIB = re.compile(r"밝혔|설명했|말했|강조했|언급했|전망했|예�
 CALL_TITLE = re.compile(r"컨콜|컨퍼런스\s*콜|실적\s*발표|실적\s*설명|실적설명회|어닝\s*콜")
 ANALYST_LINE = re.compile(r"(증권|투자증권|자산운용|리서치|Securities|Investment)\S*\s*(의\s*)?\S{2,4}\s*(입니다|이라고\s*합니다)")
 COMPANY_LINE = re.compile(r"^\s*(CFO|CEO|IR|사회자|진행자)\s*[:：]|(CFO|담당|부사장|전무|상무)\s*\S{2,4}\s*입니다")
-
-Q4 = re.compile(r"4\s*분기|4Q|fourth quarter|다음\s*분기|연말", re.I)
-EXC = re.compile(
-    r"(보조금|IRA|AMPC|세액\s*공제|tax credit|production (tax )?credit|incentive|45X)\s*(효과|금액)?\s*(를|을|은|는|도)?\s*(제외|빼|뺀|없이)|"
-    r"(excluding|ex-|without)\s*(the\s*)?(IRA|AMPC|tax credit|production)|진짜\s*흑자|실질\s*흑자|본업\s*(흑자|이익|수익성)", re.I)
-PROFIT = re.compile(r"흑자|적자|손실|이익|손익|수익성|profit|loss|margin|마진", re.I)
-NEG = re.compile(
-    r"적자|손실|\bloss|unprofitable|흑자\s*(를\s*)?(유지|지속)\s*(는|가|이|하기)?\s*(가\s*)?(어렵|쉽지\s*않|불투명|힘들)|"
-    r"이익\s*(감소|축소|둔화)\s*(는|가|이)?\s*불가피", re.I)
-NEG_NEGATED = re.compile(r"(적자|손실)\s*(로\s*)?(전환|돌아설|를\s*낼|날)\s*(가능성|우려|일)\s*(은|는|이)?\s*(낮|크지\s*않|없)", re.I)
-POS = re.compile(
-    r"흑자|수익성\s*(을|도|이)?\s*(확보|개선|높|유지|강화)|이익\s*(이|은|도)?\s*(증가|개선|확대|늘)|"
-    r"profit\w*\s*(to\s*)?(continue|remain|sustain|improve|expand|grow)|remain\s*profitable|stay\s*profitable", re.I)
-ASPIRE = re.compile(r"최선|노력하|목표로|하도록\s*하겠|할\s*수\s*있도록|aim|strive", re.I)
 
 ONEOFF = re.compile(r"보상금|일회성|일시적\s*(이익|요인|수익)|one[- ]?off|one[- ]?time|compensation|위약금|최소\s*구매|MOQ|물량\s*보상", re.I)
 Q3 = re.compile(r"3\s*분기|이번\s*분기|당\s*분기|3Q|this quarter|third quarter|분기\s*실적", re.I)
@@ -371,30 +372,6 @@ def parse_amounts(snt: str) -> list[tuple[int, int]]:
     return sorted((pos, v) for pos, v in out if 0 < v < 20000 and v not in KNOWN_EOK)
 
 
-def classify_guidance(sents: list[str]) -> tuple[str, str | None]:
-    pos = neg = asp = None
-    for i, snt in enumerate(sents):
-        prev = sents[i - 1] if i else ""
-        if not (EXC.search(snt) and PROFIT.search(snt) and (Q4.search(snt) or Q4.search(prev))):
-            continue
-        if NEG.search(snt) and not NEG_NEGATED.search(snt):
-            neg = neg or snt
-        elif POS.search(snt) or NEG_NEGATED.search(snt):
-            if ASPIRE.search(snt):
-                asp = asp or snt
-            else:
-                pos = pos or snt
-    if neg and pos:
-        return "mixed", neg
-    if neg:
-        return "negative", neg
-    if pos:
-        return "positive", pos
-    if asp:
-        return "aspirational", asp
-    return "not_stated", None
-
-
 def classify_oneoff(sents: list[str], kind: str, title: str = "") -> tuple[str, int | None, str | None]:
     best: tuple[str, int | None, str | None] = ("not_found", None, None)
     rank = {"not_found": 0, "undisclosed": 1, "immaterial": 2, "amount": 3}
@@ -427,12 +404,13 @@ def evaluate(sources: list[dict]) -> dict:
     out = {"guidance": ("not_stated", None, None), "oneoff": ("not_found", None, None, None)}
     for tier in ("company", "news"):
         pool = [s for s in sources if s["kind"] == tier]
-        if out["guidance"][0] in ("not_stated", "aspirational"):
+        weak = GUIDANCE_WEAK
+        if out["guidance"][0] in weak:
             for s in pool:
                 g, ev = classify_guidance(clean_sentences(s["text"], tier))
-                if g != "not_stated" and (out["guidance"][0] == "not_stated" or g != "aspirational"):
+                if weak.get(g, 9) > weak[out["guidance"][0]]:
                     out["guidance"] = (g, ev, s["label"])
-                    if g != "aspirational":
+                    if g not in weak:
                         break
         if out["oneoff"][0] in ("not_found", "undisclosed"):
             for s in pool:
@@ -461,6 +439,7 @@ def call_verdict(ev: dict, base_ex: int, have_sources: bool) -> tuple[str, str]:
     miss = []
     if g != "positive":
         miss.append({"not_stated": "4분기 보조금 제외 가이던스 언급 없음", "mixed": "4분기 가이던스가 엇갈림",
+                     "overall_slowdown": "4분기 전사 수익성 둔화 언급, 보조금 제외 손익 미언급",
                      "aspirational": "4분기 보조금 제외 흑자는 목표/노력 표현뿐"}.get(g, "4분기 가이던스 불명"))
     if o == "amount" and amt is not None:
         miss.append(f"일회성 비중 {amt / base_ex * 100:.0f}%로 50% 이상")
@@ -480,6 +459,7 @@ def gather_sources(cfg: dict, now: datetime) -> tuple[list[dict], dict]:
                 txt = pdf_text(raw)
                 if key == "script_pdf":
                     txt = drop_analyst_blocks(txt)
+                txt = unwrap_pdf(txt)
                 if len(txt) > 1500:
                     srcs.append({"label": label, "kind": "company", "text": txt, "title": "", "url": c[key]})
                     meta[flag] = True
@@ -557,19 +537,20 @@ def gather_sources(cfg: dict, now: datetime) -> tuple[list[dict], dict]:
 
 
 GUIDE_TXT = {"positive": "흑자 지속/확대 시사", "negative": "적자/손실 시사", "mixed": "엇갈림",
-             "aspirational": "목표/노력 표현만", "not_stated": "언급 없음"}
+             "aspirational": "목표/노력 표현만", "not_stated": "언급 없음",
+             "overall_slowdown": "전사 수익성 둔화 언급, 보조금 제외 손익 미언급"}
 
 
 def call_message(cfg: dict, label: str, why: str, ev: dict, base_ex: int, base_op: int, srcs: list[dict], now: datetime) -> tuple[str, list[str], int]:
     g, gev, gsrc = ev["guidance"]
     o, amt, oev, osrc = ev["oneoff"]
-    gtxt = GUIDE_TXT[g] + (f" ({gsrc}: \"{gev[:110]}\")" if gev else "")
+    gtxt = GUIDE_TXT[g] + (f" ({gsrc}: \"{quote(gev)}\")" if gev else "")
     if o == "amount":
         otxt = f"{amt:,}억원, 보조금 제외 영업이익 {base_ex:,}억원의 {amt / base_ex * 100:.0f}%, 발표 영업이익 {base_op:,}억원의 {amt / base_op * 100:.0f}%"
     else:
         otxt = {"immaterial": "크지 않다고 언급", "undisclosed": "언급은 있으나 금액 비공개", "not_found": "금액 언급 못 찾음"}[o]
     if oev:
-        otxt += f" ({osrc}: \"{oev[:110]}\")"
+        otxt += f" ({osrc}: \"{quote(oev, ONEOFF)}\")"
     used = []
     for s in srcs:
         if s["label"] not in used:
@@ -580,7 +561,7 @@ def call_message(cfg: dict, label: str, why: str, ev: dict, base_ex: int, base_o
         "보류": "신규 매수 보류. 보조금과 일회성을 뺀 이익이 다시 흑자로 확인되기 전에는 사지 않기.",
         "확인 필요": "판정 못 함. IR 자료와 공시 원문을 직접 확인하기 전에는 매수 결정 미루기.",
     }[label]
-    title = f"[LGESF] 373220 실적콜 판정: {label}"
+    title = f"[LGESF] 373220 실적콜 판정: {TITLE_LABEL.get(label, label)}"
     lines = [
         "이게 뭐 알림: LG에너지솔루션(373220) 11/3 3분기 실적콜에서 4분기 보조금 제외 손익 가이던스와 3분기 일회성(보상금) 비중을 보고 신규 매수 여부를 판정합니다. 미보유, 참고용, 투자 권유 아님.",
         f"지금 결과/상태: 판정 {label}. 이유: {why}. 4분기 보조금 제외 가이던스: {gtxt}. 3분기 일회성: {otxt}. "
@@ -691,6 +672,71 @@ def selftest() -> int:
         got = verdict(p_, pre)[0]
         print(("ok  " if got == want else "FAIL"), name, got)
         results_fail += got != want
+    # Real 2026-11-03 fixtures (DART 177152048 정정 공정공시 table + 기타, IR script sentences).
+    q3_notice = (
+        "1. 연결실적내용(단위: 억원, %) - - 당기실적('26.3Q) - - - 법인세비용차감전 계속사업이익(당해실적) - -2,312 - "
+        "당기순이익(당해실적) - -2,969 - 1. 연결실적내용 단위 : 억원, % 구분 당기실적 전기실적 "
+        "매출액 당해실적 96,434 75,602 27.6 - 60,654 59.0 - 누계실적 237,586 - - - 188,442 26.1 - "
+        "영업이익 당해실적 7,560 1,133 567.3 - 6,013 25.7 - 누계실적 6,616 - - - 14,681 -54.9 - "
+        "법인세비용차감전계속사업이익 당해실적 -2,312 -1,278 - - 5,528 - 적자전환 누계실적 -12,176 - - - 8,902 - 적자전환 "
+        "당기순이익 당해실적 -2,969 -3,286 - - 5,361 - 적자전환 누계실적 -15,696 - - - 8,533 - 적자전환 "
+        "지배기업 소유주지분 순이익 당해실적 - - - - - - - 4. 기타 투자판단과 관련한 중요사항 "
+        "나. 상기 '1. 연결실적내용' 중, '26.3Q 매출액 96,434억원, 영업이익 7,560억원은 미국 IRA Tax Credit(Inflation Reduction Act) "
+        "첨단 제조 생산 세액공제(Advanced Manufacturing Production Credit) 제도(45X) 등에 따른 2026년 3분기 예상 북미 생산 보조금 "
+        "효과를 포함한 수치이며, 이를 제외한 2026년 3분기 매출액은 92,265억원, 영업이익은 3,391억원, 영업이익률은 +3.7%임."
+    )
+    q3_script = unwrap_pdf(
+        "CFO: 3분기 손익은 견조한 유럽 고객 수요를 기반으로 한 폴란드 Site의 가동률 개선, 상대적으로 수익\n"
+        "성이 견조한 원통형 제품 공급 물량 지속 효과, 그리고 ESS 신규 양산 Site들의 생산성 개선에 더해 고객으로부터 일회성 물량 보상금 반영으로 "
+        "영업이익은 7,560억 원을, 영업이익률은 7.8%를 기록했습니다. 한편 매출액과 영업이익에 반영된 북미 생산 보조금은 전력망 중심의 "
+        "ESS 제품 판매 확대에 힘입어 전분기 대비 73% 늘어난 4,169억 원을 기록했습니다. "
+        "법인세 차감 전 순손실은 2,312억 원, 당기순손실은 2,969억 원이었습니다. "
+        "3분기에 인식했던 여러 가지 일회성 요인이 좀 소멸되는 기저 효과가 있고, 또 4분기에 예정되어 있는 혼다 JV에 ESS Capa 추가 가동 "
+        "준비함에 따라서 초기 고정비 부담이 발생할 것 같습니다. 이로 인해서 4분기 수익성은 일부 둔화가 불가피할 것으로 보고 있습니다."
+    )
+    pn = parse({"title": "(정정)연결재무제표기준영업(잠정)실적(공정공시)", "text": q3_notice})
+    ps = parse({"title": "", "text": q3_script})
+    for name, got, want in (
+        ("q3 notice ampc", pn["ampc"], 4169), ("q3 notice ex", pn["ex"], 3391), ("q3 notice margin", pn["ex_margin"], 3.7),
+        ("q3 notice op", pn["op"], 7560), ("q3 notice sales", pn["sales"], 96434),
+        ("q3 notice net", pn["net"], -2969), ("q3 notice pretax", pn["pretax"], -2312), ("q3 notice comp", pn["comp"], None),
+        ("q3 script ampc", ps["ampc"], 4169), ("q3 script op", ps["op"], 7560), ("q3 script ex", ps["ex"], 3391),
+        ("q3 script net", ps["net"], -2969), ("q3 script pretax", ps["pretax"], -2312),
+        ("q3 script comp not 7,560", ps["comp"], None),
+        ("조원 unit", parse({"text": "AMPC 0.4조원 반영, 영업이익 1조 2,000억원"})["ampc"], 4000),
+        ("조+억 unit", parse({"text": "영업이익 1조 2,000억원"})["op"], 12000),
+        ("comma alone no crash", parse({"text": "순이익 , 억원 영업이익 , 억원"})["op"], None),
+        ("loss sentence", parse({"text": "당기순손실은 1조 2,300억 원"})["net"], -12300),
+        ("q3 verdict", verdict(pn, pre)[0], "관망"),
+    ):
+        ok = got == want
+        print(("ok  " if ok else "FAIL"), name, got)
+        results_fail += not ok
+    g3 = classify_guidance(clean_sentences(q3_script, "company"))
+    o3 = classify_oneoff(clean_sentences(q3_script, "company"), "company")
+    want_q = "고객으로부터 일회성 물량 보상금 반영으로 영업이익은 7,560억 원을, 영업이익률은 7.8%를 기록했습니다."
+    for name, got, want in (
+        ("q3 guidance overall_slowdown", g3[0], "overall_slowdown"),
+        ("q3 oneoff undisclosed", o3[0], "undisclosed"),
+        ("q3 oneoff quote exact", quote(o3[2], ONEOFF).lstrip("."), want_q),
+        ("q3 call verdict text", call_verdict({"guidance": (g3[0], g3[1], "IR 스크립트"), "oneoff": (o3[0], o3[1], o3[2], "IR 스크립트")}, 3391, True),
+         ("관망", "4분기 전사 수익성 둔화 언급, 보조금 제외 손익 미언급, 일회성(보상금) 금액 비공개")),
+        ("no-guidance stays not_stated", classify_guidance(["4분기에도 수주는 이어질 것입니다."])[0], "not_stated"),
+    ):
+        ok = got == want
+        print(("ok  " if ok else "FAIL"), name, got)
+        results_fail += not ok
+    # parse() crash -> one ops notice per day (dry prints only), bundle continues
+    st: dict = {}
+    real_parse = globals()["parse"]
+    globals()["parse"] = lambda item: (_ for _ in ()).throw(ValueError("invalid literal for int() with base 10: ''"))
+    try:
+        r1 = safe_parse({"ticker": "373220"}, st, datetime(2026, 11, 3, 9, 22, tzinfo=KST), {"id": "x"}, "dry")
+    finally:
+        globals()["parse"] = real_parse
+    ok = r1 is None
+    print(("ok  " if ok else "FAIL"), "parse exception handled", r1)
+    results_fail += not ok
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     fails = 0
 
@@ -714,7 +760,7 @@ def selftest() -> int:
             with contextlib.redirect_stdout(buf):
                 results_part(cfg, {"result_notified": False}, datetime(2026, 11, 3, 16, 32, tzinfo=KST), "dry")
             out = buf.getvalue()
-            check(f"results dry title {want}", out.splitlines()[0], f"[LGESF] 373220 LG엔솔 3Q 확정 {want}")
+            check(f"results dry title {want}", out.splitlines()[0], f"[LGESF] 373220 LG엔솔 3Q 확정 {TITLE_LABEL.get(want, want)}")
             check(f"results {want} has no holder wording", any(w in out for w in ("상향하세요", "유지하세요", "철회하세요", "보유 비중을 재평가")), False)
             check(f"results {want} no middle dot/em-dash", any(ch in out for ch in "\u00b7\u2014"), False)
             print(out)
