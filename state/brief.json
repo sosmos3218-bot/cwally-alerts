@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-04T09:43:24.863444+09:00",
+  "updated_at": "2026-11-05T08:05:31.947214+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -117,6 +117,15 @@
       "parts_done": 2,
       "done": true,
       "at": "2026-11-04T09:43:24.863444+09:00"
+    },
+    "20261105-ust-ktb.json#d2e71f1bc1354713": {
+      "file": "20261105-ust-ktb.json",
+      "title": "[BRIEF] SPY 미국채 뉴욕 종가와 국고채 | 유지",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-05T08:05:31.947214+09:00"
     }
   },
   "rejected": {},
