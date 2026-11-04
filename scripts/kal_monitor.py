@@ -10,7 +10,7 @@
   events: DART 목록 + 네이버 공시. 유상증자결정 p4(언제든 1번), 합병 완료 p3, 합병 일정 정정 p3(공시마다),
           12/19 까지 완료 없음 p3 안내, 2027-04-01 까지 없음 p4, 3분기 분기보고서/연결 잠정 p3(11/3~11/30),
           4분기 잠정 전날 1/14 안내와 공시 1번.
-  2026-11-04: 32,500 선은 종가 또는 장중 고가, 새 26,000 선은 종가 또는 장중 저가(basis hl, 재무장 3% 종가).
+  2026-11-04: 32,500 선은 종가 또는 장중 고가, 26,500 선은 종가 또는 장중 저가(basis hl, 재무장 3% 종가, 잠깐 있던 26,000 선은 26,500 에 합침).
           12/15 '내일 합병기일 12/16, 합병등기 12/17' 안내 1번. 전용 규칙에 안 걸린 공시도 events.filings 규칙으로
           1번(실적, 사채/증자 p4, 합병, 공급계약 p3; 같은 날 같은 규칙은 DART/네이버 중복 1번).
 첫 실행(또는 새 항목)은 조용히 시드. 데이터 조회 실패는 하루 1번 cwally-ops.
@@ -345,18 +345,14 @@ def item_text(kind: str, obj, cfg: dict, ctx: dict) -> tuple[str, str, int]:
             if not p_hit(obj, p):  # close alone did not cross: the intraday high/low did
                 ext = f"({'고가' if obj['kind'] == 'up' else '저가'} {won(v)})"
         tail = f"종가 {won(p)}{ext} | {obj['label']}"
-        if k == "d26000":
-            return (tail + " | 하락 원인 확인",
-                    "1차 지정가 26,500 아래로 더 내려왔습니다. 2027년 이익 추정 하향, 순차입금 증가(통합비용, 기재 투자), 유가 중 무엇 때문인지 먼저 확인하세요. "
-                    "조건 1 점검표(합병 일정 유지, WTI 110 재안착 아님) 없이 사지 마세요.", obj["priority"])
         if k == "d26500":
             w = ctx.get("wti_last")
             wtxt = f"WTI 최근 정산 {w:.2f}달러, {'110 이상' if w >= 110 else '110 미만'}" if w else "WTI 확인 불가"
             wok = "재안착 아님" if not ctx.get("wti_110") else "2일 연속 110 이상, 조건 미충족"
             plan = cfg["plan"]
             drop = " 유상증자 공시가 있어 폐기 조건에 해당합니다." if ctx.get("rights") else ""
-            return (tail + " | 조건 1 점검",
-                    f"조건 1 점검표: 1) 종가 26,500 이하 맞음 2) {ctx.get('merger', '합병 상태 확인 불가')} 3) {wtxt}, {wok} "
+            return (tail + " | 분할 매수 검토",
+                    f"조건 1 점검표: 1) 종가 또는 장중 저가 26,500 이하 맞음 2) {ctx.get('merger', '합병 상태 확인 불가')} 3) {wtxt}, {wok} "
                     f"4) 참고 200일선 {won(ctx['ma']) if ctx.get('ma') else '계산 불가'}원. 셋 다 맞으면 1차 지정가를 검토하세요(주문 아님). "
                     f"규모: {plan['sizing']}. {plan['account']}, {plan['vehicle']}.{drop}", obj["priority"])
         if k == "d24000":
@@ -455,7 +451,7 @@ def message(cfg: dict, items: list[tuple[str, object]], stamp: str, ctx: dict) -
         f"{stamp} | 003490 | 대한항공",
         "지금 결과/상태: " + ", ".join(st) + ". 걸린 것: " + "; ".join(texts[i][0] for i in order) + ".",
         "지금 할 일: " + " ".join(texts[i][1] for i in order),
-        "나중에: 같은 선은 다시 무장된 뒤에만 다시 옵니다(26,500 은 27,300 위, 26,000 은 26,780 위, 24,000 은 24,700 위 회복, 32,500 은 31,525 아래, 40,000 은 38,500 아래, "
+        "나중에: 같은 선은 다시 무장된 뒤에만 다시 옵니다(26,500 은 27,295 위, 24,000 은 24,700 위 회복, 32,500 은 31,525 아래, 40,000 은 38,500 아래, "
         f"우선주 할인율 25% 아래, WTI 105 아래, 제트유 대용 +5%, -10% 안). 통합 출범 예정 12/17. 종료 {cfg['ends_kst'][:10]}.",
         ("익절/줄일 때: 아직 미보유. 1차 뒤에는 비관 24,000 과 폐기 조건(합병 지연, 2027년 연결 영업이익 1.5조원 아래, 유상증자)으로만 줄일지 정하세요."
          if buy_review else "익절/줄일 때: 미보유라 해당 없음. 보유하게 되면 경고 때는 비중부터 점검하세요."),
@@ -593,19 +589,21 @@ def selftest(cfg: dict) -> int:
         fails += not ok
         print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
     LA = cfg["price_lines"]
-    L = [x for x in LA if x["key"] != "d26000"]  # original four-line walk below; d26000 is tested separately
+    L = LA  # close-only walk (hl None); the 26,500 low cross is tested in the hl walk
     armed: dict = {"d26500": True, "d24000": True, "u32500": True, "u38500": True}
     check("migration: u38500 dropped, u40000 seeds silent", (judge_price(L, armed, 29900), sorted(armed)), ([], ["d24000", "d26500", "u32500", "u40000"]))
     check("all armed", all(armed.values()), True)
-    walk = [26500, 26000, 27299, 26400, 27300, 26450, 23900, 24699, 23000, 24700, 32500, 33000, 31500, 31499, 32600, 40000, 38600, 38499, 40100]
+    walk = [26500, 26000, 27294, 26400, 27300, 26450, 23900, 24699, 23000, 24700, 32500, 33000, 31500, 31499, 32600, 40000, 38600, 38499, 40100]
     got = [[x["key"] for x in judge_price(L, armed, p)] for p in walk]
     check("price walk", got, [["d26500"], [], [], [], [], ["d26500"], ["d24000"], [], [], [], ["u32500"], [], [], [], ["u32500"], ["u40000"], [], [], ["u40000"]])
     a2 = {k: True for k in ("d26500", "d24000", "u32500", "u40000")}
-    check("d26000 added to old state seeds silently", (judge_price(LA, a2, 29150, (29500, 28800)), a2.get("d26000")), ([], True))
+    a2x = {**a2, "d26000": False}
+    check("removed d26000 key dropped from old state", (judge_price(LA, a2x, 29150, (29500, 28800)), "d26000" in a2x, a2x["d26500"]), ([], False, True))
     hl_walk = [(29150, (32000, 28900), []), (32000, (32500, 31000), ["u32500"]), (32400, (33000, 31800), []), (31600, (32000, 31400), []),
-               (31500, (32000, 31000), []), (32100, (32550, 31500), ["u32500"]), (27000, (27500, 26000), ["d26000"]),
-               (26500, (26900, 26100), ["d26500"]), (26779, (27000, 26500), []), (26780, (27000, 26600), []), (26300, (26700, 25990), ["d26000"])]
-    a3 = {k: True for k in ("d26500", "d26000", "d24000", "u32500", "u40000")}
+               (31500, (32000, 31000), []), (32100, (32550, 31500), ["u32500"]), (27000, (27500, 26000), ["d26500"]),
+               (26500, (26900, 26100), []), (27294, (27500, 26600), []), (27295, (27500, 26900), []), (27000, (27400, 26500), ["d26500"]),
+               (27100, (27200, 26400), []), (23900, (24500, 23800), ["d24000"])]
+    a3 = {k: True for k in ("d26500", "d24000", "u32500", "u40000")}
     got = [[x["key"] for x in judge_price(LA, a3, c, hl)] for c, hl, _ in hl_walk]
     check("hl walk (high/low cross, 3% close re-arm)", got, [w for _, _, w in hl_walk])
     check("hl missing -> close only", [x["key"] for x in judge_price(LA, {k: True for k in a3}, 32400, None)], [])
@@ -694,11 +692,12 @@ def selftest(cfg: dict) -> int:
     base = {"close": ("2026-12-01", 26400.0), "ma": 26240.0, "pref": ("2026-12-01", 19000.0, 28.0), "wti_last": 97.1, "wti_110": False,
             "wti_hist": [["d", 111.0], ["e", 112.0]], "fuel": (4.9, 10.8), "fuel_base": 4.424, "merger": merger_status({}), "rights": False}
     t1, b1, p1 = message(cfg, [("price", L[0]), ("pref", None)], stamp, base)
-    check("buy-review title p3", (t1, p1), ("[KAL] 003490 대한항공 종가 26,400 | 1차 지정가 검토 구간 (26,500 이하) | 조건 1 점검 외 1건", 3))
-    d26 = next(x for x in LA if x["key"] == "d26000")
+    check("buy-review title p3", (t1, p1), ("[KAL] 003490 대한항공 종가 26,400 | 1차 지정가 26,500 이하 | 분할 매수 검토 외 1건", 3))
+    d26 = next(x for x in LA if x["key"] == "d26500")
     u32 = next(x for x in LA if x["key"] == "u32500")
-    td, bd, pd = message(cfg, [("price", d26)], stamp, {**base, "close": ("2026-12-01", 26300.0), "hl": (26700.0, 25990.0)})
-    check("d26000 title (low crossed)", (td, pd), ("[KAL] 003490 대한항공 종가 26,300(저가 25,990) | 26,000 이하 (1차 지정가 아래) | 하락 원인 확인", 3))
+    td, bd, pd = message(cfg, [("price", d26)], stamp, {**base, "close": ("2026-12-01", 26700.0), "hl": (27000.0, 26400.0)})
+    check("d26500 title (low crossed)", (td, pd), ("[KAL] 003490 대한항공 종가 26,700(저가 26,400) | 1차 지정가 26,500 이하 | 분할 매수 검토", 3))
+    check("d26500 checklist says close or low", "종가 또는 장중 저가 26,500 이하 맞음" in bd, True)
     tu, bu, pu = message(cfg, [("price", u32)], stamp, {**base, "close": ("2026-12-01", 32100.0), "hl": (32550.0, 31500.0)})
     check("u32500 title (high crossed)", tu, "[KAL] 003490 대한항공 종가 32,100(고가 32,550) | 52주 고점 32,500 돌파 (기본 시나리오 33,000 근접) | 추격 매수 보류")
     tu2 = message(cfg, [("price", u32)], stamp, {**base, "close": ("2026-12-01", 32600.0), "hl": (32800.0, 32000.0)})[0]
@@ -726,7 +725,7 @@ def selftest(cfg: dict) -> int:
     check("wti title", each[1][0], "[KAL] 003490 대한항공 WTI 112.00달러 | WTI 110달러 재안착, 1차 조건 미충족")
     check("delay p4", each[6][2], 4)
     check("ticker in titles", all(t.startswith("[KAL] 003490 대한항공 ") for t in titles), True)
-    check("no buy wording in d26000/filing/merger_pre", [w for w in BAD_WORDS if w in td + bd + tp_[0] + tp_[1] + "".join(t + b for t, b, _ in tf)], [])
+    check("no buy wording in filing/merger_pre", [w for w in BAD_WORDS if w in tp_[0] + tp_[1] + "".join(t + b for t, b, _ in tf)], [])
     check("first line 이게 뭐 알림", all(b.split("\n")[0].startswith("이게 뭐 알림:") for b in bodies), True)
     check("six parts", [x.split(":")[0] for x in b1.split("\n")[2:]], ["지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
     check("no dot/dash", any(ch in "".join(titles + bodies) for ch in "\u00b7\u2014"), False)
