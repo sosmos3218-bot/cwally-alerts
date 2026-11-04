@@ -8,51 +8,67 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 가격 조건은 새로 켜질 때만, 실적 알림은 날짜당 1회.",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). BTC는 Yahoo BTC-USD 완료 일봉(UTC). 가격 조건은 새로 켜질 때만, 실적 판정은 1회.",
   "alert_policy": "change_only",
-  "basis": "2026-10-22 COIN 분석 결론: 관망 우선, 실적(10/29 미국 장 마감 후) 전에는 예정 금액의 20~25% 선행 진입만. 10/21 종가 177.08달러. 관심 구간 150~160달러, 기준 시나리오 180~220달러, 약세 110~140달러, 강세 250~300달러. 아래 숫자는 그 분석의 판단 기준을 옮긴 것.",
-  "account": "미국 주식 해외 계좌 가정. 자동 주문 아님",
-  "buy_zone": {
-    "close_max": 160.0,
-    "rearm_close": 170.0,
-    "note": "COIN 완료 종가 160달러 이하 = 분석의 관심 구간(150~160) 진입. 종가 170달러 위로 올라가면 다시 무장. 실적 전망이 훼손되면 이 가격도 매수 근거 아님"
-  },
-  "break_zone": {
-    "close_max": 150.0,
-    "rearm_close": 158.0,
-    "note": "COIN 완료 종가 150달러 미만 = 관심 구간 아래 이탈, 약세 시나리오(110~140) 쪽. 종가 158달러 위로 올라가면 다시 무장"
-  },
-  "base_top": {
-    "close_min": 220.0,
-    "rearm_close": 205.0,
-    "note": "COIN 완료 종가 220달러 이상 = 기준 시나리오(180~220) 상단 도달. 종가 205달러 아래로 내려가면 다시 무장"
+  "basis": "2026-11-04 t49u 재설계. 11/3 종가 145.45달러, 52주 저점 135.46달러(11/2 Yahoo 일봉 저가). 10/22 설계의 160달러 이하(관심 구간)와 150달러 이탈은 이미 울렸고 폐지. 2차를 저가 매수(2차-A)와 추세 매수(2차-B) 두 규칙으로 나눔. 보유 여부와 수량을 모르므로 메시지는 수량이나 비중 없이 계획 단계와 조건만 말함.",
+  "rules": {
+    "warn": {
+      "close_max": 135.0,
+      "rearm_close": 142.0,
+      "note": "1. 경계: 완료 종가 135달러 이하(52주 저점 이탈). 매수 신호 아님. 종가 142달러 위면 재무장"
+    },
+    "down": {
+      "close_below": 130.0,
+      "consec_days": 2,
+      "clear_close": 130.0,
+      "note": "2. 하향 확인: 종가 130달러 미만 2거래일 연속이면 '하향 신호, 저가 매수 보류' 1회. 종가 130달러 이상 2거래일 연속이면 해제"
+    },
+    "buy_a": {
+      "touch_close": 125.0,
+      "lookback_days": 15,
+      "rearm_close": 140.0,
+      "note": "3. 2차-A 저가 매수 규칙: 125달러 이하는 '보류' 안내만(사지 않음). 최근 15거래일 안에 종가 125달러 이하가 있었고 그 뒤 종가 130달러 이상이 2거래일 연속(하향 확인 해제와 같은 조건)일 때만 조건 충족 1회. 하향 확인이 풀리기 전에는 저가 매수 문구를 내지 않아 계획의 하향 조건과 충돌하지 않음. 종가 140달러 위면 재무장"
+    },
+    "buy_b": {
+      "close_min": 178.0,
+      "sma_days": 50,
+      "btc_min": 90000.0,
+      "rearm_close": 170.0,
+      "note": "4. 2차-B 추세 매수 규칙: 종가 178달러 이상 AND 50일 이동평균 이상 AND BTC-USD 완료 일봉(UTC) 종가 9만 달러 이상. BTC 조회 실패면 판정 안 함. 종가 170달러 아래면 재무장. 2차-A와 상태 키가 다름(b_armed)"
+    },
+    "top": {
+      "close_min": 220.0,
+      "rearm_close": 205.0,
+      "note": "5. 상단: 종가 220달러 이상(기존 그대로). 205달러 아래면 재무장"
+    }
   },
   "earnings": {
-    "date_us": "2026-10-29",
-    "when": "한국시간 10/30 새벽",
-    "pre_date_kst": "2026-10-28",
-    "post_date_kst": "2026-10-30",
-    "post_window_days": 7,
-    "q2_baseline": {
-      "trading_rev_musd": 599.2,
-      "subs_services_rev_musd": 555.1,
-      "adj_ebitda_musd": 207.8,
-      "sbc_musd": 238.3
+    "quarter": "2026Q4",
+    "period_end": "2026-12-31",
+    "search_from": "2027-01-20",
+    "search_to": "2027-03-20",
+    "expected_note": "Coinbase 4분기 실적 날짜는 아직 미발표. 2025년 4분기는 2026-02-12에 8-K(Item 2.02, 주주서한)와 10-K가 같은 날 제출됨. 그래서 날짜를 고정하지 않고 창 안에서 SEC 공시를 찾음",
+    "reference": {
+      "q3_tx_k": 590224.0,
+      "nine_month_tx_k": 1945205.0,
+      "ir_url": "https://investor.coinbase.com/",
+      "source": "SEC 10-Q 0001679788-26-000122(2026-10-29 제출, coin-20260930.htm) 'Total transaction revenue' 3개월 590,224천 달러, 9개월 1,945,205천 달러. 같은 날 8-K 덱 q326earningsdeck_vsec.htm은 'Transaction revenue $590M', 'declined 1% Q/Q'"
     },
-    "ir_url": "https://investor.coinbase.com/",
-    "note": "10/28 첫 실행에서 D-1 안내 1회. 10/30부터 SEC 8-K(Item 2.02) 첨부 덱 Financial Recap 표에서 거래 매출(Transaction, net), 구독 및 서비스 매출, 조정 EBITDA, 주식보상비용을 읽어 직전 분기와 대조한 결과를 1회 보냄(IR 사이트는 봇에 403이라 SEC 사용). 표의 직전 분기 열이 q2_baseline과 다르면 판독을 믿지 않고 수동 확인 안내 후 창 안에서 재시도. 4번(다음 분기 전망)은 자동 판독 안 함"
+    "parse_note": "3분기 post_parsed false 원인: 10/22 코드는 덱의 'Financial Recap' 표를 찾았지만 3분기 덱(q326earningsdeck_vsec.htm)은 슬라이드가 그림(jpg)이고 본문 텍스트에 그 표가 없음. 2025년 4분기는 덱 대신 주주서한(q425shareholderletter.htm)이라 형식도 분기마다 다름. 새 방식은 10-K 연간 'Total transaction revenue'에서 9개월 누계를 빼서 4분기 정확값을 얻고(FY2025로 시험: 4,055,390-3,072,738=982,652천, 주주서한 '$983 million, down 6% Q/Q'와 일치), 10-K가 아직 없으면 8-K 첨부 문장으로 판정. 3분기와 1백만 달러 안이거나 출처끼리 어긋나면 수동 확인 안내 1회 후 재시도",
+    "verdict": "4분기 거래 매출 > 3분기 590.2백만 달러면 '3차 조건 충족', 아니면 '3차 보류'"
   },
   "edgar": {
     "cik": "0001679788",
-    "item": "2.02",
-    "search_days": 5,
-    "note": "data.sec.gov submissions의 8-K 중 Item 2.02이고 제출일이 date_us 이후 search_days일 안인 것"
+    "item": "2.02"
   },
+  "account": "미국 주식 해외 계좌 가정. 자동 주문 아님",
   "stale_days": 6,
   "sources": {
-    "bars": "Yahoo Finance chart v8 COIN 1d 1y (미국 동부시간 기준 완료 일봉만 사용, 당일 진행 봉 제외)"
+    "bars": "Yahoo Finance chart v8 COIN 1d 1y (미국 동부시간 기준 완료 일봉만)",
+    "btc": "Yahoo Finance chart v8 BTC-USD 1d (UTC 완료 일봉)",
+    "earnings": "SEC EDGAR submissions, 10-K, 8-K Item 2.02"
   },
   "year_guard": null,
-  "ends_kst": "2026-12-31 23:59",
-  "ends_note": "10/29 3분기 실적 반영 후 150~160/220달러 기준을 다시 설계"
+  "ends_kst": "2027-03-31 23:59",
+  "ends_note": "11/4 재설계 규칙(135, 130 하향 확인, 2차-A, 2차-B, 220, 4분기 거래 매출) 운영 후 자동 종료"
 }
