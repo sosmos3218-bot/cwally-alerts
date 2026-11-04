@@ -767,6 +767,7 @@ jobs:
             python scripts/arkg_monitor.py auto
             python scripts/mchi_monitor.py auto
             python scripts/coin_monitor.py auto
+            python scripts/fltw_monitor.py auto
             python scripts/nflxq4_monitor.py auto
           fi
           python scripts/ntfy_archive.py

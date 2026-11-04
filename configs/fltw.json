@@ -1,0 +1,42 @@
+{
+  "name": "fltw",
+  "title_prefix": "[FLTW]",
+  "symbol": "FLTW",
+  "display": "Franklin FTSE Taiwan ETF",
+  "created_at": "2026-11-04T19:30:00+09:00",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 단계 추가. 미국 직전 완료 일봉 종가만 사용(장중 봉 제외). 가격 조건은 새로 켜질 때만, TSMC 4분기 판정은 1회.",
+  "alert_policy": "change_only",
+  "basis": "2026-11-04 t53u 승인 분할 계획. 11/3 종가 93.98달러, 52주 종가 고점 114.08달러(10/5), 종가 저점 57.56달러(2025-11-20), Yahoo 일봉. 보유 없음, 메시지는 수량이나 비중 없이 계획 단계와 조건만 말함.",
+  "account": "미국 ETF 해외 계좌 가정. 자동 주문 아님",
+  "rules": {
+    "buy1": {"close_max": 90.0, "rearm_close": 95.0, "note": "1. 1차 매수: 종가 90달러 이하. 95달러 위면 재무장"},
+    "buy2": {"close_max": 82.0, "rearm_close": 87.0, "note": "2. 2차 매수: 종가 82달러 이하, TSMC 가이던스 하향이 없을 때만. 4분기 판정 전에는 자동 신호가 없으므로 메시지에 직접 확인하라고 씀. 판정이 3차 보류면 2차도 보류 문구. 87달러 위면 재무장"},
+    "buy3": {"close_max": 75.0, "note": "3. 3차 매수: TSMC 4분기 판정 양호 또는 종가 75달러 이하 중 먼저 오는 것, 전체 기간 1회. 재점검(70달러 2일)이 켜져 있으면 가격 경로는 보류"},
+    "recheck": {"close_max": 70.0, "consec_days": 2, "rearm_close": 75.0, "note": "4. 재점검: 종가 70달러 이하 2거래일 연속이면 '매수 중단, 다시 판단' 1회. 75달러 위면 해제"},
+    "chase": {"close_min": 110.0, "rearm_close": 105.0, "note": "5. 추격 금지: 종가 110달러 이상. 105달러 아래면 재무장"}
+  },
+  "tsmc_q4": {
+    "quarter": "2026Q4",
+    "search_from": "2027-01-08",
+    "search_to": "2027-02-15",
+    "cik": "0001046179",
+    "q4_guidance_low": 52.3,
+    "q4_guidance_high": 54.3,
+    "guidance_source": "TSMC 3분기 실적 6-K 0001046179-26-000726(2026-10-15 SEC 제출): 'Revenue is expected to be between US$52.3 billion and US$54.3 billion'",
+    "fy_growth_good_pct": 20.0,
+    "fy_growth_warn_pct": 15.0,
+    "threshold_note": "2027년 연간 매출 성장 20% 이상 양호, 15% 미만 경계, 15~20 중립은 어시스턴트 제안 기준이지 시장 컨센서스가 아님",
+    "q1_drop_warn_pct": 10.0,
+    "design_note": "TSMC IR 사이트는 봇 차단이라 SEC EDGAR에서 TSMC(CIK 1046179)가 실적 당일 제출하는 6-K 전체 텍스트를 읽음. 'Net Revenue (US$ billions) 실적 가이던스범위'(가이던스 52.3-54.3과 일치해야 4분기로 인정), '1Q27 Guidance ... between US$A billion and US$B billion', 'Future Outlook ... 2027 revenue to increase by ... N%'. 2026-01-15 6-K(4분기 2025)와 2026-10-15 6-K(3분기 2026) 실물로 검증. 하나라도 못 읽으면 수동 확인 안내 1회, 다음 실행 때 재시도",
+    "ir_url": "https://investor.tsmc.com/english/quarterly-results"
+  },
+  "stale_days": 6,
+  "sources": {"bars": "Yahoo Finance chart v8 FLTW 1d 1y (미국 동부시간 기준 완료 일봉만)", "tsmc": "SEC EDGAR submissions, 6-K 전체 텍스트"},
+  "year_guard": null,
+  "ends_kst": "2027-03-31 23:59",
+  "ends_note": "FLTW 분할 계획(90, 82, 75, 70 재점검, 110 추격 금지)과 TSMC 4분기 판정 운영 후 자동 종료"
+}
