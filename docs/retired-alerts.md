@@ -186,3 +186,25 @@ No [GRAB-PX] message was ever sent (dry dispatch only, run 41638102466).
 | name | prefix | added | window (KST) | what it did |
 |---|---|---|---|---|
 | grabpx | `[GRAB-PX]` | 2026-11-03 | never sent | GRAB 2.85~2.95 / 2.73 / 2.67 intraday lines + earnings date reminders |
+
+## 2026-11-04 sdipref and standalone sdichg merged into sdimix ([SDI] 006400/006405, user request pt11u)
+
+User request (Korean): 두 알림을 하나로 통합하고 우선주 괴리율 변화에 따라 보통주와 우선주 비중 조절을 추천. Agreed in chat:
+no full switch, staged shifts of about 30% by discount band, one `[SDI]` alert on the existing 19:00 k203780 slot.
+
+Removed: `configs/sdipref.json`, `scripts/sdipref_monitor.py`, `state/sdipref.json` (last state 2026-11-03 MIDDLE; the
+2026-11-04 19:00 run sent `[SDI-PREF] 006405 61.5% 이상 진입, 할인 확대 재점검` ntfy h3tvU9pdmf84, but that run's state push
+failed with a GitHub 500), the `Run SDI-PREF` step (now `Run SDI (sdimix ...)` on the same k203780 slot).
+sdichg standalone runs removed: the morning 09:00 `python scripts/sdichg_monitor.py auto` line, the `Run sdichg` step,
+its Decide branch and its five GitHub one-shot crons (`40 2 8 10 *`, `40 23 26 10 *`, `20 7 27 10 *`, `22 7 28 10 *`,
+`22 7 4 11 *`, all already past; no future one-shot was left, no cron-job.org job to delete). `state/sdichg.json` was
+folded into `state/sdimix.json` (`verdict` 보유, `sdichg_carry`). `configs/sdichg.json` stays as the verdict settings
+(rules, baseline 562,000원, peer 373220, ends 2027-01-15 09:00; `oneshot_kst` emptied, `title_prefix` removed) and
+`scripts/sdichg_monitor.py` stays as a library (`evaluate_verdict`); its `main()` now only prints that it is retired.
+`[SDI-PREF]` is still listed in the AGENTS.md prefix line (AGENTS.md not edited in this change); no script emits it now.
+`[SDI-PX]`, `[SDI-ESS]` and `[SDI]` sdiq3 are unchanged.
+
+| name | prefix | added | slot | what it did | now |
+|---|---|---|---|---|---|
+| sdipref | `[SDI-PREF]` | 2026-10-29 | 19:00 k203780 | 006400/006405 same-day KRX close discount, zone entry at <= 50% or >= 61.5% | sdimix bands Z_LOW <= 50, Z_HIGH1 >= 61.5, Z_HIGH2 >= 65, 1%p hysteresis, pref target 0/hold/30/50% |
+| sdichg (standalone) | `[SDI]` | 2026-10-08 | 09:00 morning + one-shots | 006400 change-condition verdict 보유 / 분할매수 검토 / 축소 점검, weekly Monday status | same verdict inside sdimix at 19:00, sent only on change, ends 2027-01-15 09:00 then bands only |

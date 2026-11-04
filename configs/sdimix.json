@@ -1,0 +1,36 @@
+{
+  "name": "sdimix",
+  "title_prefix": "[SDI]",
+  "title_note": "AGENTS.md 허용 prefix [SDI]. 제목에 항상 006400/006405. 옛 [SDI-PREF] sdipref 와 sdichg 단독 실행을 합침(2026-11-04, pt11u).",
+  "display": "삼성SDI 보통주/우선주 괴리율 비중 + 보통주 변경 조건 판정",
+  "ticker": "006400",
+  "ticker_common": "006400",
+  "ticker_pref": "006405",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "k203780",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 19:00 슬롯(KRX 거래일). 구간이나 보통주 판정이 바뀔 때만 발송. 주간 반복 없음.",
+  "start_date": "2026-11-05",
+  "bands": {
+    "low_pct": 50,
+    "high1_pct": 61.5,
+    "high2_pct": 65,
+    "hysteresis_pp": 1.0,
+    "note": "괴리율 = (1 - 006405 종가 / 006400 종가) x 100, 같은 날 Daum KRX 종가. Z_LOW <= 50 (P20 38.1 보다 높아 50), Z_HIGH1 >= 61.5 (P80 48.7 보다 높아 61.5), Z_HIGH2 >= 65 (P95 59.7 은 61.5 아래라 못 씀, 3년 최고 61.74 위 신기록 구간). 해제: HIGH2 는 64 미만, HIGH1 은 60.5 미만, LOW 는 51 초과."
+  },
+  "targets_pref_pct": {"Z_LOW": 0, "Z_MID": null, "Z_HIGH1": 30, "Z_HIGH2": 50},
+  "targets_note": "SDI 전체 보유(보통주 + 우선주 평가액) 중 우선주 목표 비중. Z_MID 는 지금 비중 유지, 새 전환 없음. 100% 우선주 전환은 절대 권하지 않음.",
+  "liquidity": {"avg_days": 20, "max_day_share_pct": 10},
+  "history_3y": {
+    "as_of": "2026-11-04",
+    "source": "Daum KRX 일별 A006400/A006405, 2023-11-06 ~ 2026-11-04, 729 거래일",
+    "min": 32.69, "p10": 36.56, "p20": 38.14, "median": 41.17, "p80": 48.74, "p90": 56.08, "p95": 59.69, "max": 61.74,
+    "pref_value_20d_eok": 16.0
+  },
+  "verdict_config": "sdichg",
+  "verdict_ends_kst": "2027-01-15 09:00",
+  "verdict_note": "보통주 변경 조건 판정은 scripts/sdichg_monitor.py 의 evaluate_verdict (규칙, 기준가 562,000원, 피어 373220, configs/sdichg.json) 그대로. 2027-01-15 09:00 뒤에는 판정 없이 괴리율 구간만.",
+  "ends_kst": null,
+  "ends_note": "괴리율 구간은 삭제 요청 전까지. 보통주 변경 조건 판정은 2027-01-15 09:00 까지, 그 뒤는 괴리율 구간만"
+}

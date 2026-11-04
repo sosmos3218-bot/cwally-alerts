@@ -1,30 +1,18 @@
 {
   "name": "sdichg",
-  "title_prefix": "[SDI]",
-  "title_note": "AGENTS.md 허용 prefix [SDI]. 삼성SDI 006400 변경 조건 주기 점검. 우선주 006405 아님. sdiq3 잠정 비교와 별개. 피어는 373220.",
+  "title_note": "2026-11-04 부터 단독 발송 없음(title_prefix 제거). [SDI] 006400/006405 제목은 sdimix 가 보냄. 삼성SDI 006400 변경 조건 판정 설정. 우선주 006405 아님. sdiq3 잠정 비교와 별개. 피어는 373220.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "job_id": "sdichg",
-  "schedule_kst": "09:00",
-  "schedule_note": "새 반복 cron 없음. 평일 09:00 KST morning 슬롯. 09:00 원샷은 슬롯이 처리. 연도 가드 2026-2027만(ends_kst 2027-01-15까지 수명), 그 밖의 해는 발송과 state 기록 없이 종료.",
-  "oneshot_kst": [
-    "2026-10-08 11:40",
-    "2026-10-27 08:40",
-    "2026-10-27 16:20",
-    "2026-10-28 16:22",
-    "2026-11-04 16:22"
+  "schedule_kst": null,
+  "schedule_note": "2026-11-04 단독 실행 은퇴(pt11u). morning 09:00 줄, Run sdichg 단계, 원샷 cron 5개, Decide 분기 삭제. 판정 로직(rules, baseline, peer)은 scripts/sdimix_monitor.py 가 19:00 k203780 슬롯에서 evaluate_verdict 로 호출. 이 config 는 판정 설정으로만 남음. 옛 원샷: 2026-10-08 11:40(install), 10-27 08:40, 10-27 16:20, 10-28 16:22, 11-04 16:22 (모두 지남).",
+  "oneshot_kst": [],
+  "oneshot_args": {},
+  "cron_utc": [],
+  "year_guard": [
+    2026,
+    2027
   ],
-  "oneshot_args": {
-    "2026-10-08 11:40": "install"
-  },
-  "cron_utc": [
-    "40 2 8 10 *",
-    "40 23 26 10 *",
-    "20 7 27 10 *",
-    "22 7 28 10 *",
-    "22 7 4 11 *"
-  ],
-  "year_guard": [2026, 2027],
   "ticker": "006400",
   "display": "삼성SDI",
   "baseline_date": "2026-10-07",
@@ -44,7 +32,13 @@
     "sungrow": "연 10GWh는 NH 가시성 판단이지 확정 수주 아님. 없는 수주로 상향하지 않음."
   },
   "ess_upgrade_pct": 28,
-  "event_dates": ["2026-10-27", "2026-10-28", "2026-10-29", "2026-11-04", "2026-11-05"],
+  "event_dates": [
+    "2026-10-27",
+    "2026-10-28",
+    "2026-10-29",
+    "2026-11-04",
+    "2026-11-05"
+  ],
   "event_note": "3분기 실적일은 회사 확정일 미확인. 창은 10-27 전후와 11-04/05. 373220 잠정은 10/8 확인, 006400은 미발표.",
   "rules": {
     "upgrade": "공시에서 일회성(AMPC, 보상금) 제외 영업이익이 흑자이고 ESS 매출 비중이 28% 이상이며 북미 LFP 지연 공시가 없을 때만 분할매수 검토",
@@ -57,5 +51,6 @@
     "https://m.stock.naver.com/api/stock/006400/integration"
   ],
   "ends_kst": "2027-01-15 09:00",
-  "ends_note": "변경 조건 주기 알림. 4분기 잠정과 북미 LFP 가동 확인 창 다음인 2027-01-15 09:00이 마지막"
+  "ends_note": "변경 조건 주기 알림. 4분기 잠정과 북미 LFP 가동 확인 창 다음인 2027-01-15 09:00이 마지막",
+  "retired": "2026-11-04"
 }

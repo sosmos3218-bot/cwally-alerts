@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Samsung SDI change-condition watch. Hold vs trim vs 562,000 baseline.
 
-Periodic: weekday 09:00 KST morning slot. One-shots cover the Oct 27 window only.
+Retired as a standalone alert 2026-11-04 (pt11u): no slot, no one-shot. The verdict logic below
+(rules, 562,000 baseline, 373220 peer, ends 2027-01-15 09:00 in configs/sdichg.json) is now called by
+scripts/sdimix_monitor.py ([SDI] 006400/006405, k203780 19:00 slot) through evaluate_verdict().
 Missing numbers stay missing. News is not a company filing.
 Peer print 2026-10-08: LGES 373220 sales 96,434 / OP 7,560 / AMPC 4,169 / ex-AMPC 3,391 eok.
 Compensation amount is not in that filing. Sungrow 10GWh is not a confirmed order.
@@ -207,36 +209,11 @@ def send(cfg: dict, title: str, body: str, pri: int, dry: bool, ops: bool = Fals
     publish(topic, title, body, pri, ["chart_with_upwards_trend"], resolve_server(cfg.get("ntfy_server")))
 
 
-def main() -> int:
-    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
-    if mode not in {"auto", "dry", "force", "install"}:
-        raise SystemExit(f"unknown mode: {mode}")
-    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    now = datetime.now(KST)
-    dry = mode == "dry"
-    years = cfg.get("year_guard") or [now.year]
-    if mode != "force" and now.year not in years:
-        print("sdichg year-guard silent")
-        return 0
-    if mode == "install":
-        send(
-            cfg,
-            "[SDI] 006400 설치 확인 | 매매 신호 아님",
-            "\n".join(lines_for(
-                cfg, now,
-                "평일 09:00 KST morning 슬롯과 10/27 08:40, 10/27 16:20, 10/28 16:22, 11/04 16:22 원샷. 기준가 2026-10-07 562,000원.",
-                "설치 확인만 하세요. 사지 마세요.",
-                "월요일 상태, 판정 변경, 10/27 전후와 11/04-05만 보냅니다. 숫자 없으면 미확인.",
-            )),
-            3, dry,
-        )
-        print("install confirmation sent")
-        return 0
-    if now.strftime("%Y-%m-%d %H:%M") > cfg["ends_kst"] and mode != "force":
-        print("past ends_kst; silent")
-        return 0
-    state = read_state()
-    today = now.date().isoformat()
+def evaluate_verdict(cfg: dict, now: datetime) -> dict:
+    """Same verdict as the old standalone run. Used by sdimix_monitor.py.
+
+    Returns verdict, why, status line, price, filing, target and fetch errors (perr/nerr).
+    """
     price = None
     perr = None
     try:
@@ -260,59 +237,14 @@ def main() -> int:
     target = target_price()
     verdict, why = judge(price, filing, lfp)
     status = table_line(price, int(cfg["baseline_price"]), filing, target, int(cfg["baseline_target"]))
-    status += f" | 판정 {verdict} ({why})"
     if filing and filing.get("solid"):
         status += f" | 전고체 {filing['solid']}"
-    event = today in set(cfg["event_dates"])
-    weekly = now.weekday() == 0 and state.get("last_weekly") != today
-    changed = verdict != state.get("verdict")
-    must = event or weekly or changed or mode == "force"
-    if perr and nerr and must:
-        send(
-            cfg,
-            "[SDI] 006400 조회 실패 | 보유 유지",
-            "\n".join(lines_for(cfg, now, f"시세 {perr}, 공시 {nerr}. 조건 미충족이 아닙니다.", "보유. 증권 앱에서 직접 보세요.", "다음 평일 09:00에 재시도.")),
-            4, dry, ops=True,
-        )
-        if not dry:
-            state["last_problem"] = today
-            save_state(state, now)
-        return 0
-    if not must:
-        print(f"silent verdict={verdict} price={price}")
-        if not dry:
-            state["last_price"] = price
-            save_state(state, now)
-        return 0
-    if verdict == "축소 점검":
-        action = "축소 점검. 공시 원문과 562,000원 대비 평가를 보고 비중을 재검토하세요. 매도 지시가 아닙니다."
-        title = "[SDI] 006400 축소 점검 | 변경 조건"
-    elif verdict == "분할매수 검토":
-        action = "분할매수 검토. 추가 매수 신호가 아닙니다. 일회성 제외 흑자와 ESS 비중을 원문에서 다시 보세요."
-        title = "[SDI] 006400 분할매수 검토 | 조건 충족"
-    else:
-        action = "보유. 562,000원 대비 추격하지 마세요. 숫자 미확인과 선그로우 미확정은 상향 조건이 아닙니다."
-        title = "[SDI] 006400 보유 | 변경 조건 미충족"
-    later = (
-        "피어 373220은 10/8 잠정 매출 96,434억, 영업이익 7,560억, AMPC 4,169억, AMPC 제외 3,391억. "
-        "보상금 금액은 공시에 없음. 확정 실적 11/3. 선그로우 10GWh는 확정 수주 아님. "
-        "상향은 일회성 제외 흑자, ESS 28% 이상, LFP 지연 없음. 기간은 2027년 ESS 이익."
-    )
-    send(cfg, title, "\n".join(lines_for(cfg, now, status, action, later)), 4 if verdict != "보유" else 3, dry)
-    if not dry:
-        state["verdict"] = verdict
-        state["last_price"] = price
-        state["last_target"] = target
-        state["last_core"] = None if not filing else filing.get("core")
-        state["last_ess"] = None if not filing else filing.get("ess")
-        if weekly:
-            state["last_weekly"] = today
-        if event:
-            sent = list(state.get("event_sent") or [])
-            if today not in sent:
-                sent.append(today)
-            state["event_sent"] = sent
-        save_state(state, now)
+    return {"verdict": verdict, "why": why, "status": status, "price": price, "filing": filing,
+            "target": target, "perr": perr, "nerr": nerr}
+
+
+def main() -> int:
+    print("sdichg retired 2026-11-04 as a standalone alert; its verdict runs inside sdimix_monitor.py ([SDI] 006400/006405, 19:00). No send, no state.")
     return 0
 
 
