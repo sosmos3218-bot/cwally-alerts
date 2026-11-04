@@ -6,11 +6,11 @@
   "weekly_sent_week": "2026-W45",
   "last_event_key": "달러/엔 158.5 → 158 돌파|원달러 1,343원 → 1,340 이탈",
   "last_quotes": {
-    "usdjpy": 158.524,
-    "usdkrw": 1342.88,
-    "jgb30": 3.934
+    "usdjpy": 158.098,
+    "usdkrw": 1340.69,
+    "jgb30": 3.96
   },
-  "updated_at": "2026-11-04T09:01:03.149215+09:00",
+  "updated_at": "2026-11-04T15:20:42.169475+09:00",
   "active_levels": {
     "krw1340": true,
     "jpy158": true
