@@ -13,18 +13,87 @@
   "high_note": "52주 고점 2026-08-25 장중 $169.89",
   "budget_note": "총자산 약 2억원의 5%, 약 1,000만원 (1차 300만, 2차 350만, 3차 350만). 해외 계좌 기준, 22% 해외 양도세(연 250만원 공제)와 환율 위험. ISA 로 사면 국내 상장 바이오 ETF 로 바꿔야 함 (계좌 미정).",
   "zones": [
-    {"key": "nochase", "lo": 165, "hi": null, "priority": 3, "budget_manwon": 0},
-    {"key": "z1", "lo": 147, "hi": 151, "priority": 3, "budget_manwon": 300},
-    {"key": "z2", "lo": 140, "hi": 145, "priority": 3, "budget_manwon": 350},
-    {"key": "z3", "lo": 131, "hi": 137, "priority": 3, "budget_manwon": 350}
+    {
+      "key": "nochase",
+      "lo": 165,
+      "hi": null,
+      "priority": 3,
+      "budget_manwon": 0
+    },
+    {
+      "key": "z1",
+      "lo": 147,
+      "hi": 151,
+      "priority": 3,
+      "budget_manwon": 300
+    },
+    {
+      "key": "z2",
+      "lo": 140,
+      "hi": 145,
+      "priority": 3,
+      "budget_manwon": 350
+    },
+    {
+      "key": "z3",
+      "lo": 131,
+      "hi": 137,
+      "priority": 3,
+      "budget_manwon": 350
+    }
   ],
   "zone_basis": "1차 147~151: 고점 대비 -11~-13%, 10/7~10/8, 10/23 종가 저점대. 2차 140~145: -15~-18%, 8/3 저가 143.78 과 10/16 저가 143.85 의 이중 바닥. 3차 131~137: -19~-23%, 5~6월 박스(128~137) 상단, 6월 돌파 전 자리. 추격 금지 165 이상: 고점까지 3% 안쪽.",
   "rearm_pct": 4.0,
   "rearm_note": "구간에 들어오면 1번 알림. 종가가 구간 경계 밖으로 4% 넘게 벗어난 뒤 다시 들어오면 다시 알림 (바이오 ETF 일간 변동이 커서 lrcx 3% 보다 넓게).",
   "change_conditions": "미 10년물 5.2% 초과 또는 추가 인상 신호가 나오면 구간을 한 단계 낮추는 검토, 10년물 4.8% 아래에서 종가 155 이상이면 1차를 현재가 근처로 앞당기는 검토. 변경은 사용자 승인 뒤.",
   "sources": {
-    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/XBI?interval=1d&range=10d"
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/XBI?interval=1d&range=10d",
+    "tnx": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=1mo"
   },
   "ends_kst": "2027-02-26 23:59",
-  "ends_note": "평일 09:00 XBI 분할 매수 구간 점검. 2027-02-26 까지 (마지막 평일 실행 2027-02-26 09:00)"
+  "ends_note": "평일 09:00 XBI 분할 매수 구간 점검. 2027-02-26 까지 (마지막 평일 실행 2027-02-26 09:00)",
+  "lines": [
+    {
+      "key": "hi52",
+      "series": "xbi",
+      "op": "ge",
+      "level": 169.89,
+      "rearm_op": "lt",
+      "rearm": 164.8,
+      "priority": 3,
+      "title": "52주 고점 돌파, 재평가 점검 (추격 금지 유지)"
+    },
+    {
+      "key": "below3",
+      "series": "xbi",
+      "op": "le",
+      "level": 125.0,
+      "rearm_op": "ge",
+      "rearm": 128.75,
+      "priority": 3,
+      "title": "3차 구간 이탈, 원인 점검 (추가 매수 보류)"
+    },
+    {
+      "key": "tnx_low5",
+      "series": "tnx",
+      "op": "le",
+      "level": 4.5,
+      "days": 5,
+      "rearm_op": "ge",
+      "rearm": 4.64,
+      "priority": 3,
+      "title": "10년물 4.50% 이하 5거래일, 판단 긍정 전환 조건 점검"
+    },
+    {
+      "key": "tnx_hi",
+      "series": "tnx",
+      "op": "ge",
+      "level": 5.2,
+      "rearm_op": "lt",
+      "rearm": 5.04,
+      "priority": 3,
+      "title": "10년물 5.20% 이상, 금리 부담 점검"
+    }
+  ],
+  "lines_note": "2026-11-04 사용자 승인(pt63u, 옵션 1): 승인된 분할 매수 구간은 그대로 두고 점검 선 4개 추가, 모두 p3, 약 3% 재무장 완충. ^TNX 는 시카고 15:00 이후 끝난 날만, 5거래일 연속 조건. 169.89 선과 추격 금지 165 알림이 같은 날 걸리면 한 건으로 합침. 125 선은 경고라 매수 문구 없음."
 }
