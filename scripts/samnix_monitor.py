@@ -38,6 +38,12 @@ still pending after 5 later confirmed trading days, or bars present but that dat
 as not passed + one cwally-ops notice "[SAMNIX] 000660 ADR 조회 실패 판정 포기 (000660, SKHY)". First pass -> one p4 alert and the
 code is armed for the 2차 watch above (20-day line reclaim + the flip body line) from the next day (state["nix1"][code]
 second_start). Armed = 1차 never judged again. Toggle nix_first.enabled (also stops the armed 000660 2차 watch).
+
+000660 10/30 저가 종가 이탈 1회 알림 (2026-11-04, owner delegation t35u, extends [SAMNIX], no new alert/slot/topic/input):
+configs/samnix.json nix_first.break_alert. The first confirmed Daum KRX regular-session close (no NXT, <= flow_day, >= start_day,
+<= until_kst date) below support_low (1,381,000) -> one p4 cwally-port alert "[SAMNIX] 000660 SK하이닉스 10/30 저가 1,381,000원 종가 이탈".
+Same check before and after the 1차 pass (armed_day); one dedupe key state nix1.<code>.broke {day, close, at} = once in total,
+nix1.<code>.brk_last = last processed day. 1차 pass logic is untouched (a later recovery can still pass 1차).
 """
 from __future__ import annotations
 
@@ -404,6 +410,7 @@ def selftest() -> int:
     two_week_selftest(when)
     nix_second_selftest(when)
     nix_first_selftest(when)
+    nix_break_selftest(when)
     weekly_selftest()
     print("SELFTEST OK: no network, no publish, no state")
     return 0
@@ -806,6 +813,167 @@ def nix_first_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: d
     return sent
 
 
+# ---------------- NIX1102 000660 10/30 저가 지지선 종가 이탈 1회 알림 (2026-11-04) ----------------
+def nix_break_message(now: datetime, code: str, name: str, day: str, close: float, lvl: float, armed: dict | None, until: str, prio: int = 4) -> tuple[str, str, int]:
+    pct = (close / lvl - 1) * 100
+    title = f"[SAMNIX] {code} {name} 10/30 저가 {lvl:,.0f}원 종가 이탈"
+    state_txt = (f"1차 상태: {ymd(armed['armed_day'])} 1차 조건 통과, 2차 감시 중." if armed
+                 else "1차 상태: 아직 1차 조건 미통과(진입 보류).")
+    later = ("나중에: 1차는 이미 통과했으므로 다시 판정하지 않습니다. 2차 조건 알림이 와도 추가 진입 중단 상태라 2차 진입 근거로 쓰지 마세요. "
+             if armed else
+             "나중에: 종가가 기준선 위로 회복하고 수급과 ADR 조건을 다시 충족하면 [SAMNIX]가 1차를 다시 판정합니다. ")
+    lines = [
+        f"{now.strftime('%Y-%m-%d %H:%M KST')} | SAMNIX | {name}({code}) 10/30 저가 지지선 종가 이탈 ({ymd(day)} KRX 정규장 확정 종가)",
+        f"이게 뭐 알림: [NIX1102] 계획의 기준선인 10/30 저가 {lvl:,.0f}원을 {name} KRX 정규장 종가가 처음 밑돌았다는 알림. "
+        f"{until}까지 1번만 옵니다. 매도 지시가 아닙니다.",
+        f"지금 결과/상태: {ymd(day)} 종가 {close:,.0f}원, 기준선 {lvl:,.0f}원 대비 {pct:+.2f}%. {state_txt} 기준: Daum KRX 정규장 종가, NXT 제외.",
+        "지금 할 일: 추가 진입 중단. 1차분을 이미 샀다면 계획대로 정리 검토(10/30 저가 종가 이탈 시 1차분 정리 검토, 추가 진입 중단). "
+        "아직 1차 전이면 진입 보류 유지.",
+        later + "다음 하방 안전망은 [000660] 1,322,000원(7월 저점) 알림입니다. 이 이탈 알림은 이번 1번으로 끝납니다.",
+        f"익절/줄일 때: 10/30 저가 {lvl:,.0f}원 종가 이탈 시 1차분 정리 검토, 추가 진입 중단.",
+        "하지 말 것: 하루 급락에 패닉 전량 매도, 신용 및 미수, 물타기, 장중 가격이나 NXT 가격으로 판단.",
+    ]
+    return title, "\n".join(lines), prio
+
+
+def prio_of_break(cfg: dict | None) -> int:
+    return int((((cfg or {}).get("nix_first") or {}).get("break_alert") or {}).get("priority", 4))
+
+
+def nix_break_check(mode: str, now: datetime, flow_day: str, state: dict, cfg: dict, closes_fn=None) -> list[tuple[str, str, int]]:
+    """000660 확정 KRX 정규장 종가(<= flow_day, >= start_day)가 support_low 미만인 첫날 1번(p4). 1차 통과 전후 공통,
+    state nix1.<code>.broke 하나로 중복 방지(전체 1회), nix1.<code>.brk_last 까지 처리한 날은 다시 안 봄. 1차 판정은 건드리지 않음."""
+    nf = cfg.get("nix_first") or {}
+    ba = nf.get("break_alert") or {}
+    sent: list[tuple[str, str, int]] = []
+    if not nix_first_on(cfg, now) or not ba.get("enabled"):
+        return sent
+    store = state.setdefault("nix1", {})
+    until = str(nf.get("until_kst") or "")[:10]
+    until_day = until.replace("-", "")
+    for code in nf.get("codes") or []:
+        name = CODES.get(code, code)
+        lvl = (nf.get("support_low") or {}).get(code)
+        if not lvl:
+            continue
+        lvl = float(lvl)
+        cur = store.get(code) or {}
+        if cur.get("broke"):
+            print(f"nix1 brk {name}: 이미 이탈 알림 보냄 ({ymd(cur['broke']['day'])} 종가 {cur['broke']['close']:,.0f}원), 다시 안 보냄")
+            continue
+        start = nf.get("start_day", "20261103")
+        since = next_day(cur["brk_last"]) if cur.get("brk_last") else start
+        try:
+            rows = [r for r in (closes_fn or daum_closes)(code)
+                    if since <= r["day"] <= flow_day and r["day"] >= start and (not until_day or r["day"] <= until_day)]
+        except Exception as exc:  # noqa: BLE001
+            print(f"nix1 brk {code} 조회 실패: {exc}")
+            continue
+        if not rows:
+            print(f"nix1 brk {name}: 새 확정 종가 없음 (처리 끝 {cur.get('brk_last')}, 기준선 {lvl:,.0f}원)")
+            continue
+        hit = next((r for r in rows if r["close"] < lvl), None)
+        last = rows[-1]
+        print(f"nix1 brk {name}: {ymd(rows[0]['day'])}~{ymd(last['day'])} {len(rows)}일 확인, 최근 종가 {last['close']:,.0f}원, "
+              f"기준선 {lvl:,.0f}원 -> " + (f"{ymd(hit['day'])} 종가 {hit['close']:,.0f}원 이탈" if hit else "이탈 없음"))
+        upd = {"brk_last": last["day"]}
+        if hit:
+            armed = cur if cur.get("armed_day") else None
+            title, msg, prio = nix_break_message(now, code, name, hit["day"], hit["close"], lvl, armed, until, prio_of_break(cfg))
+            assert route_topic("cwally-port", title) == "cwally-port", title
+            assert "\u00b7" not in title + msg and "\u2014" not in title + msg, title
+            print(title, "\n", msg)
+            sent.append((title, msg, prio))
+            if mode == "auto":
+                ntfy(cfg.get("ntfy_server") or "https://ntfy.sh", cfg.get("ntfy_topic") or "cwally-port", title, msg, prio)
+            upd["broke"] = {"day": hit["day"], "close": hit["close"], "at": now.isoformat()}
+        if mode == "auto":
+            store.setdefault(code, {}).update(upd)
+    if mode == "auto":
+        save_state(state)
+    elif mode == "dry":
+        print("DRY RUN nix1 brk: ntfy/state 없음")
+    return sent
+
+
+def nix_break_selftest(when: datetime) -> None:
+    """가짜 숫자, 네트워크/발송/state 파일 없음."""
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    nf = dict(cfg["nix_first"], enabled=True)
+    assert nf["break_alert"]["enabled"] and nf["break_alert"]["priority"] == 4 and nf["support_low"]["000660"] == 1381000
+    cfg = {"nix_first": nf, "ntfy_topic": "cwally-port"}
+    g = globals()
+    saved = {k: g[k] for k in ("ntfy", "save_state")}
+    pub: list = []
+    g["ntfy"] = lambda server, topic, title, msg, prio=3: pub.append((topic, title, prio))
+    g["save_state"] = lambda st: None
+    try:
+        def R(pairs):
+            return [{"day": d, "close": float(c)} for d, c in pairs]
+        base = [("20261029", 1_450_000), ("20261030", 1_391_000)]
+        ok = R(base + [("20261103", 1_398_000)])
+        # 1) 기준선 이상(1,398,000, 같은 값 1,381,000 포함) -> 0, brk_last 진행
+        st: dict = {}
+        assert nix_break_check("auto", when, "20261103", st, cfg, lambda c: ok) == [] and pub == []
+        assert st["nix1"]["000660"] == {"brk_last": "20261103"}, st
+        eq = R(base + [("20261103", 1_381_000)])
+        assert nix_break_check("auto", when, "20261103", {}, cfg, lambda c: eq) == [] and pub == []
+        # 10/30 (start_day 전) 이탈은 무시
+        pre = R([("20261030", 1_300_000), ("20261103", 1_398_000)])
+        assert nix_break_check("auto", when, "20261103", {}, cfg, lambda c: pre) == [] and pub == []
+        # 2) 이탈일 11/5 종가 1,370,000 -> 정확히 1건, p4, cwally-port
+        b1 = R(base + [("20261103", 1_398_000), ("20261104", 1_390_000), ("20261105", 1_370_000)])
+        out = nix_break_check("auto", when, "20261105", st, cfg, lambda c: b1)
+        assert len(out) == 1 and out[0][0] == "[SAMNIX] 000660 SK하이닉스 10/30 저가 1,381,000원 종가 이탈" and out[0][2] == 4, out
+        assert pub == [("cwally-port", out[0][0], 4)], pub
+        n1 = st["nix1"]["000660"]
+        assert n1["broke"]["day"] == "20261105" and n1["broke"]["close"] == 1_370_000 and n1["brk_last"] == "20261105", n1
+        t, m, p = out[0]
+        assert t.startswith("[SAMNIX] 000660") and route_topic("cwally-port", t) == "cwally-port"
+        assert "\u00b7" not in t + m and "\u2014" not in t + m
+        assert "2026-11-05 종가 1,370,000원" in m and "-0.80%" in m and "추가 진입 중단" in m and "1,322,000원(7월 저점)" in m, m
+        assert "10/30 저가 종가 이탈 시 1차분 정리 검토, 추가 진입 중단" in m and "물타기" in m and "2027-02-28까지 1번" in m, m
+        assert "[SAMNIX]가 1차를 다시 판정" in m
+        heads = [x.split(":")[0] for x in m.split("\n")[1:]]
+        assert heads == ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"], heads
+        print(f"-- nix1 brk sample (가짜 숫자)\nTITLE: {t}\nPRIORITY: {p}\n{m}\n")
+        # 3) 같은 날 다시, 다음 이탈일(11/6) -> 0 (전체 1회)
+        assert nix_break_check("auto", when, "20261105", st, cfg, lambda c: b1) == [] and len(pub) == 1
+        b2 = b1 + R([("20261106", 1_350_000)])
+        assert nix_break_check("auto", when, "20261106", st, cfg, lambda c: b2) == [] and len(pub) == 1
+        # 1차 판정 state(last_date 등)는 안 건드림
+        assert set(st["nix1"]["000660"]) == {"brk_last", "broke"}
+        # 4) 무장 뒤(armed_day) 이탈도 같은 키로 1번, 본문은 무장 문구
+        st_a: dict = {"nix1": {"000660": {"armed_day": "20261103", "second_start": "20261104", "last_date": "20261103"}}}
+        oa = nix_break_check("auto", when, "20261105", st_a, cfg, lambda c: b1)
+        assert len(oa) == 1 and "2026-11-03 1차 조건 통과" in oa[0][1] and "다시 판정하지 않습니다" in oa[0][1] and len(pub) == 2, oa
+        assert st_a["nix1"]["000660"]["armed_day"] == "20261103" and st_a["nix1"]["000660"]["broke"]["day"] == "20261105"
+        assert nix_break_check("auto", when, "20261106", st_a, cfg, lambda c: b2) == [] and len(pub) == 2
+        # 무장 전 이미 보냈으면 무장 뒤에도 0 (공유 키)
+        st_b: dict = {"nix1": {"000660": {"armed_day": "20261107", "second_start": "20261108", "broke": n1["broke"], "brk_last": "20261106"}}}
+        assert nix_break_check("auto", when, "20261110", st_b, cfg, lambda c: b2 + R([("20261109", 1_300_000), ("20261110", 1_300_000)])) == [] and len(pub) == 2
+        # 5) until_kst 뒤 (2027-03-01) -> 0, 2027-03-01 거래일 종가도 대상 아님
+        late = datetime(2027, 3, 1, 15, 20, tzinfo=KST)
+        assert nix_break_check("auto", late, "20270226", {}, cfg, lambda c: b1) == [] and len(pub) == 2
+        edge = R([("20270226", 1_390_000), ("20270302", 1_300_000)])
+        assert nix_break_check("auto", datetime(2027, 2, 28, 23, 59, tzinfo=KST), "20270302", {}, cfg, lambda c: edge) == [] and len(pub) == 2
+        # 6) dry -> 출력만, 발송/state 없음
+        st_d: dict = {}
+        od = nix_break_check("dry", when, "20261105", st_d, cfg, lambda c: b1)
+        assert len(od) == 1 and len(pub) == 2 and st_d == {"nix1": {}}, st_d
+        # 토글 꺼짐 -> 0
+        off = dict(cfg, nix_first=dict(nf, break_alert=dict(nf["break_alert"], enabled=False)))
+        assert nix_break_check("auto", when, "20261105", {}, off, lambda c: b1) == [] and len(pub) == 2
+        # 조회 실패 -> 0, state 그대로
+        st_e: dict = {"nix1": {"000660": {"brk_last": "20261103"}}}
+        def boom(c):
+            raise RuntimeError("down")
+        assert nix_break_check("auto", when, "20261105", st_e, cfg, boom) == [] and st_e["nix1"]["000660"] == {"brk_last": "20261103"}
+    finally:
+        g.update(saved)
+    print("nix1 brk selftest OK")
+
+
 def nix_first_selftest(when: datetime) -> None:
     """000660 1차 자동 재판정과 2차 무장. 가짜 숫자, 네트워크/발송/state 파일 없음."""
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
@@ -1071,6 +1239,7 @@ def main(mode: str = "auto") -> int:
     state = read_state()
     if mode in ("auto", "dry"):
         nix_first_check(mode, now, flow_day, state, cfg)
+        nix_break_check(mode, now, flow_day, state, cfg)
     flip_check(mode, now, flow_day, state)
     if mode in ("auto", "dry"):
         nix_second_check(mode, now, flow_day, state, cfg)

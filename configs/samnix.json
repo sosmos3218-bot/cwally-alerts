@@ -79,6 +79,14 @@
     "rule": "[NIX1102] 1차 분할 진입 검토 규칙을 SK하이닉스에 매일(평일 15:20, 전 거래일까지 확정분) 다시 적용. start_day 이후 각 데이터 거래일: (1) Daum KRX 정규장 종가(NXT 제외) >= support_low(10/30 저가 1,381,000) 이고 종가 >= 그날 (고가+저가)/2 = 지지 확인, (2) 외국인 확정 순매수 주식 수(네이버 종목 투자자) >= 0 이거나 순매도가 10/30 순매도(ref_foreign -300,349주)의 50% 이하 = 수급 개선, (3) SKHY ADR 괴리(국내 종가 / (직전 ADR 종가 x 원달러)를 직전 20거래일 중앙값과 비교) <= +2.0%. ADR 조회 실패(Yahoo SKHY 또는 KRW=X)인 날은 미통과로 보지 않고 판정 보류(state nix1.<code>.pending, 뒤 날짜도 기다림)로 두고 다음 실행에서 그 날짜 창의 Yahoo 봉으로 다시 판정(2026-11-03 pt20u). 뒤 확정 거래일 5일이 지나도 보류이거나 봉은 있는데 그 날짜 계산이 안 되면(영구 결측) 그날을 미통과로 확정하고 cwally-ops 에 '[SAMNIX] 000660 ADR 조회 실패 판정 포기 (000660, SKHY)' 1번. 세 조건 모두 통과한 첫날 1번(priority 4) 알리고 그 종목 2차 감시(nix_second 20일선 회복 + 외국인 3일 전환 알림 본문 2차 줄)를 그 다음 날부터 무장. 무장 뒤 1차는 다시 판정 안 함. 종가가 support_low 미만인 날은 지지 이탈이라 그날 1차 없음. 외국인 값이 아직 없는 날은 판정 보류 후 다음 실행에서 다시.",
     "dedupe": "state/samnix.json nix1.<code> (last_date, last, pending, gaveup, armed_day, armed_at, second_start)",
     "remove": "enabled=false 로 끄면 1차 판정과 000660 2차 감시(20일선, 외국인 전환 본문 줄) 모두 멈춤. 또는 해당 커밋 revert",
-    "adr_retry_trading_days": 5
+    "adr_retry_trading_days": 5,
+    "break_alert": {
+      "enabled": true,
+      "priority": 4,
+      "approval": "사용자 위임 판단 2026-11-04 (t35u \"네 소신껏\"), 이탈 알림 1회, 1차 재판정은 막지 않음. 새 알림/슬롯/토픽/입력 없음, [SAMNIX] 확장",
+      "rule": "start_day 이후 until_kst(2027-02-28 23:59) 날짜까지의 Daum KRX 정규장 확정 종가(NXT 제외, 15:20 에는 전 거래일까지)가 support_low(10/30 저가 1,381,000) 미만인 첫날 cwally-port 에 1번(priority 4). 1차 통과 전(nix_first_check 와 같은 실행)과 통과 뒤(armed_day 로 1차를 건너뛸 때도) 같은 규칙. 제목 '[SAMNIX] 000660 SK하이닉스 10/30 저가 1,381,000원 종가 이탈'. 본문: 추가 진입 중단, 1차분 보유 시 정리 검토, 1차 전이면 진입 보류 유지와 회복 시 1차 재판정, 다음 안전망 [000660] 1,322,000원(7월 저점).",
+      "dedupe": "state/samnix.json nix1.<code>.broke {day, close, at} (전체 1회, 이후 이탈일에도 다시 안 보냄), nix1.<code>.brk_last = 마지막으로 확인한 거래일(이미 본 날은 다시 안 봄)",
+      "remove": "enabled=false 로 끄거나 해당 커밋 revert"
+    }
   }
 }
