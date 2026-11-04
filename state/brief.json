@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-04T08:12:26.230057+09:00",
+  "updated_at": "2026-11-04T09:43:24.863444+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -108,6 +108,15 @@
       "parts_done": 2,
       "done": true,
       "at": "2026-11-04T08:12:26.230057+09:00"
+    },
+    "20261104-ftnt-prebuy.json#bcf71e2fdc65a9a0": {
+      "file": "20261104-ftnt-prebuy.json",
+      "title": "[BRIEF] FTNT 1차 구간 매수 전 점검 | 1차 매수 진행",
+      "topic": "cwally-port",
+      "parts": 2,
+      "parts_done": 2,
+      "done": true,
+      "at": "2026-11-04T09:43:24.863444+09:00"
     }
   },
   "rejected": {},
