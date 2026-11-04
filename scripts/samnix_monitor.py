@@ -1001,8 +1001,9 @@ def nix_second_selftest(when: datetime) -> None:
     rows3 = mk([240000] * 20 + [225000] * 12 + [210000, 260000])  # 11/03 210,000 (10/30 저가 아래), 11/04 회복
     out3 = nix_second_check("dry", when, "20261104", {}, cfg, lambda c: rows3)
     assert len(out3) == 1 and "추가 진입 중단 상태" in out3[0][1] and "2차 1/3 분할 진입 검토. 지정가" not in out3[0][1], out3
-    # 기간 끝나면 판정 안 함
-    late = datetime(2027, 2, 1, 15, 20, tzinfo=KST)
+    # 기간 끝나면 판정 안 함 (until_kst 2027-02-28 23:59: 2/28 은 판정, 3/1 은 안 함)
+    late = datetime(2027, 3, 1, 15, 20, tzinfo=KST)
+    assert nix_active(ns, "005930", datetime(2027, 2, 28, 23, 59, tzinfo=KST))
     assert nix_second_check("dry", late, "20261103", {}, cfg, lambda c: rows) == []
     # 000660 은 대상 아님
     assert not nix_active(ns, "000660", when)
