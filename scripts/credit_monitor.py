@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""[CREDIT] 미국 BBB 회사채 스프레드 (FRED BAMLC0A4CBBB, ICE BofA BBB US Corporate Index OAS, %p). 평일 09:00 KST morning 묶음 (ftnt 뒤, xlu 앞).
+"""[CREDIT] 미국 BBB 회사채 스프레드 (FRED BAMLC0A4CBBB, ICE BofA BBB US Corporate Index OAS, %p). 평일 09:00 KST morning 묶음 (hwm 뒤, xlu 앞).
 
 메모리 호황 전제의 돈줄 신호. 오라클 BBB- 투기등급 강등이나 BBB 스프레드 1.9%p 초과는 AI 설비투자 자금조달을 위협한다.
 데이터: FRED fredgraph.csv (키 없음), '.' 값은 건너뜀, 최신 관측값 하나로 판정. 최신 관측일이 state.last_date 와 같으면 아무것도 안 함.

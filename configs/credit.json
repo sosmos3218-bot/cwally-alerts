@@ -27,7 +27,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(ftnt 바로 뒤, xlu 앞)에 부착. FRED 최신 관측일로 중복 방지, 관측일이 그대로면 아무것도 안 함. 수동 job=credit 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(hwm 바로 뒤, xlu 앞)에 부착. FRED 최신 관측일로 중복 방지, 관측일이 그대로면 아무것도 안 함. 수동 job=credit 은 oneoff_mode=auto 가 아니면 selftest + dry.",
   "series": "BAMLC0A4CBBB",
   "unit": "%p",
   "sources": {
