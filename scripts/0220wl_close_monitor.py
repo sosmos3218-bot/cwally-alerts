@@ -7,7 +7,7 @@ configs/0220wl.json on case-insensitive filesystems. Same [0220WL] title prefix.
 
 Uses the optional engine keys added 2026-10-28 (absent for 005930/000660/064400, whose selftests are unchanged):
   lines + ladder_all/lines_what/lines_trim/lines_dont/yield/suppress  pref close <= 2,040 (yield 5%) and < 2,000 (재점검)
-  pair + ratio_lines   same-session discount (0220W0 - 0220WL) / 0220W0: <= 60.0% 할인 해소, >= 75.0% 괴리 확대
+  pair + ratio_lines   same-session discount (0220W0 - 0220WL) / 0220W0: < 65.0% 괴리 축소, > 75.0% 괴리 확대 (2026-11-04; was <= 60 / >= 75)
   notice_events        10/29 한화비전 3Q filing, 11/2~11/4 tender offer result (catch-up 3 days)
   notice_watch         0220W0/0220WL filings with 배당/소각/자기주식/주주환원 in the title, one alert per filing
 Added 2026-10-29 (chat approval; the 15:20 0220wl alert retired from the workflow):
@@ -162,17 +162,21 @@ def selftest() -> int:
     days = iter(f"2026-11-{i:02d}" for i in range(2, 31))
     pref = 2200.0
     pc = lambda v: pref / (1 - v / 100)  # noqa: E731  common close giving discount v
-    check("ratio 60.01% silent", feed(pref, pc(60.01)), [])
-    check("ratio 60.0% resolve fires (le)", feed(pref, pc(60.0)), ["resolve"])
-    check("ratio 59% no repeat", feed(pref, pc(59.0)), [])
-    check("ratio 60.9% no re-arm", feed(pref, pc(60.9)), [])
-    check("ratio 61.1% re-arms (silent)", feed(pref, pc(61.1)), [])
-    check("ratio 74.99% silent", feed(pref, pc(74.99)), [])
-    check("ratio 75.0% widen fires (ge)", feed(pref, pc(75.0)), ["widen"])
-    check("ratio 74.1% no re-arm", feed(pref, pc(74.1)), [])
-    check("ratio 73.9% re-arms (silent)", feed(pref, pc(73.9)), [])
-    check("ratio 76% widen again", feed(pref, pc(76.0)), ["widen"])
-    check("ratio 60% resolve again after re-arm", feed(pref, pc(60.0)), ["resolve"])
+    # 2026-11-04 thresholds: > 75.0% 괴리 확대, < 65.0% 괴리 축소, re-arm back inside 66~74%
+    check("ratio 70% inside band silent", feed(pref, pc(70.0)), [])
+    check("ratio 75.0% exactly silent (gt)", feed(pref, pc(75.0)), [])
+    check("ratio 75.5% widen fires", feed(pref, pc(75.5)), ["widen"])
+    check("ratio 77% stays above, no repeat", feed(pref, pc(77.0)), [])
+    check("ratio 74.5% no re-arm yet", feed(pref, pc(74.5)), [])
+    check("ratio 70% back inside re-arms (silent)", (feed(pref, pc(70.0)), st["ratio"]["lines"]["widen"]["armed"]), ([], True))
+    check("ratio 76% widen again after re-arm", feed(pref, pc(76.0)), ["widen"])
+    check("ratio 70% re-arm", feed(pref, pc(70.0)), [])
+    check("ratio 65.0% exactly silent (lt)", feed(pref, pc(65.0)), [])
+    check("ratio 64.5% resolve (괴리 축소) fires", feed(pref, pc(64.5)), ["resolve"])
+    check("ratio 63% stays below, no repeat", feed(pref, pc(63.0)), [])
+    check("ratio 65.8% no re-arm yet", feed(pref, pc(65.8)), [])
+    check("ratio 66.5% re-arms (silent)", (feed(pref, pc(66.5)), st["ratio"]["lines"]["resolve"]["armed"]), ([], True))
+    check("ratio 64% resolve again", feed(pref, pc(64.0)), ["resolve"])
     # same-day closes only; hold when either is missing
     st = copy.deepcopy(seed)
     ev = engine.eval_ratio(cfg, st, rows(("2026-10-28", 1900)), rows(("2026-10-27", 7700)), "2026-10-28", at("2026-10-28"))
@@ -188,8 +192,9 @@ def selftest() -> int:
     st = copy.deepcopy(seed)
     s = sends(st, {"rows": rows(("2026-10-28", 1900)), "pair_rows": rows(("2026-10-28", 7700)), "src": "Yahoo 정규장"}, at("2026-10-28"))
     check("price + ratio same day: two messages", [x[0] for x in s],
-          [f"{pfx} 종가 2,000원 미만 | 재점검 신호", f"{pfx} 괴리율 75.0% 이상 | 괴리 확대"])
+          [f"{pfx} 종가 2,000원 미만 | 재점검 신호", "[0220WL] 한화M&S 3우B 괴리율 75% 돌파 (0220WL/0220W0)"])
     check("ratio message body", "괴리율 75.32%(기준 75.0%, 차이 +0.32%p)" in s[1][1], True)
+    check("ratio message prior-day gap", "직전 거래일 괴리율 71.43%" in s[1][1], True)
 
     # ---- hold on Yahoo failure; NXT never judged
     g = engine.__dict__

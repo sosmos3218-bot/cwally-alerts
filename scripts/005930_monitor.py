@@ -339,11 +339,11 @@ def discount(main: float, pair: float) -> float:
 
 
 def ratio_hit(ln: dict, v: float) -> bool:
-    return {"le": v <= ln["level"], "ge": v >= ln["level"], "lt": v < ln["level"]}[ln["op"]]
+    return {"le": v <= ln["level"], "ge": v >= ln["level"], "lt": v < ln["level"], "gt": v > ln["level"]}[ln["op"]]
 
 
 def ratio_rearm(ln: dict, v: float, pp: float) -> bool:
-    return v < ln["level"] - pp if ln["op"] == "ge" else v > ln["level"] + pp
+    return v < ln["level"] - pp if ln["op"] in ("ge", "gt") else v > ln["level"] + pp
 
 
 def eval_ratio(cfg: dict, st: dict, rows: list[dict], pair_rows: list[dict], today: str, now: datetime) -> list[dict]:
@@ -364,11 +364,12 @@ def eval_ratio(cfg: dict, st: dict, rows: list[dict], pair_rows: list[dict], tod
         if not pc:
             break  # pair close missing for this session: hold, judged on a later run
         v = discount(r["close"], pc)
+        prev = rs.get("last")
         for ln in cfg["ratio_lines"]:
             s = rs["lines"].setdefault(ln["key"], {"armed": True, "fired_day": None})
             if s.get("armed", True) and ratio_hit(ln, v):
                 s.update(armed=False, fired_day=r["day"])
-                events.append({"kind": "ratio", "key": ln["key"], "line": ln, "day": r["day"], "close": r["close"], "pair": pc, "v": v})
+                events.append({"kind": "ratio", "key": ln["key"], "line": ln, "day": r["day"], "close": r["close"], "pair": pc, "v": v, "prev": prev})
             elif not s.get("armed", True) and ratio_rearm(ln, v, float(ln.get("rearm_pp", cfg.get("ratio_rearm_pp", 1.0)))):
                 s["armed"] = True
                 print(f"{cfg['name']} ratio {ln['key']} re-armed on {r['day']} discount {v:.2f}%")
@@ -617,13 +618,17 @@ def pair_text(cfg: dict, data: dict) -> str:
 
 
 def build_ratio(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
-    sign = {"le": "이하", "ge": "이상", "lt": "미만"}
+    sign = {"le": "이하", "ge": "이상", "lt": "미만", "gt": "초과"}
     events = sorted(events, key=lambda e: (-int(e["line"].get("priority", 4)), e["day"]))
     top = events[0]
     ln = top["line"]
-    title = f"{cfg['title_prefix']} 괴리율 {ln['level']:.1f}% {sign[ln['op']]} | {ln['title']}"
+    # optional per-line "title_full" (0220wl_close, 2026-11-04) replaces the generic title
+    title = ln.get("title_full") or f"{cfg['title_prefix']} 괴리율 {ln['level']:.1f}% {sign[ln['op']]} | {ln['title']}"
+    show_prev = bool(cfg.get("ratio_show_prev"))  # opt-in prior-session discount (0220wl_close); 000815 unchanged
     hits = [f"{e['line']['label']}: {e['day']} 우선주 종가 {fmt(e['close'])}, {cfg['pair']['short']} 종가 {fmt(e['pair'])}, "
-            f"괴리율 {e['v']:.2f}%(기준 {e['line']['level']:.1f}%, 차이 {e['v'] - e['line']['level']:+.2f}%p)." for e in events]
+            f"괴리율 {e['v']:.2f}%(기준 {e['line']['level']:.1f}%, 차이 {e['v'] - e['line']['level']:+.2f}%p)."
+            + ((f" 직전 거래일 괴리율 {e['prev']:.2f}%." if e.get("prev") is not None else " 직전 거래일 괴리율 없음.") if show_prev else "")
+            for e in events]
     last_close = (data.get("rows") or [{}])[-1].get("close") if data.get("rows") else top["close"]
     rt = cfg.get("ratio_text", {})
     msg = "\n".join([
