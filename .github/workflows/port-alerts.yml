@@ -1749,6 +1749,7 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: |
+          pip install -q pypdf==6.21.4 || echo "pypdf install failed; JDIH PDF text check falls back to manual"
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then

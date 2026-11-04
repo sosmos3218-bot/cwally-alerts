@@ -967,11 +967,20 @@ def pdf_text(raw: bytes) -> str | None:
     with tempfile.NamedTemporaryFile(suffix=".pdf") as fh:
         fh.write(raw)
         fh.flush()
+        out = ""
         try:
             out = subprocess.run(["pdftotext", "-q", fh.name, "-"], capture_output=True, timeout=60).stdout.decode("utf-8", "replace")
         except Exception:  # noqa: BLE001
-            return None
-    return out if len(out.strip()) > 200 else None
+            pass  # GitHub ubuntu-24.04 runners ship without poppler; fall back to pypdf
+        if len(out.strip()) <= 200:
+            try:
+                import io
+                from pypdf import PdfReader
+                out = "\n".join((pg.extract_text() or "") for pg in PdfReader(io.BytesIO(raw)).pages[:60])
+            except Exception as exc:  # noqa: BLE001
+                print(f"pdf text fail: {exc.__class__.__name__}")
+                return None
+    return out if len(out.strip()) > 200 else None  # scanned PDF without text layer -> None (manual check)
 
 
 def jdih_fetch_doc(src: dict, url: str) -> tuple[dict, str | None]:
