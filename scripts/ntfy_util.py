@@ -292,6 +292,22 @@ def publish(
     return None
 
 
+def record_fired(st: dict, day: str, key: str, priority: int, title: str, now: datetime | None = None, cap: int = 60) -> bool:
+    """Append one sent-history entry to st["fired"] only if the last publish() really sent.
+
+    Schema per entry: {date (judged data date), key (condition key, joined with + for a combined message),
+    priority, title, sent_at (ISO)}. Keeps the last `cap` entries. Returns True when recorded.
+    A skipped send (ends_kst passed, LAST_PUBLISH sent=False) or no publish yet records nothing.
+    """
+    if not LAST_PUBLISH.get("sent"):
+        return False
+    when = now or datetime.now(timezone(timedelta(hours=9)))
+    lst = list(st.get("fired") or [])
+    lst.append({"date": day, "key": key, "priority": priority, "title": title, "sent_at": when.isoformat()})
+    st["fired"] = lst[-cap:] if cap > 0 else []
+    return True
+
+
 def _self_test() -> int:
     """python scripts/ntfy_util.py self-test  (mocked HTTP; never sends)."""
     import io
@@ -392,6 +408,21 @@ def _self_test() -> int:
             check("NTFY_IGNORE_ENDS=1 override sends", run("[ENDED] x", "scripts/ended_monitor.py", env={"NTFY_IGNORE_ENDS": "1"})[0], True)
             s, _, _ = run("[ACTIVE] x", "scripts/active_monitor.py", append_end=False)
             check("append_end=False sends body unchanged", s and sent[0]["message"] == "본문", True)
+        # record_fired: only after a real send, cap trimming
+        keep_lp = dict(LAST_PUBLISH)
+        st: dict = {}
+        LAST_PUBLISH.clear()
+        check("record_fired no publish yet", record_fired(st, "2026-11-04", "z1", 3, "[X] t") or "fired" in st, False)
+        LAST_PUBLISH.update({"sent": False, "reason": "ended", "title": "[X] t"})
+        check("record_fired skipped send", record_fired(st, "2026-11-04", "z1", 3, "[X] t") or "fired" in st, False)
+        LAST_PUBLISH.update({"sent": True, "reason": "", "title": "[X] t"})
+        ok = record_fired(st, "2026-11-04", "hi52+tnx_hi", 3, "[X] t", datetime(2026, 11, 5, 9, tzinfo=timezone(timedelta(hours=9))))
+        check("record_fired real send", ok and st["fired"] == [{"date": "2026-11-04", "key": "hi52+tnx_hi", "priority": 3, "title": "[X] t", "sent_at": "2026-11-05T09:00:00+09:00"}], True)
+        for k in range(70):
+            record_fired(st, f"d{k}", "z2", 3, "[X] x", cap=60)
+        check("record_fired cap 60", len(st["fired"]) == 60 and st["fired"][-1]["date"] == "d69" and st["fired"][0]["date"] == "d10", True)
+        LAST_PUBLISH.clear()
+        LAST_PUBLISH.update(keep_lp)
     finally:
         CONFIGS_DIR, sys.argv = old_dir, old_argv
     print("SELF-TEST " + ("PASS" if not failures else f"FAIL ({failures})"))

@@ -21,7 +21,8 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
+import ntfy_util  # noqa: E402
+from ntfy_util import publish, record_fired, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 ET = ZoneInfo("America/New_York")
@@ -212,14 +213,7 @@ def line_msg(cfg: dict, fired: list[dict], vals: dict, stamp: str, nochase: bool
     return title, msg, max(ln["priority"] for ln in fired)
 
 
-FIRED_MAX = 60
-
-
-def record_fired(st: dict, day: str, key: str, priority: int, title: str, now: datetime) -> None:
-    """실제 발송한 신호만 기록 (dry, selftest, 조회 실패 안내는 기록 안 함). [IBB] 겹침 판단이 읽음."""
-    lst = st.get("fired") or []
-    lst.append({"date": day, "key": key, "priority": priority, "title": title, "sent_at": now.isoformat()})
-    st["fired"] = lst[-FIRED_MAX:]
+FIRED_MAX = 60  # state/xbi.json fired 최근 건수 (기록은 ntfy_util.record_fired, 실제 발송 성공 때만)
 
 
 def load_state() -> dict:
@@ -316,7 +310,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
         if not dry:
             publish(topic, t, m, p, ["dna"], server)
             if i in meta:
-                record_fired(st, meta[i][0], meta[i][1], p, t, now)
+                record_fired(st, meta[i][0], meta[i][1], p, t, now, cap=FIRED_MAX)
     if not out:
         print("no alert")
     if dry:
@@ -357,7 +351,11 @@ def selftest(cfg: dict) -> int:
     fx: dict = {}
     try:
         g["STATE_PATH"] = Path(tempfile.mkdtemp()) / "xbi.json"
-        g["publish"] = lambda topic, t, m, p, tags=None, server=None, **k: sent.append((route_topic(topic, t), t, m, p))
+        def fake_pub(topic, t, m, p, tags=None, server=None, **k):
+            sent.append((route_topic(topic, t), t, m, p))
+            ntfy_util.LAST_PUBLISH.clear()
+            ntfy_util.LAST_PUBLISH.update({"sent": True, "reason": "", "title": t})
+        g["publish"] = fake_pub
         g["last_close"] = lambda url, now: fx["x"]
         g["tnx_rows"] = lambda url, now: fx["t"]() if callable(fx["t"]) else fx["t"]
         old = {"zones": {"nochase": {"armed": True}, "z1": {"armed": True}, "z2": {"armed": True}, "z3": {"armed": True}},
@@ -443,11 +441,16 @@ def selftest(cfg: dict) -> int:
     finally:
         g.update(keep)
     fst: dict = {}
-    record_fired(fst, "2026-11-04", "z1", 3, "[XBI] t", datetime(2026, 11, 5, 9, tzinfo=KST))
-    assert fst["fired"][0]["date"] == "2026-11-04" and fst["fired"][0]["key"] == "z1"
+    ntfy_util.LAST_PUBLISH.clear()
+    ntfy_util.LAST_PUBLISH.update({"sent": False, "reason": "ends_kst passed", "title": "[XBI] t"})
+    assert not record_fired(fst, "2026-11-04", "z1", 3, "[XBI] t", cap=FIRED_MAX) and "fired" not in fst
+    ntfy_util.LAST_PUBLISH.update({"sent": True, "reason": ""})
+    assert record_fired(fst, "2026-11-04", "z1", 3, "[XBI] t", datetime(2026, 11, 5, 9, tzinfo=KST), cap=FIRED_MAX)
+    assert fst["fired"][0] == {"date": "2026-11-04", "key": "z1", "priority": 3, "title": "[XBI] t", "sent_at": "2026-11-05T09:00:00+09:00"}
     for k in range(70):
-        record_fired(fst, f"d{k}", "hi52+tnx_hi", 3, "[XBI] x", datetime(2026, 11, 5, 9, tzinfo=KST))
+        record_fired(fst, f"d{k}", "hi52+tnx_hi", 3, "[XBI] x", cap=FIRED_MAX)
     assert len(fst["fired"]) == FIRED_MAX and fst["fired"][-1]["key"] == "hi52+tnx_hi"
+    ntfy_util.LAST_PUBLISH.clear()
     print("fired history ok (최근 60건)")
     print("SELFTEST OK: fixtures only, no network, no publish, no state")
     return 0
