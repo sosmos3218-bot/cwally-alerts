@@ -29,6 +29,15 @@ Events
             {id, start, end, title, checklist, optional what/later/trim/dont/catch_up_days/priority}. Sent once on the
             end day or the first run after it within catch_up_days (default 3), never at the window start; dedupe by id
             in st["time_done"]. Wording never says 공시 확인 필요.
+  board     optional configs "board_watch" (2026-11-04, 005930 only, user approval '네 소신껏'): one-time filing window
+            start..end (2027-01-15..2027-02-15) for the January 2027 board shareholder-return decision. Inside the window
+            each KRX trading-day 19:00 run reads the company's KIND filing list (no key; same kind_list/naver_list as
+            scripts/secpref_monitor.py, Naver KRX feed if KIND fails) and sends every filing whose title matches a
+            board_watch.keywords entry (spaces, middle dots, commas and periods ignored; exclude words drop a title) once,
+            dedupe by filing id in st["board_watch"][id]["seen"] (kind:<KIND 접수번호> or naver:<no>) plus a day|title
+            signature so the same filing read from the other source is not sent twice. Nothing sent by the end-day run
+            -> one final_title notice (final_priority), then the window is closed. Feed failure: fail notice (cwally-ops),
+            the final notice waits for a readable list up to catch_up_days after end. Outside the window: no fetch, silent.
   footer    optional configs "footer_note" (2026-10-29, 0220wl_close): one line appended to the end of every message
             this config sends. Absent keys (005930/000660/064400): nothing changes.
   earnings  on configs earnings.date (KST session day), one 실적 체크 message, flag earn_done[date];
@@ -768,6 +777,121 @@ def clean(title: str, msg: str) -> None:
             raise ValueError(f"forbidden char U+{ord(ch):04X} in message: {title}")
 
 
+# ---------- board_watch: one-time filing window (2026-11-04, configs/005930.json, 2027년 1월 이사회 주주환원) ----------
+BOARD_ENABLED = True  # selftest() turns this off for the generic checks; _selftest_board turns it back on
+KIND_VIEW = "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acpt}"
+
+
+def board_norm(s: str) -> str:
+    """Title/keyword compare form: no spaces, middle dots, commas or periods (KIND 가운뎃점 표기 현금 현물배당결정 == 현금, 현물배당 결정)."""
+    return re.sub(r"[\s\u318d\u00b7\u30fb\u2027,.]", "", s or "")
+
+
+def board_rows(cfg: dict, since: str, until: str) -> list[dict]:
+    """[{'id','acptno','title','filed','src'}] for cfg code in since..until. KIND first, Naver KRX feed if KIND fails.
+    Reuses scripts/secpref_monitor.py kind_list/naver_list (read-only; imported lazily so other configs never load it)."""
+    import secpref_monitor as spm  # noqa: E402
+    q = {"code": cfg["code"], "corp_name": cfg["board_watch"].get("corp_name", cfg["short"])}
+    try:
+        return spm.kind_list(q, since, until)
+    except Exception as exc:
+        kerr = str(exc)[:60]
+    try:
+        return spm.naver_list(q, since, until)
+    except Exception as exc:
+        raise RuntimeError(f"KIND {kerr}; 네이버 {str(exc)[:60]}")
+
+
+def eval_board(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None) -> list[dict]:
+    """configs board_watch: every matching filing in start..end once, final notice if none by end. Mutates st, fails."""
+    bw = cfg.get("board_watch")
+    if not bw:
+        return []
+    s = st.setdefault("board_watch", {}).setdefault(bw["id"], {})
+    for k, v in (("seen", []), ("sigs", {}), ("sent", []), ("final_done", None), ("closed", None)):
+        s.setdefault(k, v)
+    if s["closed"] or today < bw["start"]:
+        return []
+    late = (date.fromisoformat(today) - date.fromisoformat(bw["end"])).days
+    catch = int(bw.get("catch_up_days", 5))
+    if late > catch:
+        return []
+    until = min(today, bw["end"])
+    since = max(bw["start"], (date.fromisoformat(until) - timedelta(days=int(bw.get("lookback_days", 14)))).isoformat())
+    ffail = None
+    try:
+        rows = (rows_fn or board_rows)(cfg, since, until)
+    except Exception as exc:
+        ffail = str(exc)[:120]
+        fails.append(f"{cfg['code']} 1월 이사회 공시 목록 ({ffail}; 다음 실행에서 다시 확인)")
+        rows = []
+    kws = [board_norm(k) for k in bw["keywords"]]
+    excl = [board_norm(x) for x in bw.get("exclude") or []]
+    out = []
+    for r in sorted(rows, key=lambda x: (x.get("filed") or "", x["id"])):
+        nt, day = board_norm(r["title"]), (r.get("filed") or "")[:10]
+        if not (bw["start"] <= day <= bw["end"]) or not any(k in nt for k in kws) or any(x in nt for x in excl):
+            continue
+        if r["id"] in s["seen"]:
+            continue
+        s["seen"].append(r["id"])
+        sig, src = f"{day}|{nt}", r["id"].split(":")[0]
+        if s["sigs"].get(sig) not in (None, src):  # same filing already sent from the other source (KIND vs Naver)
+            continue
+        s["sigs"][sig] = src
+        s["sent"].append({"id": r["id"], "title": scrub(r["title"]), "filed": r.get("filed"), "run_day": today})
+        out.append({"kind": "board", "filing": r})
+    # a failed list read holds the final notice; it goes out anyway on the last KRX trading day of the catch-up
+    last_chance = not any(is_trading_day(date.fromisoformat(today) + timedelta(days=i)) for i in range(1, catch - late + 1))
+    if today >= bw["end"] and (ffail is None or last_chance):
+        if not s["sent"]:
+            out.append({"kind": "board_final", "ffail": ffail})
+            s["final_done"] = today
+        s["closed"] = today
+    return out
+
+
+def board_link(cfg: dict, f: dict) -> str:
+    if f.get("acptno"):
+        return KIND_VIEW.format(acpt=f["acptno"])
+    return cfg["sources"]["notice_page"].format(code=cfg["code"]) + " (네이버 공시 목록, KIND 목록을 못 읽음)"
+
+
+def build_board(cfg: dict, e: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    bw, f = cfg["board_watch"], e["filing"]
+    name = re.sub(r"\s+", " ", scrub(f["title"])).strip()
+    filed = f.get("filed") or ""
+    when = f"{filed} KST (KIND 접수)" if len(filed) > 10 else f"{filed} (네이버 피드, 시각 없음)"
+    title = f"{cfg['title_prefix']} {bw['title']} | {name[:40]}"
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {bw['what']} {bw['context']} {bw['disclaimer']}.",
+        f"지금 결과/상태: 새 공시: {name}. 시각: {when}. 링크: {board_link(cfg, f)}",
+        f"지금 할 일: {bw['todo']} 점검: {bw['check']}.",
+        f"나중에: {bw['later']}",
+        f"익절/줄일 때: {bw['trim']}",
+        f"하지 말 것: {bw['dont']}",
+    ] + ([ref] if ref else []) + [f"{bw['disclaimer']}."])
+    return title, msg, int(bw.get("priority", 4))
+
+
+def build_board_final(cfg: dict, e: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    bw = cfg["board_watch"]
+    page = cfg["sources"]["notice_page"].format(code=cfg["code"])
+    fl = f" 마지막 실행의 공시 목록 조회는 실패했습니다({e['ffail'][:60]})." if e.get("ffail") else ""
+    title = f"{cfg['title_prefix']} {bw['final_title']}"
+    msg = "\n".join([
+        head(cfg, stamp),
+        f"이게 뭐 알림: {bw['what']} 기간이 끝나 마지막 안내 1번입니다. {bw['disclaimer']}.",
+        f"지금 결과/상태: {bw['start']}~{bw['end']} KIND, 네이버 공시 목록에서 키워드({', '.join(bw['keywords'])})에 맞는 삼성전자 공시를 못 찾았습니다.{fl} {bw['context']}",
+        f"지금 할 일: 공시 목록을 직접 확인하세요: {page}. 이사회가 미뤄졌는지, 다른 제목으로 나왔는지 보세요. 점검: {bw['check']}.",
+        "나중에: 이 1월 이사회 공시 알림은 이것으로 끝납니다. 가격 선 알림은 계속 돕니다.",
+        f"익절/줄일 때: {bw['trim']}",
+        "하지 말 것: 공시 미확인을 환원 축소로 단정하기, 신용 및 미수.",
+    ] + ([ref] if ref else []))
+    return title, msg, int(bw.get("final_priority", 3))
+
+
 # ---------- earn_auto: quarterly earnings call auto-check (2026-10-30, configs/005930.json) ----------
 def earn_notice_rows(cfg: dict) -> list[dict]:
     """Naver notice feed with contents (IR notice carries the call date). Titles scrubbed."""
@@ -1062,7 +1186,7 @@ def load_cfg(name: str) -> dict:
 
 
 def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime, filing_fn=None, ref_fn=None, notice_fn=None,
-               earn_io: dict | None = None) -> list[tuple]:
+               earn_io: dict | None = None, board_fn=None) -> list[tuple]:
     """Mutates st; returns [(title, msg, pri, tags)]. Only data['rows'] (Yahoo regular closes) can fire a line;
     ref_fn(cfg, rows, now) only formats the NXT reference line of a message that is already being sent."""
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -1105,6 +1229,11 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
                 sends.append(build_notice_event(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["clipboard"],))
             else:
                 sends.append(build_notice_watch(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["page_facing_up"],))
+    if cfg.get("board_watch") and BOARD_ENABLED:
+        fails = list(fails)
+        for e in eval_board(cfg, st, today, fails, board_fn):
+            b = build_board if e["kind"] == "board" else build_board_final
+            sends.append(b(cfg, e, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["bank"],))
     if cfg.get("time_checks"):
         for e in eval_time_checks(cfg, st, today):
             sends.append(build_time_check(cfg, e, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["calendar"],))
@@ -1241,10 +1370,12 @@ def selftest(name: str) -> int:
     g["nxt_ref"] = lambda c, rows, now: f"{c['short']} NXT 정보 없음"
     g["yahoo_rows"] = g["naver_rows"] = g["get_json"] = no_net
     g["notice_rows"] = lambda c, code: []  # notice_watch configs (064400): empty feed unless a check passes rows_fn
+    g["BOARD_ENABLED"] = False  # board_watch (005930) is checked only in _selftest_board, never with live lists
     try:
         return _selftest(name, orig)
     finally:
         g.update(orig)
+        g["BOARD_ENABLED"] = True
 
 
 def _selftest(name: str, orig: dict) -> int:
@@ -1342,6 +1473,8 @@ def _selftest(name: str, orig: dict) -> int:
         _selftest_earn(name, check, at)
     if load_cfg(name).get("notice_watch"):
         _selftest_notice_watch(name, check, at)
+    if load_cfg(name).get("board_watch"):
+        _selftest_board(name, check, at)
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
@@ -1419,6 +1552,128 @@ def _selftest_notice_watch(name, check, at) -> None:
         check("notice_watch: fail notice -> cwally-ops", route_topic("cwally-port", s3[0][0]), "cwally-ops")
     finally:
         g["get_json"] = saved
+
+
+def _selftest_board(name, check, at) -> None:
+    """board_watch (005930, 2026-11-04): fixture KIND/Naver lists, no network, no ntfy. Window gating, keyword matching
+    (spaces and middle dots ignored, exclude words), dedupe by filing id and across sources, final p3 notice once,
+    feed failure holds the final, titles carry 005930, no forbidden chars."""
+    from ntfy_util import route_topic
+    g = globals()
+    full = load_cfg(name)
+    bw = full["board_watch"]
+    pfx = full["title_prefix"]
+    cfg = copy.deepcopy(full)
+    for k in ("earn_auto", "us10y", "extra_lines", "notice_events", "notice_watch", "time_checks"):
+        cfg.pop(k, None)
+    ref = lambda c, rows, now: f"{c['short']} NXT 정보 없음"  # noqa: E731
+    calls = []
+    world = {"rows": [], "fail": None}
+
+    def rows_fn(c, since, until):
+        calls.append((since, until))
+        if world["fail"]:
+            raise RuntimeError(world["fail"])
+        return [r for r in world["rows"] if since <= r["filed"][:10] <= until]
+
+    def kind(no, title, filed):
+        return {"id": f"kind:{no}", "acptno": no, "title": title, "filed": filed, "src": "KIND"}
+
+    def fresh():
+        st = default_state(cfg)
+        st.update(seeded=True, last_day="2027-01-27", last_close=215500.0)
+        st["earn_done"] = {cfg["earnings"]["date"]: "x"}
+        return st
+
+    def run_(st, d, h=19):
+        return plan_sends(cfg, st, {"rows": [], "src": "Yahoo 정규장"}, [], at(d, h), lambda c, x: None, ref, None, None, rows_fn)
+
+    saved = g["BOARD_ENABLED"]
+    g["BOARD_ENABLED"] = True
+    try:
+        check("board: keywords are a list incl. 자기주식 취득 결정 and 기업가치 제고 계획",
+              (isinstance(bw["keywords"], list), "자기주식 취득 결정" in bw["keywords"], "기업가치 제고 계획" in bw["keywords"]), (True, True, True))
+        check("board: window 2027-01-15 ~ 2027-02-15, p4 / final p3", (bw["start"], bw["end"], bw["priority"], bw["final_priority"]),
+              ("2027-01-15", "2027-02-15", 4, 3))
+        world["rows"] = [
+            kind("20270110000011", "주식 소각 결정", "2027-01-10 17:00"),  # before the window
+            kind("20270128000101", "현금\u318d현물배당결정", "2027-01-28 07:40"),
+            kind("20270128000102", "자기주식취득 신탁계약 체결 결정", "2027-01-28 07:41"),
+            kind("20270128000103", "자기주식 처분 결정", "2027-01-28 07:42"),
+            kind("20270128000104", "연결재무제표기준영업(잠정)실적(공정공시)", "2027-01-28 07:43"),
+            kind("20270128000105", "기업가치 제고 계획(자율공시)", "2027-01-28 07:44"),
+            kind("20270128000106", "자기주식취득결과보고서", "2027-01-28 07:45"),
+            kind("20270128000107", "변경상장(주식소각)", "2027-01-28 07:46"),
+        ]
+        st = fresh()
+        check("board: 2026-11-04 (before window) silent, no list read", (run_(st, "2026-11-04"), calls), ([], []))
+        check("board: 2027-01-14 silent, no list read", (run_(st, "2027-01-14"), calls), ([], []))
+        s1 = run_(st, "2027-01-28")
+        t1 = [t for t, *_ in s1]
+        check("board: 3 matching filings once each (처분, 실적, 결과보고서, 변경상장, pre-window silent)", t1, [
+            f"{pfx} {bw['title']} | 현금, 현물배당결정",
+            f"{pfx} {bw['title']} | 자기주식취득 신탁계약 체결 결정",
+            f"{pfx} {bw['title']} | 기업가치 제고 계획(자율공시)"])
+        check("board: example title shape", t1[0].startswith("[005930] 삼성전자 1월 이사회 주주환원 공시 | "), True)
+        check("board: priority 4", [p for _, _, p, _ in s1], [4, 4, 4])
+        m = s1[0][1]
+        check("board: body has filing title, time, KIND link, check line, 투자 권유 아님",
+              ("현금, 현물배당결정" in m, "2027-01-28 07:40 KST" in m, KIND_VIEW.format(acpt="20270128000101") in m,
+               "잔여 환원 하단 55조원 근처이거나 자사주 비중이 미미하면 판단 하향 조건" in m, "투자 권유 아님" in m), (True,) * 5)
+        check("board: body six-item order", [ln.split(":")[0] for ln in m.split("\n")[1:7]],
+              ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+        check("board: seen ids", st["board_watch"][bw["id"]]["seen"], ["kind:20270128000101", "kind:20270128000102", "kind:20270128000105"])
+        check("board: same day re-run silent", run_(st, "2027-01-28", 22), [])
+        world["rows"].append({"id": "naver:999001", "acptno": None, "title": "현금\u318d현물배당 결정", "filed": "2027-01-28", "src": "네이버"})
+        world["rows"].append(kind("20270129000201", "[기재정정]자기주식 취득 결정", "2027-01-29 17:10"))
+        s2 = run_(st, "2027-01-29")
+        check("board: Naver copy of a KIND filing silent, new 정정 filing once", [t for t, *_ in s2],
+              [f"{pfx} {bw['title']} | [기재정정]자기주식 취득 결정"])
+        n = [r for r in world["rows"] if r["src"] == "네이버"]
+        st_n = fresh()
+        world_rows = world["rows"]
+        world["rows"] = n
+        s_n = run_(st_n, "2027-01-29")
+        check("board: Naver-only list -> notice page link, day without time", ("네이버 공시 목록" in s_n[0][1], "(네이버 피드, 시각 없음)" in s_n[0][1]), (True, True))
+        world["rows"] = world_rows
+        check("board: next day silent", run_(st, "2027-02-01"), [])
+        check("board: end day with earlier sends -> no final, closed", (run_(st, "2027-02-15"), bool(st["board_watch"][bw["id"]]["closed"])), ([], True))
+        calls.clear()
+        check("board: after close silent, no list read", (run_(st, "2027-02-16"), calls), ([], []))
+
+        world["rows"] = [kind("20270128000103", "자기주식 처분 결정", "2027-01-28 07:42")]
+        st = fresh()
+        check("board: nothing found during window silent", run_(st, "2027-02-12"), [])
+        sf = run_(st, "2027-02-15")
+        check("board: nothing by 2027-02-15 -> one final p3", [(t, p) for t, _, p, _ in sf], [(f"{pfx} {bw['final_title']}", 3)])
+        check("board: final title exact", sf[0][0], "[005930] 삼성전자 1월 이사회 주주환원 공시 미확인")
+        check("board: final re-run silent", (run_(st, "2027-02-15", 22), run_(st, "2027-02-16")), ([], []))
+
+        st = fresh()
+        world["fail"] = "HTTP 503"
+        sx = run_(st, "2027-02-15")
+        check("board: list down on end day -> ops fail notice only, final held", [t for t, *_ in sx], [f"{pfx} 조회 실패 | 조건 판단 보류"])
+        check("board: fail notice -> cwally-ops", route_topic("cwally-port", sx[0][0]), "cwally-ops")
+        world["fail"] = None
+        check("board: next readable run sends the final", [t for t, *_ in run_(st, "2027-02-16")], [f"{pfx} {bw['final_title']}"])
+        st = fresh()
+        world["fail"] = "HTTP 503"
+        check("board: list still down on the last catch-up trading day -> final anyway (with fail note)",
+              [(t, "조회는 실패" in m_) for t, m_, *_ in run_(st, "2027-02-19") if bw["final_title"] in t], [(f"{pfx} {bw['final_title']}", True)])
+        world["fail"] = None
+        st = fresh()
+        calls.clear()
+        check("board: past catch-up (2027-02-25) silent, no list read", (run_(st, "2027-02-25"), calls), ([], []))
+
+        allm = s1 + s2 + sf
+        check("board: every title starts with [005930] and names 005930", all(t.startswith(pfx + " ") and "005930" in t for t, *_ in allm), True)
+        check("board: no forbidden chars (middle dots, em-dash) in titles and bodies", any(ch in t + m_ for t, m_, *_ in allm for ch in FORBIDDEN), False)
+        check("board: filing and final routed to cwally-port", (route_topic("cwally-port", s1[0][0]), route_topic("cwally-port", sf[0][0])),
+              ("cwally-port", "cwally-port"))
+        check("board: norm matches spacing and middle dot variants", (board_norm("현금\u318d현물배당결정") == board_norm("현금, 현물배당 결정"),
+              board_norm("자기주식 취득 결정") in board_norm("자기주식취득결정")), (True, True))
+    finally:
+        g["BOARD_ENABLED"] = saved
 
 
 def _selftest_extra(name, check, at) -> None:
