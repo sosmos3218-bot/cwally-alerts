@@ -404,6 +404,8 @@ def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None
     out = []
     done = st.setdefault("notice_done", {})
     for ev in cfg.get("notice_events") or []:
+        if ev.get("enabled", True) is False:  # config off switch (0220wl_close tender check, 2026-11-04)
+            continue
         if ev["id"] in done or today < ev["start"]:
             continue
         if (date.fromisoformat(today) - date.fromisoformat(ev["end"])).days > int(ev.get("catch_up_days", 3)):

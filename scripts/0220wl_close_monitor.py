@@ -8,7 +8,7 @@ configs/0220wl.json on case-insensitive filesystems. Same [0220WL] title prefix.
 Uses the optional engine keys added 2026-10-28 (absent for 005930/000660/064400, whose selftests are unchanged):
   lines + ladder_all/lines_what/lines_trim/lines_dont/yield/suppress  pref close <= 2,040 (yield 5%) and < 2,000 (재점검)
   pair + ratio_lines   same-session discount (0220W0 - 0220WL) / 0220W0: < 65.0% 괴리 축소, > 75.0% 괴리 확대 (2026-11-04; was <= 60 / >= 75)
-  notice_events        10/29 한화비전 3Q filing, 11/2~11/4 tender offer result (catch-up 3 days)
+  notice_events        10/29 한화비전 3Q filing; 11/2~11/4 tender offer result (disabled 2026-11-04, enabled=false)
   notice_watch         0220W0/0220WL filings with 배당/소각/자기주식/주주환원 in the title, one alert per filing
 Added 2026-10-29 (chat approval; the 15:20 0220wl alert retired from the workflow):
   footer_note          holding note line appended to every message
@@ -262,16 +262,20 @@ def selftest() -> int:
     st = copy.deepcopy(seed)
     st["notice_done"]["vision3q-2026"] = "x"
     feed_map.clear()
-    check("11-02 tender no filing yet: silent", sends(st, base, at("2026-11-02"), notice_fn=nf), [])
-    check("11-03 still waiting: silent", sends(st, base, at("2026-11-03"), notice_fn=nf), [])
-    s = sends(st, base, at("2026-11-04"), notice_fn=nf)
-    check("11-04 end day, not found -> 확인 필요 + DART note", ([x[0] for x in s], "DART" in s[0][1]), ([f"{pfx} 공개매수 결과 체크 | 공시 확인 필요"], True))
-    check("tender checklist", all(k in s[0][1] for k in ("응모율과 안분 비율", "보통주 가격 반응", "괴리율 변화", "괴리율 71.43%")), True)
-    check("tender done once", sends(st, base, at("2026-11-05"), notice_fn=nf), [])
+    # tender-result check disabled 2026-11-04 (enabled=false): never emits, even with the filing present
+    check("tender disabled in config", next(e for e in cfg["notice_events"] if e["id"] == "tender-result-2026-11").get("enabled"), False)
+    for d in ("2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"):
+        check(f"{d} tender check silent (not found)", sends(st, base, at(d), notice_fn=nf), [])
     st = copy.deepcopy(seed)
     st["notice_done"]["vision3q-2026"] = "x"
     feed_map["0220W0"] = [tnd]
-    check("11-04 tender filing found", [x[0] for x in sends(st, base, at("2026-11-04", 19), notice_fn=nf)], [f"{pfx} 공개매수 결과 체크 | 공시 확인됨"])
+    check("11-04 tender silent even with filing", sends(st, base, at("2026-11-04", 19), notice_fn=nf), [])
+    check("tender not marked done (just skipped)", "tender-result-2026-11" in st["notice_done"], False)
+    feed_map.clear()
+    st = copy.deepcopy(seed)
+    st["notice_done"]["vision3q-2026"] = "x"
+    s = sends(st, {"rows": rows(("2026-11-04", 2180)), "pair_rows": rows(("2026-11-04", 9000)), "src": "Yahoo 정규장"}, at("2026-11-04"), notice_fn=nf)
+    check("gap > 75% still fires on 11-04 with tender off", [x[0] for x in s], ["[0220WL] 한화M&S 3우B 괴리율 75% 돌파 (0220WL/0220W0)"])
 
     # ---- notice watch
     old = {"no": "8000", "code": "0220W0", "title": "한화머시너리앤서비스홀딩스 주식회사 현금ㆍ현물배당결정", "datetime": "2026-10-08 17:00"}
