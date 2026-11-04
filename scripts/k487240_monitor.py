@@ -85,8 +85,11 @@ def step(cfg: dict, armed: dict, closes: list[float], i: int) -> list[dict]:
     return fired
 
 
-def checklist(cfg: dict, key: str) -> str:
-    return ", ".join(f"({i}) {x}" for i, x in enumerate(cfg["checklists"].get(key, []), 1))
+def checklist(cfg: dict, key: str, seen: set | None = None) -> str:
+    items = [x for x in cfg["checklists"].get(key, []) if seen is None or x not in seen]
+    if seen is not None:
+        seen.update(items)
+    return ", ".join(f"({i}) {x}" for i, x in enumerate(items, 1))
 
 
 def message(cfg: dict, fired: list[dict], day: str, p: float, ma20: float | None, ma200: float | None, stamp: str) -> tuple[str, str, int]:
@@ -109,8 +112,9 @@ def message(cfg: dict, fired: list[dict], day: str, p: float, ma20: float | None
         avoid = "물타기, 신용, 미수, 저점 이탈을 바닥 신호로 읽기."
     else:
         todo = []
+        seen: set = set()  # 같은 실행에서 여러 선이 걸려도 자금 원칙은 한 번만
         for x in fired:
-            todo.append(f"{x['title']}: {checklist(cfg, x['key'])}.")
+            todo.append(f"{x['title']}: {checklist(cfg, x['key'], seen)}.")
         action = " ".join(todo) + f" 합계 {plan['weight_pct']}(약 600만~1,000만원), 최대 {plan['max_weight_pct']}%, {plan['account']}. 지정가로 나눠서."
         later = (f"같은 선은 재무장 뒤에만 다시 옵니다(25,000 선은 25,800 이상, 22,000 선은 22,700 이상, 20일선은 20일선 아래 종가 뒤). "
                  f"20,700 미만 종가면 추가 매수 중단선 p4. 종료 {cfg['ends_kst'][:10]}.")
@@ -262,6 +266,11 @@ def selftest(cfg: dict) -> int:
     t4, b4, p4 = message(cfg, [{"key": "ma20", "title": cfg["ma"]["title"], "priority": 3, "warn": False}], "2027-01-05", 29000, 28000, 34000, "s")
     check("l25000 title/pri", (t1, p1), ("[487240] 487240 종가 24,950 | 1차 매수 검토", 3))
     check("l25000 checklist", all(k in b1 for k in ("중간선거", "Eaton", "산일전기", "200만~330만원", "일반계좌")), True)
+    for k in ("l22000", "ma20"):
+        _t, _b, _p = message(cfg, [l[k] if k in l else {"key": "ma20", "title": cfg["ma"]["title"], "priority": 3, "warn": False}], "2026-11-20", 21900.0 if k == "l22000" else 30000.0, 29000.0, 36000.0, "stamp")
+        check(f"{k} funding rule first", ("(1) 자금 원칙: 하이닉스와 삼성 합산 43%" in _b, "MEMEXIT 매도 자금이 있을 때만" in _b), (True, True))
+    _t, _b, _p = message(cfg, [l["l25000"], l["l22000"]], "2026-11-20", 21900.0, 29000.0, 36000.0, "stamp")
+    check("funding rule once when two lines fire", _b.count("자금 원칙:"), 1)
     check("l25000 funding rule first", ("(1) 자금 원칙: 하이닉스와 삼성 합산 43%" in b1, "MEMEXIT 매도 자금이 있을 때만" in b1), (True, True))
     check("l22000 alt trigger", "효성중공업 4분기 이연매출" in message(cfg, [l["l22000"]], "d", 21900, 24000, 35000, "s")[1], True)
     check("ma20 mentions 200일선 재평가", "200일선" in b4 and "재평가" in b4 and t4.endswith("3차 매수 검토 (20일선 회복)"), True)
