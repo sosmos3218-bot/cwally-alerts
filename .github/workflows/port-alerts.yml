@@ -73,6 +73,28 @@ on:
     - cron: "32 7 3 11 *"
     - cron: "10 8 3 11 *"
     - cron: "22 0 4 11 *"
+    # lgesq4 oneshot_kst (KST→UTC): 2027-01-05/06 13:47, 16:47; 01-07/08/11 10:47, 13:47, 16:47; 01-12~15 10:47, 16:47. 4Q26 잠정실적 창 (t49u)
+    - cron: "47 4 5 1 *"
+    - cron: "47 7 5 1 *"
+    - cron: "47 4 6 1 *"
+    - cron: "47 7 6 1 *"
+    - cron: "47 1 7 1 *"
+    - cron: "47 4 7 1 *"
+    - cron: "47 7 7 1 *"
+    - cron: "47 1 8 1 *"
+    - cron: "47 4 8 1 *"
+    - cron: "47 7 8 1 *"
+    - cron: "47 1 11 1 *"
+    - cron: "47 4 11 1 *"
+    - cron: "47 7 11 1 *"
+    - cron: "47 1 12 1 *"
+    - cron: "47 7 12 1 *"
+    - cron: "47 1 13 1 *"
+    - cron: "47 7 13 1 *"
+    - cron: "47 1 14 1 *"
+    - cron: "47 7 14 1 *"
+    - cron: "47 1 15 1 *"
+    - cron: "47 7 15 1 *"
     # lgesq3 oneshot_kst (KST→UTC): 10-07 09:12/16:12, 10-08 09:12/16:12, 10-09 09:12, 10-13/16/23/30 09:12
     - cron: "12 0 7 10 *"
     - cron: "12 7 7 10 *"
@@ -257,7 +279,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -424,6 +446,7 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 29 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 30 10 *" ] || [ "${{ github.event.schedule }}" = "10 0 3 11 *" ]; then JOB=lgiq3
             elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
             elif [ "${{ github.event.schedule }}" = "22 0 3 11 *" ] || [ "${{ github.event.schedule }}" = "30 3 3 11 *" ] || [ "${{ github.event.schedule }}" = "32 7 3 11 *" ] || [ "${{ github.event.schedule }}" = "10 8 3 11 *" ] || [ "${{ github.event.schedule }}" = "22 0 4 11 *" ]; then JOB=lges1103
+            elif printf '%s\n' "47 4 5 1 *" "47 7 5 1 *" "47 4 6 1 *" "47 7 6 1 *" "47 1 7 1 *" "47 4 7 1 *" "47 7 7 1 *" "47 1 8 1 *" "47 4 8 1 *" "47 7 8 1 *" "47 1 11 1 *" "47 4 11 1 *" "47 7 11 1 *" "47 1 12 1 *" "47 7 12 1 *" "47 1 13 1 *" "47 7 13 1 *" "47 1 14 1 *" "47 7 14 1 *" "47 1 15 1 *" "47 7 15 1 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=lgesq4
             elif [ "${{ github.event.schedule }}" = "12 0 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 7 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 7 8 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 9 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 13 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 16 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 23 10 *" ] || [ "${{ github.event.schedule }}" = "12 0 30 10 *" ]; then JOB=lgesq3
             elif [ "${{ github.event.schedule }}" = "40 11 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 12 27 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 27 10 *" ]; then JOB=pyplq3
             elif [ "${{ github.event.schedule }}" = "40 2 8 10 *" ] || [ "${{ github.event.schedule }}" = "40 23 26 10 *" ] || [ "${{ github.event.schedule }}" = "20 7 27 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 28 10 *" ] || [ "${{ github.event.schedule }}" = "22 7 4 11 *" ]; then JOB=sdichg
@@ -1196,6 +1219,19 @@ jobs:
           else
             python scripts/lges1103_monitor.py auto
           fi
+      - name: Run lgesq4
+        # [LGESF] 373220 4Q26 잠정실적 일회 판정 (t49u). Uses scripts/earnings_parse.py. Schedule = configs/lgesq4.json oneshot_kst.
+        # Any dispatch without oneoff_mode=auto is dry (selftest + dry: no ntfy, no state). Ends 2027-01-18.
+        if: steps.pick.outputs.job == 'lgesq4'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/lgesq4_monitor.py selftest; fi
+          python scripts/lgesq4_monitor.py "$MODE"
       - name: Run lgesq3
         if: steps.pick.outputs.job == 'lgesq3'
         env:

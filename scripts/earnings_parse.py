@@ -14,10 +14,10 @@ import sys
 from typing import Callable
 
 # A number must start with a digit (a bare "," used to reach int() and raise ValueError).
-NUM_RE = r"(-?\d[\d,]*)"
+NUM_RE = r"([-△]?\d[\d,]*)"  # △ = 음수 (LG 보도자료 "영업이익 △1220억 원")
 # The gap between label and number may not cross another metric word, so
 # "보상금 반영으로 영업이익은 7,560억 원" is not read as a 7,560억원 compensation.
-GAP_RE = r"(?:(?!영업이익|매출|순이익|순손실|제외|포함)[^0-9\-]){0,24}?"
+GAP_RE = r"(?:(?!영업이익|매출|순이익|순손실|제외|포함)[^0-9\-△]){0,24}?"
 MONEY_RE = r"(\d[\d,]*(?:\.\d+)?)\s*(조|억|백만)\s*원?(?:\s*(\d[\d,]*)\s*억\s*원?)?"
 RANGE = (-200000, 300000)
 
@@ -27,7 +27,7 @@ def eok(text: str, pattern: str) -> int | None:
     hit = re.search(pattern, text, re.I)
     if not hit or hit.group(1) is None:
         return None
-    raw = int(hit.group(1).replace(",", ""))
+    raw = int(hit.group(1).replace(",", "").replace("△", "-"))
     if (hit.group(2) or "").startswith("백만"):
         raw = raw // 100
     return raw if RANGE[0] < raw < RANGE[1] else None
@@ -53,7 +53,7 @@ def table_row(text: str, label: str) -> int | None:
     hit = re.search(r"(?:" + label + r")\s+당해실적\s+" + NUM_RE + r"(?![\d.])", text)
     if not hit:
         return None
-    v = int(hit.group(1).replace(",", ""))
+    v = int(hit.group(1).replace(",", "").replace("△", "-"))
     if re.search(r"단위\s*:\s*백만원", text):
         v //= 100
     return v if RANGE[0] < v < RANGE[1] else None
@@ -68,7 +68,7 @@ def signed(text: str, gain: str, loss: str) -> int | None:
     return None
 
 
-SUBSIDY_LABELS = r"AMPC|북미\s*생산\s*보조금|첨단\s*제조\s*생산\s*세액공제"
+SUBSIDY_LABELS = r"Tax\s*Credit|AMPC|북미\s*생산\s*보조금|첨단\s*제조\s*생산\s*세액공제"
 
 
 def parse_results(text: str, subsidy: str = SUBSIDY_LABELS, extra: dict[str, str] | None = None) -> dict:
@@ -96,15 +96,15 @@ def parse_results(text: str, subsidy: str = SUBSIDY_LABELS, extra: dict[str, str
     # "보조금 효과를 포함한 수치이며, 이를 제외한 매출액은 92,265억원"처럼 포함/제외 문구를 건너뛰지 않는다.
     sub = money(re.search(r"(?:" + subsidy + r")(?:(?!제외|포함|영업이익)[^.\n]){0,60}?" + MONEY_RE, text, re.I))
     # 공시 기타 항목: "이를 제외한 ... 영업이익은 3,391억원, 영업이익률은 +3.7%"
-    hit = re.search(r"제외한[^.]{0,80}?영업이익(?:은|는|이)?\s*(-?)" + MONEY_RE, text)
-    ex = money(hit, -1 if hit and hit.group(1) == "-" else 1, 2)
-    mm = re.search(r"제외한[^.]{0,140}?영업이익률(?:은|는|이)?\s*([+\-]?\d+(?:\.\d+)?)\s*%", text)
+    hit = re.search(r"제외한[^.]{0,80}?영업이익(?:은|는|이)?\s*([-△]?)" + MONEY_RE, text)
+    ex = money(hit, -1 if hit and hit.group(1) else 1, 2)
+    mm = re.search(r"제외한[^.]{0,140}?영업이익률(?:은|는|이)?\s*([+\-△]?\d+(?:\.\d+)?)\s*%", text)
     if sub is None and op is not None and ex is not None:
         sub = op - ex
     if ex is None and op is not None and sub is not None:
         ex = op - sub
     out = {"sales": sales, "op": op, "net": net, "pretax": pretax, "ampc": sub, "ex": ex,
-           "ex_margin": float(mm.group(1)) if mm else None}
+           "ex_margin": float(mm.group(1).replace("△", "-")) if mm else None}
     for key, label in (extra or {}).items():
         out[key] = grab(text, label)
     return out
@@ -238,6 +238,24 @@ Q3_SCRIPT_RAW = (
     "3분기에 인식했던 여러 가지 일회성 요인이 좀 소멸되는 기저 효과가 있고, 또 4분기에 예정되어 있는 혼다 JV에 ESS Capa 추가 가동 "
     "준비함에 따라서 초기 고정비 부담이 발생할 것 같습니다. 이로 인해서 4분기 수익성은 일부 둔화가 불가피할 것으로 보고 있습니다."
 )
+# Real 2026-01-09 4분기 잠정 공시 (DART 20260109800185, financialfilings.com 사본) and LG 보도자료 29769.
+Q4_2025_NOTICE = (
+    "연결재무제표 기준 영업(잠정)실적(공정공시) 실적기간 당기실적 2025-10-01 ~ 2025-12-31 전기실적 2025-07-01 ~ 2025-09-30 "
+    "※ 동 정보는 잠정치로서 향후 확정치와는 다를 수 있음. 1. 연결실적내용 단위 : 억원, % 구분 당기실적 전기실적 전기대비 "
+    "('25.4Q) ('25.3Q) 증감율(%) 흑자적자전환여부 ('24.4Q) 증감율(%) 흑자적자전환여부 "
+    "매출액 당해실적 61,415 56,999 7.7 - 64,512 -4.8 - 누계실적 236,718 - - - 256,196 -7.6 - "
+    "영업이익 당해실적 -1,220 6,013 -120.3 적자전환 -2,255 45.9 - 누계실적 13,461 - - - 5,754 133.9 - "
+    "법인세비용차감전계속사업이익 당해실적 - - - - - - - 누계실적 - - - - - - - 당기순이익 당해실적 - - - - - - - "
+    "4. 기타 투자판단과 관련한 중요사항 가. 상기 '1. 연결실적내용'은 K-IFRS 연결 재무제표 기준에 따라 작성된 영업(잠정) 실적임 "
+    "나. 상기 1. 연결실적내용 중, '25.4Q 영업이익 당기실적' 금액인 -1,220억원은 미국 IRA Tax Credit (Inflation Reduction Act) "
+    "첨단 제조 생산 세액공제(Advanced Manufacturing Production Credit) 제도(45X) 등에 따른 2025년 4분기 예상 세액 공제 금액을 포함한 수치이며, "
+    "이를 제외한 2025년 4분기 영업이익은 -4,548억원, 영업이익률은 -7.4%임"
+)
+Q4_2025_RELEASE = (
+    "LG에너지솔루션이 2025년 4분기 잠정 실적을 발표했다. 매출 6조1415억 원, 영업이익 △1220억 원이다. "
+    "미국 IRA(Inflation Reduction Act) 첨단 제조 생산 세액공제(Advanced Manufacturing Production Credit) 제도(45X) 등에 따른 "
+    "Tax Credit은 3328억 원으로 동 금액을 제외한 영업이익은 △4548억 원이다."
+)
 COMP_QUOTE = "고객으로부터 일회성 물량 보상금 반영으로 영업이익은 7,560억 원을, 영업이익률은 7.8%를 기록했습니다."
 
 
@@ -259,6 +277,13 @@ def selftest() -> int:
         check(f"notice {k}", pn[k], want)
     for k, want in (("ampc", 4169), ("op", 7560), ("ex", 3391), ("net", -2969), ("pretax", -2312), ("comp", None)):
         check(f"script {k}", ps[k], want)
+    q4 = parse_results(Q4_2025_NOTICE)
+    for k, want in (("sales", 61415), ("op", -1220), ("ex", -4548), ("ampc", 3328), ("ex_margin", -7.4), ("net", None)):
+        check(f"q4'25 notice {k}", q4[k], want)
+    q4r = parse_results(Q4_2025_RELEASE)
+    for k, want in (("sales", 61415), ("op", -1220), ("ampc", 3328), ("ex", -4548)):
+        check(f"q4'25 release {k}", q4r[k], want)
+    check("△ table row", table_row("영업이익 당해실적 △2,255 4,483", "영업이익"), -2255)
     check("unwrap 수익성", "수익성이" in script, True)
     check("조원", parse_results("AMPC 0.4조원 반영")["ampc"], 4000)
     check("조+억", parse_results("영업이익 1조 2,000억원")["op"], 12000)
