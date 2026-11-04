@@ -862,8 +862,17 @@ def asp_subject_carry(text: str) -> str:
     return "\n".join(out)
 
 
+def item1_text(text: str | None, conf: dict) -> str | None:
+    """Optional item1.exclude_re (t47u, 000660): drop each single sentence matching it before item1 is judged,
+    so a real LTA cut sentence next to an excluded one still counts. Absent key -> text unchanged."""
+    ex = conf.get("exclude_re")
+    if not text or not ex:
+        return text
+    return "\n".join(x for x in ec.sentences(text) if not re.search(ex, x))
+
+
 def earn_judge(ea: dict, text: str | None, now: datetime, china_fn=None) -> dict:
-    i1 = ec.judge_item1(text, ea["item1"])
+    i1 = ec.judge_item1(item1_text(text, ea["item1"]), ea["item1"])
     i2 = ec.judge_item2(text, ea["item2"])
     asp_text = asp_subject_carry(text) if text and ea["item3"].get("asp_subject_carry") else text
     asp = ec.judge_asp(asp_text, float(ea["item3"]["asp_drop_pct"]))
@@ -1639,8 +1648,17 @@ def _selftest_earn_660(cfg, check, at, corp, no_china) -> None:
             "D램은 출하량이 늘었다. 평균판매가격(ASP)은 한 자릿수 초반 상승했다.")
     asp = lambda t, carry=True: ec.judge_asp(asp_subject_carry(t) if carry else t, float(ea["item3"]["asp_drop_pct"]))  # noqa: E731
     check("660 config: asp_subject_carry on, item1~3 settings same as 005930",
-          (ea["item3"].get("asp_subject_carry"), all(ea[k] == load_cfg("005930")["earn_auto"][k] for k in ("item1", "item2")),
+          (ea["item3"].get("asp_subject_carry"), all({a: b for a, b in ea[k].items() if not a.startswith("exclude_")} == load_cfg("005930")["earn_auto"][k] for k in ("item1", "item2")),
            {k: v for k, v in ea["item3"].items() if not k.startswith("asp_subject")} == load_cfg("005930")["earn_auto"]["item3"]), (True, True, True))
+    i1x = ("현재 고객과 내년 HBM 공급 물량과 가격 협의를 마무리했다. 최근 일부 고객의 HBM 하향 조정 움직임은 수요가 공급을 압도하고 있음을 보여주는 대표적인 사례다. "
+           "이에 적층 단수를 낮춰 큐브 수를 늘리려는 전략이다.")
+    i1cut = i1x + " 다만 일부 고객이 2027년 HBM 장기공급계약(LTA) 물량을 축소했다."
+    j1 = lambda t, c=ea["item1"]: ec.judge_item1(item1_text(t, c), c)["status"]  # noqa: E731
+    check("660 item1: real 2026 Q3 '하향 조정 움직임' / 적층 단수 text no longer 경계", (ec.judge_item1(i1x, ea["item1"])["status"], j1(i1x)), (ec.WARN, ec.OK))
+    check("660 item1: LTA cut sentence right next to excluded ones still 경계 (per sentence)", (j1(i1cut), ec.judge_item1(item1_text(i1cut, ea["item1"]), ea["item1"])["evidence"]),
+          (ec.WARN, "다만 일부 고객이 2027년 HBM 장기공급계약(LTA) 물량을 축소했다."))
+    check("660 item1: exclude_re applies through earn_judge", earn_judge(ea, i1x, datetime(2027, 1, 28, 19, tzinfo=KST), china_fn=lambda c, n: {"status": ec.OK, "n": 0, "hits": []})["items"][0]["status"], ec.OK)
+    check("item1_text without exclude_re returns the text unchanged (005930)", item1_text(i1cut, load_cfg("005930")["earn_auto"]["item1"]) is i1cut, True)
     a3, a2 = asp(q3), asp(q2)
     check("660 ASP 2026 Q3 phrasing: D램 +28, 낸드 +25 -> 문제없음", (a3["status"], a3["dram"]["pct"], a3["nand"]["pct"]), (ec.OK, 28.0, 25.0))
     check("660 ASP 2026 Q2 phrasing (subject in an earlier sentence): D램 +30, 낸드 +55", (a2["status"], a2["dram"]["pct"], a2["nand"]["pct"]), (ec.OK, 30.0, 55.0))
