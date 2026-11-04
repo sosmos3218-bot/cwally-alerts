@@ -381,8 +381,7 @@ def caution_check(cfg: dict, state: dict, stamp: str, today: str, rss_fn=None, p
     return alerts, errs
 
 
-def main() -> int:
-    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+def run(mode: str) -> int:
     dry = mode == "dry" or os.environ.get("NKE_DRY") == "1"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     state = load_json(
@@ -643,10 +642,97 @@ def main() -> int:
     if not alerts:
         print("no alert")
 
+    if dry:
+        print("DRY RUN: no publish, state not written")
+        return 0
     state["updated_at"] = now.isoformat()
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
+
+
+def selftest() -> int:
+    """Fixtures only: no network, no publish, no real state (temp STATE_PATH, like xbi selftest)."""
+    import hashlib
+    import tempfile
+
+    real = ROOT / "state" / "nke.json"
+    before = hashlib.sha256(real.read_bytes()).hexdigest() if real.exists() else None
+    g = globals()
+    keep = {k: g[k] for k in ("STATE_PATH", "quote", "find_release", "parse_release", "caution_check", "publish")}
+    sent: list[tuple[str, int]] = []
+    fx: dict = {"q": (38.48, 1.64, None), "rel": None}
+    old_env = os.environ.pop("NKE_DRY", None)
+    try:
+        g["STATE_PATH"] = Path(tempfile.mkdtemp()) / "nke.json"
+        g["STATE_PATH"].write_text(json.dumps({"zone": "above", "last_period": "FY2027Q1"}), encoding="utf-8")
+        g["quote"] = lambda url: fx["q"]
+        g["find_release"] = lambda cfg, last: (fx["rel"], [])
+        g["parse_release"] = lambda text, fy: dict(fx.get("parsed") or {})
+        g["caution_check"] = lambda *a, **k: ([], [])
+        g["publish"] = lambda topic, t, m, p, *a, **k: sent.append((t, p))
+
+        def go(mode: str = "auto") -> list[tuple[str, int]]:
+            sent.clear()
+            assert run(mode) == 0
+            for t, _ in sent:
+                assert t.startswith("[NKE]") and "\u00b7" not in t and "\u2014" not in t, t
+            return list(sent)
+
+        def st() -> dict:
+            return json.loads(g["STATE_PATH"].read_text(encoding="utf-8"))
+
+        assert go() == [] and st()["zone"] == "above"
+        fx["q"] = (31.5, 1.64, None)
+        snap = g["STATE_PATH"].read_text(encoding="utf-8")
+        assert go("dry") == [] and g["STATE_PATH"].read_text(encoding="utf-8") == snap
+        print("ok dry: no publish, state not written")
+        assert go() == [("[NKE] 32달러 이하 | 매수는 보류", 3)] and st()["zone"] == "watch"
+        assert go() == [] or datetime.now(KST).weekday() == 0
+        fx["q"] = (29.5, 1.64, None)
+        assert go() == [("[NKE] 30달러 이하 | 분할 관심", 4)] and st()["zone"] == "buy"
+        fx["q"] = (33.0, 1.64, None)
+        assert go() == [("[NKE] 32달러 위 | 관심 해제", 3)] and st()["zone"] == "above"
+        print("ok price zones above -> watch -> buy -> above")
+        fx["q"] = (33.0, 1.50, None)
+        assert go() == [("[NKE] 배당 축소 | 30달러 지지 약화", 5)] and st()["div_alerted"] is True
+        assert go() == []
+        fx["q"] = (33.0, 1.64, None)
+        assert go() == [("[NKE] 배당 기준 복귀 | 축소 경보 해제", 3)] and st()["div_alerted"] is False
+        print("ok dividend cut once, recovery once")
+        fx["q"] = (None, None, "HTTP 500")
+        r = go()
+        assert r == [("[NKE] 주가 조회 실패 | 조건 미확인", 4)] and go() == [], r
+        print("ok quote fail once per day")
+        fx["q"] = (33.0, 1.64, None)
+        fx["rel"] = {"period": "FY2027Q2", "text": "x", "source": "fixture"}
+        fx["parsed"] = {"china_yoy": -35.0, "gm": 43.0, "eps_hi": 1.2, "fy28_growth": None}
+        assert go() == [("[NKE] 실적 | 30달러 지지 약화", 5)] and st()["last_period"] == "FY2027Q2"
+        fx["rel"]["period"] = "FY2027Q3"
+        fx["parsed"] = {"china_yoy": -5.0, "gm": 44.5, "eps_hi": 1.3, "fy28_growth": True}
+        assert go() == [("[NKE] 실적 | 매수 전환 조건", 4)]
+        fx["rel"]["period"] = "FY2027Q4"
+        fx["parsed"] = {"china_yoy": -15.0, "gm": None, "eps_hi": 1.3, "fy28_growth": None}
+        assert go() == [("[NKE] 실적 | 전환 조건 미충족", 3)]
+        print("ok earnings invalidate / flip / not met")
+    finally:
+        g.update(keep)
+        if old_env is not None:
+            os.environ["NKE_DRY"] = old_env
+    after = hashlib.sha256(real.read_bytes()).hexdigest() if real.exists() else None
+    assert before == after, "real state/nke.json changed"
+    print("SELFTEST OK: fixtures only, no network, no publish, no state")
+    return 0
+
+
+def main() -> int:
+    mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
+    if mode not in {"auto", "dry", "force"}:
+        print(f"unknown mode {mode}")
+        return 2
+    return run(mode)
 
 
 if __name__ == "__main__":
