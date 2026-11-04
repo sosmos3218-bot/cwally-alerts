@@ -486,13 +486,15 @@ def self_test() -> int:
     check("slot stale 46 min", current_slot(cfg, t("2026-10-23 11:46"))[0], None)
     check("after close", current_slot(cfg, t("2026-10-23 15:31"))[0], None)
     check("weekend", current_slot(cfg, t("2026-10-24 11:05"))[0], None)
-    check("after ends", current_slot(cfg, t("2026-11-06 11:05"))[0], None)
+    check("after ends", current_slot(cfg, t("2026-11-20 11:05"))[0], None)
     check("year guard", current_slot(cfg, t("2027-10-22 11:05"))[0], None)
     check("13:00 slot removed", current_slot(cfg, t("2026-10-27 13:05"))[0], None)
     check("10:00 slot removed", current_slot(cfg, t("2026-10-27 10:05"))[0], None)
-    check("last slot 11/5 11:00", current_slot(cfg, t("2026-11-05 11:05"))[0], "2026-11-05 11:00")
+    check("11/5 11:00 still a slot", current_slot(cfg, t("2026-11-05 11:05"))[0], "2026-11-05 11:00")
+    check("last slot 11/19 11:00", current_slot(cfg, t("2026-11-19 11:05"))[0], "2026-11-19 11:00")
     check("next after 10/30 is 11/2 11:00", next_slot(cfg, "2026-10-30 11:00", t("2026-10-30 11:05")), "2026-11-02 11:00")
-    check("no next after 11/5", next_slot(cfg, "2026-11-05 11:00", t("2026-11-05 11:05")), None)
+    check("next after 11/5 is 11/6", next_slot(cfg, "2026-11-05 11:00", t("2026-11-05 11:05")), "2026-11-06 11:00")
+    check("no next after 11/19", next_slot(cfg, "2026-11-19 11:00", t("2026-11-19 11:05")), None)
     m = cfg["muse"]
     block = re.compile(m["block_re"])
     check("spam blocked", bool(block.search("베트맨 토토 앱 설정 변경 전 확인할 적용 시점")), True)
@@ -522,7 +524,7 @@ def self_test() -> int:
     check("carry line same day", carry_line(2, "2026-10-26 11:00", "2026-10-26 13:00"), "  외 2건은 다음 점검에서 이어서 보여 드립니다.")
     check("carry line next trading day", carry_line(2, "2026-10-30 11:00", "2026-11-02 11:00"),
           "  외 2건은 다음 거래일 점검(11/02 11:00 KST)에서 이어서 보여 드립니다.")
-    check("carry line last slot", "마지막" in carry_line(1, "2026-11-05 11:00", None), True)
+    check("carry line last slot", "마지막" in carry_line(1, "2026-11-19 11:00", None), True)
     check("carry line none", carry_line(0, "2026-10-26 11:00", None), "")
     # research_checked must not suppress an unshown hit
     global get_json

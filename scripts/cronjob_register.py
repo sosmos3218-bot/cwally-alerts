@@ -122,7 +122,7 @@ PULSE_TITLE = "cwally mktpulse 11 KST weekdays"
 PULSE_OLD_TITLES = ("cwally mktpulse 10/11/13/15 KST weekdays",)
 PULSE_HOURS = [11]
 PULSE_OLD_HOURS = [10, 11, 13, 15]
-PULSE_EXPIRES = 20261105115959  # configs/mktpulse.json ends_kst 2026-11-05 (last slot 11:00)
+PULSE_EXPIRES = 20261119115959  # configs/mktpulse.json ends_kst 2026-11-19 (last slot 11:00; extended from 11/5, chat 2026-11-04)
 PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TSLASPCX_JOB_ID = 8711128  # created 2026-10-24 12:38 KST by register_tslaspcx
