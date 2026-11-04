@@ -27,6 +27,12 @@
         "armed": true,
         "fired_day": null
       }
+    },
+    "pair_lines": {
+      "tender8000": {
+        "armed": true,
+        "fired_day": null
+      }
     }
   },
   "notice_done": {

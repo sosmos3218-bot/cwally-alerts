@@ -129,7 +129,7 @@ def selftest() -> int:
         r = [{"day": d, "close": float(close)}]
         ev = engine.eval_lines(cfg, st, r, d, at(d))
         if pair:
-            ev += engine.eval_ratio(cfg, st, r, [{"day": d, "close": float(pair)}], d, at(d))
+            ev += [e for e in engine.eval_ratio(cfg, st, r, [{"day": d, "close": float(pair)}], d, at(d)) if e["kind"] != "pair_line"]
         return sorted(e["key"] for e in ev)
     check("2,041 silent", feed(2041), [])
     check("2,040 yield5 fires (le)", feed(2040), ["yield5"])
@@ -177,6 +177,27 @@ def selftest() -> int:
     check("ratio 65.8% no re-arm yet", feed(pref, pc(65.8)), [])
     check("ratio 66.5% re-arms (silent)", (feed(pref, pc(66.5)), st["ratio"]["lines"]["resolve"]["armed"]), ([], True))
     check("ratio 64% resolve again", feed(pref, pc(64.0)), ["resolve"])
+    # pair line: common 0220W0 close > 8,000 (tender price), re-arm at <= 7,800 (2026-11-04)
+    st = copy.deepcopy(seed)
+    days = iter(f"2026-12-{i:02d}" for i in range(1, 31))
+    def pfeed(common: float) -> list:
+        d = next(days)
+        return [e["key"] for e in engine.eval_ratio(cfg, st, rows((d, 2180)), rows((d, common)), d, at(d)) if e["kind"] == "pair_line"]
+    check("pair 7,560 no fire", pfeed(7560), [])
+    check("pair 8,000 exactly no fire", pfeed(8000), [])
+    check("pair 8,050 fires", pfeed(8050), ["tender8000"])
+    check("pair 8,200 no repeat", pfeed(8200), [])
+    check("pair 7,900 not re-armed", (pfeed(7900), st["ratio"]["pair_lines"]["tender8000"]["armed"]), ([], False))
+    check("pair 7,800 re-armed", (pfeed(7800), st["ratio"]["pair_lines"]["tender8000"]["armed"]), ([], True))
+    check("pair 8,100 fires again", pfeed(8100), ["tender8000"])
+    st = copy.deepcopy(seed)
+    s = sends(st, {"rows": rows(("2026-11-04", 2180)), "pair_rows": rows(("2026-11-04", 8050)), "src": "Yahoo 정규장"}, at("2026-11-04"))
+    check("pair line message title", [x[0] for x in s], ["[0220WL] 한화M&S 보통주 공개매수가 8,000원 회복 (0220W0/0220WL)"])
+    keys = ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]
+    pos = [s[0][1].index(k + ":") for k in keys]
+    check("pair line six-item order", pos == sorted(pos), True)
+    check("pair line body", all(k in s[0][1] for k in ("보통주(0220W0) 종가 8,050원", "대비 +0.6", "우선주 종가 2,180원", "괴리율 72.92%", "공개매수가보다 높게")), True)
+    check("pair line no middle dot / em-dash", ("\u00b7" in s[0][1] + s[0][0]) or ("\u2014" in s[0][1] + s[0][0]), False)
     # same-day closes only; hold when either is missing
     st = copy.deepcopy(seed)
     ev = engine.eval_ratio(cfg, st, rows(("2026-10-28", 1900)), rows(("2026-10-27", 7700)), "2026-10-28", at("2026-10-28"))
@@ -275,7 +296,7 @@ def selftest() -> int:
     st = copy.deepcopy(seed)
     st["notice_done"]["vision3q-2026"] = "x"
     s = sends(st, {"rows": rows(("2026-11-04", 2180)), "pair_rows": rows(("2026-11-04", 9000)), "src": "Yahoo 정규장"}, at("2026-11-04"), notice_fn=nf)
-    check("gap > 75% still fires on 11-04 with tender off", [x[0] for x in s], ["[0220WL] 한화M&S 3우B 괴리율 75% 돌파 (0220WL/0220W0)"])
+    check("gap > 75% still fires on 11-04 with tender off", [x[0] for x in s if "괴리율" in x[0]], ["[0220WL] 한화M&S 3우B 괴리율 75% 돌파 (0220WL/0220W0)"])
 
     # ---- notice watch
     old = {"no": "8000", "code": "0220W0", "title": "한화머시너리앤서비스홀딩스 주식회사 현금ㆍ현물배당결정", "datetime": "2026-10-08 17:00"}

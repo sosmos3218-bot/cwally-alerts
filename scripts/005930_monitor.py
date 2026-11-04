@@ -373,8 +373,33 @@ def eval_ratio(cfg: dict, st: dict, rows: list[dict], pair_rows: list[dict], tod
             elif not s.get("armed", True) and ratio_rearm(ln, v, float(ln.get("rearm_pp", cfg.get("ratio_rearm_pp", 1.0)))):
                 s["armed"] = True
                 print(f"{cfg['name']} ratio {ln['key']} re-armed on {r['day']} discount {v:.2f}%")
+        # optional "pair_lines" (0220wl_close, 2026-11-04): pair (common) close vs a fixed level, same session cursor
+        for pl in cfg.get("pair_lines") or []:
+            ps = rs.setdefault("pair_lines", {}).setdefault(pl["key"], {"armed": True, "fired_day": None})
+            if ps.get("armed", True) and pc > pl["level"]:
+                ps.update(armed=False, fired_day=r["day"])
+                events.append({"kind": "pair_line", "key": pl["key"], "line": pl, "day": r["day"], "close": r["close"], "pair": pc, "v": v})
+            elif not ps.get("armed", True) and pc <= pl["rearm_at"]:
+                ps["armed"] = True
+                print(f"{cfg['name']} pair line {pl['key']} re-armed on {r['day']} pair close {pc:.0f}")
         rs.update(last_day=r["day"], last=round(v, 4))
     return events
+
+
+def build_pair_line(cfg: dict, e: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
+    pl = e["line"]
+    dist = (e["pair"] / pl["level"] - 1) * 100
+    msg = "\n".join([
+        head(cfg, stamp),
+        "이게 뭐 알림: " + pl["what"],
+        f"지금 결과/상태: {e['day']} {cfg['pair']['short']} 종가 {fmt(e['pair'])}, 기준 {fmt(pl['level'])} 대비 {dist:+.2f}%. "
+        f"우선주 종가 {fmt(e['close'])}, 괴리율 {e['v']:.2f}%. {pl['meaning']}",
+        "지금 할 일: " + pl["action"],
+        "나중에: " + pl["later"],
+        "익절/줄일 때: " + pl["trim"],
+        "하지 말 것: " + pl["dont"],
+    ] + ([ref] if ref else []))
+    return pl["title_full"], msg, int(pl.get("priority", 4))
 
 
 def find_notice(cfg: dict, codes: list[str], keywords: list[str], since: str, exclude: list[str] | None = None, rows_fn=None) -> dict | None:
@@ -1102,9 +1127,13 @@ def plan_sends(cfg: dict, st: dict, data: dict, fails: list[str], now: datetime,
     if extra:
         sends.append(build_extra(cfg, extra, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["bell"],))
     if cfg.get("ratio_lines"):
-        rev = eval_ratio(cfg, st, data.get("rows") or [], data.get("pair_rows") or [], today, now)
+        rev_all = eval_ratio(cfg, st, data.get("rows") or [], data.get("pair_rows") or [], today, now)
+        rev = [e for e in rev_all if e["kind"] == "ratio"]
         if rev:
             sends.append(build_ratio(cfg, rev, data, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["scales"],))
+        for e in rev_all:
+            if e["kind"] == "pair_line":
+                sends.append(build_pair_line(cfg, e, stamp, ref_text([ref(cfg, data.get("rows"))])) + (["bell"],))
     if cfg.get("notice_events") or cfg.get("notice_watch"):
         fails = list(fails)
         for e in eval_notices(cfg, st, today, fails, notice_fn):
