@@ -5,7 +5,7 @@
   "last_close": 79300.0,
   "last_fail_day": null,
   "lines": {
-    "low68": {
+    "stop": {
       "armed": true,
       "fired_day": null
     },
@@ -14,6 +14,10 @@
       "fired_day": null
     },
     "deal91": {
+      "armed": true,
+      "fired_day": null
+    },
+    "avg106": {
       "armed": true,
       "fired_day": null
     }

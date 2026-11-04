@@ -171,7 +171,7 @@ def verdict(e: dict, op: int) -> str:
     return "상회" if op >= e["op_beat"] else "하회" if op <= e["op_miss"] else "부합"
 
 
-def build_q3(cfg: dict, res: dict, src: str, xc: tuple, stamp: str) -> tuple[str, str, int]:
+def build_q3(cfg: dict, res: dict, src: str, xc: tuple, stamp: str, close: float | None = None) -> tuple[str, str, int]:
     e = cfg["earn_q3"]
     c = e["consensus"]
     v = verdict(e, res["op"])
@@ -183,7 +183,7 @@ def build_q3(cfg: dict, res: dict, src: str, xc: tuple, stamp: str) -> tuple[str
     refs = ", ".join(f"{r['name']} 매출 {r['rev']:,}억, 영업이익 {r['op']:,}억" for r in e["refs"])
     exit_ok = res["rev"] >= e["exit_rev"]
     exit_line = (f"발굴 브리프 제외 기준(매출 +{e['exit_growth_pct']:.0f}%, {e['exit_rev']:,}억): "
-                 + ("통과, 관심 목록 유지 조건 충족." if exit_ok else "미달, 관심 목록 제외 조건에 해당."))
+                 + ("통과, 보유 논리 유지 조건 충족." if exit_ok else "미달, 보유 논리 재점검 조건에 해당."))
     xv, xinfo = xc
     xline = (f"Xcopri 미국 매출 {xv:,}억(회사 보도자료, 2분기 {e['q2_xcopri_eok']:,}억 대비 {pct(xv, e['q2_xcopri_eok']):+.1f}%): {xinfo}"
              if xv else f"Xcopri 미국 매출: 자동 확인 안 됨({xinfo}), 수동 확인. 보도자료 {cfg['sources']['skbp_list']}")
@@ -201,11 +201,11 @@ def build_q3(cfg: dict, res: dict, src: str, xc: tuple, stamp: str) -> tuple[str
         f"지금 결과/상태: 판정 {v}. 영업이익 {res['op']:,}억(컨센서스 {c['op']:,}억 대비 {dop:+.1f}%, 상회 {e['op_beat']:,}억 이상, 하회 {e['op_miss']:,}억 이하), "
         f"매출 {res['rev']:,}억(컨센서스 {c['rev']:,}억 대비 {drev:+.1f}%, +-{band:.0f}% 기준 {rv}), 영업이익률 {opm:.1f}%. "
         f"매출 전년 동기({e['yoy_base_rev']:,}억) 대비 {yoy:+.1f}%. {exit_line} {xline}. 참고 추정: {refs}. 컨센서스 출처: {c['source']}. "
-        f"주의: {e['milestone_note']} {srcl}",
-        f"지금 할 일: {todo} 내일 KRX 시가와 종가 반응을 보세요.",
-        "나중에: 오파칼림 부분 임상 보류 해제, 거래 종결, RISE3 톱라인 공시는 이 알림의 공시 감시로 따로 옵니다. 종가 선 68,000원, 83,400원, 91,600원 감시는 계속합니다.",
-        "익절/줄일 때: 보유 수량/평단 미확인이라 수량 지시는 없습니다. 하회이면서 매출 성장이 +15% 미만이면 관심 목록 제외를 검토하세요.",
-        "하지 말 것: 잠정치를 확정치로 보기, 마일스톤이 들어간 상회만 보고 추격 매수, 신용 및 미수. 투자 권유 아님.",
+        f"주의: {e['milestone_note']} {srcl} {pos_line(cfg, close)}",
+        f"지금 할 일: {todo} 중기 보유 계획이라 실적 하루 반응으로 매매하지 않습니다.",
+        "나중에: 오파칼림 부분 임상 보류 해제, 거래 종결, RISE3 톱라인 공시는 이 알림의 공시 감시로 따로 옵니다. 종가 선 손절선 68,000원, 83,400원, 91,600원, 평단 106,683원 감시는 계속합니다.",
+        "익절/줄일 때: 실적만으로 줄이지 않습니다. 하회이면서 매출 성장이 +15% 미만이면 보유 논리를 재점검하고, 손절선 68,000원 종가 이탈 때 15주(절반) 매도 검토. 최대 비중 3%, 보류 해제 전 물타기 금지.",
+        "하지 말 것: 잠정치를 확정치로 보기, 실적 하루 반응으로 매매, 마일스톤이 들어간 상회만 보고 추격 매수, 보류 해제 전 물타기, 신용 및 미수. 투자 권유 아님.",
     ])
     return title, msg, 3 if v == "부합" else 4
 
@@ -219,13 +219,13 @@ def build_q3_empty(cfg: dict, stamp: str) -> tuple[str, str, int]:
         f"지금 결과/상태: 네이버 공시 피드에 {e['title_key']} 공시가 없고 네이버 분기 재무도 아직 추정치입니다. 공시 목록: {cfg['sources']['notice_page'].format(code=cfg['code'])}",
         f"지금 할 일: DART와 회사 IR 자료에서 3분기 실적을 직접 확인하세요. 비교 기준은 영업이익 {e['consensus']['op']:,}억, 매출 {e['consensus']['rev']:,}억입니다.",
         "나중에: 이 실적 판정은 더 오지 않습니다. 종가 선과 공시 감시는 계속합니다.",
-        "익절/줄일 때: 실적 미확인 상태로 비중을 바꾸지 마세요. 보유 수량/평단 미확인.",
+        "익절/줄일 때: 실적 미확인 상태로 비중을 바꾸지 마세요. 보유 30주, 평단 106,683원, 최대 비중 3%.",
         "하지 말 것: 추정치를 실적으로 읽기, 신용 및 미수. 투자 권유 아님.",
     ])
     return title, msg, 3
 
 
-def earn_step(cfg: dict, st: dict, now: datetime, io: dict, fails: list[str]) -> list[tuple]:
+def earn_step(cfg: dict, st: dict, now: datetime, io: dict, fails: list[str], close: float | None = None) -> list[tuple]:
     e = cfg.get("earn_q3")
     if not e:
         return []
@@ -241,7 +241,7 @@ def earn_step(cfg: dict, st: dict, now: datetime, io: dict, fails: list[str]) ->
         print(n)
     if res:
         xc = xcopri_us(cfg, io)
-        t, m, p = build_q3(cfg, res, src, xc, stamp)
+        t, m, p = build_q3(cfg, res, src, xc, stamp, close if close is not None else st.get("last_close"))
         es.update(sent=stamp, result={"rev": res["rev"], "op": res["op"], "src": src, "verdict": verdict(e, res["op"]), "xcopri": xc[0]})
         return [(t, m, p, ["clipboard"])]
     if f:
@@ -274,14 +274,45 @@ def plan(cfg: dict, st: dict, now: datetime, io: dict) -> list[tuple]:
     data, fails = io["collect"](cfg, now)
     print(f"data src={data.get('src')} rows={(data.get('rows') or [])[-3:]} fails={fails}")
     fails = list(fails)
-    sends = earn_step(cfg, st, now, io, fails)
+    rows = data.get("rows") or []
+    sends = earn_step(cfg, st, now, io, fails, rows[-1]["close"] if rows else None)
     sends = [(t, engine.with_footer(cfg, m), p, tg) for t, m, p, tg in sends]
     for t, m, _, _ in sends:
         engine.clean(t, m)
     kw = {"notice_fn": io.get("notice_rows")}
     if io.get("ref"):
         kw["ref_fn"] = io["ref"]
-    return sends + engine.plan_sends(cfg, st, data, fails, now, **kw)
+    return sends + [hold_adjust(cfg, *x) for x in engine.plan_sends(cfg, st, data, fails, now, **kw)]
+
+
+NO_BUY = ("추가 매수를 검토", "매수 검토", "분할 매수", "추가 매수 조건 점검")
+
+
+def hold_adjust(cfg: dict, t: str, m: str, p: int, tg) -> tuple:
+    """Held position: per-line priority (stop p4, others p3) and a stop message with no buy wording."""
+    by = {ln["title"]: ln for ln in cfg["lines"]}
+    top = next((ln for tt, ln in by.items() if t.endswith("| " + tt)), None)
+    if not top:
+        return t, m, p, tg
+    p = int(top.get("priority", p))
+    if top["key"] == "stop":
+        if cfg.get("lines_trim_stop"):
+            m = m.replace(cfg["lines_trim"], cfg["lines_trim_stop"])
+        for ln in cfg["lines"]:
+            if ln["key"] != "stop" and ln["action"] in m:
+                m = m.replace(ln["action"], "")
+        m = "\n".join(" ".join(x.split()) if x.startswith("지금 할 일:") else x for x in m.split("\n"))
+        bad = [w for w in NO_BUY if w in m or w in t]
+        if bad:
+            raise ValueError(f"buy wording in stop message: {bad}")
+    return t, m, p, tg
+
+
+def pos_line(cfg: dict, close: float | None) -> str:
+    ps = cfg["position"]
+    if close is None:
+        return f"보유 {ps['shares']}주, 평단 {ps['avg']:,}원."
+    return f"보유 {ps['shares']}주, 평단 {ps['avg']:,}원, 최근 종가 {close:,.0f}원 기준 평단 대비 {pct(close, ps['avg']):+.1f}%(평가손익 약 {(close - ps['avg']) * ps['shares'] / 10000:+,.0f}만원)."
 
 
 def install_msg(cfg: dict, data: dict, fails: list[str], stamp: str) -> tuple[str, str]:
@@ -293,14 +324,15 @@ def install_msg(cfg: dict, data: dict, fails: list[str], stamp: str) -> tuple[st
     title = f"{cfg['title_prefix']} 설치 확인 | 매매 신호 아님"
     msg = "\n".join([
         engine.head(cfg, stamp),
-        f"이게 뭐 알림: {cfg['short']} 관찰 알림 설치 확인입니다. KRX 거래일 19:00에 새 조건이 생길 때만 옵니다. 끝: {cfg['ends_kst']} KST.",
+        f"이게 뭐 알림: {cfg['short']} 보유 알림(보유 30주, 평단 106,683원) 갱신 설치 확인입니다. KRX 거래일 19:00에 새 조건이 생길 때만 옵니다. 끝: {cfg['ends_kst']} KST.",
         f"지금 결과/상태: {px}" + (" 조회 실패: " + ", ".join(fails) + "." if fails else "")
         + f" 감시 1) 3분기 실적 {e['start']}~{e['end']} 1번: 영업이익 컨센서스 {e['consensus']['op']:,}억(상회 {e['op_beat']:,} 이상, 하회 {e['op_miss']:,} 이하), "
         f"매출 {e['consensus']['rev']:,}억(+-{e['rev_band_pct']:.0f}%), 전년 동기 {e['yoy_base_rev']:,}억 대비 +15%({e['exit_rev']:,}억) 기준, 일본 마일스톤 포함 경고, Xcopri 미국 매출. "
-        f"2) 공시 감시: {', '.join(w['keywords'])} 제목 새 공시마다 1번(결과 공시 나옴). 3) 종가 선: {lines}, 선마다 1회, 1% 반대로 돌아와야 재무장.",
+        f"2) 공시 감시: {', '.join(w['keywords'])} 제목 새 공시마다 1번(결과 공시 나옴). 3) 종가 선: {lines}, 선마다 1회, 1% 반대로 돌아와야 재무장. "
+        + pos_line(cfg, rows[-1]["close"] if rows else None),
         "지금 할 일: 없음. 참고: 52주 고가 144,100원, 증권사 목표가 120,000~160,000원(평균 약 14.5만~15.2만원).",
         f"나중에: {e['ir_note']}. 결과 판정은 그날 19:00에 옵니다.",
-        "익절/줄일 때: 보유 수량/평단 미확인이라 수량 지시는 없습니다.",
+        "익절/줄일 때: 손절선 68,000원 종가 이탈 때 15주(절반) 매도 검토. 최대 비중 3%(약 600만원), 넘으면 넘은 만큼만 줄이기. 임상 보류 해제 전 물타기 금지.",
         "하지 말 것: 이 설치 확인을 매수나 매도 신호로 읽기. 투자 권유 아님.",
     ])
     msg = engine.with_footer(cfg, msg)
@@ -379,6 +411,8 @@ def main(argv: list[str]) -> int:
         p = engine.state_path(NAME)
         if p.exists() and mode != "install":
             st = engine.load_state(cfg)
+            if "low68" in st["lines"]:  # 2026-11-04 low68 -> stop (held position), keep armed state
+                st["lines"]["stop"] = st["lines"].pop("low68")
             st.setdefault("earn_q3", {"sent": None, "empty_sent": None, "result": None})
     except Exception as exc:  # config or state unreadable: crash guard
         if mode == "dry":
@@ -497,7 +531,7 @@ def selftest() -> int:
 
         # --- seed: config seed 11/2 close 77,500, all lines armed, same close next day silent
         st = seed_state(cfg)
-        check("seed: all three lines armed at 77,500", [st["lines"][k]["armed"] for k in ("low68", "hold83", "deal91")], [True, True, True])
+        check("seed: all four lines armed at 77,500", [st["lines"][k]["armed"] for k in ("stop", "hold83", "deal91", "avg106")], [True, True, True, True])
         fx.update(rows=[{"day": "2026-11-03", "close": 77500.0}], watch=[], notices=[], quarter=qtr("Y"))
         run("auto", at("2026-11-03"), None)
         check("first run from config seed, flat close -> silent", sent, [])
@@ -506,7 +540,8 @@ def selftest() -> int:
         # --- lines: fire, once, re-arm after 1%
         st = seed_state(cfg)
         days = iter(["2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-09", "2026-11-10", "2026-11-11",
-                     "2026-11-12", "2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20"])
+                     "2026-11-12", "2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20",
+                     "2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26", "2026-11-27", "2026-11-30"])
         st["earn_q3"]["empty_sent"] = "x"  # earnings checked separately below
 
         def feed(close):
@@ -516,17 +551,21 @@ def selftest() -> int:
             return [s[1] for s in sent]
 
         t = feed(68000)
-        check("close 68,000 (<=) fires low68 once", t, ["[326030] 종가 68,000원 이하 | 10/15 저점 이탈"])
+        check("close 68,000 (<=) fires low68 once", t, ["[326030] 종가 68,000원 이하 | 손절선 이탈 (10/15 저점)"])
         check("again 67,000 silent (fired once)", feed(67000), [])
         check("68,600 (< 1% above) no re-arm", feed(68600), [])
         check("68,000 still silent", feed(68000), [])
         check("68,700 (> 1% above) re-arms, silent", feed(68700), [])
-        check("67,900 fires low68 again after re-arm", feed(67900), ["[326030] 종가 68,000원 이하 | 10/15 저점 이탈"])
-        check("83,400 (>=) fires hold83", feed(83400), ["[326030] 종가 83,400원 이상 | 보류 전 종가 회복"])
+        check("67,900 fires low68 again after re-arm", feed(67900), ["[326030] 종가 68,000원 이하 | 손절선 이탈 (10/15 저점)"])
+        check("83,400 (>=) fires hold83", feed(83400), ["[326030] 종가 83,400원 이상 | 보류 전 종가 회복, 추가 매수 조건 점검"])
         check("82,600 (< 1% below) no re-arm, 84,000 silent", (feed(82600), feed(84000)), ([], []))
-        check("82,500 (> 1% below) re-arms, 83,500 fires hold83 again", (feed(82500), feed(83500)), ([], ["[326030] 종가 83,400원 이상 | 보류 전 종가 회복"]))
+        check("82,500 (> 1% below) re-arms, 83,500 fires hold83 again", (feed(82500), feed(83500)), ([], ["[326030] 종가 83,400원 이상 | 보류 전 종가 회복, 추가 매수 조건 점검"]))
         check("91,600 fires deal91 (hold83 already fired)", feed(91600), ["[326030] 종가 91,600원 이상 | 라이선스 발표일 종가 회복"])
         check("92,000 silent", feed(92000), [])
+        feed(106683)
+        check("106,683 fires avg106 평단 회복 p3", [(s[1], s[2]) for s in sent], [("[326030] 종가 106,683원 이상 | 평단 회복", 3)])
+        check("105,700 (< 1% below) no re-arm, 107,000 silent", (feed(105700), feed(107000)), ([], []))
+        check("105,600 re-arms, 106,700 fires avg106 again", (feed(105600), feed(106700)), ([], ["[326030] 종가 106,683원 이상 | 평단 회복"]))
         all_text += texts()
         st2 = seed_state(cfg)
         st2["earn_q3"]["empty_sent"] = "x"
@@ -535,8 +574,10 @@ def selftest() -> int:
         check("intraday row (14:00) not judged", sent, [])
         run("auto", at("2026-11-04"), st2)
         msg = sent[0][3] if sent else ""
-        check("line message: watch-only wording, footer, ladder of all lines",
-              ("관찰용 선" in msg, msg.rstrip().endswith("보유 수량/평단 미확인. 관찰용 알림이며 투자 권유 아님."), "보류 전 종가선 83,400원" in msg), (True, True, True))
+        check("stop message: p4, half-sell action, weight rule, footer, ladder, no buy wording",
+              (sent[0][2] if sent else None, "15주(절반) 매도를 검토" in msg, "최대 비중 3%" in msg, "손절선 아래에서는 추가 매수 없음" in msg,
+               msg.rstrip().endswith("보유 30주, 평단 106,683원, 비중 약 1.2%(총자산 약 2억원 자가 신고), 최대 3%. 투자 권유 아님."),
+               "보류 전 종가선 83,400원" in msg, any(w in msg for w in NO_BUY), "미확인" in msg), (4, True, True, True, True, True, False, False))
         run("auto", at("2026-11-04", "22:00"), st2)
         check("same session twice -> silent", sent, [])
 
@@ -553,8 +594,9 @@ def selftest() -> int:
         fx["rows"] = [{"day": "2026-11-04", "close": 67500.0}, {"day": "2026-11-05", "close": 84000.0}]
         run("auto", at("2026-11-05"), st3)
         check("next run catches up 11/4 and 11/5 in order, one message with both hits",
-              (len(sent), "10/15 저점 이탈선(68,000원 이하" in (sent[0][3] if sent else ""), "임상 보류 공시 전 종가선(83,400원 이상" in (sent[0][3] if sent else "")), (1, True, True))
-        check("... both lines recorded (low68 on 11/4, hold83 on 11/5)", (st3["lines"]["low68"]["fired_day"], st3["lines"]["hold83"]["fired_day"]), ("2026-11-04", "2026-11-05"))
+              (len(sent), "손절선(10/15 저점 이탈, 68,000원 이하" in (sent[0][3] if sent else ""), "임상 보류 공시 전 종가선(83,400원 이상" in (sent[0][3] if sent else "")), (1, True, True))
+        check("... combined stop message keeps p4 and drops the hold83 buy-condition action", (sent[0][2] if sent else None, "추가 매수를 검토" in (sent[0][3] if sent else "x")), (4, False))
+        check("... both lines recorded (stop on 11/4, hold83 on 11/5)", (st3["lines"]["stop"]["fired_day"], st3["lines"]["hold83"]["fired_day"]), ("2026-11-04", "2026-11-05"))
 
         # --- notice watch
         st4 = seed_state(cfg)
@@ -615,7 +657,8 @@ def selftest() -> int:
         q3_run("200,000", "90,200")
         check("OP 902 boundary -> 하회 p4", [(s[1].split(" | ")[1][:2], s[2]) for s in sent], [("하회", 4)])
         body = sent[0][3] if sent else ""
-        check("rev 2,000억: 컨센 아래, +15% exit 미달", ("-21.4%, +-3% 기준 아래" in body, "미달, 관심 목록 제외 조건에 해당" in body), (True, True))
+        check("rev 2,000억: 컨센 아래, +15% exit 미달", ("-21.4%, +-3% 기준 아래" in body, "미달, 보유 논리 재점검 조건에 해당" in body), (True, True))
+        check("verdict body: 보유 30주, 평단, % vs avg at the last close", ("보유 30주, 평단 106,683원, 최근 종가 80,000원 기준 평단 대비 -25.0%" in body), True)
         all_text += texts()
         q3_run("270,000", "95,000")
         check("rev +6% is 위 but OP decides (부합)", ("+-3% 기준 위" in (sent[0][3] if sent else ""), sent[0][1].split(" | ")[1][:2] if sent else None), (True, "부합"))
@@ -679,7 +722,7 @@ def selftest() -> int:
         check("after ends_kst 2026-12-31 23:59 -> silent, nothing judged", (sent, st11["last_day"]), ([], "2026-11-02"))
         fx["rows"] = [{"day": "2026-12-30", "close": 60000.0}]
         run("auto", at("2026-12-30"), st11)
-        check("12/30 19:00 (last KRX session) still runs (fires low68)", [s[1].startswith("[326030] 종가 68,000원 이하") for s in sent], [True])
+        check("12/30 19:00 (last KRX session) still runs (fires stop)", [s[1].startswith("[326030] 종가 68,000원 이하") for s in sent], [True])
         fx["rows"] = [{"day": "2026-12-30", "close": 60000.0}]
         run("auto", at("2026-12-31"), st11)
         check("12/31 KRX year-end holiday -> silent", sent, [])
@@ -708,6 +751,7 @@ def selftest() -> int:
               ([(s[0], s[1]) for s in sent], all(k in (sent[0][3] if sent else "") for k in ("3분기 실적", "공시 감시", "종가 선", "81,300원"))),
               ([("cwally-port", "[326030] 설치 확인 | 매매 신호 아님")], True))
         check("install wrote no state", saved, [])
+        check("install body: held position, no 미확인", ("보유 30주, 평단 106,683원" in (sent[0][3] if sent else ""), "미확인" in (sent[0][3] if sent else "")), (True, False))
         all_text += texts()
 
         # --- text rules over every message sent above
