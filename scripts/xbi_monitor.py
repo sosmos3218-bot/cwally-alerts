@@ -212,6 +212,16 @@ def line_msg(cfg: dict, fired: list[dict], vals: dict, stamp: str, nochase: bool
     return title, msg, max(ln["priority"] for ln in fired)
 
 
+FIRED_MAX = 60
+
+
+def record_fired(st: dict, day: str, key: str, priority: int, title: str, now: datetime) -> None:
+    """실제 발송한 신호만 기록 (dry, selftest, 조회 실패 안내는 기록 안 함). [IBB] 겹침 판단이 읽음."""
+    lst = st.get("fired") or []
+    lst.append({"date": day, "key": key, "priority": priority, "title": title, "sent_at": now.isoformat()})
+    st["fired"] = lst[-FIRED_MAX:]
+
+
 def load_state() -> dict:
     try:
         return json.loads(STATE_PATH.read_text(encoding="utf-8"))
@@ -224,6 +234,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     st = load_state()
     out: list[tuple[str, str, int]] = []
+    meta: dict[int, tuple[str, str]] = {}  # out index -> (판정 종가 날짜, 조건 키); ops 안내는 없음
     pend_lines: list[dict] = []
     tnx_res: list | None = None
     tnx_err = ""
@@ -260,6 +271,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             for z in zf:
                 if not (merge and z["key"] == "nochase"):
                     extra = f"{tnx_text(tnx_res)} {fomc_text(cfg, now)}" if z["key"] == "z1" else ""
+                    meta[len(out)] = (day, z["key"])
                     out.append(zone_msg(cfg, z, day, p, stamp, extra))
             pend_lines.extend(fired)
             nochase_merged = merge
@@ -294,13 +306,17 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             st["tnx_last"] = list(rows[-1])
             print(f"10Y last {rows[-5:]}")
     if pend_lines:
+        src = st.get("last_close") if any(ln["series"] == "xbi" for ln in pend_lines) and st.get("last_close") else st.get("tnx_last")
+        meta[len(out)] = ((src or [stamp[:10]])[0], "+".join(ln["key"] for ln in pend_lines))
         out.append(line_msg(cfg, pend_lines, {"xbi": st.get("last_close"), "tnx": st.get("tnx_last")}, stamp, nochase_merged))
     topic, server = resolve_topic("port", cfg.get("ntfy_topic")), resolve_server(cfg.get("ntfy_server"))
-    for t, m, p in out:
+    for i, (t, m, p) in enumerate(out):
         assert "\u00b7" not in t + m and "\u2014" not in t + m, t
         print(f"TITLE: {t}\nPRIORITY: {p} TOPIC: {route_topic(topic, t)}\n{m}\n")
         if not dry:
             publish(topic, t, m, p, ["dna"], server)
+            if i in meta:
+                record_fired(st, meta[i][0], meta[i][1], p, t, now)
     if not out:
         print("no alert")
     if dry:
@@ -418,8 +434,21 @@ def selftest(cfg: dict) -> int:
         m = next(s[2] for s in sent if s[1].startswith("[XBI] 2차"))
         assert "Cook" not in m and "10년물(^TNX)" not in m, m
         print("ok 2차 body unchanged")
+        fh = json.loads(g["STATE_PATH"].read_text(encoding="utf-8")).get("fired") or []
+        sig = [x for x in sent if x[0] == "cwally-port"]
+        assert fh and fh[-1]["title"] == sig[-1][1] and fh[-1]["date"] == "2026-12-14" and fh[-1]["key"] == "z2", fh[-3:]
+        assert not any("조회 실패" in x["title"] for x in fh), fh
+        assert {"z1", "z2"} <= {x["key"] for x in fh} and any(k in x["key"] for x in fh for k in ("hi52", "below3", "tnx_low5", "tnx_hi")), fh
+        print(f"ok fired history in auto sim: {len(fh)} sends recorded, ops notices not recorded, keys {sorted({x['key'] for x in fh})}")
     finally:
         g.update(keep)
+    fst: dict = {}
+    record_fired(fst, "2026-11-04", "z1", 3, "[XBI] t", datetime(2026, 11, 5, 9, tzinfo=KST))
+    assert fst["fired"][0]["date"] == "2026-11-04" and fst["fired"][0]["key"] == "z1"
+    for k in range(70):
+        record_fired(fst, f"d{k}", "hi52+tnx_hi", 3, "[XBI] x", datetime(2026, 11, 5, 9, tzinfo=KST))
+    assert len(fst["fired"]) == FIRED_MAX and fst["fired"][-1]["key"] == "hi52+tnx_hi"
+    print("fired history ok (최근 60건)")
     print("SELFTEST OK: fixtures only, no network, no publish, no state")
     return 0
 

@@ -17,11 +17,10 @@
   },
   "ten_year": {"buy_up_below": 4.6, "wait_above": 5.2, "source_note": "xlu_monitor.ten_series 재사용 (Yahoo ^TNX, 실패 시 FRED DGS10)"},
   "plan_note": "바이오 비중 2억원의 3~5%를 3회 지정가 분할, 해외계좌.",
-  "xbi_overlap_note": "같은 날 XBI 종가가 configs/xbi.json 구간 안이면 IBB 본문에 XBI 상태 한 줄. XBI 알림 동작은 그대로.",
+  "xbi_overlap_note": "같은 판정 종가 날짜에 [XBI] 가 실제로 보낸 신호가 state/xbi.json fired 에 있으면 IBB 본문에 XBI 겹침 한 줄 (제목 요약, 우선순위). 없으면 줄 없음. xbi 가 같은 morning 단계에서 먼저 돌아 state 를 디스크에 씀.",
   "seed": {"date": "2026-11-03", "close": 215.47, "note": "Yahoo 일봉 2026-11-03 종가 $215.47 로 seed (모두 무장), 과거는 판정 안 함"},
   "sources": {
-    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/IBB?interval=1d&range=1mo",
-    "xbi_quote": "https://query1.finance.yahoo.com/v8/finance/chart/XBI?interval=1d&range=1mo"
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/IBB?interval=1d&range=1mo"
   },
   "ends_kst": "2027-02-26 23:59",
   "ends_note": "평일 09:00 IBB 분할 매수 가격선 점검. 2027-02-26 까지, 그 뒤 실행은 아무것도 안 함"

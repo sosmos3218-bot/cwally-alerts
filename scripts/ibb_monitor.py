@@ -8,7 +8,7 @@
   stop  종가 < 200  p4 1번 (관망 전환)
 같은 실행에 여러 개가 켜지면 가장 심한 것 하나만 보내고 나머지는 본문에 적는다.
 본문: 미 10년물 최근 종가(xlu_monitor.ten_series: Yahoo ^TNX, 실패 시 FRED DGS10),
-  < 4.6% 매수 상향 신호, > 5.2% 관망 전환 신호, 그 밖 중립. 같은 날 XBI 가 구간 안이면 한 줄.
+  < 4.6% 매수 상향 신호, > 5.2% 관망 전환 신호, 그 밖 중립. 같은 판정 날짜에 [XBI] 실제 발송(state/xbi.json fired)이 있으면 한 줄.
 조회 실패는 cwally-ops 하루 1번. 2027-02-26 23:59 KST 뒤에는 아무것도 안 함.
 modes: auto | dry (발송 없음, state 안 씀) | selftest (가짜 값, 네트워크 없음)
 """
@@ -31,7 +31,7 @@ KST = timezone(timedelta(hours=9))
 ET = ZoneInfo("America/New_York")
 CFG_PATH = ROOT / "configs" / "ibb.json"
 STATE_PATH = ROOT / "state" / "ibb.json"
-XBI_CFG = ROOT / "configs" / "xbi.json"
+XBI_STATE = ROOT / "state" / "xbi.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
 ENDS_AT = datetime(2027, 2, 26, 23, 59, tzinfo=KST)
 SEVERITY = ["stop", "buy3", "buy2", "buy1"]  # 앞이 더 심함
@@ -97,18 +97,18 @@ def ten_line(ten: tuple[str, float, str] | None, cfg: dict) -> str:
     return f"미 10년물: {d} 종가 {v:.2f}% ({src}) -> {ten_label(v, cfg)} (4.6% 미만 매수 상향, 5.2% 초과 관망 전환)"
 
 
-def xbi_line(day: str, xbi_close: float | None) -> str | None:
-    if xbi_close is None:
+def xbi_line(day: str, xbi_state: dict | None = None) -> str | None:
+    """같은 판정 종가 날짜에 [XBI] 가 실제로 보낸 신호(state/xbi.json fired)가 있을 때만 한 줄."""
+    if xbi_state is None:
+        try:
+            xbi_state = json.loads(XBI_STATE.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            return None
+    hits = [f for f in (xbi_state.get("fired") or []) if f.get("date") == day]
+    if not hits:
         return None
-    try:
-        zs = json.loads(XBI_CFG.read_text(encoding="utf-8"))["zones"]
-    except Exception:  # noqa: BLE001
-        return None
-    for z in zs:
-        if xbi_close >= z["lo"] and (z["hi"] is None or xbi_close <= z["hi"]):
-            nm = "추격 금지선 위" if z["key"] == "nochase" else f"{z['key'][1]}차 분할 매수 구간"
-            return f"XBI 겹침: 같은 날 {day} XBI 종가 ${xbi_close:.2f}, {nm}. [XBI] 알림은 따로 옴, 바이오 합산 비중 안에서 나누기."
-    return None
+    summ = ", ".join(f"{str(f.get('title', '')).replace('[XBI] ', '')[:60]} (p{f.get('priority')})" for f in hits[-2:])
+    return f"XBI 겹침: {summ}, [XBI] 알림은 따로 옴"
 
 
 def message(cfg: dict, fired: list[tuple[str, str, float]], ten, xbi: str | None, stamp: str) -> tuple[str, str, int]:
@@ -198,12 +198,7 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             except Exception as exc:  # noqa: BLE001
                 print(f"10y fail: {exc}")
             top_day = sorted(fired, key=lambda f: SEVERITY.index(f[0]))[0][1]
-            xl = None
-            try:
-                xc = dict(closes(cfg["sources"]["xbi_quote"], now)).get(top_day)
-                xl = xbi_line(top_day, xc)
-            except Exception as exc:  # noqa: BLE001
-                print(f"xbi read fail: {exc}")
+            xl = xbi_line(top_day)  # 같은 morning 단계에서 xbi 가 먼저 쓴 state/xbi.json 을 읽음
             out.append(message(cfg, fired, ten, xl, stamp))
         print(f"last {st['last_date']} pending={len(pending)} fired={[f[0] for f in fired]}")
     elif st.get("quote_fail") != stamp[:10]:
@@ -252,7 +247,11 @@ def selftest(cfg: dict) -> int:
     t, m, _ = fail_msg(stamp, "x")
     check(t, m)
     assert route_topic("cwally-port", t) == "cwally-ops", t
-    assert xbi_line("2026-11-04", 149.0) and xbi_line("2026-11-04", 155.0) is None
+    xs = {"fired": [{"date": "2026-11-04", "key": "z1", "priority": 3, "title": "[XBI] 1차 분할 매수 구간 진입 | 종가 $149.00"}]}
+    ln = xbi_line("2026-11-04", xs)
+    assert ln and ln.startswith("XBI 겹침: 1차 분할 매수") and "(p3)" in ln and ln.endswith("[XBI] 알림은 따로 옴"), ln
+    assert xbi_line("2026-11-03", xs) is None and xbi_line("2026-11-04", {}) is None
+    check(ln, "")
     print("SELFTEST OK: fixtures only, no network, no publish, no state")
     return 0
 
