@@ -4,11 +4,11 @@
       "zone": true,
       "bear": true,
       "low52": true,
-      "rec320": true,
+      "rec320": false,
       "up415": true
     },
-    "last_price": 3.115,
-    "last_at": "2026-11-04 06:00 KST"
+    "last_price": 3.225,
+    "last_at": "2026-11-04 23:30 KST"
   },
   "earn": {},
   "news": {
@@ -46,8 +46,38 @@
     ],
     "seeded": "2026-11-03 23:30 KST"
   },
-  "events_day": "2026-11-03",
+  "events_day": "2026-11-04",
   "fail_day": null,
   "seed_note": "2026-11-03 21:50 KST 합병 시드(발송 없음): 현재가 2.86(11/2 종가). 이미 구간 안이라 zone 해제, 나머지 무장. 뉴스는 첫 실행에서 기준만 기록.",
-  "updated_at": "2026-11-04T06:00:30+09:00"
+  "updated_at": "2026-11-04T23:33:12+09:00",
+  "fy_rule": {
+    "checked": []
+  },
+  "cap8": {
+    "a": {},
+    "jdih": {
+      "seen": [
+        "https://jdih.dephub.go.id/peraturan/detail?data=20zRRtJQYdQFAWOGyapHjI4TtsbQgUP8r4ZHlX7we1bd8hfJHvg6ixj8bJrgl5YMhL4jvn1UqS5jB4p5Wjr3Ae9N8bLPXSKeM3H4ZGRjm0LrU2HbtNnWYNFBsLSQD6YiMSwMLhqSYizZJpZB06TCh0mlmr",
+        "https://jdih.dephub.go.id/peraturan/detail?data=8S3odqsv8Xa3bHSzwFCoMA4aFHx0tOnQm4aBAcFtyacy4UshGG9JeCt4p5UnlPa9Pm8QeYHcacGgv4uPnBe7QOf54eRTNmNtP7d4kqWSrc1k39EDhKRVY6zzB2AT8Hwlo7i0LHzETqYJUpHECWKgFuFC34",
+        "https://jdih.dephub.go.id/peraturan/detail?data=Gbi4xowhT0p7U2RYBXigm048VIgo8PQKf8QmHHceNYK84Et4TRhGGC08m6xn4gSbqB4q6hlGJcO3C8MPngWmmR9V4EtL1BIfatV4KGxq00qMbu5STZysasnA85WYNQcI8crDFqEGkoCoLEkKJddeN9aqbw",
+        "https://jdih.dephub.go.id/peraturan/detail?data=IihlZKTj4JN1ZbqiMkffHU8Qg5CFEhCr748WbBHMo9LB8m4Nd3lSlQu4aCijCB6Vxl4KD6vrvJ8dA4aCi5wv1Osu4Z8yi6YHxED8VyYYAGbHr7G3rBOWPgTvaEX37hi1HFGo9hajD9whzUTGkTldwoy57X",
+        "https://jdih.komdigi.go.id/produk_hukum/view/id/592/t/nota-kesepahaman-antara-komisi-pengawas-persaingan-usaha-kementerian-kominfo",
+        "https://jdih.komdigi.go.id/produk_hukum/view/id/906/t/nota-kesepahaman-antara-komisi-pemilihan-umum-dan-kementerian-komunikasi-dan-informatika"
+      ],
+      "at": "2026-11-04 23:30 KST"
+    },
+    "outlook": {
+      "2026 Revenue": {
+        "lo": 4150.0,
+        "hi": 4200.0,
+        "filed": "2026-11-03"
+      },
+      "2026 Adjusted EBITDA": {
+        "lo": 790.0,
+        "hi": 800.0,
+        "filed": "2026-11-03"
+      }
+    },
+    "last_filed": "2026-11-03"
+  }
 }
