@@ -14,7 +14,7 @@ Three parts, one run, one state file (state/326030.json), topic cwally-port, fai
            YoY vs Q3 2025 1,917억 and the discovery-brief +15% (2,205억) exit line, Japan milestone warning, Xcopri US
            sales best effort from the skbp.com press release (else 수동 확인). Sent once in session days 11/5..11/12;
            nothing by 11/12 -> one 원문 없음 notice (catch-up 3 days). Feed failure -> hold, ops notice.
-Ends 2026-12-31 23:59 KST (configs ends_kst): after that the run is silent and reads nothing.
+Ends 2027-01-31 23:59 KST (configs ends_kst, extended 2026-11-04 for the PGTC sNDA January checks; earn_q3 stays 2026-only by its dates): after that the run is silent and reads nothing.
 Crash guard: any exception in auto/force sends one ops notice and exits 0 so the rest of the 19:00 bundle runs.
 Modes: auto (slot) | force (ignore holiday) | dry (live data, print, no ntfy, no state) | selftest (offline) |
        install (one install-confirmation send to cwally-port, no state).
@@ -282,7 +282,29 @@ def plan(cfg: dict, st: dict, now: datetime, io: dict) -> list[tuple]:
     kw = {"notice_fn": io.get("notice_rows")}
     if io.get("ref"):
         kw["ref_fn"] = io["ref"]
-    return sends + [hold_adjust(cfg, *x) for x in engine.plan_sends(cfg, st, data, fails, now, **kw)]
+    out = [hold_adjust(cfg, *x) for x in engine.plan_sends(cfg, st, data, fails, now, **kw)]
+    return sends + pgtc_note(cfg, st, out, now)
+
+
+def pgtc_note(cfg: dict, st: dict, sends: list[tuple], now: datetime) -> list[tuple]:
+    """Remember an acceptance-like notice (접수, PDUFA, 심사, 거절) seen by the notice watch; the PGTC date checks say so."""
+    words = cfg.get("pgtc_accept_words") or []
+    for t, m, _p, _tg in sends:
+        if not t.startswith(cfg["title_prefix"] + " 결과 공시 나옴"):
+            continue
+        line = next((x for x in m.split("\n") if x.startswith("지금 결과/상태:")), "")
+        head = line.split(". 공시 목록:")[0].replace("지금 결과/상태: ", "").replace(f"새 공시({cfg['code']}): ", "")
+        if any(w in head for w in words):
+            st.setdefault("pgtc_seen", []).append({"day": session_day(now).isoformat(), "title": head[:120]})
+    seen = st.get("pgtc_seen") or []
+    titles = {tc["title"] for tc in cfg.get("time_checks") or []}
+    out = []
+    for t, m, p, tg in sends:
+        if seen and t.split(" | ")[0][len(cfg["title_prefix"]) + 1:] in titles:
+            note = " 공시 감시가 이미 본 관련 공시: " + ", ".join(f"{x['title']}({x['day']})" for x in seen[-3:]) + ". 이미 알림을 받았다면 내용만 다시 확인하세요."
+            m = "\n".join(x + note if x.startswith("지금 결과/상태:") else x for x in m.split("\n"))
+        out.append((t, m, p, tg))
+    return out
 
 
 NO_BUY = ("추가 매수를 검토", "매수 검토", "분할 매수", "추가 매수 조건 점검")
@@ -718,8 +740,8 @@ def selftest() -> int:
         # --- end date, holiday, crash guard, dry, install
         fx.update(notices=[], quarter=qtr("Y"), rows=[{"day": "2026-12-31", "close": 60000.0}])
         st11 = seed_state(cfg)
-        run("auto", at("2027-01-01", "00:30"), st11)
-        check("after ends_kst 2026-12-31 23:59 -> silent, nothing judged", (sent, st11["last_day"]), ([], "2026-11-02"))
+        run("auto", at("2027-02-01", "00:30"), st11)
+        check("after ends_kst 2027-01-31 23:59 -> silent, nothing judged", (sent, st11["last_day"]), ([], "2026-11-02"))
         fx["rows"] = [{"day": "2026-12-30", "close": 60000.0}]
         run("auto", at("2026-12-30"), st11)
         check("12/30 19:00 (last KRX session) still runs (fires stop)", [s[1].startswith("[326030] 종가 68,000원 이하") for s in sent], [True])
@@ -728,7 +750,48 @@ def selftest() -> int:
         check("12/31 KRX year-end holiday -> silent", sent, [])
         import ntfy_util
         gate = lambda when: ntfy_util.ends_skip_reason("cwally-port", "[326030] x", config_name=NAME, config=cfg, now=at(*when.split(" ")))
-        check("publish end gate: 2026-12-31 23:59 open, 2027-01-01 01:00 blocked", (gate("2026-12-31 23:59"), gate("2027-01-01 01:00") is not None), (None, True))
+        check("publish end gate: 2027-01-31 23:59 open, 2027-02-01 01:00 blocked", (gate("2027-01-31 23:59"), gate("2027-02-01 01:00") is not None), (None, True))
+
+        # --- PGTC sNDA date checks (2027-01-05, 2027-01-20), notice keywords, 2027 runs
+        stp = seed_state(cfg)
+        stp["last_day"], stp["last_close"] = "2026-12-30", 79000.0
+        fx.update(notices=[], watch=[], rows=[{"day": "2027-01-04", "close": 79000.0}])
+        run("auto", at("2027-01-04"), stp)
+        check("2027-01-04 runs (no year guard), no date check yet, earn_q3 silent", sent, [])
+        fx["rows"] = [{"day": "2027-01-05", "close": 79000.0}]
+        run("auto", at("2027-01-05"), stp)
+        check("2027-01-05 -> one p3 PGTC 접수 점검", [(s[1], s[2]) for s in sent], [("[326030] SK바이오팜 PGTC sNDA FDA 접수 여부 점검 | 날짜 점검", 3)])
+        body = sent[0][3] if sent else ""
+        check("1/5 body: 60-day ~1/2, Refuse-to-File, PDUFA, Day-74 1/16, position, stop, add rule, no buy advice",
+              all(k in body for k in ("약 2027-01-02", "Refuse-to-File", "PDUFA", "약 2027-01-16", "보유 30주, 평단 106,683원", "68,000원", "83,400원 이상일 때만", "178330274"))
+              and not any(w in body for w in NO_BUY), True)
+        all_text += texts()
+        fx["rows"] = [{"day": "2027-01-06", "close": 79000.0}]
+        run("auto", at("2027-01-06"), stp)
+        check("1/5 check sends once", sent, [])
+        fx["watch"] = [{"no": "190001", "code": "326030", "datetime": "2027-01-08 07:00",
+                        "title": "에스케이바이오팜 주식회사 투자판단 관련 주요경영사항(세노바메이트 PGTC 적응증 미국 FDA 허가 신청 접수)"},
+                       {"no": "190002", "code": "326030", "datetime": "2027-01-08 07:00", "title": "에스케이바이오팜 주식회사 기업설명회(IR) 개최(안내공시)"}]
+        fx["rows"] = [{"day": "2027-01-08", "close": 79000.0}]
+        run("auto", at("2027-01-08"), stp)
+        check("acceptance notice caught once (IR 안내 ignored)", [s[1][:30] for s in sent], ["[326030] 결과 공시 나옴 | 투자판단 관련 주요"])
+        check("acceptance remembered for the Day-74 check", len(stp.get("pgtc_seen") or []), 1)
+        fx["watch"] = []
+        fx["rows"] = [{"day": "2027-01-20", "close": 79000.0}]
+        run("auto", at("2027-01-20"), stp)
+        check("2027-01-20 -> one p3 Day-74 check that mentions the seen notice",
+              ([(s[1], s[2]) for s in sent], "공시 감시가 이미 본 관련 공시" in (sent[0][3] if sent else "")),
+              ([("[326030] SK바이오팜 PGTC sNDA Day-74 확인 (PDUFA 날짜 공개 여부) | 날짜 점검", 3)], True))
+        all_text += texts()
+        stq = seed_state(cfg)
+        stq["last_day"] = "2027-01-15"
+        fx["rows"] = [{"day": "2027-01-29", "close": 79000.0}]
+        run("auto", at("2027-01-29"), stq)
+        check("stale: first run 1/29 -> both date checks skipped (catch-up 5 days)", sent, [])
+        kw = cfg["notice_watch"]["keywords"]
+        old = ["기업설명회(IR) 개최(안내공시)", "단일판매ㆍ공급계약체결", "정기주주총회결과", "감사보고서 제출", "주주명부폐쇄기간 또는 기준일 설정", "단기차입금증가결정",
+               "주식선물 2단계 가격제한폭 확대요건 도달(상승)", "유상증자결정(종속회사의 주요경영사항)", "타법인주식및출자증권취득결정", "지속가능경영보고서 등 관련사항(자율공시)"]
+        check("new keywords hit no routine title from the 2024-2026 feed", [t for t in old if any(k in t for k in kw)], [])
         fx["rows"] = [{"day": "2026-11-06", "close": 60000.0}]
         st12 = seed_state(cfg)
         run("auto", at("2026-11-07"), st12)
