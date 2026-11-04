@@ -1,12 +1,21 @@
 {
-  "price": 97.43,
+  "price": 95.62,
   "band": "HOLD",
   "buy1_sent": false,
   "buy2_sent": false,
   "stretch_sent": false,
   "q3_pre_sent": true,
-  "q3_post_sent": false,
+  "q3_post_sent": true,
   "fail_sent_date": null,
-  "last_kind": "Q3_PRE",
-  "updated_at": "2026-11-03T09:06:08.049934+09:00"
+  "last_kind": "Q3_POST",
+  "updated_at": "2026-11-04T09:06:21.152934+09:00",
+  "last_metrics": {
+    "found": false,
+    "source": "",
+    "fails": 2,
+    "organic": null,
+    "guide_raise": false,
+    "guide_cut": false,
+    "margin_cut": false
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-03T09:08:38.560893+09:00",
+  "updated_at": "2026-11-04T09:08:57.546053+09:00",
   "recover_armed": true,
   "breakdown_armed": true,
   "high_armed": true,
@@ -9,8 +9,8 @@
     "TXG": "2026-11-02",
     "TWST": "2026-11-02"
   },
-  "last_bar_date": "2026-11-02",
-  "last_close": 48.290000915527344,
-  "last_rs_pct": -12.29,
+  "last_bar_date": "2026-11-03",
+  "last_close": 49.5099983215332,
+  "last_rs_pct": -7.03,
   "fetch_fail_date": null
 }

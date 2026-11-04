@@ -1,5 +1,12 @@
 {
-  "final_notified": false,
+  "final_notified": true,
   "missing_notified": false,
-  "verdict": null
+  "verdict": "확인 필요",
+  "why": [
+    "FY27 매출 가이던스 성장률 못 읽음"
+  ],
+  "src": "https://www.sec.gov/Archives/edgar/data/1611052/000161105226000002/pcor-q326x8xkxexx991.htm",
+  "fy27_growth": null,
+  "om_target": "유지",
+  "updated_at": "2026-11-04T09:11:20+09:00"
 }

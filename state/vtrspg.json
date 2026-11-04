@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-03T09:06:41.691327+09:00",
+  "updated_at": "2026-11-04T09:06:54.775806+09:00",
   "yield_band": "mid",
   "vtr_zone": "base",
   "spg_zone": "base",
@@ -8,9 +8,14 @@
     "vtr"
   ],
   "fetch_fail_date": null,
-  "last_yield": 4.894,
-  "last_vtr": 86.72,
-  "last_spg": 221.73,
-  "last_vtr_mult": 22.35,
-  "last_spg_mult": 16.73
+  "last_yield": 4.952,
+  "last_vtr": 87.04,
+  "last_spg": 222.08,
+  "last_vtr_mult": 22.43,
+  "last_spg_mult": 16.76,
+  "spg_entry": {
+    "armed": true,
+    "level": 198.75,
+    "rearm_above": 204.71
+  }
 }

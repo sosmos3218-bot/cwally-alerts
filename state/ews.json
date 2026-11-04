@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-11-03T09:06:40.657431+09:00",
-  "last_price": 30.28,
+  "updated_at": "2026-11-04T09:06:54.115231+09:00",
+  "last_price": 30.22,
   "drawdown_on": true,
   "pe_on": false,
   "mas_last": "2026-07-27",
   "mas_stance": null,
   "fetch_fail_date": null,
-  "last_drawdown_pct": 11.93
+  "last_drawdown_pct": 12.1
 }
