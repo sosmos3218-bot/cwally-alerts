@@ -27,6 +27,7 @@ import html
 import json
 import re
 import sys
+import time
 import traceback
 import urllib.parse
 import urllib.request
@@ -478,6 +479,248 @@ def step_news(cfg: dict, state: dict, items: list[dict], now: datetime, stamp: s
 
 
 
+
+# ---------- FY Adjusted EBITDA rule (SEC EDGAR 6-K earnings exhibit) ----------
+
+NUM = r"\(?-?[\d,]+(?:\.\d+)?\)?"
+
+
+def html_to_text(raw: str) -> str:
+    t = re.sub(r"(?is)<(script|style).*?</\1>", " ", raw)
+    t = re.sub(r"<[^>]+>", " ", t)
+    t = html.unescape(t).replace("\xa0", " ")
+    return re.sub(r"\s+", " ", t)
+
+
+def to_musd(num: str, unit: str) -> float:
+    v = float(num.replace(",", ""))
+    return v * 1000 if unit.lower().startswith("b") else v
+
+
+def fmt_eok(musd: float) -> str:
+    return f"{musd / 100:.2f}".rstrip("0").rstrip(".") + "억 달러"
+
+
+def tnum(x: str) -> float:
+    neg = x.startswith("(") or x.startswith("-")
+    v = float(x.strip("()-").replace(",", ""))
+    return -v if neg else v
+
+
+def is_fy_release(text: str, fy: int) -> bool:
+    """Q4 + full-year <fy> results release only. A Q3 release (nine-month tables) never matches."""
+    head = text[:3000]
+    if re.search(r"Nine months ended", text, re.I):
+        return False
+    if not re.search(rf"Fourth Quarter(?: and (?:Full Year )?| )(?:Full Year )?{fy}|Q4 {fy}", head, re.I):
+        return False
+    return bool(re.search(rf"(?:For the )?year ended December 31, {fy}|full year {fy}|FY ?{fy}", text, re.I))
+
+
+def parse_fy_adj_ebitda(text: str, fy: int) -> tuple[float | None, str]:
+    """Full-year group Adjusted EBITDA in US$ million. (None, reason) when missing or ambiguous.
+
+    Sources, both must agree when both exist:
+      prose : 'Adjusted EBITDA for the full year (2027) was $930 million' and close variants
+              ('Full year 2027 Adjusted EBITDA of $0.93 billion'). Segment/Total Segment lines are excluded.
+      table : the reconciliation row 'Adjusted EBITDA q_cur q_prev fy_cur fy_prev Regional corporate costs',
+              third number, only when the text has 'year ended December 31, <fy>'.
+    """
+    money = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)"
+    pats = [
+        rf"(?<!Segment )Adjusted EBITDA for the full year(?: (?:of )?{fy})? (?:was|of|came in at|reached|totaled|totalled|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
+        rf"(?<!Segment )Adjusted EBITDA for {fy} (?:was|of|came in at|reached|totaled|totalled) {money}",
+        rf"(?:full year|FY) ?{fy}(?:,)? (?<!Segment )Adjusted EBITDA (?:was|of|came in at|reached|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
+    ]
+    prose = set()
+    for pat in pats:
+        for m in re.finditer(pat, text, re.I):
+            pre = text[max(0, m.start() - 8): m.start()]
+            if "segment" in pre.lower():
+                continue
+            prose.add(round(to_musd(m.group(1), m.group(2)), 1))
+    table = set()
+    if is_fy_release(text, fy) and re.search(rf"year ended December 31,(?: \d{{4}})* {fy}", text, re.I):
+        for m in re.finditer(rf"(?<!Segment )Adjusted EBITDA ({NUM}) ({NUM}) ({NUM}) ({NUM}) Regional corporate costs", text):
+            table.add(round(tnum(m.group(3)), 1))
+    if len(prose) > 1:
+        return None, f"본문 숫자가 여러 개 ({', '.join(f'{v:g}' for v in sorted(prose))}백만 달러)"
+    if len(table) > 1:
+        return None, f"표 숫자가 여러 개 ({', '.join(f'{v:g}' for v in sorted(table))}백만 달러)"
+    p = next(iter(prose), None)
+    t = next(iter(table), None)
+    if p is not None and t is not None and abs(p - t) > 1:
+        return None, f"본문 {p:g}백만 달러와 표 {t:g}백만 달러가 다름"
+    if p is None and t is None:
+        return None, "연간 조정 EBITDA 문장과 표를 못 찾음"
+    src = "본문+표 일치" if (p is not None and t is not None) else ("본문" if p is not None else "표")
+    return (p if p is not None else t), src
+
+
+def parse_guidance(text: str, fy: int) -> tuple[float | None, str]:
+    """Next-year Adjusted EBITDA guidance midpoint from the Business Outlook table, US$ million."""
+    money = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)?"
+    found = set()
+    for m in re.finditer(rf"(?<!Segment ){fy} Adjusted EBITDA {money}(?:\s*(?:-|to|\u2013)\s*{money})?", text, re.I):
+        u1, u2 = m.group(2), m.group(4)
+        if not (u1 or u2):
+            continue
+        lo = to_musd(m.group(1), u1 or u2)
+        hi = to_musd(m.group(3), u2 or u1) if m.group(3) else lo
+        found.add((round(lo, 1), round(hi, 1)))
+    if not found:
+        return None, f"{fy} 조정 EBITDA 가이던스 문구를 못 찾음"
+    if len(found) > 1:
+        return None, "가이던스 숫자가 여러 개"
+    lo, hi = next(iter(found))
+    return (lo + hi) / 2, f"{lo:g}~{hi:g}백만 달러"
+
+
+def sec_find_release(cfg: dict, fy: int, since: date, checked: list) -> tuple[str | None, str | None]:
+    """Newest Grab 6-K exhibit (filed on/after since) that is the Q4 / full-year <fy> earnings release."""
+    sc = cfg["fy_rule"]["sec"]
+    ua = {"User-Agent": sc["user_agent"]}
+
+    def get(url: str) -> str:
+        time.sleep(0.3)  # SEC fair-access pacing
+        req = urllib.request.Request(url, headers=ua)
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read().decode("utf-8", "replace")
+
+    sub = json.loads(get(f"https://data.sec.gov/submissions/CIK{int(sc['cik']):010d}.json"))
+    r = sub["filings"]["recent"]
+    found: list[tuple[str, str]] = []
+    n = 0
+    for i in range(len(r["form"])):
+        if r["form"][i] != "6-K" or r["filingDate"][i] < since.isoformat():
+            continue
+        acc = r["accessionNumber"][i]
+        if acc in checked or not re.search(r"earning", r["primaryDocument"][i], re.I):
+            continue  # Grab names its results 6-K cover 'a6-kxearningsrelease*.htm'
+        n += 1
+        if n > 6:
+            break
+        base = f"https://www.sec.gov/Archives/edgar/data/{int(sc['cik'])}/{acc.replace('-', '')}/"
+        items = json.loads(get(base + "index.json"))["directory"]["item"]
+        hit_doc = None
+        for it in items:
+            name = it["name"]
+            if not name.lower().endswith(".htm") or name == r["primaryDocument"][i] or "index" in name:
+                continue
+            text = html_to_text(get(base + name))
+            if is_fy_release(text, fy):
+                hit_doc = (base + name, text)
+                break
+        if hit_doc:
+            found.append(hit_doc)
+        else:
+            checked.append(acc)
+    if not found:
+        return None, None
+    # Grab files the release twice (plain 6-K and the F-3 incorporated one without the outlook); keep the fuller text
+    return max(found, key=lambda x: len(x[1]))
+
+
+def fy_messages(cfg: dict, fy: int, value: float | None, why: str, url: str, stamp: str, price: float | None) -> tuple[str, str, int, str]:
+    th = float(cfg["fy_rule"]["threshold_musd"])
+    px = f" 현재가 {price:.2f}달러." if price else ""
+    thr = f"기준 {fmt_eok(th)}(US${th:g}백만)"
+    if value is None:
+        title = f"[GRAB] FY{fy} 조정 EBITDA 자동 판독 안 됨 | 원문에서 직접 확인"
+        status = f"FY{fy} 실적 보도자료는 찾았지만 연간 조정 EBITDA 를 자동으로 읽지 못했습니다({why}). {thr}.{px} 원문: {url}"
+        todo = f"원문에서 'Adjusted EBITDA for the full year' 숫자를 직접 보고, {fmt_eok(th)} 미만이면 정리 검토, 이상이면 보유 논리 유지."
+        pri, kind = 4, "manual"
+    elif value < th:
+        title = f"[GRAB] FY{fy} 조정 EBITDA {fmt_eok(value)}, 기준 9.3억 달러 미만 | 정리 검토"
+        status = f"FY{fy} 연간 조정 EBITDA {fmt_eok(value)}(US${value:g}백만, {why}). 조건: {thr} 미만. 보유 논리가 깨졌습니다.{px} 원문: {url}"
+        todo = "보유분 정리를 검토하세요. 지정가로 나눠서, 다음 미국 정규장에서."
+        pri, kind = 5, "below"
+    else:
+        title = f"[GRAB] FY{fy} 조정 EBITDA {fmt_eok(value)}, 기준 9.3억 달러 이상 | 보유 논리 유지"
+        status = f"FY{fy} 연간 조정 EBITDA {fmt_eok(value)}(US${value:g}백만, {why}). 조건: {thr} 이상. 보유 논리 유지.{px} 원문: {url}"
+        todo = "보유 유지. 새 연간 가이던스와 인도네시아 규제 영향만 확인."
+        pri, kind = 3, "holds"
+    lines = [
+        f"이게 뭐 알림: 그랩(GRAB) FY{fy} 연간 실적 기준 알림입니다. 연간 조정 EBITDA 가 9.3억 달러 미만이면 정리 검토, 이상이면 보유 논리 유지. 한 번만 옵니다.",
+        f"지금 결과/상태: {status} 시각 {stamp}.",
+        f"지금 할 일: {todo}",
+        "나중에: 이 판정은 다시 보내지 않습니다. 가격선 알림은 그대로 돕니다.",
+        "익절/줄일 때: 정리 검토가 나오면 한 번에 다 팔기보다 나눠서.",
+        "하지 말 것: 분기 숫자를 연간 숫자로 읽기, 원문 확인 없이 주문.",
+    ]
+    return title, append_ends("\n".join(lines), "grab"), pri, kind
+
+
+def guidance_message(cfg: dict, fy: int, mid: float | None, why: str, url: str, stamp: str) -> tuple[str, str, int, str]:
+    th = float(cfg["fy_rule"]["threshold_musd"])
+    if mid is None:
+        title = f"[GRAB] FY{fy} 조정 EBITDA 가이던스 자동 판독 안 됨 | 원문 참고"
+        status = f"가이던스를 자동으로 읽지 못했습니다({why}). 원문: {url}"
+        pri, kind = 3, "manual"
+    elif mid < th:
+        title = f"[GRAB] FY{fy} 조정 EBITDA 가이던스 중간값 {fmt_eok(mid)}, 9.3억 달러 미만 | 조기 경고"
+        status = f"회사 가이던스 {why}, 중간값 {fmt_eok(mid)}. 조건: 중간값이 기준 {fmt_eok(th)} 미만. 원문: {url}"
+        pri, kind = 4, "below"
+    else:
+        title = f"[GRAB] FY{fy} 조정 EBITDA 가이던스 중간값 {fmt_eok(mid)}, 9.3억 달러 이상 | 참고"
+        status = f"회사 가이던스 {why}, 중간값 {fmt_eok(mid)}. 조건: 중간값이 기준 {fmt_eok(th)} 이상. 원문: {url}"
+        pri, kind = 2, "holds"
+    lines = [
+        f"이게 뭐 알림: FY{fy} 연간 조정 EBITDA 9.3억 달러 기준의 조기 경고입니다. 회사가 낸 FY{fy} 가이던스만 봅니다. 한 번만 옵니다.",
+        f"지금 결과/상태: {status} 시각 {stamp}.",
+        f"지금 할 일: {'추가 매수를 멈추고 FY' + str(fy) + ' 실적 전까지 비중을 다시 점검.' if kind == 'below' else '할 일 없음. 최종 판정은 FY' + str(fy) + ' 실적 발표 때.'}",
+        f"나중에: 최종 판정은 FY{fy} 실적(예상 {fy + 1}년 2월)에서 한 번 옵니다.",
+        "익절/줄일 때: 가이던스만으로 전량 정리하지 않습니다.",
+        "하지 말 것: 가이던스를 확정 실적으로 읽기.",
+    ]
+    return title, append_ends("\n".join(lines), "grab"), pri, kind
+
+
+def run_fy_rule(cfg: dict, state: dict, today: date, stamp: str, price: float | None, dry: bool, reported: set) -> list[str]:
+    fr = cfg.get("fy_rule") or {}
+    if not fr.get("enabled"):
+        return []
+    fy = int(fr["fy"])
+    fst = state.setdefault("fy_rule", {})
+    checked = fst.setdefault("checked", [])
+    problems = []
+    jobs = []
+    g = fr.get("guidance") or {}
+    if g.get("enabled") and not fst.get(f"guid{fy}") and today >= date.fromisoformat(g["start_ny"]):
+        jobs.append(("guid", fy - 1, date.fromisoformat(g["start_ny"])))
+    if not fst.get(f"fy{fy}") and today >= date.fromisoformat(fr["start_ny"]):
+        jobs.append(("fy", fy, date.fromisoformat(fr["start_ny"])))
+    for kind, rel_fy, since in jobs:
+        try:
+            url, text = sec_find_release(cfg, rel_fy, since, checked if kind == "fy" else fst.setdefault("checked_g", []))
+        except Exception as exc:  # noqa: BLE001
+            print(f"sec fail: {exc}", file=sys.stderr)
+            problems.append("SEC 6-K")
+            continue
+        qkey = f"Q4 {rel_fy}"
+        if not url:
+            print(f"fy rule {kind}: no Q4 {rel_fy} release on SEC yet")
+            first = fst.get(f"ir_seen_{rel_fy}")
+            if qkey in reported and not first:
+                fst[f"ir_seen_{rel_fy}"] = today.isoformat()
+            elif first and (today - date.fromisoformat(first)).days >= int(fr.get("sec_wait_days", 4)) and kind == "fy":
+                t, b, p, k = fy_messages(cfg, fy, None, "IR 에는 발표됐지만 SEC 6-K 원문을 못 찾음", cfg["earnings"]["ir_rss"], stamp, price)
+                if _emit(t, b, p, resolve_topic("port"), dry, ["warning"]) and not dry:
+                    fst[f"fy{fy}"] = {"result": k, "at": stamp}
+            continue
+        if kind == "fy":
+            val, why = parse_fy_adj_ebitda(text, fy)
+            print(f"fy rule: {url} -> {val} ({why})")
+            t, b, p, k = fy_messages(cfg, fy, val, why, url, stamp, price)
+        else:
+            mid, why = parse_guidance(text, fy)
+            print(f"guidance: {url} -> {mid} ({why})")
+            t, b, p, k = guidance_message(cfg, fy, mid, why, url, stamp)
+        if _emit(t, b, p, resolve_topic("port"), dry, ["bar_chart"]) and not dry:
+            fst[f"{kind}{fy}" if kind == "fy" else f"guid{fy}"] = {"result": k, "value": val if kind == "fy" else mid, "url": url, "at": stamp}
+    return problems
+
+
 # ---------- run ----------
 
 def _emit(title: str, body: str, priority: int, topic: str, dry: bool, tags: list[str]) -> bool:
@@ -496,9 +739,9 @@ def _emit(title: str, body: str, priority: int, topic: str, dry: bool, tags: lis
 
 
 def ops_message(stamp: str, what: str) -> tuple[str, str]:
-    title = "[GRAB] 일정/뉴스 조회 실패 | 매매 신호 아님"
+    title = "[GRAB] 일정/실적/뉴스 조회 실패 | 매매 신호 아님"
     lines = [
-        f"이게 뭐 알림: 그랩 실적 일정 또는 인도네시아 규제 뉴스를 읽지 못했습니다({what}). 매매 신호가 아닙니다.",
+        f"이게 뭐 알림: 그랩 실적 일정, 실적 원문(SEC) 또는 인도네시아 규제 뉴스를 읽지 못했습니다({what}). 매매 신호가 아닙니다.",
         f"지금 결과/상태: 조회 실패. 시각 {stamp}.",
         "지금 할 일: 없음. 가격선 알림은 그대로 돕니다.",
         "나중에: 다음 미국 거래일 첫 실행에서 다시 읽습니다.",
@@ -511,6 +754,7 @@ def ops_message(stamp: str, what: str) -> tuple[str, str]:
 def run_events(cfg: dict, state: dict, now_ny: datetime, stamp: str, price: float | None, dry: bool) -> list[str]:
     problems = []
     titles = fetch_ir_titles(cfg)
+    reported: set = set()
     if titles is None:
         problems.append("IR 보도자료")
     else:
@@ -520,6 +764,7 @@ def run_events(cfg: dict, state: dict, now_ny: datetime, stamp: str, price: floa
             title, body = earnings_message(item, stamp, price)
             if _emit(title, body, int(cfg["earnings"].get("priority", 3)), resolve_topic("port"), dry, ["calendar"]) and not dry:
                 mark_earn(state["earn"], item, cfg["earnings"].get("remind_days", [7, 1]))
+    problems += run_fy_rule(cfg, state, now_ny.date(), stamp, price, dry, reported)
     try:
         items = fetch_news(cfg)
         print(f"news items={len(items)}")
@@ -747,6 +992,59 @@ def selftest() -> int:
     t, _ = ops_message(stamp, "x")
     check("ops title", t.startswith("[GRAB] ") and "조회 실패" in t, True)
 
+    # FY Adjusted EBITDA rule: sample press-release text (above, below, billion, conflict, unparseable, real 2025 excerpt)
+    tbl = "Unaudited Summary Three months ended December 31, For the year ended December 31, 2027 2026 2027 2026 "
+    above = ("Grab Reports Fourth Quarter and 2027 Results. Segment Adjusted EBITDA for the full year was $1,400 million. "
+             "Adjusted EBITDA for the full year was $1,050 million, an increase of $290 million compared to $760 million in 2026. "
+             + tbl + "Legal, tax and regulatory settlement provisions (3) 5 (10) 12 Adjusted EBITDA 290 220 1,050 760 Regional corporate costs 99 96 380 368")
+    below = ("Grab Reports Fourth Quarter and 2027 Results. Adjusted EBITDA for the full year was $0.85 billion. "
+             "Adjusted EBITDA was $210 million for the quarter. "
+             + tbl + "Adjusted EBITDA 210 220 850 760 Regional corporate costs 99 96 380 368")
+    edge = "Grab Reports Fourth Quarter and 2027 Results. Full year 2027 Adjusted EBITDA of $930 million. " + tbl + "Adjusted EBITDA 240 220 930 760 Regional corporate costs 1 1 1 1"
+    conflict = "Grab Reports Fourth Quarter and 2027 Results. Adjusted EBITDA for the full year was $900 million. " + tbl + "Adjusted EBITDA 240 220 950 760 Regional corporate costs 1 1 1 1"
+    unparse = "Grab Reports Fourth Quarter and 2027 Results. Adjusted EBITDA was $250 million for the quarter. Mobility segment adjusted EBITDA for the full year was $1,000 million."
+    tableonly = "Grab Reports Fourth Quarter and 2027 Results. " + tbl + "Adjusted EBITDA 240 220 1,020 760 Regional corporate costs 1 1 1 1"
+    check("fy release detect", is_fy_release(above, 2027), True)
+    check("fy release not other year", is_fy_release(above.replace("2027", "2029"), 2027), False)
+    q3 = ("Grab Reports Third Quarter 2026 Results. Nine months ended September 30, For the year ended December 31, 2025 "
+          "Adjusted EBITDA 160 120 560 352 Regional corporate costs 1 1 1 1")
+    check("q3 release rejected", is_fy_release(q3, 2025), False)
+    check("q3 table ignored", parse_fy_adj_ebitda(q3, 2025)[0], None)
+    check("fy above", parse_fy_adj_ebitda(above, 2027), (1050.0, "본문+표 일치"))
+    check("fy below billion", parse_fy_adj_ebitda(below, 2027), (850.0, "본문+표 일치"))
+    check("fy edge 930", parse_fy_adj_ebitda(edge, 2027)[0], 930.0)
+    check("fy table only", parse_fy_adj_ebitda(tableonly, 2027), (1020.0, "표"))
+    check("fy conflict -> None", parse_fy_adj_ebitda(conflict, 2027)[0], None)
+    check("fy unparseable -> None", parse_fy_adj_ebitda(unparse, 2027)[0], None)
+    real = ("Grab Reports Fourth Quarter and 2025 Results with First Full Year Net Profit. Adjusted EBITDA for the full year was $500 million, an increase of $187 million compared to $313 million in 2024. "
+            "Business Outlook Financial Measure Guidance FY 2026 Outlook 2026 Group Revenue $4.04 billion - $4.10 billion 20% - 22% growth YoY "
+            "2026 Adjusted EBITDA $700 million - $720 million 40% - 44% growth YoY Financial Measure Guidance 3 Year Outlook 2025 - 2028 "
+            "2028 Adjusted EBITDA $1.5 billion For the year ended December 31, 2025 2024 2025 2024 Legal, tax and regulatory settlement provisions "
+            "(15) 43 (3) 48 Adjusted EBITDA 148 97 500 313 Regional corporate costs 96 87 368 350 Total Segment Adjusted EBITDA 244 184 868 663")
+    check("real 2025 FY", parse_fy_adj_ebitda(real, 2025), (500.0, "본문+표 일치"))
+    check("real 2026 guidance mid", parse_guidance(real, 2026)[0], 710.0)
+    check("guidance 2028 single billion", parse_guidance(real, 2028)[0], 1500.0)
+    check("guidance missing", parse_guidance(real, 2027)[0], None)
+    check("guidance below", parse_guidance("2027 Adjusted EBITDA $880 million - $920 million", 2027)[0], 900.0)
+    check("guidance billion range", parse_guidance("2027 Adjusted EBITDA $0.95 billion - $1.0 billion", 2027)[0], 975.0)
+    check("fmt eok", (fmt_eok(930), fmt_eok(850), fmt_eok(1050)), ("9.3억 달러", "8.5억 달러", "10.5억 달러"))
+    for val, why, want_pri, want_kind in ((850.0, "본문+표 일치", 5, "below"), (930.0, "본문", 3, "holds"), (1050.0, "표", 3, "holds"), (None, "숫자가 여러 개", 4, "manual")):
+        t, b, pri, kind = fy_messages(cfg, 2027, val, why, "https://www.sec.gov/x", stamp, 3.1)
+        check(f"fy msg {want_kind} kind/pri", (kind, pri), (want_kind, want_pri))
+        check(f"fy msg {want_kind} GRAB", t.startswith("[GRAB] "), True)
+        check(f"fy msg {want_kind} threshold", "9.3억 달러" in t + b, True)
+        check(f"fy msg {want_kind} link", "https://www.sec.gov/x" in b, True)
+        check(f"fy msg {want_kind} no forbidden", any(ch in t + b for ch in FORBIDDEN), False)
+        check(f"fy msg {want_kind} stays on port", route_ok(t), True)
+        if val is not None:
+            check(f"fy msg {want_kind} figure", fmt_eok(val) in t, True)
+    t, b, pri, kind = fy_messages(cfg, 2027, 850.0, "x", "u", stamp, None)
+    check("below says 정리 검토", "정리 검토" in t, True)
+    for mid, want in ((900.0, "below"), (975.0, "holds"), (None, "manual")):
+        t, b, pri, kind = guidance_message(cfg, 2027, mid, "x", "u", stamp)
+        check(f"guid {want}", kind, want)
+        check(f"guid {want} clean", any(ch in t + b for ch in FORBIDDEN) or not t.startswith("[GRAB] ") or not route_ok(t), False)
+
     def walk(obj) -> None:
         nonlocal fails
         if isinstance(obj, str) and any(ch in obj for ch in FORBIDDEN):
@@ -771,6 +1069,11 @@ def selftest() -> int:
 
     print(f"selftest fails={fails}")
     return 1 if fails else 0
+
+
+def route_ok(title: str) -> bool:
+    from ntfy_util import route_topic
+    return route_topic("cwally-port", title) == "cwally-port"
 
 
 def load_state_blank() -> dict:
