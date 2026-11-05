@@ -508,13 +508,24 @@ def tnum(x: str) -> float:
 
 
 def is_fy_release(text: str, fy: int) -> bool:
-    """Q4 + full-year <fy> results release only. A Q3 release (nine-month tables) never matches."""
-    head = text[:3000]
+    """Q4 + full-year <fy> results release only. A Q3 release (nine-month tables) never matches.
+
+    The headline/title in the first 3000 characters must name this year's results
+    (e.g. 'Fourth Quarter and Full Year 2025', 'Fourth Quarter and 2025 Results').
+    A comparison-column 'Q4 {fy}' or a body 'year ended December 31, {fy}' alone is not enough.
+    """
     if re.search(r"Nine months ended", text, re.I):
         return False
-    if not re.search(rf"Fourth Quarter(?: and (?:Full Year )?| )(?:Full Year )?{fy}|Q4 {fy}", head, re.I):
+    head = text[:3000]
+    if not re.search(
+        rf"Fourth Quarter and (?:Full Year )?{fy}\b|Full Year {fy} Results|Q4 and Full Year {fy}\b",
+        head, re.I,
+    ):
         return False
-    return bool(re.search(rf"(?:For the )?year ended December 31, {fy}|full year {fy}|FY ?{fy}", text, re.I))
+    return bool(re.search(
+        rf"(?:For the )?year ended December 31, {fy}|full year {fy}|FY ?{fy}\b",
+        text, re.I,
+    ))
 
 
 def parse_fy_adj_ebitda(text: str, fy: int) -> tuple[float | None, str]:
@@ -528,9 +539,9 @@ def parse_fy_adj_ebitda(text: str, fy: int) -> tuple[float | None, str]:
     """
     money = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)"
     pats = [
-        rf"(?<!Segment )Adjusted EBITDA for the full year(?: (?:of )?{fy})? (?:was|of|came in at|reached|totaled|totalled|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
-        rf"(?<!Segment )Adjusted EBITDA for {fy} (?:was|of|came in at|reached|totaled|totalled) {money}",
-        rf"(?:full year|FY) ?{fy}(?:,)? (?<!Segment )Adjusted EBITDA (?:was|of|came in at|reached|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
+        rf"(?<!Segment )(?:Group )?Adjusted EBITDA for the full year(?: (?:of )?{fy})? (?:was(?: positive at)?|of|came in at|reached|totaled|totalled|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
+        rf"(?<!Segment )(?:Group )?Adjusted EBITDA for {fy} (?:was(?: positive at)?|of|came in at|reached|totaled|totalled) {money}",
+        rf"(?:full year|FY) ?{fy}(?:,)? (?<!Segment )(?:Group )?Adjusted EBITDA (?:was(?: positive at)?|of|came in at|reached|grew [^$]{{0,80}}?to|increased [^$]{{0,80}}?to)(?: a record(?: of)?)? {money}",
     ]
     prose = set()
     for pat in pats:
@@ -558,7 +569,11 @@ def parse_fy_adj_ebitda(text: str, fy: int) -> tuple[float | None, str]:
 
 
 def parse_guidance(text: str, fy: int) -> tuple[float | None, str]:
-    """Next-year Adjusted EBITDA guidance midpoint from the Business Outlook table, US$ million."""
+    """Next-year Adjusted EBITDA guidance midpoint from the Business Outlook table, US$ million.
+
+    Prefer an explicit '{fy} Adjusted EBITDA $X - $Y'. Fallback (FY2024-style): a '{fy}/FY {fy} Revenue'
+    line followed by a yearless 'Adjusted EBITDA $X - $Y' in the same outlook block.
+    """
     money = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)?"
     found = set()
     for m in re.finditer(rf"(?<!Segment ){fy} Adjusted EBITDA {money}(?:\s*(?:-|to|\u2013)\s*{money})?", text, re.I):
@@ -569,6 +584,18 @@ def parse_guidance(text: str, fy: int) -> tuple[float | None, str]:
         hi = to_musd(m.group(3), u2 or u1) if m.group(3) else lo
         found.add((round(lo, 1), round(hi, 1)))
     if not found:
+        for m in re.finditer(
+            rf"(?:FY\s*)?{fy}\s+(?:Group\s+)?Revenue {money}(?:\s*(?:-|to|\u2013)\s*{money})?"
+            rf"[^$]{{0,160}}?(?<!Segment )(?<!\d{{4}} )Adjusted EBITDA {money}(?:\s*(?:-|to|\u2013)\s*{money})?",
+            text, re.I,
+        ):
+            u1, u2 = m.group(6), m.group(8)
+            if not (u1 or u2):
+                continue
+            lo = to_musd(m.group(5), u1 or u2)
+            hi = to_musd(m.group(7), u2 or u1) if m.group(7) else lo
+            found.add((round(lo, 1), round(hi, 1)))
+    if not found:
         return None, f"{fy} 조정 EBITDA 가이던스 문구를 못 찾음"
     if len(found) > 1:
         return None, "가이던스 숫자가 여러 개"
@@ -576,8 +603,37 @@ def parse_guidance(text: str, fy: int) -> tuple[float | None, str]:
     return (lo + hi) / 2, f"{lo:g}~{hi:g}백만 달러"
 
 
+def _sec_htm_candidates(items: list, primary: str) -> list[str]:
+    """Prefer earnings/press/exhibit99 HTM exhibits; still include other HTM (covers last)."""
+    names = []
+    for it in items:
+        name = it["name"]
+        low = name.lower()
+        if not low.endswith((".htm", ".html")) or "index" in low:
+            continue
+        names.append(name)
+
+    def rank(n: str) -> tuple:
+        low = n.lower()
+        prefer = bool(re.search(r"earning|press.?releas|ex99|exhibit99", low))
+        return (0 if prefer else 1, 0 if n != primary else 1, low)
+
+    return sorted(names, key=rank)
+
+
+def _sec_filing_prefer(primary: str) -> bool:
+    """True when the 6-K cover name itself looks like an earnings/results filing."""
+    return bool(re.search(r"earning|press.?releas|ex99|exhibit99|grab-\d{8}x6k", primary, re.I))
+
+
 def sec_find_release(cfg: dict, fy: int, since: date, checked: list) -> tuple[str | None, str | None]:
-    """Newest Grab 6-K exhibit (filed on/after since) that is the Q4 / full-year <fy> earnings release."""
+    """Newest Grab 6-K exhibit (filed on/after since) that is the Q4 / full-year <fy> earnings release.
+
+    Does not require 'earning' in the 6-K primaryDocument name (FY2024 used grab-YYYYMMDDx6k.htm).
+    Scans up to 12 6-Ks, prioritizing Jan-Apr of fy+1 (typical Q4 filing season) and
+    earnings-like covers, then other 6-Ks. For each, tries HTM exhibits preferring
+    earning/press/exhibit99 names, and decides with is_fy_release.
+    """
     sc = cfg["fy_rule"]["sec"]
     ua = {"User-Agent": sc["user_agent"]}
 
@@ -589,25 +645,32 @@ def sec_find_release(cfg: dict, fy: int, since: date, checked: list) -> tuple[st
 
     sub = json.loads(get(f"https://data.sec.gov/submissions/CIK{int(sc['cik']):010d}.json"))
     r = sub["filings"]["recent"]
-    found: list[tuple[str, str]] = []
-    n = 0
+    season_lo, season_hi = f"{fy + 1}-01-01", f"{fy + 1}-04-15"
+    idxs = []
     for i in range(len(r["form"])):
         if r["form"][i] != "6-K" or r["filingDate"][i] < since.isoformat():
             continue
-        acc = r["accessionNumber"][i]
-        if acc in checked or not re.search(r"earning", r["primaryDocument"][i], re.I):
-            continue  # Grab names its results 6-K cover 'a6-kxearningsrelease*.htm'
-        n += 1
-        if n > 6:
+        if r["accessionNumber"][i] in checked:
+            continue
+        idxs.append(i)
+    idxs.sort(key=lambda i: (
+        0 if season_lo <= r["filingDate"][i] <= season_hi else 1,
+        0 if _sec_filing_prefer(r["primaryDocument"][i]) else 1,
+        r["filingDate"][i],
+    ))
+    found: list[tuple[str, str]] = []
+    for n, i in enumerate(idxs):
+        if n >= 12:
             break
+        acc = r["accessionNumber"][i]
+        primary = r["primaryDocument"][i]
         base = f"https://www.sec.gov/Archives/edgar/data/{int(sc['cik'])}/{acc.replace('-', '')}/"
         items = json.loads(get(base + "index.json"))["directory"]["item"]
         hit_doc = None
-        for it in items:
-            name = it["name"]
-            if not name.lower().endswith(".htm") or name == r["primaryDocument"][i] or "index" in name:
-                continue
+        for name in _sec_htm_candidates(items, primary):
             text = html_to_text(get(base + name))
+            if len(text) < 2000:
+                continue
             if is_fy_release(text, fy):
                 hit_doc = (base + name, text)
                 break
@@ -617,7 +680,6 @@ def sec_find_release(cfg: dict, fy: int, since: date, checked: list) -> tuple[st
             checked.append(acc)
     if not found:
         return None, None
-    # Grab files the release twice (plain 6-K and the F-3 incorporated one without the outlook); keep the fuller text
     return max(found, key=lambda x: len(x[1]))
 
 
@@ -763,7 +825,11 @@ OUTLOOK_M = r"\$\s?([\d,]+(?:\.\d+)?)\s*(million|billion)?"
 
 
 def parse_outlook(text: str) -> dict:
-    """Business Outlook rows -> {'2026 Adjusted EBITDA': {'lo','hi','mid','prev': [lo, hi] or None}} in US$ million."""
+    """Business Outlook rows -> {'2026 Adjusted EBITDA': {'lo','hi','mid','prev': [lo, hi] or None}} in US$ million.
+
+    Explicit-year rows first. Fallback: '{y} Revenue $..' followed by yearless 'Adjusted EBITDA $..'
+    (FY2024-style), only when that year's Adjusted EBITDA is not already present.
+    """
     i = text.find("Business Outlook")
     if i < 0:
         return {}
@@ -786,6 +852,20 @@ def parse_outlook(text: str) -> dict:
             continue
         metric = "Revenue" if "Revenue" in m.group(2) else "Adjusted EBITDA"
         out[f"{m.group(1)} {metric}"] = {"lo": cur[0], "hi": cur[1], "mid": sum(cur) / 2, "prev": pair(7)}
+    for m in re.finditer(
+        rf"(?:FY\s*)?(20\d\d)\s+(?:Group\s+)?Revenue {rng}[^$]{{0,160}}?(?<!Segment )(?<!\d{{4}} )Adjusted EBITDA {rng}",
+        sect, re.I,
+    ):
+        key = f"{m.group(1)} Adjusted EBITDA"
+        if key in out:
+            continue
+        u1 = m.group(7) or m.group(9)
+        u2 = m.group(9) or m.group(7)
+        if not u1:
+            continue
+        lo = round(to_musd(m.group(6), u1), 1)
+        hi = round(to_musd(m.group(8), u2), 1)
+        out[key] = {"lo": lo, "hi": hi, "mid": (lo + hi) / 2, "prev": None}
     return out
 
 
@@ -817,20 +897,23 @@ def sec_earnings_releases(cfg: dict, after: str | None) -> list[tuple[str, str, 
     n = 0
     for i in range(len(r["form"])):
         fd = r["filingDate"][i]
-        if r["form"][i] != "6-K" or not re.search(r"earning", r["primaryDocument"][i], re.I):
+        if r["form"][i] != "6-K":
             continue
         if after and fd <= after:
             continue
         n += 1
-        if n > 4 or (after is None and best and fd not in best):
+        if n > 8 or (after is None and best and fd not in best):
             break  # seed run: newest release only
+        primary = r["primaryDocument"][i]
         base = f"https://www.sec.gov/Archives/edgar/data/{int(sc['cik'])}/{r['accessionNumber'][i].replace('-', '')}/"
-        for it in json.loads(get(base + "index.json"))["directory"]["item"]:
-            name = it["name"]
-            if name.lower().endswith(".htm") and name != r["primaryDocument"][i] and "index" not in name:
-                text = html_to_text(get(base + name))
-                if len(text) > len(best.get(fd, ("", ""))[1]):
-                    best[fd] = (base + name, text)
+        for name in _sec_htm_candidates(json.loads(get(base + "index.json"))["directory"]["item"], primary):
+            text = html_to_text(get(base + name))
+            if len(text) < 2000:
+                continue
+            if "Business Outlook" not in text and "Adjusted EBITDA" not in text:
+                continue
+            if len(text) > len(best.get(fd, ("", ""))[1]):
+                best[fd] = (base + name, text)
     return [(fd, u, t) for fd, (u, t) in sorted(best.items())]
 
 
@@ -1458,6 +1541,18 @@ def selftest() -> int:
     check("guidance missing", parse_guidance(real, 2027)[0], None)
     check("guidance below", parse_guidance("2027 Adjusted EBITDA $880 million - $920 million", 2027)[0], 900.0)
     check("guidance billion range", parse_guidance("2027 Adjusted EBITDA $0.95 billion - $1.0 billion", 2027)[0], 975.0)
+    check("prior-year headline alone fails", is_fy_release(
+        "Grab Reports Fourth Quarter and 2025 Results. Q4 2024 Revenue grew. year ended December 31, 2024 Adjusted EBITDA 97 35 313 (22) Regional corporate costs",
+        2024), False)
+    check("group positive-at prose", parse_fy_adj_ebitda(
+        "Grab Reports Fourth Quarter and Full Year 2024 Results. Group Adjusted EBITDA for the full year was positive at $313 million. "
+        "For the year ended December 31, 2024 2023 2024 2023 Adjusted EBITDA 97 35 313 (22) Regional corporate costs 87 80 350 340",
+        2024), (313.0, "본문+표 일치"))
+    check("yearless ebitda after revenue", parse_guidance(
+        "Business Outlook FY 2025 Revenue $3.33 billion to $3.40 billion 19% growth Adjusted EBITDA $440 million - $470 million Segment Financial",
+        2025)[0], 455.0)
+    ol24s = parse_outlook("Business Outlook Financial Measure Guidance FY 2025 Revenue $3.33 billion to $3.40 billion 19% - 22% growth YoY (constant currency) Adjusted EBITDA $440 million - $470 million 41% - 50% growth YoY Segment Financial")
+    check("outlook yearless ebitda", (ol24s.get("2025 Revenue", {}).get("lo"), ol24s.get("2025 Adjusted EBITDA", {}).get("lo"), ol24s.get("2025 Adjusted EBITDA", {}).get("hi")), (3330.0, 440.0, 470.0))
     check("fmt eok", (fmt_eok(930), fmt_eok(850), fmt_eok(1050)), ("9.3억 달러", "8.5억 달러", "10.5억 달러"))
     for val, why, want_pri, want_kind in ((850.0, "본문+표 일치", 5, "below"), (930.0, "본문", 3, "holds"), (1050.0, "표", 3, "holds"), (None, "숫자가 여러 개", 4, "manual")):
         t, b, pri, kind = fy_messages(cfg, 2027, val, why, "https://www.sec.gov/x", stamp, 3.1)
