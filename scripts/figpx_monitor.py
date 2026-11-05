@@ -94,7 +94,7 @@ def step(levels: list[dict], armed: dict | None, close: float) -> tuple[dict, li
     close = round(float(close), 4)
     if armed is None:
         return {lv["key"]: not hit(lv, close) for lv in levels}, []
-    new, fired = dict(armed), []
+    new, fired = {lv["key"]: bool(armed.get(lv["key"], True)) for lv in levels}, []  # retuned/renamed keys start armed
     for lv in levels:
         k = lv["key"]
         inside = hit(lv, close)
@@ -554,6 +554,7 @@ def selftest() -> int:
     check("init 24.64", step(L, None, 24.64), (A, []))
     check("init 21 no send", step(L, None, 21.0), ({"buy22": False, "bear171": True, "base291": True}, []))
     check("init 30 no send", step(L, None, 30.0)[1], [])
+    check("old keys migrate (11/04 state, 21.5)", step(L, {"buy22": True, "bear166": True, "base284": True}, 21.5), ({"buy22": False, "bear171": True, "base291": True}, ["buy22"]))
     check("22.01 nothing", step(L, A, 22.01)[1], [])
     check("22.00 buy (<=)", step(L, A, 22.0)[1], ["buy22"])
     check("17.10 gap buy+bear", step(L, A, 17.1)[1], ["buy22", "bear171"])
