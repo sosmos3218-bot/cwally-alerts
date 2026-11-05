@@ -1,0 +1,19 @@
+{
+  "updated_at": "2026-11-05T16:28:38+09:00",
+  "seeded": true,
+  "high_armed": true,
+  "low_armed": true,
+  "price_last_date": "2026-11-05",
+  "last_summary_date": "2026-11-05",
+  "seen": [
+    "kind:20251114000548",
+    "kind:20251114001297",
+    "kind:20251124000148",
+    "kind:20251215000349",
+    "kind:20260304000728",
+    "kind:20260515000649"
+  ],
+  "fail": {},
+  "init_note": "2026-11-05 시드: 종가 6,590원, 공시 소스 KIND, seen 6건. high_armed=True, low_armed=True. 소급 발송 없음.",
+  "seed_note": "2026-11-05 시드: 종가 6,590원, 공시 소스 KIND, seen 6건. high_armed=True, low_armed=True. 소급 발송 없음."
+}
