@@ -9,6 +9,8 @@
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "2026-11-05 ~ 2027-01-11: 주 1회 (ISO 주의 첫 morning 실행, 보통 월요일 09:00) / 2027-01-12 ~ 2027-06-02: 평일 매일 09:00",
   "schedule_note": "기존 평일 09:00 KST morning 묶음(cron 0 0 * * 1-5 + cron-job.org 정시 dispatch)에 붙임. 요청은 월요일 08:20 무렵이었으나 분 단위가 중요하지 않아 새 cron 없이 09:00 슬롯 사용. 주간 구간은 state week 로 ISO 주 1번만 판정, 일간 구간은 매 실행. 2027-06-03 이후는 판정 안 함. 수동 job=semius 는 oneoff_mode=auto 가 아니면 selftest + dry (ntfy, state 없음, 날짜 거름 무시).",
+  "texas_runner": "box",
+  "texas_runner_note": "텍사스 부분(TLO 법안, 주지사 행정명령)은 box routine(scripts/semius_texas_box.sh -> semius_monitor.py texas, state/semius_tx.json)에서만 돈다. GitHub runner 는 capitol.texas.gov, gov.texas.gov 에서 연결 거부(2026-11-05). GitHub auto/dry 는 SEC 부분만 (state/semius.json). 사용자 승인 2026-11-05 (pt59u).",
   "phases": {
     "weekly_from": "2026-11-05",
     "weekly_to": "2027-01-11",
@@ -82,7 +84,7 @@
       "rule": "주지사 행정명령(카테고리 executive-order 글, 또는 RSS 본문에 executive order) 중 data center 와 moratorium/pause 가 함께 있으면 글마다 p4 1번."
     },
     "puct_note": "PUCT 규칙 채택(선택 항목)은 안정적으로 읽을 공개 목록이 없어 넣지 않음.",
-    "runner_note": "2026-11-05 GitHub-hosted runner 에서 capitol.texas.gov, gov.texas.gov 연결 거부(Errno 111). box 에서는 정상. https 2번 뒤 http 1번 더 시도, 그래도 실패면 cwally-ops 안내(주간 구간 주 1번, 일간 구간 하루 1번). 실패로는 판정, 발송 없음."
+    "runner_note": "2026-11-05 GitHub-hosted runner 에서 연결 거부(Errno 111, https, http 모두). box 에서는 정상. 그래서 box routine 에서만 실행."
   },
   "footer": "모니터링 신호이며 매매 권유가 아닙니다.",
   "ends_kst": "2027-06-05 23:59",

@@ -39,6 +39,7 @@ KST = timezone(timedelta(hours=9))
 NAME = "semius"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
 STATE_PATH = ROOT / "state" / f"{NAME}.json"
+TX_STATE_PATH = ROOT / "state" / f"{NAME}_tx.json"  # Texas part, written only by the box routine
 TICKERS = "005930 000660"
 HEAD = "[SEMIUS] 005930 000660"  # literal tickers so title_ticker_check sees them (same text as before)
 OPS_TITLE = "[OPS] SEMIUS 파싱 실패 [005930 000660] | 판정 유보"
@@ -405,7 +406,7 @@ def msg_ops(cfg: dict, fails: list[str], stamp: str) -> tuple[str, str, int]:
     lines = [f"{stamp} | SEMIUS | 운영 안내",
              "이게 뭐 알림: [SEMIUS] 출처 읽기 또는 구조 해석에 실패했습니다. 투자 판단 알림이 아니며, 실패한 출처로는 판정하지 않았습니다.",
              "지금 결과/상태: " + " / ".join(q(x, 160) for x in fails[:6]),
-             "출처: https://data.sec.gov/submissions/ , https://capitol.texas.gov/Reports/ , https://gov.texas.gov/news",
+             "출처: " + ", ".join(sorted({u for u, k in (("https://data.sec.gov/submissions/", "SEC"), ("https://capitol.texas.gov/Reports/", "TLO"), ("https://gov.texas.gov/news", "gov.texas")) if any(k in x for x in fails)})),
              "지금 할 일: 같은 실패가 며칠 이어지면 출처 페이지 구조를 확인하세요. 다음 실행에서 다시 읽습니다.",
              "하지 말 것: 읽기 실패를 조건 미충족으로 읽기."]
     msg = finish(lines, cfg)
@@ -415,16 +416,17 @@ def msg_ops(cfg: dict, fails: list[str], stamp: str) -> tuple[str, str, int]:
 
 
 # ================================================================ state / schedule
-def load_state() -> dict:
+def load_state(path: Path = STATE_PATH) -> dict:
     try:
-        return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
 
-def save_state(st: dict, now: datetime) -> None:
+def save_state(st: dict, now: datetime, path: Path = STATE_PATH) -> None:
+    st = {k: v for k, v in st.items() if not k.startswith("_")}
     st["updated_at"] = now.isoformat(timespec="seconds")
-    STATE_PATH.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def phase(cfg: dict, d: date) -> str | None:
@@ -484,32 +486,125 @@ class Sources:
         return parse_rss(_get(self.cfg["texas"]["governor_eo"]["rss_url"]))
 
 
+def git_commit_push(path: Path, message: str, tries: int = 3) -> bool:
+    """Commit only `path` (if changed) as sosmos3218-bot and push to main: pull --rebase first, retry up to `tries`."""
+    import subprocess
+
+    def g(*args, check=False):
+        r = subprocess.run(["git", "-c", "user.name=sosmos3218-bot", "-c", "user.email=bot@sosmos3218.github", *args],
+                           cwd=ROOT, capture_output=True, text=True)
+        if check and r.returncode != 0:
+            raise RuntimeError(f"git {' '.join(args)}: {r.stderr.strip()[:200]}")
+        return r
+
+    rel = str(path.relative_to(ROOT))
+    if not g("status", "--porcelain", "--", rel).stdout.strip():
+        print(f"git: {rel} unchanged; nothing to commit")
+        return True
+    g("add", "--", rel, check=True)
+    g("commit", "-q", "-m", message, "--", rel, check=True)
+    for i in range(1, tries + 1):
+        pr = g("pull", "--rebase", "--autostash", "-q", "origin", "main")
+        if pr.returncode != 0:
+            g("rebase", "--abort")
+            print(f"git pull --rebase failed (try {i}/{tries}): {pr.stderr.strip()[:200]}")
+            time.sleep(5 * i)
+            continue
+        ps = g("push", "-q", "origin", "HEAD:main")
+        if ps.returncode == 0:
+            print(f"git: pushed {rel} (try {i}/{tries})")
+            return True
+        print(f"git push failed (try {i}/{tries}): {ps.stderr.strip()[:200]}")
+        time.sleep(5 * i)
+    print(f"::error::git push of {rel} failed after {tries} tries")
+    return False
+
+
 def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Sources | None = None,
         pub=publish, write: bool = True) -> list[tuple[str, str, int]]:
-    dry = mode == "dry"
-    st = load_state() if st is None else st
+    """mode: auto | dry (GitHub: SEC part; Texas too only if config texas_runner != 'box')
+             texas | texas-dry (box routine: Texas part only, state/semius_tx.json)."""
+    texas_mode = mode.startswith("texas")
+    dry = mode in ("dry", "texas-dry")
+    live = mode in ("auto", "texas")
+    do_sec = not texas_mode
+    do_tx = texas_mode or cfg.get("texas_runner", "github") != "box"
+    path = TX_STATE_PATH if texas_mode else STATE_PATH
+    st = load_state(path) if st is None else st
     src = src or Sources(cfg)
     stamp, day = now.strftime("%Y-%m-%d %H:%M KST"), now.date().isoformat()
     out: list[tuple[str, str, int]] = []
     fails: list[str] = []
-    report = {"filings": {}, "bills": [], "dc_bills": [], "eo": []}
+    report = {"filings": {}, "bills": [], "dc_bills": [], "eo": [], "filed_total": None, "cands": 0, "rss": None}
 
     def guard(fn, label):
         return safe_parse(fn, state={}, day=day, ops_notify=lambda d: fails.append(f"{label}: {d}"), dry=True, label=label)
 
-    if mode == "auto":
+    if live:
         ok, why = due(cfg, st, now)
         if not ok:
             print(f"semius: skip ({why})")
+            st["_result"] = f"skip ({why})"
             return out
-        print(f"semius: run ({why})")
+        print(f"semius {mode}: run ({why}); sec={do_sec} texas={do_tx}")
     else:
-        print(f"semius: {mode} (schedule check would say: {due(cfg, st, now)})")
+        print(f"semius: {mode} (schedule check would say: {due(cfg, st, now)}); sec={do_sec} texas={do_tx}")
 
-    if not st.get("seeded") and not dry:
+    if do_sec and not st.get("seeded") and not dry:
         print("semius: state not seeded; seeding silently first")
         seed(now, cfg, st, src, write=False)
 
+    sent = st.setdefault("sent", [])
+    if do_sec:
+        _run_capex(cfg, st, src, guard, out, report, day, stamp)
+    if do_tx:
+        _run_texas(cfg, st, src, guard, out, report, day, stamp)
+    st["sent"] = sent[-300:]
+
+    # ---------------- ops (one per day per state file, never a p3/p4)
+    if fails:
+        print("FAILURES:\n  " + "\n  ".join(fails))
+        if st.get("ops_parse_day") != day:
+            out.append(msg_ops(cfg, fails, stamp))
+            if not dry:
+                st["ops_parse_day"] = day
+        else:
+            print("ops notice already sent today")
+    if live and phase(cfg, now.date()) == "weekly":
+        # week closes even on a failure: unprocessed items are retried next week, and the ops notice stays weekly
+        st["week"] = iso_week(now.date())
+    if live and phase(cfg, now.date()) == "daily":
+        st["last_daily"] = day
+
+    print("---- summary")
+    if do_sec:
+        for tk, fl in report["filings"].items():
+            print(f"latest {tk}: {fl}  baseline2027_mid={((st.get('capex') or {}).get('baseline', {}).get(tk) or {}).get('mid')}")
+    if do_tx:
+        print(f"TLO {cfg['texas']['leg_session']} filed bills: {report['filed_total']} (data center captions {report['cands']}): {report['dc_bills'] or '없음'}")
+        print(f"moratorium bills: {report['bills'] or '없음'}")
+        print(f"EO category posts newly checked: {report['eo'] or '없음'}; RSS items read: {report['rss']}")
+    else:
+        print(f"texas: skipped here (texas_runner={cfg.get('texas_runner')}; box routine scripts/semius_texas_box.sh)")
+    topic, server = resolve_topic("port", cfg.get("ntfy_topic")), resolve_server(cfg.get("ntfy_server"))
+    for t, m, p in out:
+        print(f"TITLE: {t}\nPRIORITY: {p} TOPIC: {route_topic(topic, t)}\n{m}\n")
+    if not out:
+        print("보낼 것 없음")
+    ops_n = sum(t.startswith("[OPS]") for t, _, _ in out)
+    st["_result"] = ("ops" if ops_n and ops_n == len(out) else f"sent {len(out) - ops_n}" + (" + ops" if ops_n else "")) if out else "none"
+    if dry:
+        print("DRY RUN: no publish, state not written")
+        return out
+    for t, m, p in out:
+        pub(resolve_topic("ops") if t.startswith("[OPS]") else topic, t, m, p,
+            ["warning"] if t.startswith("[OPS]") else ["chart_with_downwards_trend"], server, config_name=NAME)
+    if write:
+        save_state(st, now, path)
+    return out
+
+
+def _run_capex(cfg, st, src, guard, out, report, day, stamp) -> None:
     # ---------------- 1) capex
     cap = st.setdefault("capex", {})
     seen = cap.setdefault("processed", {})
@@ -548,6 +643,10 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Source
             seen[tk] = seen[tk][:80]
     st["log"] = log[-60:]
 
+
+
+def _run_texas(cfg, st, src, guard, out, report, day, stamp) -> None:
+    sent = st.setdefault("sent", [])
     # ---------------- 2a) Texas bills
     tx = cfg["texas"]
     bills = st.setdefault("bills", {})
@@ -559,10 +658,11 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Source
             report_ok = False
             continue
         rows_all.extend(r)
-    report["filed_total"] = len(rows_all)
+    report["filed_total"] = len(rows_all) if report_ok else f"{len(rows_all)} (보고서 일부 실패)"
     cands = [r for r in rows_all if DC_RE.search(r["caption"])]
     cands.sort(key=lambda r: (not MOR_RE.search(r["caption"]), r["key"]))
     keys = {r["key"] for r in cands}
+    report["cands"] = len(cands)
     if report_ok:
         for k in bills:  # keep watching tracked bills even if a caption changes
             if k not in keys:
@@ -588,7 +688,7 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Source
     for link, ttl in posts or []:
         if link in eo_seen:
             continue
-        body = guard(lambda u=link: src.eo_post(u), f"EO {link[-60:]}")
+        body = guard(lambda u=link: src.eo_post(u), f"gov.texas.gov EO {link[-60:]}")
         if body is None:
             continue
         eo_seen.append(link)
@@ -605,44 +705,7 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Source
             sent.append(f"eo:{it['link']}")
             out.append(msg_eo(cfg, it["link"], it["title"], it["text"][:300], stamp))
     st["eo_seen"] = eo_seen[-200:]
-    st["sent"] = sent[-300:]
-
-    # ---------------- ops (one per day, never a p4)
-    if fails:
-        print("FAILURES:\n  " + "\n  ".join(fails))
-        if st.get("ops_parse_day") != day:
-            out.append(msg_ops(cfg, fails, stamp))
-            if not dry:
-                st["ops_parse_day"] = day
-        else:
-            print("ops notice already sent today")
-    if mode == "auto" and phase(cfg, now.date()) == "weekly":
-        # week closes even on a failure: unprocessed filings are retried next week, and the ops notice stays weekly
-        # in the weekly phase (GitHub-hosted runners got 'connection refused' from capitol.texas.gov / gov.texas.gov on 2026-11-05)
-        st["week"] = iso_week(now.date())
-    if mode == "auto" and phase(cfg, now.date()) == "daily":
-        st["last_daily"] = day
-
-    print("---- summary")
-    for tk, fl in report["filings"].items():
-        print(f"latest {tk}: {fl}  baseline2027_mid={(base.get(tk) or {}).get('mid')}")
-    print(f"TLO 90R filed bills: {report.get('filed_total')} (data center captions {len(cands)}): {report['dc_bills'] or '없음'}")
-    print(f"moratorium bills: {report['bills'] or '없음'}")
-    print(f"EO category posts newly checked: {report['eo'] or '없음'}; RSS items read: {len(items or [])}")
-    topic, server = resolve_topic("port", cfg.get("ntfy_topic")), resolve_server(cfg.get("ntfy_server"))
-    for t, m, p in out:
-        print(f"TITLE: {t}\nPRIORITY: {p} TOPIC: {route_topic(topic, t)}\n{m}\n")
-    if not out:
-        print("보낼 것 없음")
-    if dry:
-        print("DRY RUN: no publish, state not written")
-        return out
-    for t, m, p in out:
-        pub(resolve_topic("ops") if t.startswith("[OPS]") else topic, t, m, p,
-            ["warning"] if t.startswith("[OPS]") else ["chart_with_downwards_trend"], server, config_name=NAME)
-    if write:
-        save_state(st, now)
-    return out
+    report["rss"] = len(items) if items is not None else "실패"
 
 
 def seed(now: datetime, cfg: dict, st: dict, src: Sources | None = None, write: bool = True) -> dict:
@@ -830,21 +893,21 @@ def selftest() -> int:
     check("retry after failure sends once", [p for _, _, p in o], [4])
     # TLO structure failure -> ops, never p4
     st4 = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
-    o = run("auto", now, cfg, st4, Fake(cfg, fail={"tlo"}), fake_pub, write=False)
+    o = run("texas", now, cfg, st4, Fake(cfg, fail={"tlo"}), fake_pub, write=False)
     check("tlo fail ops", [t for t, _, _ in o], [OPS_TITLE])
     # bills: committee p3 then law p4, each once; filing alone nothing
     rows = [{"bill": "HB 7", "key": "HB7", "caption": "Relating to a moratorium on new data centers.", "last_action": ""}]
     hs = {"HB7": {"caption": rows[0]["caption"], "subjects": "", "last_action": "Filed", "committee": [], "actions": ["Filed"]}}
     st5 = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
     fk5 = Fake(cfg, report_rows=rows, hist=hs)
-    check("bill filed silent", run("auto", now, cfg, st5, fk5, fake_pub, write=False), [])
+    check("bill filed silent", run("texas", now, cfg, st5, fk5, fake_pub, write=False), [])
     hs["HB7"]["actions"] = ["Reported favorably w/o amendment(s)", "Filed"]
-    check("bill committee p3", [p for _, _, p in run("auto", now, cfg, st5, fk5, fake_pub, write=False)], [3])
-    check("bill committee dedup", run("auto", now, cfg, st5, fk5, fake_pub, write=False), [])
+    check("bill committee p3", [p for _, _, p in run("texas", now, cfg, st5, fk5, fake_pub, write=False)], [3])
+    check("bill committee dedup", run("texas", now, cfg, st5, fk5, fake_pub, write=False), [])
     hs["HB7"]["actions"] = ["Effective on 9/1/27", "Signed by the Governor"]
-    o = run("auto", now, cfg, st5, fk5, fake_pub, write=False)
+    o = run("texas", now, cfg, st5, fk5, fake_pub, write=False)
     check("bill law p4", [(p, "법 성립" in t) for t, _, p in o], [(4, True)])
-    check("bill law dedup", run("auto", now, cfg, st5, fk5, fake_pub, write=False), [])
+    check("bill law dedup", run("texas", now, cfg, st5, fk5, fake_pub, write=False), [])
     # schedule gating
     stw = {"seeded": "t", "week": "2026-W46"}
     check("weekly first run", due(cfg, {}, datetime(2026, 11, 9, 9, 0, tzinfo=KST)), (True, "weekly"))
@@ -853,9 +916,9 @@ def selftest() -> int:
     check("after 06-02 off", due(cfg, {}, datetime(2027, 6, 3, 9, 0, tzinfo=KST))[0], False)
     check("ends_kst", cfg["ends_kst"], "2027-06-05 23:59")
     stf = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
-    o = run("auto", datetime(2026, 11, 9, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False)
+    o = run("texas", datetime(2026, 11, 9, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False)
     check("weekly fail: ops once, week closed", ([t for t, _, _ in o], stf.get("week")), ([OPS_TITLE], "2026-W46"))
-    check("weekly fail: no rerun same week", run("auto", datetime(2026, 11, 10, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False), [])
+    check("weekly fail: no rerun same week", run("texas", datetime(2026, 11, 10, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False), [])
     # dry: no publish, no state change
     n_before = len(sent)
     st6 = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
@@ -865,6 +928,45 @@ def selftest() -> int:
     check("dry no publish", len(sent), n_before)
     check("dry no ops day", "ops_parse_day" in st6, False)
     del snap
+
+    # --- runner split: GitHub auto/dry never touches Texas, box texas never touches SEC
+    calls = []
+
+    class Spy(Fake):
+        def sec_list(self, comp):
+            calls.append("sec")
+            return super().sec_list(comp)
+
+        def report(self, url):
+            calls.append("tlo")
+            raise RuntimeError("must not be called on GitHub")
+
+        def eo_category(self):
+            calls.append("eo")
+            return []
+
+        def rss(self):
+            calls.append("rss")
+            return []
+    check("config texas_runner box", cfg.get("texas_runner"), "box")
+    o = run("auto", now, cfg, {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}, Spy(cfg), fake_pub, write=False)
+    check("auto: no Texas calls, no TX ops", (sorted(set(calls)), o), (["sec"], []))
+    calls.clear()
+    o = run("dry", now, cfg, {"seeded": "t"}, Spy(cfg), fake_pub, write=False)
+    check("dry: no Texas calls", sorted(set(calls)), ["sec"])
+    calls.clear()
+    stx = {}
+    o = run("texas", now, cfg, stx, Spy(cfg, fail={"sec"}), fake_pub, write=False)
+    check("texas: no SEC calls", "sec" in calls, False)
+    check("texas: TLO fail -> one ops", [t for t, _, _ in o], [OPS_TITLE])
+    check("texas: no seeding/capex keys", ("seeded" in stx, "capex" in stx), (False, False))
+    n_before = len(sent)
+    stx2 = {}
+    o = run("texas-dry", now, cfg, stx2, Fake(cfg, report_rows=rows, hist={"HB7": dict(hs["HB7"], actions=["Signed by the Governor"])}), fake_pub, write=False)
+    check("texas-dry builds p4, no publish, no state", ([p for _, _, p in o], len(sent) - n_before, stx2.get("bills", {}).get("HB7", {}).get("sent")), ([4], 0, ["law", "committee"]))
+    check("texas-dry no ops day", "ops_parse_day" in stx2, False)
+    check("texas schedule gate", run("texas", datetime(2026, 11, 10, 9, 0, tzinfo=KST), cfg, {"week": "2026-W46"}, Spy(cfg), fake_pub, write=False), [])
+    check("tx state path", TX_STATE_PATH.name, "semius_tx.json")
 
     # --- title rules on every title
     comp = cfg["capex"]["companies"][3]
@@ -894,11 +996,18 @@ def main() -> int:
         seed(now, cfg, st)
         print(json.dumps(st.get("capex", {}).get("baseline"), ensure_ascii=False, indent=1))
         return 0
-    if mode not in {"auto", "dry"}:
-        print("usage: semius_monitor.py <auto|dry|selftest|seed>")
+    if mode not in {"auto", "dry", "texas", "texas-dry"}:
+        print("usage: semius_monitor.py <auto|dry|selftest|seed|texas|texas-dry>")
         return 2
-    run(mode, now, cfg)
-    return 0
+    path = TX_STATE_PATH if mode.startswith("texas") else STATE_PATH
+    st = load_state(path)
+    out = run(mode, now, cfg, st)
+    pushed = True
+    if mode == "texas":
+        pushed = git_commit_push(TX_STATE_PATH, f"semius: texas state ({now:%Y-%m-%d %H:%M} KST)")
+    print(f"SEMIUS_RESULT: {mode} {st.get('_result', 'none')}" + ("" if pushed else " (state push FAILED)"))
+    del out
+    return 0 if pushed else 1
 
 
 if __name__ == "__main__":

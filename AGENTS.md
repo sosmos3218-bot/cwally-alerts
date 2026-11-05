@@ -50,7 +50,7 @@ Attach recurring alerts here before asking for a new time. Times are KST; the cr
 
 | Slot | KST | cron (UTC) | Workflow / job |
 |---|---|---|---|
-| morning | weekdays 09:00 (also `[SEMIUS]` semius_monitor.py, approved 2026-11-05 pt58u: script-gated weekly = first morning run of each ISO week 2026-11-05 ~ 2027-01-11, every weekday 2027-01-12 ~ 06-02, ends 2027-06-05 23:59; state/semius.json; job=semius dispatch is selftest + dry unless oneoff_mode=auto) | `0 0 * * 1-5` | `port-alerts.yml` / `morning` |
+| morning | weekdays 09:00 (also `[SEMIUS]` semius_monitor.py, approved 2026-11-05 pt58u: script-gated weekly = first morning run of each ISO week 2026-11-05 ~ 2027-01-11, every weekday 2027-01-12 ~ 06-02, ends 2027-06-05 23:59; state/semius.json; job=semius dispatch is selftest + dry unless oneoff_mode=auto; SEC part only, `texas_runner: box`: the Texas part runs on the Grok box routine `scripts/semius_texas_box.sh` -> `semius_monitor.py texas`, state/semius_tx.json, approved 2026-11-05 pt59u, because runners get connection refused from Texas state sites) | `0 0 * * 1-5` | `port-alerts.yml` / `morning` |
 | afternoon | weekdays 15:20 | `20 6 * * 1-5` | `port-alerts.yml` / `afternoon` |
 | flow | weekdays 15:40 | `40 6 * * 1-5` | `flow-alerts.yml` / `flow` |
 | 0090b0 | weekdays 15:40 | `40 6 * * 1-5` | `port-alerts.yml` / `0090b0` (approved 2026-10-06) |

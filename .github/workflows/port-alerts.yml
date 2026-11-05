@@ -770,7 +770,8 @@ jobs:
             python scripts/fltw_monitor.py auto
             python scripts/nflxq4_monitor.py auto
           fi
-          # [SEMIUS] 005930 000660 big tech 2027 capex cut (SEC EDGAR) + Texas data center moratorium (TLO 90R, governor EO). Approved 2026-11-05 (pt58u).
+          # [SEMIUS] 005930 000660 big tech 2027 capex cut (SEC EDGAR). Approved 2026-11-05 (pt58u). The Texas part runs on the box routine
+          # (scripts/semius_texas_box.sh, state/semius_tx.json; runners get 'connection refused' from Texas state sites; pt59u), not here.
           # No new cron: the script gates by date (weekly = first morning run of each ISO week to 2027-01-11, every weekday 2027-01-12 ~ 06-02). Ends 2027-06-05.
           if [ "$JOB" = "morning" ]; then
             python scripts/semius_monitor.py auto
