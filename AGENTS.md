@@ -96,6 +96,10 @@ Required body order:
 Title format: `[NAME] 한 줄 행동`
 Example: `[HCE] 아직 결과 없음 | 추가매수 보류`
 
+push 전 제목 티커 검사: `python scripts/title_ticker_check.py` 의 전체 출력과 종료 코드로 판단한다. 통과는 `title ticker check PASS` 와 종료 코드 0 뿐이다.
+실패면 첫 줄에 `title ticker check FAIL (N)` 이 찍히고 그 아래에 실패 줄이 이어지며 종료 코드는 1 이다. 마지막 줄이나 tail 만 보고 판단하지 않는다.
+N 이 1 이상이면 push 하지 않는다. 다른 사람 파일의 실패도 같다: 고치거나 보고하고, 무시하고 push 하지 않는다.
+
 Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
 ## Workflow file edit rules
 
