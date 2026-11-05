@@ -2,11 +2,11 @@
   "px": {
     "initialized": true,
     "armed": true,
-    "last_date": "2026-11-03",
-    "last_close": 46.22,
+    "last_date": "2026-11-04",
+    "last_close": 47.88,
     "init_note": "2026-11-03 설치 때 11/2 미국 종가 47.31달러로 초기화(Yahoo chart v8). 40달러 위라 무장, 설치 때 발송 없음."
   },
   "earn": {},
   "sdiv": {},
-  "updated_at": "2026-11-04T09:11:30+09:00"
+  "updated_at": "2026-11-05T09:13:38+09:00"
 }

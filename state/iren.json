@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-04 09:01 KST",
-  "price": 24.46,
+  "updated_at": "2026-11-05 09:00 KST",
+  "price": 21.71,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24",
@@ -142,7 +142,22 @@
     "https://247wallst.com/investing/2026/11/03/applied-digital-surges-9-as-ai-data-center-stocks-rebound-from-financing-jitters-iren-jumps-9-nebius-climbs-7/?.tsrc=rss",
     "https://247wallst.com/investing/2026/11/03/cipher-digital-soars-11-as-ai-data-center-stocks-rebound-after-price-target-selloff-iren-jumps-10-terawulf-surges-9/?.tsrc=rss",
     "https://www.tikr.com/blog/cipher-digital-soars-9-iren-up-8-as-ai-data-center-stocks-rebound-after-selloff?ref=yahoofinance&tlnk=yf-261103-2g4hjprv&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/pjt-partners-pjt-q3-earnings-120003155.html?.tsrc=rss"
+    "https://finance.yahoo.com/markets/stocks/articles/pjt-partners-pjt-q3-earnings-120003155.html?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-fell-4-on-ciphers-miss-then-jumped-10-heres-what-its-november-5-report-has-to-settle?ref=yahoofinance&tlnk=yf-261104-9h6pghpr&.tsrc=rss",
+    "https://finance.yahoo.com/news/irens-ai-transformation-faces-crucial-184119580.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/04/terawulf-falls-4-despite-google-backstop-for-19-billion-anthropic-leases-cipher-digital-plunges-18-iren-tumbles-9/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-stock-faces-us-data-171528367.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/wondering-why-iren-fell-68-161129995.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/04/texas-blue-wave-could-threaten-27-of-planned-u-s-data-center-power-heres-what-it-means-for-coreweave-iren-nebius-and-other-neocloud-stocks/?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-sinks-9-coreweave-down-6-as-democrats-win-congress-cramer-warns-be-careful?ref=yahoofinance&tlnk=yf-261104-76qv6vhw&.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/04/iren-falls-5-coreweave-drops-4-as-texas-election-stokes-data-center-moratorium-fears-nebius-dips-2/?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-falls-3-iren-down-4-as-democratic-sweep-hits-data-centers-incrementally-more-negative-sentiment?ref=yahoofinance&tlnk=yf-261104-w3v8f9g6&.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/04/blue-trade-sends-first-solar-and-sunrun-soaring-while-data-center-stocks-slump-as-investors-weigh-democrats-big-night/?.tsrc=rss",
+    "https://www.tikr.com/blog/spacex-falls-4-as-democrats-sweep-congress-musk-says-data-centers-in-space-looking-pretty-appealing?ref=yahoofinance&tlnk=yf-261104-h7jrj6r2&.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/04/a-major-neocloud-stock-rally-may-be-coming-these-3/?.tsrc=rss",
+    "https://finance.yahoo.com/m/c5d0833e-fe1d-3e77-b792-4b103f8d64bf/bitcoin-rises%2C-crypto-miners.html?.tsrc=rss",
+    "https://www.cryptoprowl.com/releases/bernstein-cuts-price-targets-on-seven-bitcoin-miners-after-democrats-texas-win-threatens-ai-data-center-boom-7670?.tsrc=rss",
+    "https://finance.yahoo.com/m/c7cfda24-812a-3e7d-a41e-138b0ad10480/ai%27s-building-boom-meets-a.html?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-02 09:00 KST",
   "pending_news": [
@@ -160,6 +175,16 @@
       "title": "Nvidia and Nike Lead Biggest Wave Yet of Tokenized Stock Objections",
       "url": "https://decrypt.co/382348/nvidia-nike-biggest-wave-yet-tokenized-stock-objections?.tsrc=rss",
       "seen_at": "2026-11-03 09:00 KST"
+    },
+    {
+      "title": "Bitcoin Rises, Crypto Miners Sharply Divided As Midterms Dampen AI Outlook",
+      "url": "https://finance.yahoo.com/m/c5d0833e-fe1d-3e77-b792-4b103f8d64bf/bitcoin-rises%2C-crypto-miners.html?.tsrc=rss",
+      "seen_at": "2026-11-05 09:00 KST"
+    },
+    {
+      "title": "Bernstein Cuts Price Targets on Seven Bitcoin Miners After Democrats’ Texas Win Threatens AI Data Center Boom",
+      "url": "https://www.cryptoprowl.com/releases/bernstein-cuts-price-targets-on-seven-bitcoin-miners-after-democrats-texas-win-threatens-ai-data-center-boom-7670?.tsrc=rss",
+      "seen_at": "2026-11-05 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",

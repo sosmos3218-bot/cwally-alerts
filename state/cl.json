@@ -1,5 +1,5 @@
 {
-  "price": 95.62,
+  "price": 98.76,
   "band": "HOLD",
   "buy1_sent": false,
   "buy2_sent": false,
@@ -8,7 +8,7 @@
   "q3_post_sent": true,
   "fail_sent_date": null,
   "last_kind": "Q3_POST",
-  "updated_at": "2026-11-04T09:06:21.152934+09:00",
+  "updated_at": "2026-11-05T09:06:19.895139+09:00",
   "last_metrics": {
     "found": false,
     "source": "",

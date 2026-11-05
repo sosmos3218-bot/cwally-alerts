@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "opinion": "watch",
-  "price_zone": false,
+  "price_zone": true,
   "liq_ok": false,
   "liq_dry": false,
   "q3_state": "pending",
@@ -74,17 +74,17 @@
     "2026-W42": "2026-10-08",
     "2026-W43": "2026-10-20",
     "2026-W44": "2026-10-23",
-    "2026-W45": "2026-11-03"
+    "2026-W45": "2026-11-04"
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-11-03",
-    "pref_close": 97300.0,
-    "common_close": 262000.0,
-    "discount_pct": 62.86,
-    "liq_median_value_eok": 5.69,
-    "avg5_volume": 5835,
-    "dps": 3052.0
+    "session": "2026-11-04",
+    "pref_close": 90000.0,
+    "common_close": 231000.0,
+    "discount_pct": 61.04,
+    "liq_median_value_eok": 6.08,
+    "avg5_volume": 8610,
+    "dps": 3027.0
   },
-  "updated_at": "2026-11-04T09:07:05+09:00"
+  "updated_at": "2026-11-05T09:07:05+09:00"
 }

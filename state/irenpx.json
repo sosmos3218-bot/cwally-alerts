@@ -1,12 +1,12 @@
 {
   "initialized": true,
   "armed": {
-    "low2372": true,
+    "low2372": false,
     "low20": true,
     "high35": true
   },
-  "last_date": "2026-11-03",
-  "last_close": 24.46,
+  "last_date": "2026-11-04",
+  "last_close": 21.71,
   "init_note": "initialized at install from 2026-10-29 close 26.25, no send",
   "fail_notified": false,
   "sec_seen": [
@@ -334,6 +334,6 @@
     "9999999995-25-002785"
   ],
   "sec_seed_note": "seeded 322 accession numbers at install 2026-10-30, no send",
-  "sec_checked": "2026-11-04T09:11:32+09:00",
-  "updated_at": "2026-11-04T09:11:32+09:00"
+  "sec_checked": "2026-11-05T09:13:40+09:00",
+  "updated_at": "2026-11-05T09:13:41+09:00"
 }
