@@ -1,0 +1,43 @@
+{
+  "name": "k182480",
+  "title_prefix": "[182480]",
+  "code": "182480",
+  "name_kr": "TIGER 미국MSCI리츠(합성 H)",
+  "created_at": "2026-11-05T15:30:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-05 (pt61u): 182480 을 금리와 분배금 기준으로 감시",
+  "holding": "보유 여부 미정, 평균가 없음",
+  "base_verdict": "보통(분산/인컴용 소액)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "평일 09:00 (morning 묶음, rblx 다음)",
+  "schedule_note": "새 cron 없음. 미국 10년물은 전 거래일 FRED 값, 한국 쪽(종가, 순자산, 괴리율)은 전 거래일 마감 값.",
+  "rules": {
+    "rate_low": 4.30,
+    "rate_low_consec": 2,
+    "rate_low_rearm": 4.50,
+    "rate_high": 5.30,
+    "rate_high_rearm": 5.10,
+    "ttm_warn": 420,
+    "ttm_good": 460,
+    "same_month_yoy_warn_pct": -20.0,
+    "aum_warn_eok": 800,
+    "aum_rearm_eok": 900,
+    "dev_warn_pct": -2.0,
+    "dev_rearm_pct": -1.0,
+    "hedge_cost_fallback_pp": 0.85,
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "1) 미 10년물 4.30% 이하 2회 연속 금리 하향, 4.50% 위 재무장 2) 5.30% 이상 금리 경계, 5.10% 아래 재무장 3) 새 분배금이 보이면 1번: 12개월 합 420원 미만 또는 같은 달 전년 대비 -20% 미만 경계, 460원 이상 양호, 그 외 월간 업데이트(낮은 우선순위) 4) 순자산 800억 미만 경계(900억 이상 재무장), 괴리율 -2.0% 이하(-1.0% 위 재무장) 5) 종합: 10년물 4.30% 이하 2회 + 분배 경계 아님 = 매력, 10년물 5.30% 이상 또는 분배 경계 = 편입 보류, 그 외 보통. 바뀔 때만 p4.",
+  "facts_2026_11_05": "미 10년물 11/4 4.90%(2026 범위 3.97~5.31, 고점 10/5). 12개월 분배금 439원(2025-11~2026-10), 연간 2024 535원, 2025 447원, 분배율 약 3.3%. 순자산 1,083억(11/4), 연초 이후 순유출 -695억. 추적오차 0.51%, 괴리율 -0.44%. 환헤지 비용 추정 0.8~0.9%p(CD91 3.32% vs 미 3개월 4.21%).",
+  "sources": {
+    "y10": "FRED DGS10 csv, 실패 시 Treasury.gov daily par yield 10 Yr",
+    "y3m": "FRED DGS3MO csv",
+    "cd91": "한국은행 ECOS 817Y002 010502000 (CD 91일), 실패 시 hedge_cost_fallback_pp",
+    "dist": "etf-lab.kr/182480 분배금 이력, 실패 시 etfro.com/etf/182480",
+    "price": "scripts/krx_close.py 정규장 종가(전 거래일)",
+    "etf": "네이버 m.stock etfAnalysis totalNav, deviationSign/deviationRate"
+  },
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "2027-10-31 까지"
+}
