@@ -1,0 +1,31 @@
+{
+  "name": "k475380",
+  "title_prefix": "[475380]",
+  "code": "475380",
+  "name_kr": "RISE 글로벌리얼티인컴",
+  "created_at": "2026-11-05T15:30:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-05 (pt1u): 475380 금리 4.50% 이하, 52주 저점 9,320, 월 분배금 변경, KRX 마감 후 일일 요약",
+  "holding": "보유 여부 미정, 평균가 없음",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 요청 예시는 16:10 KST 였으나 AGENTS 반복 슬롯 규칙에 따라 기존 k203780 장 마감 후 슬롯(KRX 거래일 19:00 KST, cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 부착. 종가/일일 요약은 당일 확정 종가, 미 10년물은 직전 미국 영업일 값. job=k475380 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "rules": {
+    "rate_low": 4.5,
+    "rate_low_rearm": 4.6,
+    "price_low": 9320,
+    "price_low_rearm": 9413,
+    "price_low_rearm_note": "9,320 x 1.01 = 9,413. 종가가 이 선 위로 올라와야 다시 무장(vnqi/pcorpx 1% 버퍼 관례).",
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "1) 미 10년물(US10Y) 4.50% 이하 교차 하향 1번, 4.60% 위 재무장. 제목에 475380 / US10Y. 2) 475380 확정 종가 9,320원 미만 1번, 9,413원 위 재무장. 3) 월 분배금 금액이 state 직전 기록과 달라지면 1번(기준일/금액 저장). 4) KRX 거래일 19:00 일일 요약 1번: 종가, 전일 대비 %, 9,320 대비 거리, 최신 US10Y.",
+  "facts_2026_11_05": "종가 11/5 10,070원(정규장). 52주 저점 참고선 9,320원(네이버 조정 52주 최저 약 9,290). 월 분배금 최근 2026-10-30 기준 32원(etfro). 미 10년물 11/4 4.90%(Treasury.gov).",
+  "sources": {
+    "y10": "FRED DGS10 csv, 실패 시 Treasury.gov daily par yield 10 Yr (usbond_monitor.treasury_10y)",
+    "price": "scripts/krx_close.py 정규장 종가(Daum, 실패 시 네이버 15:30 분봉)",
+    "dist": "etfro.com/etf/475380 분배금 이력(data-sort 표), 실패 시 etf-lab.jp/475380"
+  },
+  "ends_kst": "2027-11-05 23:59",
+  "ends_note": "2027-11-05 까지(설치 1년). 그 전에 기준선/보유 여부를 다시 정하면 연장"
+}

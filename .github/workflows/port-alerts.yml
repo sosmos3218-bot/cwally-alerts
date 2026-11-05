@@ -273,7 +273,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, k0046y0, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, k0046y0, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, k475380]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1522,6 +1522,21 @@ jobs:
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/476760_monitor.py "$MODE"
+      - name: Run k475380 (RISE 글로벌리얼티인컴 - US10Y 4.50%, close below 9,320, monthly dist change, daily summary; k203780 19:00)
+        # approved in chat 2026-11-05 (pt1u). Attached to existing k203780 after-close slot, no new cron (16:10 was example only).
+        # Dedupe: state/k475380.json rate_low_armed / price_low_armed / last_dist_* / last_summary_date.
+        # job=k475380 dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k475380') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/k475380_monitor.py selftest >/dev/null; fi
+          python scripts/k475380_monitor.py "$MODE"
       - name: Run 005930 / 000660 (Samsung Electronics, SK hynix close-based plan lines, US 10Y 5.30% shared warning, earnings check; k203780 19:00 slot)
         # attached to the existing k203780 slot, no new cron. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
