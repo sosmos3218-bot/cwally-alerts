@@ -223,14 +223,18 @@ def _txt(s: str) -> str:
 
 
 def _get(url: str, timeout: int = 60) -> str:
+    """https first (2 tries); on a refused/reset connection one plain-http try (TX state sites refuse some cloud IPs)."""
     last: Exception | None = None
-    for attempt in (1, 2):
+    tries = [url, url, url.replace("https://", "http://", 1)] if url.startswith("https://") else [url, url]
+    for i, u in enumerate(tries):
+        if i == 2 and not re.search(r"(?i)refused|reset|unreachable|timed out", str(last)):
+            break
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA_WEB), timeout=timeout) as r:
+            with urllib.request.urlopen(urllib.request.Request(u, headers=UA_WEB), timeout=timeout) as r:
                 return r.read().decode("utf-8", "replace")
         except Exception as exc:  # noqa: BLE001
             last = exc
-            if attempt == 1:
+            if i == 0:
                 time.sleep(3)
     raise last  # type: ignore[misc]
 
@@ -612,8 +616,10 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, src: Source
                 st["ops_parse_day"] = day
         else:
             print("ops notice already sent today")
-    elif mode == "auto" and phase(cfg, now.date()) == "weekly":
-        st["week"] = iso_week(now.date())  # failures leave the week open so the next morning retries
+    if mode == "auto" and phase(cfg, now.date()) == "weekly":
+        # week closes even on a failure: unprocessed filings are retried next week, and the ops notice stays weekly
+        # in the weekly phase (GitHub-hosted runners got 'connection refused' from capitol.texas.gov / gov.texas.gov on 2026-11-05)
+        st["week"] = iso_week(now.date())
     if mode == "auto" and phase(cfg, now.date()) == "daily":
         st["last_daily"] = day
 
@@ -846,6 +852,10 @@ def selftest() -> int:
     check("daily phase", due(cfg, stw, datetime(2027, 1, 12, 9, 0, tzinfo=KST)), (True, "daily"))
     check("after 06-02 off", due(cfg, {}, datetime(2027, 6, 3, 9, 0, tzinfo=KST))[0], False)
     check("ends_kst", cfg["ends_kst"], "2027-06-05 23:59")
+    stf = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
+    o = run("auto", datetime(2026, 11, 9, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False)
+    check("weekly fail: ops once, week closed", ([t for t, _, _ in o], stf.get("week")), ([OPS_TITLE], "2026-W46"))
+    check("weekly fail: no rerun same week", run("auto", datetime(2026, 11, 10, 9, 0, tzinfo=KST), cfg, stf, Fake(cfg, fail={"tlo"}), fake_pub, write=False), [])
     # dry: no publish, no state change
     n_before = len(sent)
     st6 = {"seeded": "t", "capex": {"processed": {}, "baseline": {}}}
