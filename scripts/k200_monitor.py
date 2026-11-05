@@ -11,12 +11,20 @@ rearm: 859.28 / 834.15 / 823.10 stop clear / 900.48). Several lines on one bar -
 Only confirmed closes: today's bar only when Naver basic marketStatus == CLOSE and it is past 15:30 KST.
 Missed bars are judged in date order on the next run; last_bar.day dedupes so a bar is judged once.
 
+KOSPI E-plan 4 tranches (configs/k200.json kospi_tranches, 2026-11-05 사용자 위임 t55u), separate push:
+  t1 KOSPI close <= 5,280 (20% of the E limit, p3)   t2 <= 5,050 (25%, p4)
+  t3 <= 4,800 (25%, p4)                              t4 <= 4,400 (30%, p5, E limit full)
+Each fires once and re-arms after a close >= level x 1.03. KOSPI index close = Naver index daily (same
+confirmed-bar rule). The body converts each level to 069500 / 226490 prices from same-day regular closes
+(scripts/krx_close.py, Daum days). Own cursor in state/k200.json "tranche"; seeded at the 11/5 close 5,383.80.
+
 Runs inside flow-alerts.yml (weekday 15:40 KST). Modes: auto | dry (print only, no ntfy, no state) | selftest.
 """
 from __future__ import annotations
 
 import json
 import sys
+import traceback
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -199,6 +207,220 @@ def message(cfg: dict, fired: list[str], day: str, close: float, prev: float | N
     return title, body, prio
 
 
+# ---------- KOSPI E-plan 4 tranches (2026-11-05 t55u) ----------
+
+def tranche_step(tranches: list[dict], armed: dict, close: float) -> tuple[dict, list[str]]:
+    """One confirmed KOSPI close -> (armed, fired keys). Re-arm (close >= rearm) first, then fire (close <= level)."""
+    c = round(float(close), 2)
+    armed = dict(armed)
+    fired = []
+    for t in tranches:
+        k = t["key"]
+        if not armed.get(k, True) and c >= float(t["rearm"]):
+            armed[k] = True
+    for t in tranches:
+        k = t["key"]
+        if armed.get(k, True) and c <= float(t["level"]):
+            armed[k] = False
+            fired.append(k)
+    return armed, fired
+
+
+def etf_equiv(etf_close: float, kospi_close: float, level: float, tick: int = 5) -> int:
+    """ETF price that matches a KOSPI level at today's ETF/KOSPI ratio, floored to the tick."""
+    raw = float(etf_close) * float(level) / float(kospi_close)
+    return int(raw // tick * tick)
+
+
+def _won(v: float) -> str:
+    return f"{v:,.0f}원"
+
+
+def _lv(v: float) -> str:
+    return f"{v:,.0f}"
+
+
+def equiv_text(tc: dict, t: dict, day: str, close: float, etf_closes: dict) -> str:
+    parts = []
+    for e in tc["etfs"]:
+        ec = etf_closes.get(e["code"])
+        if ec:
+            parts.append(f"{e['code']} 약 {_won(etf_equiv(ec, close, t['level'], int(tc.get('etf_tick') or 5)))}")
+        else:
+            parts.append(f"{e['code']} 환산 못 함({day} 정규장 종가 없음)")
+    return ", ".join(parts)
+
+
+def tranche_message(tc: dict, fired: list[str], day: str, close: float, prev: float | None,
+                    etf_closes: dict, armed: dict, stamp: str) -> tuple[str, str, int]:
+    by = {t["key"]: t for t in tc["tranches"]}
+    fl = [by[k] for k in fired]
+    prio = max(int(t["priority"]) for t in fl)
+    codes = " ".join(e["code"] for e in tc["etfs"])
+    title = "[K200] KOSPI " + codes + " " + " + ".join(f"{t['no']}차 {_lv(t['level'])}" for t in fl) + " 종가 도달"
+    chg_pct = (close / prev - 1) * 100 if prev else None
+    big = chg_pct is not None and chg_pct < -float(tc.get("big_drop_pct") or 3.0)
+    full = "t4" in fired
+    plan = ", ".join(f"{t['no']}차 {_lv(t['level'])} {t['share']}%" for t in tc["tranches"])
+    etf_now = []
+    for e in tc["etfs"]:
+        ec = etf_closes.get(e["code"])
+        etf_now.append(f"{e['code']} {e['name']} 종가 {_won(ec)} (코스피 대비 비율 {ec / close:.2f})" if ec
+                       else f"{e['code']} {e['name']} {day} 정규장 종가 없음")
+    hits = " ".join(f"{t['no']}차 {_lv(t['level'])} 도달, E 한도의 {t['share']}%. 환산가: {equiv_text(tc, t, day, close, etf_closes)}." for t in fl)
+    nxt = [t for t in tc["tranches"] if armed.get(t["key"], True) and t["level"] < close]
+    nxt_txt = (" 다음 차수 미리 걸 가격(오늘 비율): " + "; ".join(
+        f"{t['no']}차 {_lv(t['level'])} -> {equiv_text(tc, t, day, close, etf_closes)}" for t in nxt) + ".") if nxt else ""
+    todo = ("지정가는 미리 걸어 두는 방식. 위 환산가 근처에 그 차수 비중만 지정가로. 환산가는 오늘 종가 비율이라 내일 다시 계산해서 주문 가격 확인."
+            + nxt_txt)
+    if full:
+        todo += " 4차까지 다 찼으므로 E 한도 다 참. E안 안에서는 더 사지 않음."
+    if big:
+        todo += f" 오늘은 {chg_pct:+.2f}% 하락일: 시장가로 사지 않음, 걸어 둔 지정가만."
+    rearm = " ".join(f"{t['no']}차는 종가 {t['rearm']:,.2f} 이상에서 다시 무장." for t in fl)
+    body = "\n".join([
+        f"{stamp} | K200 | 코스피 E안 4분할",
+        f"이게 뭐 알림: 코스피 E안(위기관망) 한도 안 4분할 지정가 계획({plan})에서 정규장 종가가 차수 가격 이하로 마감한 차수를 1번 알립니다. 장중 저가와 NXT 는 안 셉니다. 매매 지시 아님.",
+        f"지금 결과/상태: {day} 코스피 종가 {close:,.2f}" + (f", 전일 대비 {chg_pct:+.2f}%" if chg_pct is not None else "") + ". "
+        + hits + " 같은 날 ETF: " + ", ".join(etf_now) + "." + (" E 한도 다 참(4차까지 합 100%)." if full else ""),
+        "지금 할 일: " + todo,
+        "나중에: " + rearm + " A안(70%) 확대는 코스피200 종가가 20일선 위 2일 연속이고 20일 변동성 40% 미만일 때만(기존 규칙, 이 알림은 판정하지 않음).",
+        "익절/줄일 때: E안 한도(코스피200 ETF 25%) 안에서만. 줄이는 판단은 기존 국면 규칙을 따름.",
+        "하지 말 것: 3% 넘게 빠진 날 시장가 매수, 신용/미수, E 한도 초과, 장중 가격으로 차수 판단, 이 알림만 보고 주문. 매매 지시 아님.",
+    ])
+    for ch in ("\u00b7", "\u2014"):
+        title, body = title.replace(ch, ", "), body.replace(ch, ", ")
+    return title, body, prio
+
+
+def etf_same_day(tc: dict, day: str, now: datetime) -> dict:
+    """{code: regular close on `day`} from krx_close (Daum days, 15:30 minute fallback). Missing -> None."""
+    import krx_close  # local import keeps selftest offline
+    out = {}
+    for e in tc["etfs"]:
+        try:
+            out[e["code"]] = dict(krx_close.session_closes(e["code"], 10, now)).get(day)
+        except Exception as exc:
+            print(f"k200 tranche {e['code']} close fetch failed: {type(exc).__name__}: {exc}")
+            out[e["code"]] = None
+    return out
+
+
+def run_tranches(cfg: dict, state: dict, now: datetime, stamp: str, dry: bool) -> None:
+    tc = cfg.get("kospi_tranches") or {}
+    if not tc.get("enabled"):
+        print("k200 tranche disabled")
+        return
+    tr = tc["tranches"]
+    ts = state.get("tranche") or {"armed": {}, "last_bar": None, "last_sent": None, "last_fail_day": None}
+    armed = {t["key"]: bool((ts.get("armed") or {}).get(t["key"], True)) for t in tr}
+    try:
+        basic = json.loads(fetch(tc["sources"]["basic"]))
+        rows = json.loads(fetch(tc["sources"]["price"]))
+        bars = confirmed_bars(rows, basic, now)
+        if not bars:
+            raise ValueError("확정 종가 없음")
+    except Exception as exc:
+        day = now.strftime("%Y-%m-%d")
+        title = "[K200] KOSPI 시세 조회 실패 | 4분할 판정 보류"
+        body = f"{stamp} | K200\n코스피 지수 조회 실패: {exc}. 다음 평일 15:40 에 다시 보고, 놓친 종가는 그때 날짜 순서대로 판정합니다. 이 실패로 매매하지 마세요."
+        print(title, "\n" + body)
+        if not dry and ts.get("last_fail_day") != day:
+            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 3, ["warning"], resolve_server(cfg.get("ntfy_server")))  # routed to cwally-ops
+            ts["last_fail_day"] = day
+            state["tranche"] = ts
+            save(state, dry)
+        return
+    last_day = (ts.get("last_bar") or {}).get("day") or ""
+    new = [(i, d, c) for i, (d, c) in enumerate(bars) if d > last_day]
+    print(f"{stamp} k200 tranche KOSPI status={basic.get('marketStatus')} last_bar={last_day} new={[(d, c) for _, d, c in new]} armed={armed}")
+    if not new:
+        print("k200 tranche no new confirmed KOSPI bar; silent")
+        return
+    fired_all: list[str] = []
+    for _i, d, c in new:
+        armed, fired = tranche_step(tr, armed, c)
+        print(f"  KOSPI bar {d} close {c:,.2f} -> fired {fired}")
+        fired_all += [k for k in fired if k not in fired_all]
+    i, day, close = new[-1]
+    prev = bars[i - 1][1] if i > 0 else (ts.get("last_bar") or {}).get("close")
+    if fired_all:
+        etf_closes = etf_same_day(tc, day, now)
+        title, body, prio = tranche_message(tc, fired_all, day, close, prev, etf_closes, armed, stamp)
+        print(f"{'DRY RUN would send' if dry else 'send'} (p{prio}): {title}\n{body}")
+        if not dry:
+            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, prio, ["chart_with_downwards_trend"], resolve_server(cfg.get("ntfy_server")))
+            ts["last_sent"] = {"at": stamp, "day": day, "fired": fired_all}
+    else:
+        print("k200 tranche silent; no new crossing")
+    ts.update({"armed": armed, "last_bar": {"day": day, "close": close}, "updated_at": stamp})
+    state["tranche"] = ts
+    save(state, dry)
+
+
+def tranche_selftest(cfg: dict) -> int:
+    tc = cfg["kospi_tranches"]
+    tr = tc["tranches"]
+    fails = 0
+
+    def chk(ok: bool, label: str) -> None:
+        nonlocal fails
+        fails += not ok
+        print("ok  " if ok else "FAIL", label)
+
+    want = {"t1": (5280.0, 3, 5438.40, 20), "t2": (5050.0, 4, 5201.50, 25), "t3": (4800.0, 4, 4944.00, 25), "t4": (4400.0, 5, 4532.00, 30)}
+    got = {t["key"]: (t["level"], t["priority"], t["rearm"], t["share"]) for t in tr}
+    chk(got == want, f"tranche config levels/priority/re-arm/share {got}")
+    chk(all(abs(t["rearm"] - round(t["level"] * 1.03, 2)) < 0.005 for t in tr), "re-arm = level x 1.03")
+    chk(sum(t["share"] for t in tr) == 100, "shares sum to 100% of the E limit")
+
+    def walk(label, seq, armed=None):
+        nonlocal fails
+        armed = dict(armed or {t["key"]: True for t in tr})
+        for n, (c, w) in enumerate(seq):
+            armed, f = tranche_step(tr, armed, c)
+            ok = f == w
+            fails += not ok
+            print(("ok  " if ok else "FAIL"), f"tranche {label}[{n}] close {c}: {f}" + ("" if ok else f" want {w}"))
+        return armed
+
+    walk("seed 11/5 5,383.80 fires nothing", [(5383.80, [])])
+    walk("5,280 exact fires 1차, 5,280.01 not", [(5280.01, []), (5280.0, ["t1"])])
+    walk("1차 once, re-arm only at 5,438.40", [(5270, ["t1"]), (5200, []), (5438.39, []), (5270, []), (5438.40, []), (5279, ["t1"])])
+    walk("gap day 5,000 fires 1차 + 2차 together", [(5000, ["t1", "t2"]), (4990, [])])
+    walk("crash to 4,390 fires all four", [(4390, ["t1", "t2", "t3", "t4"])])
+    walk("stepwise down", [(5100, ["t1"]), (5050, ["t2"]), (4801, []), (4800, ["t3"]), (4400.01, []), (4400, ["t4"])])
+    walk("4차 re-arm 4,532 then refire", [(4399, ["t1", "t2", "t3", "t4"]), (4531.99, []), (4532, []), (4400, ["t4"])])
+    chk(etf_equiv(84610, 5383.80, 5280) == 82975, f"069500 equiv 84,610 x 5,280 / 5,383.80 floored to 5 won = {etf_equiv(84610, 5383.80, 5280)}")
+    chk(etf_equiv(55490, 5383.80, 5280) == 54420, f"226490 equiv = {etf_equiv(55490, 5383.80, 5280)}")
+    stamp = "2026-11-06 15:40 KST"
+    closes = {"069500": 84610.0, "226490": 55490.0}
+    a, f = tranche_step(tr, {t["key"]: True for t in tr}, 5270.0)
+    t1, b1, p1 = tranche_message(tc, f, "2026-11-06", 5270.0, 5383.80, closes, a, stamp)
+    chk(t1 == "[K200] KOSPI 069500 226490 1차 5,280 종가 도달" and p1 == 3, f"1차 title/p3: {t1} p{p1}")
+    chk("E 한도의 20%" in b1 and "069500 약 " in b1 and "226490 약 " in b1 and "미리 걸어" in b1, "1차 body: share, ETF equivalents, pre-placed limit")
+    chk("시장가" in b1 and "신용/미수" in b1 and "매매 지시 아님" in b1, "1차 body: no market buy, no margin, not an order")
+    chk("하락일" not in b1 and "E 한도 다 참" not in b1, "1차 -2.11% day: no big-drop line, not full")
+    chk("다음 차수 미리 걸 가격" in b1 and "2차 5,050" in b1, "1차 body lists next tranche prices")
+    a, f = tranche_step(tr, {t["key"]: True for t in tr}, 4390.0)
+    t4, b4, p4 = tranche_message(tc, f, "2026-11-06", 4390.0, 4600.0, closes, a, stamp)
+    chk(p4 == 5 and t4.startswith("[K200] KOSPI 069500 226490 1차 5,280 + 2차 5,050 + 3차 4,800 + 4차 4,400"), f"gap to 4차: one message p5: {t4}")
+    chk("E 한도 다 참" in b4 and "하락일" in b4, "4차 body: E limit full + big-drop (-4.57%) line")
+    _t, b2, p2 = tranche_message(tc, ["t2"], "2026-11-06", 5040.0, 5300.0, {"069500": None, "226490": 55000.0}, {"t1": False, "t2": False, "t3": True, "t4": True}, stamp)
+    chk(p2 == 4 and "069500 환산 못 함" in b2 and "226490 약 " in b2, "2차 p4, missing ETF close -> no guessed price")
+    chk(not any(ch in t1 + b1 + t4 + b4 + b2 for ch in "\u00b7\u2014"), "no middle dot / em-dash")
+    chk(not any(w in t1 + t4 for w in ("조회 실패", "확인 불가", "미게시")), "signal titles avoid ops words (stay on cwally-port)")
+    now = datetime(2026, 11, 6, 15, 40, tzinfo=KST)
+    rows = [{"localTradedAt": "2026-11-06", "closePrice": "5,270.00"}, {"localTradedAt": "2026-11-05", "closePrice": "5,383.80"}]
+    st_bars = confirmed_bars(rows, {"marketStatus": "OPEN", "localTradedAt": "2026-11-06T15:40:00+09:00"}, now)
+    chk([d for d, _ in st_bars] == ["2026-11-05"], "KOSPI bar while market OPEN: today excluded")
+    seed = json.loads(STATE_PATH.read_text(encoding="utf-8")).get("tranche") or {}
+    ok_seed = (seed.get("last_bar") or {}).get("day") == "2026-11-05" and all((seed.get("armed") or {}).get(t["key"]) for t in tr)
+    new = [(d, c) for d, c in st_bars if d > (seed.get("last_bar") or {}).get("day", "")]
+    chk(ok_seed and new == [], "seed state: 11/5 bar already judged, all armed, first run cannot fire on 11/5")
+    return fails
+
+
 # ---------- selftest ----------
 
 def selftest() -> int:
@@ -269,6 +491,7 @@ def selftest() -> int:
     ok = confirmed_bars([{"localTradedAt": "2026-10-26", "closePrice": "-"}], {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26"}, now) == []
     fails += not ok
     print("ok  " if ok else "FAIL", "unparseable close ignored")
+    fails += tranche_selftest(cfg)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 
@@ -294,8 +517,20 @@ def main() -> int:
     if now.weekday() >= 5:
         print("k200 weekend silent")
         return 0
-    lines = cfg["lines"]
     state = load_json(STATE_PATH, {"armed": {}, "stop": False, "last_bar": None, "last_sent": None, "last_fail_day": None})
+    rc = 0
+    for part in (run_lines, run_tranches):  # a failure in one part does not skip the other
+        try:
+            part(cfg, state, now, stamp, dry)
+        except Exception:
+            traceback.print_exc()
+            print(f"k200 {part.__name__} failed")
+            rc = 1
+    return rc
+
+
+def run_lines(cfg: dict, state: dict, now: datetime, stamp: str, dry: bool) -> None:
+    lines = cfg["lines"]
     armed = {ln["key"]: bool((state.get("armed") or {}).get(ln["key"], True)) for ln in lines}
     stop = bool(state.get("stop"))
     try:
@@ -314,14 +549,14 @@ def main() -> int:
             state["last_fail_day"] = day
             state["updated_at"] = stamp
             save(state, dry)
-        return 0
+        return
     last_day = (state.get("last_bar") or {}).get("day") or ""
     prev_close = (state.get("last_bar") or {}).get("close")
     new_bars = [(d, c) for d, c in bars if d > last_day]
     print(f"{stamp} k200 status={basic.get('marketStatus')} last_bar={last_day} new={new_bars} armed={armed} stop={stop}")
     if not new_bars:
         print("k200 no new confirmed bar; silent")
-        return 0
+        return
     fired_all: list[str] = []
     for d, c in new_bars:
         armed, stop, fired = step(lines, armed, stop, c)
@@ -341,7 +576,6 @@ def main() -> int:
         print("k200 silent; no new crossing")
     state.update({"armed": armed, "stop": stop, "last_bar": {"day": day, "close": close}, "updated_at": stamp})
     save(state, dry)
-    return 0
 
 
 if __name__ == "__main__":

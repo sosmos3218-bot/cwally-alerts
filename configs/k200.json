@@ -1,7 +1,7 @@
 {
   "name": "k200",
   "title_prefix": "[K200]",
-  "display": "코스피200 분할 구간",
+  "display": "코스피200 분할 구간 + 코스피 E안 4분할 지정가",
   "created_at": "2026-10-26T12:00:00+09:00",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
@@ -39,5 +39,65 @@
   "info_note": "참고 정보(실패해도 판정과 발송은 진행): RISE 200(148020) 현재가, NAV, 거래대금(백만원 -> 억원), 코스피200 당일 거래대금(integration). 거래대금 20일 평균은 네이버가 일별 지수 거래대금 이력을 더 주지 않아(sise_index_day 410) 생략하고, 대신 차트 API 거래량 20일 평균 대비를 표시.",
   "explain": "코스피200 종가가 855 이하(1차 20%), 819~830(2차 30% 접근), 819 미만(2차 이후 중단), 905 초과(3차 50%)로 새로 들어갈 때만 오는 참고 알림입니다. 매매 권유 아님.",
   "ends_kst": "2026-12-31 15:40",
-  "ends_note": "평일 15:40 점검, 2026년 말 종료"
+  "ends_note": "평일 15:40 점검, 2026년 말 종료 (코스피 E안 4분할도 같이 끝남)",
+  "kospi_tranches": {
+    "enabled": true,
+    "approved": "2026-11-05 사용자 위임 t55u (네 소신껏)",
+    "plan_note": "11/5 종가 기준 분석: 코스피 종가 5,383.80, 지지 5,262.77, 5,042.99(3/31 저점), 10/23 저점 5,305.98, 2/6 저점 4,899.30, 갭 상단 4,382. 현재 E안(위기관망: 코스피200 ETF 25%, 현금 75%). 4차까지 다 차면 E 한도 다 참. A안(70%) 확대는 코스피200 종가 20일선 위 2일 연속 + 변동성 40% 미만일 때만(기존 루틴 규칙, 이 알림이 판정하지 않음).",
+    "index": "KOSPI",
+    "sources": {
+      "price": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=10&page=1",
+      "basic": "https://m.stock.naver.com/api/index/KOSPI/basic"
+    },
+    "source_note": "코스피 지수 종가는 kosdown/kosbrk 와 같은 네이버 지수 일별(지수는 KRX 정규장 산출, AGENTS.md KR regular-session close 예외). 오늘 봉은 basic marketStatus=CLOSE 이고 15:30 이후일 때만. ETF 종가는 scripts/krx_close.py(Daum days tradePrice, 실패 시 15:30 분봉), 같은 날 종가만 씀.",
+    "etfs": [
+      {
+        "code": "069500",
+        "name": "KODEX 200"
+      },
+      {
+        "code": "226490",
+        "name": "KODEX 코스피"
+      }
+    ],
+    "etf_tick": 5,
+    "big_drop_pct": 3.0,
+    "rearm_pct": 3.0,
+    "tranches": [
+      {
+        "key": "t1",
+        "no": 1,
+        "level": 5280.0,
+        "share": 20,
+        "priority": 3,
+        "rearm": 5438.4
+      },
+      {
+        "key": "t2",
+        "no": 2,
+        "level": 5050.0,
+        "share": 25,
+        "priority": 4,
+        "rearm": 5201.5
+      },
+      {
+        "key": "t3",
+        "no": 3,
+        "level": 4800.0,
+        "share": 25,
+        "priority": 4,
+        "rearm": 4944.0
+      },
+      {
+        "key": "t4",
+        "no": 4,
+        "level": 4400.0,
+        "share": 30,
+        "priority": 5,
+        "rearm": 4532.0
+      }
+    ],
+    "rule_note": "코스피 정규장 종가 <= 차수 가격이면 그 차수 1번(장중 저가는 안 셈). 발송 뒤 종가 >= 가격 x 1.03(5,438.40 / 5,201.50 / 4,944.00 / 4,532.00)에서 재무장. 같은 날 여러 차수는 한 메시지(우선순위는 가장 높은 값). ETF 환산가 = ETF 같은 날 종가 x 차수 가격 / 코스피 같은 날 종가, 5원 단위 내림. 비율은 매일 바뀜(60일 069500 15.57~16.00, 226490 10.20~10.36).",
+    "seed_note": "2026-11-05 seed: 네 차수 모두 무장, last_bar 11/5 종가 5,383.80 (모든 차수 위라서 첫 실행 오발송 없음, 다음 판정은 11/6 봉부터)."
+  }
 }
