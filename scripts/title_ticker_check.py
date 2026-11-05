@@ -9,7 +9,9 @@ The token sits after the bracket when the prefix itself is not the symbol.
 Skipped on purpose (allowlist): poly, polyinv, ghtrend, sgyn, gval, brief,
 burry, ops notices, and any alert whose ends_kst is already past.
 
-  python scripts/title_ticker_check.py
+  python scripts/title_ticker_check.py            # blocking check, then report-only audit
+  python scripts/title_ticker_check.py --strict   # audit violations also exit 1 (or TITLE_TICKER_STRICT=1)
+  python scripts/title_ticker_check.py --no-audit # blocking check only
 """
 from __future__ import annotations
 
@@ -276,17 +278,313 @@ def self_check() -> None:
     assert not has_ticker("[SEC-DIV] 배당 공시")
 
 
+# ---------------------------------------------------------------------------
+# Report-only audit (2026-11-05, t108u). Wider scope + strict ticker judgement.
+# Does not change the exit code unless --strict or TITLE_TICKER_STRICT=1.
+# ---------------------------------------------------------------------------
+import ast  # noqa: E402
+import os  # noqa: E402
+
+# Real tickers / index symbols that are not in a config ticker/code field.
+AUDIT_EXTRA = {
+    "ASML", "ISRG", "FTNT", "VYM", "SOXX", "SMH", "SOX", "K200", "KOSPI200", "DIA", "IWM",
+    "TNX", "DXY", "VIX", "WTI", "BRENT", "GOLD", "USDKRW", "JPYKRW",
+}
+# Nickname prefix -> real ticker. An alias never satisfies the rule by itself:
+# the real ticker must still appear in the title. Used only to say what is missing.
+TICKER_ALIASES = {"CRWVBOND": "CRWV", "PLTR25": "PLTR"}
+# Prefixes whose alert is market-wide (needs an index ticker such as KOSPI, SPY, ^TNX).
+MARKET_WIDE = {
+    "FLOW", "MARKET", "RATES", "TREND", "PORT", "PORTLIGHT", "POLY", "POLYINV", "GHTREND", "K200",
+    "MACRO-IR", "KR-RATE", "US-DIV", "US-BOND", "YENCARRY", "KRWFX", "BOK", "FR-DE", "KOSPI",
+    "KOS5500", "KOSUP", "KOSDOWN", "KOSBRK", "Q3FLOW", "MEMSWING", "MEMWATCH", "GVAL", "COUNCIL",
+}
+FREE_TEXT = {"BRIEF", "EARN"}
+TITLE_NAME_RE = re.compile(r"title|head|prefix|tag", re.I)
+SEND_FUNC_RE = re.compile(r"publish|send|post|notify|ntfy", re.I)
+PREFIX_RE = re.compile(r"^\[([^\]\n]{1,40})\]")
+PREFIX_INNER_OK = re.compile(r"^[A-Z0-9가-힣{][A-Za-z0-9가-힣\-_ {}.\[\]'\"()]*$")
+TEST_FUNC_RE = re.compile(r"^(selftest|self_test|_self_test|_selftest|self_check|audit_self_check|test_.*|_test.*|run_selftest.*)$")
+# DART filing title markers such as [정정] / [기재정정]: disclosure names, not ntfy titles.
+FILING_MARKERS = {"정정", "기재정정", "첨부정정", "발행조건확정", "첨부추가"}
+TICKER_PLACE_RE = re.compile(r"\{[^}]*(ticker|tk|tks|code|sym|symbol|stock_code)[^}]*\}", re.I)
+_SYMS: set | None = None
+
+
+def _audit_syms() -> set[str]:
+    global _SYMS
+    if _SYMS is None:
+        _SYMS = {s for s in (set(KNOWN) | AUDIT_EXTRA) if len(s) >= 2} | {"G"}  # Genpact (NYSE: G); other 1-letter tokens are too noisy
+    return _SYMS
+
+
+def strict_has_ticker(text: str) -> bool:
+    """Real ticker only: KRX code, config/extra symbol as a whole token, special symbol, or ticker placeholder."""
+    if KR_RE.search(text) or PLACE_RE.search(text) or TICKER_PLACE_RE.search(text):
+        return True
+    if any(s in text for s in SPECIALS):
+        return True
+    for sym in _audit_syms():
+        if re.search(r"(?<![A-Za-z0-9])" + re.escape(sym) + r"(?![A-Za-z0-9])", text):
+            return True
+    return False
+
+
+def _is_ops_title(t: str) -> bool:
+    try:
+        sys.path.insert(0, str(SCRIPTS))
+        from ntfy_util import OPS_TITLE_RE  # type: ignore
+    except Exception:  # noqa: BLE001
+        OPS_TITLE_RE = re.compile(r"조회\s?실패|수집\s?실패|파싱\s?실패|해석\s?불가|확인 불가|미게시")
+    return t.startswith("[OPS]") or bool(OPS_TITLE_RE.search(t))
+
+
+def _render(node, consts: dict) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        out = []
+        for v in node.values:
+            if isinstance(v, ast.Constant):
+                out.append(str(v.value))
+            elif isinstance(v, ast.FormattedValue):
+                inner = v.value
+                if isinstance(inner, ast.Name) and inner.id in consts:
+                    out.append(consts[inner.id])
+                else:
+                    out.append("{" + ast.unparse(inner) + "}")
+        return "".join(out)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        a, b = _render(node.left, consts), _render(node.right, consts)
+        if a is not None and b is not None:
+            return a + b
+        if a is not None:
+            return a + "{...}"
+    if isinstance(node, ast.Name) and node.id in consts:
+        return consts[node.id]
+    return None
+
+
+def _module_consts(tree) -> dict:
+    consts: dict = {}
+    for _ in range(2):
+        for n in tree.body:
+            if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+                r = _render(n.value, consts)
+                if r is not None and "{" not in r:
+                    consts[n.targets[0].id] = r
+    return consts
+
+
+def _title_like(t: str) -> bool:
+    m = PREFIX_RE.match(t)
+    if not m or not PREFIX_INNER_OK.match(m.group(1)) or m.group(1).strip() in FILING_MARKERS:
+        return False
+    rest = t[m.end():].strip()
+    return bool(rest)  # bare prefix constants (TAG = "[X]") are not titles
+
+
+def py_title_candidates(path: Path) -> list[tuple[int, str]]:
+    try:
+        src = path.read_text(encoding="utf-8")
+        tree = ast.parse(src)
+    except (OSError, SyntaxError, ValueError):
+        return []
+    consts = _module_consts(tree)
+    parents = {}
+    for p in ast.walk(tree):
+        for c in ast.iter_child_nodes(p):
+            parents[c] = p
+    out: list[tuple[int, str]] = []
+    seen_nodes: set = set()
+    for n in ast.walk(tree):
+        if not isinstance(n, (ast.Constant, ast.JoinedStr, ast.BinOp)):
+            continue
+        if n in seen_nodes or isinstance(parents.get(n), (ast.JoinedStr, ast.BinOp)):
+            continue
+        r = _render(n, consts)
+        if r is None or not _title_like(r):
+            continue
+        anc, in_test = parents.get(n), False
+        while anc is not None:
+            if isinstance(anc, (ast.FunctionDef, ast.AsyncFunctionDef)) and TEST_FUNC_RE.match(anc.name):
+                in_test = True
+                break
+            anc = parents.get(anc)
+        if in_test:
+            continue  # selftest fixtures are not sent titles
+        p = parents.get(n)
+        flows = False
+        if isinstance(p, ast.Assign) and any(isinstance(t, ast.Name) and TITLE_NAME_RE.search(t.id) for t in p.targets):
+            flows = True
+        elif isinstance(p, ast.keyword) and p.arg and TITLE_NAME_RE.search(p.arg):
+            flows = True
+        elif isinstance(p, ast.Call):
+            fn = ast.unparse(p.func)
+            if SEND_FUNC_RE.search(fn) or fn.endswith("append"):
+                flows = True
+        elif isinstance(p, ast.Tuple) and p.elts and p.elts[0] is n:
+            flows = True  # (title, body, priority) alert tuples
+        elif isinstance(p, ast.Dict):
+            flows = True  # dict of titles
+        elif isinstance(p, (ast.Return, ast.IfExp)):
+            flows = True
+        if flows:
+            out.append((n.lineno, r))
+    return out
+
+
+MJS_RE = re.compile(r"""(?:`|'|")(\[[^\]\n]{1,40}\][^`'"\n]*)""")
+
+
+def mjs_title_candidates(path: Path) -> list[tuple[int, str]]:
+    out = []
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        for m in MJS_RE.finditer(line):
+            t = re.sub(r"\$\{([^}]*)\}", r"{\1}", m.group(1))
+            if _title_like(t):
+                out.append((i, t))
+    return out
+
+
+def _stem_of(path: Path) -> str:
+    n = path.name
+    for suf in ("_monitor.py", "_impl.py", ".py", ".mjs"):
+        if n.endswith(suf):
+            return n[: -len(suf)]
+    return path.stem
+
+
+def classify(title: str) -> str | None:
+    """None = passes. Otherwise a reason/category."""
+    if _is_ops_title(title):
+        return "excluded ops"
+    if strict_has_ticker(title):
+        return None
+    pre = PREFIX_RE.match(title).group(1) if PREFIX_RE.match(title) else ""
+    if pre.startswith("{"):
+        return "dynamic, not checkable"
+    rest = title[len(pre) + 2:].strip() if pre else title
+    if pre in FREE_TEXT and re.fullmatch(r"(\{[^}]*\}[\s|:()/0-9-]*)+", rest or "{x}"):
+        return "dynamic, not checkable"
+    if pre in MARKET_WIDE:
+        return "market-wide: no index ticker"
+    if pre in FREE_TEXT:
+        return "free-text: no ticker"
+    alias = TICKER_ALIASES.get(pre)
+    return f"stock nickname: no ticker{f' (alias of {alias}, real ticker must appear)' if alias else ''}"
+
+
+def audit_files() -> list[Path]:
+    files = sorted(set(SCRIPTS.rglob("*.py")) | set(SCRIPTS.rglob("*.mjs")))
+    tm = ROOT / "trend_monitor"
+    if tm.is_dir():
+        files += sorted(tm.rglob("*.py"))
+    skip = {"title_ticker_check.py", "ntfy_util.py"}
+    return [f for f in files if f.name not in skip and "fixtures" not in f.parts and not f.name.startswith("test_")]
+
+
+def audit(now: datetime) -> dict:
+    res: dict = {"static": [], "excluded": [], "archive": [], "archive_body_only": [], "archive_excluded": 0}
+    for path in audit_files():
+        stem = _stem_of(path)
+        cfg = load_cfg(stem)
+        if cfg is not None and ended(cfg, now):
+            continue
+        cands = mjs_title_candidates(path) if path.suffix == ".mjs" else py_title_candidates(path)
+        for line, t in cands:
+            why = classify(t)
+            rel = path.relative_to(ROOT)
+            if why == "excluded ops":
+                res["excluded"].append(f"{rel}:{line}: {t[:120]}")
+            elif why:
+                res["static"].append((f"{rel}:{line}", t[:140], why))
+    ob = ROOT / "outbox"
+    for path in sorted(ob.glob("*.json")) if ob.is_dir() else []:
+        try:
+            t = json.loads(path.read_text(encoding="utf-8")).get("title") or ""
+        except (OSError, json.JSONDecodeError, AttributeError):
+            continue
+        why = classify(t) if t else None
+        if why == "excluded ops":
+            res["excluded"].append(f"{path.relative_to(ROOT)}: {t[:120]}")
+        elif why:
+            res["static"].append((str(path.relative_to(ROOT)), t[:140], why))
+    arch = ROOT / "state" / "archive.json"
+    try:
+        items = json.loads(arch.read_text(encoding="utf-8")).get("items") or []
+    except (OSError, json.JSONDecodeError, AttributeError):
+        items = []
+    for it in items:
+        t = it.get("title") or ""
+        why = classify(t)
+        if why is None:
+            continue
+        if why == "excluded ops" or it.get("topic") == "cwally-ops":
+            res["archive_excluded"] += 1
+            continue
+        first = (it.get("message") or "").split("\n")[0]
+        when = datetime.fromtimestamp(int(it.get("time") or 0), KST).strftime("%m-%d %H:%M")
+        row = (f"archive {when} {it.get('topic')}", t[:140], why)
+        if strict_has_ticker(first):
+            res["archive_body_only"].append((row[0], row[1], "ticker only in body first line"))
+        else:
+            res["archive"].append(row)
+    return res
+
+
+def print_audit(res: dict) -> int:
+    from collections import Counter
+    st = res["static"]
+    cats = Counter(r[2].split(" (")[0] for r in st)
+    n = len(st) + len(res["archive"])
+    print(f"title ticker audit (report-only): {n} violations "
+          f"(static {len(st)}, sent {len(res['archive'])}; body-first-line only {len(res['archive_body_only'])}; "
+          f"excluded ops {len(res['excluded']) + res['archive_excluded']})")
+    for k, v in sorted(cats.items()):
+        print(f"  category {k}: {v}")
+    for loc, t, why in st:
+        print(f"{loc}: {t} | {why}")
+    for loc, t, why in res["archive"] + res["archive_body_only"]:
+        print(f"{loc}: {t} | {why}")
+    return n
+
+
+def audit_self_check() -> None:
+    assert classify("[ZZTEST] 아무 종목 없음 | 확인").startswith("stock nickname")
+    assert classify("[GVAL] 일상 | 유지").startswith("market-wide")
+    assert classify("[HCE] 주간 체크 | 이탈") .startswith("stock nickname")
+    assert classify("[SEMIUS] 005930 000660 META 하향") is None
+    assert classify("[ASML] $1,563 이하") is None
+    assert classify("[FLOW] KOSPI 수급 평온") is None
+    assert classify("[OPS] 워크플로 실패") == "excluded ops"
+    assert classify("[XBI] 종가 조회 실패 | 판정 못 함") == "excluded ops"
+    assert classify("[BRIEF] {title}") == "dynamic, not checkable"
+    assert classify("[CRWVBOND] 회사채 78.8").endswith("real ticker must appear)")
+    assert classify("[ADDSTOP] {ticker} 점검") is None
+    assert classify("[GENPACT] G 대기") is None
+
+
 def main() -> int:
     self_check()
     now = datetime.now(KST)
     problems = scan(now)
+    strict = "--strict" in sys.argv[1:] or os.environ.get("TITLE_TICKER_STRICT") == "1"
+    rc = 0
     if problems:
         print(f"title ticker check FAIL ({len(problems)})")
         for row in problems:
             print(row)
-        return 1
-    print(f"title ticker check PASS ({now:%Y-%m-%d %H:%M KST})")
-    return 0
+        rc = 1
+    else:
+        print(f"title ticker check PASS ({now:%Y-%m-%d %H:%M KST})")
+    if "--no-audit" not in sys.argv[1:]:
+        audit_self_check()
+        n = print_audit(audit(now))
+        if strict and n:
+            print(f"title ticker audit STRICT: {n} violations -> exit 1")
+            rc = 1
+    return rc
 
 
 if __name__ == "__main__":
