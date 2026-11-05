@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""[FIG-PX] Figma (FIG, NYSE) close-based zones (approved in chat 2026-10-26).
+"""[FIG-PX] Figma (FIG, NYSE) close-based zones (approved in chat 2026-10-26; zones retuned 2026-11-05 after Q3 2026: bear 16.60->17.10, base 28.40->29.10, buy 22.00 kept).
 
   - close <= 22.00 -> '매수 검토 구간 진입'      (priority 4)
-  - close <= 16.60 -> '약세 시나리오 가치 도달'  (priority 5)
-  - close >= 28.40 -> '기본 시나리오 가치 도달'  (priority 3)
+  - close <= 17.10 -> '약세 시나리오 가치 도달'  (priority 5)
+  - close >= 29.10 -> '기본 시나리오 가치 도달'  (priority 3)
 
 Each zone fires once when a completed close ENTERS it. It re-arms (quietly) only after a close
 leaves the zone (le: close above the line, ge: close below the line). No buffer.
@@ -108,11 +108,11 @@ def step(levels: list[dict], armed: dict | None, close: float) -> tuple[dict, li
 
 
 def lines_text(cfg: dict) -> str:
-    return "매수 검토 22달러 이하, 약세 시나리오 16.6달러 이하, 기본 시나리오 가치 28.4달러 이상"
+    return "매수 검토 22달러 이하, 약세 시나리오 17.1달러 이하, 기본 시나리오 가치 29.1달러 이상"
 
 
 STOP_TODO = ("추가매수 보류, NDR(순달러유지율), 매출총이익률, SBC(주식보상비용)부터 재확인해 투자 논리 점검. "
-             "약세 시나리오 값($16.6)까지 내려왔습니다. 오늘 일괄 매수 금지.")
+             "약세 시나리오 값($17.1)까지 내려왔습니다. 오늘 일괄 매수 금지.")
 BUY_WORDS = ("분할매수", "나눠서", "추가 매수 전에", "분할매수 검토")
 
 
@@ -120,7 +120,7 @@ def message(cfg: dict, fired: list[str], close: float, day: str, prev_close: flo
     lv = {x["key"]: x for x in cfg["levels"]}
     top = max((lv[k] for k in fired), key=lambda x: x["priority"])
     labels = " + ".join(lv[k]["label"] for k in fired)
-    if "bear166" in fired:
+    if "bear171" in fired:
         act = "매수 논리 재점검"
         todo = STOP_TODO
     elif "buy22" in fired:
@@ -128,17 +128,17 @@ def message(cfg: dict, fired: list[str], close: float, day: str, prev_close: flo
         todo = "$20~22 분할매수 검토 구간 (사업 전망 유지 전제). 실적 악화로 인한 하락이면 기준 재계산 필요. 계획 금액을 나눠서만 검토."
     else:
         act = "비중 점검, 추격 금지"
-        todo = "기본 시나리오 12개월 가치 $28.4에 도달했습니다. 추가 매수보다 비중과 목표 재점검."
+        todo = "기본 시나리오 12개월 가치 $29.1에 도달했습니다. 추가 매수보다 비중과 목표 재점검."
     title = f"[FIG-PX] 종가 {close:.2f}달러 {top['label']} | {act}"
     chg = f", 전 거래일 대비 {(close / prev_close - 1) * 100:+.1f}%" if prev_close else ""
-    notes = " ".join(lv[k]["note"] for k in fired if not ("bear166" in fired and k == "buy22"))  # no buy note next to the bear line
+    notes = " ".join(lv[k]["note"] for k in fired if not ("bear171" in fired and k == "buy22"))  # no buy note next to the bear line
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | FIG | 피그마",
         "이게 뭐 알림: " + cfg["explain"],
         f"지금 결과/상태: {labels}. 미국 종가 {close:.2f}달러({day} 미 동부{chg}). {notes}",
         "지금 할 일: " + todo,
         f"나중에: 같은 구간은 종가가 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. 선: {lines_text(cfg)}.",
-        "익절/줄일 때: 28.4달러 이상은 기본 시나리오 가치 도달이라 추가 매수보다 일부 정리와 비중 점검이 먼저입니다.",
+        "익절/줄일 때: 29.1달러 이상은 기본 시나리오 가치 도달이라 추가 매수보다 일부 정리와 비중 점검이 먼저입니다.",
         "하지 말 것: 장중 급락 추격 물타기, 계획 금액 초과, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님.",
     ]
     return title, "\n".join(lines), int(top["priority"])
@@ -150,12 +150,12 @@ def confirm_message(cfg: dict, close: float | None, day: str | None) -> tuple[st
     lines = [
         "[테스트] FIG 알림 설정 완료",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: FIG 현재 종가 {px}. 선 3개: 22달러 이하 매수 검토(우선순위 4), 16.6달러 이하 약세 시나리오(5), 28.4달러 이상 기본 시나리오 가치(3).",
+        f"지금 결과/상태: FIG 현재 종가 {px}. 선 3개: 22달러 이하 매수 검토(우선순위 4), 17.1달러 이하 약세 시나리오(5), 29.1달러 이상 기본 시나리오 가치(3).",
         "지금 할 일: 없음. 평일 09:00 KST morning 에서 전일 미국 종가로 판정하고, 구간에 새로 들어갈 때만 보냅니다. 실적 전날(11/4 09:00)과 체크리스트(11/5 08:00)는 [FIG-EARN] 으로 옵니다.",
         "나중에: 같은 구간은 종가가 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. "
         f"{cfg['sec']['start_date_kst'][5:].replace('-', '/')}부터 SEC 공시 감시 추가: 중요 8-K(재작성, 감사인 변경, 상장 통지, CEO/CFO/CTO 변동 등)와 S-1/S-3/424B, 내부자 장내 매수는 우선순위 4, "
         f"8-K 8.01, 13D, 신고 1건 {cfg['sec']['insider_sale_usd'] / 1e6:,.0f}백만 달러 초과 내부자 매도와 CEO의 10b5-1 계획 밖 매도는 3, 10-K 는 2. Form 144, S-8, 일반 Form 4 는 보내지 않습니다.",
-        "익절/줄일 때: 28.4달러 이상 알림이 오면 비중 점검.",
+        "익절/줄일 때: 29.1달러 이상 알림이 오면 비중 점검.",
         "하지 말 것: 이 설치 확인을 매수/매도 신호로 읽기.",
     ]
     return title, "\n".join(lines)
@@ -380,8 +380,8 @@ def sec_message(cfg: dict, hits: list[dict]) -> tuple[str, str, int]:
         "이게 뭐 알림: 피그마(FIG) SEC 공시 중 판단에 중요한 종류(중요 8-K, 증권 발행, 13D, 대규모 내부자 거래, 10-K)만 골라 보내는 [FIG-PX] 공시 감시입니다. 투자 권유 아님.",
         f"지금 결과/상태: 새 공시 {len(hits)}건. {state}",
         "지금 할 일: " + todo,
-        "나중에: 같은 접수번호는 다시 오지 않습니다. 종가 구간 알림(22, 16.6, 28.4달러)은 따로 계속 봅니다.",
-        "익절/줄일 때: 재작성, 감사인 변경, 상장 관련 통지, 대규모 내부자 매도가 겹치고 종가가 16.6달러 아래면 비중 축소 검토.",
+        "나중에: 같은 접수번호는 다시 오지 않습니다. 종가 구간 알림(22, 17.1, 29.1달러)은 따로 계속 봅니다.",
+        "익절/줄일 때: 재작성, 감사인 변경, 상장 관련 통지, 대규모 내부자 매도가 겹치고 종가가 17.1달러 아래면 비중 축소 검토.",
         "하지 말 것: 공시 제목만 보고 바로 주문, 장 시작 직후 추격, 신용/미수. 투자 권유 아님.",
     ]
     return title, "\n".join(lines), prio
@@ -550,29 +550,29 @@ def selftest() -> int:
         fails += not ok
         print(("ok  " if ok else "FAIL"), label, got, "" if ok else f"want {want}")
 
-    A = {"buy22": True, "bear166": True, "base284": True}
+    A = {"buy22": True, "bear171": True, "base291": True}
     check("init 24.64", step(L, None, 24.64), (A, []))
-    check("init 21 no send", step(L, None, 21.0), ({"buy22": False, "bear166": True, "base284": True}, []))
+    check("init 21 no send", step(L, None, 21.0), ({"buy22": False, "bear171": True, "base291": True}, []))
     check("init 30 no send", step(L, None, 30.0)[1], [])
     check("22.01 nothing", step(L, A, 22.01)[1], [])
     check("22.00 buy (<=)", step(L, A, 22.0)[1], ["buy22"])
-    check("16.60 gap buy+bear", step(L, A, 16.6)[1], ["buy22", "bear166"])
-    check("28.39 nothing", step(L, A, 28.39)[1], [])
-    check("28.40 base (>=)", step(L, A, 28.4)[1], ["base284"])
+    check("17.10 gap buy+bear", step(L, A, 17.1)[1], ["buy22", "bear171"])
+    check("29.09 nothing", step(L, A, 29.09)[1], [])
+    check("29.10 base (>=)", step(L, A, 29.1)[1], ["base291"])
     walk = [(21.5, ["buy22"]), (21.0, []), (22.0, []), (22.01, []), (21.9, ["buy22"]),
-            (16.5, ["bear166"]), (16.0, []), (16.61, []), (16.6, ["bear166"]), (25.0, []),
-            (28.5, ["base284"]), (29.0, []), (28.39, []), (28.4, ["base284"]), (20.0, ["buy22"])]
+            (17.0, ["bear171"]), (16.5, []), (17.11, []), (17.1, ["bear171"]), (25.0, []),
+            (29.2, ["base291"]), (29.5, []), (29.09, []), (29.1, ["base291"]), (20.0, ["buy22"])]
     st = dict(A)
     for i, (c, want) in enumerate(walk):
         st, f = step(L, st, c)
         check(f"walk{i} {c}", f, want)
-    for fired in (["buy22"], ["buy22", "bear166"], ["base284"]):
-        t, body, p = message(cfg, fired, 16.5 if "bear166" in fired else 21.0, "2026-11-05", 23.0)
+    for fired in (["buy22"], ["buy22", "bear171"], ["base291"]):
+        t, body, p = message(cfg, fired, 16.5 if "bear171" in fired else 21.0, "2026-11-05", 23.0)
         check(f"no middle dot / em-dash {fired}", any(ch in t + body for ch in "\u00b7\u2014"), False)
         print(p, t)
     t, body = confirm_message(cfg, 24.64, "2026-10-23")
     check("confirm no middle dot / em-dash", any(ch in t + body for ch in "\u00b7\u2014"), False)
-    for fired in (["bear166"], ["buy22", "bear166"]):
+    for fired in (["bear171"], ["buy22", "bear171"]):
         body = message(cfg, fired, 16.5, "2026-11-05", 23.0)[1]
         todo = next(x for x in body.split("\n") if x.startswith("지금 할 일:"))
         state_ln = next(x for x in body.split("\n") if x.startswith("지금 결과/상태:"))
@@ -580,7 +580,7 @@ def selftest() -> int:
         check(f"bear {fired}: no buy advice in todo/status", [w for w in BUY_WORDS if w in todo + state_ln], [])
     body = message(cfg, ["buy22"], 21.0, "2026-11-05", 23.0)[1]
     check("pure buy22 todo unchanged", "지금 할 일: $20~22 분할매수 검토 구간 (사업 전망 유지 전제)." in body, True)
-    check("priorities", message(cfg, ["buy22", "bear166"], 16.5, "d", None)[2], 5)
+    check("priorities", message(cfg, ["buy22", "bear171"], 16.5, "d", None)[2], 5)
     sec_selftest(cfg, check)  # counts through check()
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
@@ -674,7 +674,7 @@ def price_part(cfg: dict, st: dict, now: datetime, mode: str, dry: bool) -> None
         if dry:
             print(f"DRY RUN would send (p{prio}): {title}\n{msg}")
         else:
-            tag = "chart_with_upwards_trend" if fired_all == ["base284"] else "chart_with_downwards_trend"
+            tag = "chart_with_upwards_trend" if fired_all == ["base291"] else "chart_with_downwards_trend"
             publish(resolve_topic("port"), title, msg, prio, tags=[tag])
     else:
         print("no zone entry; silent")
