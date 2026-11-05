@@ -111,6 +111,40 @@ ALWAYS_SEND_TITLE_RE = re.compile(r"^\s*\[OPS\]|워크플로\s?(실패|검사 �
 _PREFIX_RE = re.compile(r"^\s*(\[[^\]]+\])")
 LAST_PUBLISH: dict = {}
 
+# selftest 안전장치 (2026-11-05, t102u): 'selftest' 인자로 실행됐는데 실행 스크립트(argv[0] 또는 __main__ 파일,
+# runpy 래퍼면 실제 impl) 소스에 'selftest' 처리가 없으면, 이 모듈을 import 하는 순간 발송과 저장 전에 멈춘다 (exit 2).
+# 자체 selftest 모드가 있는 스크립트는 소스에 'selftest' 문자열이 있으므로 그대로 동작한다.
+SELFTEST_STOP_MSG = "selftest 모드 없음: 발송/저장 중단"
+
+
+def _script_has_selftest() -> bool:
+    cands = [sys.argv[0] if sys.argv else None, getattr(sys.modules.get("__main__"), "__file__", None)]
+    for c in cands:
+        try:
+            if c and Path(c).is_file() and "selftest" in Path(c).read_text(encoding="utf-8", errors="ignore"):
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def selftest_blocked() -> bool:
+    """True when argv asks for selftest but the running script has no selftest mode of its own."""
+    if "selftest" not in [a.lower() for a in sys.argv[1:]]:
+        return False
+    if os.environ.get("CWALLY_SELFTEST_OK") == "1":
+        return False
+    return not _script_has_selftest()
+
+
+def _selftest_guard() -> None:
+    if selftest_blocked():
+        print(f"{SELFTEST_STOP_MSG} ({Path(sys.argv[0]).name if sys.argv else '?'})", file=sys.stderr)
+        raise SystemExit(2)
+
+
+_selftest_guard()
+
 
 def _now_kst() -> datetime:
     return datetime.now(KST)
@@ -348,6 +382,11 @@ def publish(
     config: dict | None = None,
     append_end: bool = True,
 ) -> None:
+    if selftest_blocked():  # lazy import 뒤 호출 대비, import 시점 가드와 같은 조건
+        print(f"{SELFTEST_STOP_MSG}: publish refused", file=sys.stderr)
+        LAST_PUBLISH.clear()
+        LAST_PUBLISH.update({"sent": False, "reason": "selftest_guard", "title": title})
+        raise SystemExit(2)
     topic = route_topic(topic, title)
     skip = ends_skip_reason(topic, title, config_name=config_name, config=config)
     if skip:
@@ -564,6 +603,19 @@ def _self_test() -> int:
         LAST_PUBLISH.clear()
         LAST_PUBLISH.update(keep_lp)
         failures += _dup_guard_selftest(check)
+        # selftest guard: script without its own selftest stops at import (exit 2), one with it runs
+        import subprocess
+        tmpd = Path(tempfile.mkdtemp())
+        here = str(Path(__file__).resolve().parent)
+        (tmpd / "plain_monitor.py").write_text(f"import sys; sys.path.insert(0, {here!r}); import ntfy_util; print('RAN')\n", encoding="utf-8")
+        (tmpd / "own_monitor.py").write_text(f"import sys; sys.path.insert(0, {here!r}); import ntfy_util  # selftest mode below\nprint('RAN')\n", encoding="utf-8")
+        env0 = {k: v for k, v in os.environ.items() if k != "CWALLY_SELFTEST_OK"}
+        r1 = subprocess.run([sys.executable, str(tmpd / "plain_monitor.py"), "selftest"], capture_output=True, text=True, env=env0)
+        check("guard stops script without selftest", r1.returncode == 2 and "RAN" not in r1.stdout and SELFTEST_STOP_MSG in r1.stderr, True)
+        r2 = subprocess.run([sys.executable, str(tmpd / "own_monitor.py"), "selftest"], capture_output=True, text=True, env=env0)
+        check("guard lets own-selftest script run", r2.returncode == 0 and "RAN" in r2.stdout, True)
+        r3 = subprocess.run([sys.executable, str(tmpd / "plain_monitor.py"), "auto"], capture_output=True, text=True, env=env0)
+        check("guard ignores auto", r3.returncode == 0 and "RAN" in r3.stdout, True)
     finally:
         CONFIGS_DIR, sys.argv = old_dir, old_argv
     print("SELF-TEST " + ("PASS" if not failures else f"FAIL ({failures})"))
