@@ -1,0 +1,43 @@
+{
+  "name": "dszone",
+  "title_prefix": "[000150]",
+  "code": "000150",
+  "name_kr": "두산",
+  "created_at": "2026-11-05T19:00:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-05 (pt69u): 11/9 두산 3분기 실적이 나오면 전자BG 영업이익과 이익률로 75~80만원 구간을 유지, 조정, 보류 중 하나로 판정",
+  "holding": "미보유 전제, 첫 분할매수 구간 75~80만원 검토 중",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "doosan 스텝: 평일 09:00 morning, 10/26~11/16 평일 17:05 one-shot (doosan_monitor 다음)",
+  "schedule_note": "새 cron 없음. 11/9 16:00 실적 공개 전에는 읽지 않음. 11/9 17:05 one-shot 이 첫 판정 시점, 놓치면 11/10 09:00 부터 11/16 17:05 까지 재시도. dssotp(15:40)는 11/9 에는 공개 전이라 그 SOTP 메시지와 합치지 않고 따로 보냄.",
+  "release_kst": "2026-11-09 16:00",
+  "last_run_kst": "2026-11-16 17:00",
+  "qlabel": "26.3Q",
+  "ir_row_title": "3/4분기 ㈜두산 경영실적",
+  "dart_cik": "00117212",
+  "h1_2026": {"rev": 12933.52, "op": 3869.13, "src": "반기보고서 (2026.06) 20260814004047 부문별 정보 전자BG, 억원"},
+  "non_ebg_op_2q26": 107,
+  "non_ebg_note": "2Q26 IR 자체사업 영업이익 2,120억 - 전자BG 2,013억(반기 3,869억 - 1Q 1,856억). 1Q26 은 22억. IR 에 전자BG 영업이익이 없을 때만 추정에 씀.",
+  "ref": {"op_2q26": 2013, "opm_2q26": 29.8, "cons_op": 2039, "cons_opm": 29.2},
+  "shares_circulating": 13522969,
+  "rules": {
+    "zone": [75, 80],
+    "op_keep": 2000,
+    "opm_keep": 28.0,
+    "op_hold": 1700,
+    "opm_hold": 25.0,
+    "shift_per_1000_low_man": 6,
+    "peer_mult": [12, 18],
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "유지: 전자BG 영업이익 2,000억 이상 + OPM 28% 이상 + 증설 지연 문구 없음 + 인수금융 불리 문구 없음(p3). 조정: 1,700~2,000억 또는 OPM 25~28%(p4), 이동폭 = 부족분 x 4(연환산) / 1,000억 x 6만(약 8.5배), OPM 부족은 (28% - OPM) x 매출 을 영업이익 부족분으로 환산해 큰 쪽 사용, 1만 단위 반올림. 피어 배수 EV/EBITDA 12~18배(유통 13,522,969주, 1,000억당 약 8.9~13.3만)를 보수 하단 구간으로 같이 표시. 보류: 1,700억 미만 또는 OPM 25% 미만 또는 증설 지연(연기|지연|재검토 가 증설/CAPA/투자 근처) 또는 인수금융 불리(금리 상향|추가 담보|보증|조건 불리)(p4). 가격 위치는 KRX 정규장 종가 기준.",
+  "sources": {
+    "ir": "https://www.doosan.com/kr/ir/ir-report/ 의 '3/4분기 ㈜두산 경영실적' 국문 PDF (pdftotext -layout, 차트 '26.3Q 열)",
+    "dart": "DART 분기보고서 (2026.09) 21. 부문별 정보 (연결) 전자BG, 9개월 - 상반기",
+    "notice": "naver_api.notices 000150 연결재무제표기준영업(잠정)실적",
+    "close": "scripts/krx_close.py 정규장 종가"
+  },
+  "ends_kst": "2026-11-16 23:59",
+  "ends_note": "11/16 까지(3분기 보고서 법정 기한 다음 영업일)"
+}

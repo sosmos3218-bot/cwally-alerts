@@ -1449,6 +1449,10 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: |
           if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/doosan_monitor.py slot; else python scripts/doosan_monitor.py auto; fi
+          # [000150] 3Q26 전자BG 75~80만 구간 판정 (approved in chat 2026-11-05 pt69u). same step, no new cron. silent before 11/9 16:00, ends 11/16.
+          D=$(TZ=Asia/Seoul date +%Y%m%d)
+          if [ "$D" -ge 20261109 ] && [ "$D" -le 20261116 ] && ! command -v pdftotext >/dev/null; then sudo apt-get install -y -qq poppler-utils >/dev/null 2>&1 || echo "poppler install failed; dszone falls back to DART/manual notice"; fi
+          python scripts/dszone_monitor.py auto || echo "::error::dszone_monitor failed"
       - name: Run jyp
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'jyp'
         env:
