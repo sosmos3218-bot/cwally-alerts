@@ -285,10 +285,10 @@ on:
         type: choice
         options: [dry, test, auto]
       steel_mode:
-        description: weekly | quarterly | event
+        description: weekly | quarterly | event | dry (event logic, no ntfy, no state)
         default: weekly
         type: choice
-        options: [weekly, quarterly, event]
+        options: [weekly, quarterly, event, dry]
       alux_mode:
         description: weekly | event
         default: weekly

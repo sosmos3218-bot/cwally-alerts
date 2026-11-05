@@ -18,16 +18,28 @@
     "note": "매 실행 WiseReport 헤더의 BPS(최근 분기)를 읽고, 못 읽거나 config 값에서 30% 넘게 벗어나면 config 값을 쓰고 cwally-ops 에 주 1번 알림. 분기 실적 뒤 basis 를 수동으로 고치면 메시지 기준일이 맞춰짐. 자동 값이 config 와 다르면 메시지에 'WiseReport 최근 분기(자동)' 로 표시."
   },
   "lines": [
-    {"key": "low", "op": "le", "pbr": 0.15, "rearm_pbr": 0.16, "priority": 4,
-     "title": "[004020] 현대제철 PBR 0.15배 도달 (004020)",
-     "label": "PBR 0.15배 이하(저평가 심화)",
-     "context": "4Q 별도 영업이익과 주주환원 확인 전에는 분할 관망 기준 유지.",
-     "later": "PBR 0.16배 이상으로 돌아와야 이 선이 다시 울립니다. 반대쪽 0.25배 선은 따로 돕니다."},
-    {"key": "high", "op": "ge", "pbr": 0.25, "rearm_pbr": 0.24, "priority": 4,
-     "title": "[004020] 현대제철 PBR 0.25배 도달 (004020)",
-     "label": "PBR 0.25배 이상(저PBR 평균 회복, KRX 저PBR 평균 약 0.25배 수준)",
-     "context": "KRX 저PBR 평균 수준 회복, 이익 기준 PER 약 39배(2026E EPS 742원)라 추격 주의.",
-     "later": "PBR 0.24배 이하로 내려와야 이 선이 다시 울립니다. 반대쪽 0.15배 선은 따로 돕니다."}
+    {
+      "key": "low",
+      "op": "le",
+      "pbr": 0.15,
+      "rearm_pbr": 0.16,
+      "priority": 4,
+      "title": "[004020] 현대제철 PBR 0.15배 도달 (004020)",
+      "label": "PBR 0.15배 이하(저평가 심화)",
+      "context": "이 가격은 이미 [STEEL] 현대제철 재검토선 25,000원(비중 줄일 재검토) 아래입니다. 판단은 [STEEL] 25,000원 재검토 결정을 따르세요. PBR 선은 가치평가 참고선이지 따로 사라는 신호가 아닙니다.",
+      "later": "PBR 0.16배 이상으로 돌아와야 이 선이 다시 울립니다. 반대쪽 0.25배 선은 따로 돕니다."
+    },
+    {
+      "key": "high",
+      "op": "ge",
+      "pbr": 0.25,
+      "rearm_pbr": 0.24,
+      "priority": 4,
+      "title": "[004020] 현대제철 PBR 0.25배 도달 (004020)",
+      "label": "PBR 0.25배 이상(저PBR 평균 회복, KRX 저PBR 평균 약 0.25배 수준)",
+      "context": "KRX 저PBR 평균 수준 회복, 이익 기준 PER 약 39배(2026E EPS 742원)라 추격 주의. [STEEL] 현대제철 1차 익절 40,000원은 별도로 돕니다.",
+      "later": "PBR 0.24배 이하로 내려와야 이 선이 다시 울립니다. 반대쪽 0.15배 선은 따로 돕니다."
+    }
   ],
   "eps_2026e": 742,
   "overlap_note": "[STEEL] steel 바스켓(configs/steel.json HYUNDAI 가격 밴드 buy/review 25,000/target 40,000)과 [STEEL] hsteelq3(3분기 잠정실적)는 가격 밴드와 실적 이벤트만 봄. PBR 기준선은 이 알림만.",

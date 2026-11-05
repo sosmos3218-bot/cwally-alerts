@@ -256,10 +256,10 @@ def selftest() -> int:
     keys = ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"]
     pos = [m.index(k + ":") for k in keys]
     check("six-item order", pos == sorted(pos), True)
-    check("low body", all(k in m for k in ("종가 22,600원", "PBR 0.15배", "직전 거래일 0.19배", "BPS 151,227원", "기준가 22,684원", "분할 관망")), True)
+    check("low body", all(k in m for k in ("종가 22,600원", "PBR 0.15배", "직전 거래일 0.19배", "BPS 151,227원", "기준가 22,684원", "[STEEL] 25,000원 재검토 결정을 따르세요", "가치평가 참고선")), True)
     ev = evaluate(cfg, st2, [{"day": "2026-11-06", "close": 38000.0}], bps, "2026-12-31", now)
     t, m, p = message(cfg, ev[0], bps, "2026.06", "x")
-    check("high title + context", (t, "PER 약 39배" in m, "기준가 37,807원" in m, p), ("[004020] 현대제철 PBR 0.25배 도달 (004020)", True, True, 4))
+    check("high title + context", (t, "PER 약 39배" in m and "1차 익절 40,000원은 별도" in m, "기준가 37,807원" in m, p), ("[004020] 현대제철 PBR 0.25배 도달 (004020)", True, True, 4))
     ot, om = ops_message("x", "y")
     check("ops title routes to ops", "조회 실패" in ot and "004020" in ot, True)
     check("no middle dot / em-dash", any(c in json.dumps(cfg, ensure_ascii=False) + m + om for c in "\u00b7\u2014"), False)
