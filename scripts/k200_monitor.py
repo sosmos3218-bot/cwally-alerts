@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
-"""[K200] KOSPI200 close-based split-entry lines (approved in chat 2026-10-26). Reference only, not advice.
+"""[K200] KOSPI200 E-plan alert (reference only, not advice).
 
-  l855  close <= 855             '1차 20% 구간' (p3)
-  l830  819 <= close <= 830      '2차 30% 접근, 819 위 종가 확인' (p3); never while the 819 stop is on
-  l819  close < 819              '2차 이후 중단, 재평가 (다음 지지 750 안팎)' (p4); turns the stop on
-  l905  close > 905              '3차 50% 추세 확인' (p4)
+2026-11-05 t56u: the old KOSPI200 split lines (855 1차, 819~830 2차, <819 stop, >905 3차; 2026-10-26) are removed.
+Under the E-plan (위기관망: KOSPI200 ETF 25%, cash 75%) buying is driven only by the KOSPI tranches below,
+and the upside line is replaced by the scale-up rule:
 
-Each line fires once per crossing and re-arms only after a 0.5% move back past it (configs/k200.json
-rearm: 859.28 / 834.15 / 823.10 stop clear / 900.48). Several lines on one bar -> one combined push.
-Only confirmed closes: today's bar only when Naver basic marketStatus == CLOSE and it is past 15:30 KST.
-Missed bars are judged in date order on the next run; last_bar.day dedupes so a bar is judged once.
+  scaleup  KOSPI200 regular close > its 20-day SMA on 2 consecutive trading days (each day vs its own SMA20)
+           AND 20-day realized vol (sample stdev of daily log returns x sqrt(252)) < 40% on the 2nd day
+           -> '[K200] KOSPI200 069500 A안(70%) 상향 검토' p4, once; re-armed by a close below its SMA20.
+           KOSPI200 closes = Naver index daily (configs/k200.json sources.price, 60 bars).
 
 KOSPI E-plan 4 tranches (configs/k200.json kospi_tranches, 2026-11-05 사용자 위임 t55u), separate push:
   t1 KOSPI close <= 5,280 (20% of the E limit, p3)   t2 <= 5,050 (25%, p4)
   t3 <= 4,800 (25%, p4)                              t4 <= 4,400 (30%, p5, E limit full)
-Each fires once and re-arms after a close >= level x 1.03. KOSPI index close = Naver index daily (same
-confirmed-bar rule). The body converts each level to 069500 / 226490 prices from same-day regular closes
-(scripts/krx_close.py, Daum days). Own cursor in state/k200.json "tranche"; seeded at the 11/5 close 5,383.80.
+Each fires once and re-arms after a close >= level x 1.03. KOSPI index close = Naver index daily. The body
+converts each level to 069500 / 226490 prices from same-day regular closes (scripts/krx_close.py, Daum days).
+
+Only confirmed closes: today's bar only when Naver basic marketStatus == CLOSE and it is past 15:30 KST.
+Missed bars are judged in date order on the next run; each part keeps its own last_bar cursor in
+state/k200.json ("scaleup", "tranche"). Active through 2027-02-28 23:59 KST (year_guard 2026/2027).
 
 Runs inside flow-alerts.yml (weekday 15:40 KST). Modes: auto | dry (print only, no ntfy, no state) | selftest.
 """
 from __future__ import annotations
 
 import json
+import math
 import sys
 import traceback
 import urllib.request
@@ -69,50 +72,17 @@ def save(state: dict, dry: bool) -> None:
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-# ---------- core (pure) ----------
+# ---------- expiry ----------
 
-def hit(line: dict, c: float) -> bool:
-    op, lv = line["op"], float(line["level"])
-    if op == "le":
-        return c <= lv
-    if op == "lt":
-        return c < lv
-    if op == "gt":
-        return c > lv
-    if op == "band":
-        return float(line["floor"]) <= c <= lv
-    raise ValueError(op)
+def active(cfg: dict, now: datetime) -> bool:
+    """True while the alert may run: year in year_guard and not past expire_date 23:59:59 KST."""
+    yg = cfg.get("year_guard") or [2026]
+    years = {int(y) for y in (yg if isinstance(yg, list) else [yg])}
+    end = datetime.strptime(cfg.get("expire_date") or "2027-02-28", "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=KST)
+    return now.year in years and now <= end
 
 
-def rearmed(line: dict, c: float) -> bool:
-    r = float(line["rearm"])
-    return c >= r if line["rearm_op"] == "ge" else c <= r
-
-
-def step(lines: list[dict], armed: dict, stop: bool, close: float) -> tuple[dict, bool, list[str]]:
-    """One confirmed close -> (armed, stop, fired keys). Re-arms first (from the previous state), then fires."""
-    c = round(float(close), 2)
-    armed = dict(armed)
-    by = {ln["key"]: ln for ln in lines}
-    for ln in lines:
-        k = ln["key"]
-        if not armed.get(k, True) and rearmed(ln, c):
-            armed[k] = True
-    if stop and "l819" in by and rearmed(by["l819"], c):
-        stop = False
-    fired = []
-    for ln in lines:
-        k = ln["key"]
-        if not armed.get(k, True) or not hit(ln, c):
-            continue
-        if k == "l830" and stop:
-            continue  # suppressed until the 819 stop clears at 823.10
-        armed[k] = False
-        fired.append(k)
-        if k == "l819":
-            stop = True
-    return armed, stop, fired
-
+# ---------- confirmed bars ----------
 
 def confirmed_bars(rows: list, basic: dict, now: datetime) -> list[tuple[str, float]]:
     """(day, close) ascending. Today's row only if the market is CLOSE and it is past 15:30 KST."""
@@ -131,80 +101,132 @@ def confirmed_bars(rows: list, basic: dict, now: datetime) -> list[tuple[str, fl
     return sorted(out.items())
 
 
-# ---------- info (never blocks) ----------
+# ---------- A안(70%) scale-up rule (2026-11-05 t56u) ----------
 
-def etf_info(cfg: dict) -> str:
-    try:
-        h = {"User-Agent": "Mozilla/5.0", "Referer": cfg["sources"]["etf_referer"]}
-        data = json.loads(fetch(cfg["sources"]["etf"], h, "euc-kr"))
-        for it in data["result"]["etfItemList"]:
-            if str(it.get("itemcode")) == cfg["etf_code"]:
-                amt = it.get("amonut")
-                amt_txt = f", 거래대금 {amt / 100:,.0f}억원" if isinstance(amt, (int, float)) else ""
-                return f"{cfg['etf_name']}({cfg['etf_code']}) {it['nowVal']:,}원(NAV {it.get('nav', 0):,.0f}, {it.get('changeRate', 0):+.2f}%){amt_txt}"
-        return f"{cfg['etf_name']} 목록에 없음"
-    except Exception as exc:
-        return f"{cfg['etf_name']} 조회 실패({type(exc).__name__})"
+def sma(closes: list[float], i: int, n: int) -> float | None:
+    if i - n + 1 < 0:
+        return None
+    return sum(closes[i - n + 1:i + 1]) / n
 
 
-def index_value_info(cfg: dict, day: str) -> str:
-    parts = []
-    try:
-        integ = json.loads(fetch(cfg["sources"]["integration"]))
-        vals = {x.get("code"): x.get("value") for x in integ.get("totalInfos") or []}
-        if vals.get("accumulatedTradingValue"):
-            v = num(str(vals["accumulatedTradingValue"]).replace("백만", ""))
-            if v:
-                parts.append(f"코스피200 거래대금 {v / 1e6:,.1f}조원")
-    except Exception:
-        pass
-    try:
-        ch = json.loads(fetch(cfg["sources"]["chart"]))
-        pts = [(p["localDate"], p.get("accumulatedTradingVolume")) for p in ch.get("priceInfos") or [] if p.get("accumulatedTradingVolume")]
-        key = day.replace("-", "")
-        idx = [i for i, (d, _) in enumerate(pts) if d == key]
-        if idx and idx[0] >= 20:
-            i = idx[0]
-            avg = sum(v for _, v in pts[i - 20:i]) / 20
-            parts.append(f"거래량 20일 평균 대비 {pts[i][1] / avg * 100:.0f}%(거래대금 20일 평균은 네이버 미제공)")
-    except Exception:
-        pass
-    return ", ".join(parts)
+def rvol(closes: list[float], i: int, n: int) -> float | None:
+    """Annualized n-day realized vol: sample stdev of the last n daily log returns x sqrt(252)."""
+    if i - n < 0:
+        return None
+    lr = [math.log(closes[j] / closes[j - 1]) for j in range(i - n + 1, i + 1)]
+    m = sum(lr) / n
+    return math.sqrt(sum((x - m) ** 2 for x in lr) / (n - 1)) * math.sqrt(252)
 
 
-# ---------- message ----------
+def scale_eval(sc: dict, closes: list[float], i: int, armed: bool) -> tuple[bool, bool, dict]:
+    """Judge bar i -> (armed, fired, info). Re-arm (close < SMA20) first, then fire. Raises if history is short."""
+    n, vn, k = int(sc["ma_days"]), int(sc["vol_days"]), int(sc["days_above"])
+    days = []
+    for j in range(i - k + 1, i + 1):
+        m = sma(closes, j, n)
+        if m is None:
+            raise ValueError(f"이력 부족(SMA{n} 계산에 {n}봉 필요)")
+        days.append((closes[j], m))
+    v = rvol(closes, i, vn)
+    if v is None:
+        raise ValueError(f"이력 부족(변동성 계산에 {vn + 1}봉 필요)")
+    c, m = days[-1]
+    if not armed and c < m:
+        armed = True
+    cond = all(cc > mm for cc, mm in days) and v * 100 < float(sc["vol_max_pct"])
+    fired = armed and cond
+    if fired:
+        armed = False
+    return armed, fired, {"days": days, "vol": v, "cond": cond}
 
-STOP_TODO = ("추가매수 보류, 819 이탈 이유(코스피200 이익 추정치 하향 여부, 외국인 순매도 지속 여부)부터 재확인해 투자 논리 점검. "
-             "1차 포함 이번 분할은 진행하지 않음. 다음 지지는 750 안팎으로 봄.")
-BUY_WORDS = ("분할로 검토", "나눠서 검토", "1차 20%만")
 
-
-def todo_text(fired: list[str], fl: list[dict]) -> str:
-    """819 stop together with a buy line (gap day): stop wording only, no buy todo next to it."""
-    if "l819" in fired and len(fired) > 1:
-        return STOP_TODO
-    return " ".join(ln["todo"] for ln in fl)
-
-
-def message(cfg: dict, fired: list[str], day: str, close: float, prev: float | None, info: list[str], stamp: str) -> tuple[str, str, int]:
-    by = {ln["key"]: ln for ln in cfg["lines"]}
-    fl = [by[k] for k in fired]
-    prio = max(int(ln["priority"]) for ln in fl)
-    title = f"[K200] KOSPI200 종가 {close:,.2f} | " + " + ".join(ln["label"] for ln in fl)
-    chg = f", 전일 대비 {(close / prev - 1) * 100:+.2f}%" if prev else ""
-    rearm = " ".join(
-        f"{ln['level']:g}선은 종가 {ln['rearm']:.2f} {'이상' if ln['rearm_op'] == 'ge' else '이하'}에서 다시 무장." for ln in fl)
-    info_txt = ". ".join(x for x in info if x)
+def scale_message(cfg: dict, series: list[tuple[str, float]], i: int, info: dict, etf_close: float | None, stamp: str) -> tuple[str, str, int]:
+    sc = cfg["scaleup"]
+    k = int(sc["days_above"])
+    code = sc["etf_code"]
+    title = f"[K200] KOSPI200 {code} A안(70%) 상향 검토"
+    two = ", ".join(f"{series[i - k + 1 + n][0]} 종가 {c:,.2f} (20일선 {m:,.2f}, {(c / m - 1) * 100:+.2f}%)" for n, (c, m) in enumerate(info["days"]))
+    etf = f" 같은 날 {code} {sc['etf_name']} 정규장 종가 {etf_close:,.0f}원." if etf_close else f" {code} 같은 날 정규장 종가 없음(표시 안 함)."
     body = "\n".join([
-        f"{stamp} | K200 | 코스피200",
-        "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {day} 코스피200 종가 {close:,.2f}{chg}. 새로 켜진 선: " + ", ".join(ln["label"] for ln in fl) + "." + (f" 참고: {info_txt}." if info_txt else ""),
-        "지금 할 일: " + todo_text(fired, fl),
-        "나중에: " + rearm + (" 819 이탈 중에는 2차 접근 알림을 보내지 않습니다." if "l819" in fired else ""),
-        "익절/줄일 때: 905 초과 뒤 다시 900.48 아래로 밀리면 추세 확인을 취소로 보고 3차 보류.",
-        "하지 말 것: 장중 가격으로 미리 매수, 한 번에 계획 금액 전부, 신용/미수, 이 알림만 보고 주문. 매매 권유 아님.",
+        f"{stamp} | K200 | 코스피200 A안 상향 조건",
+        f"이게 뭐 알림: E안(위기관망, 코스피200 ETF 25%)에서 A안(70%)으로 올릴 조건이 처음 맞은 날 1번 알립니다. 조건: 코스피200 정규장 종가가 20일선 위 {k}일 연속, 20일 변동성 {float(sc['vol_max_pct']):g}% 미만. 매매 지시 아님.",
+        f"지금 결과/상태: {two}. 20일 변동성 {info['vol'] * 100:.1f}% (일간 로그수익률 표준편차 연율화, 252일).{etf}",
+        f"지금 할 일: A안 상향은 한 번에 하지 말고 {code} 지정가를 여러 날로 나눠 단계적으로 검토. 남은 E안 코스피 차수 지정가는 겹치지 않게 같이 정리.",
+        "나중에: 종가가 20일선 아래로 마감하면 다시 무장하고, 그 뒤 조건이 다시 맞으면 다시 알림.",
+        "익절/줄일 때: 상향 뒤 종가가 20일선 아래로 다시 마감하면 늘린 부분부터 줄일지 기존 국면 규칙대로 점검.",
+        "하지 말 것: 장중 가격으로 판단, 시장가로 한 번에 70%까지, 신용/미수, 이 알림만 보고 주문. 매매 지시 아님.",
     ])
-    return title, body, prio
+    for ch in ("\u00b7", "\u2014"):
+        title, body = title.replace(ch, ", "), body.replace(ch, ", ")
+    return title, body, int(sc["priority"])
+
+
+def etf_close_on(code: str, day: str, now: datetime) -> float | None:
+    import krx_close  # local import keeps selftest offline
+    try:
+        return dict(krx_close.session_closes(code, 10, now)).get(day)
+    except Exception as exc:
+        print(f"k200 scaleup {code} close fetch failed: {type(exc).__name__}: {exc}")
+        return None
+
+
+def run_scaleup(cfg: dict, state: dict, now: datetime, stamp: str, dry: bool) -> None:
+    sc = cfg.get("scaleup") or {}
+    if not sc.get("enabled"):
+        print("k200 scaleup disabled")
+        return
+    ss = state.get("scaleup") or {"armed": True, "last_bar": None, "last_sent": None, "last_fail_day": None}
+    armed = bool(ss.get("armed", True))
+    try:
+        basic = json.loads(fetch(cfg["sources"]["basic"]))
+        rows = json.loads(fetch(cfg["sources"]["price"]))
+        series = confirmed_bars(rows, basic, now)
+        if not series:
+            raise ValueError("확정 종가 없음")
+    except Exception as exc:
+        day = now.strftime("%Y-%m-%d")
+        title = "[K200] KOSPI200 시세 조회 실패 | 판정 보류"
+        body = f"{stamp} | K200\n코스피200 시세 조회 실패: {exc}. 다음 평일 15:40 에 다시 보고, 놓친 종가는 그때 날짜 순서대로 판정합니다. 이 실패로 매매하지 마세요."
+        print(title, "\n" + body)
+        if not dry and ss.get("last_fail_day") != day:
+            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 3, ["warning"], resolve_server(cfg.get("ntfy_server")))  # routed to cwally-ops
+            ss["last_fail_day"] = day
+            state["scaleup"] = ss
+            save(state, dry)
+        return
+    closes = [c for _, c in series]
+    last_day = (ss.get("last_bar") or {}).get("day") or ""
+    new = [i for i, (d, _) in enumerate(series) if d > last_day]
+    print(f"{stamp} k200 scaleup KOSPI200 status={basic.get('marketStatus')} bars={len(series)} last_bar={last_day} new={[series[i] for i in new]} armed={armed}")
+    if not new:
+        info = None
+        try:
+            _a, _f, info = scale_eval(sc, closes, len(closes) - 1, armed)
+        except ValueError as exc:
+            print(f"k200 scaleup latest: {exc}")
+        if info:
+            print(f"k200 scaleup latest {series[-1][0]} close {closes[-1]:,.2f} SMA20 {info['days'][-1][1]:,.2f} vol20 {info['vol'] * 100:.1f}% cond={info['cond']}")
+        print("k200 scaleup no new confirmed bar; silent")
+        return
+    fired_at = None
+    for i in new:
+        armed, fired, info = scale_eval(sc, closes, i, armed)  # short history raises -> cursor not advanced
+        print(f"  bar {series[i][0]} close {closes[i]:,.2f} SMA20 {info['days'][-1][1]:,.2f} vol20 {info['vol'] * 100:.1f}% cond={info['cond']} -> fired={fired} armed={armed}")
+        if fired:
+            fired_at = (i, info)
+    if fired_at:
+        i, info = fired_at
+        etf_close = etf_close_on(sc["etf_code"], series[i][0], now)
+        title, body, prio = scale_message(cfg, series, i, info, etf_close, stamp)
+        print(f"{'DRY RUN would send' if dry else 'send'} (p{prio}): {title}\n{body}")
+        if not dry:
+            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, prio, ["chart_with_upwards_trend"], resolve_server(cfg.get("ntfy_server")))
+            ss["last_sent"] = {"at": stamp, "day": series[i][0]}
+    else:
+        print("k200 scaleup silent; condition not newly met")
+    ss.update({"armed": armed, "last_bar": {"day": series[-1][0], "close": closes[-1]}, "updated_at": stamp})
+    state["scaleup"] = ss
+    save(state, dry)
 
 
 # ---------- KOSPI E-plan 4 tranches (2026-11-05 t55u) ----------
@@ -284,7 +306,7 @@ def tranche_message(tc: dict, fired: list[str], day: str, close: float, prev: fl
         f"지금 결과/상태: {day} 코스피 종가 {close:,.2f}" + (f", 전일 대비 {chg_pct:+.2f}%" if chg_pct is not None else "") + ". "
         + hits + " 같은 날 ETF: " + ", ".join(etf_now) + "." + (" E 한도 다 참(4차까지 합 100%)." if full else ""),
         "지금 할 일: " + todo,
-        "나중에: " + rearm + " A안(70%) 확대는 코스피200 종가가 20일선 위 2일 연속이고 20일 변동성 40% 미만일 때만(기존 규칙, 이 알림은 판정하지 않음).",
+        "나중에: " + rearm + " A안(70%) 확대는 코스피200 종가가 20일선 위 2일 연속이고 20일 변동성 40% 미만일 때만(이 알림의 A안 상향 검토 알림이 따로 판정).",
         "익절/줄일 때: E안 한도(코스피200 ETF 25%) 안에서만. 줄이는 판단은 기존 국면 규칙을 따름.",
         "하지 말 것: 3% 넘게 빠진 날 시장가 매수, 신용/미수, E 한도 초과, 장중 가격으로 차수 판단, 이 알림만 보고 주문. 매매 지시 아님.",
     ])
@@ -423,74 +445,99 @@ def tranche_selftest(cfg: dict) -> int:
 
 # ---------- selftest ----------
 
+# ---------- selftest ----------
+
+REAL_1105 = [("2026-10-06", 1095.83), ("2026-10-07", 1073.63), ("2026-10-08", 1044.52), ("2026-10-12", 1004.92),
+             ("2026-10-13", 942.07), ("2026-10-14", 936.82), ("2026-10-15", 860.7), ("2026-10-16", 878.16),
+             ("2026-10-19", 891.3), ("2026-10-20", 858.78), ("2026-10-21", 891.04), ("2026-10-22", 858.02),
+             ("2026-10-23", 862.77), ("2026-10-26", 851.51), ("2026-10-27", 881.07), ("2026-10-28", 946.4),
+             ("2026-10-29", 935.87), ("2026-10-30", 899.78), ("2026-11-02", 920.63), ("2026-11-03", 885.67),
+             ("2026-11-04", 889.25), ("2026-11-05", 837.78)]  # Naver KPI200 daily closes fetched 2026-11-05
+
+
 def selftest() -> int:
     cfg = load_json(CFG_PATH, {})
-    L = cfg["lines"]
-    A = {ln["key"]: True for ln in L}
+    sc = cfg["scaleup"]
     fails = 0
 
-    def walk(label, seq, armed=None, stop=False):
+    def chk(ok: bool, label: str) -> None:
         nonlocal fails
-        armed = dict(armed or A)
-        for i, (c, want) in enumerate(seq):
-            armed, stop, f = step(L, armed, stop, c)
-            ok = f == want
-            fails += not ok
-            print(("ok  " if ok else "FAIL"), f"{label}[{i}] close {c}: {f}" + ("" if ok else f" want {want}"), "stop" if stop else "")
-        return armed, stop
-
-    walk("seed 862.77 -> today 850 fires 1차 only", [(850.17, ["l855"])])
-    walk("855 exact fires, 855.01 not", [(855.01, []), (855.0, ["l855"])])
-    walk("buffer walk 855", [(850, ["l855"]), (858, []), (854, []), (859.27, []), (854, []), (859.28, []), (855, ["l855"])])
-    walk("830 band", [(845, ["l855"]), (830, ["l830"]), (825, []), (834.14, []), (829, []), (834.15, []), (829, ["l830"])])
-    walk("gap below 819: 1차 + stop, no 2차; 2차 only after the stop clears", [(815, ["l855", "l819"]), (818, []), (823.09, []), (825, ["l830"]), (823.09, [])])
-    a, s = walk("819 stop suppresses 2차 then recovery", [(850, ["l855"]), (818.9, ["l819"]), (821, []), (823.10, ["l830"]), (826, []), (818, ["l819"])])
-    walk("819 exact is 2차 not stop", [(819, ["l855", "l830"])])
-    walk("905 break and re-arm", [(905, []), (905.01, ["l905"]), (910, []), (900.49, []), (906, []), (900.48, []), (906, ["l905"])])
-    walk("combined same day after a rally (905 then crash)", [(906, ["l905"]), (816, ["l855", "l819"])])
-    t, b, p = message(cfg, ["l855", "l819"], "2026-10-26", 816.0, 862.77, ["RISE 200(148020) 1원"], "2026-10-26 15:40 KST")
-    ok = p == 4 and "1차 20% 구간 + 2차 이후 중단" in t and not any(ch in t + b for ch in "\u00b7\u2014")
-    fails += not ok
-    print("ok  " if ok else "FAIL", "combined message p4, no middle dot/em-dash:", t)
-    todo = next(x for x in b.split("\n") if x.startswith("지금 할 일:"))
-    ok = todo == "지금 할 일: " + STOP_TODO and not any(w in todo for w in BUY_WORDS)
-    fails += not ok
-    print("ok  " if ok else "FAIL", "combined 1차+819 stop: hold-off todo, no buy todo:", todo)
-    _t, b1, _p = message(cfg, ["l819"], "2026-10-26", 818.0, 830.0, [], "2026-10-26 15:40 KST")
-    ok = "지금 할 일: 2차 이후 분할은 멈추고 재평가. 다음 지지는 750 안팎으로 봄." in b1
-    fails += not ok
-    print("ok  " if ok else "FAIL", "819 alone keeps its own todo")
-    _t, b2, _p = message(cfg, ["l855"], "2026-10-26", 850.0, 862.77, [], "2026-10-26 15:40 KST")
-    ok = "지금 할 일: 계획한 1차 20%만 분할로 검토." in b2
-    fails += not ok
-    print("ok  " if ok else "FAIL", "pure 1차 buy todo unchanged")
-    # confirmed bars + dedupe
-    now = datetime(2026, 10, 26, 15, 40, tzinfo=KST)
-    rows = [{"localTradedAt": "2026-10-26", "closePrice": "850.17"}, {"localTradedAt": "2026-10-23", "closePrice": "862.77"}, {"localTradedAt": "2026-10-22", "closePrice": "858.02"}]
-    cases = [
-        ("CLOSE at 15:40 -> today included", {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26T15:30:00+09:00"}, now, "2026-10-26"),
-        ("OPEN at 15:40 -> today excluded", {"marketStatus": "OPEN", "localTradedAt": "2026-10-26T15:30:00+09:00"}, now, "2026-10-23"),
-        ("CLOSE but 15:20 -> excluded", {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26T15:20:00+09:00"}, now.replace(hour=15, minute=20), "2026-10-23"),
-    ]
-    for label, basic, n, want_last in cases:
-        got = confirmed_bars(rows, basic, n)[-1][0]
-        ok = got == want_last
         fails += not ok
-        print("ok  " if ok else "FAIL", label, got)
-    # re-run of the same bar: run() with last_bar already = today -> no new bars
-    st = {"armed": A, "stop": False, "last_bar": {"day": "2026-10-23", "close": 862.77}}
-    bars = confirmed_bars(rows, cases[0][1], now)
-    new = [b for b in bars if b[0] > st["last_bar"]["day"]]
-    ok = [d for d, _ in new] == ["2026-10-26"]
-    st["last_bar"] = {"day": "2026-10-26", "close": 850.17}
-    again = [b for b in bars if b[0] > st["last_bar"]["day"]]
-    ok = ok and again == []
-    fails += not ok
-    print("ok  " if ok else "FAIL", "same bar judged once (re-run finds no new bar)")
-    # data fail: bad rows -> no bars, no crash
-    ok = confirmed_bars([{"localTradedAt": "2026-10-26", "closePrice": "-"}], {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26"}, now) == []
-    fails += not ok
-    print("ok  " if ok else "FAIL", "unparseable close ignored")
+        print("ok  " if ok else "FAIL", label)
+
+    chk("lines" not in cfg and "etf_code" not in cfg, "old 855/830/819/905 lines removed from config")
+    chk(sc["ma_days"] == 20 and sc["vol_days"] == 20 and sc["days_above"] == 2 and sc["vol_max_pct"] == 40 and sc["priority"] == 4, "scaleup config 20MA, 20d vol < 40%, 2 days, p4")
+    # real 11/5 data: SMA20 903.85, vol 62.1%, below MA -> no fire
+    rc = [c for _, c in REAL_1105]
+    a, f, info = scale_eval(sc, rc, len(rc) - 1, True)
+    chk(round(info["days"][-1][1], 2) == 903.85 and round(info["vol"] * 100, 1) == 62.1 and not f and a, f"real 11/5: SMA20 {info['days'][-1][1]:.2f}, vol {info['vol'] * 100:.1f}%, no fire")
+    try:
+        scale_eval(sc, rc[:20], 19, True)
+        chk(False, "short history raises")
+    except ValueError:
+        chk(True, "short history (20 closes) raises, cursor would not advance")
+
+    # synthetic calm series: 21 bars drifting down (below MA), then a calm rise
+    base = [100.0 * (0.999 ** n) for n in range(25)]
+
+    def run(seq, armed=True):
+        out = []
+        closes = list(base)
+        for c in seq:
+            closes.append(c)
+            armed, fired, inf = scale_eval(sc, closes, len(closes) - 1, armed)
+            out.append((fired, armed, inf["cond"]))
+        return out
+
+    last = base[-1]
+    r = run([last * 0.999, last * 1.02, last * 1.025, last * 1.03, last * 1.035])
+    chk([x[0] for x in r] == [False, False, True, False, False], f"below, 1 day above (no), 2nd day above fires once, stays above silent: {[x[0] for x in r]}")
+    r = run([last * 1.02, last * 1.025, last * 1.03, last * 0.96, last * 1.03, last * 1.035])
+    chk([x[0] for x in r] == [False, True, False, False, False, True], f"re-arm after a close below SMA20, then 2 days above refires: {[x[0] for x in r]}")
+    r = run([last * 1.02, last * 0.97, last * 1.03])
+    chk([x[0] for x in r] == [False, False, False], "above, below, above: not 2 consecutive -> no fire")
+    # high vol: alternating +-4% then above MA two days -> vol >= 40% -> no fire
+    hv = [100.0]
+    for n in range(24):
+        hv.append(hv[-1] * (1.04 if n % 2 else 0.96))
+    hv += [hv[-1] * 1.08, hv[-1] * 1.10]
+    _a, f1, i1 = scale_eval(sc, hv, len(hv) - 1, True)
+    chk(not f1 and i1["vol"] * 100 >= 40 and all(c > m for c, m in i1["days"]), f"2 days above MA but vol {i1['vol'] * 100:.1f}% >= 40% -> no fire")
+    # vol exactly at limit is not < 40
+    chk(rvol([100.0, 101.0, 100.0], 2, 2) is not None, "rvol computes on minimal input")
+    # message
+    series = [(f"d{n}", c) for n, c in enumerate(base + [last * 1.02, last * 1.025])]
+    closes = [c for _, c in series]
+    _a, _f, inf = scale_eval(sc, closes, len(closes) - 1, True)
+    t, b, p = scale_message(cfg, series, len(series) - 1, inf, 98765.0, "2027-01-05 15:40 KST")
+    chk(t == "[K200] KOSPI200 069500 A안(70%) 상향 검토" and p == 4, f"title/p4: {t}")
+    lines_ = b.split("\n")
+    order = ["이게 뭐 알림:", "지금 결과/상태:", "지금 할 일:", "나중에:", "익절/줄일 때:", "하지 말 것:"]
+    chk([ln.split(":")[0] + ":" for ln in lines_[1:7]] == order, "six-part body order")
+    chk("20일선" in b and "20일 변동성" in b and "d25 종가" in b and "d26 종가" in b and "98,765원" in b, "body shows SMA20, vol, the 2 closes, 069500 close")
+    chk("지정가" in b and "신용/미수" in b and "매매 지시 아님" in b and "시장가" in b, "body: staged limit orders, no margin, not an order")
+    chk(not any(ch in t + b for ch in "\u00b7\u2014"), "no middle dot / em-dash")
+    _t, b2, _p = scale_message(cfg, series, len(series) - 1, inf, None, "2027-01-05 15:40 KST")
+    chk("069500 같은 날 정규장 종가 없음" in b2, "missing 069500 close is stated, not guessed")
+    # seed state
+    st = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    ss = st.get("scaleup") or {}
+    chk(ss.get("armed") is True and (ss.get("last_bar") or {}).get("day") == "2026-11-05" and "armed" not in st and "stop" not in st,
+        "seed: scaleup armed, last_bar 11/5 (837.78 below SMA20), old line state removed")
+    # expiry
+    chk(active(cfg, datetime(2026, 11, 6, 15, 40, tzinfo=KST)), "active 2026-11-06")
+    chk(active(cfg, datetime(2027, 1, 4, 15, 40, tzinfo=KST)), "active 2027-01-04 (year_guard allows 2027)")
+    chk(active(cfg, datetime(2027, 2, 28, 23, 59, tzinfo=KST)), "active 2027-02-28 23:59")
+    chk(not active(cfg, datetime(2027, 3, 1, 0, 0, tzinfo=KST)), "off 2027-03-01 00:00")
+    chk(not active(cfg, datetime(2028, 1, 3, 15, 40, tzinfo=KST)), "off 2028")
+    chk(cfg.get("ends_kst") == "2027-02-28 23:59" and cfg.get("expire_date") == "2027-02-28", "ends_kst / expire_date 2027-02-28")
+    # confirmed bars
+    now = datetime(2026, 10, 26, 15, 40, tzinfo=KST)
+    rows = [{"localTradedAt": "2026-10-26", "closePrice": "850.17"}, {"localTradedAt": "2026-10-23", "closePrice": "862.77"}]
+    chk(confirmed_bars(rows, {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26T15:30:00+09:00"}, now)[-1][0] == "2026-10-26", "CLOSE at 15:40 -> today included")
+    chk(confirmed_bars(rows, {"marketStatus": "OPEN", "localTradedAt": "2026-10-26T15:30:00+09:00"}, now)[-1][0] == "2026-10-23", "OPEN at 15:40 -> today excluded")
+    chk(confirmed_bars(rows, {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26T15:20:00+09:00"}, now.replace(minute=20))[-1][0] == "2026-10-23", "CLOSE but 15:20 -> excluded")
+    chk(confirmed_bars([{"localTradedAt": "2026-10-26", "closePrice": "-"}], {"marketStatus": "CLOSE", "localTradedAt": "2026-10-26"}, now) == [], "unparseable close ignored")
     fails += tranche_selftest(cfg)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
@@ -508,18 +555,15 @@ def main() -> int:
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     if dry:
         print("DRY RUN (no ntfy, no state write)")
-    if now.year != int(cfg.get("year_guard") or 2026):
-        print("k200 year-guard silent")
-        return 0
-    if now.date() > datetime.strptime(cfg.get("expire_date") or "2026-12-31", "%Y-%m-%d").date():
-        print("k200 expired silent")
+    if not active(cfg, now):
+        print("k200 year-guard / expired silent")
         return 0
     if now.weekday() >= 5:
         print("k200 weekend silent")
         return 0
-    state = load_json(STATE_PATH, {"armed": {}, "stop": False, "last_bar": None, "last_sent": None, "last_fail_day": None})
+    state = load_json(STATE_PATH, {})
     rc = 0
-    for part in (run_lines, run_tranches):  # a failure in one part does not skip the other
+    for part in (run_scaleup, run_tranches):  # a failure in one part does not skip the other
         try:
             part(cfg, state, now, stamp, dry)
         except Exception:
@@ -527,55 +571,6 @@ def main() -> int:
             print(f"k200 {part.__name__} failed")
             rc = 1
     return rc
-
-
-def run_lines(cfg: dict, state: dict, now: datetime, stamp: str, dry: bool) -> None:
-    lines = cfg["lines"]
-    armed = {ln["key"]: bool((state.get("armed") or {}).get(ln["key"], True)) for ln in lines}
-    stop = bool(state.get("stop"))
-    try:
-        basic = json.loads(fetch(cfg["sources"]["basic"]))
-        rows = json.loads(fetch(cfg["sources"]["price"]))
-        bars = confirmed_bars(rows, basic, now)
-        if not bars:
-            raise ValueError("확정 종가 없음")
-    except Exception as exc:
-        day = now.strftime("%Y-%m-%d")
-        title = "[K200] KOSPI200 시세 조회 실패 | 판정 보류"
-        body = f"{stamp} | K200\n코스피200 시세 조회 실패: {exc}. 다음 평일 15:40 에 다시 보고, 놓친 종가는 그때 날짜 순서대로 판정합니다. 이 실패로 매매하지 마세요."
-        print(title, "\n" + body)
-        if not dry and state.get("last_fail_day") != day:
-            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, 3, ["warning"], resolve_server(cfg.get("ntfy_server")))  # routed to cwally-ops
-            state["last_fail_day"] = day
-            state["updated_at"] = stamp
-            save(state, dry)
-        return
-    last_day = (state.get("last_bar") or {}).get("day") or ""
-    prev_close = (state.get("last_bar") or {}).get("close")
-    new_bars = [(d, c) for d, c in bars if d > last_day]
-    print(f"{stamp} k200 status={basic.get('marketStatus')} last_bar={last_day} new={new_bars} armed={armed} stop={stop}")
-    if not new_bars:
-        print("k200 no new confirmed bar; silent")
-        return
-    fired_all: list[str] = []
-    for d, c in new_bars:
-        armed, stop, fired = step(lines, armed, stop, c)
-        print(f"  bar {d} close {c:,.2f} -> fired {fired} stop={stop}")
-        fired_all += [k for k in fired if k not in fired_all]
-    day, close = new_bars[-1]
-    if len(new_bars) > 1:
-        prev_close = new_bars[-2][1]
-    if fired_all:
-        info = [index_value_info(cfg, day), etf_info(cfg)]
-        title, body, prio = message(cfg, fired_all, day, close, prev_close, info, stamp)
-        print(f"{'DRY RUN would send' if dry else 'send'} (p{prio}): {title}\n{body}")
-        if not dry:
-            publish(resolve_topic("port", cfg.get("ntfy_topic")), title, body, prio, ["chart_with_downwards_trend"], resolve_server(cfg.get("ntfy_server")))
-            state["last_sent"] = {"at": stamp, "day": day, "fired": fired_all}
-    else:
-        print("k200 silent; no new crossing")
-    state.update({"armed": armed, "stop": stop, "last_bar": {"day": day, "close": close}, "updated_at": stamp})
-    save(state, dry)
 
 
 if __name__ == "__main__":
