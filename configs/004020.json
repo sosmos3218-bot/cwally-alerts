@@ -1,0 +1,41 @@
+{
+  "name": "004020",
+  "title_prefix": "[004020]",
+  "code": "004020",
+  "yahoo_symbol": "004020.KS",
+  "display": "현대제철",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "approved": "2026-11-05 chat: 현대제철 PBR 0.15배와 0.25배에 닿으면 알림",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 반복 슬롯(KRX 거래일 19:00 KST)에 부착. Yahoo 004020.KS 정규장 종가만 사용(네이버 NXT 아님). 처리한 거래일(last_day)과 선마다 armed 로 중복 없음. job=004020 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "bps": {
+    "value": 151227,
+    "basis": "2026.06",
+    "source": "WiseReport c1010001 004020 (지배주주지분 자본총계 / 수정기말발행주식수, 최근 분기)",
+    "auto_refresh": true,
+    "plausible_pct": 30,
+    "note": "매 실행 WiseReport 헤더의 BPS(최근 분기)를 읽고, 못 읽거나 config 값에서 30% 넘게 벗어나면 config 값을 쓰고 cwally-ops 에 주 1번 알림. 분기 실적 뒤 basis 를 수동으로 고치면 메시지 기준일이 맞춰짐. 자동 값이 config 와 다르면 메시지에 'WiseReport 최근 분기(자동)' 로 표시."
+  },
+  "lines": [
+    {"key": "low", "op": "le", "pbr": 0.15, "rearm_pbr": 0.16, "priority": 4,
+     "title": "[004020] 현대제철 PBR 0.15배 도달 (004020)",
+     "label": "PBR 0.15배 이하(저평가 심화)",
+     "context": "4Q 별도 영업이익과 주주환원 확인 전에는 분할 관망 기준 유지.",
+     "later": "PBR 0.16배 이상으로 돌아와야 이 선이 다시 울립니다. 반대쪽 0.25배 선은 따로 돕니다."},
+    {"key": "high", "op": "ge", "pbr": 0.25, "rearm_pbr": 0.24, "priority": 4,
+     "title": "[004020] 현대제철 PBR 0.25배 도달 (004020)",
+     "label": "PBR 0.25배 이상(저PBR 평균 회복, KRX 저PBR 평균 약 0.25배 수준)",
+     "context": "KRX 저PBR 평균 수준 회복, 이익 기준 PER 약 39배(2026E EPS 742원)라 추격 주의.",
+     "later": "PBR 0.24배 이하로 내려와야 이 선이 다시 울립니다. 반대쪽 0.15배 선은 따로 돕니다."}
+  ],
+  "eps_2026e": 742,
+  "overlap_note": "[STEEL] steel 바스켓(configs/steel.json HYUNDAI 가격 밴드 buy/review 25,000/target 40,000)과 [STEEL] hsteelq3(3분기 잠정실적)는 가격 밴드와 실적 이벤트만 봄. PBR 기준선은 이 알림만.",
+  "stale_days": 6,
+  "sources": {
+    "yahoo": "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1mo",
+    "wisereport": "https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={code}"
+  },
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 KRX 거래일 19:00, 선을 새로 넘을 때만 발송"
+}
