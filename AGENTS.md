@@ -101,10 +101,10 @@ Required body order:
 Title format: `[NAME] 한 줄 행동`
 Example: `[HCE] 아직 결과 없음 | 추가매수 보류`
 
-push 전 제목 티커 검사: `python scripts/title_ticker_check.py` 의 전체 출력과 종료 코드로 판단한다. 통과는 `title ticker check PASS` 와 종료 코드 0 뿐이다.
-실패면 첫 줄에 `title ticker check FAIL (N)` 이 찍히고 그 아래에 실패 줄이 이어지며 종료 코드는 1 이다. 마지막 줄이나 tail 만 보고 판단하지 않는다.
+push 전 제목 티커 검사: `python scripts/title_ticker_check.py` 의 전체 출력과 종료 코드로 판단한다. 통과는 `title ticker check PASS`, 감사 요약의 `static 0`, 종료 코드 0 이 모두 맞을 때뿐이다.
+첫 줄은 기존 검사 `PASS` 또는 `FAIL (N)` (아래 실패 줄), 다음 줄은 감사 요약, 그 아래 `STATIC` 줄은 차단, `report-only` 줄은 보고만 한다. 차단이면 `title ticker audit BLOCK: static N -> exit 1` 이 찍히고 종료 코드는 1 이다. 마지막 줄이나 tail 만 보고 판단하지 않는다.
 N 이 1 이상이면 push 하지 않는다. 다른 사람 파일의 실패도 같다: 고치거나 보고하고, 무시하고 push 하지 않는다.
-그 아래 `title ticker audit (report-only): N violations` 절은 넓은 범위 엄격 판정 보고용이라 종료 코드에 영향이 없다 (2026-11-05 t108u). `--strict` 또는 `TITLE_TICKER_STRICT=1` 이면 이 위반도 종료 코드 1, `--no-audit` 이면 차단 검사만 한다.
+감사 차단 범위는 코드 제목과 아직 안 보낸 outbox 제목이다 (2026-11-05 t111u). 보낸 기록(archive)과 본문 첫 줄 위반은 보고만 한다. 새 outbox 브리프 제목에도 티커를 넣는다. 예외는 `AUDIT_EXCEPTIONS`(파일과 제목 패턴), 투자 무관 제외는 `AUDIT_NON_INVEST` 에만 두고 추가는 주인 승인 후. `--report-only` 또는 `TITLE_TICKER_REPORT_ONLY=1` 은 디버깅용 비차단, `--strict` 는 보낸 기록 위반도 종료 코드 1, `--no-audit` 는 기존 검사만.
 
 Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
 ## Workflow file edit rules

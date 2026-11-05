@@ -10,7 +10,9 @@ Skipped on purpose (allowlist): poly, polyinv, ghtrend, sgyn, gval, brief,
 burry, ops notices, and any alert whose ends_kst is already past.
 
   python scripts/title_ticker_check.py            # blocking check, then report-only audit
-  python scripts/title_ticker_check.py --strict   # audit violations also exit 1 (or TITLE_TICKER_STRICT=1)
+  (default: static audit violations, code + unsent outbox, also exit 1)
+  python scripts/title_ticker_check.py --report-only  # audit never blocks (or TITLE_TICKER_REPORT_ONLY=1)
+  python scripts/title_ticker_check.py --strict   # sent-archive violations also exit 1 (or TITLE_TICKER_STRICT=1)
   python scripts/title_ticker_check.py --no-audit # blocking check only
 """
 from __future__ import annotations
@@ -490,6 +492,34 @@ def _non_invest_prefixes() -> set[str]:
     return out
 
 
+# Static audit exceptions (pt111u, 2026-11-05). Each entry is (file, title regex, reason).
+# Matched by file path relative to the repo plus a stable title pattern, never by line number.
+# New entries need owner approval. New outbox briefs must carry a ticker instead.
+AUDIT_EXCEPTIONS = [
+    ("outbox/20261028-lgesfor-timing.json", r"^\[BRIEF\] lgesfor 19시 데이터 시차 판정", "sent brief"),
+    ("outbox/20261029-earn-skh-msft-googl-1.json", r"^\[EARN\] 10/28 SK하이닉스", "sent brief"),
+    ("outbox/20261029-earn-skh-msft-googl-2.json", r"^\[EARN\] 10/28 SK하이닉스", "sent brief"),
+    ("outbox/20261030-kospi-rebound-1.json", r"^\[BRIEF\] 실적 후 반등 성격 판정", "sent brief"),
+    ("outbox/20261030-kospi-rebound-2.json", r"^\[BRIEF\] 실적 후 반등 성격 판정", "sent brief"),
+    ("outbox/20261030-kospi-rebound-3.json", r"^\[BRIEF\] 실적 후 반등 성격 판정", "sent brief"),
+    ("outbox/20261030-kospi-rebound-4.json", r"^\[BRIEF\] 실적 후 반등 성격 판정", "sent brief"),
+    ("outbox/20261104-frde-event.json", r"^\[FR-DE\] 하원 PLF 1부 표결 연기", "sent brief"),
+    # prefix comes from label[c['name']], title body from strip_prefix(c['title'])
+    ("scripts/kospi_monitor.py", r"^\[\{label\[c\['name'\]\]\}\] \{strip_prefix\(c\['title'\]\)\}$", "dynamic title"),
+    # year/span bracket built per run
+    ("scripts/usdiv_monitor.py", r"^\[\{y\}년 \{span\}\] ", "dynamic title"),
+    # "[TREND] " + ", ".join(named): named rows are "{ticker} {name}"
+    ("trend_monitor/ntfy_summary.py", r"^\[TREND\] \{\.\.\.\}$", "false positive, tickers at runtime"),
+]
+
+
+def _exception_reason(rel: str, title: str) -> str | None:
+    for f, pat, reason in AUDIT_EXCEPTIONS:
+        if rel == f and re.search(pat, title):
+            return reason
+    return None
+
+
 def audit_files() -> list[Path]:
     files = sorted(set(SCRIPTS.rglob("*.py")) | set(SCRIPTS.rglob("*.mjs")))
     tm = ROOT / "trend_monitor"
@@ -501,7 +531,7 @@ def audit_files() -> list[Path]:
 
 def audit(now: datetime) -> dict:
     res: dict = {"static": [], "excluded": [], "archive": [], "archive_body_only": [], "archive_excluded": 0,
-           "non_invest": 0}
+           "non_invest": 0, "exceptions": []}
     ni_prefixes = _non_invest_prefixes()
     for path in audit_files():
         stem = _stem_of(path)
@@ -517,6 +547,8 @@ def audit(now: datetime) -> dict:
             rel = path.relative_to(ROOT)
             if why == "excluded ops":
                 res["excluded"].append(f"{rel}:{line}: {t[:120]}")
+            elif why and _exception_reason(rel.as_posix(), t):
+                res["exceptions"].append((f"{rel}:{line}", _exception_reason(rel.as_posix(), t)))
             elif why:
                 res["static"].append((f"{rel}:{line}", t[:140], why))
     ob = ROOT / "outbox"
@@ -528,6 +560,8 @@ def audit(now: datetime) -> dict:
         why = classify(t) if t else None
         if why == "excluded ops":
             res["excluded"].append(f"{path.relative_to(ROOT)}: {t[:120]}")
+        elif why and _exception_reason(path.relative_to(ROOT).as_posix(), t):
+            res["exceptions"].append((str(path.relative_to(ROOT)), _exception_reason(path.relative_to(ROOT).as_posix(), t)))
         elif why:
             res["static"].append((str(path.relative_to(ROOT)), t[:140], why))
     arch = ROOT / "state" / "archive.json"
@@ -556,22 +590,25 @@ def audit(now: datetime) -> dict:
     return res
 
 
-def print_audit(res: dict) -> int:
+def print_audit(res: dict, blocking: bool = True) -> int:
+    """Prints the audit. Returns the STATIC violation count (the blocking part)."""
     from collections import Counter
     st = res["static"]
     cats = Counter(r[2].split(" (")[0] for r in st)
     n = len(st) + len(res["archive"])
-    print(f"title ticker audit (report-only): {n} violations "
+    mode = "static blocks" if blocking else "report-only"
+    print(f"title ticker audit ({mode}; sent and body-first-line are report-only): {n} violations "
           f"(static {len(st)}, sent {len(res['archive'])}; body-first-line only {len(res['archive_body_only'])}; "
           f"excluded ops {len(res['excluded']) + res['archive_excluded']}; "
-          f"excluded non-invest {res.get('non_invest', 0)})")
+          f"excluded non-invest {res.get('non_invest', 0)}; "
+          f"excluded exception {len(res.get('exceptions', []))})")
     for k, v in sorted(cats.items()):
         print(f"  category {k}: {v}")
     for loc, t, why in st:
-        print(f"{loc}: {t} | {why}")
+        print(f"STATIC {loc}: {t} | {why}")
     for loc, t, why in res["archive"] + res["archive_body_only"]:
-        print(f"{loc}: {t} | {why}")
-    return n
+        print(f"report-only {loc}: {t} | {why}")
+    return len(st), len(res["archive"])
 
 
 def audit_self_check() -> None:
@@ -587,6 +624,10 @@ def audit_self_check() -> None:
     assert classify("[CRWVBOND] 회사채 78.8").endswith("real ticker must appear)")
     assert classify("[ADDSTOP] {ticker} 점검") is None
     assert classify("[GENPACT] G 대기") is None
+    assert _exception_reason("outbox/20261104-frde-event.json", "[FR-DE] 하원 PLF 1부 표결 연기 | 영향 제한") == "sent brief"
+    assert _exception_reason("outbox/20261199-new.json", "[FR-DE] 하원 PLF 1부 표결 연기") is None
+    assert _exception_reason("trend_monitor/ntfy_summary.py", "[TREND] {...}") is not None
+    assert _exception_reason("trend_monitor/ntfy_summary.py", "[TREND] 시장폭 회복") is None
 
 
 def main() -> int:
@@ -594,6 +635,7 @@ def main() -> int:
     now = datetime.now(KST)
     problems = scan(now)
     strict = "--strict" in sys.argv[1:] or os.environ.get("TITLE_TICKER_STRICT") == "1"
+    report_only = "--report-only" in sys.argv[1:] or os.environ.get("TITLE_TICKER_REPORT_ONLY") == "1"
     rc = 0
     if problems:
         print(f"title ticker check FAIL ({len(problems)})")
@@ -604,9 +646,12 @@ def main() -> int:
         print(f"title ticker check PASS ({now:%Y-%m-%d %H:%M KST})")
     if "--no-audit" not in sys.argv[1:]:
         audit_self_check()
-        n = print_audit(audit(now))
-        if strict and n:
-            print(f"title ticker audit STRICT: {n} violations -> exit 1")
+        n_static, n_sent = print_audit(audit(now), blocking=not report_only)
+        if n_static and not report_only:
+            print(f"title ticker audit BLOCK: static {n_static} -> exit 1")
+            rc = 1
+        if strict and n_sent:
+            print(f"title ticker audit STRICT: sent {n_sent} -> exit 1")
             rc = 1
     return rc
 

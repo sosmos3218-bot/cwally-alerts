@@ -282,7 +282,7 @@ def main() -> int:
             reasons[key] = why
 
     if hits:
-        title = "[SGYN] KOSPI " + "·".join(labels[k] for k in cfg["title_regions"] if k in hits)
+        title = "[SGYN] KOSPI " + ", ".join(labels[k] for k in cfg["title_regions"] if k in hits)
         do_now = "제목 권역만 조정으로 보세요. 나머지는 유지."
         pri = 4
     else:
