@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-05 15:15 KST",
+  "updated_at": "2026-11-05 15:19 KST",
   "items": [
+    {
+      "id": "LP8G4Y8mFY2e",
+      "topic": "cwally-port",
+      "title": "[BRKDIP] 475350 / BRK.B 설치 확인 | 매매 신호 아님",
+      "message": "2026-11-05 15:15 KST | 475350 / BRK.B | 설치 확인\n이게 뭐 알림: 475350(RISE 버크셔포트폴리오TOP10) KRX 종가 분할매수 알림 설치 확인용 테스트 발송입니다. 매매 신호가 아닙니다.\n지금 결과/상태: 평일 19:00 KST 에 Daum KRX 확정 종가로 14,000원 이하(1차), 13,700원 이하(2차), 13,540원 이하(3차/52주 저점권)를 선마다 1번 봅니다. 본문에 BRK.B 등락과 USD/KRW 참고줄을 붙입니다.\n지금 할 일: 알림이 도착했는지 확인만 하세요.\n나중에: 재무장: 14,420원 초과, 14,111원 초과, 13,946원 초과 종가 뒤. 2027-11-05 19:00 에 끝납니다.\n익절/줄일 때: 해당 없음.\n하지 말 것: 이 메시지를 매매 신호로 해석하기.\n꺼지는 때: 2027-11-05 19:00 KST (장기 분할매수 관찰 1년. 그 뒤 조용히 끝. 필요하면 ends_kst 연장)",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1793859359
+    },
     {
       "id": "oixcDNbCmA5p",
       "topic": "cwally-port",
@@ -4453,17 +4464,6 @@
         "warning"
       ],
       "time": 1793003992
-    },
-    {
-      "id": "6tbTSGnVxuMS",
-      "topic": "cwally-ops",
-      "title": "[OPS] 워크플로 실패 | cronjob-register",
-      "message": "2026-10-26 17:36 KST | OPS | cronjob-register / \n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/40293455713",
-      "priority": 3,
-      "tags": [
-        "warning"
-      ],
-      "time": 1793003814
     }
   ]
 }
