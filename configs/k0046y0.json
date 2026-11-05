@@ -1,0 +1,77 @@
+{
+  "name": "k0046y0",
+  "title_prefix": "[0046Y0]",
+  "display": "ACE 미국배당퀄리티(0046Y0) KRX 종가 분할 매수 검토: 1차 11,900원 이하, 2차 11,200원 이하, 그 뒤 20일선 위 종가 회복",
+  "approval": "사용자 위임 2026-11-05 t46u (\"네 소신껏\"): 새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음, 새 입력 없음(job 옵션만 추가).",
+  "created_at": "2026-11-05T15:20:00+09:00",
+  "code": "0046Y0",
+  "display_name": "ACE 미국배당퀄리티",
+  "etf": {
+    "name": "ACE 미국배당퀄리티 (환노출, 월배당)",
+    "index": "WisdomTree US Quality Dividend Growth (DGRW 와 비슷한 구성)",
+    "aum_note": "순자산 약 521억, 하루 거래량 수천~2만 주(20일 평균 7,807주, 11/4 기준)로 유동성 낮음. 시장가 대신 지정가.",
+    "role": "장기 위성 비중, 분할 지정가 매수, 신용/미수 안 씀"
+  },
+  "ref_ticker": "DGRW",
+  "fx_ticker": "USDKRW=X",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "k0046y0",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일, 15:40 이후 확정 정규장 종가만(NXT 미포함), 데이터 날짜(price.last_date)로 중복 방지. 수동 job=k0046y0 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "price_source": "scripts/krx_close.py regular_bars (Daum finance days tradePrice = KRX 정규장 종가, Daum 실패 시 네이버 15:30 분봉만). 네이버 일봉(NXT 섞임)은 쓰지 않음. 참고줄 DGRW 등락과 USD/KRW 는 Yahoo chart meta(실패해도 판정은 진행).",
+  "window_start": "2026-11-05",
+  "window_end": "2027-02-28",
+  "baseline": {
+    "day": "2026-11-04",
+    "close": 12095,
+    "ma20": 12139.5,
+    "low_3m": 11940,
+    "low_3m_day": "2026-10-26",
+    "intraday_low_3m": 11905,
+    "intraday_low_3m_day": "2026-10-23",
+    "high_3m": 13075,
+    "high_3m_day": "2026-08-10",
+    "low_52w": 11550,
+    "low_52w_day": "2025-11-21",
+    "high_52w": 13865,
+    "high_52w_day": "2026-06-05",
+    "verified": "Daum KRX 일별(krx_close.regular_bars) 2026-11-05 15:20 KST 조회, 2025-05-13 ~ 2026-11-04 확정 종가 362건. 11/5 장중 12,370원.",
+    "ma20_note": "최근 60거래일 동안 종가가 20일선을 아래에서 위로 넘은 날이 4번(9/18, 9/23, 10/13, 10/28). 20일선 단독 알림은 잡음이라, 1차나 2차 선이 울린 뒤 처음 회복할 때만 1번 보냄."
+  },
+  "lines": [
+    {
+      "key": "t1",
+      "op": "le",
+      "level": 11900,
+      "rearm_op": "ge",
+      "rearm": 12260,
+      "priority": 4,
+      "tier_ko": "1차",
+      "head": "1차 기준선 11,900원 종가 이탈",
+      "why": "3개월(6개월) 최저 종가 11,940원(10/26)과 장중 저점 11,905원(10/23) 바로 아래. 이 지지선을 종가로 깨면 1차 검토."
+    },
+    {
+      "key": "t2",
+      "op": "le",
+      "level": 11200,
+      "rearm_op": "ge",
+      "rearm": 11540,
+      "priority": 5,
+      "tier_ko": "2차",
+      "head": "2차 기준선 11,200원 종가 이탈",
+      "why": "1차보다 약 5.9% 아래. 52주 최저 종가 11,550원(2025-11-21)도 깬 자리."
+    }
+  ],
+  "recovery": {
+    "ma": 20,
+    "priority": 3,
+    "head": "20일선 위 종가 회복",
+    "note": "1차나 2차 선이 울린 뒤(한 사이클)에만 무장. 그 뒤 처음으로 종가 > 그날 포함 20일 이동평균이면 p3 1번 보내고 다시 선이 울릴 때까지 해제."
+  },
+  "rearm_note": "각 선은 1번만. 1차는 12,260원(11,900 x 1.03) 이상, 2차는 11,540원(11,200 x 1.03) 이상 종가가 나온 뒤 다시 무장.",
+  "first_run_note": "state 는 2026-11-04 종가 12,095원으로 미리 기록(두 선 무장, 20일선 회복은 해제). 11/5 종가부터 판정. state 에 price.last_date 가 없으면 마지막 확정 종가로 상태만 기록하고 보내지 않음(이미 선 안쪽이면 그 선은 해제로 시작).",
+  "ends_kst": "2027-02-28 23:59",
+  "ends_note": "장기 위성 분할 매수 관찰 첫 구간. 그 뒤 조용히 끝, 필요하면 ends_kst 와 window_end 연장"
+}
