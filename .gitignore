@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 trend_monitor/cache/
 trend_monitor/state/
+artifacts/

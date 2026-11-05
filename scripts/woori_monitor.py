@@ -28,6 +28,7 @@ import json
 import os
 import re
 import shutil
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -77,7 +78,7 @@ CET1_LABEL = re.compile(
     r"(?:CET\s*1(?:\s*Ratio)?|CET1비율|보통주자본비율|보통주\s*자본비율|Common\s*Equity\s*Tier\s*1)",
     re.I,
 )
-PCT_RE = re.compile(r"(\d{1,2}(?:\.\d{1,2})?)\s*%")
+PCT_RE = re.compile(r"(?<![\d.+])(\d{1,2}(?:\.\d{1,2})?)\s*%")
 PERSONAL_RE = re.compile(
     r"(개인\s*적|개인\s*의견|제\s*생각|제\s*견해|개인적으로|personal\s+view|my\s+(?:own\s+)?view|"
     r"personally|I\s+personally|애널리스트|증권사\s*추정|시장\s*예상)",
@@ -153,18 +154,46 @@ def text_of(html: str) -> str:
     return re.sub(r"\s+", " ", unescape(t)).strip()
 
 
+WOORIFG_HOSTS = ("woorifg.com", "www.woorifg.com")
+
+
+def is_woorifg_host(url: str) -> bool:
+    try:
+        host = (urllib.parse.urlparse(url).hostname or "").lower()
+    except Exception:  # noqa: BLE001
+        return False
+    return host == "woorifg.com" or host.endswith(".woorifg.com")
+
+
+def ssl_context_for(url: str) -> ssl.SSLContext | None:
+    """Host-scoped OpenSSL 3 legacy renegotiation for woorifg.com only.
+
+    Keeps certificate verification and hostname checks ON. Returns None for other hosts
+    so the default urllib context is used. Does not disable verification and does not
+    use proxies. SECLEVEL is left alone unless a future need appears (not required now).
+    """
+    if not is_woorifg_host(url):
+        return None
+    ctx = ssl.create_default_context()
+    # verify_mode / check_hostname stay at create_default_context defaults (CERT_REQUIRED / True)
+    if hasattr(ssl, "OP_LEGACY_SERVER_CONNECT"):
+        ctx.options |= ssl.OP_LEGACY_SERVER_CONNECT
+    return ctx
+
+
 def http(url: str, data: dict | None = None, headers: dict | None = None,
          tries: int = 3, timeout: int = 30, binary: bool = False):
     h = dict(UA)
     h.update(headers or {})
     body = urllib.parse.urlencode(data).encode() if data else None
     if body:
-        h.setdefault("Content-Type", "application/x-urlencoded" if False else "application/x-www-form-urlencoded")
+        h.setdefault("Content-Type", "application/x-www-form-urlencoded")
     err: Exception | None = None
+    ctx = ssl_context_for(url)
     for i in range(tries):
         try:
             req = urllib.request.Request(url, data=body, headers=h, method="POST" if body else "GET")
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
                 raw = resp.read()
                 if binary:
                     return raw
@@ -379,26 +408,64 @@ def dart_attach_pdf_text(rcp: str) -> str:
     return pdf_to_text(data)
 
 
+def _collapse_pptx_spaces(text: str) -> str:
+    """PowerPoint-exported PDFs often insert spaces between Hangul/Latin glyphs."""
+    text = re.sub(r"(?<=[가-힣A-Za-z0-9%.])\s+(?=[가-힣A-Za-z0-9%.])", "", text)
+    text = re.sub(r"(?<=[가-힣])\n(?=[가-힣])", "", text)
+    return re.sub(r"[ \t]+", " ", text)
+
+
+def _pymupdf_text(path: str) -> str:
+    try:
+        import pymupdf  # type: ignore
+    except ImportError:
+        target = Path(tempfile.gettempdir()) / "woori-pymupdf"
+        target.mkdir(parents=True, exist_ok=True)
+        if str(target) not in sys.path:
+            sys.path.insert(0, str(target))
+        try:
+            import pymupdf  # type: ignore
+        except ImportError:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-q", "--target", str(target), "pymupdf"],
+                check=False, timeout=180,
+            )
+            import pymupdf  # type: ignore
+    doc = pymupdf.open(path)
+    try:
+        return "\n".join((page.get_text("text") or "") for page in doc)
+    finally:
+        doc.close()
+
+
 def pdf_to_text(data: bytes) -> str:
+    """Extract text from IR PDFs. Prefer pdftotext; fall back to pymupdf for PPT-export decks."""
     if not data or data[:4] != b"%PDF":
-        return ""
-    if not shutil.which("pdftotext"):
         return ""
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as fh:
         fh.write(data)
         path = fh.name
+    text = ""
     try:
-        out = subprocess.run(
-            ["pdftotext", "-enc", "UTF-8", "-layout", path, "-"],
-            capture_output=True, timeout=120,
-        )
-        text = out.stdout.decode("utf-8", "replace")
-        # unwrap hangul mid-word wraps like earnings_parse.unwrap_pdf
-        text = re.sub(r"(?<=[가-힣])\n(?=[가-힣])", "", text)
-        return text
-    except Exception as exc:  # noqa: BLE001
-        print(f"pdftotext fail: {exc}", file=sys.stderr)
-        return ""
+        if shutil.which("pdftotext"):
+            try:
+                out = subprocess.run(
+                    ["pdftotext", "-enc", "UTF-8", "-layout", path, "-"],
+                    capture_output=True, timeout=120,
+                )
+                text = out.stdout.decode("utf-8", "replace")
+            except Exception as exc:  # noqa: BLE001
+                print(f"pdftotext fail: {exc}", file=sys.stderr)
+        # Image-heavy PowerPoint IR decks often yield almost no pdftotext; pymupdf still reads text runs.
+        if len(re.sub(r"\s+", "", text)) < 200:
+            try:
+                alt = _pymupdf_text(path)
+                if len(re.sub(r"\s+", "", alt)) > len(re.sub(r"\s+", "", text)):
+                    print(f"pdf_to_text: using pymupdf ({len(alt)} chars; pdftotext had {len(text)})")
+                    text = alt
+            except Exception as exc:  # noqa: BLE001
+                print(f"pymupdf fail: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return _collapse_pptx_spaces(text)
     finally:
         try:
             os.unlink(path)
@@ -406,29 +473,89 @@ def pdf_to_text(data: bytes) -> str:
             pass
 
 
-def fetch_ir_pdf_text(cfg: dict) -> tuple[str, str]:
-    """Try woorifg.com IR list for the latest 실적발표 PDF. Returns (text, source_url)."""
+def ir_file_candidates(html: str) -> list[str]:
+    """Rank FileDown.do links from the IR earnings list (newest year/quarter first)."""
+    items: list[tuple[int, str, str]] = []
+    idx = 0
+    for m in re.finditer(
+            r'(?s)<div class="list">\s*<div class="subj">.*?href="[^"]*mergeView[^"]*"[^>]*>([^<]+)</a>.*?</div>\s*'
+            r'(.*?)(?=<div class="list">|$)',
+            html):
+        title = unescape(m.group(1)).strip()
+        block = m.group(2)
+        for href in re.findall(r'(/cmm/fms/FileDown\.do\?[^"\'\>\s]+)', block):
+            items.append((idx, title, "https://www.woorifg.com" + unescape(href)))
+            idx += 1
+    if not items:
+        for href in re.findall(r'(/cmm/fms/FileDown\.do\?[^"\'\>\s]+)', html):
+            items.append((idx, "", "https://www.woorifg.com" + unescape(href)))
+            idx += 1
+
+    def score(pair: tuple[int, str, str]) -> tuple:
+        i, title, url = pair
+        ym = re.search(r"(20\d{2})", title)
+        year = int(ym.group(1)) if ym else 0
+        if re.search(r"연간|4\s*분기|4Q|FY", title, re.I):
+            season = 4
+        elif re.search(r"3\s*분기|3Q|3rd", title, re.I):
+            season = 3
+        elif re.search(r"상반기|2\s*분기|2Q|2nd", title, re.I):
+            season = 2
+        elif re.search(r"1\s*분기|1Q|1st", title, re.I):
+            season = 1
+        else:
+            season = 0
+        # list order is newest-first; keep as tiebreaker
+        return (-year, -season, i)
+
+    items.sort(key=score)
+    out, seen = [], set()
+    for _, _, url in items:
+        if url not in seen:
+            seen.add(url)
+            out.append(url)
+    return out
+
+
+def probe_woorifg() -> dict:
+    """One-time reachability check for dry/ops logs. No ntfy."""
+    out = {"ok": False, "host": "www.woorifg.com", "status": None, "bytes": 0, "error": None,
+           "legacy_ssl": True, "verify": True}
+    try:
+        ctx = ssl_context_for(IR_LIST)
+        assert ctx is not None and ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
+        raw = http(IR_LIST, tries=2, timeout=25, binary=True)
+        out.update({"ok": True, "status": 200, "bytes": len(raw or b"")})
+        print(f"woorifg probe: OK status=200 bytes={out['bytes']} legacy_ssl=1 verify=1")
+    except Exception as exc:  # noqa: BLE001
+        out["error"] = f"{type(exc).__name__}: {exc}"
+        print(f"woorifg probe: FAIL {out['error']}", file=sys.stderr)
+    return out
+
+
+def fetch_ir_pdf_text(cfg: dict, prefer: str | None = None) -> tuple[str, str]:
+    """Download a 실적발표 PDF from woorifg.com IR list. Returns (text, source_url).
+
+    prefer: optional substring to force (e.g. '20261023' for the 3Q26 deck).
+    """
     try:
         html = http(IR_LIST, tries=2, timeout=25)
     except Exception as exc:  # noqa: BLE001
         print(f"woorifg IR list unreachable: {type(exc).__name__}: {exc}", file=sys.stderr)
         return "", ""
-    # FileDown.do links or mergeView seq
-    links = re.findall(r'(https?://www\.woorifg\.com/cmm/fms/FileDown\.do\?[^"\'>\s]+)', html)
-    links += ["https://www.woorifg.com" + p for p in re.findall(
-        r'(/cmm/fms/FileDown\.do\?[^"\'>\s]+)', html)]
-    # prefer 2026/2027 filenames
-    links = list(dict.fromkeys(links))
-    for url in links[:8]:
-        url = unescape(url)
+    links = ir_file_candidates(html)
+    if prefer:
+        links = [u for u in links if prefer in u] + [u for u in links if prefer not in u]
+    for url in links[:6]:
         try:
-            data = http(url, headers={"Referer": IR_LIST}, binary=True, tries=2, timeout=60)
+            data = http(url, headers={"Referer": IR_LIST}, binary=True, tries=2, timeout=90)
         except Exception as exc:  # noqa: BLE001
-            print(f"IR file fail {url[:80]}: {exc}", file=sys.stderr)
+            print(f"IR file fail {url[:100]}: {exc}", file=sys.stderr)
             continue
         if data[:4] == b"%PDF":
             return pdf_to_text(data), url
     return "", ""
+
 
 
 def filing_body(row: dict) -> str:
@@ -461,79 +588,144 @@ def filing_body(row: dict) -> str:
 
 # ================================================================ parsers
 def parse_cet1(text: str) -> list[dict]:
-    """Return list of {value, ctx, year_end_ish} from CET1 mentions."""
-    out = []
+    """Return list of {value, ctx, year_end_ish, provisional} from CET1 mentions.
+
+    Woori IR decks pack charts as 'CET1비율…12.9%13.8%(e)' or '13.72%13.80%(e)'
+    under a 자본비율 heading. Prefer xx.xx%(e) in the bank CET1 band over bare '13%'.
+    """
+    out: list[dict] = []
     if not text:
         return out
+
+    def add(val: float, window: str, provisional: bool = False) -> None:
+        if not (10.0 <= val <= 20.0):  # skip bp noise (0.52) and non-CET1 percents
+            return
+        ctx = re.sub(r"\s+", " ", window).strip()
+        row = {
+            "value": val,
+            "ctx": ctx[:220],
+            "year_end_ish": bool(YEAR_END_RE.search(window)),
+            "provisional": provisional,
+        }
+        if any(abs(x["value"] - val) < 1e-9 and x["ctx"][:50] == row["ctx"][:50] for x in out):
+            return
+        out.append(row)
+
+    # 1) Label then ONLY the immediate following percentages (tight window —
+    #    a wide window wrongly grabs YoY like '비이자이익 13.9%').
     for m in CET1_LABEL.finditer(text):
-        window = text[max(0, m.start() - 80): m.end() + 120]
-        # avoid matching non-ratio nearby numbers first; prefer % after label
-        after = text[m.end(): m.end() + 80]
-        pm = PCT_RE.search(after) or PCT_RE.search(window)
-        if not pm:
+        after = text[m.end(): m.end() + 55]
+        window = text[max(0, m.start() - 40): m.end() + 55]
+        cands: list[tuple] = []
+        for pm in re.finditer(
+                r"(?<![\d.+])(\d{1,2}(?:\.\d{1,2})?)\s*%\s*(\(?e\)?)?",
+                after, re.I):
+            val = float(pm.group(1))
+            if 10.0 <= val <= 20.0:
+                cands.append((val, bool(pm.group(2)), "." in pm.group(1), pm.start()))
+        if not cands:
             continue
-        val = float(pm.group(1))
-        if not (8.0 <= val <= 25.0):
-            continue
-        ctx = re.sub(r"\s+", " ", window).strip()
-        out.append({"value": val, "ctx": ctx[:220], "year_end_ish": bool(YEAR_END_RE.search(window))})
-    # table-ish: "보통주자본비율 13.80" without % immediately
+        cands.sort(key=lambda x: (0 if x[1] else 1, 0 if x[2] else 1, x[3]))
+        val, prov = cands[0][0], cands[0][1]
+        add(val, window, provisional=prov)
+
+    # 2) Direct 'CET1비율 13.80' / 'CET1 Ratio 13.80%'
     for m in re.finditer(
-            r"(?:CET\s*1(?:비율|Ratio)?|보통주자본비율)\s*[:=\s]*?(\d{1,2}\.\d{1,2})\s*%?",
+            r"(?:CET\s*1(?:\s*Ratio)?|CET1비율|보통주자본비율)\s*[:=]?\s*"
+            r"(\d{1,2}\.\d{1,2})\s*%?",
             text, re.I):
-        val = float(m.group(1))
-        if not (8.0 <= val <= 25.0):
+        add(float(m.group(1)), text[max(0, m.start() - 40): m.end() + 40])
+
+    # 3) Capital-ratio slide charts: '13.72%13.80%(e)' near 자본비율/CET1
+    #    (±250 chars — pymupdf reading order may put the heading after the %)
+    for m in re.finditer(r"(?<![\d.+])(\d{1,2}\.\d{2})\s*%\s*(\(?e\))?", text, re.I):
+        window = text[max(0, m.start() - 250): m.end() + 250]
+        if not re.search(r"CET\s*1|보통주자본|자본비율", window, re.I):
             continue
-        window = text[max(0, m.start() - 60): m.end() + 60]
-        ctx = re.sub(r"\s+", " ", window).strip()
-        if not any(abs(x["value"] - val) < 1e-9 and x["ctx"][:40] == ctx[:40] for x in out):
-            out.append({"value": val, "ctx": ctx[:220], "year_end_ish": bool(YEAR_END_RE.search(window))})
+        add(float(m.group(1)), window, provisional=bool(m.group(2)))
+
     return out
 
 
 def pick_year_end_cet1(hits: list[dict]) -> dict | None:
-    ye = [h for h in hits if h.get("year_end_ish")]
-    if ye:
-        return ye[0]
-    return hits[0] if hits else None
+    if not hits:
+        return None
+
+    def rank(h: dict) -> tuple:
+        is_int = abs(h["value"] - round(h["value"])) < 1e-9
+        # Prefer (e) provisional, then non-integer (13.80 over 13), then year-end cue
+        return (
+            0 if h.get("provisional") else 1,
+            1 if is_int else 0,
+            0 if h.get("year_end_ish") else 1,
+            -h["value"],
+        )
+
+    return sorted(hits, key=rank)[0]
+
 
 
 def classify_tsr(text: str) -> list[dict]:
-    """Find official forward TSR targets. Returns {pct, official, personal, ctx}."""
-    out = []
+    """Find official forward TSR targets. Returns {pct, band, official, personal, ctx}.
+
+    IR decks pack 'TSR상향' / '주주환원율빠른속도로상향중' next to unrelated YoY
+    percents (e.g. 비이자이익 +13.9%). Only accept a numeric % that sits tightly
+    after the TSR label, in a plausible TSR band (20–100), and with a forward /
+    target cue — otherwise record qualitative uplift without inventing a pct.
+    """
+    out: list[dict] = []
     if not text:
         return out
     for m in TSR_RE.finditer(text):
-        window = text[max(0, m.start() - 100): m.end() + 140]
-        if not FWD_YEAR_RE.search(window) and "2027" not in window and "내년" not in window:
-            # still allow "총주주환원율 50%" near 목표 without year if official words present
-            if not OFFICIAL_RE.search(window):
-                continue
-        pm = PCT_RE.search(window[window.find(m.group(0)):] if m.group(0) in window else window)
-        # search after label preferentially
-        after = text[m.end(): m.end() + 100]
-        # "40%대 중반" is a band, not a hard target — check before bare N%
+        window = text[max(0, m.start() - 80): m.end() + 120]
+        after = text[m.end(): m.end() + 45]
+        personal = bool(PERSONAL_RE.search(window))
+        official = bool(OFFICIAL_RE.search(window)) and not personal
+
         band = re.search(r"(\d{2})\s*%\s*대", after) or re.search(r"(\d{2})\s*%\s*대", window)
         if band:
             out.append({
-                "pct": None, "band": int(band.group(1)), "official": bool(OFFICIAL_RE.search(window)),
-                "personal": bool(PERSONAL_RE.search(window)),
+                "pct": None, "band": int(band.group(1)), "official": official,
+                "personal": personal, "qualitative": False,
                 "ctx": re.sub(r"\s+", " ", window).strip()[:240],
             })
             continue
-        pm = PCT_RE.search(after) or PCT_RE.search(window)
+
+        pm = PCT_RE.search(after)
+        if not pm and re.search(r"목표|가이던스|target|plan", window, re.I):
+            pm = PCT_RE.search(text[m.end(): m.end() + 90])
         if not pm:
+            if re.search(r"상향|제고|확대", window):
+                out.append({
+                    "pct": None, "band": None, "official": official,
+                    "personal": personal, "qualitative": True,
+                    "ctx": re.sub(r"\s+", " ", window).strip()[:240],
+                })
             continue
+
         pct = float(pm.group(1))
-        if not (10.0 <= pct <= 100.0):
+        if not (20.0 <= pct <= 100.0):
+            # skip CET1/YoY-sized percentages glued next to TSR mentions
+            if re.search(r"상향|제고|확대", window):
+                out.append({
+                    "pct": None, "band": None, "official": official,
+                    "personal": personal, "qualitative": True,
+                    "ctx": re.sub(r"\s+", " ", window).strip()[:240],
+                })
             continue
-        personal = bool(PERSONAL_RE.search(window))
-        official = bool(OFFICIAL_RE.search(window)) and not personal
+
+        # Numeric forward target needs a year/target cue (skip bare FY25 36.8% charts)
+        if (not FWD_YEAR_RE.search(window)
+                and not re.search(r"목표|가이던스|target|plan|상향\s*추진", window, re.I)):
+            continue
+
         out.append({
             "pct": pct, "band": None, "official": official, "personal": personal,
+            "qualitative": False,
             "ctx": re.sub(r"\s+", " ", window).strip()[:240],
         })
     return out
+
 
 
 def parse_buyback_eok(text: str) -> list[dict]:
@@ -851,8 +1043,11 @@ def selftest() -> int:
     cfg = load_cfg()
     fails = 0
 
+    total = 0
+
     def check(name, got, want=True):
-        nonlocal fails
+        nonlocal fails, total
+        total += 1
         ok = got == want
         print(("ok  " if ok else "FAIL"), name, "" if ok else f"got={got!r} want={want!r}")
         fails += not ok
@@ -954,7 +1149,31 @@ def selftest() -> int:
         {"title": "연결재무제표기준영업(잠정)실적(공정공시)"},
         "2026년 연간 당기실적"), True)
 
-    print("woori selftest", "PASS" if not fails else f"FAIL {fails}", f"checks_failed={fails}")
+    # TLS context host scoping (legacy renegotiation only for woorifg.com; verify stays on)
+    ctx_w = ssl_context_for("https://www.woorifg.com/kor/investor/ir/earnings-announcement/list.do")
+    ctx_sub = ssl_context_for("https://ir.woorifg.com/x")
+    ctx_other = ssl_context_for("https://opendart.fss.or.kr/api/list.json")
+    check("ssl woorifg not None", ctx_w is not None)
+    check("ssl subdomain not None", ctx_sub is not None)
+    check("ssl other is None", ctx_other is None)
+    check("ssl verify CERT_REQUIRED", ctx_w.verify_mode == ssl.CERT_REQUIRED if ctx_w else False)
+    check("ssl check_hostname", bool(ctx_w.check_hostname) if ctx_w else False)
+    check("ssl has LEGACY flag", bool(ctx_w.options & ssl.OP_LEGACY_SERVER_CONNECT) if ctx_w and hasattr(ssl, "OP_LEGACY_SERVER_CONNECT") else True)
+    check("is_woorifg www", is_woorifg_host("https://www.woorifg.com/a"), True)
+    check("is_woorifg bare", is_woorifg_host("https://woorifg.com/x"), True)
+    check("is_woorifg dart false", is_woorifg_host("https://dart.fss.or.kr/x"), False)
+    check("ssl bare woorifg not None", ssl_context_for("https://woorifg.com/") is not None)
+    check("ssl other still None", ssl_context_for("https://kind.krx.or.kr/") is None)
+
+    # collapsed PPTX spacing (as produced by pdf_to_text on the real IR deck)
+    collapsed = _collapse_pptx_spaces("C E T 1 비 율\n1 3 . 8 0 % ( e )")
+    # simpler: already-collapsed style from real PDF
+    realish = "CET1비율12.9%13.8%(e)YTD+90bp 13.72%13.80%(e)RWA관련 총주주환원율36.8% 주주환원율빠른속도로상향중 TSR상향"
+    hits = parse_cet1(realish)
+    check("collapsed CET1 13.80", any(abs(h["value"] - 13.80) < 1e-9 for h in hits))
+    check("collapsed has 13.8", any(abs(h["value"] - 13.8) < 1e-9 for h in hits))
+
+    print("woori selftest", "PASS" if not fails else f"FAIL {fails}", f"checks={total} checks_failed={fails}")
     return 1 if fails else 0
 
 
@@ -974,6 +1193,7 @@ def main() -> int:
     st = load_state()
     if mode == "dry":
         print(f"DRY RUN (no ntfy, no state write) now={now:%Y-%m-%d %H:%M} KST")
+        probe_woorifg()  # log-only reachability; no ntfy
     # dry ignores date gate so manual dispatch can exercise fetch/parse before the window
     if mode != "dry" and not in_window(cfg, now):
         print(f"outside WOORI window {cfg['window_start']}~{cfg['window_end']}; silent")

@@ -2401,6 +2401,8 @@ jobs:
         run: |
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$PICK_JOB" != "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          # pymupdf: PowerPoint-exported IR PDFs often yield almost no pdftotext; used as fallback only.
+          pip install -q pymupdf
           if [ "$MODE" = "dry" ]; then python scripts/woori_monitor.py selftest; fi
           python scripts/woori_monitor.py "$MODE"
 
