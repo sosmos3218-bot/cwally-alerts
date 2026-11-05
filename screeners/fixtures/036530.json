@@ -1,0 +1,159 @@
+{
+  "code": "036530",
+  "name": "SNT홀딩스",
+  "market": "KOSPI",
+  "market_cap_krw": 633800000000,
+  "note": "수기 점검: 비지배지분 약 1.12조, 교환사채 약 1026억. 별도 재무가 없어 연결 순현금으로 통과시키면 안 된다. 시총은 2026-11-05 네이버 약 6338억으로, 기요하라 소형 상한 3000억보다 크다.",
+  "statements": [
+    {
+      "year": 2025,
+      "reprt_code": "11011",
+      "rows": [
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "현금및현금성자산",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "800000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "단기금융상품",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "200000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "2"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "사채",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "50000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "3"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "교환사채",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "102600000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "4"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "리스부채",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "10000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "5"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "비지배지분",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "1120000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "6"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "지배기업소유주지분",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "1366000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "7"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "자본총계",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "2486000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "8"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "매출액",
+          "account_detail": "-",
+          "thstrm_amount": "2235700000000",
+          "frmtrm_amount": "1820500000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "영업이익",
+          "account_detail": "-",
+          "thstrm_amount": "300700000000",
+          "frmtrm_amount": "231200000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "금융수익",
+          "account_detail": "-",
+          "thstrm_amount": "10000000000",
+          "frmtrm_amount": "8000000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "지배기업의 소유주에게 귀속되는 당기순이익",
+          "account_detail": "-",
+          "thstrm_amount": "129900000000",
+          "frmtrm_amount": "120000000000",
+          "currency": "KRW",
+          "ord": "1"
+        }
+      ]
+    }
+  ],
+  "dividend_rows": [
+    {
+      "se": "주당 현금배당금(원)",
+      "stock_knd": "보통주",
+      "thstrm": "3000"
+    }
+  ],
+  "shareholders": [
+    {
+      "nm": "최대주주",
+      "relate": "본인",
+      "stock_knd": "보통주",
+      "trmend_posesn_stock_qota_rt": "35"
+    }
+  ],
+  "disclosures": []
+}

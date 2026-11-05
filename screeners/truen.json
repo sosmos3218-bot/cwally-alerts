@@ -1,0 +1,18 @@
+{
+  "id": "truen",
+  "title": "트루엔 기준",
+  "model_code": "417790",
+  "model_name": "트루엔",
+  "note": "모델은 코스닥 트루엔. 시총 약 714억, 별도 순현금 약 708억(현금 509억 + 유동 FVPL 199억, 차입 없음), PER 약 6.2, PBR 약 0.62, 흑자. 코스피와 코스닥을 같이 본다.",
+  "markets": ["KOSPI", "KOSDAQ", "KOSDAQ GLOBAL"],
+  "mcap_min_krw": 0,
+  "mcap_max_krw": null,
+  "per_max": 10,
+  "pbr_max": 1,
+  "net_cash_to_mcap_min": 0.8,
+  "nci_ratio_flag": 0.2,
+  "block_consolidated_if_nci": true,
+  "fin_income_to_op_flag": 1.0,
+  "low_stake_pct": 10,
+  "exclude_financial_keywords": ["은행", "보험", "증권", "캐피탈", "금융지주", "카드"]
+}
