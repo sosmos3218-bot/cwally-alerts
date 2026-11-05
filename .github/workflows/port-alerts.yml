@@ -738,6 +738,7 @@ jobs:
             python scripts/pltr25_monitor.py auto
             python scripts/rblx_monitor.py auto
             python scripts/k182480_monitor.py auto
+            python scripts/vymibuy_monitor.py auto
             python scripts/pdd_monitor.py auto
             python scripts/133690_monitor.py auto
             python scripts/ceg_monitor.py auto
