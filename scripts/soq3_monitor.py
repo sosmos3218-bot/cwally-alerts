@@ -173,7 +173,9 @@ def call_signals(release: str, heads: list[dict], b: dict) -> dict:
             if sig["guide"] != "하향/하단":
                 sig["guide"] = "하향/하단"
                 ev(src, text)
-        elif sig["guide"] == "미확인" and re.search(r"(rais(es|ed)|lift(s|ed)|boost(s|ed)|increas(es|ed))[^.]{0,40}(guidance|outlook|forecast)", text, re.I):
+        elif sig["guide"] in {"미확인", "상단 재확인"} and re.search(r"(rais(es|ed)|lift(s|ed)|boost(s|ed)|increas(es|ed))[^.]{0,40}(guidance|outlook|forecast)"
+                                                         r"|(higher than|above) the (top|upper end|high end)", text, re.I):
+            # Q3 2026: "$4.70 or $0.10 higher than the top of our original 2026 ... guidance range" is a raise, not 상단 재확인.
             sig["guide"] = "상향"
             ev(src, text)
         elif sig["guide"] == "미확인" and re.search(r"top end|upper end|high end|top of", text, re.I):
@@ -187,7 +189,18 @@ def call_signals(release: str, heads: list[dict], b: dict) -> dict:
             if re.search(r"contract|signed|agreement|commit", text, re.I) and g < b["pipeline_gw"] and (sig["gw"] is None or g > sig["gw"]):
                 sig["gw"] = g
                 ev(src, text)
-        if re.search(r"equity", text, re.I):
+        # Q3 2026 call: "remaining equity need of approximately $2 billion through 2030" (baseline 1.1)
+        # had no "more/additional" word, so it stayed 미확인. A stated amount beats wording.
+        amt = num(r"equity (?:need|needs|requirement)s?[^.$]{0,40}\$(\d+(?:\.\d+)?) ?billion", text) \
+            or num(r"\$(\d+(?:\.\d+)?) ?billion[^.$]{0,30}(?:of )?(?:remaining |additional |new )?equity (?:need|needs|requirement)", text)
+        if amt is not None and b.get("equity_need_bn") is not None:
+            sig["equity_bn"] = amt
+            sig["equity"] = "증가" if amt > b["equity_need_bn"] + 0.1 else "유지/감소"
+            sig["equity_num"] = True
+            ev(src, text)
+        elif sig.get("equity_num"):
+            pass
+        elif re.search(r"equity", text, re.I):
             if re.search(r"(more|additional|increas\w*|rais\w*|higher|new)[^.]{0,30}equity|equity[^.]{0,30}(increas|higher|offering)", text, re.I):
                 sig["equity"] = "증가"
                 ev(src, text)
@@ -229,7 +242,8 @@ def judge_call(b: dict, p: dict, sig: dict, last: float | None, ref: float | Non
     if g == "하향/하단":
         level = 2
     if sig["equity"] == "증가":
-        reasons.append("증자 필요 증가")
+        amt = f" 약 ${sig['equity_bn']:g}B, 기준 ${b['equity_need_bn']:g}B" if sig.get("equity_bn") is not None else ""
+        reasons.append("증자 필요 증가" + amt)
         level = 2
     if sig["gw"] is not None:
         reasons.append(f"대형부하 계약 {sig['gw']:g}GW (기준 {b['contracted_gw']}GW)")
