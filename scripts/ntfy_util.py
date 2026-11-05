@@ -108,7 +108,13 @@ def resolve_server(configured: str | None = None) -> str:
 KST = timezone(timedelta(hours=9))
 DEFAULT_ENDS_GRACE_MIN = 59
 OPS_TOPIC = "cwally-ops"
-ALWAYS_SEND_TITLE_RE = re.compile(r"^\s*\[OPS\]|워크플로\s?(실패|검사 실패)|설치 확인|테스트")  # 설치 확인/테스트: 같은 날 재발송 허용 (pt15u)
+ALWAYS_SEND_TITLE_RE = re.compile(
+    r"(?:"
+    r"^\s*\[OPS\]"  # ops titles
+    r"|워크플로\s?(?:실패|검사 실패)"  # anywhere (existing)
+    r"|^\s*\[[^\]]+\] (?:설치 확인|테스트)"  # pt16u: ONLY when title starts with [TICKER]<space>설치 확인|테스트
+    r")"
+)
 _PREFIX_RE = re.compile(r"^\s*(\[[^\]]+\])")
 LAST_PUBLISH: dict = {}
 
@@ -339,7 +345,7 @@ def ends_skip_reason(topic: str, title: str | None, config_name: str | None = No
 #   morning 08:50, afternoon 15:10, 0090b0/flow/trend 15:30, k203780 18:50, portlight 20:50 KST.
 #   tsla/grab: 뉴욕 정규장 시작(서머타임 22:30 KST, 표준시 23:30 KST). 원샷: 예정 시각 - 10분.
 # 확인 출처: 1) ntfy poll  2) state/archive.json (ntfy.sh 캐시 12시간보다 오래된 발송 대비)
-# poll 실패는 fail-open. 끄기: NTFY_DUP_GUARD=0. cwally-ops 와 ALWAYS_SEND_TITLE_RE(설치 확인/테스트 포함)는 보호하지 않는다.
+# poll 실패는 fail-open. 끄기: NTFY_DUP_GUARD=0. cwally-ops 와 ALWAYS_SEND_TITLE_RE([TICKER] 설치 확인|[TICKER] 테스트 로 시작할 때만)는 보호하지 않는다.
 DUP_GUARD_TOPICS = {"cwally-port"}
 ARCHIVE_PATH = Path(__file__).resolve().parents[1] / "state" / "archive.json"
 DUP_GUARD_LOG: list[str] = []
@@ -690,9 +696,26 @@ def _dup_guard_selftest(check) -> int:
         test_t = "[XBI] 테스트 | 알림 종료 2주 전 연장 점검 샘플"
         def poll_inst(server, topic, since):
             return [{"event": "message", "time": mid + 100, "title": install}, {"event": "message", "time": mid + 101, "title": test_t}]
-        check("dup-guard 설치 확인 always sends", dup_guard_skip("cwally-port", install, "x", now=now, poll=poll_inst, archive=no_arch), False)
-        check("dup-guard 테스트 always sends", dup_guard_skip("cwally-port", test_t, "x", now=now, poll=poll_inst, archive=no_arch), False)
-        check("ALWAYS_SEND_TITLE_RE matches 설치 확인", bool(ALWAYS_SEND_TITLE_RE.search(install)), True)
+        check("dup-guard [TICKER] 설치 확인 always sends", dup_guard_skip("cwally-port", install, "x", now=now, poll=poll_inst, archive=no_arch), False)
+        check("dup-guard [TICKER] 테스트 always sends", dup_guard_skip("cwally-port", test_t, "x", now=now, poll=poll_inst, archive=no_arch), False)
+        check("ALWAYS_SEND starts-with [TICKER] 설치 확인", bool(ALWAYS_SEND_TITLE_RE.match(install)), True)
+        check("ALWAYS_SEND starts-with [TICKER] 테스트", bool(ALWAYS_SEND_TITLE_RE.match(test_t)), True)
+        check("ALWAYS_SEND leading spaces ok", bool(ALWAYS_SEND_TITLE_RE.match("  [XBI] 설치 확인 | x")), True)
+        # negative: phrase not right after ticker bracket
+        neg_mid = "[SEC-DIV] 005930 설치 확인 | 매매 신호 아님"
+        neg_body = "[YENCARRY] 레벨 점검 | 설치 확인 아님"
+        neg_test_mid = "[0192T0] 7,000 재테스트+수급 | 상향 후보"
+        neg_test_tag = "[테스트] AMTM 알림 설정 완료"  # bracket text is 테스트, not the phrase after ticker
+        for label, title in [
+            ("ALWAYS_SEND rejects ticker then code then 설치 확인", neg_mid),
+            ("ALWAYS_SEND rejects 설치 확인 later in title", neg_body),
+            ("ALWAYS_SEND rejects 재테스트 mid-title", neg_test_mid),
+            ("ALWAYS_SEND rejects [테스트] as ticker", neg_test_tag),
+        ]:
+            check(label, bool(ALWAYS_SEND_TITLE_RE.search(title)), False)
+        def poll_neg(server, topic, since):
+            return [{"event": "message", "time": mid + 100, "title": neg_mid}]
+        check("dup-guard mid-title 설치 확인 still guarded", dup_guard_skip("cwally-port", neg_mid, "x", now=now, poll=poll_neg, archive=no_arch), True)
         pl = json.dumps({"topic": "cwally-port", "title": t}).encode()
         with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "1"}, clear=False):
             os.environ.pop("DUP_GUARD_SINCE", None)
