@@ -1,6 +1,7 @@
 {
-  "notified": false,
+  "notified": true,
   "call_notified": false,
   "fail_notified": false,
-  "updated_at": "2026-11-05T21:40:23.039346+09:00"
+  "updated_at": "2026-11-05T23:40:23.208133+09:00",
+  "score": "1차 보유 유지 | 추가는 06:20 판정 뒤"
 }
