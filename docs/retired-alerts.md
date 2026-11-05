@@ -208,3 +208,19 @@ folded into `state/sdimix.json` (`verdict` 보유, `sdichg_carry`). `configs/sdi
 |---|---|---|---|---|---|
 | sdipref | `[SDI-PREF]` | 2026-10-29 | 19:00 k203780 | 006400/006405 same-day KRX close discount, zone entry at <= 50% or >= 61.5% | sdimix bands Z_LOW <= 50, Z_HIGH1 >= 61.5, Z_HIGH2 >= 65, 1%p hysteresis, pref target 0/hold/30/50% |
 | sdichg (standalone) | `[SDI]` | 2026-10-08 | 09:00 morning + one-shots | 006400 change-condition verdict 보유 / 분할매수 검토 / 축소 점검, weekly Monday status | same verdict inside sdimix at 19:00, sent only on change, ends 2027-01-15 09:00 then bands only |
+
+## 2026-11-05 retire spg + spgwatch (approved in chat pt6u, portfolio drop SPG)
+
+User removed SPG from the portfolio and asked to delete all SPG-related alerts. Kept `[VTRSPG]`
+(vtrspg) for a follow-up decision: it watches both Ventas(VTR) and Simon(SPG) stance (yield bands,
+P/FFO zones, plus an SPG entry-step), not SPG alone.
+
+Removed (git history keeps files): configs, scripts, state, morning Run lines / job option.
+No cron-job.org job was SPG-only (both rode the shared morning 09:00 KST slot). Title prefix
+`[SPG]` removed from AGENTS.md; `[VTRSPG]` stays.
+
+| name | prefix | added | end (KST) | what it did | slot |
+|---|---|---|---|---|---|
+| spg | `[SPG]` | ~2026-10-07 | 2027-06-30 09:00 | SPG limit 150/160 USD + US10Y reopen 4.5% / stress 6%, weekly summary | morning 09:00 |
+| spgwatch | `[SPG]` | 2026-11-05 | 2027-11-05 23:59 | 8-K Item 2.02, close >238.50 or <205 (1% rearm), US10Y <=4.50% rearm >4.60%, daily P/FFO summary | morning 09:00 |
+
