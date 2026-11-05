@@ -1,0 +1,4 @@
+# 실데이터 시세는 trend_monitor/requirements.txt 와 같다.
+# 테스트만이면 pytest 면 된다.
+pytest==9.2.0
+requests==2.34.2

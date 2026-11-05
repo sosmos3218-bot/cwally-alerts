@@ -1,0 +1,17 @@
+{
+  "id": "kiyohara",
+  "title": "기요하라 다쓰로 기준",
+  "model_name": "기요하라 다쓰로",
+  "note": "소형, 저평가, 순현금. 저장소에 기존 스크리너 코드가 없어 기준 숫자는 이 파일에 적었다. 시총 100억 이상 3000억 이하, PER 10 이하, PBR 1 이하, 조정 순현금이 시총 이상, 흑자. 연결만 있고 비지배지분 비중이 20% 이상이면 통과시키지 않는다.",
+  "markets": ["KOSPI", "KOSDAQ", "KOSDAQ GLOBAL"],
+  "mcap_min_krw": 10000000000,
+  "mcap_max_krw": 300000000000,
+  "per_max": 10,
+  "pbr_max": 1,
+  "net_cash_to_mcap_min": 1.0,
+  "nci_ratio_flag": 0.2,
+  "block_consolidated_if_nci": true,
+  "fin_income_to_op_flag": 1.0,
+  "low_stake_pct": 10,
+  "exclude_financial_keywords": ["은행", "보험", "증권", "캐피탈", "금융지주", "카드"]
+}

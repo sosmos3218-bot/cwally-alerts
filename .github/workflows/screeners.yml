@@ -1,0 +1,103 @@
+# 수동 실행만. 스케줄 없음. ntfy 없음. 결과를 main 에 커밋하지 않는다.
+# 2026-11-05 PR #39 후속 요청. 트루엔, 기요하라 스크리너를 실데이터로 한 번 돌린다.
+
+name: screeners
+
+on:
+  workflow_dispatch:
+    inputs:
+      screener:
+        description: "트루엔, 기요하라, 또는 둘 다"
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - truen
+          - kiyohara
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: cwally-screeners
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned requirements
+        run: python -m pip install -r trend_monitor/requirements.txt
+
+      - name: Offline selftest
+        run: python -m screeners selftest
+
+      - name: Run screeners
+        env:
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENDART_API_KEY:-}" ]; then
+            echo "OPENDART_API_KEY 가 없습니다. 값은 출력하지 않습니다."
+            exit 1
+          fi
+          choice="${{ inputs.screener }}"
+          case "$choice" in
+            truen) kinds="truen" ;;
+            kiyohara) kinds="kiyohara" ;;
+            both) kinds="truen kiyohara" ;;
+            *)
+              echo "알 수 없는 screener 입력"
+              exit 1
+              ;;
+          esac
+          mkdir -p screeners/output
+          for kind in $kinds; do
+            python -m screeners "$kind" --all --out screeners/output
+          done
+
+      - name: Write step summary
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          mkdir -p screeners/output
+          choice="${{ inputs.screener }}"
+          case "$choice" in
+            truen) kinds="truen" ;;
+            kiyohara) kinds="kiyohara" ;;
+            *) kinds="truen kiyohara" ;;
+          esac
+          python - "$kinds" << 'PY'
+          import os
+          import sys
+          from pathlib import Path
+          from screeners.render import brief_from_dir
+
+          kinds = sys.argv[1].split()
+          text = brief_from_dir(Path("screeners/output"), kinds)
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as handle:
+                  handle.write(text)
+          sys.stdout.write(text)
+          PY
+
+      - name: Upload screener results
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screener-results
+          path: screeners/output/
+          if-no-files-found: warn
+          retention-days: 14

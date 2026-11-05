@@ -1,0 +1,202 @@
+{
+  "code": "079960",
+  "name": "동양이엔피",
+  "market": "KOSPI",
+  "market_cap_krw": 109700000000,
+  "note": "2026 상반기 영업이익 92억, 금융수익 240억. PER가 낮아 보여도 금융수익 비중 표시. 순현금은 기준 미달.",
+  "statements": [
+    {
+      "year": 2026,
+      "reprt_code": "11012",
+      "rows": [
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "현금및현금성자산",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "15000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "단기차입금",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "10000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "지배기업소유주지분",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "450000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "자본총계",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "450000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "매출액",
+          "account_detail": "-",
+          "thstrm_amount": "100000000000",
+          "frmtrm_amount": "110000000000",
+          "currency": "KRW",
+          "ord": "1",
+          "thstrm_add_amount": "228500000000",
+          "frmtrm_add_amount": "250000000000"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "영업이익",
+          "account_detail": "-",
+          "thstrm_amount": "2700000000",
+          "frmtrm_amount": "6500000000",
+          "currency": "KRW",
+          "ord": "1",
+          "thstrm_add_amount": "9200000000",
+          "frmtrm_add_amount": "13500000000"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "금융수익",
+          "account_detail": "-",
+          "thstrm_amount": "10000000000",
+          "frmtrm_amount": "4000000000",
+          "currency": "KRW",
+          "ord": "1",
+          "thstrm_add_amount": "24000000000",
+          "frmtrm_add_amount": "5000000000"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "지배기업의 소유주에게 귀속되는 당기순이익",
+          "account_detail": "-",
+          "thstrm_amount": "9200000000",
+          "frmtrm_amount": "300000000",
+          "currency": "KRW",
+          "ord": "1",
+          "thstrm_add_amount": "22500000000",
+          "frmtrm_add_amount": "10000000000"
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "reprt_code": "11011",
+      "rows": [
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "현금및현금성자산",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "14000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "지배기업소유주지분",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "430000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "BS",
+          "account_nm": "자본총계",
+          "account_detail": "-",
+          "account_id": "",
+          "thstrm_amount": "430000000000",
+          "frmtrm_amount": "0",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "매출액",
+          "account_detail": "-",
+          "thstrm_amount": "596500000000",
+          "frmtrm_amount": "548400000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "영업이익",
+          "account_detail": "-",
+          "thstrm_amount": "53600000000",
+          "frmtrm_amount": "51600000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "금융수익",
+          "account_detail": "-",
+          "thstrm_amount": "8000000000",
+          "frmtrm_amount": "7000000000",
+          "currency": "KRW",
+          "ord": "1"
+        },
+        {
+          "fs_div": "CFS",
+          "sj_div": "IS",
+          "account_nm": "지배기업의 소유주에게 귀속되는 당기순이익",
+          "account_detail": "-",
+          "thstrm_amount": "49500000000",
+          "frmtrm_amount": "69600000000",
+          "currency": "KRW",
+          "ord": "1"
+        }
+      ]
+    }
+  ],
+  "dividend_rows": [
+    {
+      "se": "주당 현금배당금(원)",
+      "stock_knd": "보통주",
+      "thstrm": "450"
+    }
+  ],
+  "shareholders": [
+    {
+      "nm": "최대주주",
+      "relate": "본인",
+      "stock_knd": "보통주",
+      "trmend_posesn_stock_qota_rt": "30"
+    }
+  ],
+  "disclosures": []
+}
