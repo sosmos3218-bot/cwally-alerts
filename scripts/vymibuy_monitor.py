@@ -2,14 +2,14 @@
 """[VYMI] 분할 매수 가격선, 환율 조건 알림 (2026-11-05 요청 pt64u). 미보유, 목표 총자산 5%(약 1,000만원), 상한 7%.
 
 평일 09:00 KST morning 묶음(k182480 다음). 미국 전 거래일 종가 기준, 바뀔 때만 보냄:
-  1) 1차/2차/3차 매수선(40/30/30) 종가 이하 -> 매수 문구(환율에 따라 매수 검토 / 환전 분할 / 대기), 주수와 원화 금액
-     1차, 2차는 선 +3% 이상에서 재무장, 3차는 1번만. 급락 점검 중이면 3차 보류
+  1) 1차 $99.5 / 2차 $96.0 / 3차 $91.0(40/30/30, config 고정값) 종가 이하 -> 매수 문구(환율에 따라 매수 검토 / 환전 분할 / 대기), 주수와 원화 금액
+     1차 $102.5, 2차 $99.0 이상에서 재무장, 3차는 1번만. 급락 점검 중이면 3차 보류
   2) 추격 금지: 종가 $108 이상(새 고점), $105 미만 재무장
   3) 급락 점검: 종가 $83.5 이하 2회 연속 -> 재점검, $87.5 이상 2회 연속이면 해제
   4) 환율: 1,320 이하 환전 유리(1,340 위 재무장), 1,450 이상 환율 경계(1,420 아래 재무장)
   5) 새 배당락일 1번: 최근 4회 합 vs 1년 전 4회 합, -10% 넘게 줄면 경계
 소스가 실패하면 그 규칙만 건너뜀. 2일 연속 실패면 cwally-ops 1번(회복 뒤 재무장).
-기존 scripts/vymi_monitor.py(분기 점검)와 별개. 같은 [VYMI] 접두어.
+기존 scripts/vymi_monitor.py(분기 점검)와 별개. 제목은 모두 "[VYMI] 매수선" 으로 시작해 "[VYMI] 분기 점검" 과 구분.
 modes: auto | dry(발송 없음, state 안 씀) | selftest
 """
 from __future__ import annotations
@@ -170,14 +170,14 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
         last_n = closes[-crash_n:]
         if not st["crash_active"] and len(last_n) == crash_n and all(x <= r["crash_line"] for x in last_n):
             st["crash_active"] = True
-            out.append((f"{TAG} 종가 ${c:.2f} | 급락 재점검, 3차 보류",
+            out.append((f"{TAG} 매수선 종가 ${c:.2f} | 급락 재점검, 3차 보류",
                         f"종가가 ${r['crash_line']:.1f}(고점 -22%) 이하로 {crash_n}번 연속. {ctx} 지수 전체 급락인지 VYMI만의 문제(배당 삭감, 특정 국가)인지 확인 전까지 3차 보류. "
                         f"${r['crash_clear']:.1f} 이상 {r['crash_clear_consec']}번 연속이면 해제.", 4))
         elif st["crash_active"]:
             cl = closes[-r["crash_clear_consec"]:]
             if len(cl) == r["crash_clear_consec"] and all(x >= r["crash_clear"] for x in cl):
                 st["crash_active"] = False
-                out.append((f"{TAG} 종가 ${c:.2f} | 급락 재점검 해제",
+                out.append((f"{TAG} 매수선 종가 ${c:.2f} | 급락 재점검 해제",
                             f"${r['crash_clear']:.1f} 이상 {r['crash_clear_consec']}번 연속. {ctx} 3차 보류 풀림.", 3))
         for tr in r["tranches"]:
             k = tr["key"]
@@ -187,16 +187,16 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
                 st["armed"][k] = False
                 st["fired"][k] = True
                 ph = fx_phrase(fx, r)
-                rearm = f"${tr['line'] * (1 + tr['rearm_pct'] / 100):.1f} 이상에서 다시 무장" if tr["rearm_pct"] else "1번만"
-                out.append((f"{TAG} {tr['label']} 매수선 ${tr['line']:.1f} | 종가 ${c:.2f}, {ph}",
+                rearm = f"${tr['rearm']:.1f} 이상에서 다시 무장" if tr["rearm"] else "1번만"
+                out.append((f"{TAG} 매수선 {tr['label']} ${tr['line']:.1f} | 종가 ${c:.2f}, {ph}",
                             f"{tr['label']}({tr['pct']}%) 선 ${tr['line']:.1f} 이하. {ctx} {tranche_cost(tr, c, fx, r)}. "
                             f"환율 기준 1,400 이하 매수 검토, 1,400~1,450 환전 분할, 1,450 이상 대기. 일반 해외주식 계좌, 지정가. {rearm}.",
                             3 if ph.startswith("대기") else 4))
-            elif tr["rearm_pct"] and not st["armed"][k] and c >= tr["line"] * (1 + tr["rearm_pct"] / 100):
+            elif tr["rearm"] and not st["armed"][k] and c >= tr["rearm"]:
                 st["armed"][k] = True
         if c >= r["chase_line"] and st["chase_armed"]:
             st["chase_armed"] = False
-            out.append((f"{TAG} 종가 ${c:.2f} | 새 고점, 추격 금지",
+            out.append((f"{TAG} 매수선 종가 ${c:.2f} | 새 고점, 추격 금지",
                         f"종가 ${r['chase_line']:.0f} 이상(새 고점권). {ctx} 매수선까지 기다리기. ${r['chase_rearm']:.0f} 미만이면 재무장.", 3))
         elif c < r["chase_rearm"]:
             st["chase_armed"] = True
@@ -204,13 +204,13 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
     if fx is not None:
         if fx <= r["fx_good"] and st["fx_good_armed"]:
             st["fx_good_armed"] = False
-            out.append((f"{TAG} USD/KRW {fx:,.1f} | 환전 유리, 달러 환전 검토",
+            out.append((f"{TAG} 매수선 USD/KRW {fx:,.1f} | 환전 유리, 달러 환전 검토",
                         f"{fx_txt}, {r['fx_good']:,} 이하(52주 저점 약 1,323.5 근처). VYMI 매수선 전이라도 배정 금액 일부 미리 환전 검토. {r['fx_good_rearm']:,} 위에서 재무장.", 3))
         elif fx > r["fx_good_rearm"]:
             st["fx_good_armed"] = True
         if fx >= r["fx_warn"] and st["fx_warn_armed"]:
             st["fx_warn_armed"] = False
-            out.append((f"{TAG} USD/KRW {fx:,.1f} | 환율 경계",
+            out.append((f"{TAG} 매수선 USD/KRW {fx:,.1f} | 환율 경계",
                         f"{fx_txt}, {r['fx_warn']:,} 이상(2026 고점 약 1,550~1,559). 매수선이 와도 대기 문구. {r['fx_warn_rearm']:,} 아래에서 재무장.", 3))
         elif fx < r["fx_warn_rearm"]:
             st["fx_warn_armed"] = True
@@ -224,7 +224,7 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
             px = bars[-1][1] if bars else None
             yld = f", 분배율 {ttm / px * 100:.2f}%(종가 ${px:.2f})" if px else ""
             yt = f"1년 전 4회 합 ${prev:.3f} 대비 {yoy:+.1f}%" if yoy is not None else "1년 전 비교 값 없음"
-            out.append((f"{TAG} 분배 ${divs[-1][1]:.3f}(배당락 {divs[-1][0]}) | {'분배 경계' if warn else '분배 업데이트'}",
+            out.append((f"{TAG} 매수선 분배 ${divs[-1][1]:.3f}(배당락 {divs[-1][0]}) | {'분배 경계' if warn else '분배 업데이트'}",
                         f"최근 4회 합 ${ttm:.3f}, {yt}{yld}. 기준 4회 합이 1년 전보다 {abs(r['ttm_yoy_warn_pct']):.0f}% 넘게 줄면 경계"
                         + (", 분할 매수 속도 늦추고 배당 삭감 원인 확인." if warn else "."), 4 if warn else 2))
             st.update(last_div_date=divs[-1][0], ttm=round(ttm, 4))
@@ -269,7 +269,7 @@ def fail_alerts(cfg: dict, st: dict, errs: dict, today: str) -> list[tuple[str, 
                 f["last"] = today
             if f["days"] >= cfg["rules"]["fail_ops_after_days"] and not f["notified"]:
                 f["notified"] = True
-                out.append((f"{TAG} {names[key]} 조회 실패 | {f['days']}일 연속, 그 규칙 건너뜀",
+                out.append((f"{TAG} 매수선 {names[key]} 조회 실패 | {f['days']}일 연속, 그 규칙 건너뜀",
                             f"{names[key]} 조회가 {f['days']}일 연속 실패({errs[key]}). 그 규칙은 회복될 때까지 판단 안 함. 조건 미충족이 아님.", 3))
         else:
             f = {"days": 0, "last": None, "notified": False}
@@ -334,10 +334,9 @@ def selftest() -> int:
           (102.88, 99.93, 107.13, 84.63))
     check("TTM 3.721, prior 3.341, yield 3.60%", (round(ttm_at(divs, len(divs) - 1), 3), round(ttm_at(divs, len(divs) - 5), 3),
                                                   round(ttm_at(divs, len(divs) - 1) / 103.32 * 100, 2)), (3.721, 3.341, 3.6))
-    fl = lambda x: math.floor(x * 2) / 2  # noqa: E731
-    hi = r["high_ref"]
-    check("lines follow design (floor 0.5)", (fl(max(sma(closes, 50), hi * 0.96)), fl(max(sma(closes, 200), hi * 0.90)), round(hi * 0.85 * 2) / 2,
-                                               round(hi * 0.78 * 2) / 2), tuple(t["line"] for t in r["tranches"]) + (r["crash_line"],))
+    check("fixed lines + re-arm from config", [(x["line"], x["rearm"]) for x in r["tranches"]] + [r["crash_line"]],
+          [(99.5, 102.5), (96.0, 99.0), (91.0, None), 83.5])
+    check("lines are pullbacks below 50DMA/200DMA", (99.5 < sma(closes, 200) < sma(closes, 50), round((99.5 / r["high_ref"] - 1) * 100, 1)), (True, -7.1))
     check("naver fx prior Seoul close (today 11/05 excluded)", parse_naver_fx((FX / "naver_usdkrw.json").read_text(encoding="utf-8"), "2026-11-05"),
           ("2026-11-04", 1342.5))
     kb, _ = parse_yahoo((FX / "yahoo_krw.json").read_text(encoding="utf-8"))
@@ -345,8 +344,8 @@ def selftest() -> int:
     check("FRED DEXKOUS fallback parses", parse_fred((FX / "fred_dexkous.csv").read_text(encoding="utf-8"), "2026-11-05")[0][:7], "2026-10")
     check("fx phrase 1400 / 1420 / 1450", (fx_phrase(1400, r), fx_phrase(1420, r), fx_phrase(1450, r)),
           ("매수 검토", "매수 검토, 환전 분할", "대기(환율 고점권)"))
-    check("tranche cost 1차 at 102.5 x 1342.5", tranche_cost(r["tranches"][0], 102.5, 1342.5, r),
-          "배정 400만원 = 약 29주 x $102.50 x 1,342.5원 = 399만원(수수료 별도)")
+    check("tranche cost 1차 at 99.5 x 1342.5", tranche_cost(r["tranches"][0], 99.5, 1342.5, r),
+          "배정 400만원 = 약 29주 x $99.50 x 1,342.5원 = 387만원(수수료 별도)")
     state_file = json.loads(STATE_PATH.read_text(encoding="utf-8"))
 
     def init():
@@ -367,31 +366,31 @@ def selftest() -> int:
         nonlocal_bars = bar(c) if c is not None else bars
         return [a[0] for a in evaluate(cfg, st, dict(base, bars=nonlocal_bars, fx=(bdate[0].isoformat(), fx, "t") if fx else None, **kw))]
     st = init()
-    check("102.6 nothing", t(st, 102.6), [])
-    check("102.5 -> 1차 매수 검토", t(st, 102.5), [f"{TAG} 1차 매수선 $102.5 | 종가 $102.50, 매수 검토"])
-    check("same bar again: silent", evaluate(cfg, st, dict(base, bars=bars + [(bdate[0].isoformat(), 102.5)])), [])
-    check("101 still disarmed", t(st, 101.0), [])
-    check("105.4 no re-arm", (t(st, 105.4), st["armed"]["t1"]), ([], False))
-    check("105.6 re-arms (>= 105.575)", (t(st, 105.6), st["armed"]["t1"]), ([], True))
-    check("fires again at 102", t(st, 102.0), [f"{TAG} 1차 매수선 $102.5 | 종가 $102.00, 매수 검토"])
+    check("99.6 nothing (was a 1차 hit under old formula 102.5)", (t(st, 102.0), t(st, 99.6)), ([], []))
+    check("99.5 -> 1차 매수 검토", t(st, 99.5), [f"{TAG} 매수선 1차 $99.5 | 종가 $99.50, 매수 검토"])
+    check("same bar again: silent", evaluate(cfg, st, dict(base, bars=bars + [(bdate[0].isoformat(), 99.5)])), [])
+    check("98 still disarmed", t(st, 98.0), [])
+    check("102.4 no re-arm", (t(st, 102.4), st["armed"]["t1"]), ([], False))
+    check("102.5 re-arms", (t(st, 102.5), st["armed"]["t1"]), ([], True))
+    check("fires again at 99", t(st, 99.0), [f"{TAG} 매수선 1차 $99.5 | 종가 $99.00, 매수 검토"])
     st = init()
-    check("1420 -> 환전 분할 wording", t(st, 102.4, fx=1420), [f"{TAG} 1차 매수선 $102.5 | 종가 $102.40, 매수 검토, 환전 분할"])
+    check("1420 -> 환전 분할 wording", t(st, 99.4, fx=1420), [f"{TAG} 매수선 1차 $99.5 | 종가 $99.40, 매수 검토, 환전 분할"])
     st = init()
-    a = t(st, 99.0, fx=1460)
-    check("gap to 99 with fx 1460: 1차+2차 대기, fx 경계", a,
-          [f"{TAG} 1차 매수선 $102.5 | 종가 $99.00, 대기(환율 고점권)", f"{TAG} 2차 매수선 $99.5 | 종가 $99.00, 대기(환율 고점권)",
-           f"{TAG} USD/KRW 1,460.0 | 환율 경계"])
-    check("2차 re-arm at 102.5 (=99.5 x 1.03 = 102.485)", (t(st, 102.4, fx=1440), st["armed"]["t2"], t(st, 102.5, fx=1430), st["armed"]["t2"]),
+    a = t(st, 95.5, fx=1460)
+    check("gap to 95.5 with fx 1460: 1차+2차 대기, fx 경계", a,
+          [f"{TAG} 매수선 1차 $99.5 | 종가 $95.50, 대기(환율 고점권)", f"{TAG} 매수선 2차 $96.0 | 종가 $95.50, 대기(환율 고점권)",
+           f"{TAG} 매수선 USD/KRW 1,460.0 | 환율 경계"])
+    check("2차 re-arm at 99.0", (t(st, 98.9, fx=1440), st["armed"]["t2"], t(st, 99.0, fx=1430), st["armed"]["t2"]),
           ([], False, [], True))
     check("fx warn re-arm only < 1420", (t(st, None, fx=1425), st["fx_warn_armed"], t(st, None, fx=1419), st["fx_warn_armed"]), ([], False, [], True))
     st = init()
     a = t(st, 91.0)
-    check("91 -> 1차 2차 3차", a, [f"{TAG} {n} 매수선 ${p} | 종가 $91.00, 매수 검토" for n, p in (("1차", "102.5"), ("2차", "99.5"), ("3차", "91.0"))])
-    check("3차 once: 105.6 then 90 -> only 1차, 2차", (t(st, 105.6), t(st, 90.0)),
-          ([], [f"{TAG} 1차 매수선 $102.5 | 종가 $90.00, 매수 검토", f"{TAG} 2차 매수선 $99.5 | 종가 $90.00, 매수 검토"]))
+    check("91 -> 1차 2차 3차", a, [f"{TAG} 매수선 {n} ${p} | 종가 $91.00, 매수 검토" for n, p in (("1차", "99.5"), ("2차", "96.0"), ("3차", "91.0"))])
+    check("3차 once: 102.5 then 90 -> only 1차, 2차", (t(st, 102.5), t(st, 90.0)),
+          ([], [f"{TAG} 매수선 1차 $99.5 | 종가 $90.00, 매수 검토", f"{TAG} 매수선 2차 $96.0 | 종가 $90.00, 매수 검토"]))
     st = init()
     st["armed"].update(t1=False, t2=False)
-    check("crash 1 close 83.5: no 재점검, 3차 fires (above crash rule needs 2)", t(st, 83.5)[-1], f"{TAG} 3차 매수선 $91.0 | 종가 $83.50, 매수 검토")
+    check("crash 1 close 83.5: no 재점검, 3차 fires (above crash rule needs 2)", t(st, 83.5)[-1], f"{TAG} 매수선 3차 $91.0 | 종가 $83.50, 매수 검토")
     st = init()
     st["armed"].update(t1=False, t2=False)
     seq = bars + [("2026-11-06", 83.4)]
@@ -399,35 +398,35 @@ def selftest() -> int:
     st["armed"].update(t1=False, t2=False, t3=True)
     st["last_bar_date"] = "2026-11-05"
     seq2 = bars + [("2026-11-05", 83.4), ("2026-11-06", 83.0)]
-    check("2 closes <= 83.5 -> 재점검, 3차 paused", [a[0] for a in evaluate(cfg, st, dict(base, bars=seq2))], [f"{TAG} 종가 $83.00 | 급락 재점검, 3차 보류"])
+    check("2 closes <= 83.5 -> 재점검, 3차 paused", [a[0] for a in evaluate(cfg, st, dict(base, bars=seq2))], [f"{TAG} 매수선 종가 $83.00 | 급락 재점검, 3차 보류"])
     check("3차 still armed while paused", (st["armed"]["t3"], st["crash_active"]), (True, True))
     seq3 = seq2 + [("2026-11-09", 88.0)]
     check("one close 88 not clear", [a[0] for a in evaluate(cfg, st, dict(base, bars=seq3))], [])
     seq4 = seq3 + [("2026-11-10", 89.0)]
     check("2 closes >= 87.5 clear -> 3차 then fires (89 <= 91)", [a[0] for a in evaluate(cfg, st, dict(base, bars=seq4))],
-          [f"{TAG} 종가 $89.00 | 급락 재점검 해제", f"{TAG} 3차 매수선 $91.0 | 종가 $89.00, 매수 검토"])
+          [f"{TAG} 매수선 종가 $89.00 | 급락 재점검 해제", f"{TAG} 매수선 3차 $91.0 | 종가 $89.00, 매수 검토"])
     st = init()
     check("chase 108 once, 106 no re-arm, 104.9 re-arm, 108.2 again", (t(st, 108.0), t(st, 106.0), t(st, 104.9), t(st, 108.2)),
-          ([f"{TAG} 종가 $108.00 | 새 고점, 추격 금지"], [], [], [f"{TAG} 종가 $108.20 | 새 고점, 추격 금지"]))
+          ([f"{TAG} 매수선 종가 $108.00 | 새 고점, 추격 금지"], [], [], [f"{TAG} 매수선 종가 $108.20 | 새 고점, 추격 금지"]))
     st = init()
     check("fx 1320 good once, 1335 no re-arm, 1341 re-arm, 1318 again",
           (t(st, None, fx=1320), t(st, None, fx=1335), t(st, None, fx=1341), t(st, None, fx=1318)),
-          ([f"{TAG} USD/KRW 1,320.0 | 환전 유리, 달러 환전 검토"], [], [], [f"{TAG} USD/KRW 1,318.0 | 환전 유리, 달러 환전 검토"]))
+          ([f"{TAG} 매수선 USD/KRW 1,320.0 | 환전 유리, 달러 환전 검토"], [], [], [f"{TAG} 매수선 USD/KRW 1,318.0 | 환전 유리, 달러 환전 검토"]))
     st = init()
     nd = divs + [("2026-12-18", 0.95)]
     a = evaluate(cfg, st, dict(base, divs=nd))
     check("new ex-date 12/18 0.95: TTM 3.732 vs 3.315 update p2", ([x[0] for x in a], a[0][2], "+12.6%" in a[0][1], "분배율 3.61%" in a[0][1]),
-          ([f"{TAG} 분배 $0.950(배당락 2026-12-18) | 분배 업데이트"], 2, True, True))
+          ([f"{TAG} 매수선 분배 $0.950(배당락 2026-12-18) | 분배 업데이트"], 2, True, True))
     check("same ex-date not repeated", evaluate(cfg, st, dict(base, divs=nd)), [])
     st = init()
     a = evaluate(cfg, st, dict(base, divs=divs + [("2026-12-18", 0.15)]))
     check("12/18 0.15: TTM 2.932 vs 3.315 (-11.6%) -> 분배 경계 p4", ([x[0] for x in a], a[0][2]),
-          ([f"{TAG} 분배 $0.150(배당락 2026-12-18) | 분배 경계"], 4))
+          ([f"{TAG} 매수선 분배 $0.150(배당락 2026-12-18) | 분배 경계"], 4))
     st = init()
     a = evaluate(cfg, st, dict(base, divs=divs + [("2026-12-18", 0.25)]))
-    check("12/18 0.25: -8.5% -> not 경계", a[0][0], f"{TAG} 분배 $0.250(배당락 2026-12-18) | 분배 업데이트")
+    check("12/18 0.25: -8.5% -> not 경계", a[0][0], f"{TAG} 매수선 분배 $0.250(배당락 2026-12-18) | 분배 업데이트")
     st = init()
-    check("fx missing: tranche still fires with fallback wording", t(st, 102.0, fx=None), [f"{TAG} 1차 매수선 $102.5 | 종가 $102.00, 매수 검토(환율 확인 못 함, 직접 확인)"])
+    check("fx missing: tranche still fires with fallback wording", t(st, 99.0, fx=None), [f"{TAG} 매수선 1차 $99.5 | 종가 $99.00, 매수 검토(환율 확인 못 함, 직접 확인)"])
     st = init()
     check("all sources down: silent, state kept", (evaluate(cfg, st, {"bars": None, "divs": None, "fx": None}), st["last_bar_date"]), ([], "2026-11-04"))
     st = init()
@@ -438,16 +437,16 @@ def selftest() -> int:
     fail_alerts(cfg, st, {}, "2026-11-11")
     f4 = fail_alerts(cfg, st, {"fx": "x"}, "2026-11-12")
     check("ops only on 2nd failing day, once; reset on recovery", (f1, f1b, [x[0] for x in f2], f3, f4),
-          ([], [], [f"{TAG} USD/KRW 환율 조회 실패 | 2일 연속, 그 규칙 건너뜀"], [], []))
-    check("routing: notices port, failure ops", (route_topic("cwally-port", f"{TAG} 1차 매수선 $102.5 | 종가 $102.00, 매수 검토"), route_topic("cwally-port", f2[0][0])),
+          ([], [], [f"{TAG} 매수선 USD/KRW 환율 조회 실패 | 2일 연속, 그 규칙 건너뜀"], [], []))
+    check("routing: notices port, failure ops", (route_topic("cwally-port", f"{TAG} 매수선 1차 $99.5 | 종가 $99.00, 매수 검토"), route_topic("cwally-port", f2[0][0])),
           ("cwally-port", "cwally-ops"))
     allt = []
-    for c, fx in ((91.0, 1460), (108.0, 1310), (102.0, 1420)):
+    for c, fx in ((91.0, 1460), (108.0, 1310), (99.0, 1420)):
         s = init()
         for ti, tx, _ in t(s, c, fx=fx) and evaluate(cfg, init(), dict(base, bars=bar(c), fx=("d", fx, "t"))):
             allt.append(ti + body("s", tx))
     text = " ".join(allt) + json.dumps(cfg, ensure_ascii=False) + Path(__file__).read_text(encoding="utf-8")
-    check("titles start [VYMI], no middle dot or em-dash", (len(allt) > 5, all(a.startswith(TAG) for a in allt), "\u00b7" in text, "\u2014" in text),
+    check("titles start [VYMI] 매수선, distinct from 분기 점검, no middle dot or em-dash", (len(allt) > 5, all(a.startswith(TAG + " 매수선 ") and "분기 점검" not in a.split("\n")[0] for a in allt), "\u00b7" in text, "\u2014" in text),
           (True, True, False, False))
     check("ends 2027-10-31 23:59", cfg["ends_kst"], "2027-10-31 23:59")
     print(f"SELFTEST {'PASS' if not fails else 'FAIL'}: {len(fails)} failed")
