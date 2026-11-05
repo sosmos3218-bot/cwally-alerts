@@ -261,7 +261,7 @@ def test_dart_client_uses_fixture_bytes_and_hides_key():
 
     dart = OpenDart("SECRET", cache_dir=_tmp(), transport=transport, sleep_s=0)
     assert dart.corp_code("417790") == "001"
-    rows = dart.accounts("001", 2026, "11012")
+    rows = dart.accounts("001", 2026, "11012", "OFS")
     assert rows[0]["account_nm"] == "현금및현금성자산"
     try:
         dart.disclosures("001", "20240101", "20241105")

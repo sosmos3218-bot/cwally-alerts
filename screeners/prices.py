@@ -6,7 +6,7 @@ import json
 import re
 from urllib.request import Request, urlopen
 
-from screeners.money import EOK
+from screeners.money import EOK, parse_ratio
 
 _VALUE_RE = re.compile(r"([0-9]+(?:\.[0-9]+)?)\s*(조|억)")
 
@@ -101,6 +101,69 @@ def _market_name(text: str) -> str:
     if "KOSPI" in upper:
         return "KOSPI"
     return ""
+
+
+def ratios_from_infos(infos: dict) -> tuple[float | None, float | None]:
+    """네이버 totalInfos 의 per, pbr. 없거나 N/A 면 None."""
+    return parse_ratio(infos.get("per")), parse_ratio(infos.get("pbr"))
+
+
+def fetch_naver_ratios(code: str, opener=None) -> tuple[float | None, float | None]:
+    open_fn = opener or urlopen
+    payload = _naver_json(f"https://m.stock.naver.com/api/stock/{code}/integration", open_fn)
+    infos = {row.get("code"): row.get("value") for row in payload.get("totalInfos") or [] if isinstance(row, dict)}
+    return ratios_from_infos(infos)
+
+
+def lookup_ratios(codes: list[str], fetch, cache_path=None, today: str | None = None, workers: int = 8) -> dict[str, dict]:
+    """같은 날짜 캐시를 먼저 쓴다. 한 종목 실패는 per, pbr 없음으로 둔다."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from pathlib import Path
+
+    cached: dict = {}
+    path = Path(cache_path) if cache_path else None
+    if path and path.is_file() and today:
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            saved = {}
+        if saved.get("date") == today:
+            cached = dict(saved.get("items") or {})
+    out: dict[str, dict] = {}
+    missing = []
+    for code in codes:
+        hit = cached.get(code)
+        if isinstance(hit, dict) and ("per" in hit or "pbr" in hit):
+            out[code] = {"per": hit.get("per"), "pbr": hit.get("pbr")}
+        else:
+            missing.append(code)
+
+    def one(code: str) -> tuple[str, float | None, float | None]:
+        try:
+            per, pbr = fetch(code)
+        except Exception:
+            return code, None, None
+        return code, per, pbr
+
+    if missing and workers > 1 and len(missing) >= 4:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(one, code) for code in missing]
+            for future in as_completed(futures):
+                code, per, pbr = future.result()
+                out[code] = {"per": per, "pbr": pbr}
+    else:
+        for code in missing:
+            code, per, pbr = one(code)
+            out[code] = {"per": per, "pbr": pbr}
+    if path and today:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        merged = dict(cached)
+        merged.update(out)
+        path.write_text(
+            json.dumps({"date": today, "items": merged}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    return out
 
 
 def _close(text) -> int | None:

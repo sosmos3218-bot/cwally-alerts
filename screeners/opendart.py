@@ -21,11 +21,22 @@ HOLDER_URL = "https://opendart.fss.or.kr/api/hyslrSttus.json"
 DIVIDEND_URL = "https://opendart.fss.or.kr/api/alotMatter.json"
 LIST_URL = "https://opendart.fss.or.kr/api/list.json"
 
-AUTH_STATUS = {"010", "011", "012", "013", "020", "100", "800", "900", "901"}
+# 010 미등록 키, 011 정지된 키, 012 거부된 IP, 020 일일 한도.
+# 이 상태만 전체를 멈춘다. 013 은 데이터 없음, 100 같은 건 그 종목만 건너뛴다.
+SYSTEMIC_STATUS = {"010", "011", "012", "020"}
+DEFAULT_CALL_BUDGET = 8000
 
 
 class DartError(RuntimeError):
     pass
+
+
+class DartFatal(DartError):
+    """키 거부나 일일 한도. 다음 종목으로 가면 안 된다."""
+
+
+class DartBudget(DartError):
+    """우리가 정한 호출 상한. 이미 본 결과는 남기고 나머지를 건너뛴다."""
 
 
 def api_key_from_env() -> str:
@@ -75,20 +86,34 @@ def parse_corp_zip(content: bytes) -> dict[str, str]:
 
 
 class OpenDart:
-    def __init__(self, api_key: str, cache_dir: Path, transport=None, sleep_s: float = 0.25):
+    def __init__(self, api_key: str, cache_dir: Path, transport=None, sleep_s: float = 0.25, max_calls: int = DEFAULT_CALL_BUDGET):
         self.api_key = api_key
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.transport = transport or _http_get
         self.sleep_s = sleep_s
+        self.max_calls = max(0, int(max_calls))
+        self.calls = 0
+        self.cache_hits = 0
         self._codes: dict[str, str] | None = None
 
     def corp_code(self, ticker: str) -> str | None:
         codes = self._load_codes()
         return codes.get(str(ticker).zfill(6))
 
-    def accounts(self, corp_code: str, year: int, reprt: str) -> list[dict]:
-        return self._rows(ACCT_URL, corp_code, year, reprt, "acct")
+    def accounts(self, corp_code: str, year: int, reprt: str, fs_div: str) -> list[dict]:
+        """연결(CFS) 또는 별도(OFS). fnlttSinglAcntAll 은 fs_div 가 없으면 상태 100 이다."""
+        scope = str(fs_div or "").upper()
+        if scope not in {"CFS", "OFS"}:
+            raise DartError("fs_div 는 CFS 또는 OFS 여야 합니다.")
+        return self._rows(
+            ACCT_URL,
+            corp_code,
+            year,
+            reprt,
+            f"acct-{scope}",
+            extra={"fs_div": scope},
+        )
 
     def shareholders(self, corp_code: str, year: int, reprt: str) -> list[dict]:
         return self._rows(HOLDER_URL, corp_code, year, reprt, "holder")
@@ -106,12 +131,16 @@ class OpenDart:
         cache.write_text(json.dumps({"list": rows}, ensure_ascii=False), encoding="utf-8")
         return rows
 
-    def _rows(self, url: str, corp_code: str, year: int, reprt: str, kind: str) -> list[dict]:
+    def _rows(self, url: str, corp_code: str, year: int, reprt: str, kind: str, extra: dict | None = None) -> list[dict]:
         cache = self.cache_dir / f"{kind}-{corp_code}-{year}-{reprt}.json"
         if cache.is_file():
+            self.cache_hits += 1
             cached = json.loads(cache.read_text(encoding="utf-8"))
             return list(cached.get("list") or [])
-        body = self._call(url, {"corp_code": corp_code, "bsns_year": str(year), "reprt_code": reprt})
+        params = {"corp_code": corp_code, "bsns_year": str(year), "reprt_code": reprt}
+        if extra:
+            params.update(extra)
+        body = self._call(url, params)
         status = str(body.get("status") or "")
         if status == "013":
             rows: list[dict] = []
@@ -139,6 +168,11 @@ class OpenDart:
         return self._codes
 
     def _call(self, url: str, params: dict) -> dict:
+        if self.calls >= self.max_calls:
+            raise DartBudget(
+                f"OpenDART 호출 상한 {self.max_calls}회. 일일 한도(키당 약 2만, 추세 모니터와 공유)를 남기려고 멈춤"
+            )
+        self.calls += 1
         time.sleep(self.sleep_s)
         query = {"crtfc_key": self.api_key, **params}
         try:
@@ -155,9 +189,11 @@ class OpenDart:
                 raise DartError("OpenDART 응답이 JSON 이 아닙니다.")
             body = json.loads(text)
         status = str(body.get("status") or "")
-        if status in AUTH_STATUS - {"013"}:
-            message = redact(str(body.get("message") or status), self.api_key)
-            raise DartError(f"OpenDART 상태 {status}: {message}")
+        message = redact(str(body.get("message") or ""), self.api_key)
+        if status in SYSTEMIC_STATUS:
+            raise DartFatal(f"OpenDART 상태 {status}: {message}".strip())
+        if status not in {"", "000", "013"}:
+            raise DartError(f"OpenDART 상태 {status}: {message}".strip())
         return body
 
 
