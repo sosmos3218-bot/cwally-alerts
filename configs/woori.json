@@ -1,0 +1,72 @@
+{
+  "name": "woori",
+  "title_prefix": "[WOORI]",
+  "title_note": "제목 예: '[WOORI] 316140 우리금융 CET1 악화'. 제목에 316140 필수, 매수/가운데점/em-dash 금지.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "woori",
+  "approval": "사용자 승인 2026-11-05 (pt62u). 새 cron/새 workflow_dispatch 입력/cron-job.org 잡 없음. morning 09:00, afternoon 15:20, k203780 19:00 기존 묶음에 부착, 스크립트가 날짜로 거름.",
+  "schedule_kst": "평일 09:00 / 15:20 / 19:00 (morning, afternoon, k203780 슬롯), 창 2027-01-26 ~ 2027-02-27",
+  "schedule_note": "새 cron 없음. 기존 세 슬롯에 붙임. 4Q26/FY2026 실적과 기업가치 제고/주주환원 공시가 나오면 CET1, 총주주환원율 목표, 자사주 매입을 판정. 수동 job=woori 는 oneoff_mode=auto 가 아니면 selftest + dry (날짜 거름 무시).",
+  "year_guard": 2027,
+  "window_start": "2027-01-26",
+  "window_end": "2027-02-27",
+  "window_note": "평일만. 과거 연간/4분기 잠정: 2026-02-06, 2025-02-06 부근. 창은 2027-01-26~02-27, 마지막 확인일 02-27. ends_kst 2027-03-02 23:59.",
+  "ticker": "316140",
+  "display": "우리금융지주",
+  "corp_name": "우리금융지주",
+  "dart_corp_code": "01350869",
+  "position": {
+    "shares": 25,
+    "avg_krw": 33018,
+    "note": "보유 25주, 평단 33,018원. 본문에 현재가와 손익% (Daum/krx_close, 없으면 생략)."
+  },
+  "baseline": {
+    "q3_cet1_pct": 13.80,
+    "q3_cet1_ex_oneoffs": "13.93~13.95",
+    "year_end_outlook_pct": "13.6~13.7",
+    "tsr_guidance": "total return 40%대 중반 이상",
+    "q3_as_of": "2026-10-23",
+    "q3_source": "우리금융그룹 2026년 3분기 실적발표 / DART 20261023800639 잠정실적"
+  },
+  "thresholds": {
+    "cet1_worse_lt": 13.5,
+    "cet1_watch_lt": 13.6,
+    "tsr_improve_pct": 50,
+    "tsr_strong_pct": 55,
+    "buyback_strong_eok": 5000
+  },
+  "rules": {
+    "worse": "p4 악화: 기말(end-2026) CET1 비율 < 13.5%",
+    "watch": "p3 주의(1번): 13.5% <= CET1 < 13.6%",
+    "improve": "p4 개선: 공식 2027(또는 이후) 명목 총주주환원율 목표 >= 50% (공시/IR, 언론 추정·CFO 개인 견해 제외)",
+    "strong": "p4 강한 개선(규칙3 대신): 공식 목표 >= 55% 또는 신규 자사주 매입 >= 5,000억원"
+  },
+  "sources": {
+    "opendart_list": "https://opendart.fss.or.kr/api/list.json (OPENDART_API_KEY, corp_code 01350869)",
+    "opendart_document": "https://opendart.fss.or.kr/api/document.xml",
+    "dart_attach": "https://dart.fss.or.kr/pdf/download/ (기업가치 제고계획 첨부 PDF)",
+    "kind": "https://kind.krx.co.kr/disclosure/details.do (키 없음, OpenDART 실패 시)",
+    "naver_notice": "https://stock.naver.com/api/domestic/detail/notice?itemCode=316140",
+    "ir_list": "https://www.woorifg.com/kor/investor/ir/earnings-announcement/list.do",
+    "ir_file_pattern": "https://www.woorifg.com/cmm/fms/FileDown.do?fileId=... (실적발표 PDF, CET1은 보통 IR 발표자료에만)",
+    "price": "scripts/krx_close.py (Daum KRX)"
+  },
+  "history": [
+    {
+      "quarter": "2026 3Q",
+      "date": "2026-10-23",
+      "dart_rcp": "20261023800639",
+      "cet1": "13.80%",
+      "note": "잠정실적 공정공시 + IR 발표자료. CET1은 IR에만."
+    },
+    {
+      "quarter": "2025 FY / 2026 plan",
+      "date": "2026-02-06",
+      "dart_rcp": "20260206801698",
+      "note": "기업가치 제고계획(자율공시) + 연간 잠정실적"
+    }
+  ],
+  "ends_kst": "2027-03-02 23:59",
+  "ends_note": "우리금융 4Q26/FY2026 CET1·주주환원 감시, 창 2027-01-26~02-27, 늦은 백업 포함 3/2까지"
+}
