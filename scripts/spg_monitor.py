@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ntfy_util  # noqa: E402,F401  ntfy_util 안전장치(df362a5)가 import 시점에 걸리도록 맨 위에서 import
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "spg.json"
