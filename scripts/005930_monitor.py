@@ -301,6 +301,24 @@ def dist(close: float, level: float) -> float:
     return (close / level - 1.0) * 100.0
 
 
+def session_close_ready(day: str, today: str, now: datetime, close_hm: tuple[int, int]) -> bool:
+    """True once the KRX regular close for `day` is known at `now`.
+
+    `today` is session_day (rolls back before 06:00 KST). A late GitHub backup after
+    midnight still has session_day = yesterday, but wall-clock hour is 0..5, so a plain
+    `now.hour < 15:30` check would treat yesterday's close as still intraday and skip it
+    (2026-11-04: on-time Persist push failed, backup 41880374371 at 02:46 KST left
+    state/005930.json last_day stuck at 2026-11-03). Past session days are always ready;
+    the current session day is ready after market close, or once the calendar date has
+    moved past that session day.
+    """
+    if day > today:
+        return False
+    if day < today:
+        return True
+    return (now.hour, now.minute) >= close_hm or now.date().isoformat() > today
+
+
 def eval_lines(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime) -> list[dict]:
     events = []
     close_hm = tuple(map(int, cfg.get("market_close_kst", "15:30").split(":")))
@@ -308,8 +326,8 @@ def eval_lines(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
     for r in rows:
         if r["day"] <= last:
             continue
-        if r["day"] > today or (r["day"] == today and (now.hour, now.minute) < close_hm):
-            continue  # intraday, not a close yet
+        if not session_close_ready(r["day"], today, now, close_hm):
+            continue  # future session, or same session before the regular close
         for ln in cfg["lines"]:
             s = st["lines"].setdefault(ln["key"], {"armed": True, "fired_day": None})
             if s.get("armed", True) and hit(ln, r["close"]):
@@ -358,7 +376,7 @@ def eval_ratio(cfg: dict, st: dict, rows: list[dict], pair_rows: list[dict], tod
     for r in rows or []:
         if r["day"] <= (rs.get("last_day") or ""):
             continue
-        if r["day"] > today or (r["day"] == today and (now.hour, now.minute) < close_hm):
+        if not session_close_ready(r["day"], today, now, close_hm):
             continue
         pc = pmap.get(r["day"])
         if not pc:
@@ -1875,6 +1893,28 @@ def _selftest_rest(name, cfg, seed, check, at, orig, tk, b1v, tl, lv, sp) -> Non
     check("next run catches up 10-26 once, no fail notice", [(t, "2026-10-26" in m) for t, m, *_ in sends],
           [(f"{cfg['title_prefix']} 종가 {fmt(b1v)} 이하 | {tl}", True)])
     check("catch-up last_day", s["last_day"], "2026-10-27")
+    # Late backup after midnight (session_day rolls back, wall clock still before 15:30) must still
+    # accept that session's close (bug 2026-11-04 / run 41880374371).
+    # Seed day 10-23 Thu; next trading 10-24 Fri close silent; run Sat 10-25 02:46 -> session 10-24.
+    s_late = copy.deepcopy(seed)
+    s_late["last_day"] = cfg["seed"]["day"]
+    fri = "2026-10-24"
+    rows_fri = [{"day": cfg["seed"]["day"], "close": float(cfg["seed"]["close"])},
+                {"day": fri, "close": float(cfg["seed"]["close"])}]  # no line hit
+    now_late = datetime.fromisoformat("2026-10-25").replace(hour=2, minute=46, tzinfo=KST)
+    from kr_calendar import session_day as _sd
+    check("post-midnight backup session_day is Fri", _sd(now_late).isoformat(), fri)
+    sends_late = plan_sends(cfg, s_late, {"rows": rows_fri, "src": "Yahoo 정규장"}, [], now_late,
+                            lambda c, d: None, lambda c, rows, now: "x")
+    check("post-midnight backup: no false alert on unchanged close", sends_late, [])
+    check("post-midnight backup: last_day advances to Fri close", s_late["last_day"], fri)
+    # Same wall-clock before close on the session calendar day still holds (true intraday)
+    s_intra = copy.deepcopy(seed)
+    s_intra["last_day"] = cfg["seed"]["day"]
+    now_intra = datetime.fromisoformat(fri).replace(hour=14, minute=0, tzinfo=KST)
+    plan_sends(cfg, s_intra, {"rows": rows_fri, "src": "Yahoo 정규장"}, [], now_intra,
+               lambda c, d: None, lambda c, rows, now: "x")
+    check("true intraday before 15:30 still holds last_day", s_intra["last_day"], cfg["seed"]["day"])
     # Yahoo up but missing the session's regular close -> hold
     g["yahoo_rows"] = yrows([{"day": cfg["seed"]["day"], "close": cfg["seed"]["close"]}])
     d3, f3 = collect(cfg, at("2026-10-26"))
