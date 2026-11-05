@@ -143,6 +143,71 @@ def spg_entry_alert(stamp: str, spg: float, y10: float | None, base: dict, th: d
     return title, msg
 
 
+
+def vtr_entry_level(base: dict, th: dict) -> tuple[float, str, float, float]:
+    """Stricter (lower) of the VTR dividend-yield price and entry-multiple x Normalized FFO midpoint."""
+    div = float(base["vtr_dividend_annual"])
+    ffo = float(base["vtr_ffo"])
+    y = float(th["vtr_entry_yield"])
+    m = float(th["vtr_entry_mult"])
+    by_yield = round(div / (y / 100.0), 2)
+    by_mult = round(m * ffo, 2)
+    if by_mult <= by_yield:
+        return by_mult, f"{m:g}배 (Normalized FFO {ffo:g}달러 x {m:g})", by_yield, by_mult
+    return by_yield, f"배당 {y:g}% (연 {div:g}달러 / {y:g}%)", by_yield, by_mult
+
+
+def vtr_entry_check(vtr: float, state_entry: dict | None, base: dict, th: dict) -> tuple[bool, dict]:
+    level = vtr_entry_level(base, th)[0]
+    st = dict(state_entry or {"armed": True})
+    rearm = level * (1 + float(th["vtr_entry_rearm_pct"]) / 100.0)
+    fire = False
+    if st.get("armed", True):
+        if vtr <= level:
+            fire = True
+            st["armed"] = False
+    elif vtr > rearm:
+        st["armed"] = True
+    st["level"] = level
+    st["rearm_above"] = round(rearm, 2)
+    return fire, st
+
+
+def vtr_entry_alert(stamp: str, vtr: float, y10: float | None, base: dict, th: dict, install: bool = False) -> tuple[str, str]:
+    level, leg, by_yield, by_mult = vtr_entry_level(base, th)
+    ffo = float(base["vtr_ffo"])
+    div = float(base["vtr_dividend_annual"])
+    cheap = float(th["vtr_mult_cheap"]) * ffo
+    y_entry = float(th["vtr_entry_yield"])
+    m_entry = float(th["vtr_entry_mult"])
+    rearm = level * (1 + float(th["vtr_entry_rearm_pct"]) / 100.0)
+    ytxt = f"{y10:.2f}%" if y10 is not None else "미확인"
+    status = (
+        f"VTR 정규장 종가 {vtr:.2f}달러, 진입가 {level:.2f}달러(더 낮은 쪽: {leg}). "
+        f"배당 {y_entry:g}% 가격 {by_yield:.2f}달러, {m_entry:g}배 가격 {by_mult:.2f}달러. "
+        f"P/FFO {vtr / ffo:.2f}배, 배당수익률 {div / vtr * 100:.2f}%, 미국 10년물 {ytxt}. "
+        f"기존 cheap 구간({th['vtr_mult_cheap']:g}배) {cheap:.2f}달러까지 {(cheap / vtr - 1) * 100:+.1f}%. "
+        f"분할 매수 1차 검토 구간, 투자 권유 아님."
+    )
+    if install:
+        title = "[VTRSPG] VTR 진입 단계 설치 확인 | 매매 신호 아님 | VTR"
+        status = "설치 확인용 1회 발송입니다. " + status
+    else:
+        title = f"[VTRSPG] VTR ${vtr:.2f}, 진입 단계 도달 ({m_entry:g}배, 배당 {y_entry:g}%) | VTR"
+    msg = "\n".join(
+        [
+            f"{stamp} | VTR SPG | VTR 진입 단계",
+            f"이게 뭐 알림: VTR 종가가 진입가(배당 {y_entry:g}% 가격과 Normalized FFO {m_entry:g}배 가격 중 낮은 쪽) 이하로 처음 내려오면 1번 보내는 알림입니다. 분할 매수 1차 검토 구간, 투자 권유 아님.",
+            f"지금 결과/상태: {status}",
+            "지금 할 일: 분할 매수 1차 검토 구간입니다. 한 번에 다 사지 말고 1차 분량만 검토하세요. 자동 주문은 아닙니다.",
+            f"나중에: {th['vtr_mult_cheap']:g}배 {cheap:.2f}달러 아래면 cheap 구간 알림이 따로 옵니다. 종가가 {rearm:.2f}달러(진입가 +3%) 위로 올라가면 다시 무장합니다. 실적 뒤 배당과 가이던스가 바뀌면 진입가도 바뀝니다.",
+            f"익절/줄일 때: {th['vtr_mult_rich']:g}배(rich) 위로 올라가면 성장 프리미엄이 커집니다. 그때 비중을 다시 보세요.",
+            "하지 말 것: 신용, 미수, 한 번에 전량 매수. 이 알림을 FFO 가이던스 유지 확인으로 쓰기. SPG 4.5%/15배를 VTR에 그대로 적용하기.",
+        ]
+    )
+    return title, msg
+
+
 def selftest() -> int:
     base = {"spg_dividend_annual": 9.0, "spg_ffo": 13.25}
     th = {"spg_entry_yield": 4.5, "spg_entry_mult": 15.0, "spg_entry_rearm_pct": 3.0, "spg_mult_cheap": 14.0}
@@ -168,6 +233,33 @@ def selftest() -> int:
     pos = [m.index(k + ":") for k in keys]
     assert pos == sorted(pos), pos
     assert "\u00b7" not in m + t and "\u2014" not in m + t
+    vb = {"vtr_dividend_annual": 2.08, "vtr_ffo": 3.89}
+    vt = {
+        "vtr_entry_yield": 2.5,
+        "vtr_entry_mult": 20.0,
+        "vtr_entry_rearm_pct": 3.0,
+        "vtr_mult_cheap": 19.0,
+        "vtr_mult_rich": 23.0,
+    }
+    vl, vleg, vby, vbm = vtr_entry_level(vb, vt)
+    assert (vl, vby, vbm) == (77.8, 83.2, 77.8) and "20" in vleg, (vl, vleg, vby, vbm)
+    cheap = 19.0 * 3.89
+    assert vl > cheap, (vl, cheap)
+    vf, vst = vtr_entry_check(89.04, None, vb, vt)
+    assert not vf and vst["armed"]
+    vf, vst = vtr_entry_check(77.8, vst, vb, vt)
+    assert vf and not vst["armed"]
+    vf, vst = vtr_entry_check(70.0, vst, vb, vt)
+    assert not vf and not vst["armed"]
+    vf, vst = vtr_entry_check(80.14, vst, vb, vt)
+    assert not vf and vst["armed"]
+    vf, vst = vtr_entry_check(77.0, vst, vb, vt)
+    assert vf
+    vt2, vm2 = vtr_entry_alert("x", 77.0, 4.84, vb, vt)
+    assert vt2.startswith("[VTRSPG] VTR $77.00, 진입 단계 도달") and vt2.endswith("| VTR"), vt2
+    pos2 = [vm2.index(k + ":") for k in keys]
+    assert pos2 == sorted(pos2), pos2
+    assert "\u00b7" not in vm2 + vt2 and "\u2014" not in vm2 + vt2
     print("selftest ok")
     return 0
 
@@ -178,12 +270,17 @@ def main() -> int:
         return selftest()
     dry = mode == "dry" or os.environ.get("VTRSPG_DRY") == "1"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-    if mode == "install":
+    if mode in {"install", "install_spg", "install_vtr"}:
         b, t = cfg["baseline"], cfg["thresholds"]
-        spg_i = price_of(cfg["sources"]["spg"])
         tnx = price_of(cfg["sources"]["tnx"])
         y_i = None if tnx is None else (tnx / 10.0 if tnx > 20 else tnx)
-        title, msg = spg_entry_alert(datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"), spg_i, y_i, b, t, install=True)
+        stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
+        if mode == "install_vtr":
+            vtr_i = price_of(cfg["sources"]["vtr"])
+            title, msg = vtr_entry_alert(stamp, vtr_i, y_i, b, t, install=True)
+        else:
+            spg_i = price_of(cfg["sources"]["spg"])
+            title, msg = spg_entry_alert(stamp, spg_i, y_i, b, t, install=True)
         print(title)
         print(msg)
         publish(resolve_topic("port", cfg.get("ntfy_topic")), title, msg, 3, ["white_check_mark"], resolve_server(cfg.get("ntfy_server")))
@@ -329,6 +426,18 @@ def main() -> int:
             est["fired_on"] = today
             est["fired_close"] = round(spg, 2)
         state["spg_entry"] = est
+        if "vtr_dividend_annual" in base and "vtr_entry_mult" in th:
+            vf, vest = vtr_entry_check(vtr, state.get("vtr_entry"), base, th)
+            print(
+                f"vtr entry: close {vtr:.2f} vs entry {vest['level']:.2f} ({vtr_entry_level(base, th)[1]}), "
+                f"armed={vest['armed']}, fire={vf}"
+            )
+            if vf:
+                t_v, m_v = vtr_entry_alert(stamp, vtr, y10, base, th)
+                alerts.append((t_v, m_v, 4))
+                vest["fired_on"] = today
+                vest["fired_close"] = round(vtr, 2)
+            state["vtr_entry"] = vest
         state["yield_band"] = band
         state["vtr_zone"] = vz
         state["spg_zone"] = sz

@@ -7,21 +7,23 @@
   "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning job에만 붙임. 미국 마감 후 시세와 10년물.",
   "valid_until": "2031-10-06",
   "alert_policy": "state_change_only",
-  "as_of": "2026-10-07",
+  "as_of": "2026-11-06",
   "baseline": {
-    "price_date": "2026-10-06",
-    "yield_date": "2026-10-05",
-    "yield_10y": 5.31,
-    "vtr_price": 81.87,
-    "vtr_ffo": 3.88,
-    "vtr_ffo_note": "2026 Normalized FFO 가이던스 중간값. 실적 후 수동 갱신.",
-    "spg_price": 201.76,
-    "spg_ffo": 13.25,
-    "spg_ffo_note": "2026 Real Estate FFO 가이던스 중간값. 배수 구간과 진입 단계가 함께 씀. 실적 후 수동 갱신.",
+    "price_date": "2026-11-05",
+    "yield_date": "2026-11-05",
+    "yield_10y": 4.84,
+    "vtr_price": 89.04,
+    "vtr_ffo": 3.89,
+    "vtr_ffo_note": "2026 Normalized FFO 가이던스 중간값. Q3(2026-10-27) $3.87~$3.90 상향. 배수 구간과 진입 단계가 함께 씀.",
+    "spg_price": 226.55,
+    "spg_ffo": 13.35,
+    "spg_ffo_note": "2026 Real Estate FFO 가이던스 중간값. Q3 공시 $13.30~$13.40 상향. 배수 구간과 진입 단계가 함께 씀.",
     "vtr_spread": -0.0057,
     "spg_spread": 0.0126,
-    "spg_dividend_annual": 9.0,
-    "spg_dividend_note": "분기 배당 x 4. 2026-08-10 선언 3분기 2.25달러 기준. 실적(2026-11-05 ET, 11-06 KST) 뒤 새 분기 배당 x 4로 수동 갱신."
+    "spg_dividend_annual": 9.2,
+    "spg_dividend_note": "분기 배당 x 4. Q4 2026 선언 2.30달러 기준(연 9.20). 특별배당 제외.",
+    "vtr_dividend_annual": 2.08,
+    "vtr_dividend_note": "분기 배당 x 4. 2026-09-14 선언 0.52달러 기준(연 2.08). Q3 실적에서 추가 인상 선언 없음."
   },
   "thresholds": {
     "yield_low": 4.5,
@@ -33,7 +35,10 @@
     "spg_mult_rich": 17.0,
     "spg_entry_yield": 4.5,
     "spg_entry_mult": 15.0,
-    "spg_entry_rearm_pct": 3.0
+    "spg_entry_rearm_pct": 3.0,
+    "vtr_entry_yield": 2.5,
+    "vtr_entry_mult": 20.0,
+    "vtr_entry_rearm_pct": 3.0
   },
   "earnings": {
     "vtr": "2026-10-27",
@@ -53,6 +58,10 @@
   "ends_note": "평일 09:00 VTR/SPG 상태 변화 때만 발송, 이후 자동 종료",
   "spg_entry": {
     "approved": "2026-11-03 chat",
-    "note": "진입가 = min(연 배당 / 4.5%, 15 x RE FFO 중간값). 가격을 고정하지 않고 baseline.spg_dividend_annual, baseline.spg_ffo 에서 매번 계산. SPG 정규장 종가가 진입가 이하면 p4 1번(에피소드당). 종가가 진입가 x 1.03 위로 올라오면 재무장. 17배 rich, 14배 cheap 구간과 [SPG] 150/160달러, 10년물 구간은 그대로."
+    "note": "진입가 = min(연 배당 / 4.5%, 15 x RE FFO 중간값). 가격을 고정하지 않고 baseline.spg_dividend_annual, baseline.spg_ffo 에서 매번 계산. SPG 정규장 종가가 진입가 이하면 p4 1번(에피소드당). 종가가 진입가 x 1.03 위로 올라오면 재무장. 17배 rich, 14배 cheap 구간과 [SPG] 150/160달러, 10년물 구간은 그대로. 2026-11-06 Q3 반영: 배당 9.2, FFO 13.35."
+  },
+  "vtr_entry": {
+    "approved": "2026-11-03 chat (VTR 제안대로 추가 사전승인), 2026-11-06 판정 필요",
+    "note": "진입가 = min(연 배당 / 2.5%, 20 x Normalized FFO 중간값). SPG의 4.5%/15배는 이식하지 않음. VTR은 시니어하우징 성장 리츠라 역사적 P/FFO가 더 높고 배당수익률이 더 낮음. 20배는 기존 cheap 19배보다 1배수 위(SPG 15 vs 14와 같은 간격), 2.5%는 최근 압축 수익률(약 2.0~2.5%)의 상단. 기존 19/23 배수 구간은 그대로. 진입가가 cheap 이하이면 만들지 않음. 종가 진입가 이하 p4 1번, +3% 재무장."
   }
 }
