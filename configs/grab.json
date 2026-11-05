@@ -6,7 +6,7 @@
   "currency": "USD",
   "as_of": "2026-11-03",
   "approval": "사용자 요청 2026-11-03: [GRAB](4.15/3.20, Komdigi 뉴스)와 [GRAB-PX](2.85~2.95/2.73/2.67, 실적 일정)를 하나로 합침 (pt1u). 기존 tsla 슬롯 부착, 새 cron 없음",
-  "holding_note": "보유 여부 미기재. 매매 지시 아님.",
+  "holding_note": "보유 108주, 평단 3.7152달러. 매매 지시 아님.",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "job_id": "grab",
@@ -64,6 +64,18 @@
       "todo": "1차 매수분이 있으면 유지. 추격 매수는 하지 말고, 인도네시아 배달 수수료 규제가 넓어지지 않았는지 확인하세요.",
       "later": "4.15달러(적정가)에 닿으면 일부 익절 검토 알림이 옵니다. 3.10달러(3.20의 3% 아래) 밑으로 내려가면 이 선은 다시 무장합니다.",
       "trim": "이 알림은 매도 신호가 아닙니다."
+    },
+    "be371": {
+      "kind": "above",
+      "level": 3.7152,
+      "rearm_pct": 3.0,
+      "priority": 4,
+      "title": "[GRAB] 손익분기점 3.7152달러 회복 | 본전 구간 진입",
+      "status": "GRAB 현재가가 보유 평단(손익분기점) 3.7152달러 위로 올라왔습니다. Base 시나리오 가치(약 3.71달러) 근처라 공정가치 부근입니다.",
+      "todo": "본전에 들어왔으니 추격 매수는 하지 말고, 다음 선인 적정가 4.15달러까지는 보유 유지를 기본으로 두세요.",
+      "later": "4.15달러(적정가)에 닿으면 일부 익절 검토 알림이 옵니다. 3.60달러(3.7152의 약 3% 아래) 밑으로 내려가면 이 선은 다시 무장합니다.",
+      "trim": "이 알림은 매도 신호가 아닙니다. 전량 정리 근거로 쓰지 마세요.",
+      "show_pnl": true
     },
     "up415": {
       "kind": "above",
@@ -244,5 +256,11 @@
       "note": "매일 1번(뉴스 확인과 같은 실행). 검색 결과 제목이 title_re 에 맞는 새 문서만 상세 페이지를 엽니다. 번호와 제정일(Tanggal Penetapan/Pengundangan)이 있고 Rancangan 이 아니며 min_date 이후인 문서만 판정. 제목 또는 PDF 본문(pdftotext)에서 8% 와 수수료 단어, 배달 단어가 400자 안에 같이 있으면 A 자동 확정(p4 공포 확인). 관련 규정인데 8% 나 배달 범위를 못 읽으면 후보 + p4 수동 확인. Komdigi 는 PDF 가 봇에 막혀(403) 제목만 봅니다. peraturan.go.id, jdihn.go.id 는 응답 없음, peraturan.bpk.go.id 는 Cloudflare 차단이라 dry run 에서 연결만 점검. 소스 전체 실패는 일일 운영 알림 한 번. cap8.manual status rejected 가 언제나 우선.",
       "scope_title_re": "aplikasi|pesan antar|kurir|pengantaran|angkutan|ojek|sepeda motor|daring|platform|aplikator"
     }
+  },
+  "holding": {
+    "shares": 108,
+    "avg_cost": 3.7152,
+    "base_scenario": 3.71,
+    "note": "보유 108주, 평단 3.7152달러. Base 시나리오 가치 약 3.71달러(손익분기와 거의 같음)."
   }
 }
