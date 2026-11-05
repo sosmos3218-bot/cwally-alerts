@@ -1,0 +1,11 @@
+{
+  "seeded": false,
+  "updated_at": null,
+  "last_day": null,
+  "last_fail_day": null,
+  "ops_day": null,
+  "last": {},
+  "upgrade": {"armed": true, "fired_day": null},
+  "risk": {"armed": true, "fired_day": null},
+  "px_low": {"armed": true, "fired_day": null}
+}

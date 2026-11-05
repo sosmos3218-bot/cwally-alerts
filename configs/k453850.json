@@ -1,0 +1,58 @@
+{
+  "name": "k453850",
+  "title_prefix": "[453850]",
+  "code": "453850",
+  "short": "ACE 미국30년국채액티브(H)",
+  "display": "ACE 미국30년국채액티브(H)(453850) US30Y 관망 해제/리스크 + 52주 저점 분할매수 점검",
+  "approval": "사용자 채팅 승인 2026-11-05 (pt5u): 새 알림. 기존 morning 09:00 + k203780 19:00 슬롯 부착, 새 cron 없음. 453850 전용 알림/보유 기록 없음. 관련 [476760] 환노출 5.4/5.5, [USTSY] 484790/476760 비중, [RATES] 10년, [US-BOND] IEF/FOMC 다음날은 기준선과 상품이 달라 별도 유지.",
+  "holding": "미보유 또는 미등록. 이 저장소에 453850 수량/평단 기록 없음.",
+  "overlap_note": "같은 30년물 시계열을 보는 기존 알림: [476760] ACE 미국30년(환노출) 5.4%/5.5%+종가 8300, [USTSY] 484790(헤지)/476760 원달러 비중(exclude에 453850), [RATES] 10년 5.15/4.85/5.50/5.00, [US-BOND] IEF+FOMC 다음날 요약. 453850(헤지, 월배당) 관망 해제 5.0% / 리스크 5.5% / 52주저 6685 기준이라 기존에 섞지 않음.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 19:00",
+  "schedule_note": "새 cron 없음. morning 09:00(미국 전일 종가 확정 뒤)와 k203780 19:00(미국 데이터/KRX 종가 뒤). 오후 15:20은 미국 종가가 아직 안 나와 붙이지 않음. 하루 두 번이어도 armed/fired_day 로 같은 날 중복 발송 없음. 수동 job=k453850 은 oneoff_mode=auto 아니면 selftest+dry.",
+  "market_close_kst": "15:30",
+  "alert_policy": "event_only",
+  "yield": {
+    "upgrade_below": 5.0,
+    "upgrade_rearm": 5.1,
+    "risk_above": 5.5,
+    "risk_rearm": 5.4,
+    "primary": "FRED DGS30",
+    "fallback": "Yahoo ^TYX",
+    "note": "미국 30년물 종가 < 5.00% = 관망 해제 점검(1회, 5.10% 위로 올라와야 재무장). > 5.50% = 리스크(1회, 5.40% 아래로 내려와야 재무장)."
+  },
+  "price": {
+    "low_max": 6685,
+    "low_rearm": 6886,
+    "low_rearm_note": "6,685 x 1.03 = 6,885.55 → 6,886. 종가가 이 선 위로 올라와야 다시 무장.",
+    "high_52w": 7950,
+    "ref_close": 7080,
+    "ref_day": "2026-11-04",
+    "note": "종가 <= 6,685(52주 저) = 분할매수 검토(1회). 매수 지시 아님."
+  },
+  "dividend": {
+    "monthly_dps_krw": 25,
+    "annual_est_krw": 300,
+    "yield_note": "최근 월 분배 약 25원 기준 연 약 300원. 배당수익률 추정 = 300 / 종가."
+  },
+  "thesis": {
+    "as_of": "2026-11-05",
+    "stance": "현 시점 매력 낮음. 금리 정점 확인 전 본격 진입 자제(관망).",
+    "duration_note": "듀레이션 약 16-18년, 환헤지, 월배당, 총보수 0.05%.",
+    "us30y_ref": "약 5.28%(최근 고점 약 5.67%). Fed 3.75-4.00% 동결(10/28), 12월 인상 논의.",
+    "upgrade": ["US30Y < 5.0%", "Fed가 인하 사이클 진입을 명확히 시사(수동 확인)"],
+    "risk": ["US30Y > 5.5%"],
+    "fed_cut_note": "Fed 인하 시사 자동 감지는 하지 않음. [FOMC] 알림은 폐기됨. [US-BOND]는 IEF용 FOMC 다음날 요약만 있음. Fed 스탠스는 수동 점검."
+  },
+  "sources": {
+    "price": "https://m.stock.naver.com/api/stock/453850/price?pageSize=20&page=1",
+    "fred_dgs30": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30&cosd={start}",
+    "yahoo_tyx": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETYX?interval=1d&range=1mo"
+  },
+  "window_start": "2026-11-05",
+  "ends_kst": "2027-05-31 19:00",
+  "ends_note": "평일 09:00/19:00 금리·가격 점검. 2027-05-31까지(금리 사이클 관찰). 연장하려면 ends_kst 갱신.",
+  "explain": "453850(헤지) 조건 알림. US30Y 5.0% 하회 관망 해제 점검, 5.5% 상회 리스크, 종가 6,685 이하 분할매수 검토. 각 조건은 넘을 때 1번만. 매매 신호 아님. 리뷰 프롬프트만."
+}
