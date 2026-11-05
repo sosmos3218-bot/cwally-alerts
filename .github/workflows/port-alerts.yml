@@ -273,7 +273,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, woori, k475380, k417790, k316140]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, woori, k475380, k417790, k316140]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -2164,6 +2164,19 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k0046y0_monitor.py selftest; fi
           python scripts/k0046y0_monitor.py "$MODE"
+      - name: Run 402340 (SK Square look-through discount vs SK hynix stake, KRX closes, split-buy review D>=47% / D>=50% + narrowing D<=30%; k203780 19:00 slot; 2026-11-06 ~ 2027-02-28)
+        # user delegated 2026-11-05 (t59u). Attached to the existing k203780 slot, no new cron. KRX regular closes of 402340 and 000660 via scripts/krx_close.py (no Naver/NXT); dedupe state/k402340.json price.last_date + armed.
+        # job=k402340 (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k402340') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/k402340_monitor.py selftest; fi
+          python scripts/k402340_monitor.py "$MODE"
       - name: Run 309230 (ACE US Wide Moat equal-weight KRX close buy1 29,000 / buy2 28,600 / trim 32,800 + MOAT-QQQ 3M regime; k203780 19:00 slot; 2026-11-05 ~ 2027-05-05)
         # user delegated 2026-11-05 (t19u). Attached to the existing k203780 slot, no new cron. KRX regular close via scripts/krx_close.py; regime via Yahoo MOAT/QQQ. No dist notice, no MA20 recover.
         # job=k309230 (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.

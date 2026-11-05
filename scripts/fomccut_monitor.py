@@ -628,7 +628,7 @@ def build_signal(cfg, stamp, decision, result, snap) -> tuple[str, str, int]:
 
 def build_brief(cfg, stamp, decision, result, snap) -> tuple[str, str, int]:
     klass = result["class"]
-    title = f"{TAG} {decision[5:7]}/{decision[8:]} 요약 | {klass}"
+    title = f"{TAG} 453850 476760 {decision[5:7]}/{decision[8:]} 요약 | {klass}"
     status = (
         f"회의 {decision}. 분류 {klass} (비둘기 {result['dovish']} / 매파 {result['hawk']}, 행동 {result['action']}). "
         f"근거: {'; '.join(result['reasons']) or '뚜렷한 가점 없음'}. {result['sep_note']}. "
@@ -647,7 +647,7 @@ def build_brief(cfg, stamp, decision, result, snap) -> tuple[str, str, int]:
 
 
 def ops_msg(stamp: str, status: str) -> tuple[str, str]:
-    t = f"{TAG} 조회 실패 | 판정 보류"
+    t = f"{TAG} 453850 476760 조회 실패 | 판정 보류"
     m = body(stamp, "조회 실패", "FOMC 인하 신호 점검이 데이터를 못 읽었습니다.", status,
              "다음 morning 재시도를 기다리세요.", "회의당 1번 원칙은 유지됩니다.",
              "이 실패만으로 포지션을 바꾸지 마세요.", "조회 실패를 인하 신호로 읽기.")
@@ -662,7 +662,7 @@ def install_message(cfg, stamp, snap) -> tuple[str, str]:
             nxt.append(f"{d} -> {(date.fromisoformat(d)+timedelta(days=1)).isoformat()} 09:00")
         if len(nxt) >= 3:
             break
-    t = f"{TAG} 설치 확인 | 매매 신호 아님"
+    t = f"{TAG} 453850 476760 설치 확인 | 매매 신호 아님"
     status = (
         f"{distance_lines(cfg, snap)} 다음 예정: {', '.join(nxt) or '설정 없음'}. "
         f"SEP 회의: {', '.join(sorted(sep_dates(cfg)))}."
