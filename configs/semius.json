@@ -1,0 +1,59 @@
+{
+  "name": "semius",
+  "title_prefix": "[SEMIUS]",
+  "display": "삼성전자 005930, SK하이닉스 000660 수요 리스크 감시: 미국 빅테크 4사(AMZN, MSFT, GOOGL, META) 2027 capex 하향 공시 + 텍사스 데이터센터 모라토리엄 법적 효력",
+  "approval": "사용자 승인 설계 (2026-11-05 채팅, pt58u '네 소신껏'). 새 cron, 새 workflow 입력, cron-job.org 잡 없음. 평일 09:00 KST morning 묶음 안에서 날짜로 거름.",
+  "title_rule": "모든 제목에 005930 과 000660 포함. 제목에 '매수' 금지. 한글 본문에 가운뎃점, em-dash 금지.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "2026-11-05 ~ 2027-01-11: 주 1회 (ISO 주의 첫 morning 실행, 보통 월요일 09:00) / 2027-01-12 ~ 2027-06-02: 평일 매일 09:00",
+  "schedule_note": "기존 평일 09:00 KST morning 묶음(cron 0 0 * * 1-5 + cron-job.org 정시 dispatch)에 붙임. 요청은 월요일 08:20 무렵이었으나 분 단위가 중요하지 않아 새 cron 없이 09:00 슬롯 사용. 주간 구간은 state week 로 ISO 주 1번만 판정, 일간 구간은 매 실행. 2027-06-03 이후는 판정 안 함. 수동 job=semius 는 oneoff_mode=auto 가 아니면 selftest + dry (ntfy, state 없음, 날짜 거름 무시).",
+  "phases": {
+    "weekly_from": "2026-11-05",
+    "weekly_to": "2027-01-11",
+    "daily_from": "2027-01-12",
+    "daily_to": "2027-06-02"
+  },
+  "capex": {
+    "priority": 4,
+    "year": 2027,
+    "user_agent": "cwally-alerts semius sosmos3218@gmail.com",
+    "user_agent_note": "요청한 'cwally-alerts bot@sosmos3218.github' 는 SEC 가 403 (Undeclared Automated Tool) 으로 막음. capex 감시와 같은 꼴의 이메일 UA 사용.",
+    "forms": ["8-K", "8-K/A", "10-Q", "10-K"],
+    "eight_k_items": ["2.02", "7.01", "8.01"],
+    "min_filed": "2026-11-01",
+    "max_docs_per_filing": 4,
+    "max_doc_bytes": 25000000,
+    "rule": "공시 접수번호마다 1번만 판정. (a) 2027 capex 숫자 가이던스(중간값)가 저장된 직전 2027 가이던스보다 낮거나 문장 안 'prior outlook' 값보다 낮으면 p4. 직전값이 null 이면 저장만. (b) 2027 capex 가 2026 대비 감소/축소/낮아짐/줄어듦을 명시한 문장이면 p4. 'growth will moderate/slow', 증가율 둔화는 하향 아님: 보내지 않고 로그만. 회사별 공시 1건당 p4 1번.",
+    "companies": [
+      {"ticker": "AMZN", "name": "Amazon", "cik": "0001018724", "ir": "https://ir.aboutamazon.com/"},
+      {"ticker": "MSFT", "name": "Microsoft", "cik": "0000789019", "ir": "https://www.microsoft.com/en-us/investor", "fiscal_note": "회계연도 7월~6월. 'FY27', 'fiscal year 2027' 도 2027 로 봄. 'next year' 는 회계연도가 엇갈려 쓰지 않음."},
+      {"ticker": "GOOGL", "name": "Alphabet", "cik": "0001652044", "ir": "https://abc.xyz/investor/"},
+      {"ticker": "META", "name": "Meta Platforms", "cik": "0001326801", "ir": "https://investor.atmeta.com/"}
+    ]
+  },
+  "texas": {
+    "leg_session": "90R",
+    "session_note": "90회 정기회 사전 접수 2026-11 시작, 개회 2027-01-12, 폐회 2027-05-31",
+    "reports": [
+      "https://capitol.texas.gov/Reports/Report.aspx?LegSess=90R&ID=housefiled",
+      "https://capitol.texas.gov/Reports/Report.aspx?LegSess=90R&ID=senatefiled"
+    ],
+    "history_url": "https://capitol.texas.gov/BillLookup/History.aspx?LegSess={sess}&Bill={bill}",
+    "max_history_fetch": 40,
+    "p_committee": 3,
+    "p_law": 4,
+    "rule": "제목(caption)이나 주제(subjects)에 data center(s) 또는 large load 와 moratorium/pause/신규 건설, 허가 금지(prohibit, suspend, halt, ban)가 함께 있는 법안만. 접수만으로는 발송 없음. 위원회 통과(Out of committee, Reported favorably/from committee)면 p3 1번, 주지사 서명/Effective/서명 없이 성립이면 p4 1번(이 때 p3 는 건너뜀). 거부권은 로그만.",
+    "governor_eo": {
+      "category_url": "https://gov.texas.gov/news/category/executive-order",
+      "rss_url": "https://gov.texas.gov/news/rss",
+      "priority": 4,
+      "rule": "주지사 행정명령(카테고리 executive-order 글, 또는 RSS 본문에 executive order) 중 data center 와 moratorium/pause 가 함께 있으면 글마다 p4 1번."
+    },
+    "puct_note": "PUCT 규칙 채택(선택 항목)은 안정적으로 읽을 공개 목록이 없어 넣지 않음."
+  },
+  "footer": "모니터링 신호이며 매매 권유가 아닙니다.",
+  "ends_kst": "2027-06-05 23:59",
+  "ends_note": "텍사스 정기회 폐회(2027-05-31) 뒤 2027-06-02 까지 평일 판정, 늦은 백업 포함 6/5 까지"
+}

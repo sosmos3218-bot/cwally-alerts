@@ -273,7 +273,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -560,6 +560,8 @@ jobs:
             if [ "$JOB" = "neeq3" ]; then NQ="${{ github.event.inputs.neeq3_mode }}"; [ -z "$NQ" ] && NQ=dry; fi
             if [ "$JOB" = "soq3" ]; then SQ="${{ github.event.inputs.soq3_mode }}"; [ -z "$SQ" ] && SQ=dry; fi
             if [ "$JOB" = "crwvq3" ]; then CQ="${{ github.event.inputs.crwvq3_mode }}"; [ -z "$CQ" ] && CQ=dry; fi
+            # job=semius: dry (selftest + dry, no ntfy, no state) unless oneoff_mode=auto
+            if [ "$JOB" = "semius" ]; then SU=dry; [ "${{ github.event.inputs.oneoff_mode }}" = "auto" ] && SU=auto; fi
           fi
           echo "steel_mode=$SM" >> "$GITHUB_OUTPUT"
           echo "alux_mode=$AM" >> "$GITHUB_OUTPUT"
@@ -577,6 +579,7 @@ jobs:
           echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
           echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
+          echo "semius_mode=${SU:-dry}" >> "$GITHUB_OUTPUT"
       - name: Run VTRSPG manual check (job=vtrspg dispatch only; scheduled run stays in the 09:00 morning bundle)
         # 2026-11-03 chat: SPG entry step added to [VTRSPG]. No new cron. job=vtrspg is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'vtrspg' }}
@@ -766,6 +769,11 @@ jobs:
             python scripts/fltw_monitor.py auto
             python scripts/nflxq4_monitor.py auto
           fi
+          # [SEMIUS] 005930 000660 big tech 2027 capex cut (SEC EDGAR) + Texas data center moratorium (TLO 90R, governor EO). Approved 2026-11-05 (pt58u).
+          # No new cron: the script gates by date (weekly = first morning run of each ISO week to 2027-01-11, every weekday 2027-01-12 ~ 06-02). Ends 2027-06-05.
+          if [ "$JOB" = "morning" ]; then
+            python scripts/semius_monitor.py auto
+          fi
           python scripts/ntfy_archive.py
           exit $failed
       - name: Run square + silicon2 + cover0198 + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 + 464310 + 461490 (afternoon)
@@ -906,6 +914,17 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
           if [ "$MODE" = "dry" ]; then python scripts/shiplev_monitor.py selftest; fi
           python scripts/shiplev_monitor.py "$MODE"
+      - name: Run SEMIUS standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
+        # [SEMIUS] approved 2026-11-05 (pt58u). job=semius dispatch is selftest + dry (no ntfy, no state, date gate ignored) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'semius' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          SEMIUS_MODE: ${{ steps.pick.outputs.semius_mode }}
+        run: |
+          MODE="${SEMIUS_MODE:-dry}"
+          if [ "$MODE" != "auto" ]; then MODE=dry; python scripts/semius_monitor.py selftest; fi
+          python scripts/semius_monitor.py "$MODE"
       - name: Run LRCX standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
         # approved in chat 2026-10-26. job=lrcx dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'lrcx'
