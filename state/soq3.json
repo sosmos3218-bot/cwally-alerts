@@ -1,7 +1,10 @@
 {
   "notified": true,
-  "call_notified": false,
+  "call_notified": true,
   "fail_notified": false,
-  "updated_at": "2026-11-05T23:40:23.208133+09:00",
-  "score": "1차 보유 유지 | 추가는 06:20 판정 뒤"
+  "updated_at": "2026-11-06T06:20:22.372919+09:00",
+  "score": "추가 20% 검토",
+  "guide": "상향",
+  "gw": null,
+  "equity": "미확인"
 }
