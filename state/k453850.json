@@ -1,11 +1,25 @@
 {
-  "seeded": false,
-  "updated_at": null,
-  "last_day": null,
+  "seeded": true,
+  "updated_at": "2026-11-05T19:03:27.251115+09:00",
+  "last_day": "2026-11-05",
   "last_fail_day": null,
   "ops_day": null,
-  "last": {},
-  "upgrade": {"armed": true, "fired_day": null},
-  "risk": {"armed": true, "fired_day": null},
-  "px_low": {"armed": true, "fired_day": null}
+  "last": {
+    "y30": 5.2820000648498535,
+    "y30_day": "2026-11-04",
+    "y30_src": "Yahoo ^TYX"
+  },
+  "upgrade": {
+    "armed": true,
+    "fired_day": null
+  },
+  "risk": {
+    "armed": true,
+    "fired_day": null
+  },
+  "px_low": {
+    "armed": true,
+    "fired_day": null
+  },
+  "seed_note": "2026-11-05 19:03 KST 시드. 그때 이미 켜진 조건: 없음"
 }

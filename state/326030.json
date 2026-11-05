@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-05T02:46:59.583183+09:00",
+  "updated_at": "2026-11-05T19:02:03.481685+09:00",
   "seeded": true,
-  "last_day": "2026-11-04",
-  "last_close": 80700.0,
+  "last_day": "2026-11-05",
+  "last_close": 90600.0,
   "last_fail_day": null,
   "lines": {
     "stop": {
@@ -10,8 +10,8 @@
       "fired_day": null
     },
     "hold83": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-05"
     },
     "deal91": {
       "armed": true,
@@ -29,9 +29,16 @@
   ],
   "time_done": {},
   "earn_q3": {
-    "sent": null,
+    "sent": "2026-11-05 19:02 KST",
     "empty_sent": null,
-    "result": null
+    "result": {
+      "rev": 2584,
+      "op": 1163,
+      "src": "notice",
+      "verdict": "상회",
+      "xcopri": 2236
+    }
   },
-  "seed_note": "config seed 2026-11-02 close 77,500"
+  "seed_note": "config seed 2026-11-02 close 77,500",
+  "hold_lift_seen": []
 }
