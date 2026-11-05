@@ -1,17 +1,17 @@
 {
-  "updated_at": "2026-11-04 15:21 KST",
+  "updated_at": "2026-11-05 15:21 KST",
   "baseline_done": true,
   "flags": {
     "UP_RETEST": false,
     "DOWN_ALT": false,
-    "DOWN_ECO": false,
+    "DOWN_ECO": true,
     "GAP": false,
     "AUM": true,
     "FLOW2": false
   },
   "flow_streak": 0,
   "last_fail_date": null,
-  "last_action": "WATCH",
+  "last_action": "ALERT",
   "baseline_date": "2026-10-02",
   "baseline_price": 7425.0,
   "baseline_names": {
@@ -22,9 +22,9 @@
   "baseline_aum": 321.0,
   "flow_date": "20261103",
   "errors": [],
-  "price": 5700.0,
-  "premium_pct": -0.3386736651064696,
-  "aum_uk": 257.0,
-  "alt_contrib": -3.4551650485436896,
-  "eco_contrib": -3.9781242977528093
+  "price": 5400.0,
+  "premium_pct": -0.05996402158704373,
+  "aum_uk": 258.0,
+  "alt_contrib": -2.970796116504854,
+  "eco_contrib": -5.741044943820225
 }

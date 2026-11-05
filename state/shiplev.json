@@ -2,10 +2,10 @@
   "px": {
     "armed": true,
     "above_streak": 0,
-    "below_streak": 29,
-    "last_date": "2026-11-03",
-    "last_close": 19655.0,
-    "last_ma20": 21278.75,
+    "below_streak": 30,
+    "last_date": "2026-11-04",
+    "last_close": 19525.0,
+    "last_ma20": 20968.75,
     "source": "daum",
     "seeded_at": "2026-11-03 21:50 KST, 11/3 확정 종가까지"
   },
@@ -55,6 +55,15 @@
           "https://www.yna.co.kr/view/AKR20261007053400003"
         ],
         "added": "2026-11-03 seed (기사 원문 확인)"
+      },
+      "2026-10": {
+        "value": 187.2,
+        "sources": [
+          "https://www.koreareport.co.kr/news/articleView.html?idxno=54314",
+          "http://www.kookje.co.kr/news2011/asp/newsbody.asp?code=0200&key=20261105.22010001291",
+          "https://www.newsworks.co.kr/news/articleView.html?idxno=901974"
+        ],
+        "added": "2026-11-05 15:22 KST"
       }
     },
     "sent": [],
