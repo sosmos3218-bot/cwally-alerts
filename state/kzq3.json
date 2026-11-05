@@ -1,5 +1,7 @@
 {
-  "final_notified": false,
+  "final_notified": true,
   "empty_notified": false,
-  "fail_notified": false
+  "fail_notified": false,
+  "score": "하향",
+  "updated_at": "2026-11-05T16:10:32.538174+09:00"
 }
