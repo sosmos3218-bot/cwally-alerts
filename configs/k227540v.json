@@ -1,0 +1,47 @@
+{
+  "name": "k227540v",
+  "title_prefix": "[227540]",
+  "display": "227540 TIGER 200 헬스케어 vs 구성 개별주, 한국 헬스케어 섹터 주간 판정",
+  "created_at": "2026-11-05T11:30:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-05 (pt56u, t56u): 227540 과 구성 개별주 중 어느 쪽이 더 매력적인지 주기 판정 + 섹터 매력",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "그 주 마지막 KRX 거래일 19:00 (주 1번), [KR-HC] 주간 요약 바로 뒤",
+  "schedule_note": "새 cron 없음. 기존 KR-HC step(k203780 19:00 슬롯 + morning 09:00 늦은 발송)에 형제 실행으로 붙음. 주 계산과 늦은 발송 규칙은 krhc 와 같음(catchup_days 7). 판정이 그대로여도 매주 1번 보냄, 바뀌면 제목에 판정 변경.",
+  "market_close_kst": "15:40",
+  "catchup_days": 7,
+  "etf": {"code": "227540", "name": "TIGER 200 헬스케어"},
+  "benchmark": {"code": "069500", "name": "KODEX 200 (코스피200)"},
+  "holdings_fallback": [
+    {"code": "207940", "name": "삼성바이오로직스", "weight": 23.15},
+    {"code": "068270", "name": "셀트리온", "weight": 23.06},
+    {"code": "000100", "name": "유한양행", "weight": 13.11},
+    {"code": "326030", "name": "SK바이오팜", "weight": 9.59},
+    {"code": "128940", "name": "한미약품", "weight": 8.03},
+    {"code": "0126Z0", "name": "삼성에피스홀딩스", "weight": 5.31}
+  ],
+  "holdings_as_of": "2026-11-04 (WiseReport ETF 구성종목)",
+  "rules": {
+    "stock_upside_gap_pp": 10.0,
+    "stock_revision_min_pct": 0.0,
+    "stock_need_above_ma": true,
+    "ma_days": 200,
+    "rel_weeks": 13,
+    "revision_target_days": 28,
+    "revision_min_days": 7,
+    "sector_attractive_score": 2,
+    "sector_unattractive_score": -2,
+    "aum_warn_eok": 200
+  },
+  "rule_note": "개별주 우위 = (그 종목 목표가 업사이드 - ETF 가중 업사이드) 10%p 이상 AND 예상 EPS 수정률 0% 이상(확인된 경우만) AND 종가가 200일선 이상. 해당 없으면 ETF 유지, 여러 개면 업사이드 차이가 가장 큰 종목을 1순위로. 섹터 점수 = 227540 의 13주 수익률이 코스피200(069500)보다 높으면 +1 낮으면 -1, ETF 가중 EPS 수정률 양수 +1 음수 -1 미확인 0, 227540 종가가 200일선 위 +1 아래 -1. 합계 2 이상 매력, -2 이하 비매력, 그 사이 중립. 기준값은 비서 제안(컨센서스 아님). 미국 금리 신호는 넣지 않음(단순하게 유지).",
+  "sources": {
+    "price": "scripts/krx_close.py 정규장 종가(Daum days), 그 주 마지막 거래일까지만",
+    "consensus": "네이버 m.stock integration: consensusInfo.priceTargetMean(평균 목표가), totalInfos cnsEps/cnsPer(추정 EPS, 추정 PER)",
+    "revision": "주마다 추정 EPS 를 state 에 저장, 약 4주(최소 1주) 전 저장값과 비교. 쌓이기 전에는 미확인",
+    "weights": "navercomp.wisereport.co.kr ETF 구성종목 ETF_WEIGHT, 실패하면 holdings_fallback",
+    "etf_info": "네이버 m.stock etfAnalysis totalNav(순자산), cumulativeNetInflow3m"
+  },
+  "ends_kst": "2027-10-31 23:59",
+  "ends_note": "기존 [227540] 종가 알림과 같은 날 종료"
+}
