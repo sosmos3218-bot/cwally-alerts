@@ -273,7 +273,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, k0046y0, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, k475380]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k0046y0, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, k475380]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1579,17 +1579,19 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/064400_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/064400_monitor.py "$MODE" || rc=1
           exit "$rc"
-      - name: Run 326030 (SK Biopharm watch, close lines 68,000/83,400/91,600, opakalim/RISE3 filing watch, 3Q verdict 11/5~11/12; 005930 engine, k203780 19:00 slot)
-        # approved in chat 2026-11-03 (t37u). attached to the existing k203780 slot, no new cron. Crash guard inside the script (ops notice, exit 0).
-        # Dedupe: state/326030.json last_day + armed, notice_seen, earn_q3. Ends 2026-12-31 23:59 KST. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry).
-        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+      - name: Run 326030 (SK Biopharm watch, close lines 68k/83.4k/91.6k, opakalim hold-lift checklist, RISE3/Q3; morning 09:00 / afternoon 15:20 / k203780 19:00)
+        # approved in chat 2026-11-03 (t37u); hold_lift extension 2026-11-05 (pt2u). Existing slots only, no new cron. Crash guard inside the script (ops notice, exit 0).
+        # Dedupe: state/326030.json last_day + armed, notice_seen, hold_lift_seen, earn_q3. Ends 2027-01-31 23:59 KST.
+        # job=326030 (or a manual morning/afternoon/k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == '326030') }}
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/326030_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/326030_monitor.py "$MODE" || rc=1

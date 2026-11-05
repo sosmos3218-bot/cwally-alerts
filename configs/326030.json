@@ -8,8 +8,8 @@
   "as_of": "2026-11-04",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "19:00",
-  "schedule_note": "새 cron 없음. 기존 k203780 반복 슬롯(KRX 거래일 19:00 KST, cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업)에 붙은 별도 step. 엔진은 scripts/005930_monitor.py(종가 선, 공시 감시, 조회 실패 알림) + scripts/326030_monitor.py(3분기 실적 판정). 휴장일은 조용히 끝남. 하루 두 번 돌아도 last_day, notice_seen, earn_q3 상태로 중복 발송 없음.",
+  "schedule_kst": "09:00 / 15:20 / 19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 morning, 15:20 afternoon, 19:00 k203780 슬롯에 부착(공시/보류해제 감시는 장중에도 돌고, 종가 선은 정규장 종가 기준). 엔진은 scripts/005930_monitor.py + scripts/326030_monitor.py + scripts/opakalim_hold_lift.py. 휴장일은 조용히 끝남. last_day, notice_seen, earn_q3, hold_lift_seen 상태로 중복 발송 없음.",
   "alert_policy": "event_only",
   "market_close_kst": "15:30",
   "rearm_pct": 1.0,
@@ -148,8 +148,8 @@
   },
   "year_guard": null,
   "ends_kst": "2027-01-31 23:59",
-  "ends_note": "KRX 거래일 19:00, 2027-01-31까지(1월 PGTC sNDA 접수 점검 때문에 2026-12-31에서 연장). 3분기 실적 판정은 2026-11-05~11-12 1번만(2026 전용). 날짜 점검 2027-01-05, 2027-01-20 각 1번.",
-  "explain": "SK바이오팜(326030) 보유 알림(30주, 평단 106,683원, 최대 비중 3%). 1) 3분기 잠정실적을 컨센서스(매출 2,546억, 영업이익 950억)와 비교해 상회, 부합, 하회 1번. 2) 오파칼림, 임상, 라이선스, 투자판단 관련 주요경영사항 공시가 새로 나오면 1번씩. 3) 종가 손절선 68,000원 이하 p4(절반 매도 검토), 83,400원 이상, 91,600원 이상, 평단 106,683원 이상 p3, 선마다 1번, 1% 반대로 돌아와야 재무장. 4) 날짜 점검: 2027-01-05 PGTC sNDA FDA 접수 여부, 2027-01-20 Day-74 PDUFA 날짜 공개 여부, 각 p3 1번(접수 공시를 이미 봤으면 본문에 표시). 2027-01-31까지.",
+  "ends_note": "KRX 거래일 09:00/15:20/19:00, 2027-01-31까지(1월 PGTC sNDA 접수 점검 + 오파칼림 보류 해제 감시). 3분기 실적 판정은 2026-11-05~11-12 1번만(2026 전용).",
+  "explain": "SK바이오팜(326030) 보유 알림(30주, 평단 106,683원, 최대 비중 3%). 1) 3분기 잠정실적 판정(11/5~11/12). 2) 오파칼림/임상/라이선스 공시 감시 + 오파칼림 부분 임상 보류 해제 공시 시 물타기 금지 해제/추가매수 구간 점검 1번. 3) 종가 선 68,000/83,400/91,600/평단. 4) 2027-01 PGTC sNDA 접수/Day-74 날짜 점검. 2027-01-31까지.",
   "position": {
     "shares": 30,
     "avg": 106683,
@@ -205,5 +205,41 @@
       "trim": "보유 30주, 평단 106,683원, 손절선 68,000원 종가 이탈 때 15주(절반) 매도 검토. 추가 매수는 오파칼림 보류 해제 공시 확인 그리고 종가 83,400원 이상일 때만, 합계 비중 3% 안.",
       "dont": "PDUFA 날짜만 보고 추격 매매, 비중 3% 초과, 보류 해제 전 물타기, 신용 및 미수. 투자 권유 아님."
     }
-  ]
+  ],
+  "hold_lift": {
+    "enabled": true,
+    "since": "2026-11-05",
+    "drug_names": [
+      "오파칼림",
+      "Opakalim",
+      "OPAKALIM",
+      "BHV-7000",
+      "BHV7000"
+    ],
+    "drug_note": "오파칼림(영문 Opakalim, 개발코드 BHV-7000). Biohaven Kv7 후보, SK바이오팜 라이선스 도입 예정(딜 클로징 전). 2026-09-10 FDA Partial Clinical Hold(신규 환자 등록 중단, 기존 투약 유지, RISE3 모집 완료 상태).",
+    "title_or_body_any": [
+      "보류 해제",
+      "임상 보류 해제",
+      "부분 임상 보류 해제",
+      "clinical hold lifted",
+      "partial clinical hold lifted",
+      "hold lifted",
+      "hold has been lifted",
+      "신규 환자 등록 재개",
+      "환자 등록 재개",
+      "Clinical Hold 해제",
+      "Partial Clinical Hold 해제"
+    ],
+    "exclude_title_any": [
+      "Partial Clinical Hold 통보",
+      "Partial Clinical Hold 통",
+      "임상 부분 보류",
+      "부분 임상 보류)"
+    ],
+    "priority": 5,
+    "add_zone_plan": 83400,
+    "title": "오파칼림 부분 임상 보류 해제 공시 | 물타기 금지 해제 점검",
+    "what": "SK바이오팜(326030) 오파칼림(Opakalim, BHV-7000) 부분 임상 보류 해제 관련 공시가 포착됐을 때, 기존 계획의 물타기 금지 해제 여부와 추가 매수 구간을 점검하는 알림입니다. 자동 매수 신호가 아닙니다.",
+    "sources_note": "1순위 네이버 공시(제목+본문, DART/KIND 미러, API 키 없음). 보조로 SK바이오팜 보도자료 목록 제목. OpenDART 키는 이 알림에서 쓰지 않음(저장소 OPENDART_API_KEY 시크릿은 trend-monitor 용)."
+  }
 }

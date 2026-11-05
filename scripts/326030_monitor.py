@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
-"""[326030] SK바이오팜 watch alert on the k203780 19:00 KST slot (approved in chat 2026-11-03, t37u).
+"""[326030] SK바이오팜 watch on morning 09:00 / afternoon 15:20 / k203780 19:00 KST
+(approved 2026-11-03 t37u; hold_lift extension 2026-11-05 pt2u).
 
-Three parts, one run, one state file (state/326030.json), topic cwally-port, failures to cwally-ops:
-  lines    configs/326030.json "lines" through the 005930 engine (scripts/005930_monitor.py): KRX regular close
-           (Yahoo 326030.KS) <= 68,000 / >= 83,400 / >= 91,600, each fires once, re-arms after the close moves more
-           than 1% back. Watch-only lines (holding unknown). Hold on missing data: no close, no judgment, the session
-           stays unprocessed and the next run catches it up; one 조회 실패 notice a day to cwally-ops.
-  notices  "notice_watch" through the same engine: new Naver notice titles with 투자판단 관련 주요경영사항, Opakalim,
-           오파칼림, Clinical Hold, 임상, 라이선스 since 2026-11-03, one alert per filing number ("결과 공시 나옴").
-  earn_q3  this file: 2026 Q3 연결재무제표기준영업(잠정)실적 notice (정정 skipped, on/after earn_q3.since), parsed for
-           revenue and OP; fallback Naver finance/quarter 202609 only when isConsensus is not Y. Verdict by OP vs the
-           frozen consensus 950억: >= 998 상회, <= 902 하회, else 부합 (revenue vs 2,546억, +-3% band, not decisive).
-           YoY vs Q3 2025 1,917억 and the discovery-brief +15% (2,205억) exit line, Japan milestone warning, Xcopri US
-           sales best effort from the skbp.com press release (else 수동 확인). Sent once in session days 11/5..11/12;
-           nothing by 11/12 -> one 원문 없음 notice (catch-up 3 days). Feed failure -> hold, ops notice.
-Ends 2027-01-31 23:59 KST (configs ends_kst, extended 2026-11-04 for the PGTC sNDA January checks; earn_q3 stays 2026-only by its dates): after that the run is silent and reads nothing.
-Crash guard: any exception in auto/force sends one ops notice and exits 0 so the rest of the 19:00 bundle runs.
-Modes: auto (slot) | force (ignore holiday) | dry (live data, print, no ntfy, no state) | selftest (offline) |
-       install (one install-confirmation send to cwally-port, no state).
+Four parts, one state file (state/326030.json), topic cwally-port, failures to cwally-ops:
+  lines     005930 engine close lines 68,000 / 83,400 / 91,600 / avg.
+  notices   notice_watch keyword filings ("결과 공시 나옴").
+  hold_lift Opakalim partial clinical hold lift -> 물타기 금지 해제/추가매수 구간 점검 1번
+            (scripts/opakalim_hold_lift.py; Naver notice title+body, skbp press titles).
+  earn_q3   Q3 2026 provisional results verdict (11/5~11/12).
+Ends 2027-01-31 23:59 KST. Crash guard: exception -> one ops notice, exit 0.
+Modes: auto | force | dry | selftest | install.
 """
 from __future__ import annotations
 
@@ -37,6 +29,7 @@ _spec.loader.exec_module(engine)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import naver_api  # noqa: E402
+import opakalim_hold_lift as holdlift  # noqa: E402
 from kr_calendar import is_trading_day, session_day  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 
@@ -270,11 +263,13 @@ def ended(cfg: dict, now: datetime) -> bool:
 
 
 def plan(cfg: dict, st: dict, now: datetime, io: dict) -> list[tuple]:
-    """Mutates st; returns [(title, msg, pri, tags)] for lines, notices, Q3 result and the daily fail notice."""
+    """Mutates st; returns sends for lines, notices, hold_lift, Q3 and daily fail notice."""
     data, fails = io["collect"](cfg, now)
     print(f"data src={data.get('src')} rows={(data.get('rows') or [])[-3:]} fails={fails}")
     fails = list(fails)
     rows = data.get("rows") or []
+    # hold_lift first so matching filings enter notice_seen before generic notice_watch
+    lift = holdlift.hold_lift_step(cfg, st, now, io, fails, rows, engine, pos_line)
     sends = earn_step(cfg, st, now, io, fails, rows[-1]["close"] if rows else None)
     sends = [(t, engine.with_footer(cfg, m), p, tg) for t, m, p, tg in sends]
     for t, m, _, _ in sends:
@@ -283,7 +278,7 @@ def plan(cfg: dict, st: dict, now: datetime, io: dict) -> list[tuple]:
     if io.get("ref"):
         kw["ref_fn"] = io["ref"]
     out = [hold_adjust(cfg, *x) for x in engine.plan_sends(cfg, st, data, fails, now, **kw)]
-    return sends + pgtc_note(cfg, st, out, now)
+    return lift + sends + pgtc_note(cfg, st, out, now)
 
 
 def pgtc_note(cfg: dict, st: dict, sends: list[tuple], now: datetime) -> list[tuple]:
@@ -346,13 +341,15 @@ def install_msg(cfg: dict, data: dict, fails: list[str], stamp: str) -> tuple[st
     title = f"{cfg['title_prefix']} 설치 확인 | 매매 신호 아님"
     msg = "\n".join([
         engine.head(cfg, stamp),
-        f"이게 뭐 알림: {cfg['short']} 보유 알림(보유 30주, 평단 106,683원) 갱신 설치 확인입니다. KRX 거래일 19:00에 새 조건이 생길 때만 옵니다. 끝: {cfg['ends_kst']} KST.",
+        f"이게 뭐 알림: {cfg['short']} 보유 알림(보유 30주, 평단 106,683원) 갱신 설치 확인입니다. 평일 09:00/15:20/19:00에 새 조건이 생길 때만 옵니다. 끝: {cfg['ends_kst']} KST.",
         f"지금 결과/상태: {px}" + (" 조회 실패: " + ", ".join(fails) + "." if fails else "")
         + f" 감시 1) 3분기 실적 {e['start']}~{e['end']} 1번: 영업이익 컨센서스 {e['consensus']['op']:,}억(상회 {e['op_beat']:,} 이상, 하회 {e['op_miss']:,} 이하), "
         f"매출 {e['consensus']['rev']:,}억(+-{e['rev_band_pct']:.0f}%), 전년 동기 {e['yoy_base_rev']:,}억 대비 +15%({e['exit_rev']:,}억) 기준, 일본 마일스톤 포함 경고, Xcopri 미국 매출. "
-        f"2) 공시 감시: {', '.join(w['keywords'])} 제목 새 공시마다 1번(결과 공시 나옴). 3) 종가 선: {lines}, 선마다 1회, 1% 반대로 돌아와야 재무장. "
+        f"2) 공시 감시: {', '.join(w['keywords'])} 제목 새 공시마다 1번(결과 공시 나옴). "
+        f"3) 오파칼림(Opakalim, BHV-7000) 부분 임상 보류 해제 공시 시 물타기 금지 해제/추가매수 구간 점검 1번. "
+        f"4) 종가 선: {lines}, 선마다 1회, 1% 반대로 돌아와야 재무장. "
         + pos_line(cfg, rows[-1]["close"] if rows else None),
-        "지금 할 일: 없음. 참고: 52주 고가 144,100원, 증권사 목표가 120,000~160,000원(평균 약 14.5만~15.2만원).",
+        "지금 할 일: 없음. 슬롯: 평일 09:00, 15:20, 19:00 KST. 참고: 52주 고가 144,100원, 증권사 목표가 120,000~160,000원.",
         f"나중에: {e['ir_note']}. 결과 판정은 그날 19:00에 옵니다.",
         "익절/줄일 때: 손절선 68,000원 종가 이탈 때 15주(절반) 매도 검토. 최대 비중 3%(약 600만원), 넘으면 넘은 만큼만 줄이기. 임상 보류 해제 전 물타기 금지.",
         "하지 말 것: 이 설치 확인을 매수나 매도 신호로 읽기. 투자 권유 아님.",
@@ -506,6 +503,9 @@ def selftest() -> int:
                 if isinstance(v, Exception):
                     raise v
                 return v
+        # optional skbp list/view: empty page (hold_lift secondary); other missing fixtures still fail
+        if "skbp.com" in url:
+            return ""
         raise OSError(f"no fixture {url}")
 
     io = {"collect": collect, "notice_rows": watch_rows, "ref": lambda c, rows, now: f"{c['short']} NXT 정보 없음",
@@ -810,12 +810,60 @@ def selftest() -> int:
         fx["rows"] = [{"day": "2026-11-03", "close": 81300.0}]
         sent.clear()
         execute("install", cfg, None, at("2026-11-03", "12:30"), io, pub, save)
-        check("install: one send to cwally-port, [326030] 설치 확인, lists the three parts",
-              ([(s[0], s[1]) for s in sent], all(k in (sent[0][3] if sent else "") for k in ("3분기 실적", "공시 감시", "종가 선", "81,300원"))),
+        check("install: one send to cwally-port, [326030] 설치 확인, lists the watch parts",
+              ([(s[0], s[1]) for s in sent], all(k in (sent[0][3] if sent else "") for k in ("3분기 실적", "공시 감시", "보류 해제", "종가 선", "81,300원"))),
               ([("cwally-port", "[326030] 설치 확인 | 매매 신호 아님")], True))
         check("install wrote no state", saved, [])
         check("install body: held position, no 미확인", ("보유 30주, 평단 106,683원" in (sent[0][3] if sent else ""), "미확인" in (sent[0][3] if sent else "")), (True, False))
         all_text += texts()
+
+
+        # --- hold_lift (Opakalim partial clinical hold lift checklist)
+        st_hl = seed_state(cfg)
+        st_hl["last_day"] = "2026-11-05"
+        fx["rows"] = [{"day": "2026-11-%02d" % i, "close": float(70000 + i * 500)} for i in range(1, 7)] + [
+            {"day": "2026-11-10", "close": 82000.0}, {"day": "2026-11-11", "close": 85000.0}
+        ]
+        fx["notices"] = [{
+            "id": "HL001", "datetime": "2026-11-11T08:00:00",
+            "title": "에스케이바이오팜 주식회사 투자판단 관련 주요경영사항(오파칼림 Partial Clinical Hold 해제)",
+            "text": "미국 FDA가 오파칼림(Opakalim, BHV-7000)에 대한 Partial Clinical Hold를 해제하였으며 신규 환자 등록을 재개한다. RISE2 등록 재개."
+        }]
+        fx["watch"] = []
+        run("auto", at("2026-11-11"), st_hl)
+        lift_msgs = [s for s in sent if "물타기 금지 해제 점검" in s[1]]
+        check("hold_lift fires once with 326030 in title", [s[1] for s in lift_msgs],
+              ["[326030] 오파칼림 부분 임상 보류 해제 공시 | 물타기 금지 해제 점검"])
+        body = lift_msgs[0][3] if lift_msgs else ""
+        check("hold_lift body: checklist, zones, review-only, position",
+              all(k in body for k in ("물타기 금지 해제 점검 결과", "계획 추가매수 전제선", "20일 평균", "보유 30주, 평단 106,683원", "자동 매수 신호", "투자 권유 아님", "85,000원"))
+              and ("해제 검토 가능" in body or "조건부" in body), True)
+        check("hold_lift marked seen", ("HL001" in (st_hl.get("hold_lift_seen") or []), "HL001" in (st_hl.get("notice_seen") or [])), (True, True))
+        all_text += texts()
+        run("auto", at("2026-11-12"), st_hl)
+        check("hold_lift does not repeat", [s[1] for s in sent if "보류 해제" in s[1]], [])
+        st_hl2 = seed_state(cfg)
+        st_hl2["last_day"] = "2026-11-05"
+        fx["rows"] = [{"day": "2026-11-10", "close": 80000.0}]
+        fx["notices"] = [{
+            "id": "HOLD910", "datetime": "2026-11-10T09:00:00",
+            "title": "에스케이바이오팜 주식회사 투자판단 관련 주요경영사항(뇌전증 신약 후보 물질 Opakalim의 미국 FDA 임상 2/3상 Partial Clinical Hold 통보)",
+            "text": "FDA로부터 Partial Clinical Hold 통보. 신규 환자 등록 중단. 기존 투약 유지."
+        }]
+        run("auto", at("2026-11-10"), st_hl2)
+        check("original hold notice does not trigger hold_lift", [s[1] for s in sent if "물타기 금지 해제 점검" in s[1]], [])
+        st_hl3 = seed_state(cfg)
+        st_hl3["last_day"] = "2026-11-05"
+        fx["rows"] = [{"day": "2026-11-11", "close": 79000.0}]
+        fx["notices"] = [{
+            "id": "HL002", "datetime": "2026-11-11T10:00:00",
+            "title": "에스케이바이오팜 주식회사 투자판단 관련 주요경영사항(오파칼림 임상 보류 해제)",
+            "text": "Opakalim clinical hold lifted. 부분 해제. 신규 환자 등록 재개."
+        }]
+        run("auto", at("2026-11-11"), st_hl3)
+        check("hold_lift below 83,400 -> 조건부", "조건부" in (sent[0][3] if sent else ""), True)
+        all_text += texts()
+        fx["notices"] = []
 
         # --- text rules over every message sent above
         check("every title starts with [326030]", all(t.startswith("[326030] ") for t in all_text), True)
