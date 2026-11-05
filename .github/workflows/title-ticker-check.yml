@@ -1,0 +1,85 @@
+name: title-ticker-check
+
+# pt112u (2026-11-05): run scripts/title_ticker_check.py on pushes to main that touch titles.
+# STATIC (blocking) violations or a legacy FAIL -> one cwally-ops note per KST day, then the job fails.
+# Report-only lines (sent archive, body first line) never notify. Dedupe uses actions/cache, no commits.
+# workflow_dispatch dry=true (default) never sends and never writes the cache.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "trend_monitor/**"
+      - "outbox/**"
+      - "configs/**"
+      - ".github/workflows/title-ticker-check.yml"
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "true = never send, never write cache"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: title-ticker-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Run title_ticker_check.py
+        id: chk
+        run: |
+          set +e
+          python scripts/title_ticker_check.py > ttc.out 2>&1
+          rc=$?
+          set -e
+          cat ttc.out
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          echo "day=$(TZ=Asia/Seoul date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "checker exit code: $rc"
+      - name: Daily dedupe lookup
+        id: dd
+        if: steps.chk.outputs.rc != '0'
+        uses: actions/cache/restore@v4
+        with:
+          path: .ttc-ops-sent
+          key: title-ticker-ops-${{ steps.chk.outputs.day }}
+          lookup-only: true
+      - name: Notify cwally-ops (once per KST day)
+        id: notify
+        if: steps.chk.outputs.rc != '0'
+        env:
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry && '1' || '0' }}
+          ALREADY: ${{ steps.dd.outputs.cache-hit == 'true' && '1' || '0' }}
+          DAY: ${{ steps.chk.outputs.day }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/title_ticker_ops_notify.py ttc.out
+      - name: Mark sent for today
+        if: steps.notify.outputs.sent == '1'
+        run: echo "${{ steps.chk.outputs.day }}" > .ttc-ops-sent
+      - name: Save daily dedupe
+        if: steps.notify.outputs.sent == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: .ttc-ops-sent
+          key: title-ticker-ops-${{ steps.chk.outputs.day }}
+      - name: Fail on violations
+        if: steps.chk.outputs.rc != '0'
+        run: |
+          echo "::error::title_ticker_check exit ${{ steps.chk.outputs.rc }} (STATIC or legacy FAIL lines above)"
+          exit 1
