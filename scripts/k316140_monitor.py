@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""[316140] 우리금융지주 관심 종목 알림 (2026-11-05 사용자 승인 pt74u, 미보유, 보유 여부 미확인).
+"""[316140] 우리금융지주 보유 종목 알림 (2026-11-05 승인 pt74u, 보유 25주 평단 33,018원 반영 pt76u).
 
 KRX 거래일 15:40 KST (0090b0 슬롯에 부착). Daum KRX 확정 종가(실패 시 Yahoo 316140.KS), 당일 행은 15:35 이후만. 네이버 안 씀.
 선(상태가 바뀔 때만 1번, 재무장 완충):
-  l30400 : 종가 <= 30,400 -> p3 1차 관심 점검 (31,300 이상 재무장)
-  l28800 : 종가 <= 28,800 -> p3 2차 관심 점검 (29,700 이상)
-  h33100 : 종가 >= 33,100 -> p3 60일선 회복, 추격 보류 (32,100 미만)
+  l30400 : 종가 <= 30,400 -> p3 1차 추가매수 점검 (31,300 이상 재무장)
+  l28800 : 종가 <= 28,800 -> p3 2차 추가매수 점검 (29,700 이상)
+  h33100 : 종가 >= 33,100 -> p3 평단(33,018원)과 60일선 회복, 추격 매수 보류, 비중 점검 (32,100 미만)
+  w26414 : 종가 <= 26,414 -> p4 경고 평단 -20% 손실 점검 (27,200 이상)
   w25400 : 종가 <= 25,400 -> p4 경고 52주 저점 이탈 (26,200 이상). 경고가 걸리면 경고만 보내고 매수 문구 없음.
+본문에 평단 대비 평가손익(25주).
 공시: KIND 최근 45일 316140 공시 중 대량보유, 기업가치 제고 계획, 현금 현물배당 결정, 자기주식 취득 결정, 주식 소각 결정
 새 접수번호마다 p3 1번. 첫 실행은 가격과 공시 모두 조용히 시드. 종가 실패는 하루 1번, KIND 실패는 3회 연속일 때 cwally-ops.
 usage: k316140_monitor.py <auto|dry> | selftest
@@ -30,7 +32,7 @@ TAG = "[316140]"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
 STATE_PATH = ROOT / "state" / f"{NAME}.json"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-BUY_WORDS = ("매수 검토", "분할 매수", "매수 기회", "저가 매수", "사세요", "담을", "물타기 하", "비중 확대", "지금 매수", "관심 점검")
+BUY_WORDS = ("추가매수", "매수 검토", "분할 매수", "매수 기회", "저가 매수", "사세요", "담을", "물타기 하", "비중 확대", "지금 매수", "관심 점검")
 OPS = {"le": lambda v, x: v <= x, "lt": lambda v, x: v < x, "ge": lambda v, x: v >= x}
 
 
@@ -90,17 +92,31 @@ def judge(cfg: dict, armed: dict, p: float) -> list[dict]:
 
 
 TODO = {
-    "l30400": "20일선(11/5 기준 30,940원)과 전일 종가 부근 되돌림. 점검: 하락 원인(오버행 매물, 금리, 업종 수급), 3분기 실적 흐름 유지 여부. 미보유라 계획(금액, 분할)부터 정하기.",
-    "l28800": "10/27 저점대(28,850원) 재방문. 점검: 유진PE, 포스코 잔여 지분 매각 공시 여부, NIM, 대손비용 흐름. 1차 점검 뒤 무엇이 바뀌었는지 비교.",
-    "h33100": "60일선(11/5 기준 33,132원) 회복. 추격 보류: 미보유 상태에서 급등 뒤 따라가지 않기. 2027년 2월 기업가치 제고 계획 전까지 재료 확인.",
-    "w25400": "52주 저점(25,400원) 아래 종가. 논리 재점검: NIM 회복 실패, 대손비용률 급증, 오버행, 금리 경로 중 무엇이 원인인지 먼저 확인. 기존 관심 가격 점검은 멈춤.",
+    "l30400": "20일선(11/5 기준 30,940원)과 전일 종가 부근 되돌림. 점검: 하락 원인(오버행 매물, 금리, 업종 수급), 3분기 실적 흐름 유지 여부. "
+              "예시: 30,400원에 10주 추가하면 평단 33,018원에서 약 32,270원(35주). 금액과 분할 계획부터 정하기.",
+    "l28800": "10/27 저점대(28,850원) 재방문. 점검: 유진PE, 포스코 잔여 지분 매각 공시 여부, NIM, 대손비용 흐름. "
+              "예시: 28,800원에 10주 추가하면 평단 약 31,813원(35주). 1차 점검 뒤 무엇이 바뀌었는지 비교.",
+    "h33100": "평단(33,018원)과 60일선(11/5 기준 33,132원) 회복. 추격 매수 보류. 비중 점검: 손익분기 근처에서 목표 비중과 보유 이유(배당, 환원율)가 그대로인지 확인.",
+    "w26414": "평단 대비 -20% 손실 구간. 논리 재점검: 처음 산 이유(배당, 기업가치 제고, 저PBR)가 아직 유효한지, 비중을 줄일지 유지할지 미리 정한 기준으로 판단. 가격 점검 선은 멈춤.",
+    "w25400": "52주 저점(25,400원) 아래 종가. 논리 재점검: NIM 회복 실패, 대손비용률 급증, 오버행, 금리 경로 중 무엇이 원인인지 먼저 확인. 기존 가격 점검은 멈춤.",
 }
 DONT = {
-    "l30400": "하루 되돌림만 보고 판단, 계획 없이 한 번에 사기.",
+    "l30400": "하루 되돌림만 보고 판단, 계획 없이 한 번에 늘리기.",
     "l28800": "저점대라는 이유만으로 판단, 신용 및 미수.",
-    "h33100": "급등 추격, 배당 수익률만 보고 판단.",
+    "h33100": "본전 심리로 급등 추격, 배당 수익률만 보고 판단.",
+    "w26414": "손실 회복만을 위해 비중 늘리기, 신용 및 미수.",
     "w25400": "저점 이탈을 싸졌다는 신호로 읽기, 신용 및 미수.",
 }
+
+
+def pnl(cfg: dict, p: float, day: str) -> str:
+    pos = cfg["position"]
+    n, avg = int(pos["shares"]), float(pos["avg"])
+    d = p - avg
+    out = f"평가손익: {n}주, 평단 {won(avg)} 대비 주당 {d:+,.0f}원, 합계 {d * n:+,.0f}원({d / avg * 100:+.2f}%)."
+    if day <= pos.get("div_note_until", ""):
+        out += " " + pos["div_note"] + "."
+    return out
 
 
 def footer(cfg: dict) -> str:
@@ -113,12 +129,13 @@ def line_message(cfg: dict, fired: list[dict], day: str, p: float, src: str, sta
     title = f"{TAG} 우리금융 316140 종가 {won(p)} | " + " + ".join(x["title"] for x in shown)
     body = "\n".join([
         f"{stamp} | 316140 | 우리금융지주",
-        f"이게 뭐 알림: 우리금융지주 관심 종목 KRX 확정 종가가 미리 정한 선에 닿았다는 알림. {'경고.' if warn else '점검 시점.'} 매매 지시 아님.",
-        f"지금 결과/상태: {day} 종가 {won(p)}({src}). 걸린 선: {', '.join(x['title'] for x in shown)}. {footer(cfg)}",
+        f"이게 뭐 알림: 우리금융지주 보유 종목 KRX 확정 종가가 미리 정한 선에 닿았다는 알림. {'경고.' if warn else '점검 시점.'} 매매 지시 아님.",
+        f"지금 결과/상태: {day} 종가 {won(p)}({src}). 걸린 선: {', '.join(x['title'] for x in shown)}. {pnl(cfg, p, day)} {footer(cfg)}",
         "지금 할 일: " + " ".join(TODO[x["key"]] for x in shown),
         "나중에: 같은 선은 재무장 뒤에만 다시 옵니다(30,400 선은 31,300원 이상, 28,800 선은 29,700원 이상, 33,100 선은 32,100원 미만, "
-        f"25,400 선은 26,200원 이상). 공시 감시는 계속. 종료 {cfg['ends_kst'][:10]}.",
-        "익절/줄일 때: 미보유(보유 여부 미확인), 해당 없음.",
+        f"26,414 선은 27,200원 이상, 25,400 선은 26,200원 이상). 공시 감시는 계속. 종료 {cfg['ends_kst'][:10]}.",
+        "익절/줄일 때: " + ("보유 25주. 줄일지 유지할지는 미리 정한 손실 기준으로 판단. 이 알림은 주문이 아님." if warn
+                           else "보유 25주. 줄일 기준은 본인이 미리 정한 값으로 판단. 이 알림은 주문이 아님."),
         "하지 말 것: " + " ".join(DONT[x["key"]] for x in shown) + " 투자 권유 아님.",
     ])
     if warn:
@@ -159,7 +176,7 @@ def disc_message(cfg: dict, r: dict, stamp: str) -> tuple[str, str, int]:
         f"지금 결과/상태: {t} ({r['filed']}, 접수번호 {r['acptno']}). 원문: {url} {footer(cfg)}",
         f"지금 할 일: {hint}",
         "나중에: 같은 접수번호는 다시 보내지 않습니다. 가격 선 감시는 계속.",
-        "익절/줄일 때: 미보유(보유 여부 미확인), 해당 없음.",
+        "익절/줄일 때: 보유 25주. 공시만으로 줄이거나 늘리지 말고 내용 확인 뒤 판단.",
         "하지 말 것: 제목만 보고 매매, 공시 직후 급등락 추격. 투자 권유 아님.",
     ])
     return f"{TAG} 우리금융 316140 공시 | {kind}: {t[:60]}", body, int(cfg["disclosure_watch"]["priority"])
@@ -253,20 +270,27 @@ def selftest(cfg: dict) -> int:
         print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
 
     a: dict = {}
-    check("seed at 31,950 silent, all armed", (judge(cfg, a, 31950), a), ([], {"l30400": True, "l28800": True, "h33100": True, "w25400": True}))
+    check("seed at 31,950 silent, all armed", (judge(cfg, a, 31950), a), ([], {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True}))
     walk = [31000, 30400, 30000, 31299, 31300, 30300, 28800, 29600, 29700, 28700, 33100, 32200, 32099, 33200, 25400, 26100, 26200, 25300]
-    a = {"l30400": True, "l28800": True, "h33100": True, "w25400": True}
+    a = {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True}
     got = [[x["key"] for x in judge(cfg, a, p)] for p in walk]
     check("walk with re-arm buffers", got, [[], ["l30400"], [], [], [], ["l30400"], ["l28800"], [], [], ["l28800"], ["h33100"], [], [], ["h33100"],
-                                             ["l30400", "l28800", "w25400"], [], [], ["w25400"]])  # gap down crosses all three; message shows only the warning
+                                             ["l30400", "l28800", "w25400", "w26414"], [], [], ["w25400"]])  # gap down crosses all three; message shows only the warning
     L = {x["key"]: x for x in cfg["lines"]}
     t1, b1, p1 = line_message(cfg, [L["l30400"]], "2026-11-10", 30300, "Daum KRX", "s")
     t4, b4, p4 = line_message(cfg, [L["l30400"], L["l28800"], L["w25400"]], "2026-12-01", 25300, "Daum KRX", "s")
-    check("titles and priorities", (t1, p1, t4, p4), ("[316140] 우리금융 316140 종가 30,300원 | 1차 관심 점검 (20일선, 전일 종가 부근 되돌림)", 3,
-                                                       "[316140] 우리금융 316140 종가 25,300원 | 경고 52주 저점 이탈, 논리 재점검", 4))
+    t5, b5, p5 = line_message(cfg, [L["w26414"]], "2026-12-01", 26400, "Daum KRX", "s")
+    check("titles and priorities", (t1, p1, t4, p4, t5, p5), ("[316140] 우리금융 316140 종가 30,300원 | 1차 추가매수 점검 (20일선, 전일 종가 부근 되돌림)", 3,
+                                                       "[316140] 우리금융 316140 종가 25,300원 | 경고 52주 저점 이탈, 논리 재점검", 4,
+                                                       "[316140] 우리금융 316140 종가 26,400원 | 경고 평단 -20% 손실 점검, 논리 재점검", 4))
+    check("loss warning has no buy wording", [w for w in BUY_WORDS if w in t5 + b5], [])
+    check("P/L vs avg and conditional dividend", ("주당 -2,718원, 합계 -67,950원(-8.23%)" in b1, "11/6까지 보유 시" in b1, "11/6까지" in b4, "32,270원" in b1),
+          (True, True, False, True))
+    _, b6, _ = line_message(cfg, [L["h33100"]], "2026-12-01", 33100, "Daum KRX", "s")
+    check("avg recovery body", ("합계 +2,050원(+0.25%)" in b6, "비중 점검" in b6), (True, True))
     check("warning has no buy wording", [w for w in BUY_WORDS if w in t4 + b4], [])
     check("body has context and change conditions", all(k in b1 for k in ("2026-11-05 기준", "CET1 13.80%", "1,360원", "PBR 0.62", "NIM 회복 실패",
-                                                                           "대손비용률 50bp", "유진PE", "포스코", "11/26", "50% 공식화", "미확인")), True)
+                                                                           "대손비용률 50bp", "유진PE", "포스코", "11/26", "50% 공식화", "보유 25주, 평단 33,018원")), True)
     check("seven lines", [x.split(":")[0] for x in b1.split("\n")[1:]], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
     now = datetime(2026, 11, 5, 15, 40, tzinfo=KST)
     check("confirmed: today row only after 15:35", (confirmed([("2026-11-05", 1.0)], datetime(2026, 11, 5, 15, 20, tzinfo=KST)), confirmed([("2026-11-05", 1.0)], now)),
@@ -286,7 +310,7 @@ def selftest(cfg: dict) -> int:
     io["state"] = st
     out, st = run("dry", datetime(2026, 11, 6, 15, 40, tzinfo=KST), cfg, io)
     titles = [o[0] for o in out]
-    check("line + 3 new disclosures (해지 excluded)", (len(out), titles[0].endswith("1차 관심 점검 (20일선, 전일 종가 부근 되돌림)"),
+    check("line + 3 new disclosures (해지 excluded)", (len(out), titles[0].endswith("1차 추가매수 점검 (20일선, 전일 종가 부근 되돌림)"),
                                                        sum("공시 |" in t for t in titles)), (4, True, 3))
     allt = "".join(o[0] + o[1] for o in out)
     check("no middle dot or em-dash, DART ㆍ rewritten", ("\u00b7" in allt, "\u2014" in allt, "\u318d" in allt, "현금, 현물 배당 결정" in allt), (False, False, False, True))

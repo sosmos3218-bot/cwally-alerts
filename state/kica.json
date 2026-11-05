@@ -1,8 +1,10 @@
 {
-  "updated_at": "2026-11-05 15:41 KST",
+  "updated_at": "2026-11-05 18:16 KST",
   "fired": {
     "band_high": false,
-    "band_low": false
+    "band_low": false,
+    "l4800": false,
+    "w3950": false
   },
   "last_move_day": "2026-10-29",
   "last_fail_day": null,
@@ -20,5 +22,8 @@
   "earnings_notified": false,
   "empty_notified": false,
   "annual_notified": false,
-  "annual_empty_notified": false
+  "annual_empty_notified": false,
+  "disc_seen": [],
+  "disc_seeded": "2026-11-05 18:16 KST",
+  "kind_fail": 0
 }

@@ -22,7 +22,8 @@
     "band_low": 4500,
     "band_high": 6500,
     "move_pct": 5.0,
-    "band_reset_margin": 100
+    "band_reset_margin": 100,
+    "band_reset_margin_note": "band_low 재무장 4,700원 이상, band_high 재무장 6,200원 미만 (lines 의 rearm 이 우선)"
   },
   "baseline": {
     "day": "2026-10-16",
@@ -35,7 +36,8 @@
     "prev_q3_op_eok": 83,
     "q2_op_eok": 85,
     "h1_op_eok": 176,
-    "expire_date": "2026-11-16"
+    "expire_date": "2026-11-16",
+    "q3_criteria": "영업이익 전년 3분기 83억 이상, 지배순이익 회복 여부, 인증서 매출 정체 여부"
   },
   "annual_earnings": {
     "key": "202612",
@@ -47,8 +49,71 @@
     "daily": "정규장 종가 scripts/krx_close.py (Daum A053300 days). siseJson 일봉은 시간외가 섞여 쓰지 않음",
     "integration": "https://m.stock.naver.com/api/stock/053300/integration",
     "quarter": "https://m.stock.naver.com/api/stock/053300/finance/quarter",
-    "annual": "https://m.stock.naver.com/api/stock/053300/finance/annual"
+    "annual": "https://m.stock.naver.com/api/stock/053300/finance/annual",
+    "kind_view": "https://kind.krx.co.kr/common/disclsviewer.do?method=search&acptno={acptno}"
   },
   "ends_kst": null,
-  "ends_note": "평일 15:40 조건 알림은 종료일 없음. 3분기 실적 확인은 11-16 18:00 후보일까지. 연간 실적 확인은 2027-03-19 18:00 후보일까지"
+  "ends_note": "평일 15:40 조건 알림은 종료일 없음. 3분기 실적 확인은 11-16 18:00 후보일까지. 연간 실적 확인은 2027-03-19 18:00 후보일까지",
+  "lines": [
+    {
+      "key": "l4800",
+      "op": "le",
+      "level": 4800,
+      "rearm_op": "ge",
+      "rearm": 5000,
+      "priority": 3,
+      "warn": false,
+      "title": "1차 관심 점검 (120일선 이탈)"
+    },
+    {
+      "key": "band_low",
+      "op": "lt",
+      "level": 4500,
+      "rearm_op": "ge",
+      "rearm": 4700,
+      "priority": 3,
+      "warn": false,
+      "title": "2차 관심 점검 (4,500원 하단, 배당수익률 약 4.4%)"
+    },
+    {
+      "key": "band_high",
+      "op": "gt",
+      "level": 6500,
+      "rearm_op": "lt",
+      "rearm": 6200,
+      "priority": 3,
+      "warn": false,
+      "title": "6,500원 상단: 공정가치 근처, 추격 보류, 밸류 매력 소멸 점검"
+    },
+    {
+      "key": "w3950",
+      "op": "le",
+      "level": 3950,
+      "rearm_op": "ge",
+      "rearm": 4150,
+      "priority": 4,
+      "warn": true,
+      "title": "경고 120일 저점 이탈, 논리 재점검"
+    }
+  ],
+  "lines_note": "2026-11-05 승인(pt76u). 같은 날 여러 선과 ±5% 변동은 한 건으로 합침. 경고가 걸리면 경고만 표시하고 매수 문구 없음. 처음 보는 선은 그날 종가로 조용히 시드.",
+  "holding_note": "보유(수량, 평단 미입력). 평가손익 표시 안 함.",
+  "context": "2026-11-05 기준: 종가 4,930원, 20일선 5,113원, 60일선 5,029원, 120일선 4,922원, 120일 범위 3,970~6,040원, PER 약 8배(2025 EPS 617원), PBR 0.98배, DPS 200원, Simply Wall St 공정가치 약 6,536원.",
+  "change_conditions": "인증서 매출 정체(상반기 +1.6%), 광고 자회사 의존, 순이익 감소 지속, 배당 축소, PQC 전자서명 의무화는 2030년 이후(단기 촉매 아님).",
+  "disclosure_watch": {
+    "source": "KIND 상세검색(회사 코드 053300, 최근 45일, API 키 불필요, scripts/usdiv_monitor.kind_search 재사용). 접수번호는 DART rcept_no 와 같은 14자리.",
+    "patterns": [
+      "주식등의대량보유상황보고서",
+      "현금ㆍ현물 ?배당 ?결정",
+      "자기주식 ?취득.*결정",
+      "주식 ?소각 ?결정"
+    ],
+    "exclude": [
+      "해지",
+      "변경상장",
+      "상황보고서 한국정보인증$"
+    ],
+    "lookback_days": 45,
+    "priority": 3
+  }
 }
