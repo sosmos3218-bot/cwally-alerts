@@ -192,11 +192,55 @@ def test_call_budget_stops_without_dropping_finished_rows(tmp_path):
     assert "호출 상한" in saved["budget_note"]
 
 
-def test_prefilter_keeps_missing_ratios():
+def test_prefilter_requires_listing_ratios():
     config = {"per_max": 10, "pbr_max": 1, "mcap_min_krw": 0, "mcap_max_krw": None, "exclude_financial_keywords": ["은행"]}
-    assert prefilter_reason({"name": "예시", "market_cap_krw": 100, "per": None, "pbr": None}, config) is None
+    assert prefilter_reason({"name": "예시", "market_cap_krw": 100, "per": None, "pbr": None}, config) == "PER 또는 PBR 없음"
     assert prefilter_reason({"name": "예시", "market_cap_krw": 100, "per": 11, "pbr": 0.4}, config) == "PER이 기준 밖"
-    assert prefilter_reason({"name": "예시은행", "market_cap_krw": 100}, config) == "금융업 제외"
+    assert prefilter_reason({"name": "예시", "market_cap_krw": 100, "per": 4, "pbr": 0.4}, config) is None
+    assert prefilter_reason({"name": "예시은행", "market_cap_krw": 100, "per": 4, "pbr": 0.4}, config) == "금융업 제외"
+
+
+def test_plain_name_is_one_dart_call_and_cap_skips_the_rest(tmp_path):
+    class One:
+        def __init__(self):
+            self.calls = 0
+            self.cache_hits = 0
+            self.by_corp: dict[str, int] = {}
+
+        def corp_code(self, ticker: str):
+            return "SAM" if ticker == "005930" else "C" + ticker
+
+        def accounts(self, corp, year, reprt, fs_div):
+            self.calls += 1
+            self.by_corp[corp] = self.by_corp.get(corp, 0) + 1
+            assert fs_div == "CFS"
+            return [_cash("CFS")]
+
+    listing = [
+        {"code": f"{i:06d}", "name": f"종목{i}", "market": "KOSPI", "market_cap_krw": 50_000_000_000 + i, "close": 1000}
+        for i in range(1, 5)
+    ]
+    dart = One()
+    run_live(
+        "kiyohara",
+        None,
+        2,
+        True,
+        tmp_path,
+        date(2026, 11, 5),
+        None,
+        listing=listing,
+        dart=dart,
+        ratio_fetch=lambda code: (4.0, 0.4),
+        ratio_cache=tmp_path / "ratios.json",
+    )
+    saved = json.loads((tmp_path / "kiyohara.json").read_text(encoding="utf-8"))
+    assert saved["checked"] == 2
+    assert sum(1 for row in saved["skipped_rows"] if row["reason"] == "조회 상한") == 2
+    company_calls = {corp: n for corp, n in dart.by_corp.items() if corp != "SAM"}
+    assert company_calls
+    assert all(n == 1 for n in company_calls.values())
+    assert saved["elapsed_sec"] is not None
 
 
 def test_cache_hit_does_not_count_as_call(tmp_path):

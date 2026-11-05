@@ -14,5 +14,6 @@
   "fin_income_to_op_flag": 1.0,
   "low_stake_pct": 10,
   "exclude_financial_keywords": ["은행", "보험", "증권", "캐피탈", "금융지주", "카드"],
-  "dart_call_budget": 8000
+  "dart_call_budget": 900,
+  "dart_name_cap": 300
 }
