@@ -5,7 +5,7 @@
   "supplement_notified": false,
   "date_notified": false,
   "release_date": null,
-  "date_missing_notified": false,
+  "date_missing_notified": true,
   "fail_notified": false,
   "empty_final_notified": false,
   "parsed": {
@@ -16,5 +16,5 @@
     "mau_growth": null,
     "mau_is_period": false
   },
-  "updated_at": "2026-10-29T09:23:16.896428+09:00"
+  "updated_at": "2026-11-05T09:23:18.143105+09:00"
 }
