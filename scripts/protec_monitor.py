@@ -238,7 +238,11 @@ def main() -> int:
     ping_keys = [k for k, on in (("q3", q3_on), ("fy", fy_on), ("op27", op27_on)) if on]
     already = set(prev.get("window_ping") or [])
     new_window = [k for k in ping_keys if k not in already]
+    week = now.strftime("%G-W%V")
     monday = now.weekday() == 0 and (ping_keys or today <= repeat_dl)
+    # 주간 점검은 ISO 주당 1번만 (pt15u). 같은 주 오전·오후 중복 발송을 막는다.
+    if monday and prev.get("weekly_sent_week") == week:
+        monday = False
 
     print_day = cfg["earnings_3q"]
     buy3 = int(cfg["buy3"])
@@ -333,6 +337,9 @@ def main() -> int:
         lines.append("")
         lines.append("C7: 레이저 본더 신규 수주(3/31) 또는 반복·첨단패키징(6/30) 미확인.")
 
+    weekly_sent = prev.get("weekly_sent_week")
+    if send and (monday or mode in {"weekly"}):
+        weekly_sent = week
     STATE_PATH.write_text(
         json.dumps(
             {
@@ -348,6 +355,7 @@ def main() -> int:
                 "c1_confirmed": c1_now,
                 "c1_reason": c1_reason,
                 "prints": prints,
+                "weekly_sent_week": weekly_sent,
             },
             ensure_ascii=False,
             indent=2,

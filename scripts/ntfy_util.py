@@ -107,7 +107,7 @@ def resolve_server(configured: str | None = None) -> str:
 KST = timezone(timedelta(hours=9))
 DEFAULT_ENDS_GRACE_MIN = 59
 OPS_TOPIC = "cwally-ops"
-ALWAYS_SEND_TITLE_RE = re.compile(r"^\s*\[OPS\]|워크플로\s?(실패|검사 실패)")
+ALWAYS_SEND_TITLE_RE = re.compile(r"^\s*\[OPS\]|워크플로\s?(실패|검사 실패)|설치 확인|테스트")  # 설치 확인/테스트: 같은 날 재발송 허용 (pt15u)
 _PREFIX_RE = re.compile(r"^\s*(\[[^\]]+\])")
 LAST_PUBLISH: dict = {}
 
@@ -282,21 +282,117 @@ def ends_skip_reason(topic: str, title: str | None, config_name: str | None = No
         return None
 
 
-# 하루 한 번 발송 보호 (dup-guard, 2026-11-04 사용자 요청 pt13u).
+# 하루 한 번 발송 보호 (dup-guard, 2026-11-04 pt13u; 슬롯 범위 2026-11-05 pt15u).
 # state 저장(git push)이 실패해도 늦은 백업 실행이 같은 알림을 다시 보내지 않게, cwally-port 로 보내기 직전에
-# 오늘(KST 00:00 이후) 같은 topic 에 제목이 완전히 같은 메시지가 이미 있으면 보내지 않는다.
-# 확인 출처: 1) ntfy 서버 poll (<server>/<topic>/json?poll=1&since=<오늘 00:00 KST unix>, git 과 무관)
-#            2) state/archive.json (Archive ntfy 단계가 쌓는 사본, ntfy.sh 캐시 12시간보다 오래된 오늘 발송 대비)
-# poll 실패는 fail-open: 기록하고 그대로 보낸다(알림을 놓치는 쪽이 더 나쁘고, 1차 중복 방지는 각 알림 state 가 함).
-# 끄기: 환경변수 NTFY_DUP_GUARD=0. cwally-ops 는 보호하지 않는다(장애 안내는 매번).
+# since 이후 같은 topic 에 제목이 완전히 같은 메시지가 이미 있으면 보내지 않는다.
+# since: 환경변수 DUP_GUARD_SINCE (unix, Decide jobs 가 슬롯 시작 10분 전으로 넣음). 없으면 오늘 00:00 KST.
+#   morning 08:50, afternoon 15:10, 0090b0/flow/trend 15:30, k203780 18:50, portlight 20:50 KST.
+#   tsla/grab: 뉴욕 정규장 시작(서머타임 22:30 KST, 표준시 23:30 KST). 원샷: 예정 시각 - 10분.
+# 확인 출처: 1) ntfy poll  2) state/archive.json (ntfy.sh 캐시 12시간보다 오래된 발송 대비)
+# poll 실패는 fail-open. 끄기: NTFY_DUP_GUARD=0. cwally-ops 와 ALWAYS_SEND_TITLE_RE(설치 확인/테스트 포함)는 보호하지 않는다.
 DUP_GUARD_TOPICS = {"cwally-port"}
 ARCHIVE_PATH = Path(__file__).resolve().parents[1] / "state" / "archive.json"
 DUP_GUARD_LOG: list[str] = []
+# 슬롯 시작(KST HH, MM). since = 시작 - 10분.
+DUP_GUARD_SLOT_START_KST = {
+    "morning": (9, 0),
+    "afternoon": (15, 20),
+    "0090b0": (15, 40),
+    "flow": (15, 40),
+    "trend": (15, 40),
+    "k203780": (19, 0),
+    "portlight": (21, 0),
+}
+DUP_GUARD_LEAD_MIN = 10
 
 
 def _kst_midnight_unix(now: datetime | None = None) -> int:
     now = (now or _now_kst()).astimezone(KST)
     return int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+
+
+def _us_eastern_dst(d: datetime) -> bool:
+    """US DST (2nd Sun Mar ~ 1st Sun Nov). d is a calendar date in Eastern terms."""
+    y = d.year
+    # 2nd Sunday of March
+    mar1 = datetime(y, 3, 1, tzinfo=timezone.utc)
+    dst_start = mar1.replace(day=1 + (6 - mar1.weekday()) % 7 + 7)  # first Sun + 7
+    # 1st Sunday of November
+    nov1 = datetime(y, 11, 1, tzinfo=timezone.utc)
+    dst_end = nov1.replace(day=1 + (6 - nov1.weekday()) % 7)
+    day = d.date() if hasattr(d, "date") else d
+    return dst_start.date() <= day < dst_end.date()
+
+
+def ny_session_open_unix(now: datetime | None = None) -> int:
+    """Unix of today's New York regular-session open, expressed in KST wall clock (22:30 DST / 23:30 EST).
+    If now is before that open on the KST calendar day, use yesterday's open (overnight session)."""
+    now = (now or _now_kst()).astimezone(KST)
+    # NY date roughly: before 06:00 KST still belongs to previous NY day for open lookup
+    ny_approx = now - timedelta(hours=13)  # EST offset; DST handled below via KST open hour
+    # Prefer KST wall-clock of open for the NY trading day that contains `now`
+    # Session open in NY = 09:30 ET -> KST 22:30 (EDT) or 23:30 (EST)
+    # Find which NY calendar day is in session: if KST hour >= open_hour yesterday, or before ~06:30 next day
+    def open_for_ny_date(ny_day):
+        dst = _us_eastern_dst(datetime(ny_day.year, ny_day.month, ny_day.day, tzinfo=timezone.utc))
+        hh, mm = (22, 30) if dst else (23, 30)
+        # open is on KST calendar day = ny_day (EDT: NY Mon 09:30 = KST Mon 22:30; EST: = KST Tue 23:30... wait)
+        # Actually: NY Mon 09:30 EDT = UTC 13:30 = KST Mon 22:30. Same calendar date.
+        # NY Mon 09:30 EST = UTC 14:30 = KST Mon 23:30. Same calendar date.
+        return datetime(ny_day.year, ny_day.month, ny_day.day, hh, mm, tzinfo=KST)
+
+    # NY session day: if now KST is before today's open, the active session (if any) is yesterday's
+    today_open = open_for_ny_date(now.date())
+    if now < today_open:
+        # overnight: still in previous NY session if within ~7h after open (until ~05:30/06:30)
+        yday = (now - timedelta(days=1)).date()
+        yopen = open_for_ny_date(yday)
+        if now >= yopen:
+            return int(yopen.timestamp())
+        return int(today_open.timestamp())  # before any session today; use today's upcoming open as since
+    return int(today_open.timestamp())
+
+
+def dup_guard_since_unix(job: str | None = None, schedule: str | None = None, now: datetime | None = None) -> int:
+    """Unix since for DUP_GUARD_SINCE. job = slot name; schedule = GitHub cron (UTC 'M H D mon *') for oneshots."""
+    now = (now or _now_kst()).astimezone(KST)
+    job = (job or "").strip()
+    if job in {"tsla", "grab"}:
+        return ny_session_open_unix(now)
+    if job in DUP_GUARD_SLOT_START_KST:
+        hh, mm = DUP_GUARD_SLOT_START_KST[job]
+        start = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        # overnight backup after midnight (before 06:00 KST) for evening slots still belongs to yesterday
+        if job in {"k203780", "portlight"} and now.hour < 6 and start > now:
+            start -= timedelta(days=1)
+        elif start > now + timedelta(hours=12):
+            start -= timedelta(days=1)
+        return int((start - timedelta(minutes=DUP_GUARD_LEAD_MIN)).timestamp())
+    sched = (schedule or "").strip()
+    if sched and sched.count(" ") >= 3:
+        try:
+            parts = sched.split()
+            mi, ho, dom, mon = int(parts[0]), int(parts[1]), parts[2], parts[3]
+            if dom.isdigit() and mon.isdigit():
+                utc = datetime(now.year, int(mon), int(dom), ho, mi, tzinfo=timezone.utc)
+                # if UTC date is in the future relative to now by >180d, try previous year
+                if utc - now > timedelta(days=180):
+                    utc = utc.replace(year=now.year - 1)
+                kst = utc.astimezone(KST)
+                return int((kst - timedelta(minutes=DUP_GUARD_LEAD_MIN)).timestamp())
+        except (TypeError, ValueError, OverflowError):
+            pass
+    return _kst_midnight_unix(now)
+
+
+def resolve_dup_guard_since(now: datetime | None = None) -> int:
+    raw = (os.environ.get("DUP_GUARD_SINCE") or "").strip()
+    if raw:
+        try:
+            return int(raw)
+        except ValueError:
+            _dup_log(f"dup-guard DUP_GUARD_SINCE={raw!r} not int; falling back to midnight KST")
+    return _kst_midnight_unix(now)
 
 
 def _dup_poll(server: str, topic: str, since: int) -> list[dict]:
@@ -337,28 +433,59 @@ def _dup_log(line: str) -> None:
 
 
 def dup_guard_skip(topic: str, title: str | None, server: str | None = None, *, now: datetime | None = None,
-                   poll=None, archive=None) -> bool:
-    """True = same title already published to this topic today (KST); caller must not send."""
+                   poll=None, archive=None, dedup_key: str | None = None) -> bool:
+    """True = same title (or dedup_key tag) already published to this topic since DUP_GUARD_SINCE; caller must not send."""
     if (os.environ.get("NTFY_DUP_GUARD") or "").strip().lower() in {"0", "false", "no", "off"}:
         return False
     if topic not in DUP_GUARD_TOPICS or not title:
         return False
-    since = _kst_midnight_unix(now)
+    if ALWAYS_SEND_TITLE_RE.search(title):
+        return False
+    since = resolve_dup_guard_since(now)
     poll = poll or _dup_poll
     archive = archive or _dup_archive
+    key_tag = dedup_key_tag(dedup_key) if dedup_key else None
+
+    def _hit(msgs: list[dict]) -> str | None:
+        for m in msgs:
+            if key_tag and key_tag in _msg_tags(m):
+                return f"dedup_key tag {key_tag}"
+            if m.get("title") == title:
+                return "same title"
+        return None
+
     try:
-        if any(m.get("title") == title for m in poll(server or resolve_server(), topic, since)):
-            _dup_log(f"dup-guard skip: {topic} same title already sent today (ntfy poll): {title}")
+        reason = _hit(poll(server or resolve_server(), topic, since))
+        if reason:
+            _dup_log(f"dup-guard skip: {topic} {reason} already sent since {since} (ntfy poll): {title}")
             return True
     except Exception as exc:  # fail-open
         _dup_log(f"dup-guard poll failed ({type(exc).__name__}: {exc}); fail-open, archive check then send")
     try:
-        if any(m.get("title") == title for m in archive(topic, since)):
-            _dup_log(f"dup-guard skip: {topic} same title already sent today (state/archive.json): {title}")
+        reason = _hit(archive(topic, since))
+        if reason:
+            _dup_log(f"dup-guard skip: {topic} {reason} already sent since {since} (state/archive.json): {title}")
             return True
     except Exception as exc:
         _dup_log(f"dup-guard archive check failed ({type(exc).__name__}); send")
     return False
+
+
+def dedup_key_tag(key: str | None) -> str | None:
+    """Stable short tag for a disclosure receipt / id. dk-<10 hex of sha1>."""
+    if not key:
+        return None
+    import hashlib
+    return "dk-" + hashlib.sha1(str(key).encode("utf-8")).hexdigest()[:10]
+
+
+def _msg_tags(m: dict) -> set[str]:
+    t = m.get("tags")
+    if isinstance(t, list):
+        return {str(x) for x in t}
+    if isinstance(t, str):
+        return {x for x in t.replace(",", " ").split() if x}
+    return set()
 
 
 def dup_guard_skip_payload(server: str | None, payload: bytes) -> bool:
@@ -459,9 +586,10 @@ def _dup_guard_selftest(check) -> int:
     no_arch = lambda topic, since: []  # noqa: E731
     env = {"NTFY_DUP_GUARD": "1"}
     with mock.patch.dict(os.environ, env, clear=False):
+        os.environ.pop("DUP_GUARD_SINCE", None)
         t = today[0]["title"]
         check("dup-guard same title today -> skip", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_ok, archive=no_arch), True)
-        check("dup-guard poll since = today 00:00 KST", seen_since[-1] == mid, True)
+        check("dup-guard poll since = today 00:00 KST (unset)", seen_since[-1] == mid, True)
         check("dup-guard different title -> send", dup_guard_skip("cwally-port", t + " 2", "x", now=now, poll=poll_ok, archive=no_arch), False)
         nxt = datetime(2026, 11, 5, 19, 0, tzinfo=KST)
         check("dup-guard yesterday's title -> send", dup_guard_skip("cwally-port", t, "x", now=nxt, poll=poll_ok, archive=no_arch), False)
@@ -472,18 +600,58 @@ def _dup_guard_selftest(check) -> int:
         check("dup-guard ops topic never guarded", dup_guard_skip("cwally-ops", t, "x", now=now, poll=poll_ok, archive=no_arch), False)
         with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "0"}):
             check("dup-guard NTFY_DUP_GUARD=0 off", dup_guard_skip("cwally-port", t, "x", now=now, poll=poll_ok, archive=no_arch), False)
+        # slot-scoped since (pt15u)
+        afternoon_since = dup_guard_since_unix("afternoon", now=datetime(2026, 11, 5, 15, 25, tzinfo=KST))
+        want_1510 = int(datetime(2026, 11, 5, 15, 10, tzinfo=KST).timestamp())
+        check("dup-guard afternoon since = 15:10 KST", afternoon_since, want_1510)
+        check("dup-guard morning since = 08:50 KST", dup_guard_since_unix("morning", now=datetime(2026, 11, 5, 9, 5, tzinfo=KST)), int(datetime(2026, 11, 5, 8, 50, tzinfo=KST).timestamp()))
+        check("dup-guard 0090b0 since = 15:30 KST", dup_guard_since_unix("0090b0", now=datetime(2026, 11, 5, 15, 45, tzinfo=KST)), int(datetime(2026, 11, 5, 15, 30, tzinfo=KST).timestamp()))
+        check("dup-guard k203780 since = 18:50 KST", dup_guard_since_unix("k203780", now=datetime(2026, 11, 5, 19, 5, tzinfo=KST)), int(datetime(2026, 11, 5, 18, 50, tzinfo=KST).timestamp()))
+        # Nov 5 2026 is after US DST end (Nov 1) -> EST -> 23:30 KST
+        check("dup-guard tsla since = 23:30 KST (EST)", dup_guard_since_unix("tsla", now=datetime(2026, 11, 5, 23, 45, tzinfo=KST)), int(datetime(2026, 11, 5, 23, 30, tzinfo=KST).timestamp()))
+        # Jul 15 2026 is DST -> 22:30 KST
+        check("dup-guard grab since = 22:30 KST (EDT)", dup_guard_since_unix("grab", now=datetime(2026, 7, 15, 23, 0, tzinfo=KST)), int(datetime(2026, 7, 15, 22, 30, tzinfo=KST).timestamp()))
+        # oneshot: 10 7 28 10 * = 2026-10-28 07:10 UTC = 16:10 KST -> since 16:00
+        check("dup-guard oneshot schedule -10min", dup_guard_since_unix("lgiq3", "10 7 28 10 *", now=datetime(2026, 10, 28, 16, 20, tzinfo=KST)), int(datetime(2026, 10, 28, 16, 0, tzinfo=KST).timestamp()))
+        # DUP_GUARD_SINCE env wins
+        with mock.patch.dict(os.environ, {"DUP_GUARD_SINCE": str(want_1510), "NTFY_DUP_GUARD": "1"}):
+            seen_since.clear()
+            # morning-sent title at 09:01 should NOT block afternoon (since=15:10)
+            morning_msg = [{"event": "message", "time": int(datetime(2026, 11, 5, 9, 1, tzinfo=KST).timestamp()), "title": "[YENCARRY] USDJPY 달러 보유 줄이기."}]
+            def poll_m(server, topic, since):
+                seen_since.append(since)
+                return [m for m in morning_msg if m["time"] >= since]
+            check("dup-guard slot since skips morning title in afternoon", dup_guard_skip("cwally-port", morning_msg[0]["title"], "x", now=datetime(2026, 11, 5, 15, 25, tzinfo=KST), poll=poll_m, archive=no_arch), False)
+            check("dup-guard uses DUP_GUARD_SINCE env", seen_since[-1], want_1510)
+        # always-send: 설치 확인 / 테스트
+        install = "[XBI] 설치 확인 | 매매 신호 아님"
+        test_t = "[XBI] 테스트 | 알림 종료 2주 전 연장 점검 샘플"
+        def poll_inst(server, topic, since):
+            return [{"event": "message", "time": mid + 100, "title": install}, {"event": "message", "time": mid + 101, "title": test_t}]
+        check("dup-guard 설치 확인 always sends", dup_guard_skip("cwally-port", install, "x", now=now, poll=poll_inst, archive=no_arch), False)
+        check("dup-guard 테스트 always sends", dup_guard_skip("cwally-port", test_t, "x", now=now, poll=poll_inst, archive=no_arch), False)
+        check("ALWAYS_SEND_TITLE_RE matches 설치 확인", bool(ALWAYS_SEND_TITLE_RE.search(install)), True)
         pl = json.dumps({"topic": "cwally-port", "title": t}).encode()
-        with mock.patch(f"{__name__}._dup_poll", side_effect=poll_ok), mock.patch(f"{__name__}._now_kst", return_value=now), mock.patch(f"{__name__}._dup_archive", side_effect=no_arch):
-            check("dup-guard payload helper (direct posters) -> skip", dup_guard_skip_payload("x", pl), True)
-            posted = []
-            with mock.patch("urllib.request.urlopen", side_effect=lambda req, timeout=20: posted.append(req) or (_ for _ in ()).throw(AssertionError("network"))):
-                publish("cwally-port", t, "본문", 3, ["x"], "https://ntfy.invalid")
-            check("dup-guard publish() skips POST and marks delivered", (not posted, LAST_PUBLISH.get("sent"), LAST_PUBLISH.get("dup")), (True, True, True))
+        with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "1"}, clear=False):
+            os.environ.pop("DUP_GUARD_SINCE", None)
+            with mock.patch(f"{__name__}._dup_poll", side_effect=poll_ok), mock.patch(f"{__name__}._now_kst", return_value=now), mock.patch(f"{__name__}._dup_archive", side_effect=no_arch):
+                check("dup-guard payload helper (direct posters) -> skip", dup_guard_skip_payload("x", pl), True)
+                posted = []
+                with mock.patch("urllib.request.urlopen", side_effect=lambda req, timeout=20: posted.append(req) or (_ for _ in ()).throw(AssertionError("network"))):
+                    publish("cwally-port", t, "본문", 3, ["x"], "https://ntfy.invalid")
+                check("dup-guard publish() skips POST and marks delivered", (not posted, LAST_PUBLISH.get("sent"), LAST_PUBLISH.get("dup")), (True, True, True))
         tmp = Path(os.environ.get("RUNNER_TEMP") or "/tmp") / "dupguard_archive_test.json"
         tmp.write_text(json.dumps({"items": [{"topic": "cwally-port", "time": mid + 60, "title": "A"}, {"topic": "cwally-port", "time": mid - 60, "title": "B"}]}), encoding="utf-8")
         got = [m["title"] for m in _dup_archive("cwally-port", mid, tmp)]
         tmp.unlink()
         check("dup-guard archive reader keeps only today", got, ["A"])
+        # dedup_key tag helpers (used by commit 2; safe to assert now)
+        tag = dedup_key_tag("20261120000001")
+        check("dedup_key_tag format", bool(tag and tag.startswith("dk-") and len(tag) == 13), True)
+        check("dedup_key_tag stable", dedup_key_tag("20261120000001"), tag)
+        tagged = [{"event": "message", "time": mid + 50, "title": "[OTHER] x", "tags": ["chart_with_upwards_trend", tag]}]
+        check("dup-guard dedup_key tag match skips", dup_guard_skip("cwally-port", "[SDI-ESS] other title", "x", now=now, poll=lambda *a: tagged, archive=no_arch, dedup_key="20261120000001"), True)
+        check("dup-guard dedup_key miss falls back to title", dup_guard_skip("cwally-port", "[SDI-ESS] other title", "x", now=now, poll=lambda *a: tagged, archive=no_arch, dedup_key="other"), False)
     return before
 
 

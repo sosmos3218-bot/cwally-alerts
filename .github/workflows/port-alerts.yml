@@ -516,6 +516,9 @@ jobs:
             if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
           fi
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
+          # dup-guard 슬롯 since (pt15u): 슬롯 시작 10분 전 unix. tsla/grab = 뉴욕 정규장 시작.
+          SCHED="${{ github.event.schedule }}"
+          python scripts/dup_guard_since.py --job "$JOB" --schedule "$SCHED" >> "$GITHUB_ENV"
           DOW=$(date -u +%u); DAY=$(date -u +%d); MON=$(date -u +%m)
           if [ "$DAY" = "01" ] && echo "$MON" | grep -Eq '01|04|07|10'; then SM=quarterly
           elif [ "$DOW" = "1" ]; then SM=weekly

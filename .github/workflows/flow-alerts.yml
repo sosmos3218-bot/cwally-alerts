@@ -58,6 +58,9 @@ jobs:
             SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check flow || RUN=0
           fi
           echo "run=$RUN" >> "$GITHUB_OUTPUT"
+      - name: Dup-guard since (flow 15:40)
+        if: steps.guard.outputs.run == '1'
+        run: python scripts/dup_guard_since.py --job flow >> "$GITHUB_ENV"
       - name: Run flow
         if: steps.guard.outputs.run == '1'
         env:

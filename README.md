@@ -19,6 +19,12 @@
 
 005930 1월 이사회 주주환원 공시 (2026-11-04 사용자 승인): 2027년 1월 이사회 주주환원 공시는 `[SEC-PREF]` (configs/secpref.json, 2027-01-15 ~ 02-27) 에서만 알림. 2026-11-04 커밋 17396d4 에서 005930 엔진에 넣었던 `board_watch` 는 중복이라 지움.
 
+## Dup-guard / state 저장
+
+- `scripts/ntfy_util.py` dup-guard: 같은 제목의 `cwally-port` 재발송을 슬롯 since(`DUP_GUARD_SINCE`, 슬롯 시작 10분 전) 이후로 막습니다. `설치 확인`/`테스트` 제목은 예외. `NTFY_DUP_GUARD=0` 으로 끌 수 있습니다.
+- Persist 실패 시 `scripts/persist_state.sh` 가 최대 5번 재시도하고, 끝내 실패하면 state/ artifact(7일)와 cwally-ops 안내를 남깁니다.
+- `[PROTEC]` 주간 점검은 `state/protec.json` 의 `weekly_sent_week`(ISO `%G-W%V`) 로 주당 1번만 보냅니다.
+
 ## 스케줄
 
 | 슬롯 | KST | 잡 |

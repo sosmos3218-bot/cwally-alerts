@@ -131,5 +131,6 @@
   "last_action": "WATCH",
   "c1_confirmed": false,
   "c1_reason": null,
-  "prints": []
+  "prints": [],
+  "weekly_sent_week": "2026-W45"
 }

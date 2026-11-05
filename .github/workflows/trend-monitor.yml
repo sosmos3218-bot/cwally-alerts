@@ -87,6 +87,9 @@ jobs:
           fi
           echo "run=$RUN" >> "$GITHUB_OUTPUT"
           echo "mark=$RUN" >> "$GITHUB_OUTPUT"
+      - name: Dup-guard since (trend 15:40)
+        if: steps.guard.outputs.run == '1'
+        run: python scripts/dup_guard_since.py --job trend >> "$GITHUB_ENV"
       - name: Run trend monitor
         if: steps.guard.outputs.run == '1'
         env:
