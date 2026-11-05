@@ -311,8 +311,8 @@ def selftest() -> int:
     assert band_of(D("63.9"), "Z_HIGH2", cfg) == "Z_HIGH1"
     assert band_of(D("60.0"), "Z_HIGH2", cfg) == "Z_MID"
     assert band_of(D("49"), "Z_HIGH2", cfg) == "Z_LOW"
-    # seeded state (today 11/4) never re-sends
-    seed = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    # in-memory seed fixture (never read live state/sdimix.json; last_date is fixed for the scenario)
+    seed = {"last_date": "2026-11-04", "band": "Z_HIGH1", "verdict": "보유", "discount_pct": "61.74"}
     assert seed["band"] == "Z_HIGH1" and seed["verdict"] == "보유" and seed["last_date"] == "2026-11-04"
     s, send, _ = decide(seed, "2026-11-04", D("61.74"), "보유", cfg)
     assert not send
