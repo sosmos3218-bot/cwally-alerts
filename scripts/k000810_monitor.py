@@ -262,7 +262,7 @@ def earn_step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], f
         pre = [x for x in orig if "잠정" in x[0]["title"]]
         r, p = (pre or orig)[0]
         t, m, pri = result_message(cfg, r, p, stamp, pref_fn)
-        out.append((t, m, pri, "port"))
+        out.append((t, m, pri, "port", r.get("acptno") or r["id"]))
         es["fired"] = {"id": r["id"], "filed": r["filed"], "title": r["title"], "link": link_of(r), "parsed": p, "at": stamp}
         seen |= {x[0]["id"] for x in fresh if not is_correction(x[0]["title"])}
     elif es.get("fired"):
@@ -270,7 +270,7 @@ def earn_step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], f
         if corr:
             r, p = corr[-1]
             t, m, pri = followup_message(cfg, es["fired"], r, p, stamp)
-            out.append((t, m, pri, "port"))
+            out.append((t, m, pri, "port", r.get("acptno") or r["id"]))
             es["followup_sent"] = {"id": r["id"], "filed": r["filed"], "title": r["title"], "parsed": p, "at": stamp}
         seen |= {x[0]["id"] for x in fresh}
     es["seen"] = sorted(seen)
@@ -278,7 +278,7 @@ def earn_step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], f
         final = datetime.strptime(e["final_kst"], "%Y-%m-%d %H:%M").replace(tzinfo=KST)
         if now >= final:
             t, m, pri = missing_message(cfg, stamp)
-            out.append((t, m, pri, "port"))
+            out.append((t, m, pri, "port", None))
             es["final_done"] = stamp
         else:
             print(f"earn: 아직 3분기 실적 공시 없음, {e['final_kst']} KST 까지 계속 확인")
@@ -340,7 +340,7 @@ def price_messages(cfg: dict, ev: list[dict], stamp: str) -> list[tuple[str, str
             trim = "비중 상한을 넘기지 않기. 실적 체크리스트가 나쁘면 확대를 미루기."
         st = f"{e['day']} 종가 {e['close']:,.0f}원, {e['label']} {lvl:,}원 이하로 내려옴."
         later = f"{lvl:,} x 1.03 = {rearm:,.0f}원 넘는 종가가 나온 뒤 다시 {lvl:,}원 이하로 오면 다시 알림. 3분기 실적 체크: {ck}."
-        out.append((t, body(stamp, "가격", WHAT_P, st, act, later, trim, "장중 가격만 보고 판단하기. 이 알림은 확정 종가 기준."), e["priority"], "port"))
+        out.append((t, body(stamp, "가격", WHAT_P, st, act, later, trim, "장중 가격만 보고 판단하기. 이 알림은 확정 종가 기준."), e["priority"], "port", None))
     return out
 
 
@@ -424,7 +424,7 @@ def run(mode: str, now: datetime, cfg: dict, parts: set[str], pub=publish) -> in
     if errs and st.get("ops_day") != today:
         ops = ops_msg(stamp, " / ".join(errs) + ". state 는 그대로.")
         st["ops_day"] = today
-    for t, m, pri, _ in out:
+    for t, m, pri, _, _key in out:
         check_text(t, m)
         print(f"TITLE: {t}\nPRIORITY: {pri} TOPIC: {route_topic(topic, t)}\n{m}\n")
     if ops:
@@ -434,8 +434,8 @@ def run(mode: str, now: datetime, cfg: dict, parts: set[str], pub=publish) -> in
     if dry:
         print("DRY RUN: no publish, state not written")
         return 0
-    for t, m, pri, _ in out:
-        pub(topic, t, m, pri, ["chart_with_downwards_trend" if "가격대" in t else "page_facing_up"], server, config_name=NAME)
+    for t, m, pri, _, key in out:
+        pub(topic, t, m, pri, ["chart_with_downwards_trend" if "가격대" in t else "page_facing_up"], server, config_name=NAME, dedup_key=str(key) if key else None)
     if ops:
         try:
             pub(resolve_topic("ops"), ops[0], ops[1], 3, ["warning"], server, config_name=NAME)

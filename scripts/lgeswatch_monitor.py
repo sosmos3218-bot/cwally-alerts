@@ -543,12 +543,12 @@ def selftest() -> int:
 
 # ---------- main ----------
 
-def send(dry: bool, topic: str, title: str, msg: str, prio: int, tags: list[str]) -> None:
+def send(dry: bool, topic: str, title: str, msg: str, prio: int, tags: list[str], dedup_key: str | None = None) -> None:
     print(title)
     if dry:
         print(f"DRY RUN would send (p{prio}):\n{msg}")
     else:
-        publish(topic, title, msg, prio, tags=tags)
+        publish(topic, title, msg, prio, tags=tags, dedup_key=dedup_key)
 
 
 def main() -> int:
@@ -660,10 +660,10 @@ def main() -> int:
                         ci = contract_info(cfg, f["title"], body, berr)
                         print(f"contract {f['acptno']}: ess={ci['ess']} large={ci['large']} prio={ci['priority']} check={ci['check_amount']}")
                     t, m, p = filing_msg(cfg, f, rule, ci)
-                    send(dry, port, t, m, p, ["page_facing_up"])
+                    send(dry, port, t, m, p, ["page_facing_up"], dedup_key=f["acptno"])
                     if rule["key"] == "prelim" and in_q4(cfg, f["filed"]) and not st.get("q4_checklist_sent"):
                         t, m, p = q4_msg(cfg, f)
-                        send(dry, port, t, m, p, ["clipboard"])
+                        send(dry, port, t, m, p, ["clipboard"], dedup_key=f"{f['acptno']}:q4")
                         st["q4_checklist_sent"] = f["acptno"]
                 else:
                     print(f"skip (not watched): {f['acptno']} {clean(f['title'])}")

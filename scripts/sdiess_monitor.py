@@ -305,7 +305,7 @@ def step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], fetch=
             continue
         p = parse(r.get("body") or "")
         print(f"filing {r['id']} {r['filed']} {r['title']!r} parsed={p}")
-        out.append(message(cfg, r, p, stamp))
+        out.append((*message(cfg, r, p, stamp), r.get("acptno") or r["id"]))
         sent.append({"id": r["id"], "filed": r["filed"], "title": show_title(r["title"]), "amount": (p or {}).get("amount"), "at": stamp})
     if first:
         st["seeded_at"] = stamp
@@ -335,7 +335,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish) -> int:
     if errs and st.get("ops_day") != today:
         ops = ops_msg(stamp, " / ".join(errs) + ". state 는 그대로.")
         st["ops_day"] = today
-    for t, m, pri in out:
+    for t, m, pri, _key in out:
         check_text(t, m)
         print(f"TITLE: {t}\nPRIORITY: {pri} TOPIC: {route_topic(topic, t)}\n{m}\n")
     if ops:
@@ -343,8 +343,8 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish) -> int:
     if dry:
         print("DRY RUN: no publish, state not written")
         return 0
-    for t, m, pri in out:
-        pub(topic, t, m, pri, ["battery"], server, config_name=NAME)
+    for t, m, pri, key in out:
+        pub(topic, t, m, pri, ["battery"], server, config_name=NAME, dedup_key=str(key) if key else None)
     if ops:
         try:
             pub(resolve_topic("ops"), ops[0], ops[1], 3, ["warning"], server, config_name=NAME)

@@ -150,18 +150,23 @@ def eval_c1(prints, cut: float = 0.22) -> str | None:
     return None
 
 
-def publish(title: str, message: str, priority: int, tags: str) -> None:
+def publish(title: str, message: str, priority: int, tags: str, dedup_key: str | None = None) -> None:
     message = append_ends(message)  # AGENTS.md "Alert end line"
+    import ntfy_util
+    tag_list = [t for t in tags.split(",") if t]
+    dk = ntfy_util.dedup_key_tag(dedup_key)
+    if dk:
+        tag_list.append(dk)
     payload = json.dumps(
         {
             "topic": route_topic("cwally-port", title),
             "title": title,
             "message": message,
             "priority": priority,
-            "tags": tags.split(","),
+            "tags": tag_list,
         }
     ).encode()
-    if __import__("ntfy_util").dup_guard_skip_payload("https://ntfy.sh", payload):  # 하루 한 번 발송 보호 (같은 제목 오늘 이미 발송)
+    if ntfy_util.dup_guard_skip_payload("https://ntfy.sh", payload, dedup_key=dedup_key):  # 하루 한 번 발송 보호
         return
     req = urllib.request.Request(
         "https://ntfy.sh",
@@ -240,7 +245,7 @@ def main() -> int:
     new_window = [k for k in ping_keys if k not in already]
     week = now.strftime("%G-W%V")
     monday = now.weekday() == 0 and (ping_keys or today <= repeat_dl)
-    # 주간 점검은 ISO 주당 1번만 (pt15u). 같은 주 오전·오후 중복 발송을 막는다.
+    # 주간 점검은 ISO 주당 1번만 (pt15u). 같은 주 오전과 오후 중복 발송을 막는다.
     if monday and prev.get("weekly_sent_week") == week:
         monday = False
 
@@ -393,7 +398,8 @@ def main() -> int:
         pri = 5 if action == "FULL" or solo else (
             4 if action in {"HALF", "BUY3", "NOBUY"} or c1_changed or new_discs or first_miss7 else 3
         )
-        publish(title, msg, pri, "warning,triangular_flag_on_post")
+        dk = "+".join(d["id"] for d in new_discs[:8]) if new_discs else None
+        publish(title, msg, pri, "warning,triangular_flag_on_post", dedup_key=dk)
     return 0
 
 

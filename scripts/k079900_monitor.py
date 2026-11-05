@@ -333,7 +333,7 @@ def price_msg(cfg: dict, ev: dict, stamp: str) -> tuple[str, str, int, list[str]
     msg = body(stamp, "전진건설로봇 가격이 밸류에이션 기준 구간에 닿을 때만 오는 알림(장중 저가 기준). 매매 신호 아님, 자동 주문 아님.",
                status, action, later, trim,
                "가격만 보고 한 번에 다 사기, 실적 추정치 하향 확인 없이 물타기, 35,000원과 33,000원을 차트 지지선으로 믿기.")
-    return title, msg, pri, tags
+    return title, msg, pri, tags, None
 
 
 def report_msg(cfg: dict, rep: dict, res: dict | None, err: str | None, link: str, stamp: str) -> tuple[str, str, int, list[str]]:
@@ -354,7 +354,7 @@ def report_msg(cfg: dict, rep: dict, res: dict | None, err: str | None, link: st
                "다음 정기보고서가 나오면 다시 옵니다. 15% 미만이 2분기 연속이면 비중 계획을 다시 봅니다.",
                "영업이익률 15% 미만이 이어지거나 엠티알(MTR) 손실, 자금 지원이 커지면 비중 축소 검토.",
                "영업이익률 한 숫자만 보고 사거나 팔기, 이연 판매 매출을 현금 확인 없이 믿기.")
-    return title, msg, pri, ["page_facing_up"]
+    return title, msg, pri, ["page_facing_up"], rep["acptno"]
 
 
 # ---------------- main ----------------
@@ -378,7 +378,7 @@ def main() -> int:
     def ops_once(key: str, title: str, msg: str) -> None:
         fn = state.setdefault("fail_notice", {})
         if fn.get(key) != today:
-            out.append((title, msg, 3, ["warning"]))
+            out.append((title, msg, 3, ["warning"], None))
             fn[key] = today
 
     # 1) 가격
@@ -426,10 +426,12 @@ def main() -> int:
                       "필요하면 DART에서 전진건설로봇 공시를 직접 보세요.", "다음 실행 때 다시 봅니다.",
                       "이번 안내로 비중을 바꾸지 마세요.", "조회 실패를 새 보고서 없음으로 읽기."))
 
-    for title, msg, pri, tags in out:
+    for item in out:
+        title, msg, pri, tags = item[0], item[1], item[2], item[3]
+        key = item[4] if len(item) > 4 else None
         print(f"TITLE: {title}\nPRIORITY: {pri} TOPIC: {route_topic(topic, title)}\n{msg}\n")
         if not dry:
-            publish(topic, title, msg, pri, tags, server)
+            publish(topic, title, msg, pri, tags, server, dedup_key=str(key) if key else None)
     if not out:
         print(f"no alert (zone={state['zone']} break={state['break']})")
     if dry:

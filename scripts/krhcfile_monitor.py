@@ -230,7 +230,7 @@ def report_msg(co: dict, rep: dict, res: dict | None, err: str | None, link: str
         "익절/줄일 때: 이 숫자 하나로 정하지 않기. 미리 정한 비중 기준대로.",
         "하지 말 것: 영업이익률 한 분기 변화만 보고 사거나 팔기, 확인 불가 항목을 0이나 정상으로 읽기.",
     ])
-    return title, msg, 3, ["page_facing_up"]
+    return title, msg, 3, ["page_facing_up"], rep["acptno"]
 
 
 def link_for(co: dict, rep: dict) -> str:
@@ -273,7 +273,7 @@ def main() -> int:
     def ops_once(key: str, title: str, msg: str) -> None:
         fn = state.setdefault("fail_notice", {})
         if fn.get(key) != today:
-            out.append((title, msg, 3, ["warning"]))
+            out.append((title, msg, 3, ["warning"], None))
             fn[key] = today
 
     for co in cfg["companies"]:
@@ -308,10 +308,12 @@ def main() -> int:
     if mode == "parse":
         print("PARSE: no publish, no state")
         return 0
-    for title, msg, pri, tags in out:
+    for item in out:
+        title, msg, pri, tags = item[0], item[1], item[2], item[3]
+        key = item[4] if len(item) > 4 else None
         print(f"TITLE: {title}\nPRIORITY: {pri} TOPIC: {route_topic(topic, title)}\n{msg}\n")
         if not dry:
-            publish(topic, title, msg, pri, tags, server)
+            publish(topic, title, msg, pri, tags, server, dedup_key=str(key) if key else None)
     if not out:
         print("no alert")
     if dry:

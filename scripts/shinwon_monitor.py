@@ -261,9 +261,9 @@ def hint_for(kind: str) -> str:
     return "공시 원문을 열어 확인하세요."
 
 
-def publish(title: str, message: str, priority: int, tags: str) -> bool:
+def publish(title: str, message: str, priority: int, tags: str, dedup_key: str | None = None) -> bool:
     # ntfy_util.publish: same topic routing, tags, server and end line; skips after ends_kst + grace.
-    ntfy_util.publish("cwally-port", title, message, priority, tags.split(","), "https://ntfy.sh", config_name="shinwon")
+    ntfy_util.publish("cwally-port", title, message, priority, tags.split(","), "https://ntfy.sh", config_name="shinwon", dedup_key=dedup_key)
     return bool(ntfy_util.LAST_PUBLISH.get("sent"))
 
 
@@ -396,7 +396,12 @@ def run(mode: str, now: datetime, cfg: dict, prev: dict, price_fn, daum_fn, nave
         return {"sent": [], "would": out, "zone": z, "coin": coin_new, "state": prev}
     sent = {}
     for kind, t, m, p in out:
-        sent[kind] = (pub or publish)(t, m, p, "warning,chart_with_downwards_trend")
+        dk = "+".join(d["id"] for d in new_discs[:6]) if (kind == "main" and new_discs) else None
+        fn = pub or publish
+        try:
+            sent[kind] = fn(t, m, p, "warning,chart_with_downwards_trend", dedup_key=dk)
+        except TypeError:
+            sent[kind] = fn(t, m, p, "warning,chart_with_downwards_trend")
     ok = sent.get("main", False) or not send
     coin_ok = sent.get("coin", False) or not milestone
     new_ids = {d["id"] for d in new_discs}
@@ -427,7 +432,7 @@ def selftest() -> int:
         n += 1
     T = lambda d, h=9, mi=0: datetime.fromisoformat(d).replace(hour=h, minute=mi, tzinfo=KST)  # noqa: E731
     sent, saved = [], []
-    pub = lambda t, m, p, tags: sent.append((t, m, p)) or True  # noqa: E731
+    pub = lambda t, m, p, tags, dedup_key=None: sent.append((t, m, p)) or True  # noqa: E731
     wr = lambda s: saved.append(s)  # noqa: E731
     nodisc = lambda code: []  # noqa: E731
     nonav = lambda code: (_ for _ in ()).throw(RuntimeError("x"))  # noqa: E731

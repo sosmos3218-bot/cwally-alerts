@@ -488,13 +488,20 @@ def _msg_tags(m: dict) -> set[str]:
     return set()
 
 
-def dup_guard_skip_payload(server: str | None, payload: bytes) -> bool:
+def dup_guard_skip_payload(server: str | None, payload: bytes, *, dedup_key: str | None = None) -> bool:
     """For scripts that build their own ntfy JSON payload (topic/title keys) and POST it directly."""
     try:
         obj = json.loads(payload.decode("utf-8") if isinstance(payload, (bytes, bytearray)) else payload)
     except Exception:
         return False
-    return dup_guard_skip(str(obj.get("topic") or ""), obj.get("title"), server)
+    key = dedup_key
+    if not key:
+        for t in _msg_tags(obj):
+            if t.startswith("dk-"):
+                # reverse not possible; pass tag as key so dedup_key_tag(tag) won't match.
+                # Instead compare titles only unless caller passes dedup_key.
+                break
+    return dup_guard_skip(str(obj.get("topic") or ""), obj.get("title"), server, dedup_key=key)
 
 
 def publish(
@@ -508,6 +515,7 @@ def publish(
     config_name: str | None = None,
     config: dict | None = None,
     append_end: bool = True,
+    dedup_key: str | None = None,
 ) -> None:
     if selftest_blocked():  # lazy import 뒤 호출 대비, import 시점 가드와 같은 조건
         print(f"{SELFTEST_STOP_MSG}: publish refused", file=sys.stderr)
@@ -521,20 +529,24 @@ def publish(
         LAST_PUBLISH.clear()
         LAST_PUBLISH.update({"sent": False, "reason": skip, "title": title})
         return None
-    if dup_guard_skip(topic, title, server):
+    if dup_guard_skip(topic, title, server, dedup_key=dedup_key):
         LAST_PUBLISH.clear()
-        LAST_PUBLISH.update({"sent": True, "dup": True, "reason": "dup-guard: already published today", "title": title})
+        LAST_PUBLISH.update({"sent": True, "dup": True, "reason": "dup-guard: already published today", "title": title, "dedup_key": dedup_key})
         return None
     ends_name = config_name if config_name and config is None and (CONFIGS_DIR / f"{config_name}.json").is_file() else None
     if append_end:  # False only for legacy callers whose body never had the end line (hce)
         message = append_ends(message, ends_name)
+    out_tags = list(tags or ["chart_with_upwards_trend"])
+    dk = dedup_key_tag(dedup_key)
+    if dk and dk not in out_tags:
+        out_tags.append(dk)
     payload = json.dumps(
         {
             "topic": topic,
             "title": title,
             "message": message,
             "priority": priority,
-            "tags": tags or ["chart_with_upwards_trend"],
+            "tags": out_tags,
         }
     ).encode()
     req = urllib.request.Request(
@@ -652,6 +664,28 @@ def _dup_guard_selftest(check) -> int:
         tagged = [{"event": "message", "time": mid + 50, "title": "[OTHER] x", "tags": ["chart_with_upwards_trend", tag]}]
         check("dup-guard dedup_key tag match skips", dup_guard_skip("cwally-port", "[SDI-ESS] other title", "x", now=now, poll=lambda *a: tagged, archive=no_arch, dedup_key="20261120000001"), True)
         check("dup-guard dedup_key miss falls back to title", dup_guard_skip("cwally-port", "[SDI-ESS] other title", "x", now=now, poll=lambda *a: tagged, archive=no_arch, dedup_key="other"), False)
+        # publish() attaches dk- tag and skips on key match even when titles differ
+        posted = []
+        class _R:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return b'{"id":"x"}'
+        def capture(req, timeout=20):
+            posted.append(json.loads(req.data.decode()))
+            return _R()
+        with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "1"}, clear=False), mock.patch("urllib.request.urlopen", side_effect=capture):
+            os.environ.pop("DUP_GUARD_SINCE", None)
+            with mock.patch(f"{__name__}._dup_poll", return_value=[]), mock.patch(f"{__name__}._dup_archive", return_value=[]):
+                publish("cwally-port", "[SDI-ESS] 006400 공급계약 체결", "본문", 3, ["battery"], "https://ntfy.invalid", dedup_key="20261120000001")
+        check("publish attaches dk- tag", bool(posted and any(str(t).startswith("dk-") for t in posted[0].get("tags", []))), True)
+        dk = dedup_key_tag("20261120000001")
+        with mock.patch.dict(os.environ, {"NTFY_DUP_GUARD": "1"}, clear=False):
+            with mock.patch(f"{__name__}._dup_poll", return_value=[{"event":"message","time": mid+1,"title":"[SDI-ESS] different", "tags":[dk]}]), mock.patch(f"{__name__}._dup_archive", return_value=[]):
+                posted2 = []
+                with mock.patch("urllib.request.urlopen", side_effect=lambda *a, **k: posted2.append(1) or (_ for _ in ()).throw(AssertionError("net"))):
+                    publish("cwally-port", "[SDI-ESS] 006400 공급계약 체결, 다른 제목", "본문", 3, ["battery"], "https://ntfy.invalid", dedup_key="20261120000001")
+                check("publish skips when dedup_key already sent", (not posted2, LAST_PUBLISH.get("dup")), (True, True))
+
     return before
 
 

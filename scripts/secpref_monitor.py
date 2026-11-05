@@ -463,7 +463,7 @@ def step(cfg: dict, st: dict, now: datetime, stamp: str, errs: list[str], fetch=
         jan = in_jan and not st.get("jan_first")
         print(f"filing {r['id']} {r['filed']} {r['title']!r} kind={kind} jan={jan} parsed={p}")
         t, m, pri = message(cfg, r, kind, p, stamp, jan, in_jan)
-        out.append((t, m, pri))
+        out.append((t, m, pri, r.get("acptno") or r["id"]))
         if jan:
             st["jan_first"] = r["id"]
         seen.add(r["id"])
@@ -497,7 +497,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish) -> int:
     if errs and st.get("ops_day") != today:
         ops = ops_msg(stamp, " / ".join(errs) + ". state 는 그대로.")
         st["ops_day"] = today
-    for t, m, pri in out:
+    for t, m, pri, _key in out:
         check_text(t, m)
         print(f"TITLE: {t}\nPRIORITY: {pri} TOPIC: {route_topic(topic, t)}\n{m}\n")
     if ops:
@@ -505,8 +505,8 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish) -> int:
     if dry:
         print("DRY RUN: no publish, state not written")
         return 0
-    for t, m, pri in out:
-        pub(topic, t, m, pri, ["moneybag"], server, config_name=NAME)
+    for t, m, pri, key in out:
+        pub(topic, t, m, pri, ["moneybag"], server, config_name=NAME, dedup_key=str(key) if key else None)
     if ops:
         try:
             pub(resolve_topic("ops"), ops[0], ops[1], 3, ["warning"], server, config_name=NAME)
@@ -564,7 +564,7 @@ def selftest() -> int:
     nob = step(cfg, {}, now, "T", [], fetch=lambda c, a, b: ([{**rep, "body": ""}], []))
     assert "직접 확인" in nob[0][1]
     assert step(cfg, {}, datetime(2027, 2, 28, 9, 0, tzinfo=KST), "T", [], fetch=lambda c, a, b: ([rep], [])) == []
-    for t, m, _ in out + out2 + out3 + nob:
+    for t, m, *_ in out + out2 + out3 + nob:
         check_text(t, m)
     # ---- 2026-10-30 추가 종류 ----
     for t in ("현금ㆍ현물배당결정", "현금ㆍ현물 배당 결정", "현금·현물배당 결정", "현금배당결정", "[정정] 현금ㆍ현물배당결정"):
@@ -609,7 +609,7 @@ def selftest() -> int:
     non_b = {**ret_b, "id": "kind:20261105000002", "acptno": "20261105000002", "body": "1. 제목 기부금 출연 2. 주요내용 출연 금액 12.6억원"}
     o = step(cfg2, stc, datetime(2026, 11, 5, 19, 0, tzinfo=KST), "T", [], fetch=lambda c, a, b: ([ret_b, non_b], []))
     assert len(o) == 1 and "주주환원 관련 공시" in o[0][0] and "kind:20261105000002" in stc["checked"], (o, stc)
-    for t, m, _ in o:
+    for t, m, *_ in o:
         check_text(t, m)
     for kname in ("div", "vup", "ret"):
         t, m, _ = message(cfg, {**rep, "title": "현금ㆍ현물배당결정"}, kname, None, "T", True)
