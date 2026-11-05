@@ -141,13 +141,18 @@ def ttm_of(rows: list[tuple[str, float]], end_idx: int) -> float | None:
     return sum(v for _, v in rows[end_idx - 11: end_idx + 1])
 
 
-def same_month_yoy(rows: list[tuple[str, float]], idx: int) -> float | None:
-    d, v = rows[idx]
+def prev_same_month(rows: list[tuple[str, float]], idx: int) -> float | None:
+    d = rows[idx][0]
     ym = f"{int(d[:4]) - 1}-{d[5:7]}"
     prev = [x for x in rows if x[0][:7] == ym]
-    if not prev or prev[-1][1] <= 0:
+    return prev[-1][1] if prev else None
+
+
+def same_month_yoy(rows: list[tuple[str, float]], idx: int) -> float | None:
+    base = prev_same_month(rows, idx)
+    if not base or base <= 0:
         return None
-    return (v / prev[-1][1] - 1) * 100
+    return (rows[idx][1] / base - 1) * 100
 
 
 def classify(ttm: float, yoy: float | None, r: dict) -> str:
@@ -195,8 +200,11 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
             ttm = ttm_of(rows, idx)
             if ttm is not None:
                 prev_ttm = st.get("ttm") or ttm_of(rows, idx - 1)
+                base = prev_same_month(rows, idx)
                 yoy = same_month_yoy(rows, idx)
-                cls = classify(ttm, yoy, r)
+                min_base = r.get("yoy_min_base_krw", 30)
+                yoy_used = yoy if base is not None and base >= min_base else None
+                cls = classify(ttm, yoy_used, r)
                 yld = (ttm / price[1] * 100) if price else None
                 ctx = ""
                 if yld is not None and y10:
@@ -205,11 +213,16 @@ def evaluate(cfg: dict, st: dict, obs: dict) -> list[tuple[str, str, int]]:
                            f"({y10[-1][1]:.2f}% - 헤지 비용 {hedge:.2f}%p, {hnote}), 차이 {yld - hedged:+.2f}%p.")
                 elif yld is not None:
                     ctx = f" 분배율 {yld:.2f}%."
-                yoy_txt = "같은 달 전년 값 없음" if yoy is None else f"같은 달 전년 대비 {yoy:+.0f}%"
+                if yoy is None:
+                    yoy_txt = "같은 달 전년 값 없음"
+                elif yoy_used is None:
+                    yoy_txt = f"전년 동월 {base:.0f}원({min_base:.0f}원 미만), 전년 비교 제외(지금 {yoy:+.0f}%)"
+                else:
+                    yoy_txt = f"같은 달 전년 대비 {yoy:+.0f}%(전년 {base:.0f}원)"
                 head = {"경계": "분배 경계", "양호": "분배 양호", "보통": "월간 분배 업데이트"}[cls]
                 out.append((f"{TAG} {nd[5:7]}월 분배금 {nv:.0f}원 | {head}",
                             f"기준일 {nd} 분배금 {nv:.0f}원, {yoy_txt}. 12개월 합 {ttm:.0f}원(직전 {prev_ttm:.0f}원, "
-                            f"{ttm - prev_ttm:+.0f}원). 기준 420원 미만 또는 같은 달 -20% 미만 경계, 460원 이상 양호.{ctx}",
+                            f"{ttm - prev_ttm:+.0f}원). 기준 420원 미만 또는 같은 달 -20% 미만(전년 동월 30원 이상일 때만) 경계, 460원 이상 양호.{ctx}",
                             4 if cls == "경계" else 3 if cls == "양호" else 2))
                 st.update(last_dist_date=nd, ttm=ttm, dist_class=cls)
     etf = obs.get("etf")
@@ -375,8 +388,27 @@ def selftest() -> int:
     check("body has yield and hedged spread", ("분배율 3.35%" in a[0][1], "헤지 뒤 미 10년물 4.03%" in a[0][1], "차이 -0.68%p" in a[0][1]), (True, True, True))
     check("same distribution not repeated", evaluate(cfg, st, dict(base, dists=nov)), [])
     st = init()
-    a = [x[0] for x in evaluate(cfg, st, dict(base, dists=lab + [("2026-11-30", 1.0)]))]
-    check("Nov 1원 -> ttm 420? no: 420 not <420, yoy -95% -> 경계 + 편입 보류", a, [f"{TAG} 11월 분배금 1원 | 분배 경계", f"{TAG} 종합 판정 변경 | 보통 -> 편입 보류"])
+    a = [x[0] for x in evaluate(cfg, st, dict(base, dists=lab + [("2026-11-30", 0.0)]))]
+    check("Nov 0원 -> ttm 419 <420 -> 경계 + 편입 보류 (YoY skipped, base 20)", a, [f"{TAG} 11월 분배금 0원 | 분배 경계", f"{TAG} 종합 판정 변경 | 보통 -> 편입 보류"])
+    def one(rows):
+        s2 = init()
+        s2["last_dist_date"] = rows[-2][0]
+        a2 = evaluate(cfg, s2, dict(base, dists=rows))
+        return a2[0][0], a2[0][1]
+    t15, b15 = one(lab + [("2026-11-30", 15.0)])
+    check("Nov base 20 now 15 (-25%): YoY skipped, ttm 434 -> not 경계", (t15, "전년 동월 20원(30원 미만), 전년 비교 제외" in b15),
+          (f"{TAG} 11월 분배금 15원 | 월간 분배 업데이트", True))
+    syn = [(f"2025-{m:02d}-28", 40.0) for m in range(1, 13)] + [(f"2026-{m:02d}-28", 40.0) for m in range(1, 12)]
+    rows45 = [x if x[0] != "2025-11-28" else ("2025-11-28", 45.0) for x in syn]
+    rows45[-1] = ("2026-11-28", 34.0)
+    t34, b34 = one(rows45)
+    check("base 45 now 34 (-24%), ttm 474 -> 경계 by YoY", (t34, "같은 달 전년 대비 -24%(전년 45원)" in b34), (f"{TAG} 11월 분배금 34원 | 분배 경계", True))
+    rows30 = [x if x[0] != "2025-11-28" else ("2025-11-28", 30.0) for x in syn]
+    rows30[-1] = ("2026-11-28", 23.0)
+    check("base exactly 30 applies: 23 (-23%) -> 경계", one(rows30)[0], f"{TAG} 11월 분배금 23원 | 분배 경계")
+    rows29 = [x if x[0] != "2025-11-28" else ("2025-11-28", 29.0) for x in syn]
+    rows29[-1] = ("2026-11-28", 22.0)
+    check("base 29 skipped: 22 (-24%), ttm 462 -> 양호", one(rows29)[0], f"{TAG} 11월 분배금 22원 | 분배 양호")
     st = init()
     a = [x[0] for x in evaluate(cfg, st, dict(base, dists=lab + [("2026-11-30", 60.0)], y10=y(4.3, 4.2)))]
     check("Nov 60원 -> ttm 479 양호, with rates low -> 매력", a,
@@ -410,7 +442,7 @@ def selftest() -> int:
           ("cwally-port", "cwally-ops"))
     st = init()
     allt = []
-    for kw in ({"y10": y(4.3, 4.2), "dists": lab + [("2026-11-30", 1.0)]}, {"y10": y(5.2, 5.4), "etf": {"aum_eok": 700, "dev_pct": -3}}):
+    for kw in ({"y10": y(4.3, 4.2), "dists": lab + [("2026-11-30", 0.0)]}, {"y10": y(5.2, 5.4), "etf": {"aum_eok": 700, "dev_pct": -3}}):
         for ti, tx, _ in evaluate(cfg, init(), dict(base, **kw)):
             allt.append(ti + body("s", tx, "보통"))
     text = " ".join(allt) + json.dumps(cfg, ensure_ascii=False)
