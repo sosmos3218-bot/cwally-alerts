@@ -475,6 +475,21 @@ def classify(title: str) -> str | None:
     return f"stock nickname: no ticker{f' (alias of {alias}, real ticker must appear)' if alias else ''}"
 
 
+# Non-investment alerts, excluded from the audit by exact script stem (pt110u, 2026-11-05).
+# gval: AI API price comparison. ghtrend: GitHub trending repos. Neither measures a market.
+# Sent archive titles are matched only by the exact title_prefix in these stems' configs.
+AUDIT_NON_INVEST = {"gval", "ghtrend"}
+
+
+def _non_invest_prefixes() -> set[str]:
+    out = set()
+    for stem in AUDIT_NON_INVEST:
+        cfg = load_cfg(stem) or {}
+        if cfg.get("title_prefix"):
+            out.add(cfg["title_prefix"])
+    return out
+
+
 def audit_files() -> list[Path]:
     files = sorted(set(SCRIPTS.rglob("*.py")) | set(SCRIPTS.rglob("*.mjs")))
     tm = ROOT / "trend_monitor"
@@ -485,11 +500,16 @@ def audit_files() -> list[Path]:
 
 
 def audit(now: datetime) -> dict:
-    res: dict = {"static": [], "excluded": [], "archive": [], "archive_body_only": [], "archive_excluded": 0}
+    res: dict = {"static": [], "excluded": [], "archive": [], "archive_body_only": [], "archive_excluded": 0,
+           "non_invest": 0}
+    ni_prefixes = _non_invest_prefixes()
     for path in audit_files():
         stem = _stem_of(path)
         cfg = load_cfg(stem)
         if cfg is not None and ended(cfg, now):
+            continue
+        if stem in AUDIT_NON_INVEST:
+            res["non_invest"] += len(py_title_candidates(path)) if path.suffix == ".py" else 0
             continue
         cands = mjs_title_candidates(path) if path.suffix == ".mjs" else py_title_candidates(path)
         for line, t in cands:
@@ -517,6 +537,9 @@ def audit(now: datetime) -> dict:
         items = []
     for it in items:
         t = it.get("title") or ""
+        if any(t.startswith(p + " ") or t == p for p in ni_prefixes):
+            res["non_invest"] += 1
+            continue
         why = classify(t)
         if why is None:
             continue
@@ -540,7 +563,8 @@ def print_audit(res: dict) -> int:
     n = len(st) + len(res["archive"])
     print(f"title ticker audit (report-only): {n} violations "
           f"(static {len(st)}, sent {len(res['archive'])}; body-first-line only {len(res['archive_body_only'])}; "
-          f"excluded ops {len(res['excluded']) + res['archive_excluded']})")
+          f"excluded ops {len(res['excluded']) + res['archive_excluded']}; "
+          f"excluded non-invest {res.get('non_invest', 0)})")
     for k, v in sorted(cats.items()):
         print(f"  category {k}: {v}")
     for loc, t, why in st:

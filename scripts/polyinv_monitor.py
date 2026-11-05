@@ -475,9 +475,9 @@ def render(items: list[dict], now: datetime, cfg: dict) -> tuple[str, list[str]]
     if items:
         top = max(ranked, key=lambda it: abs(it["ch"]) if it["ch"] is not None else -1)
         hl = f"{top['title_ko'][:22]} {fmt_pp(top['ch'])}" if top["ch"] is not None else f"{len(items)}개"
-        title = f"{PREFIX} 주간 확률 변화 {len(items)}개 | 가장 큰 변화: {hl} | 참고 지표"
+        title = f"{PREFIX} SPY 주간 확률 변화 {len(items)}개 | 가장 큰 변화: {hl} | 참고 지표"
     else:
-        title = f"{PREFIX} 이번 주 기준 넘는 항목 없음 | 참고 지표"
+        title = f"{PREFIX} SPY 이번 주 기준 넘는 항목 없음 | 참고 지표"
     head = [
         f"{now.strftime('%Y-%m-%d %H:%M')} KST | 투자자용 폴리마켓 주간",
         "1) 이게 뭐 알림: 금리, 물가, 경기, 관세, 지정학, 미국 정치/재정, 가상자산, 빅테크 관련 폴리마켓 확률의 1주 변화. 확률은 참고 지표, 매매 신호 아님.",
@@ -656,7 +656,7 @@ def main() -> int:
     state = load_state()
 
     if mode == "install":
-        publish(resolve_topic("port", cfg.get("ntfy_topic")), f"{PREFIX} 설치 확인 | 매매 신호 아님",
+        publish(resolve_topic("port", cfg.get("ntfy_topic")), f"{PREFIX} SPY 설치 확인 | 매매 신호 아님",
                 install_body(), 2, ["white_check_mark"], resolve_server(cfg.get("ntfy_server")))
         return 0
 

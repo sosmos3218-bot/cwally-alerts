@@ -132,7 +132,7 @@ def main() -> int:
 
     summary = " / ".join(lines) if lines else "조회 실패 또는 이벤트 없음"
 
-    title = f"[POLY] 상위 {len(lines)}개 | 참고용"
+    title = f"[POLY] SPY 상위 {len(lines)}개 | 참고용"
     body = "\n".join([
         f"{now.strftime('%Y-%m-%d %H:%M KST')} | POLY 주간",
         "이게 뭐 알림: 폴리마켓 주간 상위 이벤트 브리핑. 투자권유 아님.",
