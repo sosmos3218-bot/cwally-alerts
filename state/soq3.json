@@ -1,1 +1,6 @@
-{"notified": false, "call_notified": false, "fail_notified": false}
+{
+  "notified": false,
+  "call_notified": false,
+  "fail_notified": false,
+  "updated_at": "2026-11-05T21:40:23.039346+09:00"
+}
