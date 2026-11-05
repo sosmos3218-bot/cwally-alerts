@@ -1,9 +1,24 @@
 {
-  "updated_at": null,
-  "sent": false,
-  "sent_at": null,
-  "verdict": null,
-  "source": null,
-  "parsed": null,
+  "updated_at": "2026-11-05T09:14:00.490261+09:00",
+  "sent": true,
+  "sent_at": "2026-11-05T09:14:00.490261+09:00",
+  "verdict": "신중",
+  "source": "SEC 8-K 2026-11-04 https://www.sec.gov/Archives/edgar/data/1579878/000162828026070133/q326pressrelease.htm",
+  "parsed": {
+    "revenue_m": 391.4,
+    "revenue_yoy": 43.0,
+    "ndr": 131.0,
+    "nongaap_gm": 82.0,
+    "fcf_margin": 11.0,
+    "fcf_m": 41.5,
+    "ai_weekly_pct": null,
+    "ai_lines": [
+      "As of October 31, 2026, on a weekly basis, 65% of Paid Customers with more than $10,000 in ARR were using the Figma agent and over 80% were consuming AI credits."
+    ],
+    "fy_low_m": 1497.0,
+    "fy_high_m": 1499.0,
+    "fy_op_low_m": 158.0,
+    "fy_op_high_m": 163.0
+  },
   "fail_notified": false
 }
