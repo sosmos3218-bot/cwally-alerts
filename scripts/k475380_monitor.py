@@ -118,10 +118,25 @@ def parse_dists(html: str) -> list[tuple[str, float]]:
     return sorted(by.items())
 
 
+def funetf_dists() -> list[tuple[str, float]]:
+    """금융투자협회 funetf etfdividend (ISIN KR7475380002). 날짜는 분배락일."""
+    import usdiv_monitor as ud
+
+    form = ud.funetf_form("KR7475380002")
+    raw = ud.funetf_divs(form)
+    if len(raw) < 6:
+        raise RuntimeError(f"funetf 행 {len(raw)}개")
+    return sorted(raw.items())
+
+
 def dists() -> list[tuple[str, float]]:
     errs = []
+    try:
+        return funetf_dists()
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"funetf {exc}")
     urls = (f"https://etfro.com/etf/{CODE}", f"https://etf-lab.jp/{CODE}")
-    for attempt in range(3):
+    for attempt in range(2):
         for url in urls:
             try:
                 r = parse_dists(http(url, timeout=35))
@@ -130,10 +145,10 @@ def dists() -> list[tuple[str, float]]:
                 errs.append(f"{url} 행 {len(r)}개")
             except Exception as exc:  # noqa: BLE001
                 errs.append(f"{url} try{attempt + 1} {exc}")
-        if attempt < 2:
+        if attempt < 1:
             import time
-            time.sleep(1.5)
-    raise RuntimeError(" / ".join(errs[-6:]))
+            time.sleep(1.0)
+    raise RuntimeError(" / ".join(errs[-8:]))
 
 
 def price_bars(today: date) -> list[tuple[str, float]]:

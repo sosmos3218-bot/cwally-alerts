@@ -20,11 +20,11 @@
     "fail_ops_after_days": 2
   },
   "rule_note": "1) 미 10년물(US10Y) 4.50% 이하 교차 하향 1번, 4.60% 위 재무장. 제목에 475380 / US10Y. 2) 475380 확정 종가 9,320원 미만 1번, 9,413원 위 재무장. 3) 월 분배금 금액이 state 직전 기록과 달라지면 1번(기준일/금액 저장). 4) KRX 거래일 19:00 일일 요약 1번: 종가, 전일 대비 %, 9,320 대비 거리, 최신 US10Y.",
-  "facts_2026_11_05": "종가 11/5 10,070원(정규장). 52주 저점 참고선 9,320원(네이버 조정 52주 최저 약 9,290). 월 분배금 최근 2026-10-30 기준 32원(etfro). 미 10년물 11/4 4.90%(Treasury.gov).",
+  "facts_2026_11_05": "종가 11/5 10,070원(정규장). 52주 저점 참고선 9,320원(네이버 조정 52주 최저 약 9,290). 월 분배금 최근 32원(funetf 분배락일 2026-10-29 / etfro 기준일 2026-10-30). 미 10년물 11/4 4.90%(Treasury.gov).",
   "sources": {
     "y10": "FRED DGS10 csv, 실패 시 Treasury.gov daily par yield 10 Yr (usbond_monitor.treasury_10y)",
     "price": "scripts/krx_close.py 정규장 종가(Daum, 실패 시 네이버 15:30 분봉)",
-    "dist": "etfro.com/etf/475380 분배금 이력(data-sort 표), 실패 시 etf-lab.jp/475380"
+    "dist": "funetf.co.kr etfdividend (ISIN KR7475380002, 분배락일), 실패 시 etfro.com/etf/475380 또는 etf-lab.jp/475380"
   },
   "ends_kst": "2027-11-05 23:59",
   "ends_note": "2027-11-05 까지(설치 1년). 그 전에 기준선/보유 여부를 다시 정하면 연장"
