@@ -13,6 +13,7 @@ from screeners.money import EOK, parse_krw, redact
 from screeners.net_cash import compute_scope
 from screeners.opendart import OpenDart, parse_corp_zip, probe_order
 from screeners.prices import naver_quote, parse_market_text
+from screeners.render import brief_from_dir, render_brief
 from screeners.rows import sum_tag
 from screeners.run import load_config, load_fixture, screen_fixtures
 from screeners.universe import keep_listing_row
@@ -270,6 +271,24 @@ def test_dart_client_uses_fixture_bytes_and_hides_key():
         raise AssertionError("should fail")
     assert "SECRET" not in text
     assert "crtfc_key=***" in text or "***" in text
+
+
+def test_brief_lists_passes_only(tmp_path):
+    rows = screen_fixtures("truen")
+    text = render_brief("truen", {"count": len(rows), "passes": sum(row["passes"] for row in rows), "rows": rows}, limit=2)
+    assert "005710" in text
+    assert "214180" not in text
+    assert "나머지" in text
+    assert "·" not in text and "—" not in text
+    folder = tmp_path / "out"
+    folder.mkdir()
+    (folder / "truen.json").write_text(
+        '{"count": 1, "passes": 0, "rows": []}',
+        encoding="utf-8",
+    )
+    brief = brief_from_dir(folder, ["truen", "kiyohara"])
+    assert "통과 종목 없음" in brief
+    assert "결과 파일 없음" in brief
 
 
 def test_cli_demo_writes_output_without_network(tmp_path):

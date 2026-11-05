@@ -75,6 +75,61 @@ def render_markdown(kind: str, rows: list[dict], generated_at: datetime | None =
     return "\n".join(lines)
 
 
+def render_brief(kind: str, payload: dict, limit: int = 15) -> str:
+    """GitHub 단계 요약용. 통과 종목만, 길이를 제한한다."""
+    rows = list(payload.get("rows") or [])
+    passed = [row for row in rows if row.get("passes")]
+    count = payload.get("count", len(rows))
+    n_pass = payload.get("passes", len(passed))
+    lines = [
+        f"## {kind}",
+        "",
+        f"검사 {count}종목, 통과 {n_pass}종목.",
+        "",
+    ]
+    if not passed:
+        lines.append("통과 종목 없음.")
+        lines.append("")
+        return "\n".join(lines)
+    show = passed[:limit]
+    lines.append("통과 종목. 비율은 판정에 쓴 조정 순현금 / 시총.")
+    lines.append("")
+    lines.append("| 코드 | 이름 | 비율 | 단순 순현금 | 조정 순현금 | PER | PBR |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for row in show:
+        net = row.get("net_cash") or {}
+        lines.append(
+            f"| {row.get('code')} | {row.get('name')} | {_num(net.get('ratio'))} | "
+            f"{fmt_eok(net.get('naive_krw'))} | {fmt_eok(net.get('adjusted_krw'))} | "
+            f"{_num(row.get('per'))} | {_num(row.get('pbr'))} |"
+        )
+    lines.append("")
+    if len(passed) > limit:
+        lines.append(f"나머지 {len(passed) - limit}개는 JSON 아티팩트에 있다.")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def brief_from_dir(out_dir, kinds: list[str], limit: int = 15) -> str:
+    """출력 폴더의 JSON 을 읽어 짧은 마크다운을 만든다. 없는 파일은 결과 없음으로 적는다."""
+    from pathlib import Path
+
+    folder = Path(out_dir)
+    lines = ["# 스크리너 결과", ""]
+    for kind in kinds:
+        path = folder / f"{kind}.json"
+        if not path.is_file():
+            lines.append(f"## {kind}")
+            lines.append("")
+            lines.append("결과 파일 없음.")
+            lines.append("")
+            continue
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        lines.append(render_brief(kind, payload, limit=limit).rstrip())
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _num(value) -> str:
     if value is None:
         return "없음"

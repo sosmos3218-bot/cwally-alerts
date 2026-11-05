@@ -86,3 +86,9 @@ OPENDART_API_KEY='발급받은키' python3 -m screeners kiyohara --limit 50
 ```
 
 기준 숫자를 바꾸려면 JSON 만 고치고 `--config` 로 넘기면 된다.
+
+## GitHub 수동 실행
+
+`.github/workflows/screeners.yml` 은 `workflow_dispatch` 만 있다. 스케줄과 ntfy 는 없다. 입력 `screener` 는 `both`(기본), `truen`, `kiyohara` 이다. 저장소 시크릿 `OPENDART_API_KEY` 로 코스피, 코스닥 보통주 전체를 보고, JSON 과 마크다운은 아티팩트 `screener-results` 로만 올린다. main 에 결과를 커밋하지 않는다. 로그에 키를 찍지 않는다. 단계 요약에는 통과 종목 15개까지 적는다.
+
+종목이 많아 OpenDART 호출이 길고, 일일 한도에 걸릴 수 있다. 같은 실행에서 트루엔을 먼저 돌리고 기요하라는 캐시를 쓴다.

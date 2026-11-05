@@ -172,4 +172,6 @@ def write_output(kind: str, rows: list[dict], out_dir: Path) -> None:
     }
     (out_dir / f"{kind}.json").write_text(dump_json(payload), encoding="utf-8")
     (out_dir / f"{kind}.md").write_text(render_markdown(kind, rows, now), encoding="utf-8")
-    print(render_markdown(kind, rows, now))
+    print(f"{kind} 검사 {payload['count']}종목, 통과 {payload['passes']}종목. 파일 {out_dir / (kind + '.json')}")
+    if len(rows) <= 40:
+        print(render_markdown(kind, rows, now))
