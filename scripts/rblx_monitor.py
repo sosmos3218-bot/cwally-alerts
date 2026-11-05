@@ -106,6 +106,78 @@ def parse_dau(blob: str) -> float | None:
             return float(m.group(1))
     return None
 
+DAU_GREW_RE = re.compile(r"\bDAUs\s+grew\s+[0-9]+%\s+year-over-year\s+to\s+([0-9]{2,3}(?:\.[0-9])?)\s*million", re.I)
+BOOKINGS_K_RE = re.compile(r"\bBookings\s*\$\s*([0-9]{1,2},[0-9]{3},[0-9]{3})(?![0-9])")
+EBITDA_RE = re.compile(
+    r"Adjusted EBITDA was\s+(?:(negative|a loss of)\s+)?\$\s*(\()?\s*([0-9][0-9,]*(?:\.[0-9])?)\s*\)?\s*(million|billion)", re.I
+)
+MONET_RE = re.compile(
+    r"Bookings per Hour\s+(grew|increased|declined|decreased|fell)\s+(?:approximately\s+)?([0-9]+(?:\.[0-9])?)%\s+year-over-year globally"
+    r"\s+and\s+(?:(grew|increased|declined|decreased|fell)\s+)?(?:approximately\s+)?([0-9]+(?:\.[0-9])?)%\s+year-over-year in the U\.S\. and Canada",
+    re.I,
+)
+NEG_WORDS = ("declined", "decreased", "fell")
+
+
+def parse_bookings_any(blob: str) -> float | None:
+    """Q1~Q3 letters print bookings in $ millions, Q4 letters in $ thousands ("Bookings $ 2,222,275")."""
+    b = parse_bookings(blob)
+    if b is not None:
+        return b
+    for m in BOOKINGS_K_RE.finditer(blob or ""):
+        if "guidance" in blob[max(0, m.start() - 400) : m.start()].lower():
+            continue
+        return round(float(m.group(1).replace(",", "")) / 1000, 1)
+    return None
+
+
+def parse_dau_any(blob: str) -> float | None:
+    d = parse_dau(blob)
+    if d is not None:
+        return d
+    m = DAU_GREW_RE.search(blob or "")
+    return float(m.group(1)) if m else None
+
+
+def parse_adj_ebitda(blob: str) -> float | None:
+    m = EBITDA_RE.search(blob or "")
+    if not m:
+        return None
+    v = float(m.group(3).replace(",", "")) * (1000 if m.group(4).lower() == "billion" else 1)
+    return -v if (m.group(1) or m.group(2)) else v
+
+
+def parse_uscan_bph(blob: str) -> tuple[float, float] | None:
+    """(global %, U.S./Canada %) bookings per hour YoY."""
+    m = MONET_RE.search(blob or "")
+    if not m:
+        return None
+    g = float(m.group(2)) * (-1 if m.group(1).lower() in NEG_WORDS else 1)
+    verb = (m.group(3) or m.group(1)).lower()
+    return g, float(m.group(4)) * (-1 if verb in NEG_WORDS else 1)
+
+
+GUIDE_LABEL_RE = re.compile(r"(Q[1-4]\s+20[0-9]{2}|Full Year\s+20[0-9]{2})")
+
+
+def parse_guidance(blob: str, label: str) -> tuple[float, float] | None:
+    """Guidance table bookings range for 'Q1 2027' / 'Full Year 2027' ($ millions). Handles 2-column tables."""
+    for m in re.finditer(r"Guidance\s+((?:(?:Q[1-4]|Full Year)\s+20[0-9]{2}\s*){1,3})\(\$ in (millions|thousands)\)", blob or ""):
+        labels = [re.sub(r"\s+", " ", x) for x in GUIDE_LABEL_RE.findall(m.group(1))]
+        if label not in labels:
+            continue
+        row = re.search(r"Bookings\s*(?:\([A-Z0-9]\))?\s*((?:\$\s*[0-9][0-9,]*\s*){2,6})", blob[m.end() : m.end() + 800])
+        if not row:
+            return None
+        nums = [float(x.replace(",", "")) for x in re.findall(r"\$\s*([0-9][0-9,]*)", row.group(1))]
+        i = labels.index(label) * 2
+        if len(nums) < i + 2:
+            return None
+        lo, hi = nums[i], nums[i + 1]
+        return (lo / 1000, hi / 1000) if m.group(2) == "thousands" or lo > 100000 else (lo, hi)
+    return None
+
+
 def sec_doc_base(cik: str, accession: str) -> str:
     return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession.replace('-', '')}/"
 
@@ -232,10 +304,101 @@ def q3_judgment(bookings: float | None, lo: float, hi: float, price: float | Non
         scenarios,
     )
 
+# ---------------- Q4 2026 one-shot verdict (2026-11-05, t58) ----------------
+def q4_find(recent: dict | None, q: dict) -> str | None:
+    """First 8-K Item 2.02 filed inside the Q4 window -> accession."""
+    if not recent:
+        return None
+    for form, day, acc, item in zip(recent.get("form") or [], recent.get("filingDate") or [], recent.get("accessionNumber") or [],
+                                    recent.get("items") or [""] * len(recent.get("form") or [])):
+        if form == "8-K" and q["search_from"] <= day <= q["search_to"] and (not item or "2.02" in item):
+            return acc
+    return None
+
+
+def q4_parse(text: str, q: dict) -> dict:
+    return {"bookings_m": parse_bookings_any(text), "dau_m": parse_dau_any(text), "ebitda_m": parse_adj_ebitda(text),
+            "bph": parse_uscan_bph(text), "next_q": parse_guidance(text, q["next_q_label"]),
+            "next_fy": parse_guidance(text, q["next_fy_label"])}
+
+
+def q4_verdict(p: dict, q: dict, price: float | None, shares: float, cost: float, src: str) -> tuple[str, str, str, int]:
+    pnl = pnl_text(price, shares, cost)
+    b, lo, hi = p["bookings_m"], q["bookings_lo_m"], q["bookings_hi_m"]
+    if b is None:
+        return ("[RBLX] Q4 실적 나옴 | 직접 확인",
+                f"Q4 2026 실적 8-K는 찾았지만 bookings 숫자를 자동으로 읽지 못했습니다. 미확인이며 하회가 아닙니다. {pnl}. 출처: {src}",
+                f"원문에서 Q4 bookings가 {lo / 100:.1f}~{hi / 100:.1f}억 달러 가이던스 대비 어디인지, 조정 EBITDA, DAU를 직접 보세요. 다음 평일 09:00에 다시 읽습니다.", 4)
+    if b > hi:
+        head, action, pri = "가이던스 상회, 추가 매수 검토", "추가 매수 검토 가능. 단 55달러 위 추가 금지 선은 그대로이고, 미리 정한 계획 안에서 지정가로만.", 4
+    elif b < lo:
+        head, action, pri = "가이던스 하회, 보유 재검토", "28주 보유 비중 재검토. 파싱값과 원문이 다르면 원문 우선. 매도 지시가 아닙니다.", 5
+    else:
+        head, action, pri = "가이던스 안, 보유 유지", "보유 유지. 가이던스 안은 추가 조건이 아닙니다.", 3
+    parts = [f"Q4 bookings {b / 100:.2f}억 달러(가이던스 {lo / 100:.1f}~{hi / 100:.1f}억, {head.split(',')[0]})"]
+    e = p["ebitda_m"]
+    if e is None:
+        parts.append("조정 EBITDA 원문 확인 필요")
+    else:
+        el, eh = q["adj_ebitda_lo_m"], q["adj_ebitda_hi_m"]
+        tag = "가이던스 위" if e > eh else "가이던스 아래" if e < el else "가이던스 안"
+        parts.append(f"조정 EBITDA {e:+.0f}백만 달러({el:.0f}~{eh:.0f} 가이던스, {tag})")
+    d, d0 = p["dau_m"], q["prev_year_dau_m"]
+    parts.append("DAU 원문 확인 필요" if d is None else f"DAU {d:g}백만 명, 전년 4분기 {d0:g}백만 대비 {(d / d0 - 1) * 100:+.1f}%")
+    if p["bph"]:
+        parts.append(f"시간당 bookings 전년 대비 전체 {p['bph'][0]:+.0f}%, 미국/캐나다 {p['bph'][1]:+.0f}%")
+    if p["next_q"]:
+        parts.append(f"{q['next_q_label']} bookings 가이던스 {p['next_q'][0] / 100:.1f}~{p['next_q'][1] / 100:.1f}억 달러")
+    if p["next_fy"]:
+        parts.append(f"{q['next_fy_label']} bookings 가이던스 {p['next_fy'][0] / 100:.1f}~{p['next_fy'][1] / 100:.1f}억 달러")
+    elif not p["next_q"]:
+        parts.append("2027 가이던스 없음 또는 미확인(회사는 2027년부터 연간 가이던스 중단 예고)")
+    return (f"[RBLX] Q4 실적 | {head}", ". ".join(parts) + f". {pnl}. 출처: {src}", action, pri)
+
+
+def q4_step(cfg: dict, state: dict, recent: dict | None, today: str, price: float | None, reader=None) -> list[tuple[str, str, int]]:
+    q = cfg.get("q4_2026") or {}
+    if not q or not (q["search_from"] <= today <= q["search_to"]) or state.get("q4_done"):
+        return []
+    acc = q4_find(recent, q)
+    if not acc:
+        return []
+    cik = str(cfg.get("cik") or "1315098")
+    try:
+        if reader:
+            text, src = reader(acc)
+        else:
+            url = ex991_url(cik, acc)
+            if not url:
+                raise RuntimeError(f"EX-99.1 없음 ({acc})")
+            text, src = visible(fetch(url)), url
+    except Exception as exc:  # network error: silent, retry next run
+        print(f"q4 read fail: {exc}")
+        return []
+    p = q4_parse(text, q)
+    print(f"q4 parse {acc}: {p}")
+    shares, cost = float(cfg["position"]["shares"]), float(cfg["position"]["avg_cost"])
+    title, status, action, pri = q4_verdict(p, q, price, shares, cost, src)
+    if p["bookings_m"] is None:
+        if state.get("q4_manual_sent") == acc:
+            return []
+        state["q4_manual_sent"] = acc
+    else:
+        state["q4_done"] = acc
+        state["q4_result"] = {"bookings_m": p["bookings_m"], "dau_m": p["dau_m"], "ebitda_m": p["ebitda_m"], "title": title}
+        state["last_bookings_m"] = p["bookings_m"]
+        state["earnings_fingerprint"] = json.dumps({"accession": acc, "bookings_m": p["bookings_m"]}, sort_keys=True)
+    msg = body(datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"), status, action,
+               "Q4 판정은 1번만 보냅니다. 2027년 1월 광고 배분 시작 여부는 원문에서 같이 보세요. 알림은 2027-03-31에 끝납니다.",
+               "55달러 위 추가 금지, -10% 추가 금지, -20% 보유 재검토 선은 그대로.",
+               "파싱 실패를 하회로 세기. 실적 다음 날 주가 반응만 보고 추격.")
+    return [(title, msg, pri)]
+
+
 def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str, scenarios: str = "") -> str:
     lines = [
         f"{stamp} | RBLX | 관망 조건 점검",
-        "이게 뭐 알림: 보유 중인 로블록스 가격 구간과 Q3 bookings/DAU 조건만 보는 알림입니다. 추가매수 지시가 아닙니다.",
+        "이게 뭐 알림: 보유 중인 로블록스 가격 구간과 분기 실적 bookings/DAU 조건만 보는 알림입니다. 추가매수 지시가 아닙니다.",
         f"지금 결과/상태: {status}",
         f"지금 할 일: {action}",
         f"나중에: {later}",
@@ -248,6 +411,8 @@ def body(stamp: str, status: str, action: str, later: str, trim: str, avoid: str
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
@@ -347,16 +512,16 @@ def main() -> int:
                 action = "보유는 유지하세요. 55달러 위 추가는 금지입니다."
             else:
                 title = "[RBLX] -10%~55달러 | 보유 유지"
-                action = "보유 유지, 추가 없음. 10/30 실적 확인 전 비중을 바꾸지 마세요."
+                action = "보유 유지, 추가 없음. Q4 실적(2027년 2월 초 예상) 확인 전 비중을 바꾸지 마세요."
             why = "구간 변경" if changed else "월요일 상태" if weekly else "실적 창"
             alerts.append(
                 (
                     title,
                     body(
                         stamp,
-                        f"RBLX {price:.2f}달러. 28주, 평단 {cost:.4f}달러, 평가 {pnl:+.2f}달러({pct:+.1f}%). 구간 {prev} -> {zone}. {why}. Q3 bookings 가이드 15.76~16.53억 달러.",
+                        f"RBLX {price:.2f}달러. 28주, 평단 {cost:.4f}달러, 평가 {pnl:+.2f}달러({pct:+.1f}%). 구간 {prev} -> {zone}. {why}. {cfg.get('status_line', '')}",
                         action,
-                        "보유 유지. 상향은 bookings 16.53억 초과와 미국/캐나다 시간당 수익화 반등. 하향은 15.76억 미만이면 비중 재검토.",
+                        "Q4 판정: bookings 20.0억 달러 초과면 추가 매수 검토, 18.9억 미만이면 보유 재검토, 그 사이는 보유 유지.",
                         "55달러 위 추가 금지. -10%는 추가 금지, -20%는 보유 재검토이지 매도 지시 아님.",
                         "손실 폭 터치를 추가매수나 전량매도 신호로 쓰기. 신용, 미수, 추격.",
                     ),
@@ -444,6 +609,14 @@ def main() -> int:
                 state["last_filing"] = max(filing, last_filing or filing)
                 last_filing = state["last_filing"]
 
+    q4cfg = cfg.get("q4_2026") or {}
+    in_q4 = bool(q4cfg) and q4cfg["search_from"] <= day <= q4cfg["search_to"]
+    if in_q4:
+        alerts.extend(q4_step(cfg, state, recent, day, price))
+        if filing and state.get("q4_done"):
+            state["last_filing"] = max(filing, state.get("last_filing") or filing)
+        last_filing = None  # generic Q3-guide branch off inside the Q4 window
+
     # New filing branch: now runs on oneshot dates too (skipped only when the oneshot above
     # already handled this run, so one run never sends two earnings notices).
     if filing and last_filing and filing > last_filing and not oneshot_handled:
@@ -529,10 +702,84 @@ def main() -> int:
     if not alerts:
         print("no alert")
 
+    if dry:
+        print("DRY RUN: no publish, state not written")
+        return 0
     state["updated_at"] = now.isoformat()
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
+
+# ---------------- selftest (offline) ----------------
+def selftest() -> int:
+    import ntfy_util
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    q = cfg["q4_2026"]
+    fx = Path(__file__).resolve().parent / "fixtures" / "rblx"
+    q3 = (fx / "q3_2026_ex991.txt").read_text(encoding="utf-8")
+    q4p = (fx / "q4_2025_ex991.txt").read_text(encoding="utf-8")
+    fails: list[str] = []
+
+    def check(name, got, want):
+        ok = got == want
+        print(("ok   " if ok else "FAIL ") + f"{name}: got={got!r} want={want!r}")
+        if not ok:
+            fails.append(name)
+    check("config window/ends", (cfg["valid_until"], cfg["ends_kst"], q["search_from"], q["search_to"]), ("2027-03-31", "2027-03-31 23:59", "2027-01-20", "2027-02-28"))
+    check("price lines kept", (cfg["levels"], cfg["position"]["shares"], cfg["position"]["avg_cost"]),
+          ({"loss10": 43.12, "loss20": 38.33, "jefferies": 38, "hold_ceiling": 55}, 28, 47.9164))
+    check("Q3 2026 fixture parse (millions)", (parse_bookings_any(q3), parse_dau_any(q3), parse_adj_ebitda(q3), parse_uscan_bph(q3)),
+          (1697.0, 138.0, 138.0, (4.0, 2.0)))
+    check("Q3 2026 Q4 guidance table", parse_guidance(q3, "Q4 2026"), (1890.0, 2000.0))
+    check("Q4 2025 fixture parse (thousands table, 'DAUs grew .. to')", (parse_bookings_any(q4p), parse_dau_any(q4p), parse_adj_ebitda(q4p)),
+          (2222.3, 144.0, 3.0))
+    check("Q4 2025 two-column guidance", (parse_guidance(q4p, "Q1 2026"), parse_guidance(q4p, "Full Year 2026"), parse_guidance(q4p, "Q1 2027")),
+          ((1690.0, 1740.0), (8282.0, 8553.0), None))
+    check("negative EBITDA forms", (parse_adj_ebitda("Adjusted EBITDA was negative $42 million"), parse_adj_ebitda("Adjusted EBITDA was $(35) million"),
+                                    parse_adj_ebitda("Adjusted EBITDA was a loss of $8 million")), (-42.0, -35.0, -8.0))
+    check("monetization declined form", parse_uscan_bph("Bookings per Hour declined approximately 3% year-over-year globally and 5% year-over-year in the U.S. and Canada"),
+          (-3.0, -5.0))
+    base = {"bookings_m": 1950.0, "dau_m": 140.0, "ebitda_m": -40.0, "bph": (1.0, 2.0), "next_q": None, "next_fy": None}
+    t = lambda b: q4_verdict(dict(base, bookings_m=b), q, 50.0, 28, 47.9164, "src")[0]  # noqa: E731
+    check("Q4 rules: >2000 상회, <1890 하회, between 유지, 2000/1890 edges inside",
+          (t(2001), t(1889), t(1950), t(2000), t(1890)),
+          ("[RBLX] Q4 실적 | 가이던스 상회, 추가 매수 검토", "[RBLX] Q4 실적 | 가이던스 하회, 보유 재검토", "[RBLX] Q4 실적 | 가이던스 안, 보유 유지",
+           "[RBLX] Q4 실적 | 가이던스 안, 보유 유지", "[RBLX] Q4 실적 | 가이던스 안, 보유 유지"))
+    _, st, _, _ = q4_verdict(dict(base, ebitda_m=-80.0, next_q=(1500.0, 1600.0)), q, 50.0, 28, 47.9164, "src")
+    check("Q4 body: EBITDA below guide, DAU YoY vs 144, Q1 2027 guide",
+          ("가이던스 아래" in st, "-2.8%" in st, "Q1 2027 bookings 가이던스 15.0~16.0억" in st, "19.50억 달러" in st), (True, True, True, True))
+    _, st, _, _ = q4_verdict(base, q, 50.0, 28, 47.9164, "src")
+    check("no 2027 guidance noted", "연간 가이던스 중단" in st, True)
+    recent = {"form": ["8-K", "10-Q", "8-K"], "filingDate": ["2027-02-04", "2026-10-30", "2026-10-29"],
+              "accessionNumber": ["A-27", "Q-26", "B-26"], "items": ["2.02,9.01", "", "2.02,9.01"]}
+    good = "Bookings $ 2,050,000 $ 2,222,275 ... DAUs were 141 million ... Adjusted EBITDA was $(20) million"
+    st0: dict = {}
+    check("outside window: nothing", q4_step(cfg, st0, recent, "2027-01-19", 50.0, reader=lambda a: (good, "u")), [])
+    check("old Q3 8-K not picked in window when no new 8-K", q4_find({k: v[1:] for k, v in recent.items()}, q), None)
+    out = q4_step(cfg, st0, recent, "2027-02-05", 50.0, reader=lambda a: (good, "u"))
+    check("Q4 verdict once from thousands table", ([x[0] for x in out], st0.get("q4_done")), (["[RBLX] Q4 실적 | 가이던스 상회, 추가 매수 검토"], "A-27"))
+    check("Q4 verdict not repeated", q4_step(cfg, st0, recent, "2027-02-06", 50.0, reader=lambda a: (good, "u")), [])
+    st1: dict = {}
+    bad = lambda a: ("no numbers here", "u")  # noqa: E731
+    first = [x[0] for x in q4_step(cfg, st1, recent, "2027-02-05", 50.0, reader=bad)]
+    second = q4_step(cfg, st1, recent, "2027-02-06", 50.0, reader=bad)
+    third = [x[0] for x in q4_step(cfg, st1, recent, "2027-02-09", 50.0, reader=lambda a: (good, "u"))]
+    check("manual notice once, retry later gives verdict", (first, second, third),
+          (["[RBLX] Q4 실적 나옴 | 직접 확인"], [], ["[RBLX] Q4 실적 | 가이던스 상회, 추가 매수 검토"]))
+
+    def boom(a):
+        raise RuntimeError("net")
+    st2: dict = {}
+    check("read error silent, state untouched", (q4_step(cfg, st2, recent, "2027-02-05", 50.0, reader=boom), st2), ([], {}))
+    titles = ["[RBLX] Q4 실적 | 가이던스 상회, 추가 매수 검토", "[RBLX] Q4 실적 | 가이던스 하회, 보유 재검토", "[RBLX] Q4 실적 | 가이던스 안, 보유 유지",
+              "[RBLX] Q4 실적 나옴 | 직접 확인"]
+    check("Q4 titles go to cwally-port", {ntfy_util.route_topic("cwally-port", x) for x in titles}, {"cwally-port"})
+    allt = " ".join(titles) + st + cfg["status_line"] + json.dumps(cfg, ensure_ascii=False)
+    check("no middle dot / em-dash", ("\u00b7" in allt, "\u2014" in allt), (False, False))
+    check("status line mentions Q3 upgrade met", "상향 조건 충족" in cfg["status_line"], True)
+    print(f"SELFTEST {'PASS' if not fails else 'FAIL'}: {len(fails)} failed")
+    return 1 if fails else 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

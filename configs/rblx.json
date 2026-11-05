@@ -7,15 +7,18 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "평일 09:00 KST morning. 실적 직후 oneshot 추가. 연도 가드 2026-2027만(valid_until 2027-01-29까지 수명), 그 밖의 해는 발송과 state 기록 없이 종료.",
+  "schedule_note": "평일 09:00 KST morning. 실적 직후 oneshot 추가. 연도 가드 2026-2027만(valid_until 2027-03-31까지 수명), 그 밖의 해는 발송과 state 기록 없이 종료.",
   "oneshot_kst": [
     "2026-10-30 06:10",
     "2026-10-30 08:10",
     "2026-10-30 09:10"
   ],
   "oneshot_note": "10/29 장후 실적 직후 Bookings/DAU/시나리오 업데이트. GitHub fallback cron + cron-job.org oneshot dispatch.",
-  "year_guard": [2026, 2027],
-  "valid_until": "2027-01-29",
+  "year_guard": [
+    2026,
+    2027
+  ],
+  "valid_until": "2027-03-31",
   "alert_policy": "weekly_or_change",
   "cik": "0001315098",
   "earnings_est_kst": "2026-10-30 05:30",
@@ -45,8 +48,8 @@
     "sec": "https://data.sec.gov/submissions/CIK0001315098.json",
     "ir": "https://ir.roblox.com/"
   },
-  "ends_kst": "2027-01-29 09:00",
-  "ends_note": "보유 28주 월요 -10/-20% 점검. 2027-01 광고 배분 시작 확인 후 종료",
+  "ends_kst": "2027-03-31 23:59",
+  "ends_note": "보유 28주 월요 -10/-20% 점검. 2027-01 광고 배분 시작 확인(Q4 실적 원문에서)과 Q4 2026 실적 판정 뒤 종료. 2026-11-05 2027-01-29 에서 연장(Q4 실적이 2월 초라서, 전년 Q4 실적 8-K 2026-02-05).",
   "holding": true,
   "holding_note": "보유 28주, 평단 47.9164달러. 2026-10-19 확인.",
   "position": {
@@ -55,5 +58,31 @@
     "currency": "USD"
   },
   "q3_judge_kst": "2026-10-30 09:00",
-  "q3_judge_note": "기존 morning + oneshot. bookings 15.76억 미만이면 비중 재검토, 가이드 안이면 보유 유지. 시나리오 포함."
+  "q3_judge_note": "기존 morning + oneshot. bookings 15.76억 미만이면 비중 재검토, 가이드 안이면 보유 유지. 시나리오 포함.",
+  "q3_result": {
+    "checked_kst": "2026-11-05",
+    "accession": "0001628280-26-068235",
+    "bookings_m": 1697,
+    "dau_m": 138,
+    "uscan_bookings_per_hour_yoy_pct": 2,
+    "global_bookings_per_hour_yoy_pct": 4,
+    "upgrade_rule_met": true,
+    "note": "bookings 16.97억 > 16.53억 이고 미국/캐나다 시간당 bookings 전년 대비 +2%(하락 멈춤). 2026-10 당시 스크립트는 수익화 문장을 읽지 않아 '미확인'으로 보냈음. 소급 발송 없음."
+  },
+  "status_line": "Q3 확인: bookings 16.97억 달러(상단 16.53억 초과), 미국/캐나다 시간당 bookings +2%로 상향 조건 충족(11/5 재확인). Q4 가이던스 bookings 18.9~20.0억, 조정 EBITDA -0.7~-0.1억 달러.",
+  "q4_2026": {
+    "search_from": "2027-01-20",
+    "search_to": "2027-02-28",
+    "bookings_lo_m": 1890,
+    "bookings_hi_m": 2000,
+    "adj_ebitda_lo_m": -70,
+    "adj_ebitda_hi_m": -10,
+    "prev_year_dau_m": 144,
+    "prev_year_note": "Q4 2025 DAU 144백만(2026-02-05 8-K 0001315098-26-000009 'DAUs grew 69% year-over-year to 144 million')",
+    "next_q_label": "Q1 2027",
+    "next_fy_label": "Full Year 2027",
+    "guidance_source": "Q3 2026 8-K 0001628280-26-068235 Guidance Q4 2026 표",
+    "rule": "bookings 20.0억 초과 상회 -> 추가 매수 검토(55달러 위 추가 금지는 유지), 18.9억 미만 하회 -> 보유 재검토, 그 사이 보유 유지. 조정 EBITDA, DAU 전년 대비, 미국/캐나다 시간당 bookings, Q1 2027 또는 2027 연간 가이던스는 본문 참고. 8-K 는 찾았는데 숫자를 못 읽으면 직접 확인 1번, 다음 실행에서 다시 읽음.",
+    "schedule": "평일 09:00 KST morning 실행마다 SEC submissions 에서 창 안 8-K Item 2.02 확인(새 cron 없음). 실적은 미국 장 마감 뒤라 다음 날 09:00 KST 에 잡힘."
+  }
 }
