@@ -13,7 +13,7 @@ configs/spg.json ([SPG] limit 150/160) and vtrspg ([VTRSPG]).
      and 205, P/FFO at guidance midpoint (13.25 until a parsed update).
 
 Modes: auto | dry (no ntfy, no state) | install (one confirmation, no state) | selftest
-Not investment advice. Korean text: no middle dot (·) or em-dash (—).
+Not investment advice. Korean text: no Korean middle-dot or em-dash characters.
 """
 from __future__ import annotations
 
