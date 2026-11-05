@@ -1,0 +1,28 @@
+{
+  "name": "174350",
+  "title_prefix": "[174350]",
+  "code": "174350",
+  "yahoo_symbol": "174350.KS",
+  "index_symbol": "^KS11",
+  "display": "TIGER 로우볼",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "approved": "2026-11-05 chat: 174350 분할 매수 가격대(20,650, 19,500, 18,800원)와 KOSPI 6,191 및 6,509 축소 신호",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 반복 슬롯(KRX 거래일 19:00 KST)에 부착. Yahoo 174350.KS, ^KS11 일봉 정규장 종가만 사용(오늘 봉은 15:30 전이면 제외, 네이버 NXT 안 씀). 처리한 거래일(last_day)과 선마다 armed 로 중복 없음. job=174350 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
+  "lines_fixed_note": "모든 선은 2026-11-05 에 정한 고정 숫자. 이동평균 값은 날마다 바뀌므로 선을 따라 움직이지 않음(200일선은 참고로만 표시).",
+  "annual_dividend": 634,
+  "buy_lines": [
+    {"key": "buy1", "level": 20650, "rearm": 21050, "band": "20,000~20,650원", "weight": "배정 40%", "label": "1차 매수 구간", "action": "1차 분할 매수 구간입니다. 배정의 40%만 나눠서 검토하세요.", "priority": 4},
+    {"key": "buy2", "level": 19500, "rearm": 19900, "band": "19,000~19,500원", "weight": "배정 30%", "label": "2차 매수 구간", "action": "2차 분할 매수 구간입니다. 배정의 30%만 나눠서 검토하세요.", "priority": 4},
+    {"key": "buy3", "level": 18800, "rearm": 19200, "band": "18,500~18,800원", "weight": "배정 30%", "label": "3차 매수 구간", "action": "3차 분할 매수 구간입니다. 남은 배정 30%만 나눠서 검토하세요. 물타기 확대는 하지 마세요.", "priority": 4},
+    {"key": "stop", "level": 17840, "op": "lt", "rearm": 18200, "band": "17,840원 미만", "weight": "추가 매수 없음", "label": "중단선", "action": "추가 매수 중단, 점검하세요. 로우볼 논리(방어주 상대강도, 배당)를 다시 확인하세요. 손절 지시는 아닙니다.", "priority": 4}
+  ],
+  "trim1": {"key": "trim1", "kospi_level": 6191, "rearm_below": 6000, "ratio_days": 20, "priority": 4, "label": "축소1 (KOSPI 6,191 이상 + 174350/KOSPI 비율 20일 평균 아래)", "action": "보유분 25% 축소를 검토하세요(KOSPI200 또는 성장형으로 이동)."},
+  "trim2": {"key": "trim2", "kospi_level": 6509, "days": 5, "rearm_below": 6300, "ma_days": 200, "priority": 4, "label": "축소2 (KOSPI 6,509 이상 5거래일 연속)", "action": "추가 25% 축소를 검토하세요. 포트 비중을 10% 하단으로 낮추세요."},
+  "seed": {"day": "2026-11-05", "close": 20610, "kospi": 5383.8, "note": "11/5 종가 20,610원은 이미 1차 구간 안. 사용자가 계획대로 1차를 지금 사는 중이라 1차는 발송된 것으로 시드(armed false, fired_day 2026-11-05). 첫 실행에서 1차 알림 없음."},
+  "stale_note": "Yahoo 실패나 그날 둘 중 하나의 종가가 없으면 판정 보류(cwally-ops 하루 1번), 다음 실행에서 순서대로 따라잡음.",
+  "sources": {"yahoo": "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1y"},
+  "ends_kst": null,
+  "ends_note": "수동 해제 전까지 KRX 거래일 19:00, 선을 새로 넘을 때만 발송"
+}
