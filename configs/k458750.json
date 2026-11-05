@@ -1,0 +1,36 @@
+{
+  "name": "k458750",
+  "title_prefix": "[458750]",
+  "code": "458750",
+  "isin": "KR7458750007",
+  "name_kr": "TIGER 미국배당다우존스타겟커버드콜1호",
+  "created_at": "2026-11-05T18:50:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-05 (pt7u): 458750 월 분배금 변경, 원달러 1,250 이하, 종가 밴드 14,020/10,735, KRX 마감 후 일일 요약",
+  "holding": "인컴 슬롯 관심, 평균가 미입력",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 장 마감 후 슬롯(KRX 거래일 19:00 KST)에 부착. job=k458750 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "rules": {
+    "fx_low": 1250.0,
+    "fx_low_rearm": 1265.0,
+    "price_high": 14020,
+    "price_high_rearm": 13880,
+    "price_high_rearm_note": "14,020 x 0.99 = 13,879.8, 반올림 13,880. 종가가 이 선 아래로 내려와야 고점 돌파 재무장.",
+    "price_low": 10735,
+    "price_low_rearm": 10842,
+    "price_low_rearm_note": "10,735 x 1.01 = 10,842.35, 반올림 10,842. 종가가 이 선 위로 올라와야 저점 이탈 재무장.",
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "1) 월 분배금 금액이 state 직전 기록과 달라지면 1번(기준일/금액 저장, funetf ISIN KR7458750007 우선). 2) 원달러(USDKRW) 1,250원 이하 교차 1번, 1,265원 위 재무장. 제목 '458750 / USDKRW'. 3) 종가 14,020 초과 또는 10,735 미만 교차 1번, 1% 버퍼 재무장. 4) KRX 거래일 19:00 일일 요약: 종가, 전일 대비 %, NAV/괴리(가능하면), 원달러.",
+  "facts_2026_11_05": "종가 11/5 13,315원(정규장). 52주 고 14,020 / 저 10,735. 최근 분배금 64원(funetf 분배락일 2026-10-14). 원달러 Yahoo USDKRW=X 약 1,340.78. 네이버 etfKeyIndicator NAV 표기 약 13,055.69(괴리 +0.2%, 해외 기초자산이라 날짜는 전일일 수 있음). mirae 기준가격 표는 조회 가능하나 GitHub에서 403 날 수 있음.",
+  "sources": {
+    "price": "scripts/krx_close.py 정규장 종가(Daum)",
+    "fx": "Yahoo Finance chart USDKRW=X (ustsy/yencarry 와 동일). 실패 시 query2.",
+    "dist": "funetf.co.kr etfdividend (ISIN KR7458750007), 실패 시 etfro.com/etf/458750 또는 etf-lab.jp/458750",
+    "nav": "우선 미래에셋 기준가격 표(scripts/k203780_monitor.mirae_nav). 실패/미갱신 시 네이버 etfKeyIndicator nav+deviationRate(날짜 미확인 가능, 본문에 표기). 둘 다 실패하면 일일 요약에서 NAV 생략."
+  },
+  "ends_kst": "2027-11-05 23:59",
+  "ends_note": "2027-11-05 까지(설치 1년). 밴드/환율 기준을 다시 정하면 연장"
+}

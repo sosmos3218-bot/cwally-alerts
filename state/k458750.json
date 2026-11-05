@@ -1,0 +1,13 @@
+{
+  "updated_at": "2026-11-05T18:50:00+09:00",
+  "fx_low_armed": true,
+  "fx_last": 1340.78,
+  "price_high_armed": true,
+  "price_low_armed": true,
+  "price_last_date": "2026-11-05",
+  "last_dist_date": "2026-10-14",
+  "last_dist_amt": 64.0,
+  "last_summary_date": "2026-11-05",
+  "fail": {},
+  "init_note": "2026-11-05 시드: 종가 13,315원(11/5), 분배금 64원(2026-10-14 funetf), 원달러 약 1,340.78(Yahoo USDKRW=X). 밴드/환율 무장, 일일 요약은 오늘을 보낸 것으로 시드해 첫 실행 중복 방지."
+}
