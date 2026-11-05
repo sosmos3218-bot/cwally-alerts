@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-05 15:30 KST",
+  "updated_at": "2026-11-05 15:37 KST",
   "items": [
+    {
+      "id": "NzGwuG3X49ZA",
+      "topic": "cwally-port",
+      "title": "[475380] 설치 확인 | 매매 신호 아님",
+      "message": "2026-11-05 15:33 KST | 475380 | RISE 글로벌리얼티인컴\n이게 뭐 알림: 475380(RISE 글로벌리얼티인컴) 금리 4.50% 이하, 종가 9,320원 미만, 월 분배금 변경, 장 마감 후 일일 요약. 매매 지시 아님.\n지금 결과/상태: 종가 10,070원(2026-11-05), 미 10년물 4.90%(2026-11-04). 조회 실패: {\"dists\": \"https://etfro.com/etf/475380 try1 <urlopen error [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1029)> / https://etf-lab.jp/475380 try1 <urlopen error [SSL: UNEXPECT\"}. 지금 켜진 이벤트 조건 없음(설치 확인).\n지금 할 일: 없음. KRX 거래일 19:00에 조건이 새로 켜질 때만 옵니다.\n나중에: 조건: US10Y 4.50% 이하, 종가 9,320 미만, 분배금 변경, 일일 요약.\n익절/줄일 때: 계획한 비중이 있으면 그 안에서만. 없으면 새로 비중을 정한 뒤.\n하지 말 것: 이 설치 확인을 매수나 매도 신호로 읽기.\n꺼지는 때: 2027-11-05 23:59 KST (2027-11-05 까지(설치 1년). 그 전에 기준선/보유 여부를 다시 정하면 연장)",
+      "priority": 3,
+      "tags": [
+        "white_check_mark"
+      ],
+      "time": 1793860505
+    },
     {
       "id": "jUrjEJEDmqa4",
       "topic": "cwally-port",
@@ -4452,18 +4463,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1793059265
-    },
-    {
-      "id": "yr6lLwxfzDue",
-      "topic": "cwally-port",
-      "title": "[IREN] 새 공시/일정 | $30 하회 재검토",
-      "message": "2026-10-27 09:00 KST | IREN | IREN\n이게 뭐 알림: IREN(아이렌 AI 데이터센터) 일정·공시 검토입니다. 계약 인수·전력·채굴 종료가 핵심입니다.\n지금 상태: $25.43 | $30 아래. 재검토. 계약 ARR $40억 / 가동 $10억 / 갱 $30억.\n지금 할 일: 비중을 줄일지 검토하세요. Horizon 인수·채굴 종료 일정을 먼저 확인하세요.\n나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프. 이 공시가 나오기 전에 추격하지 마세요.\n익절: $65 근처에서 일부, $80 근처에서 추가 정리를 검토하세요.\n줄일 때: $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.\n하지 말 것: 공시 없이 추격매수, 신용/미수. 이 알림만으로 한번에 다 사지 말 것.\n\n지금 진행 중인 일정:\n- Horizon 2-4 인도/인수 2026-10-01~2026-12-31: Childress 50MW x3 인수 공시. 미인수면 $40억 ARR 중 $30억 갭 유지. 유예는 27년 2초까지.\n\n21일 안 일정:\n- 중간선거·텍사스 계통 2026-11-01\n\n새 키워드 공시/뉴스:\n- [sec] 8-K - Current report\n  https://www.sec.gov/Archives/edgar/data/1878848/000187884826000051/0001878848-26-000051-index.htm\n- [sec] 8-K - Current report\n  https://www.sec.gov/Archives/edgar/data/1878848/000114036126032638/0001140361-26-032638-index.htm\n- [yahoo] Meta, SpaceX, Tesla, Microsoft, CoreWeave, FICO, and More Stocks That Explain Today’s Market\n  https://finance.yahoo.com/m/f34285b4-f496-3c4f-b29d-49e2d71f092d/meta%2C-spacex%2C-tesla%2C.html?.tsrc=rss",
-      "priority": 4,
-      "tags": [
-        "warning",
-        "zap"
-      ],
-      "time": 1793059253
     }
   ]
 }
