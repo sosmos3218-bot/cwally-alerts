@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
+from kr_calendar import session_close_ready  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "k453810.json"
@@ -41,7 +42,7 @@ def etf_rows(code: str, now: datetime) -> list[tuple[str, float]]:
     import krx_close
     rows = [(b.day, b.close) for b in krx_close.regular_bars(code, 30)]
     today = now.strftime("%Y-%m-%d")
-    return [r for r in rows if r[0] < today or (r[0] == today and (now.hour, now.minute) >= (15, 31))]
+    return [r for r in rows if session_close_ready(r[0], today, now, (15, 31))]
 
 
 def yahoo_rows(symbol: str, close_hm: str, now: datetime) -> list[tuple[str, float]]:

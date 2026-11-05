@@ -135,7 +135,7 @@ def amount_change(text: str) -> str | None:
 
 
 
-from kr_calendar import is_trading_day, session_day  # noqa: E402
+from kr_calendar import is_trading_day, session_day, session_close_ready  # noqa: E402
 
 
 # ---------- 0219B0 가격 ----------
@@ -153,7 +153,7 @@ def price_eval(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime)
         d = row["day"]
         if d <= ps["last_date"] or d < cfg["daily_window"]["start"] or d > today:
             continue
-        if d == today and (now.hour, now.minute) < (15, 40):
+        if not session_close_ready(d, today, now, (15, 40)):
             continue
         c = row["close"]
         if c < lo and ps["down_armed"]:
@@ -410,7 +410,7 @@ def q3_judge(cfg: dict, found: dict | None, now: datetime, today: str) -> dict:
     line2 = f"2) 수요 {c2}: {capex_txt}; {opt_txt}"
     last = None
     try:
-        rows = [r for r in price_rows(cfg["price"]["code"]) if r["day"] < today or (now.hour, now.minute) >= (15, 40)]
+        rows = [r for r in price_rows(cfg["price"]["code"]) if session_close_ready(r["day"], today, now, (15, 40))]
         last = rows[-1] if rows else None
     except Exception as exc:  # noqa: BLE001
         errs.append(f"0219B0 종가 {NA}: {str(exc)[:60]}")
@@ -535,7 +535,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, rows_fn=None) -> int:
     if mode == "seed":
         reps = kind_all(cfg["wooriro"]["code"], "2025-01-01", today)
         st["wooriro_seen"] = sorted({r["acptno"] for r in reps} | set(st.get("wooriro_seen") or []))
-        rows = [r for r in price_rows(cfg["price"]["code"]) if r["day"] < today or (now.hour, now.minute) >= (15, 40)]
+        rows = [r for r in price_rows(cfg["price"]["code"]) if session_close_ready(r["day"], today, now, (15, 40))]
         last = rows[-1]
         st["price"] = {"last_date": last["day"], "last_close": last["close"],
                        "down_armed": not last["close"] < cfg["price"]["down"]["level"], "up_armed": not last["close"] >= cfg["price"]["up"]["level"],

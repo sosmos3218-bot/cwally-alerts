@@ -14,6 +14,7 @@ import json
 import re
 import sys
 import urllib.parse
+from kr_calendar import session_close_ready  # noqa: E402
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -159,8 +160,7 @@ def naver_closes(code: str) -> dict:
 
 def confirmed(closes: dict, now: datetime) -> dict:
     today = now.strftime("%Y-%m-%d")
-    late = (now.hour, now.minute) >= CLOSE_HM
-    return {d: c for d, c in closes.items() if d < today or (d == today and late)}
+    return {d: c for d, c in closes.items() if session_close_ready(d, today, now, CLOSE_HM)}
 
 
 def coin_stats(closes: dict) -> dict:

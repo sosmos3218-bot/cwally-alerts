@@ -75,7 +75,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import is_trading_day, session_day  # noqa: E402
+from kr_calendar import is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import append_ends, publish, resolve_server, resolve_topic  # noqa: E402
 import earncall_lib as ec  # noqa: E402
 
@@ -299,24 +299,6 @@ def rearm(ln: dict, close: float, pct: float) -> bool:
 
 def dist(close: float, level: float) -> float:
     return (close / level - 1.0) * 100.0
-
-
-def session_close_ready(day: str, today: str, now: datetime, close_hm: tuple[int, int]) -> bool:
-    """True once the KRX regular close for `day` is known at `now`.
-
-    `today` is session_day (rolls back before 06:00 KST). A late GitHub backup after
-    midnight still has session_day = yesterday, but wall-clock hour is 0..5, so a plain
-    `now.hour < 15:30` check would treat yesterday's close as still intraday and skip it
-    (2026-11-04: on-time Persist push failed, backup 41880374371 at 02:46 KST left
-    state/005930.json last_day stuck at 2026-11-03). Past session days are always ready;
-    the current session day is ready after market close, or once the calendar date has
-    moved past that session day.
-    """
-    if day > today:
-        return False
-    if day < today:
-        return True
-    return (now.hour, now.minute) >= close_hm or now.date().isoformat() > today
 
 
 def eval_lines(cfg: dict, st: dict, rows: list[dict], today: str, now: datetime) -> list[dict]:

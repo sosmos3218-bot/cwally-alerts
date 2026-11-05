@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import is_trading_day  # noqa: E402
+from kr_calendar import is_trading_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -110,7 +110,7 @@ def price_rows(code: str) -> list[tuple[str, float]]:
 
 def confirmed_close(rows: list[tuple[str, float]], now: datetime) -> tuple[str, float] | None:
     today = now.strftime("%Y-%m-%d")
-    ok = [r for r in rows if r[0] < today or (r[0] == today and (now.hour, now.minute) >= (15, 31))]
+    ok = [r for r in rows if session_close_ready(r[0], today, now, (15, 31))]
     return ok[-1] if ok else None
 
 

@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import KST, is_trading_day, session_day  # noqa: E402
+from kr_calendar import KST, is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import OPS_TITLE_RE, publish, resolve_server  # noqa: E402
 
 CFG_PATH = ROOT / "configs" / "sdimix.json"
@@ -241,7 +241,7 @@ def main() -> int:
     if not is_trading_day(day):
         print("non-session; silent" + ("\nDRY RUN: no ntfy, no state" if dry else ""))
         return 0
-    if now.date() == day and (now.hour, now.minute) < (15, 40):
+    if not session_close_ready(day.isoformat(), day.isoformat(), now, (15, 40)):
         print("not a completed KRX session; silent" + ("\nDRY RUN: no ntfy, no state" if dry else ""))
         return 0
     state = json.loads(STATE_PATH.read_text(encoding="utf-8")) if STATE_PATH.exists() else {}
@@ -311,8 +311,14 @@ def selftest() -> int:
     assert band_of(D("63.9"), "Z_HIGH2", cfg) == "Z_HIGH1"
     assert band_of(D("60.0"), "Z_HIGH2", cfg) == "Z_MID"
     assert band_of(D("49"), "Z_HIGH2", cfg) == "Z_LOW"
-    # in-memory seed fixture (never read live state/sdimix.json; last_date is fixed for the scenario)
-    seed = {"last_date": "2026-11-04", "band": "Z_HIGH1", "verdict": "보유", "discount_pct": "61.74"}
+    # Fixture seed (do not assert against live state/sdimix.json: last_date moves every 19:00).
+    # Mirrors the 2026-11-04 merge seed: Z_HIGH1 / 보유. Live last_date may already be later.
+    seed = {
+        "band": "Z_HIGH1",
+        "verdict": "보유",
+        "last_date": "2026-11-04",
+        "discount_pct": "61.74",
+    }
     assert seed["band"] == "Z_HIGH1" and seed["verdict"] == "보유" and seed["last_date"] == "2026-11-04"
     s, send, _ = decide(seed, "2026-11-04", D("61.74"), "보유", cfg)
     assert not send
@@ -378,6 +384,11 @@ def selftest() -> int:
     assert abs(float(d) - 61.7431) < 0.001
     # config copy text also clean
     assert text_ok(json.dumps(cfg, ensure_ascii=False))
+    # session_close_ready: post-midnight backup still treats prior session as ready; true intraday skips
+    late = datetime(2026, 11, 5, 2, 46, tzinfo=KST)
+    assert session_close_ready("2026-11-04", "2026-11-04", late, (15, 40))
+    assert not session_close_ready("2026-11-05", "2026-11-05", datetime(2026, 11, 5, 14, 0, tzinfo=KST), (15, 40))
+    assert session_close_ready("2026-11-05", "2026-11-05", datetime(2026, 11, 5, 15, 40, tzinfo=KST), (15, 40))
     print("SELFTEST PASS: bands + 1pp hysteresis, seed no-send, verdict-change trigger, reduce override, upgrade split note, "
           "2027-01-15 end (bands only), title tickers 006400/006405, no ops words, no middle dot / em-dash, 6-item body")
     return 0

@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import KST, is_trading_day, session_day  # noqa: E402
+from kr_calendar import KST, is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 TAG = "[SDI-PX]"
@@ -48,7 +48,7 @@ def daum_rows(code: str) -> list[dict]:
 
 
 def confirmed(rows: list[dict], today: str, now: datetime) -> list[dict]:
-    return [r for r in rows if r["day"] < today or (r["day"] == today and (now.hour, now.minute) >= CLOSE_HM)]
+    return [r for r in rows if session_close_ready(r["day"], today, now, CLOSE_HM)]
 
 
 def hit(op: str, c: float, lvl: float) -> bool:
@@ -172,7 +172,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, rows_fn=None) -> int:
     out, err = [], None
     try:
         rows = confirmed((rows_fn or daum_rows)(cfg["code"]), today, now)
-        if (now.hour, now.minute) >= CLOSE_HM and (not rows or rows[-1]["day"] != today):
+        if session_close_ready(today, today, now, CLOSE_HM) and (not rows or rows[-1]["day"] != today):
             err = f"{today} KRX 종가가 Daum KRX 일별에 아직 없음(마지막 {rows[-1]['day'] if rows else '없음'}). 오늘 판정 건너뜀"
         if rows:
             print(f"latest KRX close {rows[-1]['day']} {rows[-1]['close']:,.0f} (prev {rows[-1].get('prev')}): {judge_text(cfg, rows[-1]['close'])}")
@@ -231,6 +231,14 @@ def selftest() -> int:
         check_text(t, m)
     for t, m in (ops_msg("T", "x"), install_message("T")):
         check_text(t, m)
+    # post-midnight backup: session_day still yesterday, wall clock < close must still count that close
+    late = datetime(2026, 11, 5, 2, 46, tzinfo=KST)
+    rows = [{"day": "2026-11-04", "close": 500000.0}, {"day": "2026-11-05", "close": 510000.0}]
+    assert [r["day"] for r in confirmed(rows, "2026-11-04", late)] == ["2026-11-04"]
+    intra = datetime(2026, 11, 5, 14, 0, tzinfo=KST)
+    assert [r["day"] for r in confirmed(rows, "2026-11-05", intra)] == ["2026-11-04"]
+    after = datetime(2026, 11, 5, 15, 40, tzinfo=KST)
+    assert [r["day"] for r in confirmed(rows, "2026-11-05", after)] == ["2026-11-04", "2026-11-05"]
     print("selftest ok")
     return 0
 

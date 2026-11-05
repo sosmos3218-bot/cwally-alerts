@@ -33,7 +33,7 @@ engine = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(engine)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import is_trading_day, session_day  # noqa: E402
+from kr_calendar import is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 
 NAME = "000815"
@@ -68,7 +68,7 @@ def sec_eval(cfg: dict, st: dict, rows: list[dict], now: datetime) -> list[dict]
     for r in rows:
         if r["day"] <= (ss.get("last_day") or ""):
             continue
-        if r["day"] > today or (r["day"] == today and (now.hour, now.minute) < close_hm):
+        if not session_close_ready(r["day"], today, now, close_hm):
             continue
         if ss.get("armed", True) and engine.hit(ln, r["close"]):
             ss.update(armed=False, fired_day=r["day"])
@@ -512,6 +512,15 @@ def selftest() -> int:
         check("install lists every watch", all(k in im for k in ("360,000원 이하 1차", "340,000원 이하 3차 대안", "25% 이하", "48% 이상", "171,750원 이하", "공시", "2027-03-31 23:59")), True)
         check("install: no state", saved, [])
 
+        # ---- post-midnight backup must still confirm prior session close
+        late = datetime(2026, 11, 5, 2, 46, tzinfo=KST)
+        check("post-midnight session_close_ready prior day", session_close_ready("2026-11-04", "2026-11-04", late, (15, 30)), True)
+        check("true intraday session_close_ready skips today", session_close_ready("2026-11-05", "2026-11-05", datetime(2026, 11, 5, 14, 0, tzinfo=KST), (15, 30)), False)
+        st_pm = copy.deepcopy(seed)
+        sec_rows = [{"day": "2026-11-04", "close": 170000.0}]
+        # seed last_day is before 11-04 so sec_eval should advance on late backup
+        ev = sec_eval(cfg, st_pm, sec_rows, late)
+        check("post-midnight backup: sec advances last_day", st_pm["sec"]["last_day"], "2026-11-04")
         # ---- every message: prefix, footer, no forbidden chars
         msgs = []
         reset(rows=rows(("2026-11-04", 335000)), pair=rows(("2026-11-04", 700000)), sec=rows(("2026-11-04", 170000)))

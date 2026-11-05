@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import json, sys, urllib.parse, urllib.request
+from kr_calendar import session_close_ready  # noqa: E402
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from ntfy_util import route_topic  # noqa: E402
@@ -67,7 +68,7 @@ def yahoo_close(ticker, now=None):
 
 def last_confirmed(bars, now):
     today = now.date().isoformat()
-    done = [b for b in bars if b[0] < today or (b[0] == today and (now.hour, now.minute) >= (15, 30))]
+    done = [b for b in bars if session_close_ready(b[0], today, now, (15, 30))]
     return done[-1] if done else None
 
 

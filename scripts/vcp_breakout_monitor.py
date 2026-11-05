@@ -222,7 +222,7 @@ def run(mode: str, watch_override: list[dict] | None = None, asof: str | None = 
         day = date.fromisoformat(asof)
     else:
         day = kr_calendar.session_day(now)
-        if day == now.date() and (now.hour, now.minute) < krx_close.READY:
+        if not kr_calendar.session_close_ready(day.isoformat(), day.isoformat(), now, tuple(krx_close.READY)):
             print("vcp_breakout: before 15:31 KST; today's close not final, silent")
             return 0
     if not kr_calendar.is_trading_day(day):

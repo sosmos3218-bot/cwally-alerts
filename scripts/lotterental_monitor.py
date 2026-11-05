@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import k079900_monitor as k79  # noqa: E402  (읽기 전용 재사용: http, num, KST)
-from kr_calendar import is_trading_day, prev_trading_day, session_day  # noqa: E402
+from kr_calendar import is_trading_day, prev_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 KST = k79.KST
@@ -42,8 +42,7 @@ def fetch_rows(cfg: dict) -> list[dict]:
 
 
 def confirmed(rows: list[dict], today: str, now: datetime) -> list[dict]:
-    late = (now.hour, now.minute) >= CLOSE_HM or now.date().isoformat() > today
-    return [r for r in rows if r["day"] < today or (r["day"] == today and late)]
+    return [r for r in rows if session_close_ready(r["day"], today, now, CLOSE_HM)]
 
 
 def expected_day(sday: date, now: datetime) -> str:

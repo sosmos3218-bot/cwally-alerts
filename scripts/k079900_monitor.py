@@ -31,6 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
+from kr_calendar import session_close_ready  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 NAME = "k079900"
@@ -118,7 +119,7 @@ def eval_price(cfg: dict, state: dict, rows: list[dict], today: str, now: dateti
     for r in rows:
         if r["day"] < start:
             continue
-        live = r["day"] == today and (now.hour, now.minute) < close_hm
+        live = not session_close_ready(r["day"], today, now, close_hm)
         for key, thr, rearm, strict in (("zone", pz["zone_max"], pz["zone_rearm"], False),
                                         ("break", pz["break_below"], pz["break_rearm"], True)):
             st = state[key]

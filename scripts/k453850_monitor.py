@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import KST, is_trading_day, session_day  # noqa: E402
+from kr_calendar import KST, is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 
 TAG = "[453850]"
@@ -237,7 +237,7 @@ def evaluate(cfg: dict, st: dict, data: dict, today: str, now: datetime) -> list
         for r in rows:
             if r["day"] < start:
                 continue
-            if r["day"] == today and (now.hour, now.minute) < close_hm:
+            if not session_close_ready(r["day"], today, now, close_hm):
                 continue
             step(
                 st, "px_low",
@@ -269,7 +269,7 @@ def evaluate(cfg: dict, st: dict, data: dict, today: str, now: datetime) -> list
 def status_line(cfg: dict, data: dict) -> str:
     rows = data.get("rows") or []
     n = datetime.now(KST)
-    live = bool(rows) and rows[-1]["day"] == n.date().isoformat() and n.hour * 60 + n.minute < 15 * 60 + 30
+    live = bool(rows) and not session_close_ready(rows[-1]["day"], n.date().isoformat(), n, (15, 30))
     close = rows[-1]["close"] if rows else None
     px = (
         f"453850 {'현재가' if live else '종가'} {close:,.0f}원({rows[-1]['day']})"
@@ -457,7 +457,7 @@ def run(mode: str, as_of: datetime | None = None) -> int:
             st[k] = tmp[k]
         done_rows = [
             r["day"] for r in (data.get("rows") or [])
-            if r["day"] < today or now.hour * 60 + now.minute >= 15 * 60 + 30
+            if session_close_ready(r["day"], today, now, (15, 30))
         ]
         st["last_day"] = tmp.get("last_day") or (done_rows[-1] if done_rows else None)
         st["seeded"] = True

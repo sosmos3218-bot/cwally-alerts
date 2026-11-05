@@ -64,6 +64,25 @@ def session_day(now: datetime | None = None, rollover_hour: int = 6) -> date:
     return d
 
 
+def session_close_ready(day: str, today: str, now: datetime, close_hm: tuple[int, int] = (15, 30)) -> bool:
+    """True once the KRX regular close for `day` is known at `now`.
+
+    `today` is usually session_day (rolls back before 06:00 KST). A late GitHub backup
+    after midnight still has session_day = yesterday, but wall-clock hour is 0..5, so a
+    plain `now.hour < 15:30` check would treat yesterday's close as still intraday and
+    skip it (2026-11-04: 005930 last_day stuck after Persist push failed; fixed in
+    86854a0, then shared here). Past session days are always ready; the current session
+    day is ready after market close, or once the calendar date has moved past it.
+    Also safe when `today` is the calendar date instead of session_day.
+    """
+    now = now.astimezone(KST)
+    if day > today:
+        return False
+    if day < today:
+        return True
+    return (now.hour, now.minute) >= close_hm or now.date().isoformat() > today
+
+
 if __name__ == "__main__":
     import sys
 

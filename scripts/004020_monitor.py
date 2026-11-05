@@ -19,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kr_calendar import KST  # noqa: E402
+from kr_calendar import KST, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 
 NAME = "004020"
@@ -88,7 +88,7 @@ def evaluate(cfg: dict, st: dict, rows: list[dict], bps: float, today: str, now:
         if r["day"] <= (st.get("last_day") or ""):
             prev = r["close"] / bps
             continue
-        if r["day"] > today or (r["day"] == today and (now.hour, now.minute) < (15, 30)):
+        if not session_close_ready(r["day"], today, now, (15, 30)):
             continue
         pbr = r["close"] / bps
         for ln in cfg["lines"]:
@@ -175,7 +175,7 @@ def run(mode: str) -> int:
     else:
         if not st.get("last_day"):
             # first run: seed at the latest completed session, no alert for a condition already on
-            done = [r for r in rows if r["day"] < today or (now.hour, now.minute) >= (15, 30)]
+            done = [r for r in rows if session_close_ready(r["day"], today, now, (15, 30))]
             seed = done[-1]
             p = seed["close"] / bps
             st.update(last_day=seed["day"], last_close=seed["close"], last_pbr=round(p, 4),
@@ -242,6 +242,18 @@ def selftest() -> int:
     check("already-done day skipped", evaluate(cfg, st, [{"day": "2026-11-01", "close": 1000}], bps, "2026-12-31", now), [])
     check("intraday not judged", evaluate(cfg, st, [{"day": "2026-12-31", "close": 1000}], bps, "2026-12-31",
                                           datetime(2026, 12, 31, 14, 0, tzinfo=KST)), [])
+    # post-midnight backup: session_day still prior day, wall clock < 15:30 must still judge that close
+    st_pm = {"last_day": "2026-11-03", "last_close": 29000.0, "last_pbr": 0.1918,
+             "lines": {"low": {"armed": True, "fired_day": None}, "high": {"armed": True, "fired_day": None}}}
+    late = datetime(2026, 11, 5, 2, 46, tzinfo=KST)
+    check("post-midnight prior close judged",
+          [e["line"]["key"] for e in evaluate(cfg, st_pm, [{"day": "2026-11-04", "close": 22700}], bps, "2026-11-04", late)],
+          ["low"])
+    check("post-midnight advances last_day", st_pm["last_day"], "2026-11-04")
+    check("true intraday skips today's unfinished close",
+          evaluate(cfg, {"last_day": "2026-11-03", "lines": {"low": {"armed": True}, "high": {"armed": True}}},
+                   [{"day": "2026-11-04", "close": 22700}], bps, "2026-11-04",
+                   datetime(2026, 11, 4, 14, 0, tzinfo=KST)), [])
     # BPS parsing / fallback
     html = "<td>EPS</td><td>-136</td> <td>BPS</td><td>151,227</td> PER N/A"
     check("parse BPS", parse_bps(html), 151227.0)

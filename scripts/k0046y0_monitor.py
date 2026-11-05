@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 import krx_close  # noqa: E402
-from kr_calendar import KST, is_trading_day, session_day  # noqa: E402
+from kr_calendar import KST, is_trading_day, session_day, session_close_ready  # noqa: E402
 
 TAG = "[0046Y0]"
 NAME = "k0046y0"
@@ -73,7 +73,7 @@ def ctx_line(cfg: dict) -> str:
 
 
 def confirmed(rows: list[dict], today: str, now: datetime) -> list[dict]:
-    return [r for r in rows if r["day"] < today or (r["day"] == today and (now.hour, now.minute) >= CLOSE_HM)]
+    return [r for r in rows if session_close_ready(r["day"], today, now, CLOSE_HM)]
 
 
 def hit(op: str, c: float, lvl: float) -> bool:
@@ -258,7 +258,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, rows_fn=None, ctx_fn=N
     ctx = "참고값 생략"
     try:
         rows = confirmed((rows_fn or krx_rows)(cfg["code"]), today, now)
-        if (now.hour, now.minute) >= CLOSE_HM and (not rows or rows[-1]["day"] != today):
+        if session_close_ready(today, today, now, CLOSE_HM) and (not rows or rows[-1]["day"] != today):
             err = f"{today} KRX 종가가 아직 없음(마지막 {rows[-1]['day'] if rows else '없음'}). 오늘 판정 건너뜀"
         if rows:
             ma = sma(rows, len(rows) - 1, cfg["recovery"]["ma"])

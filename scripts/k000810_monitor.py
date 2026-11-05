@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import secdiv_monitor as sd  # noqa: E402  (읽기 전용 재사용: http, text_of, clean, kind_body, KIND, KIND_VIEW)
-from kr_calendar import is_trading_day, session_day  # noqa: E402
+from kr_calendar import is_trading_day, session_day, session_close_ready  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 KST = sd.KST
@@ -295,7 +295,7 @@ def fetch_rows(cfg: dict) -> list[dict]:
 
 
 def confirmed(rows: list[dict], today: str, now: datetime) -> list[dict]:
-    return [r for r in rows if r["day"] < today or (r["day"] == today and (now.hour, now.minute) >= CLOSE_HM)]
+    return [r for r in rows if session_close_ready(r["day"], today, now, CLOSE_HM)]
 
 
 def seed_price(cfg: dict, rows: list[dict], stamp: str) -> dict:
