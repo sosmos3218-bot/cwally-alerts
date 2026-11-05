@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -117,14 +118,63 @@ LAST_PUBLISH: dict = {}
 SELFTEST_STOP_MSG = "selftest 모드 없음: 발송/저장 중단"
 
 
+def _is_selftest_const(n) -> bool:
+    if isinstance(n, ast.Constant) and n.value == "selftest":
+        return True
+    if isinstance(n, (ast.Tuple, ast.List, ast.Set)):
+        return any(_is_selftest_const(e) for e in n.elts)
+    return False
+
+
+def selftest_branch_kind(src: str) -> str | None:
+    """Return how the source handles a 'selftest' mode, or None.
+
+    Counts only code (ast, so comments are ignored and docstrings/print/usage strings do not count):
+    a comparison against 'selftest' (==, !=, in, not in, incl. tuple/list/set), argparse choices=[...'selftest'...]
+    or add_parser('selftest'), a dict dispatch key 'selftest', or a match case 'selftest'.
+    Raises SyntaxError/ValueError when the source cannot be parsed (caller treats that as no selftest).
+    """
+    for n in ast.walk(ast.parse(src)):
+        if isinstance(n, ast.Compare) and any(_is_selftest_const(x) for x in [n.left, *n.comparators]):
+            return "compare"
+        if isinstance(n, ast.Call):
+            if any(k.arg == "choices" and _is_selftest_const(k.value) for k in n.keywords):
+                return "argparse choices"
+            if isinstance(n.func, ast.Attribute) and n.func.attr == "add_parser" and n.args and _is_selftest_const(n.args[0]):
+                return "argparse subparser"
+        if isinstance(n, ast.Dict) and any(k is not None and _is_selftest_const(k) for k in n.keys):
+            return "dict dispatch"
+        if isinstance(n, ast.match_case) and isinstance(n.pattern, ast.MatchValue) and _is_selftest_const(n.pattern.value):
+            return "match case"
+    return None
+
+
 def _script_has_selftest() -> bool:
+    """argv[0] / __main__ file (runpy impl included), plus sibling .py files it loads by a literal name
+    (thin wrappers such as 000660 -> 005930_monitor.py, burry -> burry_impl.py). Parse failure = no selftest."""
     cands = [sys.argv[0] if sys.argv else None, getattr(sys.modules.get("__main__"), "__file__", None)]
+    seen: set = set()
     for c in cands:
-        try:
-            if c and Path(c).is_file() and "selftest" in Path(c).read_text(encoding="utf-8", errors="ignore"):
-                return True
-        except OSError:
+        if not c:
             continue
+        files = [Path(c)]
+        while files:
+            f = files.pop()
+            try:
+                f = f.resolve()
+                if f in seen or not f.is_file():
+                    continue
+                seen.add(f)
+                src = f.read_text(encoding="utf-8", errors="ignore")
+                if selftest_branch_kind(src):
+                    return True
+                if len(seen) < 4:  # one wrapper hop is enough; keep it bounded
+                    for n in ast.walk(ast.parse(src)):
+                        if isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value.endswith(".py") and "/" not in n.value:
+                            files.append(f.with_name(n.value))
+            except (OSError, SyntaxError, ValueError) as exc:
+                print(f"selftest guard: cannot parse {f} ({type(exc).__name__}); treated as no selftest", file=sys.stderr)
+                continue
     return False
 
 
@@ -810,12 +860,31 @@ def _self_test() -> int:
         tmpd = Path(tempfile.mkdtemp())
         here = str(Path(__file__).resolve().parent)
         (tmpd / "plain_monitor.py").write_text(f"import sys; sys.path.insert(0, {here!r}); import ntfy_util; print('RAN')\n", encoding="utf-8")
-        (tmpd / "own_monitor.py").write_text(f"import sys; sys.path.insert(0, {here!r}); import ntfy_util  # selftest mode below\nprint('RAN')\n", encoding="utf-8")
+        (tmpd / "own_monitor.py").write_text(f"import sys; sys.path.insert(0, {here!r}); import ntfy_util\nif sys.argv[1] == 'selftest':\n    print('RAN')\n", encoding="utf-8")
         env0 = {k: v for k, v in os.environ.items() if k != "CWALLY_SELFTEST_OK"}
         r1 = subprocess.run([sys.executable, str(tmpd / "plain_monitor.py"), "selftest"], capture_output=True, text=True, env=env0)
         check("guard stops script without selftest", r1.returncode == 2 and "RAN" not in r1.stdout and SELFTEST_STOP_MSG in r1.stderr, True)
         r2 = subprocess.run([sys.executable, str(tmpd / "own_monitor.py"), "selftest"], capture_output=True, text=True, env=env0)
         check("guard lets own-selftest script run", r2.returncode == 0 and "RAN" in r2.stdout, True)
+        hdr = f"import sys; sys.path.insert(0, {here!r}); import ntfy_util\n"
+        cases = {
+            "comment_monitor.py": (hdr + "# selftest mode below\nprint('RAN')\n", 2),
+            "usage_monitor.py": (hdr + "print('usage: auto | dry | selftest'); print('RAN')\n", 2),
+            "doc_monitor.py": ('"""Modes: auto | selftest"""\n' + hdr + "print('RAN')\n", 2),
+            "branch_monitor.py": (hdr + "mode = sys.argv[1]\nif mode == 'selftest':\n    print('RAN')\n", 0),
+            "inset_monitor.py": (hdr + "if sys.argv[1] in ('selftest', 'self-test'):\n    print('RAN')\n", 0),
+        }
+        for fn, (src, want) in cases.items():
+            (tmpd / fn).write_text(src, encoding="utf-8")
+            r = subprocess.run([sys.executable, str(tmpd / fn), "selftest"], capture_output=True, text=True, env=env0)
+            check(f"guard {fn} exit {want}", r.returncode == want and (("RAN" in r.stdout) == (want == 0)), True)
+        (tmpd / "eng_monitor.py").write_text("import sys\nif sys.argv[1] == 'selftest':\n    print('RAN')\n", encoding="utf-8")
+        (tmpd / "wrap_monitor.py").write_text(hdr + "import runpy; runpy.run_path(__file__.replace('wrap_monitor.py', 'eng_monitor.py'))\n", encoding="utf-8")
+        r = subprocess.run([sys.executable, str(tmpd / "wrap_monitor.py"), "selftest"], capture_output=True, text=True, env=env0)
+        check("guard follows literal sibling .py (wrapper)", r.returncode == 0 and "RAN" in r.stdout, True)
+        (tmpd / "bad_monitor.py").write_text(hdr + "print('RAN')\n", encoding="utf-8")
+        r = subprocess.run([sys.executable, str(tmpd / "bad_monitor.py"), "selftest"], capture_output=True, text=True, env={**env0, "CWALLY_SELFTEST_OK": "1"})
+        check("CWALLY_SELFTEST_OK=1 bypass", r.returncode == 0 and "RAN" in r.stdout, True)
         r3 = subprocess.run([sys.executable, str(tmpd / "plain_monitor.py"), "auto"], capture_output=True, text=True, env=env0)
         check("guard ignores auto", r3.returncode == 0 and "RAN" in r3.stdout, True)
     finally:
