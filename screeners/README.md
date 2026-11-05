@@ -91,4 +91,4 @@ OPENDART_API_KEY='발급받은키' python3 -m screeners kiyohara --limit 50
 
 `.github/workflows/screeners.yml` 은 `workflow_dispatch` 만 있다. 스케줄과 ntfy 는 없다. 입력 `screener` 는 `both`(기본), `truen`, `kiyohara` 이다. 저장소 시크릿 `OPENDART_API_KEY` 로 코스피, 코스닥 보통주 전체를 보고, JSON 과 마크다운은 아티팩트 `screener-results` 로만 올린다. main 에 결과를 커밋하지 않는다. 로그에 키를 찍지 않는다. 단계 요약에는 통과 종목 15개까지 적는다.
 
-종목이 많아 OpenDART 호출이 길고, 일일 한도에 걸릴 수 있다. 같은 실행에서 트루엔을 먼저 돌리고 기요하라는 캐시를 쓴다.
+종목이 많아 OpenDART 호출이 길다. 키당 하루 약 2만 회이고 추세 모니터와 같은 키를 쓴다. 시총, PER, PBR 로 기준 밖을 먼저 빼고, 삼성전자로 최신 보고서 하나만 고른 뒤 연결(CFS)과 별도(OFS)를 받는다. 한 번 실행의 네트워크 호출 상한은 8,000회(`dart_call_budget`)이다. 캐시에 있으면 다시 호출하지 않아 이어서 도는 기요하라가 호출을 거의 쓰지 않는다. 종목 하나의 오류는 건너뛰고, 키 거부(010, 011, 012)와 한도 초과(020)만 전체를 멈춘다. JSON 과 단계 요약에 검사, 통과, 건너뜀, 호출 횟수를 적는다.

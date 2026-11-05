@@ -84,9 +84,26 @@ def render_brief(kind: str, payload: dict, limit: int = 15) -> str:
     lines = [
         f"## {kind}",
         "",
-        f"검사 {count}종목, 통과 {n_pass}종목.",
+        f"검사 {payload.get('checked', count)}종목, 통과 {n_pass}종목, 건너뜀 {payload.get('skipped', 0)}종목.",
         "",
     ]
+    if payload.get("dart_calls") is not None:
+        lines.append(
+            f"OpenDART 호출 {payload.get('dart_calls')}회, 캐시 {payload.get('dart_cache_hits') or 0}회."
+        )
+        lines.append("")
+    if payload.get("budget_note"):
+        lines.append(str(payload.get("budget_note")))
+        lines.append("")
+    reasons: dict[str, int] = {}
+    for item in payload.get("skipped_rows") or []:
+        reason = str(item.get("reason") or "이유 없음")
+        reasons[reason] = reasons.get(reason, 0) + 1
+    if reasons:
+        lines.append("건너뜀 이유:")
+        for reason, n in sorted(reasons.items(), key=lambda pair: (-pair[1], pair[0]))[:8]:
+            lines.append(f"- {reason}: {n}")
+        lines.append("")
     if not passed:
         lines.append("통과 종목 없음.")
         lines.append("")
