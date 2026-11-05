@@ -1,0 +1,18 @@
+{
+  "price": {
+    "last_date": "2026-11-05",
+    "last_close": 31585.0,
+    "armed": {
+      "buy1": true,
+      "buy2": true,
+      "trim": true
+    },
+    "seed_note": "설치 seed 2026-11-05 17:30 KST: 마지막 KRX 확정 종가 2026-11-05 31,585원(Daum KRX). 세 선 모두 밖이라 무장."
+  },
+  "regime": {
+    "zone": "up",
+    "last_spread": 9.83,
+    "last_day": "2026-11-04",
+    "seed_note": "설치 seed: Yahoo MOAT-QQQ 63거래일 상대 +9.83%p(2026-11-04). UP 구간으로 시드(이미 보낸 것으로 간주), 중립(+1.0 미만) 복귀 후 재진입 때만 발송."
+  }
+}

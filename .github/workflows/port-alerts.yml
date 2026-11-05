@@ -273,7 +273,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, k0046y0, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, k475380, k417790, k316140]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, semius, woori, k475380, k417790, k316140, spgwatch]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1647,6 +1647,21 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/000815_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/000815_monitor.py "$MODE" || rc=1
           exit "$rc"
+      - name: Run 271560 (Orion quarterly DCF re-judge from DART consolidated filings; k203780 19:00 slot)
+        # approved in chat 2026-11-05 (pt67u). attached to the existing k203780 slot, no new cron. Acts only inside the quarter windows in configs/k271560.json.
+        # Dedupe: state/k271560.json done + seen_prelim + fail. Ends 2027-12-31 23:59 KST. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry).
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/k271560_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/k271560_monitor.py "$MODE" || rc=1
+          exit "$rc"
       - name: Run 0220WL close (Hanwha M&S 3우B close lines 2,040/2,000, common/pref discount <65%/>75% (2026-11-04), 10/29 Vision 3Q, 11/2~11/4 tender result, payout filings; same engine as 005930, k203780 19:00 slot)
         # approved in chat 2026-10-28. attached to the existing k203780 slot, no new cron. Separate from the 15:20 0220wl alert (afternoon).
         # Dedupe: state/0220wl_close.json last_day + armed, ratio.last_day + armed, notice_done, notice_seen.
@@ -1986,6 +2001,21 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/vnqi_monitor.py selftest >/dev/null; fi
           python scripts/vnqi_monitor.py "$MODE"
+      - name: Run SPGWATCH (SPG NYSE - 8-K Item 2.02, close bands 238.50/205, US10Y 4.50%, daily summary; morning 09:00)
+        # approved in chat 2026-11-05 (pt4u). Attached to existing morning US after-close slot, no new cron.
+        # Separate from existing [SPG] limit watch (spg_monitor) and [VTRSPG]. Dedupe: state/spgwatch.json
+        # seen_accessions + high/low/rate armed + last_summary_date. job=spgwatch dispatch is dry unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'spgwatch') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/spgwatch_monitor.py selftest >/dev/null; fi
+          python scripts/spgwatch_monitor.py "$MODE"
       - name: Run IEFA (iShares Core MSCI EAFE ETF new-buy watch - 200-day line recover/break +-0.5%, P/E <= 17 once; morning 09:00)
         # approved in chat 2026-10-26. Not held, reference only. Attached to the existing morning slot, no new cron. Dedupe: state/iefa.json
         # last_date + band (BELOW/ABOVE), pe_last_asof + pe_armed (re-arm at P/E >= 17.5). job=iefa dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
@@ -2150,6 +2180,19 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k0046y0_monitor.py selftest; fi
           python scripts/k0046y0_monitor.py "$MODE"
+      - name: Run 309230 (ACE US Wide Moat equal-weight KRX close buy1 29,000 / buy2 28,600 / trim 32,800 + MOAT-QQQ 3M regime; k203780 19:00 slot; 2026-11-05 ~ 2027-05-05)
+        # user delegated 2026-11-05 (t19u). Attached to the existing k203780 slot, no new cron. KRX regular close via scripts/krx_close.py; regime via Yahoo MOAT/QQQ. No dist notice, no MA20 recover.
+        # job=k309230 (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k309230') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/k309230_monitor.py selftest; fi
+          python scripts/k309230_monitor.py "$MODE"
       - name: "Run K079960 (Dongyang EnP 079960 disclosure watch, Q3 earnings checklist, contracts, buyback/dividend, cash deploy; morning 09:00 / afternoon 15:20 / k203780 19:00; 2026-11-05 ~ 2027-02-28)"
         # approved in chat 2026-11-05 (pt3u). Existing slots only, no new cron. Naver notice title+body (DART/KIND mirror, no key). Dedupe state/k079960.json seen.
         # job=k079960 (or a manual morning/afternoon/k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
@@ -2178,6 +2221,21 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k453850_monitor.py selftest; fi
           python scripts/k453850_monitor.py "$MODE"
+      - name: "Run FOMC-CUT (statement+SEP cut-cycle signal for 453850/476760; morning after FOMC; 2026-11-05 ~ 2027-12-31)"
+        # approved in chat 2026-11-05 (pt6u). Existing morning 09:00 only (decision 2pm ET ≈ next-day 04:00 KST). No new cron.
+        # Calendar shared with usbond; does not revive retired fedodds/fomc1007 CME/minutes oneshots. Dedupe state/fomccut.json done[].
+        # job=fomccut (or manual morning) is dry unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'fomccut') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/fomccut_monitor.py selftest; fi
+          python scripts/fomccut_monitor.py "$MODE"
       - name: Run SDI-ESS (Samsung SDI 006400 supply contract filings, each once; morning 09:00, afternoon 15:20, k203780 19:00 slots; 2026-10-29 ~ 2027-03-31)
         # approved in chat 2026-10-29. Attached to existing slots, no new cron. Dedupe: state/sdiess.json seen (KIND acptno) + naver_keys.
         # job=sdiess (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
@@ -2330,6 +2388,24 @@ jobs:
         run: |
           pip install -q finance-datareader==0.9.202 pandas==3.1.0 numpy==2.5.4
           python scripts/vcp_monitor.py auto
+      - name: Run WOORI (우리금융지주 316140 4Q26 CET1/주주환원; morning 09:00, afternoon 15:20, k203780 19:00)
+        # approved 2026-11-05 (pt62u). Attached to existing slots, no new cron. Script gates 2027-01-26~02-27.
+        # job=woori dispatch is selftest + dry (no ntfy, no state, date gate ignored) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'woori') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$PICK_JOB" != "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          # pymupdf: PowerPoint-exported IR PDFs often yield almost no pdftotext; used as fallback only.
+          pip install -q pymupdf
+          if [ "$MODE" = "dry" ]; then python scripts/woori_monitor.py selftest; fi
+          python scripts/woori_monitor.py "$MODE"
+
       - name: Archive ntfy
         if: always()
         run: python scripts/ntfy_archive.py

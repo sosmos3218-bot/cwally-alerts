@@ -15,7 +15,7 @@ it fires once when crossed and re-arms after the price goes back past it by rear
 A line the price is already beyond is seeded disarmed (state seeded from the current price),
 so nothing fires just because the alert was installed.
   down : zone 2.85-2.95 (entry) p4 -> bear < 2.73 p4 -> low52 < 2.67 p5. Deepest only per run.
-  up   : rec320 >= 3.20 (worst-case value recovered) p3 -> up415 >= 4.15 (fair value) p4. Highest only.
+  up   : rec320 >= 3.20 (worst-case) p3 -> be371 >= 3.7152 (breakeven / avg cost) p4 -> up415 >= 4.15 (fair value) p4. Highest only.
 
 Modes: auto | force | dry [price] | selftest. dry never calls publish() and never writes state/.
 Not investment advice.
@@ -51,7 +51,7 @@ CLOSE_MIN = 16 * 60
 OFF_SESSION = {"PRE", "POST", "PREPRE", "POSTPOST", "CLOSED"}
 FORBIDDEN = ("\u00b7", "\u2014", "\u318d")  # middle dots, em dash; kept as escapes so copy stays free of them
 DOWN = ["zone", "bear", "low52"]  # shallow -> deep
-UP = ["rec320", "up415"]  # low -> high
+UP = ["rec320", "be371", "up415"]  # low -> high
 ALL = DOWN + UP
 MAX_SEEN = 600
 TP = "익절/줄일 때: 이 알림은 매도 신호가 아닙니다. 익절 가격은 여기서 정하지 않습니다."
@@ -203,6 +203,22 @@ def thesis_line(cfg: dict, price: float) -> str:
     return f"적정가 {th['fair_value']:.2f}달러까지 {fv:+.1f}%, 최악 시나리오 {th['worst_case']:.2f}달러 대비 {wc:+.1f}%."
 
 
+def holding_pnl_line(cfg: dict, price: float) -> str:
+    """Avg-cost P&L sentence for the breakeven alert. Empty when holding is not configured."""
+    h = cfg.get("holding") or {}
+    shares = h.get("shares")
+    avg = h.get("avg_cost")
+    if not shares or not avg:
+        return ""
+    pnl = (price - float(avg)) * int(shares)
+    pct = (price / float(avg) - 1) * 100
+    sign = "+" if pnl >= 0 else ""
+    return (
+        f" 보유 {int(shares)}주, 평단 {float(avg):.4f}달러, "
+        f"평가손익 {sign}{pnl:.2f}달러({sign}{pct:.1f}%)."
+    )
+
+
 def price_message(cfg: dict, key: str, price: float, stamp: str, yahoo_low: float | None) -> tuple[str, str, int]:
     spec = cfg["levels"][key]
     kind = spec["kind"]
@@ -211,11 +227,12 @@ def price_message(cfg: dict, key: str, price: float, stamp: str, yahoo_low: floa
     elif kind == "below":
         cond = f"조건: 현재가 {spec['level']:.2f}달러 아래로 내려감"
     else:
-        cond = f"조건: 현재가 {spec['level']:.2f}달러 위로 올라감"
+        cond = f"조건: 현재가 {spec['level']:.4f}달러 위로 올라감" if key == "be371" else f"조건: 현재가 {spec['level']:.2f}달러 위로 올라감"
     low_txt = f" 야후 52주 저가 {yahoo_low:.2f}달러." if yahoo_low else ""
+    pnl = holding_pnl_line(cfg, price) if spec.get("show_pnl") else ""
     lines = [
         f"이게 뭐 알림: {cfg['explain']}",
-        f"지금 결과/상태: {spec['status']} 현재가 {price:.2f}달러. {cond}. {thesis_line(cfg, price)} 시각 {stamp}.{low_txt}",
+        f"지금 결과/상태: {spec['status']} 현재가 {price:.2f}달러.{pnl} {cond}. {thesis_line(cfg, price)} 시각 {stamp}.{low_txt}",
         f"지금 할 일: {spec['todo']}",
         f"나중에: {spec['later']} 같은 선은 지날 때 한 번만 옵니다.",
         f"익절/줄일 때: {spec.get('trim', '이 알림은 매도 신호가 아닙니다.')}",
@@ -1380,7 +1397,7 @@ def selftest() -> int:
     # seeding from the current price: 2.86 is inside the zone and under 3.20 / 4.15
     armed: dict = {}
     seed_armed(lv, armed, 2.86)
-    check("seed 2.86", armed, {"zone": False, "bear": True, "low52": True, "rec320": True, "up415": True})
+    check("seed 2.86", armed, {"zone": False, "bear": True, "low52": True, "rec320": True, "be371": True, "up415": True})
     check("seed 2.86 sends nothing", evaluate(lv, armed, 2.86)[0], [])
     a2: dict = {}
     seed_armed(lv, a2, 3.50)
@@ -1416,6 +1433,29 @@ def selftest() -> int:
     k, a = evaluate(lv, a, 3.21)
     check("3.21 rec320 up-cross", k, ["rec320"])
     check("3.25 rec320 silent", evaluate(lv, a, 3.25)[0], [])
+    # breakeven 3.7152: cross, silence, re-arm below 3.60, highest-wins vs 3.20 / 4.15
+    allarm = {k: True for k in ALL}
+    k, a = evaluate(lv, allarm, 3.72)
+    check("3.72 be371 cross", k, ["be371"])
+    check("3.80 be371 silent", evaluate(lv, a, 3.80)[0], [])
+    check("3.61 not rearmed", evaluate(lv, a, 3.61)[1]["be371"], False)
+    check("3.59 rearms be371", evaluate(lv, a, 3.59)[1]["be371"], True)
+    k, a = evaluate(lv, {**a, "be371": True}, 3.72)
+    check("3.72 after rearm", k, ["be371"])
+    k, _ = evaluate(lv, {k: True for k in ALL}, 3.80)
+    check("3.10->3.80 highest be371 not rec320", k, ["be371"])
+    k, _ = evaluate(lv, {k: True for k in ALL}, 4.20)
+    check("jump 4.20 only up415", k, ["up415"])
+    t, b, pri = price_message(cfg, "be371", 3.80, stamp, None)
+    check("be371 title", t.startswith("[GRAB] ") and "3.7152" in t and "손익분기" in t, True)
+    check("be371 prio", pri, 4)
+    check("be371 pnl usd", "+9.16달러" in b, True)  # (3.80-3.7152)*108 = 9.1584
+    check("be371 shares", "보유 108주" in b and "평단 3.7152" in b, True)
+    check("be371 next line", "4.15" in b, True)
+    check("be371 clean", any(ch in t + b for ch in FORBIDDEN), False)
+    # exact pnl
+    pnl = (3.80 - 3.7152) * 108
+    check("be371 pnl calc", abs(pnl - 9.1584) < 1e-6, True)
     check("3.11 rec320 not rearmed", evaluate(lv, a, 3.11)[1]["rec320"], False)
     check("3.09 rec320 rearmed", evaluate(lv, a, 3.09)[1]["rec320"], True)
     k, a = evaluate(lv, a, 4.15)

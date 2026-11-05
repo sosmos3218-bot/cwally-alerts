@@ -1,0 +1,80 @@
+{
+  "name": "fomccut",
+  "title_prefix": "[FOMC-CUT]",
+  "display": "FOMC 성명+점도표 인하 사이클 신호 감지, 453850/476760 관망 해제 연결",
+  "approval": "사용자 채팅 승인 2026-11-05 (pt6u): FOMC 성명과 점도표에서 인하 사이클 신호를 감지해 453850과 476760에 연결. 기존 morning 09:00 슬롯만 사용(결정 14:00 ET ≈ 익일 04:00 KST 이후). 새 cron 없음.",
+  "retired_note": "폐기된 [FOMC](fedodds, fomc1007)는 2026-10 일회성(9월 의사록 문장 카운트, CME 연방기금 선물 확률)이었고 2026-10-26 oneshot 만료 정리로 삭제됨. 정책 거부가 아님. 이 알림은 CME/의사록 문장수를 재도입하지 않고 성명+SEP+실제금리만 본다.",
+  "overlap_note": "[US-BOND] FOMC 다음 날 19:00 요약은 IEF 1차 분할(+25bp)용. 일정 목록은 같은 연준 달력을 공유하되 판정/발송은 분리. [453850]/[476760]은 금리/가격 선 알림이고, 이 알림이 인하 신호일 때 공유 플래그를 심어 본문에 'FOMC 인하 신호 확인됨'을 붙인다.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 morning 09:00 KST. 결정일(미 동부 둘째 날) 다음 KST 날짜 09:00에 1회. 놓치면 catchup_days 안 다음 morning. 수동 job=fomccut 은 oneoff_mode=auto 아니면 selftest+dry.",
+  "fomc": {
+    "verified_from": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+    "verified_at": "2026-11-05 KST",
+    "decision_dates_2026": [
+      "2026-01-28", "2026-03-18", "2026-04-29", "2026-06-17",
+      "2026-07-29", "2026-09-16", "2026-10-28", "2026-12-09"
+    ],
+    "decision_dates_2027": [
+      "2027-01-27", "2027-03-17", "2027-04-28", "2027-06-09",
+      "2027-07-28", "2027-09-15", "2027-10-27", "2027-12-08"
+    ],
+    "sep_dates_2026": ["2026-03-18", "2026-06-17", "2026-09-16", "2026-12-09"],
+    "sep_dates_2027": ["2027-03-17", "2027-06-09", "2027-09-15", "2027-12-08"],
+    "catchup_days": 4,
+    "send_note": "결정일 다음 KST morning(09:00). 예: 2026-12-09 결정 -> 2026-12-10 09:00. 2026-10-28 은 이미 지났으면 catchup 밖이면 스킵(시드로만 기록)."
+  },
+  "linked": {
+    "tickers": ["453850", "476760"],
+    "flag_state": "state/fomccut.json",
+    "signal_classes": ["인하 사이클 진입", "인하 신호 강화"],
+    "thresholds": {
+      "453850": {"y_upgrade": 5.0, "y_risk": 5.5, "px_low": 6685},
+      "476760": {"y_raise": 5.4, "y_review": 5.5, "px_add": 8300}
+    }
+  },
+  "scoring": {
+    "actual_cut": 3,
+    "removed_firming": 1,
+    "easing_language_added": 1,
+    "cut_dissent": 1,
+    "sep_median_below_mid": 2,
+    "sep_median_lower_vs_prior": 1,
+    "entry_min": 4,
+    "strengthen_min": 2,
+    "hawk_actual_hike": 3,
+    "hawk_added_firming": 1,
+    "hawk_sep_median_higher": 1
+  },
+  "phrase_bank": {
+    "firming": [
+      "additional policy firming",
+      "additional firming",
+      "further firming",
+      "increase the target range",
+      "raise the target range"
+    ],
+    "easing": [
+      "reduce the target range",
+      "lower the target range",
+      "decrease the target range",
+      "adjustments to the target range"
+    ],
+    "hold": ["maintain the target range", "decided to maintain"]
+  },
+  "sources": {
+    "calendar": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+    "statement": "https://www.federalreserve.gov/newsevents/pressreleases/monetary{yyyymmdd}a.htm",
+    "sep": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl{yyyymmdd}.htm",
+    "fred_upper": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFEDTARU&cosd={start}",
+    "fred_lower": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFEDTARL&cosd={start}",
+    "us30y": "FRED DGS30 then Yahoo ^TYX (same as k453850)",
+    "prices": "Naver m.stock price API for 453850 and 476760"
+  },
+  "send_brief_on_neutral_or_hawkish": true,
+  "ends_kst": "2027-12-31 09:00",
+  "ends_note": "2027 FOMC 일정까지. 2028 달력 공개 후 decision_dates_2028 추가 및 ends 연장.",
+  "explain": "FOMC 결정 다음 morning에 성명 변화, 실제 금리(DFEDTARU/L), SEP 점도표(해당 회의만)로 인하 사이클 신호를 채점. 인하 신호 강화/진입이면 453850/476760 연결 알림 1회 + 공유 플래그. 중립/매파면 짧은 요약 1회. 회의당 1번. 매매 신호 아님."
+}

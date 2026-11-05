@@ -1,0 +1,15 @@
+{
+  "seeded": false,
+  "done": [],
+  "signal": {
+    "active": false,
+    "class": null,
+    "meeting": null,
+    "score": null,
+    "updated_at": null
+  },
+  "prior_statement": {},
+  "prior_sep": {},
+  "ops_day": null,
+  "updated_at": null
+}

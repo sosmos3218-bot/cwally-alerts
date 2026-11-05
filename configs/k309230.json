@@ -1,0 +1,92 @@
+{
+  "name": "k309230",
+  "title_prefix": "[309230]",
+  "display": "ACE 미국WideMoat동일가중(309230) KRX 종가 분할/축소 선 + MOAT-QQQ 3개월 상대강도 레짐",
+  "approval": "사용자 위임 2026-11-05 t19u (\"네 소신껏\"): 새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음. 분배 알림과 MA20 회복 선은 넣지 않음.",
+  "created_at": "2026-11-05T17:30:00+09:00",
+  "code": "309230",
+  "display_name": "ACE 미국WideMoat동일가중",
+  "etf": {
+    "name": "ACE 미국WideMoat동일가중 (환노출, 분기 분배)",
+    "index": "Morningstar Wide Moat Focus Index",
+    "isin": "KR7309230001",
+    "aum_note": "순자산 약 1,100억(2026-11-05), 총보수 0.40%. 유동성 제한 있어 지정가.",
+    "role": "장기 위성 비중(품질+밸류 동일가중). AI 메가캡 모멘텀 대비 상대 매력 변화를 같이 봄."
+  },
+  "regime": {
+    "moat": "MOAT",
+    "qqq": "QQQ",
+    "rsp": "RSP",
+    "spy": "SPY",
+    "lookback_bars": 63,
+    "up_enter": 3.0,
+    "up_reset": 1.0,
+    "down_enter": -3.0,
+    "down_reset": -1.0,
+    "note": "Yahoo 완료 일봉만. MOAT 63거래일 수익률 - QQQ 63거래일 수익률(%p). +3.0 이상 진입=품질 우위 매력 상승(p3), +1.0 미만 중립. -3.0 이하 진입=AI 모멘텀 재개 매력 하락(p4), -1.0 초과 중립. RSP-SPY와 원/달러는 본문 참고만."
+  },
+  "fx_ticker": "USDKRW=X",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "k309230",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일, 15:40 이후 확정 정규장 종가만(NXT 미포함). 수동 job=k309230 은 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "price_source": "scripts/krx_close.py regular_bars (Daum KRX 정규장 종가). 네이버 일봉(NXT 섞임) 안 씀. 레짐/참고는 Yahoo chart v8.",
+  "window_start": "2026-11-05",
+  "window_end": "2027-05-05",
+  "baseline": {
+    "day": "2026-11-05",
+    "close": 31585,
+    "high_52w_close": 32990,
+    "high_52w_close_day": "2026-07-03",
+    "low_52w_close": 28775,
+    "low_52w_close_day": "2026-10-02",
+    "high_52w_intra": 33325,
+    "high_52w_intra_day": "2026-07-10",
+    "low_52w_intra": 28575,
+    "low_52w_intra_day": "2026-03-30",
+    "moat_qqq_spread_3m_pct": 9.83,
+    "moat_qqq_asof": "2026-11-04",
+    "verified": "Daum KRX regular_bars + Yahoo MOAT/QQQ 2026-11-05 검증. 종가 31,585는 세 선 밖."
+  },
+  "lines": [
+    {
+      "key": "buy1",
+      "op": "le",
+      "level": 29000,
+      "rearm_op": "ge",
+      "rearm": 29870,
+      "priority": 4,
+      "tier_ko": "1차",
+      "head": "1차 29,000원 이하 분할 매수 검토",
+      "why": "52주 종가 저점 28,775원(10/2), 장중 저 28,575원 직상단. 분할 지정가 1차."
+    },
+    {
+      "key": "buy2",
+      "op": "le",
+      "level": 28600,
+      "rearm_op": "ge",
+      "rearm": 29458,
+      "priority": 5,
+      "tier_ko": "2차",
+      "head": "2차 28,600원 이하 비중 확대 검토",
+      "why": "장중 52주 저 28,575원 부근. 1차보다 깊은 자리, 비중 확대는 계획 몫만."
+    },
+    {
+      "key": "trim",
+      "op": "ge",
+      "level": 32800,
+      "rearm_op": "le",
+      "rearm": 31816,
+      "priority": 3,
+      "tier_ko": "축소",
+      "head": "32,800원 이상 일부 축소 익절 검토",
+      "why": "52주 종가 고점 32,990원(7/3) 직하. 장중 고 33,325원까지 여유."
+    }
+  ],
+  "rearm_note": "buy1은 29,870원 이상, buy2는 29,458원 이상, trim은 31,816원 이하 종가 뒤 재무장. 선마다 1번.",
+  "first_run_note": "state 는 2026-11-05 종가 31,585원, 레짐 UP(MOAT-QQQ 약 +9.8%p)으로 시드. 세 선 무장, 레짐은 이미 UP이라 재진입 전까지 무발송.",
+  "ends_kst": "2027-05-05 23:59",
+  "ends_note": "첫 관측 구간 6개월. 뒤에는 조용히 끝, 필요하면 ends_kst 와 window_end 연장"
+}

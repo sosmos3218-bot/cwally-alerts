@@ -6,7 +6,7 @@
   "display": "ACE 미국30년국채액티브(H)(453850) US30Y 관망 해제/리스크 + 52주 저점 분할매수 점검",
   "approval": "사용자 채팅 승인 2026-11-05 (pt5u): 새 알림. 기존 morning 09:00 + k203780 19:00 슬롯 부착, 새 cron 없음. 453850 전용 알림/보유 기록 없음. 관련 [476760] 환노출 5.4/5.5, [USTSY] 484790/476760 비중, [RATES] 10년, [US-BOND] IEF/FOMC 다음날은 기준선과 상품이 달라 별도 유지.",
   "holding": "미보유 또는 미등록. 이 저장소에 453850 수량/평단 기록 없음.",
-  "overlap_note": "같은 30년물 시계열을 보는 기존 알림: [476760] ACE 미국30년(환노출) 5.4%/5.5%+종가 8300, [USTSY] 484790(헤지)/476760 원달러 비중(exclude에 453850), [RATES] 10년 5.15/4.85/5.50/5.00, [US-BOND] IEF+FOMC 다음날 요약. 453850(헤지, 월배당) 관망 해제 5.0% / 리스크 5.5% / 52주저 6685 기준이라 기존에 섞지 않음.",
+  "overlap_note": "같은 30년물 시계열을 보는 기존 알림: [476760] ACE 미국30년(환노출) 5.4%/5.5%+종가 8300, [USTSY] 484790(헤지)/476760 원달러 비중(exclude에 453850), [RATES] 10년 5.15/4.85/5.50/5.00, [US-BOND] IEF+FOMC 다음날 요약. 453850(헤지, 월배당) 관망 해제 5.0% / 리스크 5.5% / 52주저 6685 기준이라 기존에 섞지 않음. [FOMC-CUT] fomccut 연결.",
   "ntfy_topic": "cwally-port",
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
@@ -42,9 +42,14 @@
     "stance": "현 시점 매력 낮음. 금리 정점 확인 전 본격 진입 자제(관망).",
     "duration_note": "듀레이션 약 16-18년, 환헤지, 월배당, 총보수 0.05%.",
     "us30y_ref": "약 5.28%(최근 고점 약 5.67%). Fed 3.75-4.00% 동결(10/28), 12월 인상 논의.",
-    "upgrade": ["US30Y < 5.0%", "Fed가 인하 사이클 진입을 명확히 시사(수동 확인)"],
-    "risk": ["US30Y > 5.5%"],
-    "fed_cut_note": "Fed 인하 시사 자동 감지는 하지 않음. [FOMC] 알림은 폐기됨. [US-BOND]는 IEF용 FOMC 다음날 요약만 있음. Fed 스탠스는 수동 점검."
+    "upgrade": [
+      "US30Y < 5.0%",
+      "Fed가 인하 사이클 진입을 명확히 시사(수동 확인)"
+    ],
+    "risk": [
+      "US30Y > 5.5%"
+    ],
+    "fed_cut_note": "Fed 인하 시사는 scripts/fomccut_monitor.py 가 회의 다음 morning에 판정. 인하 신호 강화/진입이면 state/fomccut.json signal.active=true 이고 본문 점검표에 'FOMC 인하 신호 확인됨'이 붙음. 그 전에는 수동."
   },
   "sources": {
     "price": "https://m.stock.naver.com/api/stock/453850/price?pageSize=20&page=1",

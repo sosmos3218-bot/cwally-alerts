@@ -34,6 +34,19 @@ UA = {"User-Agent": "Mozilla/5.0 cwally-alerts 476760"}
 KEYS = ("add", "raise", "review_y", "fx_level", "fx_move")
 
 
+def fomc_cut_flag():
+    path = ROOT / "state" / "fomccut.json"
+    try:
+        st = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, NameError):
+        return None
+    sig = st.get("signal") or {}
+    if sig.get("active") and sig.get("class") in {"인하 사이클 진입", "인하 신호 강화"}:
+        return sig
+    return None
+
+
+
 def get_json(url: str):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=20) as resp:
@@ -169,7 +182,11 @@ def status_line(cfg: dict, data: dict) -> str:
     y = f"미국 30년물 {data['y30']:.3f}%" if data.get("y30") is not None else "미국 30년물 없음"
     fx = f"원달러 {data['fx']:,.1f}" if data.get("fx") is not None else "원달러 없음"
     mv = f"1주 {data['fx_move']:+.2f}%" if data.get("fx_move") is not None else "1주 변화 없음"
-    return f"{px}. {y}. {fx}({mv})."
+    flag = fomc_cut_flag()
+    extra = ""
+    if flag:
+        extra = f" FOMC 인하 신호 확인됨 ({flag.get('meeting')}, {flag.get('class')})."
+    return f"{px}. {y}. {fx}({mv}).{extra}"
 
 
 def build(cfg: dict, events: list[dict], data: dict, stamp: str) -> tuple[str, str, int]:

@@ -196,6 +196,19 @@ def collect(cfg: dict) -> tuple[dict, list[str]]:
     return data, fails
 
 
+
+def fomc_cut_flag() -> dict | None:
+    """Read shared flag written by scripts/fomccut_monitor.py."""
+    path = ROOT / "state" / "fomccut.json"
+    try:
+        st = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    sig = st.get("signal") or {}
+    if sig.get("active") and sig.get("class") in {"인하 사이클 진입", "인하 신호 강화"}:
+        return sig
+    return None
+
 def div_yield_pct(cfg: dict, close: float | None) -> float | None:
     annual = num((cfg.get("dividend") or {}).get("annual_est_krw"))
     if not close or not annual:
@@ -288,7 +301,13 @@ def checklist(cfg: dict, data: dict) -> str:
     if y is not None:
         bits.append("재평가(관망 해제): US30Y < 5.0% " + ("충족" if y < yz["upgrade_below"] else "미충족"))
         bits.append("리스크: US30Y > 5.5% " + ("충족" if y > yz["risk_above"] else "미충족"))
-    bits.append("Fed 인하 사이클 시사: 수동 확인(자동 감지 없음)")
+    flag = fomc_cut_flag()
+    if flag:
+        bits.append(
+            f"FOMC 인하 신호 확인됨 ({flag.get('meeting')}, {flag.get('class')})"
+        )
+    else:
+        bits.append("Fed 인하 사이클 시사: 수동 확인(자동 감지 없음, fomccut 대기)")
     rows = data.get("rows") or []
     if rows:
         c = rows[-1]["close"]
@@ -350,7 +369,7 @@ def build(cfg: dict, events: list[dict], data: dict, stamp: str) -> tuple[str, s
         "453850(헤지) 조건(US30Y 5.0%/5.5%, 종가 6,685원)이 새로 켜질 때만 오는 알림입니다. 매매 신호가 아닙니다. 리뷰 프롬프트만입니다.",
         scrub(status),
         action,
-        f"기본 태도는 관망입니다. {cfg['thesis']['stance']} 같은 조건은 재무장 선(5.10% / 5.40% / 6,886원)을 넘었다 와야 다시 옵니다. Fed 인하 시사는 수동.",
+        f"기본 태도는 관망입니다. {cfg['thesis']['stance']} 같은 조건은 재무장 선(5.10% / 5.40% / 6,886원)을 넘었다 와야 다시 옵니다. Fed 인하 시사는 fomccut 알림(또는 수동).",
         "해당 없음(미보유/미등록). 이미 보유 중이면 듀레이션 위험을 먼저 보세요.",
         "이 알림을 매수나 매도 신호로 읽기. 한 번에 큰돈 넣기. 조회 실패를 신호로 읽기.",
     )
@@ -384,7 +403,7 @@ def install_message(cfg: dict, stamp: str, data: dict, fails: list[str]) -> tupl
         "알림이 도착했는지 확인만 하세요.",
         "평일 09:00, 19:00 KST 에 FRED DGS30(실패 시 Yahoo ^TYX)과 네이버 종가를 봅니다. "
         "US30Y 5.0% 하회(관망 해제), 5.5% 상회(리스크), 종가 6,685 이하(분할매수 검토)가 나오면 1번씩. "
-        "Fed 인하 시사는 수동. 끝: " + str(cfg.get("ends_kst")) + ".",
+        "Fed 인하 시사는 fomccut 알림(또는 수동). 끝: " + str(cfg.get("ends_kst")) + ".",
         "해당 없음.",
         "이 메시지를 매매 신호로 해석하기.",
     )
