@@ -41,6 +41,12 @@ def evaluate_company(payload: dict, config: dict) -> dict:
     equity = _equity_for_pbr(cfs, ofs, screen_scope)
     per = per_of(mcap, income)
     pbr = pbr_of(mcap, equity)
+    # 실조회는 시세 PER, PBR 로 이미 걸렀다. 반기 한 장만 받아도 그 값을 판정에 쓴다.
+    if payload.get("listing_per") is not None:
+        per = float(payload["listing_per"])
+        income = {**income, "per_basis": "listing"}
+    if payload.get("listing_pbr") is not None:
+        pbr = float(payload["listing_pbr"])
     profit = profitable(income)
     shareholder = _shareholder(payload, income)
     flags = _flags(headline, cfs, income, shareholder, config)

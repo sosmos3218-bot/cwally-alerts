@@ -7,7 +7,10 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import time
+
 from screeners.evaluate import evaluate_company
+from screeners.net_cash import compute_scope
 from screeners.opendart import (
     DEFAULT_CALL_BUDGET,
     DartBudget,
@@ -69,7 +72,11 @@ class CompanySkip(Exception):
 
 
 def prefilter_reason(quote: dict, config: dict) -> str | None:
-    """DART 전에 탈락이면 짧은 이유. 통과면 None. PER, PBR 이 없으면 그 항목은 거르지 않는다."""
+    """DART 전에 탈락이면 짧은 이유. 통과면 None.
+
+    PER 과 PBR 이 둘 다 있어야 한다. PER 이 양수인 것을 흑자 대리 지표로 쓴다.
+    숫자가 없으면 재무 조회로 넘기지 않는다.
+    """
     name = "".join(str(quote.get("name") or "").split())
     for word in config.get("exclude_financial_keywords") or []:
         if word and word in name:
@@ -81,14 +88,19 @@ def prefilter_reason(quote: dict, config: dict) -> str | None:
         return "시가총액이 없음"
     if mcap < low or (high is not None and mcap > high):
         return "시가총액이 기준 밖"
-    per_max = float(config["per_max"])
-    pbr_max = float(config["pbr_max"])
     per = quote.get("per")
     pbr = quote.get("pbr")
-    if per is not None and (per <= 0 or per > per_max):
+    if per is None or pbr is None:
+        return "PER 또는 PBR 없음"
+    per_max = float(config["per_max"])
+    pbr_max = float(config["pbr_max"])
+    if per <= 0 or per > per_max:
         return "PER이 기준 밖"
-    if pbr is not None and (pbr <= 0 or pbr > pbr_max):
+    if pbr <= 0 or pbr > pbr_max:
         return "PBR이 기준 밖"
+    eps = quote.get("eps")
+    if eps is not None and eps <= 0:
+        return "이익이 흑자가 아님"
     return None
 
 
@@ -103,36 +115,38 @@ def discover_report(dart: OpenDart, asof: date) -> tuple[int, str] | None:
     return None
 
 
-def _pull_scope(dart: OpenDart, corp: str, year: int, reprt: str) -> list[dict]:
-    """연결을 먼저 받고, 별도는 지배주주 현금용으로 항상 시도한다. 013 이면 그 범위만 빈다."""
-    rows = list(dart.accounts(corp, year, reprt, "CFS"))
-    rows.extend(dart.accounts(corp, year, reprt, "OFS"))
-    return rows
-
-
-def _bundle(dart: OpenDart, corp: str, year: int, reprt: str, rows: list[dict] | None = None) -> list[dict]:
-    got = rows if rows is not None else _pull_scope(dart, corp, year, reprt)
-    if not got:
+def _one_statement(dart: OpenDart, corp: str, year: int, reprt: str, nci_flag: float) -> list[dict]:
+    """연결 한 번. 연결이 없거나 비지배지분이 크면 별도를 한 번 더 받는다. 연간 추가 조회는 하지 않는다."""
+    cfs = list(dart.accounts(corp, year, reprt, "CFS"))
+    if cfs:
+        scope = compute_scope(cfs, "CFS")
+        need_ofs = (not scope.present) or (scope.nci_ratio is not None and scope.nci_ratio >= nci_flag)
+        if need_ofs:
+            cfs.extend(dart.accounts(corp, year, reprt, "OFS"))
+        return [{"year": year, "reprt_code": reprt, "rows": cfs}]
+    ofs = list(dart.accounts(corp, year, reprt, "OFS"))
+    if not ofs:
         return []
-    statements = [{"year": year, "reprt_code": reprt, "rows": got}]
-    if reprt != "11011":
-        annual = _pull_scope(dart, corp, year - 1, "11011")
-        if annual:
-            statements.append({"year": year - 1, "reprt_code": "11011", "rows": annual})
-    return statements
+    return [{"year": year, "reprt_code": reprt, "rows": ofs}]
 
 
-def statements_for_company(dart: OpenDart, corp: str, asof: date, discovered: tuple[int, str] | None) -> list[dict]:
+def statements_for_company(
+    dart: OpenDart,
+    corp: str,
+    asof: date,
+    discovered: tuple[int, str] | None,
+    nci_flag: float = 0.2,
+) -> list[dict]:
     if discovered:
         year, reprt = discovered
-        bundled = _bundle(dart, corp, year, reprt)
+        bundled = _one_statement(dart, corp, year, reprt, nci_flag)
         if bundled or reprt == "11011":
             return bundled
-        return _bundle(dart, corp, year - 1, "11011")
+        return _one_statement(dart, corp, year - 1, "11011", nci_flag)
     for year, reprt in probe_order(asof)[:4]:
-        rows = _pull_scope(dart, corp, year, reprt)
-        if rows:
-            return _bundle(dart, corp, year, reprt, rows)
+        bundled = _one_statement(dart, corp, year, reprt, nci_flag)
+        if bundled:
+            return bundled
     return []
 
 
@@ -166,11 +180,18 @@ def select_quotes(config: dict, codes: list[str] | None, limit: int | None, list
     return rows
 
 
-def fetch_payload(dart: OpenDart, quote: dict, asof: date, enrich: bool, discovered: tuple[int, str] | None) -> dict:
+def fetch_payload(
+    dart: OpenDart,
+    quote: dict,
+    asof: date,
+    enrich: bool,
+    discovered: tuple[int, str] | None,
+    nci_flag: float = 0.2,
+) -> dict:
     corp = dart.corp_code(quote["code"])
     if not corp:
         raise CompanySkip("OpenDART 고유번호 없음")
-    statements = statements_for_company(dart, corp, asof, discovered)
+    statements = statements_for_company(dart, corp, asof, discovered, nci_flag)
     if not statements:
         raise CompanySkip("최근 재무제표 없음")
     year = statements[0]["year"]
@@ -181,6 +202,8 @@ def fetch_payload(dart: OpenDart, quote: dict, asof: date, enrich: bool, discove
         "market": quote.get("market") or "",
         "market_cap_krw": quote.get("market_cap_krw"),
         "close": quote.get("close"),
+        "listing_per": quote.get("per"),
+        "listing_pbr": quote.get("pbr"),
         "statements": statements,
         "extras": "skipped",
     }
@@ -215,6 +238,7 @@ def run_live(
 ) -> list[dict]:
     if not codes and limit is None and not all_names:
         raise SystemExit("종목(--codes), 개수(--limit), 전체(--all) 중 하나를 지정하세요. 전체는 OpenDART 호출이 많습니다.")
+    started = time.perf_counter()
     config = load_config(kind, config_path)
     if listing is None:
         listing = load_listing_quotes()
@@ -247,14 +271,19 @@ def run_live(
                 skipped.append({"code": quote.get("code"), "name": quote.get("name") or "", "reason": reason})
             else:
                 chosen.append(quote)
-        if limit is not None:
-            chosen = chosen[:limit]
+        chosen.sort(key=lambda row: (row.get("pbr") if row.get("pbr") is not None else 99, row.get("market_cap_krw") or 0))
+        cap = limit if limit is not None else int(config.get("dart_name_cap") or 300)
+        if cap >= 0 and len(chosen) > cap:
+            for extra in chosen[cap:]:
+                skipped.append({"code": extra.get("code"), "name": extra.get("name") or "", "reason": "조회 상한"})
+            chosen = chosen[:cap]
     print(f"{kind} 재무 조회 대상 {len(chosen)}종목, 시세에서 제외 {len(skipped)}종목, 기준일 {asof.isoformat()}", flush=True)
     if dart is None:
         budget = int(config.get("dart_call_budget") or DEFAULT_CALL_BUDGET)
         dart = OpenDart(api_key_from_env(), ROOT / "cache", max_calls=budget)
     fatal: DartFatal | None = None
     budget_note = ""
+    nci_flag = float(config.get("nci_ratio_flag") or 0.2)
     try:
         discovered = discover_report(dart, asof)
     except DartBudget as exc:
@@ -275,7 +304,7 @@ def run_live(
             quote = chosen[index]
             index += 1
             try:
-                payload = fetch_payload(dart, quote, asof, enrich=False, discovered=discovered)
+                payload = fetch_payload(dart, quote, asof, enrich=False, discovered=discovered, nci_flag=nci_flag)
             except DartBudget as exc:
                 budget_note = str(exc)
                 skipped.append({"code": quote.get("code"), "name": quote.get("name") or "", "reason": "OpenDART 호출 상한"})
@@ -297,16 +326,6 @@ def run_live(
                 print(f"{quote.get('code')} 건너뜀: {exc}", flush=True)
                 continue
             result = evaluate_company(payload, config)
-            if result.get("passes") and not budget_note:
-                try:
-                    payload = fetch_payload(dart, quote, asof, enrich=True, discovered=discovered)
-                    result = evaluate_company(payload, config)
-                except DartBudget as exc:
-                    budget_note = str(exc)
-                except DartFatal as exc:
-                    fatal = exc
-                except (CompanySkip, DartError) as exc:
-                    print(f"{quote.get('code')} 주주 정보 건너뜀: {exc}", flush=True)
             rows.append(result)
             mark = "통과" if result.get("passes") else "탈락"
             print(f"{result['code']} {result['name']} {mark}", flush=True)
@@ -315,6 +334,7 @@ def run_live(
                     skipped.append({"code": rest.get("code"), "name": rest.get("name") or "", "reason": "OpenDART 호출 상한" if budget_note else "OpenDART 중단"})
                 break
     rows = sort_rows(rows)
+    elapsed = round(time.perf_counter() - started, 1)
     stats = {
         "checked": len(rows),
         "skipped": len(skipped),
@@ -322,6 +342,7 @@ def run_live(
         "dart_cache_hits": dart.cache_hits,
         "skipped_rows": skipped,
         "budget_note": budget_note,
+        "elapsed_sec": elapsed,
     }
     write_output(kind, rows, out_dir, stats)
     if fatal is not None:
@@ -346,6 +367,7 @@ def write_output(kind: str, rows: list[dict], out_dir: Path, stats: dict | None 
         "dart_calls": extra.get("dart_calls"),
         "dart_cache_hits": extra.get("dart_cache_hits"),
         "budget_note": extra.get("budget_note") or "",
+        "elapsed_sec": extra.get("elapsed_sec"),
         "skipped_rows": extra.get("skipped_rows") or [],
         "rows": rows,
     }
@@ -353,9 +375,11 @@ def write_output(kind: str, rows: list[dict], out_dir: Path, stats: dict | None 
     (out_dir / f"{kind}.md").write_text(render_markdown(kind, rows, now), encoding="utf-8")
     calls = payload.get("dart_calls")
     call_text = f", OpenDART 호출 {calls}회" if calls is not None else ""
+    elapsed = payload.get("elapsed_sec")
+    elapsed_text = f", {elapsed}초" if elapsed is not None else ""
     print(
         f"{kind} 검사 {payload['checked']}종목, 통과 {payload['passes']}종목, "
-        f"건너뜀 {payload['skipped']}종목{call_text}. 파일 {out_dir / (kind + '.json')}"
+        f"건너뜀 {payload['skipped']}종목{call_text}{elapsed_text}. 파일 {out_dir / (kind + '.json')}"
     )
     if len(rows) <= 40:
         print(render_markdown(kind, rows, now))

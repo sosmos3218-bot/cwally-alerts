@@ -103,6 +103,18 @@ def _market_name(text: str) -> str:
     return ""
 
 
+def _ratios_fresh(saved: str, today: str, days: int = 7) -> bool:
+    """같은 주 안쪽의 PER, PBR 캐시를 다시 쓴다. 날짜가 깨지면 버린다."""
+    from datetime import date, timedelta
+
+    try:
+        left = date.fromisoformat(saved)
+        right = date.fromisoformat(today)
+    except ValueError:
+        return False
+    return abs(right - left) <= timedelta(days=days)
+
+
 def ratios_from_infos(infos: dict) -> tuple[float | None, float | None]:
     """네이버 totalInfos 의 per, pbr. 없거나 N/A 면 None."""
     return parse_ratio(infos.get("per")), parse_ratio(infos.get("pbr"))
@@ -116,7 +128,7 @@ def fetch_naver_ratios(code: str, opener=None) -> tuple[float | None, float | No
 
 
 def lookup_ratios(codes: list[str], fetch, cache_path=None, today: str | None = None, workers: int = 8) -> dict[str, dict]:
-    """같은 날짜 캐시를 먼저 쓴다. 한 종목 실패는 per, pbr 없음으로 둔다."""
+    """일주일 안의 PER, PBR 캐시를 먼저 쓴다. 한 종목 실패는 없음으로 둔다."""
     from concurrent.futures import ThreadPoolExecutor, as_completed
     from pathlib import Path
 
@@ -127,7 +139,7 @@ def lookup_ratios(codes: list[str], fetch, cache_path=None, today: str | None = 
             saved = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             saved = {}
-        if saved.get("date") == today:
+        if _ratios_fresh(str(saved.get("date") or ""), today):
             cached = dict(saved.get("items") or {})
     out: dict[str, dict] = {}
     missing = []

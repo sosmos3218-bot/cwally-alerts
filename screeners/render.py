@@ -88,8 +88,10 @@ def render_brief(kind: str, payload: dict, limit: int = 15) -> str:
         "",
     ]
     if payload.get("dart_calls") is not None:
+        elapsed = payload.get("elapsed_sec")
+        elapsed_text = f", 걸린 시간 {elapsed}초" if elapsed is not None else ""
         lines.append(
-            f"OpenDART 호출 {payload.get('dart_calls')}회, 캐시 {payload.get('dart_cache_hits') or 0}회."
+            f"OpenDART 호출 {payload.get('dart_calls')}회, 캐시 {payload.get('dart_cache_hits') or 0}회{elapsed_text}."
         )
         lines.append("")
     if payload.get("budget_note"):
