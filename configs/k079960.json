@@ -1,0 +1,116 @@
+{
+  "name": "k079960",
+  "title_prefix": "[079960]",
+  "code": "079960",
+  "short": "동양이엔피",
+  "display": "동양이엔피(079960) 공시 감시: 3Q 실적, 수주, 자사주/배당, 현금 투입",
+  "approval": "사용자 채팅 승인 2026-11-05 (pt3u): 새 알림. 기존 09:00/15:20/19:00 슬롯 부착, 새 cron 없음. 기존 079960 알림/포지션 없음.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:20 / 19:00",
+  "schedule_note": "새 cron 없음. morning 09:00, afternoon 15:20, k203780 19:00. 수동 job=k079960 은 oneoff_mode=auto 아니면 dry.",
+  "window_start": "2026-11-05",
+  "window_end": "2027-02-28",
+  "q3_window": {
+    "start": "2026-11-10",
+    "end": "2026-11-20",
+    "note": "3분기 실적 예상 2026-11-13 전후"
+  },
+  "thesis": {
+    "as_of": "2026-11-05",
+    "price_band": "약 1.5만원대",
+    "mcap_note": "시가총액 약 1,140억, 주식수 약 755만주",
+    "ttm_sales_eok": 5200,
+    "ttm_eps_note": "TTM EPS 약 7,200~7,500원, PER 약 2.0~2.1, PBR 약 0.24~0.26, DPS 450원(배당수익률 약 2.9%)",
+    "buyback_note": "2026-06 자기주식 약 30만주(약 4%) 소각",
+    "core": "SMPS/충전기/어댑터(삼성전자 등). 본업 매출 감소 추세.",
+    "new_biz": "전장, ESS 전력변환, EV 충전기, 태양광인버터(매출 기여 아직 미미)",
+    "rerate": [
+      "영업이익 마진 회복",
+      "전장/ESS/충전기 수주 구체화",
+      "매출 가이던스 상향",
+      "추가 주주환원"
+    ],
+    "downgrade": [
+      "매출 감소 지속",
+      "현금이 신규사업에 과도 투입"
+    ]
+  },
+  "position": {
+    "note": "이 저장소에 079960 보유 수량/평단 기록 없음. 미보유 또는 미등록으로 취급."
+  },
+  "rules": [
+    {
+      "key": "earn",
+      "priority": 4,
+      "label": "실적 공시",
+      "any": [
+        "영업(잠정)실적",
+        "영업잠정실적",
+        "분기보고서",
+        "매출액또는손익구조30",
+        "매출액 또는 손익구조 30",
+        "손익구조30%"
+      ]
+    },
+    {
+      "key": "contract",
+      "priority": 4,
+      "label": "수주/공급계약",
+      "any": [
+        "단일판매",
+        "공급계약체결",
+        "공급계약 체결"
+      ],
+      "exclude_any": [
+        "해지"
+      ]
+    },
+    {
+      "key": "buyback",
+      "priority": 3,
+      "label": "자사주/소각",
+      "any": [
+        "자기주식",
+        "주식소각",
+        "자사주",
+        "주식 소각"
+      ]
+    },
+    {
+      "key": "dividend",
+      "priority": 3,
+      "label": "배당",
+      "any": [
+        "현금배당",
+        "현물배당",
+        "배당결정",
+        "배당 결정"
+      ]
+    },
+    {
+      "key": "invest",
+      "priority": 4,
+      "label": "투자/현금투입",
+      "any": [
+        "타법인주식",
+        "출자증권취득",
+        "금전대여",
+        "유형자산취득",
+        "시설투자",
+        "유상증자"
+      ]
+    }
+  ],
+  "sources": {
+    "naver_notice": "https://stock.naver.com/api/domestic/detail/notice?itemCode=079960",
+    "notice_page": "https://m.stock.naver.com/domestic/stock/079960/notice",
+    "naver_quarter": "https://m.stock.naver.com/api/stock/079960/finance/quarter",
+    "kind_note": "네이버 공시(제목+본문, DART/KIND 미러, 키 없음). OpenDART 키 불필요."
+  },
+  "first_run_note": "state.seeded 없으면 창 안 기존 공시를 seen만 기록, 발송 없음.",
+  "ends_kst": "2027-02-28 19:00",
+  "ends_note": "3Q26 실적과 후속 수주/환원 공시 관찰 뒤 끝. 연장하려면 ends_kst 갱신",
+  "explain": "동양이엔피(079960) 공시 감시. 실적(잠정/분기/30%변동), 공급계약, 자사주/소각, 배당, 타법인취득/금전대여 등 현금 투입 공시가 나오면 1번씩 재평가/하향 조건 점검. 자동 매수 신호 아님."
+}
