@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-05T08:05:31.947214+09:00",
+  "updated_at": "2026-11-05T20:08:14.920169+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -126,6 +126,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-05T08:05:31.947214+09:00"
+    },
+    "20261105-089860-q3.json#62e4d7718b27427c": {
+      "file": "20261105-089860-q3.json",
+      "title": "[BRIEF] 089860 롯데렌탈 3분기 실적 후 재판정 | 신규 매수 보류 유지, 알림 유지",
+      "topic": "cwally-port",
+      "parts": 2,
+      "parts_done": 2,
+      "done": true,
+      "at": "2026-11-05T20:08:14.920169+09:00"
     }
   },
   "rejected": {},
