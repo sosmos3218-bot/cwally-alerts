@@ -210,7 +210,7 @@ def build(kind: str, zone: str | None, snap: dict, cfg: dict, stamp: str, drop: 
                  "하지 말 것: 조회 실패를 신용 안정이나 매수 신호로 보기."]
         return title, lines, 3
     if kind == "INSTALL":
-        title = "[CRWVBOND] 설치 확인 | 매매 신호 아님"
+        title = "[CRWVBOND] CRWV 설치 확인 | 매매 신호 아님"
         lines = [head, intro, status_line(snap, rules),
                  f"지금 할 일: 없음. 현재 판정 {ZONE_KO.get(zone, '확인불가')}. 다음 평일 09:00부터 구간이 바뀔 때만 알립니다.",
                  later,
@@ -218,27 +218,27 @@ def build(kind: str, zone: str | None, snap: dict, cfg: dict, stamp: str, drop: 
                  "하지 말 것: 이 메시지를 매매 신호로 보기."]
         return title, lines, 2
     if kind == "SHOCK":
-        title = f"[CRWVBOND] 1주 {drop:.1f}포인트 급락 | AI 추격 금지"
+        title = f"[CRWVBOND] CRWV 1주 {drop:.1f}포인트 급락 | AI 추격 금지"
         action = "AI 인프라와 반도체 신규 추격을 멈추고, 신용 경색이 시장 전체로 번지는지 하이일드 OAS를 같이 보세요."
         pri = 4
     elif zone == "SEVERE":
-        title = f"[CRWVBOND] 회사채 {p:.1f} 심각 | 레버리지 줄이기"
+        title = f"[CRWVBOND] CRWV 회사채 {p:.1f} 심각 | 레버리지 줄이기"
         action = "10/15 저점(78~80센트) 아래 신저가 구간입니다. AI 인프라 레버리지와 단기 매매 비중을 줄이는 쪽을 검토하세요."
         pri = 5
     elif zone == "DISTRESS":
-        title = f"[CRWVBOND] 회사채 {p:.1f} 부실권 | 신규 추격 금지"
+        title = f"[CRWVBOND] CRWV 회사채 {p:.1f} 부실권 | 신규 추격 금지"
         action = "80센트 아래는 통상 부실 신호입니다. AI 인프라와 반도체 신규 매수는 미루고 보유분은 손절선만 점검하세요."
         pri = 4
     elif zone == "RECOVER":
-        title = f"[CRWVBOND] 회사채 {p:.1f} 회복 | 신용 경색 완화"
+        title = f"[CRWVBOND] CRWV 회사채 {p:.1f} 회복 | 신용 경색 완화"
         action = "신용 쪽 경고는 풀렸습니다. 외국인 수급 같은 다른 조건이 맞을 때만 분할로 다시 보세요."
         pri = 3
     else:
-        title = f"[CRWVBOND] 회사채 {p:.1f} 경계 | 관망"
+        title = f"[CRWVBOND] CRWV 회사채 {p:.1f} 경계 | 관망"
         action = "80~88센트 경계 구간입니다. 새 판단 없이 관망하고, 80 이탈 여부만 보세요."
         pri = 3
     if kind == "WEEKLY":
-        title = f"[CRWVBOND] 주간 {p:.1f} {ZONE_KO.get(zone, '')} | 구간 유지"
+        title = f"[CRWVBOND] CRWV 주간 {p:.1f} {ZONE_KO.get(zone, '')} | 구간 유지"
     lines = [head, intro, status_line(snap, rules), f"지금 할 일: {action}", later,
              "익절/줄일 때: 부실권이나 심각이 나오면 AI 관련 수익 난 포지션부터 일부 줄입니다. 회복이어도 한 번에 되사지 않습니다.",
              "하지 말 것: 회사채 하나의 하루 시세로 부도를 단정하기. 신용, 미수, 물타기."]

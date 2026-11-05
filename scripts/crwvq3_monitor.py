@@ -314,11 +314,11 @@ def main() -> int:
         stress = simple_stress(cash.get("ocf_b"), near_rpo)
         near = rpo.get("near_pct") if rpo else None
         verdict = "전환 빨라짐" if near is not None and near > b["q2_rpo_24m_pct"] + 2 else ("전환 느려짐" if near is not None and near < b["q2_rpo_24m_pct"] - 2 else "전환 속도 비슷/미확인")
-        title = f"[CRWVQ3] 코어위브 3Q 백로그 {bk:,.0f}B$ | {verdict} | 매매 신호 아님" if bk else f"[CRWVQ3] 코어위브 3Q 발표 | 백로그 미확인 | 매매 신호 아님"
+        title = f"[CRWVQ3] CRWV 코어위브 3Q 백로그 {bk:,.0f}B$ | {verdict} | 매매 신호 아님" if bk else f"[CRWVQ3] CRWV 코어위브 3Q 발표 | 백로그 미확인 | 매매 신호 아님"
         status = f"{docs.get('pr_day')} 공시. {rev_txt}. {bk_txt}. {rpo_txt}. {ocf_txt}. {power_txt}."
         extra = f"부채: {debt_txt}. 만기: {mat_txt}. {stress}"
     else:
-        title = "[CRWVQ3] 코어위브 3Q 미발표 | HBM LTA 뉴스만 | 매매 신호 아님"
+        title = "[CRWVQ3] CRWV 코어위브 3Q 미발표 | HBM LTA 뉴스만 | 매매 신호 아님"
         status = "11/20 07:25까지 SEC에 3분기 실적 8-K 없음. 백로그/RPO/OCF/전력 판정 못 함."
         extra = ""
     lines = [

@@ -243,7 +243,7 @@ ZONE_COPY = {
 
 def title_for(zone: str, r: dict) -> str:
     tag = {B1: "50일선 근처", B2: "200일선 근처", BREAK: "200일선 아래 2일", WAIT: "구간 밖", CHASE: "최근 고점 위"}[zone]
-    return f"[PLTR25] ${r['close']:.2f} {tag} | {ZONE_COPY[zone][0]}"
+    return f"[PLTR25] PLTR ${r['close']:.2f} {tag} | {ZONE_COPY[zone][0]}"
 
 
 # ---------------- 매수 재검토 가격 ----------------
@@ -390,7 +390,7 @@ def evaluate(cfg: dict, state: dict, data: dict, now: datetime) -> list[tuple[st
             vl = " 밸류에이션: Yahoo 조회 실패, 이번 주는 생략."
         pend = f" 확인 중: {r['pending']['zone']} {r['pending']['n']}일째." if r["pending"] else ""
         _, _, act, later, avoid = ZONE_COPY[r["zone"]]
-        alerts.append(("port", f"[PLTR25] 주간 점검 | ${r['close']:.2f}, {r['zone']}", body(
+        alerts.append(("port", f"[PLTR25] PLTR 주간 점검 | ${r['close']:.2f}, {r['zone']}", body(
             stamp, f"구간 {r['zone']}.{pend} {level_line(r)} {pq}{vl}{review_line(state, cfg)}{el}", act, later, "보유 없음, 해당 없음.",
             "주간 점검을 매수 신호로 읽기. " + avoid), 2))
         state["last_weekly"] = wk
@@ -573,7 +573,7 @@ def selftest(cfg: dict) -> int:
     check("chase day1 silent", al, [])
     al = run(st3, {"pltr": hi_b, "qqq": None}, now)
     check("chase day2 p3", [(a[1].endswith("추격 금지"), a[3]) for a in al], [(True, 3)])
-    check("title has price and no-chase", al[0][1].startswith("[PLTR25] $") if al else False)
+    check("title has price and no-chase", al[0][1].startswith("[PLTR25] PLTR $") if al else False)
     # 관망으로 복귀 p3
     st4 = dict(DEFAULT_STATE, last_weekly="2026-W44", zone_sent=B1)
     al = run(st4, {"pltr": b_wait, "qqq": None}, now)

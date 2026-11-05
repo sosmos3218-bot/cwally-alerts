@@ -269,7 +269,7 @@ def main() -> int:
     mw, m_notes, m_shown = commitment_view(cfg, com)
     worse = cw == "심화" or mw in ("급증", "증가")
     act = "위험 재점검" if worse else "변화 작음"
-    title = f"[SPCX10Q] 고객 집중 {cw}, 투자 약정 {mw} | {act}"
+    title = f"[SPCX10Q] SPCX 고객 집중 {cw}, 투자 약정 {mw} | {act}"
     ytd = ", ".join(f"{k} {v:.1f}%" for k, v in sorted(conc["ytd"].items()) if v is not None)
     base = cfg["q2"]
     capex = capex_sentence(text)

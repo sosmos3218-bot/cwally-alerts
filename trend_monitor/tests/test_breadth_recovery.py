@@ -41,7 +41,7 @@ def test_crossing_up_sends_once():
     msg = recovery_message(_payload("2026-11-04", 31.5), CFG, ("2026-11-03", 28.0))
     assert msg is not None
     title, body = msg
-    assert title.startswith("[TREND] 시장폭 30% 회복 11/04")
+    assert title.startswith("[TREND] KOSPI 시장폭 30% 회복 11/04")
     assert "31.5%" in title and "28.0%" in title
     assert "꺼지는 때:" in body
     assert "·" not in title + body and "—" not in title + body

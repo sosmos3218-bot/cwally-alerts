@@ -180,7 +180,7 @@ def recovery_message(payload: dict, cfg: Config, prev: tuple[str, float] | None)
         return None
     day = payload.get("trade_date") or ""
     title = (
-        f"[TREND] 시장폭 {limit:g}% 회복 {_md(day)}: "
+        f"[TREND] KOSPI 시장폭 {limit:g}% 회복 {_md(day)}: "
         f"{now_pct:.1f}% ({_md(prev_day)} {prev_pct:.1f}%)"
     )
     end = "종료일 없음" if not cfg.ends_kst else f"{cfg.ends_kst} KST"
