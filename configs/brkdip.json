@@ -1,0 +1,60 @@
+{
+  "name": "brkdip",
+  "title_prefix": "[BRKDIP]",
+  "display": "RISE 버크셔포트폴리오TOP10(475350) KRX 종가 분할매수 3단계",
+  "approval": "사용자 채팅 승인 2026-11-05 (pt1u \"네 소신껏\"): 새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음. 기존 [BRK10] 밴드/환율 알림은 유지.",
+  "code": "475350",
+  "display_name": "RISE 버크셔포트폴리오TOP10",
+  "brk_ticker": "BRK-B",
+  "fx_ticker": "USDKRW=X",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일, 15:40 이후 확정 KRX 종가만. 수동 job=brkdip 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "price_source": "Daum KRX 일별 https://finance.daum.net/api/quote/A475350/days (sdipx 와 같은 소스, NXT 미포함). BRK.B 일간 등락과 USD/KRW 는 Yahoo chart meta (선택, 실패해도 가격선 판정은 진행).",
+  "window_start": "2026-11-05",
+  "window_end": "2027-11-05",
+  "baseline": {
+    "day": "2026-11-04",
+    "close": 14305,
+    "note": "사용자 분석 시점 근처: 14,300~14,450원대, 52주 13,540~16,295, BRK.B ~579 USD",
+    "low_52w": 13540,
+    "high_52w": 16295
+  },
+  "lines": [
+    {
+      "key": "t1",
+      "op": "le",
+      "level": 14000,
+      "rearm_op": "gt",
+      "rearm": 14420,
+      "priority": 3,
+      "tier_ko": "1차",
+      "head": "분할매수 1차 구간"
+    },
+    {
+      "key": "t2",
+      "op": "le",
+      "level": 13700,
+      "rearm_op": "gt",
+      "rearm": 14111,
+      "priority": 4,
+      "tier_ko": "2차",
+      "head": "분할매수 2차 구간"
+    },
+    {
+      "key": "t3",
+      "op": "le",
+      "level": 13540,
+      "rearm_op": "gt",
+      "rearm": 13946,
+      "priority": 5,
+      "tier_ko": "3차",
+      "head": "분할매수 3차 구간 (52주 저점권)"
+    }
+  ],
+  "first_run_note": "state 에 last_date 가 없으면 마지막 확정 KRX 종가로 상태만 기록(이미 선 안쪽이면 그 선은 무장 해제), 발송 없음.",
+  "ends_kst": "2027-11-05 19:00",
+  "ends_note": "장기 분할매수 관찰 1년. 그 뒤 조용히 끝. 필요하면 ends_kst 연장"
+}
