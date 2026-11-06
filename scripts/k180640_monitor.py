@@ -223,13 +223,42 @@ def is_maxshare(title: str) -> bool:
     return "최대주주변경" in title or "최대주주등소유주식변동" in title
 
 
-def gap_line(st: dict) -> str:
+def gap_from_shares(hoban_sh: int, cho_sh: int, common: int) -> dict:
+    """갭 %p는 항상 주식수 차이 / 보통주 총수 후 반올림. 부호 대신 우세 라벨."""
+    gap_sh = hoban_sh - cho_sh
+    gap_pp = round(abs(gap_sh) / common * 100, 2)
+    if gap_sh > 0:
+        who = "호반 측"
+    elif gap_sh < 0:
+        who = "조원태 측"
+    else:
+        who = "동률"
+    label = f"{who} 우세 {gap_pp:.2f}%p" if gap_sh != 0 else f"동률 {gap_pp:.2f}%p"
+    return {"gap_shares": gap_sh, "gap_pp": gap_pp, "who": who, "label": label,
+            "phrase": f"갭 {abs(gap_sh):,}주({label})"}
+
+
+def gap_line(st: dict, cfg: dict | None = None) -> str:
+    if cfg is not None:
+        x = live_stakes(cfg, st)
+        g = gap_from_shares(x["hoban_shares"], x["cho_shares"], x["common"])
+        return (f"호반 측 {x['hoban_pct']:.2f}% vs 조원태 측 {x['cho_pct']:.2f}% "
+                f"({g['phrase']}, 기준일 {x['as_of']})")
     h, c = st["stakes"].get("hoban_pct"), st["stakes"].get("cho_group_pct")
+    hs, cs = st["stakes"].get("hoban_shares"), st["stakes"].get("cho_group_shares")
+    common = st["stakes"].get("common")
+    if hs is not None and cs is not None and common:
+        g = gap_from_shares(int(hs), int(cs), int(common))
+        hp = hs / common * 100
+        cp = cs / common * 100
+        return f"호반 측 {hp:.2f}% vs 조원태 측 {cp:.2f}% ({g['phrase']}, 기준일 {st['stakes'].get('as_of', '?')})"
     if h is None or c is None:
         return "갭 확인 불가"
-    d = h - c
-    who = "호반 측" if d >= 0 else "조원태 측"
-    return f"호반 측 {h:.2f}% vs 조원태 측 {c:.2f}% (갭 {abs(d):.2f}%p, {who} 우세, 기준일 {st['stakes'].get('as_of', '?')})"
+    # pct-only fallback: still avoid bare minus
+    d = round(abs(h - c), 2)
+    who = "호반 측" if h >= c else ("조원태 측" if c > h else "동률")
+    label = f"{who} 우세 {d:.2f}%p" if h != c else f"동률 {d:.2f}%p"
+    return f"호반 측 {h:.2f}% vs 조원태 측 {c:.2f}% (갭 {label}, 기준일 {st['stakes'].get('as_of', '?')})"
 
 
 def live_stakes(cfg: dict, st: dict) -> dict:
@@ -283,13 +312,12 @@ def scenario_block(cfg: dict, st: dict, *, cho_shares: int | None = None, hoban_
     cho = cho_shares if cho_shares is not None else x["cho_shares"]
     delta, kdb = x["delta_shares"], x["kdb_shares"]
     hoban_pct, cho_pct = hoban / common * 100, cho / common * 100
-    gap_sh, gap_pp = hoban - cho, hoban_pct - cho_pct
-    who = "호반 측" if gap_sh >= 0 else "조원태 측"
+    g = gap_from_shares(hoban, cho, common)
     turnouts = (cfg.get("agm") or {}).get("turnout_pct") or [70, 80]
     lines = [
         f"주총 시나리오(추정, 보통주 {common:,}주, 기준 {x['as_of']}): "
         f"호반 측 {hoban:,}주({hoban_pct:.2f}%) vs 조원태 측 {cho:,}주({cho_pct:.2f}%), "
-        f"갭 {abs(gap_sh):,}주({abs(gap_pp):.2f}%p, {who} 우세).",
+        f"{g['phrase']}.",
         f"우호 지분 추정: Delta {x['delta_pct']:.2f}%({delta:,}주), 산은 {x['kdb_pct']:.2f}%({kdb:,}주). "
         f"보통결의 = 출석 과반 + 발행주식총수 1/4 이상.",
     ]
@@ -319,9 +347,10 @@ def scenario_block(cfg: dict, st: dict, *, cho_shares: int | None = None, hoban_
         lines.append(" ".join(bits) + f". -> {tip}.")
     if alt_cho_shares is not None:
         alt_pct = alt_cho_shares / common * 100
+        ag = gap_from_shares(hoban, alt_cho_shares, common)
         lines.append(
             f"대안({alt_label or '매도자=특수관계인, 조원태 측 순증 0'}): 조원태 측 {alt_cho_shares:,}주({alt_pct:.2f}%), "
-            f"호반 대비 갭 {hoban - alt_cho_shares:,}주({hoban_pct - alt_pct:+.2f}%p)."
+            f"호반 대비 {ag['phrase']}."
         )
         # one-line a/b under alt
         a_left = alt_cho_shares + delta
@@ -425,11 +454,10 @@ def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
                 alt_cho_shares=(cho_rel if seller_unknown else None),
                 alt_label="매도자=특수관계인, 조원태 측 순증 0",
             )
-            gap_sh = cur["hoban_shares"] - primary
-            gap_pp = cur["hoban_pct"] - primary_pct
+            g = gap_from_shares(cur["hoban_shares"], primary, cur["common"])
             recompute = (f"재계산: 호반 측 {cur['hoban_pct']:.2f}%({cur['hoban_shares']:,}주) vs "
                          f"조원태 측 {primary_pct:.2f}%({primary:,}주), "
-                         f"갭 {gap_sh:,}주({gap_pp:+.2f}%p).")
+                         f"{g['phrase']}.")
             out.append({"kind": "cho_done", "pri": 4,
                         "title": f"{TAG} 조원태 매수 완료 | +{buy:,}주, 조원태 측 약 {primary_pct:.2f}%",
                         "text": (f"{day} {filer} '{title}'. 11/2 거래계획({plan['shares']:,}주 x {plan['price']:,}원, "
@@ -787,6 +815,16 @@ def selftest() -> int:
           True)
     check("cho_done after buy: 조원태 ahead vs 호반 in scenario",
           ("조원태 측 우세" in t.split("주총 시나리오")[1][:200]) or ("갭" in t and "조원태" in t), True)
+    # 갭 %p는 주식수 기준 반올림, 재계산/시나리오 동일, 부호 대신 우세 라벨
+    want_gap = "갭 249,866주(조원태 측 우세 0.37%p)"
+    re_part = t.split("주총 시나리오")[0]
+    sc_part = t.split("주총 시나리오")[1].split("우호 지분")[0]
+    check("gap %p from shares, same in 재계산 and 시나리오",
+          (want_gap in re_part, want_gap in sc_part, "-0.38%p" not in t, "+0." not in re_part.split("재계산")[-1][:120]),
+          (True, True, True, True))
+    g0 = gap_from_shares(13814053, 14063919, 66762275)
+    check("gap_from_shares unit", (g0["gap_pp"], g0["who"], g0["phrase"]),
+          (0.37, "조원태 측", "갭 249,866주(조원태 측 우세 0.37%p)"))
 
     st = init()
     a = classify(cfg, st, {"rcp": "20261104800730", "title": "최대주주변경", "filer": "한진칼", "date": "2026-11-04"}, bodies["maxshare"])
