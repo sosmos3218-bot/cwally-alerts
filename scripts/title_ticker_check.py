@@ -75,6 +75,9 @@ def _collect(node, found: set[str]) -> None:
     if isinstance(node, dict):
         for key, val in node.items():
             if key in {"ticker", "symbol", "code", "pref_code", "common_code", "etf_code"} and isinstance(val, str):
+                hk = val.strip().upper()
+                if re.fullmatch(r"\d{3,5}\.HK", hk):
+                    found.add(hk)
                 sym = val.split(".")[0].strip()
                 if re.fullmatch(r"[A-Z][A-Z0-9]{0,5}", sym):
                     found.add(sym)
@@ -279,6 +282,8 @@ def self_check() -> None:
     assert not has_ticker("[SQUARE] 보유 유지")
     assert not has_ticker("[FLOW] 과열 조짐 | 추격 금지")
     assert not has_ticker("[SEC-DIV] 배당 공시")
+    assert has_ticker("[1810] 1810.HK 실적 공시")
+    assert not has_ticker("[1810] 실적 공시")
 
 
 # ---------------------------------------------------------------------------
@@ -640,6 +645,7 @@ def audit_self_check() -> None:
     assert classify("[CRWVBOND] 회사채 78.8").endswith("real ticker must appear)")
     assert classify("[ADDSTOP] {ticker} 점검") is None
     assert classify("[GENPACT] G 대기") is None
+    assert classify("[1810] 1810.HK 실적 공시 게시 | 사람 검토") is None
     assert _exception_reason("outbox/20261104-frde-event.json", "[FR-DE] 하원 PLF 1부 표결 연기 | 영향 제한") == "sent brief"
     assert _exception_reason("outbox/20261199-new.json", "[FR-DE] 하원 PLF 1부 표결 연기") is None
     assert _exception_reason("trend_monitor/ntfy_summary.py", "[TREND] {...}") is not None

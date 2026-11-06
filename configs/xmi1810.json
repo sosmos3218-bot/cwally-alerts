@@ -1,0 +1,56 @@
+{
+  "name": "xmi1810",
+  "title_prefix": "[1810]",
+  "ticker": "1810.HK",
+  "code": "1810",
+  "issuer": "Xiaomi Corporation (Class B, HKD counter 1810 / 01810, RMB counter 81810)",
+  "name_kr": "샤오미 Class B",
+  "holding": "보유 수량 미입력. 매수/매도 신호 아님",
+  "created_at": "2026-11-06T18:30:00+09:00",
+  "approval": "2026-11-06 채팅: 1810.HK 공식 실적/EV 공시 사람 검토 알림. 매매 신호 아님. 기존 슬롯만 사용.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "priority": 3,
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 morning 09:00, afternoon 15:20, k203780 19:00 (KST). 홍콩 장마감은 16:00 HKT=17:00 KST 라서 늦은 저녁 공시는 다음 날 09:00에 본다. job=xmi1810 는 oneoff_mode=auto 가 아니면 dry.",
+  "hkex_stock_id": "1000195151",
+  "search_url": "https://www1.hkexnews.hk/search/titlesearch.xhtml?category=0&lang=EN&market=SEHK&stockId=1000195151",
+  "search_note": "HKEX Listed Company Information Title Search (공개 검색 화면). stockId 1000195151 은 01810/81810 XIAOMI. 최신 약 100건만 읽음. 행의 코드가 01810/1810/81810 이고 이름이 XIAOMI 인 것만 사용.",
+  "stale_days": 40,
+  "pdf_max_bytes": 600000,
+  "sources": {
+    "board_q3_2026": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/1023/2026102301169.pdf",
+    "buyback_program": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0526/2026052600980.pdf",
+    "fy2025_results": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0324/2026032400608.pdf",
+    "h1_2026_results": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0818/2026081801014.pdf",
+    "ir_not_used": "https://ir.mi.com/"
+  },
+  "reference_board": {
+    "news_id": "2026102301169",
+    "hkex_release": "2026-10-23 19:01",
+    "announcement_date": "2026-10-23",
+    "board_date": "2026-11-24",
+    "period": "three and nine months ended September 30, 2026",
+    "note": "이사회가 2026-11-24 에 3분기/9개월 실적 승인을 검토한다고 적은 일정 공시. 실적 공개 시각의 보장이 아님."
+  },
+  "reference_verified": {
+    "fy2025_deliveries": "411,082 vehicles in 2025 (2026-03-24 annual results)",
+    "fy2026_delivery_target": "strive to deliver 550,000 vehicles for the entire year 2026 (2026-03-24 annual results). 목표 문장이지 확정 인도가 아님.",
+    "fy2025_segment_ops": "smart EV, AI and other new initiatives segment positive income from operations RMB0.9 billion in 2025, defined as gross profit minus operating expenses. 순수 EV나 IFRS 순이익이 아님.",
+    "q2_2026": "2026-08-18 results: Q2 deliveries 104,199; Q1 2026 deliveries stated in the same filing as 80,856. Smartphone shipments 31.2 million, ASP RMB1,351, smartphone GPM 8.5%. Segment GPM 19.2%. Segment loss from operations RMB2.6 billion. Footnote: income/(loss) from operations is gross profit minus operating expenses. Segment includes AI and other new initiatives.",
+    "skynomad": "2026-08-18 실적 공시에 Xiaomi SkyNomad Series (N90 Max, N70 Max) 이름이 있음.",
+    "buyback_limit": "2026-05-26 voluntary announcement: new program up to HK$20 billion (200억 홍콩달러), not HK$2 billion. No assurance any repurchase will occur. Program limit, not completed purchases. Daily next-day disclosure returns are not alerts."
+  },
+  "do_not_hardcode": [
+    "2026-10 monthly deliveries above 50000",
+    "Jan-Oct cumulative 336000",
+    "price 30.4",
+    "PE 21 or 27",
+    "target price 34",
+    "SOTP 32-38",
+    "H1 2026 deliveries 185055 as one official total. Q1 80856 and Q2 104199 are separate sentences in the 2026-08-18 filing. This alert does not add them."
+  ],
+  "limitations": "월간 EV 인도 트리거 없음. HKEX 1810 최신 목록의 Monthly Return 은 주식 변동 보고서라 인도 실적이 아님. 별도 공식 월간 인도 제목은 이 목록에서 확인하지 못함. ir.mi.com 은 이 환경에서 403 이라 수집하지 않음. 언론으로 대체하지 않음. 실적 PDF 숫자는 받지 않고 미추출로 둠. 이사회 예정일 문장(will be held on)만 짧은 일정 PDF에서 읽고, 실패하면 미추출.",
+  "ends_kst": "2027-11-24 23:59",
+  "ends_note": "2026-11-24 이사회 예정일 다음 해 같은 날까지. 그 사이 연간/분기 공시 한 바퀴. 더 보려면 연장"
+}
