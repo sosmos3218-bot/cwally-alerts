@@ -2,11 +2,11 @@
   "initialized": true,
   "armed": {
     "low2372": false,
-    "low20": true,
+    "low20": false,
     "high35": true
   },
-  "last_date": "2026-11-04",
-  "last_close": 21.71,
+  "last_date": "2026-11-05",
+  "last_close": 18.03,
   "init_note": "initialized at install from 2026-10-29 close 26.25, no send",
   "fail_notified": false,
   "sec_seen": [
@@ -321,6 +321,8 @@
     "0001878848-26-000030",
     "0001878848-26-000051",
     "0001878848-26-000052",
+    "0001878848-26-000065",
+    "0001878848-26-000066",
     "9999999995-21-004363",
     "9999999995-23-000192",
     "9999999995-23-000462",
@@ -334,6 +336,6 @@
     "9999999995-25-002785"
   ],
   "sec_seed_note": "seeded 322 accession numbers at install 2026-10-30, no send",
-  "sec_checked": "2026-11-05T09:13:40+09:00",
-  "updated_at": "2026-11-05T09:13:41+09:00"
+  "sec_checked": "2026-11-06T09:15:11+09:00",
+  "updated_at": "2026-11-06T09:15:12+09:00"
 }

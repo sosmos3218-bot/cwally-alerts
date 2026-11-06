@@ -1,7 +1,6 @@
 {
-  "updated_at": "2026-11-05T15:40:00+09:00",
-  "init_note": "2026-11-05 초기값: 미 10년물 4.90%(11/4), 12개월 분배금 439원(기준일 2026-10-30 41원), 순자산 1,083억, 괴리율 -0.44%. 첫 실행에 지난 값으로 알림이 나가지 않게 모두 무장 상태, 판정 보통.",
-  "y10_last_date": "2026-11-03",
+  "updated_at": "2026-11-06T09:07:06.393296+09:00",
+  "y10_last_date": "2026-11-05",
   "rate_low_armed": true,
   "rate_high_armed": true,
   "last_dist_date": "2026-10-30",
@@ -10,5 +9,27 @@
   "verdict": "보통",
   "aum_armed": true,
   "dev_armed": true,
-  "fail": {}
+  "fail": {
+    "y10": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "dists": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "price": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "etf": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    }
+  },
+  "init_note": "2026-11-05 초기값: 미 10년물 4.90%(11/4), 12개월 분배금 439원(기준일 2026-10-30 41원), 순자산 1,083억, 괴리율 -0.44%. 첫 실행에 지난 값으로 알림이 나가지 않게 모두 무장 상태, 판정 보통."
 }

@@ -1,9 +1,30 @@
 {
-  "updated_at": "2026-11-05T19:00:00+09:00",
+  "updated_at": "2026-11-06T09:14:24.667231+09:00",
   "sent": null,
   "confirmed": null,
   "correction_sent": false,
   "manual_sent": false,
   "ops_sent": false,
-  "fail": {}
+  "fail": {
+    "ir": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "dart": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "close": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "notice": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    }
+  }
 }

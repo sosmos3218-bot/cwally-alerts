@@ -1,11 +1,15 @@
 {
-  "updated_at": null,
-  "phase": "idle",
+  "updated_at": "2026-11-06T09:06:11.808168+09:00",
+  "phase": "fetch_fail",
   "results_notified": false,
   "miss_notified": false,
-  "fail_notified": false,
+  "fail_notified": true,
   "source": null,
   "verdict": null,
   "parsed": null,
-  "price": null
+  "price": {
+    "regular": 41.1,
+    "post": null,
+    "prev": 38.97
+  }
 }

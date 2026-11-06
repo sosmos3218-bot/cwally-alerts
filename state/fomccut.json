@@ -1,6 +1,14 @@
 {
-  "seeded": false,
-  "done": [],
+  "seeded": true,
+  "done": [
+    "2026-01-28",
+    "2026-03-18",
+    "2026-04-29",
+    "2026-06-17",
+    "2026-07-29",
+    "2026-09-16",
+    "2026-10-28"
+  ],
   "signal": {
     "active": false,
     "class": null,
@@ -8,8 +16,36 @@
     "score": null,
     "updated_at": null
   },
-  "prior_statement": {},
-  "prior_sep": {},
+  "prior_statement": {
+    "meeting": "2026-10-28",
+    "text": "by a 10 - 2 vote: The Committee decided to maintain the target range for the federal funds rate at 3-3/4 to 4 percent, in support of the Federal Reserve's dual mandate. The Committee is continuing its policy of maintaining ample reserves in the banking system. Economic activity is expanding at a strong pace. While uncertainty remains elevated owing, in part, to geopolitical developments, domestic spending has been resilient. Productivity growth is strong, and capital investment is robust. Job gains have kept pace with the workforce, and the unemployment rate has changed little. Inflation remains elevated. The accumulation of more information will help the Committee determine the policy stance appropriate to ensure a timely return of inflation to the Committee's 2 percent goal. The Committee will deliver price stability. Voting against the monetary policy action were Lisa D. Cook and Beth M. Hammack, who preferred to raise the target range for the federal funds rate by 1/4 percentage point at this meeting."
+  },
+  "prior_sep": {
+    "meeting": "2026-09-16",
+    "url": "https://www.federalreserve.gov/monetarypolicy/fomcprojtabl20260916.htm",
+    "medians": {
+      "2026": 3.2,
+      "2027": 4.1,
+      "2028": 3.9,
+      "2029": 3.6
+    },
+    "years": [
+      "2026",
+      "2027",
+      "2028",
+      "2029",
+      "2026",
+      "2027",
+      "2028",
+      "2029",
+      "2026",
+      "2027",
+      "2028",
+      "2029"
+    ]
+  },
   "ops_day": null,
-  "updated_at": null
+  "updated_at": "2026-11-06T09:15:07.200685+09:00",
+  "last": {},
+  "seed_note": "2026-11-06 09:15 KST 시드. done=['2026-06-17', '2026-07-29', '2026-09-16', '2026-10-28']"
 }

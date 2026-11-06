@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-11-05T09:09:11.725764+09:00",
+  "updated_at": "2026-11-06T09:10:26.094963+09:00",
   "recover_armed": true,
-  "breakdown_armed": true,
+  "breakdown_armed": false,
   "high_armed": true,
   "high_ref": null,
   "rs_regime": "lag",
   "holding_alerted": {
-    "TXG": "2026-11-02",
-    "TWST": "2026-11-02"
+    "TXG": "2026-11-05",
+    "TWST": "2026-11-05"
   },
-  "last_bar_date": "2026-11-04",
-  "last_close": 49.689998626708984,
-  "last_rs_pct": -6.8,
+  "last_bar_date": "2026-11-05",
+  "last_close": 44.619998931884766,
+  "last_rs_pct": -8.88,
   "fetch_fail_date": null
 }

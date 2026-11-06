@@ -1,11 +1,11 @@
 {
-  "last_discount": 21.238532110091743,
-  "last_pref": 171700.0,
-  "last_common": 218000.0,
-  "updated": "2026-11-05T09:08:42.773630+09:00",
+  "last_discount": 20.397022332506204,
+  "last_pref": 160400.0,
+  "last_common": 201500.0,
+  "updated": "2026-11-06T09:10:11.407085+09:00",
   "last_weekly": "2026-W45",
   "last_basis": "전일 KRX 종가",
   "last_source": "Daum(KRX)",
-  "last_day": "20261104",
+  "last_day": "20261105",
   "last_zone": "HOLD"
 }

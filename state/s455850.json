@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-05 09:06 KST",
-  "session_date": "2026-11-04",
+  "updated_at": "2026-11-06 09:06 KST",
+  "session_date": "2026-11-05",
   "level": 3,
   "triggers": [
     "T1",
@@ -10,8 +10,8 @@
   "last_sent_sig": "3",
   "last_sent_week": "2026-W45",
   "fail_sent_date": null,
-  "px_etf": 20900.0,
-  "px_hanmi": 186100.0,
-  "px_jusung": 167100.0,
-  "jusung_foreign_bn": null
+  "px_etf": 18180.0,
+  "px_hanmi": 169100.0,
+  "px_jusung": 146700.0,
+  "jusung_foreign_bn": -3.280212
 }

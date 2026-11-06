@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-05 09:00 KST",
-  "price": 21.71,
+  "updated_at": "2026-11-06 09:00 KST",
+  "price": 18.03,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24",
@@ -157,7 +157,22 @@
     "https://www.fool.com/investing/2026/11/04/a-major-neocloud-stock-rally-may-be-coming-these-3/?.tsrc=rss",
     "https://finance.yahoo.com/m/c5d0833e-fe1d-3e77-b792-4b103f8d64bf/bitcoin-rises%2C-crypto-miners.html?.tsrc=rss",
     "https://www.cryptoprowl.com/releases/bernstein-cuts-price-targets-on-seven-bitcoin-miners-after-democrats-texas-win-threatens-ai-data-center-boom-7670?.tsrc=rss",
-    "https://finance.yahoo.com/m/c7cfda24-812a-3e7d-a41e-138b0ad10480/ai%27s-building-boom-meets-a.html?.tsrc=rss"
+    "https://finance.yahoo.com/m/c7cfda24-812a-3e7d-a41e-138b0ad10480/ai%27s-building-boom-meets-a.html?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-iren-draws-tighter-oversight-232125190.html?.tsrc=rss",
+    "https://finance.yahoo.com/m/cc63f2bb-aa0f-3660-b064-b2dd8d2dd6f8/a-tale-of-two-data-center.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/05/applied-digital-plunges-17-cipher-digital-sinks-14-terawulf-tumbles-13-as-texas-data-center-fears-deepen/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-stock-plunges-18-microsoft-162134051.html?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-sinks-20-on-report-its-behind-microsofts-ai-spending-delay-ahead-of-earnings?ref=yahoofinance&tlnk=yf-261105-qr7pp429&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-stock-setup-strong-enough-150757493.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/05/iren-sinks-9-after-report-links-it-to-microsofts-ai-spending-delay-nebius-tumbles-11-coreweave-slides-7/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/company-news-nov-5-2026-132600043.html?.tsrc=rss",
+    "https://www.trefis.com/stock/mu/articles/622728/can-democrats-slow-the-800-billion-ai-boom/2026-11-05?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/05/iren-is-only-fit-for-a-specific-investor-currently/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/us-futures-mixed-after-rally-on-wednesday-mu-tsla-aapl-msft-app-nvda-iren-in-focus/cNG1WKIR9EY?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-stock-drops-after-report-says-it-s-behind-microsoft-s-ai-spending-delay-as-investors-turn-to-earnings/cNG15gfR9Ef?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/bc-most-active-stocks-153422188.html?.tsrc=rss",
+    "https://www.tikr.com/blog/cleanspark-lost-21-in-a-week-to-a-new-52-week-low-bernstein-still-sees-62-upside?ref=yahoofinance&tlnk=yf-261105-p7rhc5w8&.tsrc=rss",
+    "https://finance.yahoo.com/m/2e601466-99b5-3e96-b356-1d6e19eb6e46/coreweave-stock-is-plunging.html?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-02 09:00 KST",
   "pending_news": [
@@ -185,6 +200,31 @@
       "title": "Bernstein Cuts Price Targets on Seven Bitcoin Miners After Democrats’ Texas Win Threatens AI Data Center Boom",
       "url": "https://www.cryptoprowl.com/releases/bernstein-cuts-price-targets-on-seven-bitcoin-miners-after-democrats-texas-win-threatens-ai-data-center-boom-7670?.tsrc=rss",
       "seen_at": "2026-11-05 09:00 KST"
+    },
+    {
+      "title": "IREN stock plunges 18% as Microsoft raises concerns over data center delays",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/iren-stock-plunges-18-microsoft-162134051.html?.tsrc=rss",
+      "seen_at": "2026-11-06 09:00 KST"
+    },
+    {
+      "title": "IREN Sinks 20% on Report It’s Behind Microsoft’s AI Spending Delay Ahead of Earnings",
+      "url": "https://www.tikr.com/blog/iren-sinks-20-on-report-its-behind-microsofts-ai-spending-delay-ahead-of-earnings?ref=yahoofinance&tlnk=yf-261105-qr7pp429&.tsrc=rss",
+      "seen_at": "2026-11-06 09:00 KST"
+    },
+    {
+      "title": "IREN Sinks 9% After Report Links It to Microsoft’s AI Spending Delay; Nebius Tumbles 11%, CoreWeave Slides 7%",
+      "url": "https://247wallst.com/investing/2026/11/05/iren-sinks-9-after-report-links-it-to-microsofts-ai-spending-delay-nebius-tumbles-11-coreweave-slides-7/?.tsrc=rss",
+      "seen_at": "2026-11-06 09:00 KST"
+    },
+    {
+      "title": "US Futures Mixed After Rally On Wednesday — MU, TSLA, AAPL, MSFT, APP, NVDA, IREN In Focus",
+      "url": "https://stocktwits.com/news-articles/markets/equity/us-futures-mixed-after-rally-on-wednesday-mu-tsla-aapl-msft-app-nvda-iren-in-focus/cNG1WKIR9EY?.tsrc=rss",
+      "seen_at": "2026-11-06 09:00 KST"
+    },
+    {
+      "title": "IREN Stock Drops After Report Says It’s Behind Microsoft’s AI Spending Delay, As Investors Turn To Earnings",
+      "url": "https://stocktwits.com/news-articles/markets/equity/iren-stock-drops-after-report-says-it-s-behind-microsoft-s-ai-spending-delay-as-investors-turn-to-earnings/cNG15gfR9Ef?.tsrc=rss",
+      "seen_at": "2026-11-06 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",

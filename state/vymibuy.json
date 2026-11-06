@@ -1,13 +1,32 @@
 {
-  "updated_at": "2026-11-05T16:40:00+09:00",
-  "last_bar_date": "2026-11-04",
-  "armed": {"t1": true, "t2": true, "t3": true},
-  "fired": {"t1": false, "t2": false, "t3": false},
+  "updated_at": "2026-11-06T09:08:19.183419+09:00",
+  "last_bar_date": "2026-11-05",
+  "armed": {
+    "t1": true,
+    "t2": true,
+    "t3": true
+  },
+  "fired": {
+    "t1": false,
+    "t2": false,
+    "t3": false
+  },
   "chase_armed": true,
   "crash_active": false,
   "fx_good_armed": true,
   "fx_warn_armed": true,
   "last_div_date": "2026-09-18",
   "ttm": 3.721,
-  "fail": {}
+  "fail": {
+    "price": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "fx": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    }
+  }
 }

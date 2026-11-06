@@ -1,12 +1,11 @@
 {
-  "updated_at": "2026-11-05 15:20 KST",
+  "updated_at": "2026-11-06 09:00 KST",
   "zone": "STOP",
-  "price": 92400.0,
-  "below_hits": 19,
+  "price": 93300.0,
+  "below_hits": 20,
   "stop_sent": true,
   "shock_sent": false,
   "last_event_ids": [
-    "lge-3q26",
     "lg-3q26",
     "lgchem-3q26"
   ]
