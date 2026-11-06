@@ -104,6 +104,8 @@ from oneshot_pick import occurrences  # noqa: E402
 KST = timezone(timedelta(hours=9))
 API = "https://api.cron-job.org"
 TEMPLATE_JOB_ID = 8588894  # cwally port morning (09:00 KST)
+AFTERNOON_JOB_ID = 0  # set when known; fix_slot_oneoff patches oneoff_mode=auto
+B0_JOB_ID = 0  # 0090b0 15:41 KST; set when known
 DISPATCH_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches"
 ONESHOT_BODY = {"ref": "main", "inputs": {"job": "oneshot"}}
 TEMPLATE_BODY = {"ref": "main", "inputs": {"job": "morning", "oneoff_mode": "auto"}}
@@ -199,7 +201,7 @@ def check_oneshot_kst(at: datetime) -> list[str]:
 
 def call(method: str, path: str, key: str, payload: dict | None = None) -> dict:
     data = json.dumps(payload).encode() if payload is not None else None
-    for attempt in (1, 2):
+    for attempt in (1, 2, 3):
         req = urllib.request.Request(
             API + path,
             data=data,
@@ -214,8 +216,8 @@ def call(method: str, path: str, key: str, payload: dict | None = None) -> dict:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.loads(resp.read().decode() or "{}")
         except urllib.error.HTTPError as exc:
-            if exc.code == 429 and attempt == 1:
-                time.sleep(25)
+            if exc.code == 429 and attempt < 3:
+                time.sleep(40 * attempt)
                 continue
             # status only; the body could echo request data
             raise Stop(API_ERROR, f"cron-job.org {method} {path} -> HTTP {exc.code}")
@@ -863,69 +865,65 @@ def run_register_portlight(now: datetime) -> int:
     got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
     try:
         body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == PORTLIGHT_BODY
-    except ValueError:
-        body_ok = False
-    print("created:")
-    print_job(got)
-    print(f"body_ok={body_ok}")
-    return 0
+    def run_fix_slot_oneoff(now: datetime) -> int:
+    """pt20u: patch morning/afternoon/0090b0 on-time bodies to oneoff_mode=auto.
 
-
-def run_fix_slot_oneoff(now: datetime) -> int:
-    """pt20u: morning/afternoon/0090b0 on-time bodies must pass oneoff_mode=auto so
-    workflow_dispatch + oneoff_mode=dry can mean a true dry test without breaking live slots.
-    Touches only the morning template plus enabled port-alerts jobs whose title clearly
-    names morning/afternoon/0090b0 (avoids GET-every-job rate limits).
+    Does NOT list all jobs (rate limit). Patches known ids:
+      morning TEMPLATE_JOB_ID, plus AFTERNOON_JOB_ID / B0_JOB_ID when set,
+      plus any numeric ids in CRONJOB_JOB_IDS (treated as same three bodies by
+      reading each job once and matching inputs.job).
     """
     key = env("CRONJOB_API_KEY")
     if not key:
         raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
     wanted = {
-        "morning": {"ref": "main", "inputs": {"job": "morning", "oneoff_mode": "auto"}},
+        "morning": TEMPLATE_BODY,
         "afternoon": {"ref": "main", "inputs": {"job": "afternoon", "oneoff_mode": "auto"}},
         "0090b0": {"ref": "main", "inputs": {"job": "0090b0", "oneoff_mode": "auto"}},
     }
-    title_hints = {
-        "morning": ("morning", "09:00"),
-        "afternoon": ("afternoon", "15:20"),
-        "0090b0": ("0090b0", "15:41"),
-    }
-    res = call("GET", "/jobs", key)
-    if res.get("someFailed"):
-        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed)")
-    candidates: dict[str, int] = {"morning": TEMPLATE_JOB_ID}
-    for j in res.get("jobs") or []:
-        jid = int(j.get("jobId") or 0)
-        if not jid or not j.get("enabled"):
-            continue
-        if (j.get("url") or "").rstrip("/") != DISPATCH_URL:
-            continue
-        title = (j.get("title") or "").lower()
-        for job_name, hints in title_hints.items():
-            if any(h.lower() in title for h in hints):
-                candidates.setdefault(job_name, jid)
+    ids: list[int] = [TEMPLATE_JOB_ID]
+    for const in ("AFTERNOON_JOB_ID", "B0_JOB_ID"):
+        # module-level optional ints; 0 means unknown
+        v = globals().get(const) or 0
+        if int(v):
+            ids.append(int(v))
+    raw = (env("CRONJOB_JOB_IDS") or "").strip()
+    if raw:
+        for part in raw.split(","):
+            part = part.strip()
+            if part.isdigit():
+                ids.append(int(part))
+    # de-dupe preserve order
+    seen = set()
+    ordered = []
+    for jid in ids:
+        if jid and jid not in seen:
+            seen.add(jid)
+            ordered.append(jid)
     touched = 0
-    for job_name, jid in candidates.items():
-        target = wanted[job_name]
-        time.sleep(0.4)
+    for jid in ordered:
+        time.sleep(1.0)
         detail = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
         ext = detail.get("extendedData") or {}
         try:
             body = json.loads(ext.get("body") or "null")
         except json.JSONDecodeError:
             body = None
+        inputs = (body.get("inputs") or {}) if isinstance(body, dict) else {}
+        job_name = inputs.get("job")
+        if jid == TEMPLATE_JOB_ID:
+            job_name = "morning"
+        if job_name not in wanted:
+            print(f"skip: job {jid} title={detail.get('title')!r} body job={job_name!r}")
+            continue
+        target = wanted[job_name]
         if body == target:
             print(f"ok: job {jid} title={detail.get('title')!r} already {json.dumps(target)}")
-            continue
-        # only rewrite bodies that already target this job (or morning template)
-        inputs = (body.get("inputs") or {}) if isinstance(body, dict) else {}
-        if inputs.get("job") not in (None, job_name) and jid != TEMPLATE_JOB_ID:
-            print(f"skip: job {jid} title={detail.get('title')!r} body job={inputs.get('job')!r}")
             continue
         print(f"update: job {jid} title={detail.get('title')!r} {json.dumps(body)} -> {json.dumps(target)}")
         if env("CRONJOB_DRY_RUN") == "1":
             continue
-        time.sleep(0.4)
+        time.sleep(1.0)
         headers = dict(ext.get("headers") or {})
         call("PATCH", f"/jobs/{jid}", key, {
             "job": {
@@ -934,6 +932,13 @@ def run_fix_slot_oneoff(now: datetime) -> int:
                     "body": json.dumps(target, separators=(",", ":")),
                 }
             }
+        })
+        touched += 1
+    print(f"fix_slot_oneoff done touched={touched} ids={ordered}")
+    return 0
+
+
+     }
         })
         touched += 1
     print(f"fix_slot_oneoff done touched={touched} candidates={candidates}")
