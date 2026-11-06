@@ -2287,6 +2287,7 @@ jobs:
           python scripts/k402340_monitor.py "$MODE"
       - name: Run 309230 (ACE US Wide Moat equal-weight KRX close buy1 29,000 / buy2 28,600 / trim 32,800 + MOAT-QQQ 3M regime; k203780 19:00 slot; 2026-11-05 ~ 2027-05-05)
         # user delegated 2026-11-05 (t19u). Attached to the existing k203780 slot, no new cron. KRX regular close via scripts/krx_close.py; regime via Yahoo MOAT/QQQ. No dist notice, no MA20 recover.
+        # 2026-11-06 review add-on, same step: 60-session FunETF total-return NAV drawdown -10% (rearm -5%) and, only if 309230 and 360750 share dates and the TR definition, 60-session return gap <= -3pp (rearm -1pp). Human review. No new cron.
         # job=k309230 (or a manual k203780) dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k309230') }}
         env:

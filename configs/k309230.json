@@ -1,7 +1,7 @@
 {
   "name": "k309230",
   "title_prefix": "[309230]",
-  "display": "ACE 미국WideMoat동일가중(309230) KRX 종가 분할/축소 선 + MOAT-QQQ 3개월 상대강도 레짐",
+  "display": "ACE 미국WideMoat동일가중(309230) KRX 종가 분할/축소 선 + MOAT-QQQ 3개월 상대강도 레짐 + 60거래일 기준가 총수익 낙폭/360750 차이 사람 검토",
   "approval": "사용자 위임 2026-11-05 t19u (\"네 소신껏\"): 새 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음. 분배 알림과 MA20 회복 선은 넣지 않음.",
   "created_at": "2026-11-05T17:30:00+09:00",
   "code": "309230",
@@ -31,7 +31,7 @@
   "ntfy_server": "https://ntfy.sh",
   "job_id": "k309230",
   "schedule_kst": "19:00",
-  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일, 15:40 이후 확정 정규장 종가만(NXT 미포함). 수동 job=k309230 은 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 체인(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일, 15:40 이후 확정 정규장 종가만(NXT 미포함). 기준가 검토도 같은 슬롯. 수동 job=k309230 은 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
   "price_source": "scripts/krx_close.py regular_bars (Daum KRX 정규장 종가). 네이버 일봉(NXT 섞임) 안 씀. 레짐/참고는 Yahoo chart v8.",
   "window_start": "2026-11-05",
   "window_end": "2027-05-05",
@@ -86,7 +86,23 @@
     }
   ],
   "rearm_note": "buy1은 29,870원 이상, buy2는 29,458원 이상, trim은 31,816원 이하 종가 뒤 재무장. 선마다 1번.",
-  "first_run_note": "state 는 2026-11-05 종가 31,585원, 레짐 UP(MOAT-QQQ 약 +9.8%p)으로 시드. 세 선 무장, 레짐은 이미 UP이라 재진입 전까지 무발송.",
+  "first_run_note": "가격/레짐 state 는 2026-11-05 종가 31,585원, 레짐 UP(MOAT-QQQ 약 +9.8%p)으로 시드. 세 선 무장, 레짐은 이미 UP이라 재진입 전까지 무발송. 기준가 검토(review)는 시드 숫자를 넣지 않음. 첫 auto 실행이 그날 값을 기록만 하고 보내지 않음.",
+  "review": {
+    "note": "사람 검토 기준. 매수/매도 밸류에이션이 아님. 60거래일 창 하나만 씀(1개월 창 없음). 베타, 보유수량, 환율 선, 현재가 고정값 없음.",
+    "lookback_sessions": 60,
+    "max_gap_days": 6,
+    "chart_tol_pp": 0.2,
+    "drawdown": {"enter": -10.0, "rearm": -5.0, "priority": 3},
+    "relative": {
+      "code": "360750",
+      "isin": "KR7360750004",
+      "name": "TIGER 미국S&P500",
+      "enter_pp": -3.0,
+      "rearm_pp": -1.0,
+      "priority": 3
+    },
+    "source": "FunETF etfnav 기준가(fp) + etfdividend 분배금(divAmt, gijunYmd=분배락일). 총수익은 (fp+분배금)/전일 fp - 1 을 누적. etfchart nav 누적과 0.2%p 안이면 총수익으로 인정하고 360750도 같은 정의, 같은 날짜일 때만 차이를 봄. 아니면 기준가 가격 낙폭만 알리고 상대 비교는 생략. 달력 공백이 max_gap_days 보다 길면 거래일이 빠진 것으로 보고 신호를 내지 않음."
+  },
   "ends_kst": "2027-05-05 23:59",
   "ends_note": "첫 관측 구간 6개월. 뒤에는 조용히 끝, 필요하면 ends_kst 와 window_end 연장"
 }
