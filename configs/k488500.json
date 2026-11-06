@@ -1,0 +1,36 @@
+{
+  "name": "k488500",
+  "title_prefix": "[488500]",
+  "code": "488500",
+  "isin": "KR7488500000",
+  "name_kr": "TIGER 미국S&P500동일가중",
+  "created_at": "2026-11-06T16:55:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-06 (pt14u): 488500 RSP/SPY 브레드스 ±3%/20거래일, 종가 11,500/14,000, 분기 분배금 변경, KRX 마감 후 일일 요약. 소신껏.",
+  "holding": "시총가중 보완재 관심, 평균가 미입력",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 장 마감 후 슬롯(KRX 거래일 19:00 KST)에 부착. job=k488500 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "rules": {
+    "breadth_lookback_bars": 20,
+    "breadth_down_pct": -3.0,
+    "breadth_down_rearm_pct": -1.5,
+    "breadth_up_pct": 3.0,
+    "breadth_up_rearm_pct": 1.5,
+    "price_low": 11500,
+    "price_low_rearm": 11700,
+    "price_high": 14000,
+    "price_high_rearm": 13800,
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "1) Yahoo RSP/SPY 완료 일봉 종가 비율이 약 20거래일 전 대비 -3% 초과 하락 1번, -1.5% 위로 돌아오면 재무장. 제목 '488500/RSP/SPY'. 2) 같은 비율 +3% 초과 상승 1번, +1.5% 아래로 돌아오면 재무장. 3) 종가 11,500원 이하 교차 1번(재무장 >11,700), 14,000원 이상 교차 1번(재무장 <13,800). 4) 분기 분배금 금액이 state 직전 기록과 달라지면 1번(funetf ISIN KR7488500000 우선). 5) KRX 거래일 19:00 일일 요약: 종가/전일대비%, RSP/SPY 비율과 20거래일 변화, 11,500/14,000까지 거리.",
+  "facts_2026_11_06": "종가 11/6 12,425원(정규장 Daum). 최근 분배금 43원(funetf 분배락일 2026-10-29, ISIN KR7488500000). Yahoo RSP/SPY 비율 약 0.2959(2026-11-05), 20거래일 전(2026-10-08) 대비 약 +8.08%(이미 강화 구간이라 breadth_up_armed=false 로 시드).",
+  "sources": {
+    "price": "scripts/krx_close.py 정규장 종가(Daum, 실패 시 Naver minute 15:30)",
+    "breadth": "Yahoo Finance chart RSP, SPY 완료 일봉 종가 비율(query1, 실패 시 query2). 공통 거래일 정렬 후 약 20거래일 전 대비.",
+    "dist": "funetf.co.kr etfdividend (ISIN KR7488500000), 실패 시 etfro.com/etf/488500 또는 etf-lab.jp/488500"
+  },
+  "ends_kst": "2027-11-06 23:59",
+  "ends_note": "2027-11-06 까지(설치 1년). 밴드/브레드스 기준을 다시 정하면 연장"
+}
