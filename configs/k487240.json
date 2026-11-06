@@ -5,7 +5,7 @@
   "ticker": "487240",
   "name_kr": "KODEX AI전력핵심설비",
   "as_of": "2026-11-03",
-  "approval": "사용자 요청 2026-11-03 (pt48u): '487240을 관심 종목으로 알림 걸어 줘. 25,000, 22,000, 20,700, 20일선 회복 기준으로.'",
+  "approval": "사용자 요청 2026-11-03 (pt48u): '487240을 관심 종목으로 알림 걸어 줘. 25,000, 22,000, 20,700, 20일선 회복 기준으로.' | 2026-11-06 t119u: kr487240 병합, 19:00 krx_close 로 이전, ends 2027-05-31 유지.",
   "holding": "미보유 관심 종목. 계획: 3회 분할, 합계 포트폴리오 3~5%(약 600만~1,000만원), 최대 7%, 일반계좌(ISA 아님).",
   "fund_note": "삼성자산운용, 총보수 0.39%, iSelect AI전력핵심설비 지수. 상위 편입(2026-11-02 네이버): LS ELECTRIC 22.2%, 효성중공업 20.0%, HD현대일렉트릭 13.7%, LS 12.5%, 대한전선 8.1%, 산일전기 7.1%, 가온전선 4.7%, 일진전기 4.7%.",
   "plan": {
@@ -23,8 +23,8 @@
   },
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "15:40",
-  "schedule_note": "새 cron 없음. 기존 평일 15:40 0090b0 슬롯에 부착(227540, KAL 옆). 네이버 fchart 일봉(수정주가) 정규장 종가, 당일 행은 15:31 이후만. ETF 라 NXT 거래 없음. 수동 job=k487240 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 슬롯에 부착([036530] SNT홀딩스 바로 뒤). 2026-11-06 t119u: 15:40(0090b0) k487240 과 19:00 kr487240 을 이 하나로 합침. 정규장 종가+거래량 scripts/krx_close.py (Daum A487240 days, 실패 시 네이버 15:30 분봉). 네이버 일봉은 시간외 포함이라 안 씀. 당일 행은 15:40 이후만 확정. 수동 job=k487240 은 oneoff_mode=auto 가 아니면 selftest + dry.",
   "lines": [
     {
       "key": "l25000",
@@ -92,10 +92,10 @@
   },
   "reference_2026_11_03": "종가 25,075원, 52주 저점 21,799원(장중, 종가 저점 21,989원 2025-12-01), 52주 고점 64,617원, 20일선 약 28,641원, 200일선 약 36,297원",
   "sources": {
-    "price": "https://fchart.stock.naver.com/sise.nhn?symbol=487240&timeframe=day&count=260&requestType=0"
+    "price": "scripts/krx_close.py regular_bars(487240) (was naver fchart; retired t119u)"
   },
   "ends_kst": "2027-05-31 23:59",
-  "ends_note": "평일 15:40 확정 종가 점검, 2027-05-31 까지",
+  "ends_note": "KRX 거래일 19:00, 2027-05-31까지. 뒤에는 조용히 끝남",
   "funding_rule": {
     "rule": "1차, 2차, 3차 매수 검토 알림 본문 첫 항목. 하이닉스+삼성 합산 비중이 40% 초과라 신규 자금으로 사지 않고 MEMEXIT 일부 매도 자금으로만 비중 교체.",
     "combined_weight_pct": 43,
@@ -117,5 +117,34 @@
       "approval": "사용자 분석 붙여 넣기 2026-11-03 (pt51u, 판단 변경 조건: 11월 중순 관세청 품목별 통계)",
       "date_note": "관세청 확정치는 매월 15일 발표(관세청 안내, 9월 확정치 2026-10-15 발표). 2026-11-15 가 일요일이라 그 다음 첫 평일 2026-11-16(월) 15:40 슬롯."
     }
-  ]
+  ],
+  "price_source": "정규장 종가와 거래량 scripts/krx_close.py. 네이버 일봉 금지.",
+  "support": {
+    "level": 19000,
+    "days": 3,
+    "vol_days": 20,
+    "priority": 3,
+    "title": "19,000원 지지 확인",
+    "note": "종가 19,000원 이상이 3거래일 연속이고 그날 거래량이 직전 20거래일 평균보다 작으면 p3 1번. 종가 19,000원 미만 뒤 재무장."
+  },
+  "low": {
+    "level": 19000,
+    "priority": 4,
+    "rearm_above": 19800,
+    "title": "19,000원 하단 이탈",
+    "note": "종가 19,000원 미만이면 p4 1번. 종가 19,800원 초과 뒤 재무장. 같은 날 20,700 중단선과 같이 걸리면 한 통."
+  },
+  "recovery": {
+    "level": 22680,
+    "priority": 3,
+    "title": "22,680원 회복 (11/5 종가)",
+    "note": "종가 22,680원 초과면 p3 1번만. 재무장 안 함. 같은 날 22,000 2차 매수와 같이 걸리면 한 통."
+  },
+  "context": "상위 편입(LS ELECTRIC, 효성중공업, HD현대일렉트릭) 비중이 높아 개별 종목 충격에 민감하고, 미국 데이터센터 전력 규제 변화가 전력설비 수요 가정에 영향을 줄 수 있음.",
+  "seed": {
+    "day": "2026-11-06",
+    "close": 20490,
+    "volume": 5815656,
+    "note": "병합 seed: 11/6 종가 20,490. ladder armed flags kept from prior state. support/low armed, recovery waiting."
+  }
 }

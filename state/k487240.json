@@ -10,12 +10,18 @@
     "2026-11-06",
     20490.0
   ],
+  "last_volume": 5815656.0,
   "ma20": 26739.0,
   "ma200": 36271.71,
-  "updated_at": "2026-11-06 15:41 KST",
+  "support_armed": true,
+  "above_streak": 3,
+  "low_armed": true,
+  "recovery_sent": null,
+  "updated_at": "2026-11-06 19:55 KST",
   "reminders_sent": {},
   "last_sent": {
     "at": "2026-11-06 15:41 KST",
     "title": "[487240] 487240 종가 20,490 | 추가 매수 중단선 (52주 저점 -5%)"
-  }
+  },
+  "merge_note": "t119u: kept ladder armed from k487240; imported support_armed/above_streak/low_armed/recovery_sent from kr487240 seed 11/6 close 20490."
 }

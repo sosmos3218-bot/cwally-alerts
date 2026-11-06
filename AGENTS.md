@@ -109,6 +109,7 @@ push 전 제목 티커 검사: `python scripts/title_ticker_check.py` 의 전체
 첫 줄은 기존 검사 `PASS` 또는 `FAIL (N)` (아래 실패 줄), 다음 줄은 감사 요약, 그 아래 `STATIC` 줄은 차단, `report-only` 줄은 보고만 한다. 차단이면 `title ticker audit BLOCK: static N -> exit 1` 이 찍히고 종료 코드는 1 이다. 마지막 줄이나 tail 만 보고 판단하지 않는다.
 N 이 1 이상이면 push 하지 않는다. 다른 사람 파일의 실패도 같다: 고치거나 보고하고, 무시하고 push 하지 않는다.
 감사 차단 범위는 코드 제목과 아직 안 보낸 outbox 제목이다 (2026-11-05 t111u). 보낸 기록(archive)과 본문 첫 줄 위반은 보고만 한다. 새 outbox 브리프 제목에도 티커를 넣는다. 예외는 `AUDIT_EXCEPTIONS`(파일과 제목 패턴), 투자 무관 제외는 `AUDIT_NON_INVEST` 에만 두고 추가는 주인 승인 후. `--report-only` 또는 `TITLE_TICKER_REPORT_ONLY=1` 은 디버깅용 비차단, `--strict` 는 보낸 기록 위반도 종료 코드 1, `--no-audit` 는 기존 검사만.
+[487240] 은 19:00 k203780 슬롯 하나(k487240). 정규장 종가+거래량은 scripts/krx_close.py. 15:40 네이버 일봉과 별도 kr487240 은 2026-11-06 t119u 에서 합쳐 제거함. ends 2027-05-31.
 CI: `.github/workflows/title-ticker-check.yml` 이 main push(scripts, trend_monitor, outbox, configs 변경)마다 같은 검사를 돌리고, 차단 위반이면 cwally-ops 에 KST 하루 한 번 `[OPS] SPY 제목 티커 검사 위반 N건` 을 보낸 뒤 실패로 끝난다 (2026-11-05 t112u).
 
 Template: `configs/alert_copy.json`. Helper: `scripts/ntfy_util.py`.
