@@ -27,6 +27,7 @@ ZONE_KO = {
     "NONEW": "41~45만",
     "SELL2": "46~50만",
     "EXIT": "50만위",
+    "BELOW": "20만미만",
     "DATA_FAIL": "시세 조회 실패",
 }
 ACTION = {
@@ -40,6 +41,7 @@ ACTION = {
     "NONEW": "관찰",
     "SELL2": "익절",
     "EXIT": "익절",
+    "BELOW": "관찰",
     "DATA_FAIL": "관찰",
 }
 DO_NOW = {
@@ -53,6 +55,7 @@ DO_NOW = {
     "NONEW": "신규 없음. 38만 재이탈시 감액.",
     "SELL2": "2차 익절.",
     "EXIT": "50만 위 정리.",
+    "BELOW": "20만 미만 감액 조건은 꺼져 있습니다. 다른 구간 선만 보세요.",
     "DATA_FAIL": "시세를 다시 확인하세요.",
 }
 WATCH_LINE = {
@@ -66,6 +69,7 @@ WATCH_LINE = {
     "NONEW": "38만/41만",
     "SELL2": "46만",
     "EXIT": "50만",
+    "BELOW": "20만",
     "DATA_FAIL": "시세",
 }
 
@@ -103,11 +107,29 @@ def yahoo_close(ticker: str):
         return None
 
 
-def zone(price):
+def _reduce_cut(bands):
+    """Legacy sub-200k REDUCE. Inactive unless bands['reduce_enabled'] is true.
+
+    reduce_lt stays in the config as a record. With the flag off, a price under
+    buy1_lo (200000) is BELOW: no 감액 and no 20만하회. Other bands are untouched.
+    """
+    bands = bands or {}
+    if not bands.get("reduce_enabled"):
+        return None
+    raw = bands.get("reduce_lt")
+    if raw is None:
+        return None
+    return float(raw)
+
+
+def zone(price, bands=None):
     if price is None:
         return "DATA_FAIL"
-    if price < 200000:
+    cut = _reduce_cut(bands)
+    if cut is not None and price < cut:
         return "REDUCE"
+    if price < 200000:
+        return "BELOW"
     if price < 240000:
         return "BUY1"
     if price < 280000:
@@ -136,6 +158,8 @@ def zone_label(z, price):
         return ZONE_KO[z]
     if z == "REDUCE":
         return "20만미만"
+    if z == "BELOW":
+        return "20만미만"
     if z == "BUY1":
         return "20~24만"
     if z == "BUY2":
@@ -161,11 +185,12 @@ def zone_label(z, price):
     return ZONE_KO[z]
 
 
-def warnings(price, prev_price):
+def warnings(price, prev_price, bands=None):
     out = []
     if price is None:
         return out
-    if price < 200000:
+    cut = _reduce_cut(bands)
+    if cut is not None and price < cut:
         out.append("20만하회")
     if price >= 290000:
         out.append("29만돌파(종가)")
@@ -437,8 +462,46 @@ def run_earnings(cfg: dict, now: datetime, state: dict) -> dict:
     return state
 
 
+def alert_title(z, price) -> str:
+    act = ACTION[z]
+    man = None if price is None else round(price / 10000, 2)
+    man_txt = f"{man}만" if man is not None else "시세없음"
+    return f"[SEC] 005930 {act} {man_txt} {zone_label(z, price)}"
+
+
+def alert_priority(z, warn) -> int:
+    warn = warn or []
+    if z in {"REDUCE", "EXIT"} or "20만하회" in warn or "50만과열" in warn:
+        return 5
+    if warn or z in {"SELL1", "SELL2"}:
+        return 4
+    return 3
+
+
+def price_event(mode, z, warn, prev_zone, prev_warn) -> bool:
+    """True when the price alert has something new to say. Earnings are separate.
+
+    BELOW is the disabled sub-200k REDUCE band: no weekly status and no zone-change
+    send. A different warning (38만재이탈 and the rest) can still send.
+    """
+    warn = warn or []
+    prev_warn = prev_warn or []
+    if z == "BELOW":
+        other = [w for w in warn if w != "20만하회"]
+        prev_other = [w for w in prev_warn if w != "20만하회"]
+        return bool(other) and other != prev_other
+    if z == "DATA_FAIL":
+        return True
+    if mode == "weekly":
+        return True
+    zone_changed = bool(prev_zone) and prev_zone != z
+    return bool(zone_changed or (warn and warn != prev_warn))
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     now = datetime.now(KST)
     if mode == "auto":
@@ -462,30 +525,25 @@ def main() -> int:
             pass
 
     price = yahoo_close(cfg["ticker"])
-    z = zone(price)
+    bands = cfg.get("bands") or {}
+    z = zone(price, bands)
     if z == "DATA_FAIL" and prev.get("zone"):
         z = prev["zone"]
         price = prev.get("price")
     act = ACTION[z]
     zname = zone_label(z, price)
-    warn = warnings(price, prev.get("price"))
+    warn = warnings(price, prev.get("price"), bands)
     warn_txt = ", ".join(warn) if warn else "경고 없음."
     man = None if price is None else round(price / 10000, 2)
     man_txt = f"{man}만" if man is not None else "시세없음"
     line1 = f"{act} - {man_txt}, {zname}."
     line2 = f"오늘 장중 {WATCH_LINE[z]} 선을 먼저 보고 {DO_NOW[z]}"
 
-    zone_changed = bool(prev.get("zone")) and prev.get("zone") != z
     today = now.strftime("%Y-%m-%d")
     already = prev.get("last_alert_date") == today
-    send = False
-    if z == "DATA_FAIL":
-        send = not already
-    elif mode == "weekly":
-        send = not already
-    elif zone_changed or (warn and warn != (prev.get("warn") or [])):
-        send = not already
-    else:
+    event = price_event(mode, z, warn, prev.get("zone"), prev.get("warn") or [])
+    send = event and not already
+    if not event:
         print("no sec event; silent")
 
     display = cfg.get("display", "삼성전자")
@@ -503,8 +561,8 @@ def main() -> int:
     msg = "\n".join(lines)
     print(msg)
     if send:
-        title = f"[SEC] 005930 {act} {man_txt} {zname}"
-        pri = 5 if z in {"REDUCE", "EXIT"} or "20만하회" in warn or "50만과열" in warn else (4 if warn or z in {"SELL1", "SELL2"} else 3)
+        title = alert_title(z, price)
+        pri = alert_priority(z, warn)
         ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, pri, "chart_with_upwards_trend")
 
     prev = run_earnings(cfg, now, prev)
@@ -520,6 +578,213 @@ def main() -> int:
     )
     STATE_PATH.write_text(json.dumps(prev, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
+
+
+def selftest() -> int:
+    """Offline. No ntfy, no state write. Proves sub-200k REDUCE is off and the other bands stay."""
+    import importlib.util
+
+    sec_before = STATE_PATH.read_bytes()
+    p93 = ROOT / "state" / "005930.json"
+    b93 = p93.read_bytes() if p93.exists() else None
+    sent = {"n": 0}
+
+    def _no_publish(*a, **k):
+        sent["n"] += 1
+        raise RuntimeError("selftest tried to publish")
+
+    orig_pub = ntfy_publish
+    globals()["ntfy_publish"] = _no_publish
+    ok = True
+
+    def check(label, got, want):
+        nonlocal ok
+        good = got == want
+        ok &= good
+        print(f"{'ok  ' if good else 'FAIL'} {label}: got={got!r} want={want!r}")
+
+    try:
+        cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+        bands = cfg["bands"]
+        check("reduce_enabled off", bands.get("reduce_enabled"), False)
+        for key, want in {
+            "reduce_lt": 200000,
+            "buy1_lo": 200000,
+            "buy1_hi": 240000,
+            "buy2_lo": 240000,
+            "buy2_hi": 280000,
+            "hold_lo": 290000,
+            "hold_hi": 320000,
+            "sell1_lo": 330000,
+            "sell1_hi": 380000,
+            "break38": 380000,
+            "nonew_lo": 410000,
+            "nonew_hi": 450000,
+            "sell2_lo": 460000,
+            "sell2_hi": 500000,
+            "exit_ge": 500000,
+            "chase_ban": 290000,
+        }.items():
+            check(f"band {key}", bands.get(key), want)
+
+        ladder = [
+            (None, "DATA_FAIL"),
+            (0, "BELOW"),
+            (100000, "BELOW"),
+            (176999, "BELOW"),
+            (177000, "BELOW"),
+            (185000, "BELOW"),
+            (198000, "BELOW"),
+            (199999, "BELOW"),
+            (199999.99, "BELOW"),
+            (200000, "BUY1"),
+            (239999.99, "BUY1"),
+            (240000, "BUY2"),
+            (279999.99, "BUY2"),
+            (280000, "WATCH"),
+            (289999.99, "WATCH"),
+            (290000, "HOLD"),
+            (319999.99, "HOLD"),
+            (320000, "WATCH"),
+            (329999.99, "WATCH"),
+            (330000, "SELL1"),
+            (379999.99, "SELL1"),
+            (380000, "HOLD38"),
+            (409999.99, "HOLD38"),
+            (410000, "NONEW"),
+            (449999.99, "NONEW"),
+            (450000, "WATCH"),
+            (459999.99, "WATCH"),
+            (460000, "SELL2"),
+            (499999.99, "SELL2"),
+            (500000, "EXIT"),
+            (600000, "EXIT"),
+        ]
+        for px, want in ladder:
+            check(f"zone {px}", zone(px, bands), want)
+            if want != "DATA_FAIL":
+                check(f"no 20만하회 at {px}", "20만하회" in warnings(px, None, bands), False)
+                title = alert_title(zone(px, bands), px)
+                check(f"title not 감액 at {px}", ("감액" in title, title.startswith("[SEC] 005930 ")), (False, True))
+
+        check("200000 label", zone_label("BUY1", 200000), "20~24만")
+        check("280000 label", zone_label("WATCH", 280000), "28~29만")
+        check("320000 label", zone_label("WATCH", 320000), "32~33만")
+        check("450000 label", zone_label("WATCH", 450000), "45~46만")
+        check("BUY1 action", ACTION["BUY1"], "진입")
+        check("SELL1 action", ACTION["SELL1"], "익절")
+        check("EXIT action", ACTION["EXIT"], "익절")
+        check("REDUCE copy kept but not selected", (DO_NOW["REDUCE"], ACTION[zone(198000, bands)]), ("신규 금지. 비중을 줄이세요.", "관찰"))
+
+        check("warn 250000", warnings(250000, None, bands), [])
+        check("warn 290000", warnings(290000, None, bands), ["29만돌파(종가)"])
+        check("warn 330000", warnings(330000, None, bands), ["29만돌파(종가)", "33만감액"])
+        check("warn 38만재이탈", warnings(379999, 380000, bands), ["29만돌파(종가)", "33만감액", "38만재이탈"])
+        check("warn 380000 no rebreak", "38만재이탈" in warnings(380000, 380000, bands), False)
+        check("warn 410000", warnings(410000, None, bands), ["29만돌파(종가)", "33만감액", "41만재평가"])
+        check("warn 460000", warnings(460000, None, bands), ["29만돌파(종가)", "33만감액", "41만재평가", "46만익절"])
+        check("warn 500000", warnings(500000, None, bands), ["29만돌파(종가)", "33만감액", "41만재평가", "46만익절", "50만과열"])
+        w_below = warnings(150000, 400000, bands)
+        check("below keeps 38만 only", w_below, ["38만재이탈"])
+        check("below 38만 still sends", price_event("event", "BELOW", w_below, "BELOW", []), True)
+        check("below 38만 title is not 감액", "감액" in alert_title("BELOW", 150000), False)
+        check("below 38만 priority is 4", alert_priority("BELOW", w_below), 4)
+        check("below 38만 repeat silent", price_event("event", "BELOW", w_below, "BELOW", w_below), False)
+
+        def would_send(mode, z, warn, prev_z, prev_w, already):
+            return price_event(mode, z, warn, prev_z, prev_w) and not already
+
+        check("sub200 event from BUY1 silent", would_send("event", "BELOW", [], "BUY1", [], False), False)
+        check("sub200 weekly silent", would_send("weekly", "BELOW", [], "BELOW", [], False), False)
+        check("weekly BUY1 still sends", would_send("weekly", "BUY1", [], "BUY1", [], False), True)
+        check("weekly already blocks send", would_send("weekly", "HOLD", ["29만돌파(종가)"], "HOLD", ["29만돌파(종가)"], True), False)
+        check("weekly HOLD sends", would_send("weekly", "HOLD", ["29만돌파(종가)"], "HOLD", ["29만돌파(종가)"], False), True)
+        check("event same zone silent", price_event("event", "BUY1", [], "BUY1", []), False)
+        check("event BUY1 to BUY2 sends", price_event("event", "BUY2", [], "BUY1", []), True)
+        check("event BELOW back to BUY1 sends", price_event("event", "BUY1", [], "BELOW", []), True)
+        check("event warn change sends", price_event("event", "SELL1", ["29만돌파(종가)", "33만감액", "38만재이탈"], "SELL1", ["29만돌파(종가)", "33만감액"]), True)
+        check("DATA_FAIL is an event", price_event("event", "DATA_FAIL", [], "BUY1", []), True)
+        check("EXIT priority 5", alert_priority("EXIT", warnings(500000, None, bands)), 5)
+        check("SELL2 priority 4", alert_priority("SELL2", warnings(460000, None, bands)), 4)
+        check("BUY2 priority 3", alert_priority("BUY2", []), 3)
+
+        on = dict(bands, reduce_enabled=True)
+        check("flag on restores REDUCE", zone(199999, on), "REDUCE")
+        check("flag on 20만하회", warnings(199999, None, on), ["20만하회"])
+        check("flag on 200000 still BUY1", zone(200000, on), "BUY1")
+        check("flag on zone change would send", price_event("event", zone(199999, on), warnings(199999, None, on), "BUY1", []), True)
+        check("flag on title is 감액", "감액" in alert_title("REDUCE", 199999), True)
+        check("flag on priority 5", alert_priority("REDUCE", ["20만하회"]), 5)
+
+        earn = cfg["earnings"]
+        check("earn CUT", verdict(earn, {"op": 100, "eps": None, "q4_op": None, "q4_note": ""}), "CUT")
+        check("earn under cons CUT", verdict(earn, {"op": 110, "eps": 14000, "q4_op": None, "q4_note": ""}), "CUT")
+        check("earn UP", verdict(earn, {"op": 114, "eps": 14242, "q4_op": 120, "q4_note": ""}), "UP")
+        check("earn HOLD", verdict(earn, {"op": 111, "eps": 14000, "q4_op": 120, "q4_note": ""}), "HOLD")
+        check("earn PENDING", verdict(earn, {"op": None, "eps": None}), "PENDING")
+
+        spec = importlib.util.spec_from_file_location("m005930", ROOT / "scripts" / "005930_monitor.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        c93 = mod.load_cfg("005930")
+        got_lines = [(ln["key"], ln["op"], ln["level"], ln["title"]) for ln in c93["lines"]]
+        check("005930 lines", got_lines, [
+            ("buy1", "le", 210000, "1차 매수 30%"),
+            ("buy2", "le", 198000, "2차 매수 40%"),
+            ("buy3", "le", 185000, "3차 매수 30%"),
+            ("trim1", "ge", 260000, "1차 축소 30%"),
+            ("trim2", "ge", 295000, "2차 축소 40%"),
+            ("stop", "lt", 177000, "손절선 이탈"),
+        ])
+        ea = c93["earn_auto"]
+        check("005930 LTA word", "장기공급계약" in ea["item1"]["lta_words"], True)
+        check("005930 CAPEX re", "CAPEX" in ea["item2"]["capex_re"], True)
+        check("005930 ASP -10", ea["item3"]["asp_drop_pct"], -10.0)
+        check("005930 China names", ("YMTC" in ea["item3"]["china"]["names_re"], "CXMT" in ea["item3"]["china"]["names_re"]), (True, True))
+        check("005930 China not auto-negative", ea["item3"]["china"]["counts_as_negative"], False)
+
+        def fired(close):
+            st = mod.default_state(c93)
+            st["last_day"] = "2026-11-01"
+            ev = mod.eval_lines(c93, st, [{"day": "2026-11-02", "close": close}], "2026-11-02", datetime(2026, 11, 6, 19, tzinfo=KST))
+            return [(e["kind"], e["key"]) for e in ev]
+
+        check("005930 210000 buy1", fired(210000), [("line", "buy1")])
+        check("005930 198000 buy1+buy2", fired(198000), [("line", "buy1"), ("line", "buy2")])
+        check("005930 185000 three buys", fired(185000), [("line", "buy1"), ("line", "buy2"), ("line", "buy3")])
+        check("005930 177000 stop silent", fired(177000), [("line", "buy1"), ("line", "buy2"), ("line", "buy3")])
+        check("005930 176999 stop", fired(176999), [("line", "buy1"), ("line", "buy2"), ("line", "buy3"), ("line", "stop")])
+        check("005930 260000 trim1", fired(260000), [("line", "trim1"), ("extra", "up220k"), ("extra", "up230k")])
+        check("005930 295000 trim1+trim2", fired(295000), [("line", "trim1"), ("line", "trim2"), ("extra", "up220k"), ("extra", "up230k")])
+        check("005930 210001 no line yet", fired(210001), [])
+
+        now = datetime(2026, 10, 30, 19, tzinfo=KST)
+        no_china = lambda c, n: {"status": mod.ec.OK, "fail": None, "hits": [], "n": 0}  # noqa: E731
+        ok_txt = "\n".join([
+            "이에 전분기 대비 회사 D램 평균판매가격(ASP)은 약 20%, 낸드 ASP는 10% 후반 상승했다.",
+            "2026년 연간 시설 투자 규모는 84조원으로 전년 대비 증가할 것으로 예상된다.",
+            "2027년 HBM 공급 물량은 목표 수준의 가격으로 협상이 완료돼 이미 완판된 상태다.",
+            "일부 고객과는 장기공급계약을 완료했고 추가 고객과 협상을 진행 중이다.",
+        ])
+        warn_txt = "\n".join([
+            "이에 전분기 대비 회사 D램 ASP는 10% 초반 하락했고 낸드 ASP는 한 자릿수 후반 하락했다.",
+            "2027년 시설 투자는 큰 폭으로 증가할 것으로 예상된다.",
+            "4분기 D램 가격은 하락 전환이 불가피할 것으로 보인다.",
+            "일부 고객과 2027년 HBM 장기공급계약 물량을 재협상하고 있다.",
+        ])
+        check("005930 LTA/CAPEX/ASP ok", [i["status"] for i in mod.earn_judge(ea, ok_txt, now, no_china)["items"]], [mod.ec.OK, mod.ec.OK, mod.ec.OK])
+        check("005930 LTA/CAPEX/ASP warn", [i["status"] for i in mod.earn_judge(ea, warn_txt, now, no_china)["items"]], [mod.ec.WARN, mod.ec.WARN, mod.ec.WARN])
+
+        check("no publish", sent["n"], 0)
+        import hashlib
+        check("sec state untouched", hashlib.sha256(STATE_PATH.read_bytes()).hexdigest(), hashlib.sha256(sec_before).hexdigest())
+        now93 = p93.read_bytes() if p93.exists() else None
+        check("005930 state untouched", hashlib.sha256(now93).hexdigest() if now93 is not None else None, hashlib.sha256(b93).hexdigest() if b93 is not None else None)
+    finally:
+        globals()["ntfy_publish"] = orig_pub
+
+    print("SELFTEST", "PASS" if ok else "FAIL")
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

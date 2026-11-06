@@ -16,6 +16,8 @@
   "foreign_share_band": "46",
   "bands": {
     "reduce_lt": 200000,
+    "reduce_enabled": false,
+    "reduce_note": "2026-11-06 사용자 승인: 20만 미만 REDUCE(감액, 20만하회)만 비활성. [005930] 매수 210000/198000/185000과 충돌. reduce_lt 숫자는 기록용이고 reduce_enabled가 true일 때만 감액. 다른 구간과 실적 판정은 그대로.",
     "buy1_lo": 200000,
     "buy1_hi": 240000,
     "buy2_lo": 240000,
