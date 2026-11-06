@@ -428,7 +428,7 @@ def selftest() -> int:
     st = init()
     check("fx missing: tranche still fires with fallback wording", t(st, 99.0, fx=None), [f"{TAG} 매수선 1차 $99.5 | 종가 $99.00, 매수 검토(환율 확인 못 함, 직접 확인)"])
     st = init()
-    check("all sources down: silent, state kept", (evaluate(cfg, st, {"bars": None, "divs": None, "fx": None}), st["last_bar_date"]), ([], "2026-11-04"))
+    check("all sources down: silent, state kept", (evaluate(cfg, st, {"bars": None, "divs": None, "fx": None}), st["last_bar_date"]), ([], state_file["last_bar_date"]))
     st = init()
     f1 = fail_alerts(cfg, st, {"fx": "x"}, "2026-11-06")
     f1b = fail_alerts(cfg, st, {"fx": "x"}, "2026-11-06")
