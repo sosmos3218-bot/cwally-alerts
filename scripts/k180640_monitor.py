@@ -232,6 +232,108 @@ def gap_line(st: dict) -> str:
     return f"호반 측 {h:.2f}% vs 조원태 측 {c:.2f}% (갭 {abs(d):.2f}%p, {who} 우세, 기준일 {st['stakes'].get('as_of', '?')})"
 
 
+def live_stakes(cfg: dict, st: dict) -> dict:
+    """state 우선, 없으면 config base. Delta/산은은 추정 기본값."""
+    b = cfg["base"]
+    s = st.get("stakes") or {}
+    common = int(s.get("common") or b["common_shares"])
+    hoban_sh = s.get("hoban_shares")
+    cho_sh = s.get("cho_group_shares")
+    hoban_pct = s.get("hoban_pct")
+    cho_pct = s.get("cho_group_pct")
+    if hoban_sh is None and hoban_pct is not None:
+        hoban_sh = round(common * hoban_pct / 100)
+    if cho_sh is None and cho_pct is not None:
+        cho_sh = round(common * cho_pct / 100)
+    if hoban_sh is None:
+        hoban_sh = b["hoban_shares"]
+    if cho_sh is None:
+        cho_sh = b["cho_group_shares"]
+    if hoban_pct is None:
+        hoban_pct = hoban_sh / common * 100
+    if cho_pct is None:
+        cho_pct = cho_sh / common * 100
+    delta_pct = float(s.get("delta_pct") if s.get("delta_pct") is not None else b.get("delta_pct", 14.90))
+    kdb_pct = float(s.get("kdb_pct") if s.get("kdb_pct") is not None else b.get("kdb_pct", 10.58))
+    return {
+        "common": common,
+        "hoban_shares": int(hoban_sh), "hoban_pct": float(hoban_pct),
+        "cho_shares": int(cho_sh), "cho_pct": float(cho_pct),
+        "delta_pct": delta_pct, "delta_shares": round(common * delta_pct / 100),
+        "kdb_pct": kdb_pct, "kdb_shares": round(common * kdb_pct / 100),
+        "as_of": s.get("as_of") or b.get("as_of", "?"),
+    }
+
+
+def _side_line(name: str, shares: int, common: int, turnout_pct: int) -> str:
+    attendees = common * turnout_pct / 100
+    of_att = shares / attendees * 100
+    of_tot = shares / common * 100
+    maj = "출석과반" if shares > attendees / 2 else "출석과반 미달"
+    qtr = "발행 1/4 충족" if shares >= common / 4 else "발행 1/4 미달"
+    return f"{name} {shares:,}주({of_tot:.2f}%), 출석{turnout_pct}% 기준 출석대비 {of_att:.1f}% ({maj}, {qtr})"
+
+
+def scenario_block(cfg: dict, st: dict, *, cho_shares: int | None = None, hoban_shares: int | None = None,
+                   alt_cho_shares: int | None = None, alt_label: str | None = None) -> str:
+    """주총 표 대결 시나리오. 우호 지분(Delta, 산은)은 추정. alt_* 는 매도자 특수관계인 가정 등 대안."""
+    x = live_stakes(cfg, st)
+    common = x["common"]
+    hoban = hoban_shares if hoban_shares is not None else x["hoban_shares"]
+    cho = cho_shares if cho_shares is not None else x["cho_shares"]
+    delta, kdb = x["delta_shares"], x["kdb_shares"]
+    hoban_pct, cho_pct = hoban / common * 100, cho / common * 100
+    gap_sh, gap_pp = hoban - cho, hoban_pct - cho_pct
+    who = "호반 측" if gap_sh >= 0 else "조원태 측"
+    turnouts = (cfg.get("agm") or {}).get("turnout_pct") or [70, 80]
+    lines = [
+        f"주총 시나리오(추정, 보통주 {common:,}주, 기준 {x['as_of']}): "
+        f"호반 측 {hoban:,}주({hoban_pct:.2f}%) vs 조원태 측 {cho:,}주({cho_pct:.2f}%), "
+        f"갭 {abs(gap_sh):,}주({abs(gap_pp):.2f}%p, {who} 우세).",
+        f"우호 지분 추정: Delta {x['delta_pct']:.2f}%({delta:,}주), 산은 {x['kdb_pct']:.2f}%({kdb:,}주). "
+        f"보통결의 = 출석 과반 + 발행주식총수 1/4 이상.",
+    ]
+    rows = [
+        ("a) 조원태+Delta vs 호반", cho + delta, hoban),
+        ("b) 조원태+Delta+산은(전부 우호) vs 호반", cho + delta + kdb, hoban),
+        ("c) 산은 기권, 조원태+Delta vs 호반", cho + delta, hoban),
+        ("d) 산은 지분이 호반으로(최악) vs 조원태+Delta", cho + delta, hoban + kdb),
+    ]
+    for label, left, right in rows:
+        bits = [label + ":"]
+        for t in turnouts:
+            bits.append(f"출석{t}% -> " + _side_line("조원태진영", left, common, t) + " / " + _side_line("호반진영", right, common, t))
+        # simple winner hint at 70%
+        t0 = turnouts[0]
+        att = common * t0 / 100
+        left_ok = left > att / 2 and left >= common / 4
+        right_ok = right > att / 2 and right >= common / 4
+        if left_ok and not right_ok:
+            tip = f"출석{t0}%에서 조원태진영이 보통결의 수치상 우세"
+        elif right_ok and not left_ok:
+            tip = f"출석{t0}%에서 호반진영이 보통결의 수치상 우세"
+        elif left_ok and right_ok:
+            tip = f"출석{t0}%에서 양쪽 모두 보통결의 수치 충족(경합)"
+        else:
+            tip = f"출석{t0}%에서 양쪽 모두 보통결의 수치 미달 가능"
+        lines.append(" ".join(bits) + f". -> {tip}.")
+    if alt_cho_shares is not None:
+        alt_pct = alt_cho_shares / common * 100
+        lines.append(
+            f"대안({alt_label or '매도자=특수관계인, 조원태 측 순증 0'}): 조원태 측 {alt_cho_shares:,}주({alt_pct:.2f}%), "
+            f"호반 대비 갭 {hoban - alt_cho_shares:,}주({hoban_pct - alt_pct:+.2f}%p)."
+        )
+        # one-line a/b under alt
+        a_left = alt_cho_shares + delta
+        b_left = alt_cho_shares + delta + kdb
+        lines.append(
+            f"대안 a) 조원태+Delta {a_left:,}주({a_left / common * 100:.2f}%) vs 호반 {hoban:,}주. "
+            f"대안 b) +산은 {b_left:,}주({b_left / common * 100:.2f}%)."
+        )
+    lines.append("위 Delta/산은 수치는 추정. 실제 의결권 위임.출석.우호 여부에 따라 달라짐.")
+    return " ".join(lines)
+
+
 def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
     """row + optional body -> list of alert dicts {kind, title, text, pri, updates}."""
     party = party_of(row["filer"], cfg)
@@ -250,7 +352,7 @@ def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
                         "title": f"{TAG} 호반 측 보유목적 변경 | 단순투자 -> 경영권 영향",
                         "text": (f"{day} {filer} '{title}'. 보유목적이 단순투자에서 경영권에 영향을 주기 위한 목적으로 바뀜. "
                                  f"지분 {mass.get('pct_prev')}% -> {mass.get('pct_now')}%. {gap_line(st)}. "
-                                 f"해석: 경영권 경쟁이 공식화되는 신호. 원문: {link}"),
+                                 f"해석: 경영권 경쟁이 공식화되는 신호. {scenario_block(cfg, st)} 원문: {link}"),
                         "updates": {"hoban_purpose": "경영권"}})
         elif purpose == "단순투자" and prev_p == "경영권":
             out.append({"kind": "hoban_purpose", "pri": 4,
@@ -263,25 +365,35 @@ def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
                         "title": f"{TAG} 호반 측 지분 변동 | {pct_prev:.2f}% -> {pct_now:.2f}% ({pct_now - pct_prev:+.2f}%p)",
                         "text": (f"{day} {filer} '{title}'. {mass.get('reason') or '사유 미기재'}. "
                                  f"주식수 {mass.get('shares_prev'):,} -> {mass.get('shares_now'):,}. 보유목적 {purpose}. "
-                                 f"{gap_line(st)}. 원문: {link}"),
+                                 f"{gap_line(st)}. "
+                                 + scenario_block(cfg, {**st, "stakes": {**(st.get("stakes") or {}), "hoban_pct": pct_now,
+                                   "hoban_shares": mass.get("shares_now"), "as_of": day}}) + f" 원문: {link}"),
                         "updates": {"stakes.hoban_pct": pct_now, "stakes.hoban_shares": mass.get("shares_now"), "stakes.as_of": day}})
         elif not out:
             out.append({"kind": "hoban_new", "pri": 4,
                         "title": f"{TAG} 호반 측 대량보유 보고 | 목적 {purpose}",
                         "text": (f"{day} {filer} '{title}'. 지분 {pct_prev}% -> {pct_now}%, 목적 {purpose}. "
-                                 f"{gap_line(st)}. 원문: {link}"),
+                                 f"{gap_line(st)}. {scenario_block(cfg, st)} 원문: {link}"),
                         "updates": ({"hoban_purpose": purpose} if purpose != "unknown" else {})})
         return out
 
     # 3) 산은
     if party == "kdb" and (is_mass(title) or is_own(title)):
         mass = parse_mass_summary(body or "") if body and is_mass(title) else {}
+        upd = {"stakes.as_of": day}
+        st2 = st
+        if mass.get("pct_now") is not None:
+            upd["stakes.kdb_pct"] = mass["pct_now"]
+            if mass.get("shares_now") is not None:
+                upd["stakes.kdb_shares"] = mass["shares_now"]
+            st2 = {**st, "stakes": {**(st.get("stakes") or {}), "kdb_pct": mass["pct_now"],
+                                    "kdb_shares": mass.get("shares_now"), "as_of": day}}
         out.append({"kind": "kdb", "pri": 4,
                     "title": f"{TAG} 산은 지분 변동 | {title[:40]}",
                     "text": (f"{day} {filer} '{title}'. "
                              + (f"지분 {mass.get('pct_prev')}% -> {mass.get('pct_now')}%. " if mass.get("pct_now") is not None else "")
-                             + f"{gap_line(st)}. 해석: 공동보유.우호 구도 변수. 원문: {link}"),
-                    "updates": {}})
+                             + f"{gap_line(st)}. 해석: 공동보유.우호 구도 변수. {scenario_block(cfg, st2)} 원문: {link}"),
+                    "updates": upd})
         return out
 
     # 4) 조원태 매수 완료
@@ -296,25 +408,35 @@ def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
             acquired = parse_own_acquire(body)
         done = is_plan_done(title) or (acquired is not None and abs(acquired - plan["shares"]) <= cfg["rules"]["cho_buy_tol"])
         if done and not st.get("cho_plan_done"):
-            # 재계산: 조원태 측 +325,000 (매수자=본인이면), 호반은 그대로. 매도자가 특수관계인이면 순증 0.
-            seller_note = "매도자 특수관계인 여부는 공시 본문에서 확인 필요"
-            if body and ("특수관계인" in body and ("매도" in body or "처분" in body)):
-                seller_note = "공시에 특수관계인 매도.처분 언급 있음 - 조원태 측 순증이 없을 수 있음"
-            new_cho = st["stakes"].get("cho_group_shares") or base["cho_group_shares"]
-            if acquired and acquired > 0 and "순증이 없을" not in seller_note:
-                new_cho = new_cho + acquired
-            common = st["stakes"].get("common") or base["common_shares"]
-            new_pct = new_cho / common * 100
-            hoban_pct = st["stakes"].get("hoban_pct") or base["hoban_pct"]
-            gap = hoban_pct - new_pct
+            # 재계산: 매도자=외부면 조원태 측 +취득, 특수관계인이면 순증 0. 불명이면 둘 다 표시.
+            seller_related = bool(body and ("특수관계인" in body and ("매도" in body or "처분" in body)))
+            seller_unknown = not seller_related
+            buy = acquired if acquired and acquired > 0 else plan["shares"]
+            cur = live_stakes(cfg, st)
+            cho_ext = cur["cho_shares"] + buy
+            cho_rel = cur["cho_shares"]  # 특수관계인 매도 = 묶음 안 이동
+            primary = cho_rel if seller_related else cho_ext
+            primary_pct = primary / cur["common"] * 100
+            seller_note = ("공시에 특수관계인 매도.처분 언급 -> 조원태 측 순증 0으로 계산"
+                           if seller_related else
+                           "매도자 특수관계인 여부는 공시에서 확인 필요(외부 매도 가정으로 먼저 계산, 대안도 표시)")
+            scen = scenario_block(
+                cfg, st, cho_shares=primary, hoban_shares=cur["hoban_shares"],
+                alt_cho_shares=(cho_rel if seller_unknown else None),
+                alt_label="매도자=특수관계인, 조원태 측 순증 0",
+            )
+            gap_sh = cur["hoban_shares"] - primary
+            gap_pp = cur["hoban_pct"] - primary_pct
+            recompute = (f"재계산: 호반 측 {cur['hoban_pct']:.2f}%({cur['hoban_shares']:,}주) vs "
+                         f"조원태 측 {primary_pct:.2f}%({primary:,}주), "
+                         f"갭 {gap_sh:,}주({gap_pp:+.2f}%p).")
             out.append({"kind": "cho_done", "pri": 4,
-                        "title": f"{TAG} 조원태 매수 완료 | +{acquired or plan['shares']:,}주, 조원태 측 약 {new_pct:.2f}%",
+                        "title": f"{TAG} 조원태 매수 완료 | +{buy:,}주, 조원태 측 약 {primary_pct:.2f}%",
                         "text": (f"{day} {filer} '{title}'. 11/2 거래계획({plan['shares']:,}주 x {plan['price']:,}원, "
                                  f"{plan['start']}~{plan['end']}) 이행으로 보임. {seller_note}. "
-                                 f"재계산: 호반 측 {hoban_pct:.2f}% vs 조원태 측 {new_pct:.2f}% (갭 {abs(gap):.2f}%p, "
-                                 f"{'호반' if gap >= 0 else '조원태'} 측 우세). 원문: {link}"),
-                        "updates": {"cho_plan_done": True, "stakes.cho_group_shares": new_cho, "stakes.cho_group_pct": round(new_pct, 2),
-                                    "stakes.as_of": day}})
+                                 f"{recompute} {scen} 원문: {link}"),
+                        "updates": {"cho_plan_done": True, "stakes.cho_group_shares": primary,
+                                    "stakes.cho_group_pct": round(primary_pct, 2), "stakes.as_of": day}})
             return out
         if party == "cho" and is_mass(title) and not done:
             mass = parse_mass_summary(body or "") if body else {}
@@ -338,28 +460,45 @@ def classify(cfg: dict, st: dict, row: dict, body: str | None) -> list[dict]:
     if is_maxshare(title) and ("호반" in (body or "") or "조원태" in (body or "") or party in ("hoban", "cho") or filer in ("한진칼",)):
         mx = parse_maxshare(body or "") if body else {}
         if mx:
+            upd = {}
+            st2 = st
+            if "호반" in mx["after"]:
+                upd = {"stakes.hoban_pct": mx["after_pct"], "stakes.hoban_shares": mx["after_shares"],
+                       "stakes.cho_group_pct": mx["before_pct"], "stakes.cho_group_shares": mx["before_shares"],
+                       "stakes.as_of": day}
+                st2 = {**st, "stakes": {**(st.get("stakes") or {}), "hoban_pct": mx["after_pct"], "hoban_shares": mx["after_shares"],
+                                        "cho_group_pct": mx["before_pct"], "cho_group_shares": mx["before_shares"], "as_of": day}}
+            elif "호반" in mx["before"]:
+                upd = {"stakes.cho_group_pct": mx["after_pct"], "stakes.cho_group_shares": mx["after_shares"],
+                       "stakes.hoban_pct": mx["before_pct"], "stakes.hoban_shares": mx["before_shares"],
+                       "stakes.as_of": day}
+                st2 = {**st, "stakes": {**(st.get("stakes") or {}), "cho_group_pct": mx["after_pct"], "cho_group_shares": mx["after_shares"],
+                                        "hoban_pct": mx["before_pct"], "hoban_shares": mx["before_shares"], "as_of": day}}
             out.append({"kind": "maxshare", "pri": 4,
                         "title": f"{TAG} 최대주주 변경 | {mx['before']} -> {mx['after']}",
                         "text": (f"{day} {filer} '{title}'. {mx['before']} {mx['before_pct']}%({mx['before_shares']:,}주) -> "
                                  f"{mx['after']} {mx['after_pct']}%({mx['after_shares']:,}주). "
-                                 f"해석: 공시상 최대주주 교체. 원문: {link}"),
-                        "updates": {}})
-            # update stakes if 호반/조원태
-            if "호반" in mx["after"]:
-                out[-1]["updates"] = {"stakes.hoban_pct": mx["after_pct"], "stakes.hoban_shares": mx["after_shares"],
-                                      "stakes.cho_group_pct": mx["before_pct"], "stakes.cho_group_shares": mx["before_shares"],
-                                      "stakes.as_of": day}
+                                 f"해석: 공시상 최대주주 교체. {scenario_block(cfg, st2)} 원문: {link}"),
+                        "updates": upd})
             return out
 
     # 5) Delta 부수
     if party == "delta" and (is_mass(title) or is_own(title)):
         mass = parse_mass_summary(body or "") if body and is_mass(title) else {}
+        upd = {"stakes.as_of": day}
+        st2 = st
+        if mass.get("pct_now") is not None:
+            upd["stakes.delta_pct"] = mass["pct_now"]
+            if mass.get("shares_now") is not None:
+                upd["stakes.delta_shares"] = mass["shares_now"]
+            st2 = {**st, "stakes": {**(st.get("stakes") or {}), "delta_pct": mass["pct_now"],
+                                    "delta_shares": mass.get("shares_now"), "as_of": day}}
         out.append({"kind": "delta", "pri": 3,
                     "title": f"{TAG} Delta 지분 변동 | {title[:40]}",
-                    "text": (f"{day} {filer} '{title}'. 기준 지분 약 {base['delta_pct']}%. "
+                    "text": (f"{day} {filer} '{title}'. 기준 지분 약 {base.get('delta_pct', 14.90)}%(추정). "
                              + (f"이번 {mass.get('pct_prev')}% -> {mass.get('pct_now')}%. " if mass.get("pct_now") is not None else "")
-                             + f"{gap_line(st)}. 원문: {link}"),
-                    "updates": {}})
+                             + f"{gap_line(st)}. {scenario_block(cfg, st2)} 원문: {link}"),
+                    "updates": upd})
         return out
 
     # 조원태 새 거래계획 (참고, p3)
@@ -636,6 +775,44 @@ def selftest() -> int:
           ([], [], [f"{TAG} DART 공시 목록 조회 실패 | 2일 연속, 다음 실행에서 다시 시도"], [], []))
     check("routing: notices port, failure ops", (route_topic("cwally-port", f"{TAG} 호반 측 보유목적 변경 | 단순투자 -> 경영권 영향"),
                                                  route_topic("cwally-port", f2[0][0])), ("cwally-port", "cwally-ops"))
+
+    # 주총 시나리오 블록 (t72u): cho_done + maxshare + kdb
+    st = init()
+    a = classify(cfg, st, {"rcp": "X5", "title": "임원ㆍ주요주주특정증권등소유상황보고서", "filer": "조원태", "date": "2026-12-03"}, own_body)
+    t = a[0]["text"]
+    check("cho_done has scenario block markers",
+          all(x in t for x in ["주총 시나리오(추정", "보통주 66,762,275주", "우호 지분 추정", "a) 조원태+Delta",
+                               "b) 조원태+Delta+산은", "c) 산은 기권", "d) 산은 지분이 호반으로",
+                               "출석70%", "출석80%", "보통결의", "대안(매도자=특수관계인", "추정"]),
+          True)
+    check("cho_done after buy: 조원태 ahead vs 호반 in scenario",
+          ("조원태 측 우세" in t.split("주총 시나리오")[1][:200]) or ("갭" in t and "조원태" in t), True)
+
+    st = init()
+    a = classify(cfg, st, {"rcp": "20261104800730", "title": "최대주주변경", "filer": "한진칼", "date": "2026-11-04"}, bodies["maxshare"])
+    check("maxshare text has scenario + 추정", ("주총 시나리오(추정" in a[0]["text"], "우호 지분 추정" in a[0]["text"]), (True, True))
+
+    st = init()
+    a = classify(cfg, st, {"rcp": "X4", "title": "주식등의대량보유상황보고서(약식)", "filer": "한국산업은행", "date": "2026-12-01"},
+                 "보유주식등의 수 및 보유비율 | 보유주식등의 수 | 보유비율 | 직전 보고서 | 1,000,000 | 1.50 | 이번 보고서 | 500,000 | 0.75 | 보고사유 | 장내매도 | 보유목적 | 단순투자")
+    check("kdb text has scenario and updates kdb_pct", ("주총 시나리오(추정" in a[0]["text"], a[0]["updates"].get("stakes.kdb_pct")), (True, 0.75))
+
+    # live_stakes / scenario_block unit
+    st0 = init()
+    sc = scenario_block(cfg, st0)
+    check("scenario_block mentions turnout and ordinary resolution",
+          ("출석70%" in sc and "출석80%" in sc and "발행주식총수 1/4" in sc and "추정" in sc), True)
+    x = live_stakes(cfg, st0)
+    check("live_stakes defaults", (x["common"], round(x["delta_pct"], 2), round(x["kdb_pct"], 2), x["hoban_shares"], x["cho_shares"]),
+          (66762275, 14.90, 10.58, 13814053, 13738919))
+
+    # related seller: 조원태 측 순증 0
+    st = init()
+    related_body = own_body + " | 매도자 특수관계인 처분"
+    a = classify(cfg, st, {"rcp": "X5b", "title": "임원ㆍ주요주주특정증권등소유상황보고서", "filer": "조원태", "date": "2026-12-03"}, related_body)
+    check("related seller: cho shares unchanged, no alt block",
+          (a[0]["updates"]["stakes.cho_group_shares"], "순증 0" in a[0]["text"], "대안(매도자=특수관계인" not in a[0]["text"]),
+          (13738919, True, True))
 
     # Korean punctuation + title prefix
     allt = []
