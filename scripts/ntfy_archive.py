@@ -74,6 +74,12 @@ def main() -> int:
     items.sort(key=lambda x: x.get("time") or 0, reverse=True)
     cap = int(cfg.get("max_items") or 400)
     items = items[:cap]
+    # Skip rewrite when nothing changed so dry/manual runs do not Persist a stamp-only commit.
+    prev_items = prev.get("items") or []
+    prev_deleted = [str(x) for x in prev.get("deleted_ids") or [] if x]
+    if added == 0 and items == prev_items and deleted == prev_deleted:
+        print(f"archive unchanged total={len(items)}")
+        return 0
     stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
     out = {"updated_at": stamp, "items": items}
     if deleted:
