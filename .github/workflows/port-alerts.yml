@@ -233,6 +233,14 @@ on:
     - cron: "12 8 16 11 *"
     - cron: "5 8 17 11 *"
     - cron: "5 0 18 11 *"
+    # soq4 oneshot_kst (KST->UTC): 2027-02-18 21:40, 23:40, 02-19 08:00, 10:00, 13:00, 02-20 09:10, 02-21 09:10. SO 4분기 2026 숫자 판정 + 녹취 기반 콜 판정 (pt66u; expected date 2/18 not yet company-confirmed; script finds the 8-K by SEC, year-guarded 2027; GitHub fallback; on-time = cron-job.org job=oneshot)
+    - cron: "40 12 18 2 *"
+    - cron: "40 14 18 2 *"
+    - cron: "0 23 18 2 *"
+    - cron: "0 1 19 2 *"
+    - cron: "0 4 19 2 *"
+    - cron: "10 0 20 2 *"
+    - cron: "10 0 21 2 *"
     # lgchem oneshot_kst (KST→UTC): 2026-11-05 13:50, 16:12, 11-06 09:12, 11-16 16:40. LG화학 3Q 실적 판정 (GitHub fallback; on-time = cron-job.org job=oneshot). 16:10/09:10은 kzq3와 겹쳐 12분으로 조정
     - cron: "50 4 5 11 *"
     - cron: "12 7 5 11 *"
@@ -262,7 +270,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, k475380, k417790, k316140, k458750]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, k316140, k458750]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -445,6 +453,7 @@ jobs:
             elif echo "0 9 19 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=steelre
             elif printf '%s\n' "20 9 2 11 *" "20 23 2 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=nix1102
             elif echo "0 0 21 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=bke
+            elif printf '%s\n' "40 12 18 2 *" "40 14 18 2 *" "0 23 18 2 *" "0 1 19 2 *" "0 4 19 2 *" "10 0 20 2 *" "10 0 21 2 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=soq4
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then JOB=tsla
@@ -741,6 +750,10 @@ jobs:
           if [ "$JOB" = "morning" ]; then
             python scripts/semius_monitor.py auto
           fi
+          # [SO] soq4 SO 4분기 2026 (pt66u): weekday 09:00 catch-up for the 8-K / transcript; script gates 2027-02-10 ~ 03-09, state dedupe.
+          if [ "$JOB" = "morning" ]; then
+            python scripts/soq4_monitor.py auto
+          fi
           python scripts/ntfy_archive.py
           exit $failed
       - name: Run square + silicon2 + cover0198 + lg + ustsy + sgyn + yencarry + kship + shinwon + protec + pltr + addstop + k091160 + skc011790 + 464310 + 461490 (afternoon)
@@ -881,6 +894,18 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
           if [ "$MODE" = "dry" ]; then python scripts/shiplev_monitor.py selftest; fi
           python scripts/shiplev_monitor.py "$MODE"
+      - name: Run SO Q4 standalone (soq4; fallback crons = auto, manual job=soq4 = selftest + dry unless oneoff_mode=auto)
+        # [SO] approved 2026-11-06 (pt66u). On-time runs come from job=oneshot (oneshot_pick runs soq4 auto) and the morning bundle.
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'soq4' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/soq4_monitor.py selftest; export SOQ4_REGRESS=q3; fi
+          python scripts/soq4_monitor.py "$MODE"
       - name: Run SEMIUS standalone (manual check; the weekday 09:00 morning bundle runs it in auto)
         # [SEMIUS] approved 2026-11-05 (pt58u). job=semius dispatch is selftest + dry (no ntfy, no state, date gate ignored) unless oneoff_mode=auto.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'semius' }}

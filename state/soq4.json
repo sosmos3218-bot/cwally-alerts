@@ -1,0 +1,7 @@
+{
+  "numbers_sent": false,
+  "call_sent": false,
+  "missing_sent": false,
+  "fail_notified": false,
+  "attempts": []
+}
