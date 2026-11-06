@@ -14,6 +14,7 @@ burry, ops notices, and any alert whose ends_kst is already past.
   python scripts/title_ticker_check.py --report-only  # audit never blocks (or TITLE_TICKER_REPORT_ONLY=1)
   python scripts/title_ticker_check.py --strict   # sent-archive violations also exit 1 (or TITLE_TICKER_STRICT=1)
   python scripts/title_ticker_check.py --no-audit # blocking check only
+Legacy archive ids (pt80u): ARCHIVE_LEGACY_IDS skips three 2026-10-27~29 sends that predate the ticker-in-title rule.
 """
 from __future__ import annotations
 
@@ -492,6 +493,17 @@ def _non_invest_prefixes() -> set[str]:
     return out
 
 
+# Legacy sent-archive exceptions (pt80u, 2026-11-06). Exact ntfy message ids only.
+# These three went out 2026-10-27~29 before the title-must-include-ticker rule took effect
+# (scripts/title_ticker_check.py via #32 / 68c9e72 around 2026-10-31). Tickers were already
+# in the body first line (005930 / 006400 / 053300). Do not extend without owner approval;
+# new sends must put the ticker in the title. Archived messages themselves are not edited.
+ARCHIVE_LEGACY_IDS = {
+    "PvIt7pE2wfAw",  # 2026-10-28 09:01 KST [SEC] 연간치 하향 | 3Q 83.0조
+    "sB9JBv1mcchR",  # 2026-10-27 16:20 KST [SDI] 보유 | 변경 조건 미충족
+    "nzFLIyCwGJKt",  # 2026-10-29 15:41 KST [KICA] 5,090원 -5.9% | 하루 -5.9% 하락
+}
+
 # Static audit exceptions (pt111u, 2026-11-05). Each entry is (file, title regex, reason).
 # Matched by file path relative to the repo plus a stable title pattern, never by line number.
 # New entries need owner approval. New outbox briefs must carry a ticker instead.
@@ -531,7 +543,7 @@ def audit_files() -> list[Path]:
 
 def audit(now: datetime) -> dict:
     res: dict = {"static": [], "excluded": [], "archive": [], "archive_body_only": [], "archive_excluded": 0,
-           "non_invest": 0, "exceptions": []}
+           "archive_legacy": 0, "non_invest": 0, "exceptions": []}
     ni_prefixes = _non_invest_prefixes()
     for path in audit_files():
         stem = _stem_of(path)
@@ -571,6 +583,9 @@ def audit(now: datetime) -> dict:
         items = []
     for it in items:
         t = it.get("title") or ""
+        if it.get("id") in ARCHIVE_LEGACY_IDS:
+            res["archive_legacy"] += 1
+            continue
         if any(t.startswith(p + " ") or t == p for p in ni_prefixes):
             res["non_invest"] += 1
             continue
@@ -601,7 +616,8 @@ def print_audit(res: dict, blocking: bool = True) -> int:
           f"(static {len(st)}, sent {len(res['archive'])}; body-first-line only {len(res['archive_body_only'])}; "
           f"excluded ops {len(res['excluded']) + res['archive_excluded']}; "
           f"excluded non-invest {res.get('non_invest', 0)}; "
-          f"excluded exception {len(res.get('exceptions', []))})")
+          f"excluded exception {len(res.get('exceptions', []))}; "
+          f"excluded legacy-archive {res.get('archive_legacy', 0)})")
     for k, v in sorted(cats.items()):
         print(f"  category {k}: {v}")
     for loc, t, why in st:
@@ -628,6 +644,8 @@ def audit_self_check() -> None:
     assert _exception_reason("outbox/20261199-new.json", "[FR-DE] 하원 PLF 1부 표결 연기") is None
     assert _exception_reason("trend_monitor/ntfy_summary.py", "[TREND] {...}") is not None
     assert _exception_reason("trend_monitor/ntfy_summary.py", "[TREND] 시장폭 회복") is None
+    assert "nzFLIyCwGJKt" in ARCHIVE_LEGACY_IDS and "PvIt7pE2wfAw" in ARCHIVE_LEGACY_IDS and "sB9JBv1mcchR" in ARCHIVE_LEGACY_IDS
+    assert len(ARCHIVE_LEGACY_IDS) == 3  # pt80u: do not grow without owner approval
 
 
 def main() -> int:
