@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "edc1c8fc988d4380aab37b53f45ec2b8",
+    "title": "Q403-RFP Medical Disability Examinations-Next Generation (MDE-NG)",
+    "type": {
+      "code": "o",
+      "value": "Solicitation"
+    },
+    "publishDate": "2026-11-05T18:01:17+00:00",
+    "modifiedDate": "2026-11-05T18:01:17+00:00",
+    "responseDate": "2026-12-17T15:00:00+00:00",
+    "responseDateActual": "2026-12-17T10:00:00-05:00",
+    "responseTimeZone": "America/New_York",
+    "solicitationNumber": "36C10X27R0001",
+    "modifications": {
+      "count": 0
+    },
+    "isActive": true
+  },
+  {
+    "_id": "3009ffdae48342949d91e43116301741",
+    "title": "Q403-DRAFT RFP Medical Disability Examinations-Next Generation (MDE-NG)",
+    "type": {
+      "code": "p",
+      "value": "Presolicitation"
+    },
+    "publishDate": "2026-10-13T18:56:48+00:00",
+    "modifiedDate": "2026-10-13T18:56:48+00:00",
+    "responseDate": "2026-10-26T20:00:00+00:00",
+    "responseDateActual": "2026-10-26T16:00:00-04:00",
+    "responseTimeZone": "America/New_York",
+    "solicitationNumber": "36C10X27R0001",
+    "modifications": {
+      "count": 2
+    },
+    "isActive": true
+  }
+]

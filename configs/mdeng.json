@@ -1,0 +1,36 @@
+{
+  "name": "mdeng",
+  "title_prefix": "[LDOS]",
+  "ticker": "LDOS",
+  "display": "Leidos Holdings (NYSE: LDOS) / VA MDE-NG",
+  "solnum": "36C10X27R0001",
+  "created_at": "2026-11-06T10:40:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-06 (pt11u): VA MDE-NG(36C10X27R0001) 신규 수정/공고만 ntfy. 기존 최종 RFP는 시드. 새 cron 없음, 09:00 morning 부착.",
+  "holding": "LDOS 미보유 관심. Health 마진(4Q high teens 가이던스, 1%p당 EPS 약 $0.27)과 MDE 재경쟁이 핵심. Maximus(MMS)는 별도 입찰 후보로만 언급.",
+  "thesis": "Leidos Health 부문 VBA MDE 계약 재경쟁(MDE-NG final RFP 2026-11-05 18:01 UTC). 수정 공고/Q&A/버전 변경이 나오면 Health 마진 가정과 입찰 조건을 다시 본다.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST port-alerts morning 슬롯에 부착. job=mdeng 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "solnum_note": "SAM.gov 검색은 solnum=36C10X27R0001 만. 같은 검색에 섞일 수 있는 구 번호(예 36C10X26R0042)는 무시.",
+  "sources": {
+    "primary": "https://sam.gov/api/prod/sgs/v1/search/?index=opp&q=36C10X27R0001&page=0&size=25&mode=search (공개 HAL, api_key 불필요)",
+    "official": "https://api.sam.gov/opportunities/v2/search?solnum=36C10X27R0001 (SAM_API_KEY 필요; 이 저장소 secrets 에 없음, 키가 있으면 환경변수로 사용)",
+    "ui": "https://sam.gov/opp/<notice_id>/view"
+  },
+  "seed_note": "최종 RFP(edc1c8fc988d4380aab37b53f45ec2b8, 2026-11-05)와 DRAFT RFP(3009ffdae48342949d91e43116301741)를 state.seen 에 시드. 같은 notice id / modification 키는 두 번 알리지 않음.",
+  "dedupe": "seen 키 = <notice_id>|<modifiedDate>|<modifications.count>. 새 공고 id 또는 같은 id 의 수정일/수정횟수 변화가 오면 1번.",
+  "rules": {
+    "fail_ops_after": 3,
+    "noop_after_date": "2026-12-18"
+  },
+  "milestones": {
+    "final_rfp_utc": "2026-11-05T18:01:17+00:00",
+    "questions_due": "2026-11-16",
+    "intent_due": "2026-12-01",
+    "proposals_et": "2026-12-17 10:00 ET"
+  },
+  "ends_kst": "2026-12-18 23:59",
+  "ends_note": "제안 마감(12/17 ET) 다음날. 그 뒤 스크립트는 조용히 종료"
+}
