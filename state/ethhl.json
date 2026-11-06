@@ -4,20 +4,20 @@
     "CLOSE_2500"
   ],
   "fail_notified": false,
-  "updated_at": "2026-11-05T15:41:13.679826+09:00",
+  "updated_at": "2026-11-06T15:41:04.838199+09:00",
   "snap": {
-    "close": 2422.27,
-    "close_note": "coinbase UTC 일봉 2026-11-04 종가 2422.27",
+    "close": 2234.61,
+    "close_note": "coinbase UTC 일봉 2026-11-05 종가 2234.61",
     "long_note": "",
     "short_note": "",
     "long_entry": 2518.71,
-    "long_liq": 2132.6566605536,
-    "long_value": 63108146.41239,
-    "long_upnl": -2441575.676655,
+    "long_liq": 2133.2829760035,
+    "long_value": 58064491.50921,
+    "long_upnl": -7485230.579835,
     "short_entry": 2322.72,
-    "short_liq": 3898.4877843995,
-    "short_value": 207179779.60911,
-    "short_upnl": -8729740.580986,
+    "short_liq": 3988.531424929,
+    "short_value": 176557745.76309,
+    "short_upnl": 7250671.082269,
     "short_baseline": 278000000.0
   }
 }
