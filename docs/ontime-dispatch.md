@@ -42,7 +42,7 @@ X-GitHub-Api-Version: 2022-11-28
 Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
 ```
 
-성공 응답은 `204 No Content`. morning/afternoon/0090b0 도 `oneoff_mode=auto` 가 필요하다(pt20u: 기본값 dry 는 테스트 dry 로 쓰므로, 없으면 슬롯이 dry 로 돈다).
+성공 응답은 `204 No Content`. morning/afternoon/0090b0 는 `oneoff_mode=auto` 를 넣거나 생략한다(pt20u: 워크플로 기본값이 auto). 테스트 dry 는 반드시 `oneoff_mode=dry` 를 넣는다.
  `gh`가 있으면 `gh workflow run cwally-port-alerts -R sosmos3218-bot/cwally-alerts -f job=morning`과 같다.
 
 토큰: fine-grained PAT, 저장소 `cwally-alerts`만, **Actions: Read and write** (Metadata read는 자동). 다른 권한은 주지 않는다.

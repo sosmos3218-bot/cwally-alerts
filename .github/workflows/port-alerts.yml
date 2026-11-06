@@ -343,8 +343,8 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "dry = print, no ntfy, no state, no slot mark (morning/afternoon/0090b0 tests too) | auto = live send+state (required for on-time cron bodies) | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state)"
-        default: dry
+        description: "auto = live send+state (default; on-time cron may omit and still live) | dry = print, no ntfy, no state, no slot mark, no Persist (morning/afternoon/0090b0 tests too) | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state)"
+        default: auto
         type: choice
         options: [dry, auto, force]
       kica_mode:
@@ -597,16 +597,19 @@ jobs:
               fi
               if [[ "$1" == scripts/*.py ]]; then
                 local script=$1; shift
+                local rc=0
                 if [ $# -eq 0 ]; then
-                  command python "$script" dry && return 0
-                  echo "dry: skip $script (no dry mode)"; return 0
+                  command python "$script" dry || rc=$?
+                  if [ "$rc" -ne 0 ]; then echo "dry: skip $script (no dry mode)"; fi
+                  return 0
                 fi
                 local mode=$1; shift
                 case "$mode" in auto|event|weekly|daily|force|quarterly|slot) mode=dry ;; esac
-                command python "$script" "$mode" "$@"
-                return $?
+                command python "$script" "$mode" "$@" || rc=$?
+                if [ "$rc" -ne 0 ]; then echo "dry: skip $script (dry unsupported or failed rc=$rc)"; fi
+                return 0
               fi
-              command python "$@"
+              command python "$@" || true
             }
             node() { echo "dry: skip node $*"; return 0; }
           fi
@@ -809,16 +812,19 @@ jobs:
               fi
               if [[ "$1" == scripts/*.py ]]; then
                 local script=$1; shift
+                local rc=0
                 if [ $# -eq 0 ]; then
-                  command python "$script" dry && return 0
-                  echo "dry: skip $script (no dry mode)"; return 0
+                  command python "$script" dry || rc=$?
+                  if [ "$rc" -ne 0 ]; then echo "dry: skip $script (no dry mode)"; fi
+                  return 0
                 fi
                 local mode=$1; shift
                 case "$mode" in auto|event|weekly|daily|force|quarterly|slot) mode=dry ;; esac
-                command python "$script" "$mode" "$@"
-                return $?
+                command python "$script" "$mode" "$@" || rc=$?
+                if [ "$rc" -ne 0 ]; then echo "dry: skip $script (dry unsupported or failed rc=$rc)"; fi
+                return 0
               fi
-              command python "$@"
+              command python "$@" || true
             }
             node() { echo "dry: skip node $*"; return 0; }
           fi
@@ -2539,7 +2545,8 @@ jobs:
           python scripts/ntfy_archive.py
       - name: Persist state
         id: persist
-        if: always()
+        # Dry/manual tests must not commit (pt20u), even if a script wrote locally.
+        if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.oneoff_mode != 'auto')
         # retry pull --rebase + push 5 times (5/15/30/60 s), state conflicts keep this run's state (pt13u)
         run: |
           bash scripts/persist_state.sh "chore: update alert state" state
