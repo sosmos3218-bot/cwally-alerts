@@ -6,11 +6,11 @@
   "weekly_sent_week": "2026-W45",
   "last_event_key": "달러/엔 158.5 → 158 돌파|원달러 1,343원 → 1,340 이탈",
   "last_quotes": {
-    "usdjpy": 157.451,
-    "usdkrw": 1356.98,
-    "jgb30": 3.99
+    "usdjpy": 157.884,
+    "usdkrw": 1358.68,
+    "jgb30": 3.929
   },
-  "updated_at": "2026-11-06T09:00:53.186748+09:00",
+  "updated_at": "2026-11-06T15:20:49.126098+09:00",
   "active_levels": {},
   "active_note": "2026-10-30 hysteresis install: 1,340 already sent (last_event_key), seeded active"
 }

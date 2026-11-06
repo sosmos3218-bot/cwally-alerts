@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-05 15:21 KST",
+  "updated_at": "2026-11-06 15:21 KST",
   "last_zone": "KILL",
   "last_fail_date": null,
-  "last_action": "ALERT",
-  "price": 10590.0,
+  "last_action": "WATCH",
+  "price": 9410.0,
   "errors": []
 }
