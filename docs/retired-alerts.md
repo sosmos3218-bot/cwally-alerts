@@ -224,3 +224,15 @@ No cron-job.org job was SPG-only (both rode the shared morning 09:00 KST slot). 
 | spg | `[SPG]` | ~2026-10-07 | 2027-06-30 09:00 | SPG limit 150/160 USD + US10Y reopen 4.5% / stress 6%, weekly summary | morning 09:00 |
 | spgwatch | `[SPG]` | 2026-11-05 | 2027-11-05 23:59 | 8-K Item 2.02, close >238.50 or <205 (1% rearm), US10Y <=4.50% rearm >4.60%, daily P/FFO summary | morning 09:00 |
 
+## 2026-11-06 retire neeq3, soq3, cash30 (approved in chat 2026-10-26)
+
+All three one-shots had already sent. neeq3 finished 2026-10-21 23:40 (`state/neeq3.json` notified, call_stance 검토/협상 중). soq3 slots 2026-11-05 21:40, 23:40 and 2026-11-06 06:20 (`notified` true, score 추가 20% 검토). cash30 2026-11-06 08:40 (`notified` true, choice nee_wait). cash30 was the only reader of `state/neeq3.json` and `state/soq3.json`. No other script imported the modules (pcorq3 and ratesbell only mention them in comments).
+
+Removed: config, script, state, GitHub fallback crons, Decide branches, `workflow_dispatch` job options, mode inputs (`neeq3_mode`, `soq3_mode`, `cash30_mode`), and the Run steps. `oneshot_pick.py` has no hardcoded map; it reads `oneshot_kst` from `configs/*.json`, so deleting the configs drops the mappings. Finished keys removed from `state/slots/oneshot.json`. Title prefixes `[NEE]` `[SO]` `[CASH30]` removed from the AGENTS.md required list (no other alert emits them; README's prefix line never had them). Sent messages stay in `state/archive.json`.
+
+| name | prefix | added | oneshot window (KST) | what it did |
+|---|---|---|---|---|
+| neeq3 | `[NEE]` | 2026-10-16 | 2026-10-21 20:40 ~ 2026-10-21 23:40 | NEE Q3 2026 숫자 판정(20:40, 22:40 재시도)과 콜 이후 요금동결 대응(23:40) |
+| soq3 | `[SO]` | 2026-10-20 | 2026-11-05 21:40 ~ 2026-11-06 06:20 | SO Q3 2026 숫자 판정(21:40, 23:40 재시도)과 콜 이후 가이던스/대형부하/증자(06:20) |
+| cash30 | `[CASH30]` | 2026-10-20 | 2026-11-06 08:40 ~ 2026-11-06 08:40 | 남은 30% 현금을 NEE 73-75 대기 / SO / DUK 중 어디로 둘지 1회 판정 |
+

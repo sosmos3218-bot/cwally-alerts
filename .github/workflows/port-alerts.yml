@@ -196,10 +196,6 @@ on:
     - cron: "0 0 28 10 *"
     # figq3 oneshot_kst (KST→UTC): 2026-11-05 09:05, moved off the 09:00 morning slot. FIG 3분기 실적 다음 날 요약 1회, 연도/날짜 가드는 스크립트 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "5 0 5 11 *"
-    # neeq3 oneshot_kst (KST→UTC): 2026-10-21 20:40, 22:40, 23:40. Q3 실적 판정
-    - cron: "40 11 21 10 *"
-    - cron: "40 13 21 10 *"
-    - cron: "40 14 21 10 *"
     # memswing oneshot_kst (KST→UTC): 2026-10-19 18:30, 19:30. 10/19 확정 수급 스윙 진입 1회 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "30 9 19 10 *"
     - cron: "30 10 19 10 *"
@@ -237,18 +233,11 @@ on:
     - cron: "12 8 16 11 *"
     - cron: "5 8 17 11 *"
     - cron: "5 0 18 11 *"
-    # soq3 oneshot_kst (KST→UTC): 2026-11-05 21:40, 23:40, 11-06 06:20. SO 3분기 실적 숫자 판정 + 콜 이후 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
-    - cron: "40 12 5 11 *"
-    - cron: "40 14 5 11 *"
-    - cron: "20 21 5 11 *"
-
     # lgchem oneshot_kst (KST→UTC): 2026-11-05 13:50, 16:12, 11-06 09:12, 11-16 16:40. LG화학 3Q 실적 판정 (GitHub fallback; on-time = cron-job.org job=oneshot). 16:10/09:10은 kzq3와 겹쳐 12분으로 조정
     - cron: "50 4 5 11 *"
     - cron: "12 7 5 11 *"
     - cron: "12 0 6 11 *"
     - cron: "40 7 16 11 *"
-    # cash30 oneshot_kst (KST→UTC): 2026-11-06 08:40. 남은 30% 현금 배분 판정 (GitHub fallback; on-time = cron-job.org job=oneshot)
-    - cron: "40 23 5 11 *"
     # secdiv oneshot_kst (KST->UTC): 2026-10-29 10:00, 2026-10-30 10:00. 삼성전자 3분기 배당 공시 추가 확인 (approved in chat 2026-10-26; GitHub fallback; on-time = cron-job.org job=oneshot)
     - cron: "0 1 29 10 *"
     - cron: "0 1 30 10 *"
@@ -273,7 +262,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, neeq3, soq3, lgchem, cash30, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, k475380, k417790, k316140, k458750]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, celltrion, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, manh, truen417790, kos5500, kica, hmcq3, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, figearn, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lges1103, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, nix1102, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, k475380, k417790, k316140, k458750]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -360,21 +349,6 @@ on:
         default: dry
         type: choice
         options: [dry, auto, force]
-      neeq3_mode:
-        description: "job=neeq3 only. dry = print, no ntfy, no state write | auto | force"
-        default: dry
-        type: choice
-        options: [dry, auto, force]
-      soq3_mode:
-        description: "job=soq3 only. dry = print, no ntfy, no state write | auto | force"
-        default: dry
-        type: choice
-        options: [dry, auto, force]
-      cash30_mode:
-        description: "job=cash30 only. dry = print, no ntfy, no state write | auto | force"
-        default: dry
-        type: choice
-        options: [dry, auto, force]
       crwvq3_mode:
         description: "job=crwvq3 only. dry = parse print, no ntfy, no state write | auto | force"
         default: dry
@@ -454,7 +428,6 @@ jobs:
             elif [ "${{ github.event.schedule }}" = "10 7 5 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 6 11 *" ] || [ "${{ github.event.schedule }}" = "10 0 7 11 *" ] || [ "${{ github.event.schedule }}" = "10 9 7 11 *" ]; then JOB=kzq3
             elif [ "${{ github.event.schedule }}" = "0 0 28 10 *" ]; then JOB=manh
             elif [ "${{ github.event.schedule }}" = "5 0 5 11 *" ]; then JOB=figq3
-            elif [ "${{ github.event.schedule }}" = "40 11 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 13 21 10 *" ] || [ "${{ github.event.schedule }}" = "40 14 21 10 *" ]; then JOB=neeq3
             elif [ "${{ github.event.schedule }}" = "30 9 19 10 *" ] || [ "${{ github.event.schedule }}" = "30 10 19 10 *" ]; then JOB=memswing
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "25 5 29 10 *" ] || [ "$S" = "30 7 29 10 *" ]; then JOB=hmcq3
             elif [ "${{ github.event.schedule }}" = "0 9 12 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 13 11 *" ] || [ "${{ github.event.schedule }}" = "0 9 16 11 *" ]; then JOB=kica
@@ -466,10 +439,8 @@ jobs:
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "10 0 17 11 *" ] || [ "$S" = "10 0 18 11 *" ] || [ "$S" = "10 0 19 11 *" ]; then JOB=optq3
 
             elif [ "${{ github.event.schedule }}" = "12 8 9 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 10 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 11 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 12 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 13 11 *" ] || [ "${{ github.event.schedule }}" = "12 8 16 11 *" ] || [ "${{ github.event.schedule }}" = "5 8 17 11 *" ] || [ "${{ github.event.schedule }}" = "5 0 18 11 *" ]; then JOB=jyp
-            elif [ "${{ github.event.schedule }}" = "40 12 5 11 *" ] || [ "${{ github.event.schedule }}" = "40 14 5 11 *" ] || [ "${{ github.event.schedule }}" = "20 21 5 11 *" ]; then JOB=soq3
             elif [ "${{ github.event.schedule }}" = "31 7 9 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 10 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 11 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 12 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 13 11 *" ] || [ "${{ github.event.schedule }}" = "31 7 16 11 *" ]; then JOB=truen417790
             elif printf '%s\n' "50 4 5 11 *" "12 7 5 11 *" "12 0 6 11 *" "40 7 16 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=oneshot
-            elif echo "40 23 5 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=cash30
             elif printf '%s\n' "0 1 29 10 *" "0 1 30 10 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=secdiv
             elif echo "0 9 19 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=steelre
             elif printf '%s\n' "20 9 2 11 *" "20 23 2 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=nix1102
@@ -533,8 +504,6 @@ jobs:
           WL=event
           IR=event
           if [ "$DOW" = "1" ]; then IR=weekly; fi
-          NQ=auto
-          SQ=auto
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Slot dispatches from cron-job.org ({"job":"morning"} etc.) carry no *_mode inputs, so the input
             # defaults (steel/alux weekly, hce daily) used to run every weekday. Slot jobs keep the day-based modes above.
@@ -557,8 +526,6 @@ jobs:
             [ -z "$KC" ] && KC=dry
             HQ="${{ github.event.inputs.hmcq3_mode }}"
             [ -z "$HQ" ] && HQ=dry
-            if [ "$JOB" = "neeq3" ]; then NQ="${{ github.event.inputs.neeq3_mode }}"; [ -z "$NQ" ] && NQ=dry; fi
-            if [ "$JOB" = "soq3" ]; then SQ="${{ github.event.inputs.soq3_mode }}"; [ -z "$SQ" ] && SQ=dry; fi
             if [ "$JOB" = "crwvq3" ]; then CQ="${{ github.event.inputs.crwvq3_mode }}"; [ -z "$CQ" ] && CQ=dry; fi
             # job=semius: dry (selftest + dry, no ntfy, no state) unless oneoff_mode=auto
             if [ "$JOB" = "semius" ]; then SU=dry; [ "${{ github.event.inputs.oneoff_mode }}" = "auto" ] && SU=auto; fi
@@ -576,8 +543,6 @@ jobs:
           echo "kzq3_mode=$KZ" >> "$GITHUB_OUTPUT"
           echo "kica_mode=$KC" >> "$GITHUB_OUTPUT"
           echo "hmcq3_mode=$HQ" >> "$GITHUB_OUTPUT"
-          echo "neeq3_mode=$NQ" >> "$GITHUB_OUTPUT"
-          echo "soq3_mode=$SQ" >> "$GITHUB_OUTPUT"
           echo "crwvq3_mode=$CQ" >> "$GITHUB_OUTPUT"
           echo "semius_mode=${SU:-dry}" >> "$GITHUB_OUTPUT"
       - name: Run VTRSPG manual check (job=vtrspg dispatch only; scheduled run stays in the 09:00 morning bundle)
@@ -1436,12 +1401,6 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/oneshot_pick.py run "$RUNNER_TEMP/oneshot_plan.json"
-      - name: Run neeq3
-        if: steps.pick.outputs.job == 'neeq3' || steps.pick.outputs.job == 'oneshot' || steps.pick.outputs.job == 'all'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/neeq3_monitor.py "${{ steps.pick.outputs.neeq3_mode }}"
       - name: Run doosan
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'doosan'
         env:
@@ -1460,18 +1419,6 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: |
           if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/jyp_monitor.py snap; else python scripts/jyp_monitor.py auto; fi
-      - name: Run soq3
-        if: steps.pick.outputs.job == 'soq3'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/soq3_monitor.py "${{ steps.pick.outputs.soq3_mode }}"
-      - name: Run cash30
-        if: steps.pick.outputs.job == 'cash30'
-        env:
-          NTFY_TOPIC: cwally-port
-          NTFY_SERVER: https://ntfy.sh
-        run: python scripts/cash30_monitor.py "${{ github.event.inputs.cash30_mode || 'auto' }}"
       - name: Run SDI Q4 2026 disclosure check (existing morning, afternoon, 19:00 slots)
         # Q4 release date unconfirmed; observation window is in configs/sdiq3.json. No new cron.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780') }}

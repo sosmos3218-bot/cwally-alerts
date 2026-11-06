@@ -56,7 +56,7 @@ def yahoo_tnx() -> tuple[float | None, str | None]:
     if price is None:
         return None, None
     price = float(price)
-    if price > 20:  # ^TNX quoted x10 on some feeds (same guard as cash30_monitor)
+    if price > 20:  # ^TNX quoted x10 on some feeds (retired cash30 used the same guard)
         price /= 10
     day = datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%d") if ts else None
     return float(price), day

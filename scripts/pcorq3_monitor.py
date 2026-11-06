@@ -13,7 +13,7 @@ Verdict (configs/pcorq3.json rules):
   확인 필요 10% <= growth < 11%, or a number not parseable (raw numbers in the body).
 
 Forward-looking/cautionary boilerplate is dropped before any stance or financing parse
-(same filter as soq3/neeq3, commit 454c322), so risk-factor text never fires.
+(same boilerplate filter as the retired soq3/neeq3 parsers, commit 454c322), so risk-factor text never fires.
 
 Runs on the existing morning 09:00 KST slot inside the window (11/4-11/6, year 2026) plus the one-shot
 times 11/5 08:00 and 18:00 KST taken over from the retired `pcor` alert (same cron-job.org jobs
