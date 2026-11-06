@@ -1,14 +1,4 @@
 {
-  "initialized": true,
-  "armed": {
-    "low2372": false,
-    "low20": false,
-    "high35": true
-  },
-  "last_date": "2026-11-05",
-  "last_close": 18.03,
-  "init_note": "initialized at install from 2026-10-29 close 26.25, no send",
-  "fail_notified": false,
   "sec_seen": [
     "0000000000-21-011621",
     "0000000000-21-012725",
@@ -337,5 +327,6 @@
   ],
   "sec_seed_note": "seeded 322 accession numbers at install 2026-10-30, no send",
   "sec_checked": "2026-11-06T09:15:11+09:00",
-  "updated_at": "2026-11-06T09:15:12+09:00"
+  "updated_at": "2026-11-06T14:55:00+09:00",
+  "price_lines_removed": "2026-11-06 pt78u; armed/last_close cleared; SEC watch continues"
 }

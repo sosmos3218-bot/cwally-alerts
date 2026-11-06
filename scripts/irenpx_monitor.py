@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
-"""[IREN-PX] IREN (NASDAQ) close-based zones + SEC filing whitelist (approved in chat 2026-10-30).
+"""[IREN-PX] IREN (NASDAQ) SEC filing whitelist only (price lines removed 2026-11-06, pt78u).
 
-Watchlist only (user does not hold IREN). Warnings never carry buy wording.
-  - close <= 23.72 (52-week low) -> '52주 저가 이탈, 관망 유지 경고'      (priority 3)
-  - close <= 20.00              -> '재평가 구간 진입 경고'               (priority 4, re-check list)
-  - close >= 35.00              -> '반등 확인, 추격 매수 보류 체크리스트' (priority 3)
-Each zone fires once when a completed close ENTERS it; it re-arms quietly after a close leaves the zone.
-If 23.72 and 20.00 fire together only the stronger 20.00 warning is sent. First run only records the close.
-Dedupe by the bar's own US/Eastern date (state last_date). Same pattern as figpx_monitor.py.
-
-SEC whitelist (CIK 0001878848, from sec.start_date_kst; every accession at install seeded silently):
+Price zones (23.72 / 20 / 35 and any proposed replacements) were removed after the Q1 FY27
+earnings verdict. This alert keeps the SEC whitelist only (CIK 0001878848):
   p4: 8-K items 1.01 1.02 2.01 2.05 2.06 3.01 4.01 4.02 5.01, 8-K 5.02 naming the co-CEOs/CFO
       (other 5.02 -> p3), S-1 / S-3 / 424B* (dilution)
   p3: other 8-K items (8.01, 2.03 debt, 3.02 unregistered sales, 3.03 ...), convertible-note 8-Ks
       (text check), Schedule 13D(/A), Form 4 open-market sales (S) by a co-CEO over sec.ceo_sale_usd per filing
   ignored: 144, other Form 4, S-8, 13G, proxy, FWP, D, 10-K, 10-Q ([IREN-EARN] watches results),
            8-K with only 2.02 / 7.01 / 5.07 / 9.01
-Same-run hits are combined into one message (max priority).
+Same-run hits are combined into one message (max priority). Accessions seeded silently at install.
 
-Runs on the existing morning 09:00 KST slot (after the US close). No new cron.
-Modes: auto | force (ignore date dedupe) | dry (print only, no ntfy, no state)
-       | confirm (install-confirmation send, no state) | selftest | backtest [days] (SEC classifier on past filings, no send).
+Runs on the existing morning 09:00 KST slot. No new cron. No price fetch, no price ntfy.
+Modes: auto | force | dry (print only, no ntfy, no state)
+       | confirm (install-confirmation send, no state) | selftest | backtest [days].
 Not investment advice.
 """
 from __future__ import annotations
@@ -32,14 +25,12 @@ import sys
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
-NY = ZoneInfo("America/New_York")
 CFG = ROOT / "configs" / "irenpx.json"
 STATE = ROOT / "state" / "irenpx.json"
 UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
@@ -70,115 +61,15 @@ def save_state(st: dict, dry: bool) -> None:
     STATE.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def fetch_bars(cfg: dict, now_ny: datetime) -> list[tuple[date, float]]:
-    """Completed daily bars (US/Eastern date, close), ascending. Today's live bar is excluded."""
-    req = urllib.request.Request(cfg["sources"]["bars"], headers=UA)
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        res = json.loads(resp.read().decode())["chart"]["result"][0]
-    out: dict[date, float] = {}
-    for t, c in zip(res.get("timestamp") or [], res["indicators"]["quote"][0].get("close") or []):
-        if c is not None:
-            out[datetime.fromtimestamp(t, NY).date()] = float(c)
-    meta = res.get("meta") or {}
-    rmt, rmp = meta.get("regularMarketTime"), meta.get("regularMarketPrice")
-    if rmt and rmp:
-        mt = datetime.fromtimestamp(rmt, NY)
-        if mt.date() not in out and mt.hour * 60 + mt.minute >= 16 * 60:
-            out[mt.date()] = float(rmp)
-    today = now_ny.date()
-    after_close = now_ny.hour * 60 + now_ny.minute >= 16 * 60 + 10
-    return sorted((d, c) for d, c in out.items() if d < today or (d == today and after_close))
+# ---------- price lines disabled (pt78u 2026-11-06) ----------
 
-
-# ---------- price zones (pure) ----------
-
-def hit(level: dict, close: float) -> bool:
-    p = float(level["price"])
-    return close <= p if level["op"] == "le" else close >= p
-
-
-def step(levels: list[dict], armed: dict | None, close: float) -> tuple[dict, list[str]]:
-    """armed[key] True = watching (outside the zone). armed None = first run: init, nothing fires."""
-    close = round(float(close), 4)
-    if armed is None:
-        return {lv["key"]: not hit(lv, close) for lv in levels}, []
-    new, fired = dict(armed), []
-    for lv in levels:
-        k = lv["key"]
-        inside = hit(lv, close)
-        if new.get(k, True):
-            if inside:
-                new[k] = False
-                fired.append(k)
-        elif not inside:
-            new[k] = True
-    return new, fired
-
-
-def effective(fired: list[str]) -> list[str]:
-    """20.00 warning supersedes the 23.72 warning when both fire in the same run."""
-    return [k for k in fired if not (k == "low2372" and "low20" in fired)]
-
-
-LINES = "23.72달러 이하(52주 저가 이탈, 경고), 20달러 이하(재평가 구간, 강한 경고), 35달러 이상(반등 확인)"
-RECHECK = ("1) Horizon 2~4 진행: 인도 일정과 고객(Microsoft) 승인, 지연 문구. "
-           "2) 펀딩과 희석: 현금(약 59억 달러) 대비 전환사채(약 67억 달러), ATM 신주 발행, 새 전환사채. "
-           "3) 가이던스: 2026년 말 계약 ARR 40억 달러 목표 유지 여부, CapEx 계획")
-REBOUND_CHECK = ("1) 반등 이유가 공시나 보도자료로 확인되는지(신규 계약, 프리페이먼트, 가이던스 상향, Horizon 인도). "
-                 "2) 같은 시기 희석 발표(ATM, 전환사채, 424B) 동반 여부. "
-                 "3) 거래량과 공매도 비율(21~23%) 숏커버 가능성, 베타 약 4.3이라 하루 10% 이상 되돌림 흔함. "
-                 "4) 실적과 Horizon 일정이 2026-10-30 분석 때보다 실제로 좋아졌는지")
-
-
-def message(cfg: dict, fired: list[str], close: float, day: str, prev_close: float | None) -> tuple[str, str, int]:
-    lv = {x["key"]: x for x in cfg["levels"]}
-    fired = effective(fired)
-    top = max((lv[k] for k in fired), key=lambda x: x["priority"])
-    warn = any(lv[k]["kind"] == "warning" for k in fired)
-    chg = f", 전 거래일 대비 {(close / prev_close - 1) * 100:+.1f}%" if prev_close else ""
-    labels = " + ".join(lv[k]["label"] for k in fired)
-    status = f"{labels}. 미국 종가 {close:.2f}달러({day} 미 동부{chg}). 52주 고가 76.87달러 대비 {(close / 76.87 - 1) * 100:+.0f}%."
-    if "low20" in fired:
-        title = f"{P} 종가 {close:.2f}달러 20달러 이하 재평가 구간 | 경고, 추가매수 보류"
-        todo = ("관망 유지, 추가매수 보류(보유 없음이면 신규 진입도 보류). 재평가 구간이라 아래 3가지를 공시와 실적 자료로 다시 확인: "
-                + RECHECK + ".")
-        later = "3가지 확인 결과는 메모해 두고, 다음 실적과 SEC 공시 알림([IREN-PX] 공시, [IREN-EARN])과 함께 다시 판단."
-        trim = "보유 없음이라 해당 없음. 소규모 투기 포지션을 잡았다면 20달러 아래에서는 손절 기준과 비중부터 재확인."
-        dont = "급락 당일 물타기, 반등 기대 추격, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님."
-    elif warn:
-        title = f"{P} 종가 {close:.2f}달러 52주 저가 이탈 | 관망 유지, 추가매수 보류"
-        todo = ("관망 유지, 추가매수 보류(보유 없음이면 신규 진입도 보류). 하락 이유가 Horizon 지연, 희석(ATM, 전환사채), "
-                "가이던스 하향 중 무엇인지 뉴스와 SEC 공시로 먼저 확인.")
-        later = "20달러 이하로 더 내려가면 재평가 구간 경고(우선순위 4)가 따로 옵니다."
-        trim = "보유 없음이라 해당 없음. 소규모 포지션이 있다면 손절 기준 재확인."
-        dont = "52주 저가라는 이유만으로 바닥 판단, 장중 급락 추격, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님."
-    else:
-        title = f"{P} 종가 {close:.2f}달러 35달러 이상 반등 | 추격 매수 보류, 근거 재확인"
-        todo = "추격 매수 보류. 반등 근거부터 확인: " + REBOUND_CHECK + "."
-        later = "근거가 확인돼도 관망 또는 소규모 투기 포지션 원칙(2026-10-30 분석) 유지. 다시 35달러 아래로 내려갔다 올라오면 또 울립니다."
-        trim = "보유 없음이라 해당 없음. 소규모 포지션이 있다면 35달러 반등에서 일부 정리 기준 점검."
-        dont = "반등 첫날 추격, 계획 금액 초과, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님."
-    body = [
-        f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | IREN | 관심 종목(보유 없음)",
-        "이게 뭐 알림: " + cfg["explain"],
-        "지금 결과/상태: " + status,
-        "지금 할 일: " + todo,
-        f"나중에: {later} 같은 구간은 종가가 구간을 벗어난 뒤 다시 들어올 때만 또 울립니다. 선: {LINES}.",
-        "익절/줄일 때: " + trim,
-        "하지 말 것: " + dont,
-    ]
-    return title, "\n".join(body), int(top["priority"])
-
-
-def confirm_message(cfg: dict, close: float | None, day: str | None) -> tuple[str, str]:
-    px = f"{close:.2f}달러({day} 미 동부 종가)" if close is not None else "조회 실패(구간 미확인)"
+def confirm_message(cfg: dict) -> tuple[str, str]:
     s = cfg["sec"]
     lines = [
-        "[테스트] IREN 알림 설정 완료",
+        "[테스트] IREN SEC 공시 알림 설정 확인",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: IREN 현재 종가 {px}. 선 3개: 23.72달러 이하 52주 저가 이탈 경고(우선순위 3), 20달러 이하 재평가 구간 경고(4), 35달러 이상 반등 확인(3). "
-        f"SEC(CIK {s['cik']}) 공시 감시도 같은 알림에 포함.",
-        "지금 할 일: 없음. 평일 09:00 KST morning 에서 전일 미국 종가로 판정하고 구간에 새로 들어갈 때만 보냅니다. 실적(11/5 미 동부 장 마감 뒤) 전 체크리스트는 11/5 19:00, 실적 공시 확인은 [IREN-EARN] 으로 옵니다.",
+        f"지금 결과/상태: 가격 선 없음(2026-11-06 제거). SEC(CIK {s['cik']}) 화이트리스트만 감시.",
+        "지금 할 일: 없음. 평일 09:00 KST morning 에서 새 접수번호만 분류합니다. 실적(8-K 2.02, 10-Q)은 [IREN-EARN] 이 봅니다.",
         "나중에: SEC 공시는 중요 8-K(계약 체결과 종료, 인수, 손상, 상장 통지, 감사인 변경, 재작성, 지배권 변경, 공동 CEO 또는 CFO 변동)와 S-1/S-3/424B(희석)는 우선순위 4, "
         f"8-K 8.01 등 기타 항목, 전환사채 발행, 13D, 공동 CEO의 신고 1건 {s['ceo_sale_usd'] / 1e6:,.0f}백만 달러 초과 매도는 3. Form 144, S-8, 일반 Form 4, 13G 는 보내지 않습니다. 2027-10-31 까지.",
         "익절/줄일 때: 보유 없음이라 해당 없음.",
@@ -364,7 +255,7 @@ def sec_message(cfg: dict, hits: list[dict]) -> tuple[str, str, int]:
         "이게 뭐 알림: IREN SEC 공시 중 판단에 중요한 종류(중요 8-K, 증권 발행과 전환사채, 13D, 공동 CEO 대규모 매도)만 골라 보내는 [IREN-PX] 공시 감시입니다. 실적 공시는 [IREN-EARN] 이 따로 봅니다.",
         f"지금 결과/상태: 새 공시 {len(hits)}건. {state}",
         "지금 할 일: " + todo,
-        f"나중에: 같은 접수번호는 다시 오지 않습니다. 종가 구간 알림({LINES})은 따로 계속 봅니다.",
+        "나중에: 같은 접수번호는 다시 오지 않습니다. 가격 선은 없습니다(2026-11-06 제거). 실적 공시는 [IREN-EARN] 이 따로 봅니다.",
         "익절/줄일 때: 보유 없음이라 해당 없음. 소규모 포지션이 있다면 대규모 희석이나 Horizon 지연 공시가 나올 때 비중부터 점검.",
         "하지 말 것: 공시 제목만 보고 바로 주문, 장 시작 직후 추격, 신용/미수. 투자 권유 아님.",
     ]
@@ -401,62 +292,10 @@ def sec_part(cfg: dict, st: dict, now: datetime, dry: bool) -> None:
 
 
 def price_part(cfg: dict, st: dict, now: datetime, mode: str, dry: bool) -> None:
-    try:
-        bars = fetch_bars(cfg, now.astimezone(NY))
-    except Exception as exc:  # noqa: BLE001
-        print(f"bars fetch failed: {exc}")
-        if not st.get("fail_notified"):
-            title, msg = f"{P} 시세 조회 실패 | 매매 신호 아님", f"IREN 일봉 조회 실패: {exc}. 다음 09:00 실행에서 다시 봅니다."
-            if dry:
-                print(f"DRY RUN would send (ops): {title}\n{msg}")
-            else:
-                publish(resolve_topic("ops"), title, msg, 3, config_name="irenpx")
-                st["fail_notified"] = True
-        return
-    if not bars:
-        print("no completed bars")
-        return
-    st["fail_notified"] = False
-    L = cfg["levels"]
-    last_d, last_c = bars[-1]
-    if (now.date() - last_d).days > int(cfg.get("stale_days", 6)):
-        print(f"stale bar {last_d}; skip")
-        return
-    armed = st.get("armed") if st.get("initialized") else None
-    if armed is None:
-        armed, _ = step(L, None, last_c)
-        st.update({"initialized": True, "armed": armed, "last_date": str(last_d), "last_close": round(last_c, 4),
-                   "init_note": f"initialized from {last_d} close {last_c:.2f}, no send"})
-        print(f"init from {last_d} close {last_c:.2f}: {armed} (no send)")
-        return
-    prev_date = st.get("last_date")
-    new_bars = [(d, c) for d, c in bars if prev_date is None or str(d) > prev_date]
-    if mode == "force" and not new_bars:
-        new_bars = bars[-1:]
-    if not new_bars:
-        print(f"no new bar after {prev_date}; armed={armed}; last close {last_c:.2f} ({last_d})")
-        return
-    fired_all: list[str] = []
-    prev_close = st.get("last_close")
-    for d, c in new_bars:
-        armed, fired = step(L, armed, c)
-        print(f"bar {d} close {c:.2f} -> fired={fired} armed={armed}")
-        fired_all += [k for k in fired if k not in fired_all]
-    d, c = new_bars[-1]
-    if len(new_bars) > 1:
-        prev_close = new_bars[-2][1]
-    for lv in L:
-        print(f"  line {lv['price']:.2f} ({lv['label']}): {'armed' if armed[lv['key']] else 'inside zone'}, distance {(c / lv['price'] - 1) * 100:+.1f}%")
-    if fired_all:
-        title, msg, prio = message(cfg, fired_all, c, str(d), prev_close)
-        if dry:
-            print(f"DRY RUN would send (p{prio}): {title}\n{msg}")
-        else:
-            tag = "chart_with_upwards_trend" if fired_all == ["high35"] else "warning"
-            publish(resolve_topic("port"), title, msg, prio, tags=[tag], config_name="irenpx")
-    else:
-        print("no zone entry; silent")
-    st.update({"armed": armed, "last_date": str(d), "last_close": round(c, 4)})
+    """No-op: price lines removed 2026-11-06 (pt78u). SEC watch continues in sec_part."""
+    if cfg.get("levels"):
+        raise RuntimeError("irenpx levels must stay empty after price-line removal")
+    print("price lines disabled; skip close zones")
 
 
 # ---------- backtest (no send, no state) ----------
@@ -504,7 +343,6 @@ def f4(name: str, title: str, txs: list[tuple]) -> str:
 
 def selftest() -> int:
     cfg = load_cfg()
-    L = cfg["levels"]
     fails = 0
 
     def check(label, got, want):
@@ -513,43 +351,12 @@ def selftest() -> int:
         fails += not ok
         print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
 
-    A = {"low2372": True, "low20": True, "high35": True}
-    check("init 26.25 all armed, no send", step(L, None, 26.25), (A, []))
-    check("init 22 no send", step(L, None, 22.0), ({"low2372": False, "low20": True, "high35": True}, []))
-    check("23.73 nothing", step(L, A, 23.73)[1], [])
-    check("23.72 low (<=)", step(L, A, 23.72)[1], ["low2372"])
-    check("20.00 gap both", step(L, A, 20.0)[1], ["low2372", "low20"])
-    check("gap -> only 20 warning sent", effective(["low2372", "low20"]), ["low20"])
-    check("20.01 only 23.72", step(L, A, 20.01)[1], ["low2372"])
-    check("34.99 nothing", step(L, A, 34.99)[1], [])
-    check("35.00 rebound (>=)", step(L, A, 35.0)[1], ["high35"])
-    walk = [(23.5, ["low2372"]), (23.0, []), (23.72, []), (23.73, []), (23.6, ["low2372"]),
-            (19.9, ["low20"]), (19.0, []), (20.01, []), (20.0, ["low20"]), (26.0, []),
-            (35.5, ["high35"]), (36.0, []), (34.99, []), (35.0, ["high35"]), (21.0, ["low2372"])]
-    st = dict(A)
-    for i, (c, want) in enumerate(walk):
-        st, f = step(L, st, c)
-        check(f"walk{i} {c}", f, want)
-    msgs = {}
-    for fired, c in ((["low2372"], 23.5), (["low2372", "low20"], 19.5), (["low20"], 19.9), (["high35"], 35.4)):
-        t, b, p = message(cfg, fired, c, "2026-11-06", 25.0)
-        msgs[tuple(fired)] = (t, b, p)
-        print(f"  p{p} {t}")
-        check(f"{fired} no middle dot / em-dash", any(ch in t + b for ch in BANNED), False)
-        check(f"{fired} six parts", [x.split(":")[0] for x in b.split("\n")[1:7]],
-              ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
-        check(f"{fired} prefix", t.startswith(P + " "), True)
-    for k in (("low2372",), ("low2372", "low20"), ("low20",)):
-        t, b, p = msgs[k]
-        check(f"warning {k} no buy wording", [w for w in BUY_WORDS if w in t + b], [])
-        check(f"warning {k} 추가매수 보류 + 관망", "추가매수 보류" in t and "관망 유지" in b, True)
-    check("gap msg = 20 warning p4", (msgs[("low2372", "low20")][2], "재평가 구간" in msgs[("low2372", "low20")][0], "52주 저가 이탈 |" in msgs[("low2372", "low20")][0]), (4, True, False))
-    check("20 warning re-check items", all(x in msgs[("low20",)][1] for x in ("Horizon 2~4", "펀딩과 희석", "가이던스")), True)
-    check("23.72 p3", msgs[("low2372",)][2], 3)
-    check("35 p3 추격 매수 보류 checklist", (msgs[("high35",)][2], "추격 매수 보류" in msgs[("high35",)][0], "반등 이유" in msgs[("high35",)][1]), (3, True, True))
-    t, b = confirm_message(cfg, 26.25, "2026-10-29")
+    check("price levels empty", cfg.get("levels"), [])
+    check("price_lines flag", cfg.get("price_lines"), "disabled")
+    t, b = confirm_message(cfg)
     check("confirm title", t, "[IREN-PX] 설치 확인 | 매매 신호 아님")
-    check("confirm no dot/dash", any(ch in t + b for ch in BANNED), False)
+    check("confirm says no price lines", "가격 선 없음" in b, True)
+    check("confirm no middle dot / em-dash", any(ch in t + b for ch in BANNED), False)
 
     # SEC classifier
     docs = {
@@ -651,12 +458,7 @@ def main() -> int:
     if dry:
         print("DRY RUN (no ntfy, no state write)")
     if mode == "confirm":
-        try:
-            d, c = fetch_bars(cfg, now.astimezone(NY))[-1]
-            title, msg = confirm_message(cfg, c, str(d))
-        except Exception as exc:  # noqa: BLE001
-            print(f"bars fetch failed: {exc}")
-            title, msg = confirm_message(cfg, None, None)
+        title, msg = confirm_message(cfg)
         print(title)
         print(msg)
         publish(resolve_topic("port"), title, msg, 3, tags=["white_check_mark"], config_name="irenpx")
