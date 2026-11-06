@@ -2439,7 +2439,17 @@ jobs:
 
       - name: Archive ntfy
         if: always()
-        run: python scripts/ntfy_archive.py
+        env:
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          # Dry/manual test dispatches must not Persist. Skip archive so a 48h ntfy poll
+          # cannot create a stamp/items-only state commit (pt18u). schedule and
+          # oneoff_mode=auto still archive; next auto run covers the 48h window.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then
+            echo "dry dispatch: skip ntfy archive (no Persist from archive)"
+            exit 0
+          fi
+          python scripts/ntfy_archive.py
       - name: Persist state
         id: persist
         if: always()
