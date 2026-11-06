@@ -5,33 +5,104 @@
   "display": "우리금융지주 (KRX 316140)",
   "as_of": "2026-11-05",
   "holding": "보유 25주, 평단 33,018원 (2026-11-05 공유 메모리 기준, port.json 은 미변경).",
-  "position": {"shares": 25, "avg": 33018, "div_note": "11/6까지 보유 시 3분기 배당 220원 x 25주 = 5,500원 수령 예정(기준일 11/10, 배당락 11/9)", "div_note_until": "2026-11-30"},
-  "approval": "2026-11-05 사용자 승인(pt74u, 초안 그대로, 공시 감시 포함). 보유 반영 2026-11-05 승인(pt76u)",
+  "position": {
+    "shares": 25,
+    "avg": 33018,
+    "div_note": "11/6까지 보유 시 3분기 배당 220원 x 25주 = 5,500원 수령 예정(기준일 11/10, 배당락 11/9)",
+    "div_note_until": "2026-11-30"
+  },
+  "approval": "2026-11-05 사용자 승인(pt74u, 초안 그대로, 공시 감시 포함). 보유 반영 2026-11-05 승인(pt76u). WOORI 공시 핸드오프 2026-11-06 승인(pt79u).",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "15:40",
-  "schedule_note": "새 cron 없음. 기존 0090b0 15:40 KST 슬롯(KRX 거래일)에 부착. 수동 job=k316140 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 0090b0 15:40 KST 슬롯(KRX 거래일)에 부착. 수동 job=k316140 은 oneoff_mode=auto 가 아니면 selftest + dry. 2027-01-26~02-27(woori window) 동안 기업가치 제고 계획과 자기주식 취득 결정 KIND 공시는 ntfy 없이 WOORI([WOORI] job)로 넘김(seen 처리). WOORI 조회/파싱 실패나 다음날까지 미처리면 [316140] 이 p3 대체 발송.",
   "price_source_note": "판정은 Daum KRX 확정 종가만(실패하면 Yahoo 316140.KS 정규장 일봉). 당일 행은 15:35 KST 이후만. 네이버는 NXT 가 섞여 쓰지 않음.",
   "lines": [
-    {"key": "l30400", "op": "le", "level": 30400, "rearm_op": "ge", "rearm": 31300, "priority": 3, "warn": false,
-     "title": "1차 추가매수 점검 (20일선, 전일 종가 부근 되돌림)"},
-    {"key": "l28800", "op": "le", "level": 28800, "rearm_op": "ge", "rearm": 29700, "priority": 3, "warn": false,
-     "title": "2차 추가매수 점검 (10/27 저점대)"},
-    {"key": "h33100", "op": "ge", "level": 33100, "rearm_op": "lt", "rearm": 32100, "priority": 3, "warn": false,
-     "title": "평단(33,018원)과 60일선 회복, 추격 매수 보류, 비중 점검"},
-    {"key": "w25400", "op": "le", "level": 25400, "rearm_op": "ge", "rearm": 26200, "priority": 4, "warn": true,
-     "title": "경고 52주 저점 이탈, 논리 재점검"},
-    {"key": "w26414", "op": "le", "level": 26414, "rearm_op": "ge", "rearm": 27200, "priority": 4, "warn": true,
-     "title": "경고 평단 -20% 손실 점검, 논리 재점검"}
+    {
+      "key": "l30400",
+      "op": "le",
+      "level": 30400,
+      "rearm_op": "ge",
+      "rearm": 31300,
+      "priority": 3,
+      "warn": false,
+      "title": "1차 추가매수 점검 (20일선, 전일 종가 부근 되돌림)"
+    },
+    {
+      "key": "l28800",
+      "op": "le",
+      "level": 28800,
+      "rearm_op": "ge",
+      "rearm": 29700,
+      "priority": 3,
+      "warn": false,
+      "title": "2차 추가매수 점검 (10/27 저점대)"
+    },
+    {
+      "key": "h33100",
+      "op": "ge",
+      "level": 33100,
+      "rearm_op": "lt",
+      "rearm": 32100,
+      "priority": 3,
+      "warn": false,
+      "title": "평단(33,018원)과 60일선 회복, 추격 매수 보류, 비중 점검"
+    },
+    {
+      "key": "w25400",
+      "op": "le",
+      "level": 25400,
+      "rearm_op": "ge",
+      "rearm": 26200,
+      "priority": 4,
+      "warn": true,
+      "title": "경고 52주 저점 이탈, 논리 재점검"
+    },
+    {
+      "key": "w26414",
+      "op": "le",
+      "level": 26414,
+      "rearm_op": "ge",
+      "rearm": 27200,
+      "priority": 4,
+      "warn": true,
+      "title": "경고 평단 -20% 손실 점검, 논리 재점검"
+    }
   ],
   "context": "2026-11-05 기준: 종가 31,950원, 20일선 30,940원, 60일선 33,132원, CET1 13.80%(일시요인 제외 13.9%대), 2025 DPS 1,360원, PBR 0.62배, 3분기 DPS 220원(비과세), 컨센서스 목표가 평균 43,526원.",
   "change_conditions": "NIM 회복 실패, 대손비용률 50bp 이상, 오버행 재부각(유진PE 잔여 약 2.1%, 포스코), 금통위 11/26 결과, 2027년 2월 기업가치 제고 계획에서 환원율 50% 공식화 여부.",
   "disclosure_watch": {
     "source": "KIND 상세검색(회사 코드 316140, 최근 45일, API 키 불필요, scripts/usdiv_monitor.kind_search 재사용). KIND 접수번호는 DART rcept_no 와 같은 14자리.",
-    "patterns": ["주식등의대량보유상황보고서", "기업가치 ?제고 ?계획", "현금ㆍ현물 ?배당 ?결정", "자기주식 ?취득.*결정", "주식 ?소각 ?결정"],
-    "exclude": ["해지", "변경상장", "상황보고서 우리금융지주$"],
+    "patterns": [
+      "주식등의대량보유상황보고서",
+      "기업가치 ?제고 ?계획",
+      "현금ㆍ현물 ?배당 ?결정",
+      "자기주식 ?취득.*결정",
+      "주식 ?소각 ?결정"
+    ],
+    "exclude": [
+      "해지",
+      "변경상장",
+      "상황보고서 우리금융지주$"
+    ],
     "lookback_days": 45,
-    "priority": 3
+    "priority": 3,
+    "handoff_to_woori": {
+      "enabled": true,
+      "kinds": [
+        "기업가치 제고 계획",
+        "자기주식 취득 결정"
+      ],
+      "title_patterns": [
+        "기업가치 ?제고 ?계획",
+        "자기주식 ?취득.*결정"
+      ],
+      "woori_config": "configs/woori.json",
+      "woori_state": "state/woori.json",
+      "window_from": "woori.window_start/window_end",
+      "lag_days": 1,
+      "note": "창 안에서는 ntfy 없이 seen+pending. WOORI ops_fetch_day/ops_parse_day(공시일 이후) 또는 lag_days 지나도 seen_rcps 미표기면 대체 발송."
+    }
   },
   "sources": {
     "daum": "https://finance.daum.net/api/quote/A316140/days?symbolCode=A316140&page=1&perPage=10&pagination=true",

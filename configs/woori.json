@@ -7,7 +7,7 @@
   "job_id": "woori",
   "approval": "사용자 승인 2026-11-05 (pt62u). 새 cron/새 workflow_dispatch 입력/cron-job.org 잡 없음. morning 09:00, afternoon 15:20, k203780 19:00 기존 묶음에 부착, 스크립트가 날짜로 거름.",
   "schedule_kst": "평일 09:00 / 15:20 / 19:00 (morning, afternoon, k203780 슬롯), 창 2027-01-26 ~ 2027-02-27",
-  "schedule_note": "새 cron 없음. 기존 세 슬롯에 붙임. 4Q26/FY2026 실적과 기업가치 제고/주주환원 공시가 나오면 CET1, 총주주환원율 목표, 자사주 매입을 판정. 수동 job=woori 는 oneoff_mode=auto 가 아니면 selftest + dry (날짜 거름 무시).",
+  "schedule_note": "새 cron 없음. 기존 세 슬롯에 붙임. 4Q26/FY2026 실적과 기업가치 제고/주주환원 공시가 나오면 CET1, 총주주환원율 목표, 자사주 매입을 판정. 수동 job=woori 는 oneoff_mode=auto 가 아니면 selftest + dry (날짜 거름 무시). [316140] 은 같은 창에서 기업가치 제고/자기주식 취득 KIND 공시 ntfy 를 넘기고, WOORI 실패 시에만 대체 발송.",
   "year_guard": 2027,
   "window_start": "2027-01-26",
   "window_end": "2027-02-27",
@@ -22,7 +22,7 @@
     "note": "보유 25주, 평단 33,018원. 본문에 현재가와 손익% (Daum/krx_close, 없으면 생략)."
   },
   "baseline": {
-    "q3_cet1_pct": 13.80,
+    "q3_cet1_pct": 13.8,
     "q3_cet1_ex_oneoffs": "13.93~13.95",
     "year_end_outlook_pct": "13.6~13.7",
     "tsr_guidance": "total return 40%대 중반 이상",

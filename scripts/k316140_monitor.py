@@ -11,6 +11,8 @@ KRX 거래일 15:40 KST (0090b0 슬롯에 부착). Daum KRX 확정 종가(실패
 본문에 평단 대비 평가손익(25주).
 공시: KIND 최근 45일 316140 공시 중 대량보유, 기업가치 제고 계획, 현금 현물배당 결정, 자기주식 취득 결정, 주식 소각 결정
 새 접수번호마다 p3 1번. 첫 실행은 가격과 공시 모두 조용히 시드. 종가 실패는 하루 1번, KIND 실패는 3회 연속일 때 cwally-ops.
+WOORI 창(configs/woori.json window_start~window_end, 기본 2027-01-26~02-27): 기업가치 제고/자기주식 취득은 ntfy 없이 handed to WOORI(pending).
+WOORI ops_fetch_day/ops_parse_day(공시일 이후) 또는 lag_days(기본 1) 지나도 seen_rcps 미표기면 p3 대체 발송(본문에 WOORI 판정 실패로 대체 발송).
 usage: k316140_monitor.py <auto|dry> | selftest
 """
 from __future__ import annotations
@@ -161,20 +163,112 @@ def show(title: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def disc_message(cfg: dict, r: dict, stamp: str) -> tuple[str, str, int]:
+def disc_kind(title: str) -> str:
+    t = show(title)
+    if "대량보유" in t:
+        return "대량보유 보고"
+    if "가치" in t and "제고" in t:
+        return "기업가치 제고 계획"
+    if "배당" in t:
+        return "배당 결정"
+    if "자기주식" in t:
+        return "자기주식 취득 결정"
+    if "소각" in t:
+        return "주식 소각 결정"
+    return "기타 공시"
+
+
+def load_woori_cfg(io: dict | None = None) -> dict:
+    if io and "woori_cfg" in io:
+        return io["woori_cfg"]
+    path = ROOT / "configs" / "woori.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+    return {"window_start": "2027-01-26", "window_end": "2027-02-27"}
+
+
+def load_woori_state(io: dict | None = None) -> dict:
+    if io and "woori_state" in io:
+        return io["woori_state"]
+    path = ROOT / "state" / "woori.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+    return {}
+
+
+def woori_window(cfg: dict, io: dict | None = None) -> tuple[str, str]:
+    wcfg = load_woori_cfg(io)
+    return str(wcfg.get("window_start") or "2027-01-26"), str(wcfg.get("window_end") or "2027-02-27")
+
+
+def in_woori_window(cfg: dict, day: str, io: dict | None = None) -> bool:
+    h = (cfg.get("disclosure_watch") or {}).get("handoff_to_woori") or {}
+    if not h.get("enabled", True):
+        return False
+    start, end = woori_window(cfg, io)
+    return start <= day <= end
+
+
+def is_handoff_disc(cfg: dict, title: str) -> bool:
+    h = (cfg.get("disclosure_watch") or {}).get("handoff_to_woori") or {}
+    pats = h.get("title_patterns") or []
+    return any(re.search(p, title) for p in pats)
+
+
+def filed_day(r: dict) -> str:
+    return str(r.get("filed") or "")[:10]
+
+
+def woori_processed(wst: dict, acptno: str) -> bool:
+    seen = wst.get("seen_rcps") or []
+    return any(acptno == str(x) or acptno in str(x) for x in seen)
+
+
+def woori_failed_since(wst: dict, day: str) -> bool:
+    for key in ("ops_fetch_day", "ops_parse_day"):
+        d = wst.get(key)
+        if d and str(d)[:10] >= day:
+            return True
+    return False
+
+
+def pending_should_fallback(cfg: dict, item: dict, today: str, wst: dict) -> str | None:
+    """Return reason string if fallback should fire, else None. 'resolved' means drop silently."""
+    acpt = item["acptno"]
+    fday = item["filed"][:10]
+    if woori_processed(wst, acpt):
+        return "resolved"
+    if woori_failed_since(wst, fday):
+        return "woori_ops_fail"
+    lag = int(((cfg.get("disclosure_watch") or {}).get("handoff_to_woori") or {}).get("lag_days") or 1)
+    if date.fromisoformat(today) >= date.fromisoformat(fday) + timedelta(days=lag):
+        return "woori_lag"
+    return None
+
+
+def disc_message(cfg: dict, r: dict, stamp: str, *, fallback: str | None = None) -> tuple[str, str, int]:
     t = show(r["title"])
-    kind = ("대량보유 보고" if "대량보유" in t else "기업가치 제고 계획" if "가치" in t else "배당 결정" if "배당" in t
-            else "자기주식 취득 결정" if "자기주식" in t else "주식 소각 결정")
+    kind = disc_kind(r["title"])
     url = cfg["sources"]["kind_view"].format(acptno=r["acptno"])
     hint = {"대량보유 보고": "보고자와 지분 변동(유진PE, 포스코 등 매도인지, 5% 이상 신규인지)을 확인. 오버행 재부각 여부 판단.",
             "기업가치 제고 계획": "총주주환원율 50% 이상 공식화, DPS 성장, CET1 목표가 바뀌었는지 확인.",
             "배당 결정": "주당 배당금, 기준일, 비과세(자본준비금 감액) 재원 여부 확인.",
             "자기주식 취득 결정": "매입 규모와 기간, 소각 여부 확인.",
-            "주식 소각 결정": "소각 주식 수와 발행주식 대비 비율 확인."}[kind]
+            "주식 소각 결정": "소각 주식 수와 발행주식 대비 비율 확인.",
+            "기타 공시": "원문 확인."}[kind]
+    status = f"{t} ({r['filed']}, 접수번호 {r['acptno']}). 원문: {url}"
+    if fallback:
+        status += " WOORI 판정 실패로 대체 발송."
     body = "\n".join([
         f"{stamp} | 316140 | 우리금융지주",
         f"이게 뭐 알림: 우리금융지주 새 공시({kind}) 1회 알림. 내용 판단은 직접. 매매 지시 아님.",
-        f"지금 결과/상태: {t} ({r['filed']}, 접수번호 {r['acptno']}). 원문: {url} {footer(cfg)}",
+        f"지금 결과/상태: {status} {footer(cfg)}",
         f"지금 할 일: {hint}",
         "나중에: 같은 접수번호는 다시 보내지 않습니다. 가격 선 감시는 계속.",
         "익절/줄일 때: 보유 25주. 공시만으로 줄이거나 늘리지 말고 내용 확인 뒤 판단.",
@@ -214,23 +308,48 @@ def run(mode: str, now: datetime, cfg: dict, io: dict | None = None) -> tuple[li
                 f"지금 결과/상태: Daum KRX, Yahoo 모두 확인 불가 ({str(exc)[:150]}).", "지금 할 일: 필요하면 직접 확인.",
                 "나중에: 다음 거래일 15:40 에 밀린 종가를 순서대로 판정.", "익절/줄일 때: 해당 없음.", "하지 말 것: 조회 실패를 조건 미충족으로 읽기."]), 3))
     seen = st.setdefault("disc_seen", [])
+    pending = st.setdefault("woori_pending", [])  # [{acptno, filed, title}]
     try:
         since = (now.date() - timedelta(days=int(cfg["disclosure_watch"]["lookback_days"]))).isoformat()
         lst = io["kind"]() if "kind" in io else kind_rows(since, today)
         hits = [r for r in lst if disc_match(cfg, r["title"])]
         seeding = not st.get("disc_seeded")
-        for r in sorted(hits, key=lambda x: x["acptno"]):
-            if r["acptno"] in seen:
+        window = in_woori_window(cfg, today, io)
+        wst = load_woori_state(io)
+        # resolve / fallback pending first (dedupe by acptno)
+        still: list[dict] = []
+        pending_acs = {p["acptno"] for p in pending}
+        for item in pending:
+            reason = pending_should_fallback(cfg, item, today, wst)
+            if reason == "resolved":
+                print(f"handed to WOORI resolved (seen_rcps): {item['acptno']}")
                 continue
-            seen.append(r["acptno"])
-            if not seeding:
-                out.append(disc_message(cfg, r, stamp))
+            if reason:
+                print(f"WOORI fallback ({reason}): {item['acptno']}")
+                out.append(disc_message(cfg, item, stamp, fallback=reason))
+                continue
+            still.append(item)
+        pending = still
+        for r in sorted(hits, key=lambda x: x["acptno"]):
+            acpt = r["acptno"]
+            if acpt in seen:
+                continue
+            seen.append(acpt)
+            if seeding:
+                continue
+            if window and is_handoff_disc(cfg, r["title"]):
+                if acpt not in pending_acs and acpt not in {p["acptno"] for p in pending}:
+                    pending.append({"acptno": acpt, "filed": r["filed"], "title": r["title"]})
+                print(f"handed to WOORI: {acpt} {disc_kind(r['title'])}")
+                continue
+            out.append(disc_message(cfg, r, stamp))
         if seeding:
             st["disc_seeded"] = stamp
             print(f"disclosures seeded: {len(hits)} matches marked seen")
         st["disc_seen"] = seen[-200:]
+        st["woori_pending"] = pending[-50:]
         st["kind_fail"] = 0
-        print(f"KIND rows {len(lst)}, matches {len(hits)}")
+        print(f"KIND rows {len(lst)}, matches {len(hits)}, pending={len(pending)}")
     except Exception as exc:  # noqa: BLE001
         st["kind_fail"] = int(st.get("kind_fail") or 0) + 1
         print(f"KIND fail {st['kind_fail']}: {exc}")
@@ -326,6 +445,84 @@ def selftest(cfg: dict) -> int:
         r.append([o[0].split(" | ")[0] for o in out])
     check("price fail daily ops, KIND fail on 3rd run", r, [["[316140] 우리금융 316140 종가 조회 실패"], ["[316140] 우리금융 316140 종가 조회 실패"],
                                                             ["[316140] 우리금융 316140 종가 조회 실패", "[316140] 우리금융 316140 공시 조회 실패"]])
+
+    # --- WOORI handoff window (pt79u) ---
+    wcfg = {"window_start": "2027-01-26", "window_end": "2027-02-27"}
+    prices_ok = lambda: ([("2027-02-04", 32000.0), ("2027-02-05", 32100.0)], "Daum KRX", [])
+    kind_in = [
+        {"acptno": "20270205001001", "filed": "2027-02-05 15:00", "title": "우리금융지주 기업가치 제고 계획(자율공시) 우리금융지주"},
+        {"acptno": "20270205001002", "filed": "2027-02-05 15:05", "title": "우리금융지주 자기주식취득 신탁계약 체결 결정 우리금융지주"},
+        {"acptno": "20270205001003", "filed": "2027-02-05 15:10", "title": "우리금융지주 주식등의대량보유상황보고서(일반) 포스코"},
+    ]
+    st0 = {"disc_seeded": "x", "disc_seen": [], "armed": {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True},
+           "last_date": "2027-02-04", "woori_pending": []}
+    io_h = {"state": st0, "prices": prices_ok, "kind": lambda: list(kind_in),
+            "woori_cfg": wcfg, "woori_state": {"seen_rcps": [], "ops_fetch_day": None, "ops_parse_day": None}}
+    out, st = run("dry", datetime(2027, 2, 5, 15, 40, tzinfo=KST), cfg, io_h)
+    titles = [o[0] for o in out]
+    check("in-window handoff: only 대량보유 sent", (sum("공시 |" in t for t in titles),
+                                                   any("대량보유" in t for t in titles),
+                                                   any("기업가치" in t or "자기주식" in t for t in titles)), (1, True, False))
+    check("in-window pending has 2 handoff filings", sorted(p["acptno"] for p in st["woori_pending"]),
+          ["20270205001001", "20270205001002"])
+    check("in-window handoff marked seen", all(a in st["disc_seen"] for a in ("20270205001001", "20270205001002", "20270205001003")), True)
+
+    # same day again: silent (dedupe) even with pending
+    io_h["state"] = st
+    out2, st = run("dry", datetime(2027, 2, 5, 15, 50, tzinfo=KST), cfg, io_h)
+    check("in-window same-day dedupe silent", out2, [])
+
+    # next day, woori healthy but not processed -> lag fallback
+    io_h["state"] = st
+    io_h["prices"] = lambda: ([("2027-02-05", 32100.0), ("2027-02-06", 32200.0)], "Daum KRX", [])
+    io_h["kind"] = lambda: list(kind_in)  # no new
+    io_h["woori_state"] = {"seen_rcps": [], "ops_fetch_day": None, "ops_parse_day": None}
+    out, st = run("dry", datetime(2027, 2, 6, 15, 40, tzinfo=KST), cfg, io_h)
+    titles = [o[0] for o in out]
+    check("lag fallback sends both handoff types", (sum("공시 |" in t for t in titles), len(st["woori_pending"]),
+                                                    all("WOORI 판정 실패로 대체 발송" in o[1] for o in out if "공시 |" in o[0])),
+          (2, 0, True))
+    # dedupe after fallback
+    io_h["state"] = st
+    out, st = run("dry", datetime(2027, 2, 6, 15, 50, tzinfo=KST), cfg, io_h)
+    check("fallback dedupe silent", out, [])
+
+    # ops-fail same-day fallback
+    st1 = {"disc_seeded": "x", "disc_seen": [], "armed": {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True},
+           "last_date": "2027-02-04", "woori_pending": []}
+    io_f = {"state": st1, "prices": prices_ok, "kind": lambda: [
+        {"acptno": "20270205002001", "filed": "2027-02-05 14:00", "title": "우리금융지주 기업가치 제고 계획(자율공시) 우리금융지주"}],
+            "woori_cfg": wcfg, "woori_state": {"seen_rcps": [], "ops_fetch_day": None, "ops_parse_day": None}}
+    out, st = run("dry", datetime(2027, 2, 5, 15, 40, tzinfo=KST), cfg, io_f)
+    check("ops-fail path: first handoff no send", (out, [p["acptno"] for p in st["woori_pending"]]), ([], ["20270205002001"]))
+    io_f["state"] = st
+    io_f["woori_state"] = {"seen_rcps": [], "ops_fetch_day": "2027-02-05", "ops_parse_day": None}
+    out, st = run("dry", datetime(2027, 2, 5, 16, 00, tzinfo=KST), cfg, io_f)
+    check("ops-fail same-day fallback", (len(out) == 1 and "기업가치" in out[0][0] and "WOORI 판정 실패로 대체 발송" in out[0][1],
+                                         st["woori_pending"]), (True, []))
+
+    # woori processed -> drop pending silently
+    st2 = {"disc_seeded": "x", "disc_seen": ["20270205003001"], "armed": {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True},
+           "last_date": "2027-02-05",
+           "woori_pending": [{"acptno": "20270205003001", "filed": "2027-02-05 15:00",
+                              "title": "우리금융지주 자기주식취득 신탁계약 체결 결정 우리금융지주"}]}
+    io_r = {"state": st2, "prices": lambda: ([("2027-02-05", 32100.0), ("2027-02-06", 32200.0)], "Daum KRX", []),
+            "kind": lambda: [], "woori_cfg": wcfg,
+            "woori_state": {"seen_rcps": ["20270205003001"], "ops_fetch_day": None, "ops_parse_day": None}}
+    out, st = run("dry", datetime(2027, 2, 6, 15, 40, tzinfo=KST), cfg, io_r)
+    check("woori processed: pending cleared, no fallback send", (out, st["woori_pending"]), ([], []))
+
+    # out-of-window: handoff types send normally
+    st3 = {"disc_seeded": "x", "disc_seen": [], "armed": {"l30400": True, "l28800": True, "h33100": True, "w25400": True, "w26414": True},
+           "last_date": "2026-12-01"}
+    io_o = {"state": st3, "prices": lambda: ([("2026-12-01", 31000.0), ("2026-12-02", 30900.0)], "Daum KRX", []),
+            "kind": lambda: [{"acptno": "20261202004001", "filed": "2026-12-02 15:00",
+                              "title": "우리금융지주 기업가치 제고 계획(자율공시) 우리금융지주"}],
+            "woori_cfg": wcfg, "woori_state": {}}
+    out, st = run("dry", datetime(2026, 12, 2, 15, 40, tzinfo=KST), cfg, io_o)
+    check("out-of-window send 기업가치", (len(out) == 1 and "기업가치" in out[0][0] and "대체 발송" not in out[0][1],
+                                      st.get("woori_pending", [])), (True, []))
+
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 
