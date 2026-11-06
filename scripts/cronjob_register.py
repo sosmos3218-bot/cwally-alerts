@@ -107,7 +107,7 @@ TEMPLATE_JOB_ID = 8588894  # cwally port morning (09:00 KST)
 AFTERNOON_JOB_ID = 0  # set when known; fix_slot_oneoff patches oneoff_mode=auto
 B0_JOB_ID = 0  # 0090b0 15:41 KST; set when known
 DISPATCH_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches"
-ONESHOT_BODY = {"ref": "main", "inputs": {"job": "oneshot"}}
+ONESHOT_BODY = {"ref": "main", "inputs": {"job": "oneshot", "oneoff_mode": "auto"}}
 TEMPLATE_BODY = {"ref": "main", "inputs": {"job": "morning", "oneoff_mode": "auto"}}
 POST = 1  # cron-job.org RequestMethod
 SLOT_JOB_ID = 8698629  # created 2026-10-22 by register_slot
@@ -138,7 +138,7 @@ TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0, 
                  "hours": [9, 10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
                  "wdays": [1, 2, 3, 4, 5]}
 PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
-PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight"}}
+PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight", "oneoff_mode": "auto"}}
 PORTLIGHT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [21],
                       "mdays": [-1], "months": [-1], "wdays": [0]}
 TREND_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/trend-monitor.yml/dispatches"
@@ -201,7 +201,9 @@ def check_oneshot_kst(at: datetime) -> list[str]:
 
 def call(method: str, path: str, key: str, payload: dict | None = None) -> dict:
     data = json.dumps(payload).encode() if payload is not None else None
-    for attempt in (1, 2, 3):
+    # Default: fail fast on 429 (pt21u). Set CRONJOB_RETRY_429=1 only for non-urgent register flows.
+    retries = (1, 2, 3) if env("CRONJOB_RETRY_429") == "1" else (1,)
+    for attempt in retries:
         req = urllib.request.Request(
             API + path,
             data=data,
@@ -216,10 +218,13 @@ def call(method: str, path: str, key: str, payload: dict | None = None) -> dict:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.loads(resp.read().decode() or "{}")
         except urllib.error.HTTPError as exc:
-            if exc.code == 429 and attempt < 3:
-                time.sleep(40 * attempt)
-                continue
-            # status only; the body could echo request data
+            if exc.code == 429:
+                ra = exc.headers.get("Retry-After") if exc.headers else None
+                hint = f" Retry-After={ra}" if ra else " (no Retry-After header)"
+                if attempt != retries[-1]:
+                    time.sleep(40 * attempt)
+                    continue
+                raise Stop(API_ERROR, f"cron-job.org {method} {path} -> HTTP 429{hint}")
             raise Stop(API_ERROR, f"cron-job.org {method} {path} -> HTTP {exc.code}")
         except (urllib.error.URLError, TimeoutError) as exc:
             raise Stop(API_ERROR, f"cron-job.org {method} {path} -> {type(exc).__name__}")
@@ -874,44 +879,68 @@ def run_register_portlight(now: datetime) -> int:
 
 
 def run_fix_slot_oneoff(now: datetime) -> int:
-    """pt20u: patch morning/afternoon/0090b0 on-time bodies to oneoff_mode=auto.
-
-    Avoids GET /jobs list (rate limit). Patches TEMPLATE_JOB_ID plus optional
-    AFTERNOON_JOB_ID / B0_JOB_ID and any numeric CRONJOB_JOB_IDS.
+    """pt21u: one light pass — list once, patch morning/afternoon/0090b0 (+ any
+    other port-alerts dispatcher missing oneoff_mode=auto when the job uses it),
+    read back each. Fail fast on 429. No long warmup/retry loops.
     """
     key = env("CRONJOB_API_KEY")
     if not key:
         raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
-    # Give cron-job.org rate limit a chance to clear after prior list storms.
-    warmup = int(env("CRONJOB_WARMUP_SEC") or "90")
-    if warmup > 0:
-        print(f"fix_slot_oneoff: warmup sleep {warmup}s")
-        time.sleep(warmup)
     wanted = {
         "morning": TEMPLATE_BODY,
         "afternoon": {"ref": "main", "inputs": {"job": "afternoon", "oneoff_mode": "auto"}},
         "0090b0": {"ref": "main", "inputs": {"job": "0090b0", "oneoff_mode": "auto"}},
+        "k203780": SLOT_BODY,
+        "tslaspcx": TSLASPCX_BODY,
+        "tsla": TSLA_BODY,
+        # oneshot/portlight ignore some oneoff paths, but with workflow default=dry they must
+        # send auto explicitly or the scheduled run becomes a dry test (pt21u).
+        "oneshot": {"ref": "main", "inputs": {"job": "oneshot", "oneoff_mode": "auto"}},
+        "portlight": {"ref": "main", "inputs": {"job": "portlight", "oneoff_mode": "auto"}},
     }
-    ids: list[int] = [TEMPLATE_JOB_ID]
-    for const in ("AFTERNOON_JOB_ID", "B0_JOB_ID"):
-        v = int(globals().get(const) or 0)
-        if v:
-            ids.append(v)
-    raw = (env("CRONJOB_JOB_IDS") or "").strip()
-    if raw:
-        for part in raw.split(","):
-            part = part.strip()
-            if part.isdigit():
-                ids.append(int(part))
-    seen: set[int] = set()
-    ordered: list[int] = []
-    for jid in ids:
-        if jid and jid not in seen:
-            seen.add(jid)
-            ordered.append(jid)
-    touched = 0
-    for jid in ordered:
-        time.sleep(1.0)
+    gap = float(env("CRONJOB_GAP_SEC") or "1.5")
+
+    def pause() -> None:
+        time.sleep(gap)
+
+    print("fix_slot_oneoff: GET /jobs (once)")
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed)")
+    port_ids: list[tuple[int, str]] = []
+    for j in res.get("jobs") or []:
+        jid = int(j.get("jobId") or 0)
+        if not jid or not j.get("enabled"):
+            continue
+        if (j.get("url") or "").rstrip("/") != DISPATCH_URL:
+            continue
+        port_ids.append((jid, (j.get("title") or "").strip()))
+    print(f"port-alerts dispatchers enabled: {len(port_ids)}")
+    for jid, title in port_ids:
+        print(f"  listed id={jid} title={title!r}")
+
+    # Prefer known/hint order: morning template, then afternoon/0090b0 by title, then rest
+    def rank(item: tuple[int, str]) -> tuple[int, int]:
+        jid, title = item
+        tl = title.lower()
+        if jid == TEMPLATE_JOB_ID or "morning" in tl or "09:00" in tl:
+            return (0, jid)
+        if "afternoon" in tl or "15:20" in tl:
+            return (1, jid)
+        if "0090b0" in tl or "15:41" in tl:
+            return (2, jid)
+        return (3, jid)
+
+    port_ids.sort(key=rank)
+    confirmed_auto: list[str] = []
+    patched: list[str] = []
+        pending: list[str] = []
+    must = {"morning", "afternoon", "0090b0"}
+    must_ok: set[str] = set()
+
+    for jid, title in port_ids:
+        pause()
+        print(f"GET /jobs/{jid}")
         detail = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
         ext = detail.get("extendedData") or {}
         try:
@@ -922,28 +951,73 @@ def run_fix_slot_oneoff(now: datetime) -> int:
         job_name = inputs.get("job")
         if jid == TEMPLATE_JOB_ID:
             job_name = "morning"
-        if job_name not in wanted:
-            print(f"skip: job {jid} title={detail.get('title')!r} body job={job_name!r}")
-            continue
-        target = wanted[job_name]
-        if body == target:
-            print(f"ok: job {jid} title={detail.get('title')!r} already {json.dumps(target)}")
-            continue
-        print(f"update: job {jid} title={detail.get('title')!r} {json.dumps(body)} -> {json.dumps(target)}")
-        if env("CRONJOB_DRY_RUN") == "1":
-            continue
-        time.sleep(1.0)
-        headers = dict(ext.get("headers") or {})
-        call("PATCH", f"/jobs/{jid}", key, {
-            "job": {
-                "extendedData": {
-                    "headers": headers,
-                    "body": json.dumps(target, separators=(",", ":")),
+        oneoff = inputs.get("oneoff_mode")
+        line = f"id={jid} title={title!r} job={job_name!r} oneoff_mode={oneoff!r} body={json.dumps(body, separators=(',', ':'))}"
+        print(f"read: {line}")
+
+        if job_name in wanted:
+            target = wanted[job_name]
+            if body == target and oneoff == "auto":
+                print(f"ok: {job_name} already auto")
+                confirmed_auto.append(line)
+                if job_name in must:
+                    must_ok.add(job_name)
+                continue
+            print(f"update: {job_name} {json.dumps(body)} -> {json.dumps(target)}")
+            if env("CRONJOB_DRY_RUN") == "1":
+                pending.append(f"dry-run would patch {line}")
+                continue
+            pause()
+            headers = dict(ext.get("headers") or {})
+            call("PATCH", f"/jobs/{jid}", key, {
+                "job": {
+                    "extendedData": {
+                        "headers": headers,
+                        "body": json.dumps(target, separators=(",", ":")),
+                    }
                 }
-            }
-        })
-        touched += 1
-    print(f"fix_slot_oneoff done touched={touched} ids={ordered}")
+            })
+            pause()
+            detail2 = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
+            try:
+                body2 = json.loads((detail2.get("extendedData") or {}).get("body") or "null")
+            except json.JSONDecodeError:
+                body2 = None
+            inputs2 = (body2.get("inputs") or {}) if isinstance(body2, dict) else {}
+            if body2 == target and inputs2.get("oneoff_mode") == "auto":
+                print(f"confirmed: id={jid} job={job_name} oneoff_mode=auto")
+                confirmed_auto.append(
+                    f"id={jid} title={title!r} job={job_name!r} oneoff_mode=auto body={json.dumps(body2, separators=(',', ':'))}"
+                )
+                patched.append(job_name)
+                if job_name in must:
+                    must_ok.add(job_name)
+            else:
+                pending.append(f"patch verify failed id={jid} got={body2}")
+            continue
+
+        # Other port-alerts dispatchers not in wanted map
+        if oneoff == "auto":
+            print(f"ok-other: already auto job={job_name!r}")
+            confirmed_auto.append(line)
+        elif oneoff is None:
+            pending.append(f"missing oneoff_mode: {line}")
+        else:
+            pending.append(f"unexpected oneoff={oneoff!r}: {line}")
+
+    print("--- summary ---")
+    print(f"must_ok={sorted(must_ok)} patched={patched}")
+    print(f"confirmed_auto_count={len(confirmed_auto)}")
+    for x in confirmed_auto:
+        print(f"CONFIRMED {x}")
+    for x in pending:
+        print(f"PENDING {x}")
+    if must - must_ok:
+        raise Stop(API_ERROR, f"required slots not confirmed auto: {sorted(must - must_ok)}; pending={pending}")
+    if pending:
+        raise Stop(API_ERROR, f"required slots OK but other dispatchers not verified auto: {pending}")
+    print("fix_slot_oneoff: all port-alerts dispatchers verified oneoff_mode=auto")
+    print("ALL_DISPATCHERS_AUTO=1")
     return 0
 
 
