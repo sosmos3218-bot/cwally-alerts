@@ -4,7 +4,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 평일 09:00 KST morning만 사용. 2026-10-28, 2026-11-05, 2026-11-06 세 날만 발송. year-guard 2026.",
+  "schedule_note": "새 cron 없음. 평일 09:00 KST morning만 사용. 2026-10-28, 2026-11-05, 2026-11-06 세 날만 발송. year-guard 2026. switch3는 실적 창 이후 주 1회(ISO주 첫 morning) 평가.",
   "year_guard": 2026,
   "window_start": "2026-10-28",
   "window_end": "2026-11-06",
@@ -30,6 +30,60 @@
   },
   "ir_url": "https://investor.sandisk.com/",
   "explain": "SNDK 11/5 실적 전후 체크리스트. 국내 빅2는 스위치 3개가 켜지기 전에는 같이 보지 않습니다.",
-  "ends_kst": "2026-11-06 09:00",
-  "ends_note": "실적 확인 평일 09:00, 11/6이 마지막"
+  "ends_kst": "2027-03-31 09:00",
+  "ends_note": "실적 일회성 알림은 2026-11-06 09:00이 마지막. switch3 주간 숫자 판정은 2027-03-31 09:00까지.",
+  "switch3": {
+    "enabled": true,
+    "active_from": "2026-11-06",
+    "expire_date": "2027-03-31",
+    "tickers_in_title": [
+      "SNDK",
+      "005930",
+      "000660"
+    ],
+    "min_valid": 2,
+    "min_pass_for_on": 2,
+    "spot": {
+      "series_url": "https://www.ddrwatcher.com/api/series",
+      "series_id": "ddr5_chip_spot",
+      "daily_url": "https://www.dramexchange.com/",
+      "daily_item": "DDR5 16Gb (2Gx8) 4800/5600",
+      "ma_weeks": 4,
+      "max_age_days": 10,
+      "rule": "MA4_now = mean(last 4 weekly avgs); MA4_prev = mean(weeks -5..-2); pass iff MA4_now >= MA4_prev * (1 + ma4_min_rise_pct/100)",
+      "ma4_min_rise_pct": 1.0
+    },
+    "rdimm_lead": {
+      "weeks": 19,
+      "min_weeks": 16,
+      "asof": "2026-11-02",
+      "source": "TrendForce Weekly Radar 008 (Very Tight, esp. 32/64GB RDIMM)",
+      "max_age_days": 14
+    },
+    "hbm_sold_out": {
+      "value": true,
+      "asof": "2026-11-01",
+      "source": "Samsung 3Q call 2027 HBM sold out; SK hynix DRAM+HBM sold out through 2029 (restated Korean press 11/01)",
+      "max_age_days": 21
+    },
+    "server_contract": {
+      "qoq_pct": 12.5,
+      "min_qoq_pct": 10.0,
+      "asof": "2026-11-01",
+      "source": "Meritz/DRAMeXchange: 4Q26 server DRAM fixed +10~15% QoQ (OEM +15~20%)",
+      "max_age_days": 21
+    },
+    "export_context": {
+      "memory_usd_bn": 50.14,
+      "yoy_pct": 360.5,
+      "asof": "2026-11-01",
+      "source": "MOTIE Oct 2026 semiconductor exports (memory detail via Newsis/Zerowiz)",
+      "max_age_days": 45,
+      "counts_as_vote": false
+    },
+    "alert_on_change_only": true,
+    "hold_priority": 3,
+    "on_priority": 4,
+    "off_priority": 4
+  }
 }
