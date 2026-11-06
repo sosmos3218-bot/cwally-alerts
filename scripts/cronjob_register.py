@@ -865,13 +865,19 @@ def run_register_portlight(now: datetime) -> int:
     got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
     try:
         body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == PORTLIGHT_BODY
-    def run_fix_slot_oneoff(now: datetime) -> int:
+    except ValueError:
+        body_ok = False
+    print("created:")
+    print_job(got)
+    print(f"body_ok={body_ok}")
+    return 0
+
+
+def run_fix_slot_oneoff(now: datetime) -> int:
     """pt20u: patch morning/afternoon/0090b0 on-time bodies to oneoff_mode=auto.
 
-    Does NOT list all jobs (rate limit). Patches known ids:
-      morning TEMPLATE_JOB_ID, plus AFTERNOON_JOB_ID / B0_JOB_ID when set,
-      plus any numeric ids in CRONJOB_JOB_IDS (treated as same three bodies by
-      reading each job once and matching inputs.job).
+    Avoids GET /jobs list (rate limit). Patches TEMPLATE_JOB_ID plus optional
+    AFTERNOON_JOB_ID / B0_JOB_ID and any numeric CRONJOB_JOB_IDS.
     """
     key = env("CRONJOB_API_KEY")
     if not key:
@@ -883,19 +889,17 @@ def run_register_portlight(now: datetime) -> int:
     }
     ids: list[int] = [TEMPLATE_JOB_ID]
     for const in ("AFTERNOON_JOB_ID", "B0_JOB_ID"):
-        # module-level optional ints; 0 means unknown
-        v = globals().get(const) or 0
-        if int(v):
-            ids.append(int(v))
+        v = int(globals().get(const) or 0)
+        if v:
+            ids.append(v)
     raw = (env("CRONJOB_JOB_IDS") or "").strip()
     if raw:
         for part in raw.split(","):
             part = part.strip()
             if part.isdigit():
                 ids.append(int(part))
-    # de-dupe preserve order
-    seen = set()
-    ordered = []
+    seen: set[int] = set()
+    ordered: list[int] = []
     for jid in ids:
         if jid and jid not in seen:
             seen.add(jid)
@@ -936,6 +940,7 @@ def run_register_portlight(now: datetime) -> int:
         touched += 1
     print(f"fix_slot_oneoff done touched={touched} ids={ordered}")
     return 0
+
 
 
 def main() -> int:
