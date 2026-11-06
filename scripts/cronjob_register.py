@@ -934,7 +934,7 @@ def run_fix_slot_oneoff(now: datetime) -> int:
     port_ids.sort(key=rank)
     confirmed_auto: list[str] = []
     patched: list[str] = []
-        pending: list[str] = []
+    pending: list[str] = []
     must = {"morning", "afternoon", "0090b0"}
     must_ok: set[str] = set()
 
