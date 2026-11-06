@@ -882,6 +882,11 @@ def run_fix_slot_oneoff(now: datetime) -> int:
     key = env("CRONJOB_API_KEY")
     if not key:
         raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    # Give cron-job.org rate limit a chance to clear after prior list storms.
+    warmup = int(env("CRONJOB_WARMUP_SEC") or "90")
+    if warmup > 0:
+        print(f"fix_slot_oneoff: warmup sleep {warmup}s")
+        time.sleep(warmup)
     wanted = {
         "morning": TEMPLATE_BODY,
         "afternoon": {"ref": "main", "inputs": {"job": "afternoon", "oneoff_mode": "auto"}},
