@@ -343,7 +343,7 @@ on:
         type: choice
         options: [dry, auto, force]
       oneoff_mode:
-        description: "job=mktpulse, k203780 or k079900 only. dry = print, no ntfy, no state | auto | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state; k079900: same as dry; job=k203780 + auto = on-time 19:00 slot from cron-job.org)"
+        description: "dry = print, no ntfy, no state, no slot mark (morning/afternoon/0090b0 tests too) | auto = live send+state (required for on-time cron bodies) | force (mktpulse only: send now, off-slot; k203780: install-confirmation send, no state)"
         default: dry
         type: choice
         options: [dry, auto, force]
@@ -492,8 +492,13 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ]; then
             # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
             # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
-            git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
-            if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+            # Dry workflow_dispatch (oneoff_mode!=auto) skips check+mark so tests never burn the daily slot (pt20u).
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.oneoff_mode || 'dry' }}" != "auto" ]; then
+              echo "dry dispatch: skip slot_guard check for $JOB"
+            else
+              git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+              if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+            fi
           fi
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
           # dup-guard 슬롯 since (pt15u): 슬롯 시작 10분 전 unix. tsla/grab = 뉴욕 정규장 시작.
@@ -582,7 +587,30 @@ jobs:
           set +e
           failed=0
           trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
+          # Dry slot test (pt20u): workflow_dispatch + oneoff_mode!=auto -> no ntfy, no state, no slot mark.
+          IS_DRY=0
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${IREN_ONEOFF:-dry}" != "auto" ]; then IS_DRY=1; echo "dry dispatch: force dry modes, skip slot mark/archive"; fi
+          if [ "$IS_DRY" = 1 ]; then
+            python() {
+              if [ "$1" = "scripts/slot_guard.py" ] || [ "$1" = "scripts/ntfy_archive.py" ]; then
+                echo "dry: skip $*"; return 0
+              fi
+              if [[ "$1" == scripts/*.py ]]; then
+                local script=$1; shift
+                if [ $# -eq 0 ]; then
+                  command python "$script" dry && return 0
+                  echo "dry: skip $script (no dry mode)"; return 0
+                fi
+                local mode=$1; shift
+                case "$mode" in auto|event|weekly|daily|force|quarterly|slot) mode=dry ;; esac
+                command python "$script" "$mode" "$@"
+                return $?
+              fi
+              command python "$@"
+            }
+            node() { echo "dry: skip node $*"; return 0; }
+          fi
+          if [ "$IS_DRY" != 1 ] && { [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; }; then python scripts/slot_guard.py mark "$JOB"; fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "steel" ]; then
             python scripts/steel_monitor.py "${{ steps.pick.outputs.steel_mode }}"
           fi
@@ -599,13 +627,13 @@ jobs:
             # [IREN] weekly news digest (approved in chat 2026-10-30): daily runs queue news silently, Monday (or catch-up
             # 7+ days) sends one p2 digest; new schedule windows stay immediate p3. Manual dispatch (not morning) is dry unless oneoff_mode=auto.
             IRM=auto
-            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then IRM=dry; python scripts/iren_monitor.py selftest >/dev/null; fi
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$IREN_ONEOFF" != "auto" ]; then IRM=dry; python scripts/iren_monitor.py selftest >/dev/null; fi
             python scripts/iren_monitor.py "${{ steps.pick.outputs.iren_mode }}" "$IRM"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "yencarry" ]; then
             # manual job=yencarry/all dispatch is dry unless oneoff_mode=auto (2026-10-30, hysteresis change); schedules and morning stay auto
             YCM=auto
-            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then YCM=dry; python scripts/yencarry_monitor.py selftest >/dev/null; fi
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$IREN_ONEOFF" != "auto" ]; then YCM=dry; python scripts/yencarry_monitor.py selftest >/dev/null; fi
             python scripts/yencarry_monitor.py "${{ steps.pick.outputs.yencarry_mode }}" "$YCM"
           fi
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "krwfx" ]; then
@@ -616,7 +644,7 @@ jobs:
           if [ "$JOB" = "morning" ] || [ "$JOB" = "all" ] || [ "$JOB" = "port" ]; then
             # manual job=port/all dispatch is dry unless oneoff_mode=auto (2026-10-30, verdict-only change rule); morning stays auto
             PTM=auto
-            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$JOB" != "morning" ] && [ "$IREN_ONEOFF" != "auto" ]; then PTM=dry; python scripts/port_monitor.py selftest >/dev/null; fi
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$IREN_ONEOFF" != "auto" ]; then PTM=dry; python scripts/port_monitor.py selftest >/dev/null; fi
             python scripts/port_monitor.py "$PTM"
             # 2026-11-02: brk10/googl have no dry mode, so a dry port dispatch skips them (no real send from a dry check)
             if [ "$PTM" != "dry" ]; then
@@ -761,6 +789,7 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
           # force only for a manual job=square/sgyn dispatch; the on-time 15:20 slot dispatch ({"job":"afternoon"}, no inputs) used to force SQUARE and SGYN every day
           FORCE_ALERT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_square == 'true' && (github.event.inputs.job == 'square' || github.event.inputs.job == 'sgyn') && '1' || '0' }}
         run: |
@@ -769,7 +798,31 @@ jobs:
           set +e
           failed=0
           trap 'failed=1; echo "::error::script failed: $BASH_COMMAND"' ERR
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; then python scripts/slot_guard.py mark "$JOB"; fi
+          # Dry slot test (pt20u): workflow_dispatch + oneoff_mode!=auto -> no ntfy, no state, no slot mark.
+          IS_DRY=0
+          ONEOFF_MODE="${ONEOFF_MODE:-${IREN_ONEOFF:-dry}}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then IS_DRY=1; echo "dry dispatch: force dry modes, skip slot mark/archive"; fi
+          if [ "$IS_DRY" = 1 ]; then
+            python() {
+              if [ "$1" = "scripts/slot_guard.py" ] || [ "$1" = "scripts/ntfy_archive.py" ]; then
+                echo "dry: skip $*"; return 0
+              fi
+              if [[ "$1" == scripts/*.py ]]; then
+                local script=$1; shift
+                if [ $# -eq 0 ]; then
+                  command python "$script" dry && return 0
+                  echo "dry: skip $script (no dry mode)"; return 0
+                fi
+                local mode=$1; shift
+                case "$mode" in auto|event|weekly|daily|force|quarterly|slot) mode=dry ;; esac
+                command python "$script" "$mode" "$@"
+                return $?
+              fi
+              command python "$@"
+            }
+            node() { echo "dry: skip node $*"; return 0; }
+          fi
+          if [ "$IS_DRY" != 1 ] && { [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ]; }; then python scripts/slot_guard.py mark "$JOB"; fi
           if [ "$JOB" = "afternoon" ] || [ "$JOB" = "all" ] || [ "$JOB" = "square" ]; then
             node scripts/square_sell_alert.mjs
             python scripts/square_monitor.py auto
@@ -1115,7 +1168,11 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/pffd_monitor.py auto
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then MODE=dry; fi
+          python scripts/pffd_monitor.py "$MODE"
       - name: Run llyq3
         if: steps.pick.outputs.job == 'llyq3'
         env:
@@ -1133,9 +1190,12 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: |
-          python scripts/slot_guard.py mark 0090b0
-          python scripts/0090b0_monitor.py auto
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" != "dry" ]; then python scripts/slot_guard.py mark 0090b0; else echo "dry: skip slot_guard mark 0090b0"; fi
+          python scripts/0090b0_monitor.py "$MODE"
       - name: Run CELLTRION price (068270 confirmed adjusted close zones; 15:40 0090b0 slot)
         # ended 2026-11-02 (user sold all; configs/celltrion.json ends_kst): the script exits silently, no fetch, no ops notice.
         # approved in chat 2026-10-26. Same slot as 0090b0 (cron-job.org on-time + GitHub 40 6 * * 1-5), slot guard above.
@@ -1365,7 +1425,11 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/truen417790_monitor.py auto
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then MODE=dry; fi
+          python scripts/truen417790_monitor.py "$MODE"
       - name: Run kica
         if: steps.pick.outputs.job == 'kica'
         env:
@@ -1431,19 +1495,39 @@ jobs:
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: |
-          if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/doosan_monitor.py slot; else python scripts/doosan_monitor.py auto; fi
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then
+            python scripts/doosan_monitor.py dry
+          elif [ "${{ steps.pick.outputs.job }}" = "morning" ]; then
+            python scripts/doosan_monitor.py slot
+          else
+            python scripts/doosan_monitor.py auto
+          fi
           # [000150] 3Q26 전자BG 75~80만 구간 판정 (approved in chat 2026-11-05 pt69u). same step, no new cron. silent before 11/9 16:00, ends 11/16.
           D=$(TZ=Asia/Seoul date +%Y%m%d)
           if [ "$D" -ge 20261109 ] && [ "$D" -le 20261116 ] && ! command -v pdftotext >/dev/null; then sudo apt-get install -y -qq poppler-utils >/dev/null 2>&1 || echo "poppler install failed; dszone falls back to DART/manual notice"; fi
-          python scripts/dszone_monitor.py auto || echo "::error::dszone_monitor failed"
+          DSZ="$MODE"
+          [ "$DSZ" = "slot" ] && DSZ=auto
+          python scripts/dszone_monitor.py "$DSZ" || echo "::error::dszone_monitor failed"
       - name: Run jyp
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'jyp'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: |
-          if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/jyp_monitor.py snap; else python scripts/jyp_monitor.py auto; fi
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "${ONEOFF_MODE:-dry}" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then
+            python scripts/jyp_monitor.py dry
+          elif [ "${{ steps.pick.outputs.job }}" = "morning" ]; then
+            python scripts/jyp_monitor.py snap
+          else
+            python scripts/jyp_monitor.py auto
+          fi
       - name: Run SDI Q4 2026 disclosure check (existing morning, afternoon, 19:00 slots)
         # Q4 release date unconfirmed; observation window is in configs/sdiq3.json. No new cron.
         # workflow_dispatch with oneoff_mode!=auto is dry on morning/afternoon/k203780 (pt19u); schedule and oneoff_mode=auto stay auto.
@@ -1633,7 +1717,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/326030_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/326030_monitor.py "$MODE" || rc=1
@@ -1981,7 +2065,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/pcorq3_monitor.py selftest >/dev/null || rc=1; python scripts/pcorpx_monitor.py selftest >/dev/null || rc=1; fi
           if [ "$PICK_JOB" != "pcorpx" ]; then python scripts/pcorq3_monitor.py "$MODE" || rc=1; fi
@@ -2002,7 +2086,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/figpx_monitor.py selftest >/dev/null || rc=1; python scripts/figearn_monitor.py selftest >/dev/null || rc=1; fi
           if [ "$PICK_JOB" != "figearn" ]; then python scripts/figpx_monitor.py "$MODE" || rc=1; fi
@@ -2019,7 +2103,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/vnqi_monitor.py selftest >/dev/null; fi
           python scripts/vnqi_monitor.py "$MODE"
       - name: Run IEFA (iShares Core MSCI EAFE ETF new-buy watch - 200-day line recover/break +-0.5%, P/E <= 17 once; morning 09:00)
@@ -2033,7 +2117,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/iefa_monitor.py selftest >/dev/null; fi
           python scripts/iefa_monitor.py "$MODE"
       - name: Run SEC-DIV (Samsung Electronics Q3 2026 dividend decision filing, once; morning 09:00, afternoon 15:20, k203780 19:00 slots)
@@ -2047,7 +2131,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/secdiv_monitor.py selftest >/dev/null; fi
           python scripts/secdiv_monitor.py "$MODE"
       - name: Run STEELRE (POSCO홀딩스, 고려아연 재진입 판정 once 2026-11-19 18:00 KST; morning 09:00 snapshot on 11/3, 11/6 only)
@@ -2089,7 +2173,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           PARTS=earn,price; if [ "$PICK_JOB" = "morning" ] || [ "$PICK_JOB" = "afternoon" ]; then PARTS=earn; fi
           if [ "$MODE" = "dry" ]; then python scripts/k000810_monitor.py selftest; fi
           python scripts/k000810_monitor.py "$MODE" --parts "$PARTS"
@@ -2104,7 +2188,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/secpref_monitor.py selftest; fi
           python scripts/secpref_monitor.py "$MODE"
       - name: Run BOK (BOK MPC base rate >= 3.25% p4 once, otherwise result p3 once per meeting; k203780 19:00 slot; 2026-10-30 ~ 2027-03-31)
@@ -2223,7 +2307,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k079960_monitor.py selftest; fi
           python scripts/k079960_monitor.py "$MODE"
       - name: "Run K453850 (ACE US30Y Active H 453850: US30Y 5.0% upgrade / 5.5% risk / close 6685 dip; morning 09:00 + k203780 19:00; 2026-11-05 ~ 2027-05-31)"
@@ -2237,7 +2321,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k453850_monitor.py selftest; fi
           python scripts/k453850_monitor.py "$MODE"
       - name: "Run FOMC-CUT (statement+SEP cut-cycle signal for 453850/476760; morning after FOMC; 2026-11-05 ~ 2027-12-31)"
@@ -2252,7 +2336,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/fomccut_monitor.py selftest; fi
           python scripts/fomccut_monitor.py "$MODE"
       - name: Run SDI-ESS (Samsung SDI 006400 supply contract filings, each once; morning 09:00, afternoon 15:20, k203780 19:00 slots; 2026-10-29 ~ 2027-03-31)
@@ -2266,7 +2350,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$PICK_JOB" != "afternoon" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/sdiess_monitor.py selftest; fi
           python scripts/sdiess_monitor.py "$MODE"
       - name: Run 005935 dry check (manual job=005935 only; dry-run path, prints what would be sent, no ntfy, no state)
@@ -2288,7 +2372,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/macroir_monitor.py selftest >/dev/null || rc=1; fi
           if [ "$PICK_JOB" = "morning" ] || [ "$PICK_JOB" = "macroir" ]; then python scripts/macroir_monitor.py event "$MODE" || rc=1; fi
@@ -2306,7 +2390,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/amtmearn_monitor.py selftest >/dev/null || rc=1; python scripts/amtmpx_monitor.py selftest >/dev/null || rc=1; fi
           SLOT=morning; [ "$PICK_JOB" = "k203780" ] && SLOT=evening
@@ -2325,7 +2409,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/bke_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/bke_monitor.py "$MODE" || rc=1
@@ -2342,7 +2426,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/mkif_monitor.py selftest >/dev/null || rc=1; fi
           if [ "$PICK_JOB" = "morning" ] || [ "$PICK_JOB" = "mkif" ]; then python scripts/mkif_monitor.py price "$MODE" || rc=1; fi
@@ -2361,7 +2445,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/irenearn_monitor.py selftest >/dev/null || rc=1; python scripts/irenpx_monitor.py selftest >/dev/null || rc=1; fi
           SLOT=morning; [ "$PICK_JOB" = "k203780" ] && SLOT=evening
@@ -2379,7 +2463,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/ldos_monitor.py selftest | tail -1; fi
           python scripts/ldos_monitor.py "$MODE"
       - name: Run MDENG (VA MDE-NG 36C10X27R0001 new amendment/notice watch for LDOS; morning 09:00 slot)
@@ -2394,7 +2478,7 @@ jobs:
           SAM_API_KEY: ${{ secrets.SAM_API_KEY }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/mdeng_monitor.py selftest | tail -1; fi
           python scripts/mdeng_monitor.py "$MODE"
       - name: Run 453810 (KODEX 인도Nifty50 ISA tranche plan; morning 09:00 on prior confirmed closes)
@@ -2408,7 +2492,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" != "morning" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/k453810_monitor.py selftest; fi
           python scripts/k453810_monitor.py "$MODE"
       - name: Run VCP (B2R weekly KOSPI/KOSDAQ watchlist; portlight Sunday 21:00)
@@ -2467,7 +2551,8 @@ jobs:
           path: state/
           retention-days: 7
       - name: Notify ops on failure
-        if: failure()
+        # Skip on dry/manual test dispatches (pt20u): failures there should not page ops.
+        if: failure() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.oneoff_mode != 'auto')
         env:
           NTFY_SERVER: https://ntfy.sh
           STATE_ARTIFACT: ${{ steps.persist.outputs.persist_failed == '1' && format('state-{0}-{1}', github.run_id, github.run_attempt) || '' }}

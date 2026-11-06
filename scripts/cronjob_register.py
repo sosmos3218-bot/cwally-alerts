@@ -106,7 +106,7 @@ API = "https://api.cron-job.org"
 TEMPLATE_JOB_ID = 8588894  # cwally port morning (09:00 KST)
 DISPATCH_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/port-alerts.yml/dispatches"
 ONESHOT_BODY = {"ref": "main", "inputs": {"job": "oneshot"}}
-TEMPLATE_BODY = {"ref": "main", "inputs": {"job": "morning"}}
+TEMPLATE_BODY = {"ref": "main", "inputs": {"job": "morning", "oneoff_mode": "auto"}}
 POST = 1  # cron-job.org RequestMethod
 SLOT_JOB_ID = 8698629  # created 2026-10-22 by register_slot
 SLOT_HOUR = 19
@@ -871,6 +871,87 @@ def run_register_portlight(now: datetime) -> int:
     return 0
 
 
+def run_fix_slot_oneoff(now: datetime) -> int:
+    """pt20u: morning/afternoon/0090b0 on-time bodies must pass oneoff_mode=auto so
+    workflow_dispatch + oneoff_mode=dry can mean a true dry test without breaking live slots.
+    PATCHes the morning template and any enabled port-alerts dispatch whose body job is
+    afternoon or 0090b0 and still lacks oneoff_mode=auto.
+    """
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    wanted = {
+        "morning": {"ref": "main", "inputs": {"job": "morning", "oneoff_mode": "auto"}},
+        "afternoon": {"ref": "main", "inputs": {"job": "afternoon", "oneoff_mode": "auto"}},
+        "0090b0": {"ref": "main", "inputs": {"job": "0090b0", "oneoff_mode": "auto"}},
+    }
+    res = call("GET", "/jobs", key)
+    if res.get("someFailed"):
+        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed)")
+    jobs = res.get("jobs") or []
+    touched = 0
+    for j in jobs:
+        jid = int(j.get("jobId") or 0)
+        if not jid or not j.get("enabled"):
+            continue
+        if (j.get("url") or "").rstrip("/") != DISPATCH_URL:
+            continue
+        detail = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
+        ext = detail.get("extendedData") or {}
+        try:
+            body = json.loads(ext.get("body") or "null")
+        except json.JSONDecodeError:
+            body = None
+        if not isinstance(body, dict):
+            continue
+        inputs = (body.get("inputs") or {}) if isinstance(body.get("inputs"), dict) else {}
+        job_name = inputs.get("job")
+        if job_name not in wanted:
+            continue
+        target = wanted[job_name]
+        if body == target:
+            print(f"ok: job {jid} title={detail.get('title')!r} already {json.dumps(target)}")
+            continue
+        print(f"update: job {jid} title={detail.get('title')!r} {json.dumps(body)} -> {json.dumps(target)}")
+        if env("CRONJOB_DRY_RUN") == "1":
+            continue
+        headers = dict(ext.get("headers") or {})
+        call("PATCH", f"/jobs/{jid}", key, {
+            "job": {
+                "extendedData": {
+                    "headers": headers,
+                    "body": json.dumps(target, separators=(",", ":")),
+                }
+            }
+        })
+        touched += 1
+    # Also always ensure template id matches (even if list miss)
+    detail = call("GET", f"/jobs/{TEMPLATE_JOB_ID}", key).get("jobDetails") or {}
+    ext = detail.get("extendedData") or {}
+    try:
+        body = json.loads(ext.get("body") or "null")
+    except json.JSONDecodeError:
+        body = None
+    if body != TEMPLATE_BODY:
+        print(f"update template {TEMPLATE_JOB_ID}: {body} -> {TEMPLATE_BODY}")
+        if env("CRONJOB_DRY_RUN") != "1":
+            headers = dict(ext.get("headers") or {})
+            call("PATCH", f"/jobs/{TEMPLATE_JOB_ID}", key, {
+                "job": {
+                    "extendedData": {
+                        "headers": headers,
+                        "body": json.dumps(TEMPLATE_BODY, separators=(",", ":")),
+                    }
+                }
+            })
+            touched += 1
+    else:
+        print(f"ok: template {TEMPLATE_JOB_ID} body already auto")
+    print(f"fix_slot_oneoff done touched={touched}")
+    return 0
+
+
+
 def main() -> int:
     now = datetime.now(KST)
     try:
@@ -895,8 +976,10 @@ def main() -> int:
             return run_register_tsla(now)
         if action == "register_trend":
             return run_register_trend(now)
+        if action == "fix_slot_oneoff":
+            return run_fix_slot_oneoff(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, fix_slot_oneoff, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

@@ -33,7 +33,7 @@ on:
       action:
         description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
         type: choice
-        options: [register, register_slot, update_slot, delete, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
+        options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"

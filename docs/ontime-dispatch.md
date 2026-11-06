@@ -23,11 +23,11 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 
 | 슬롯 | KST | UTC | 워크플로 파일 | inputs |
 |---|---|---|---|---|
-| morning | 09:00 | 00:00 | `port-alerts.yml` | `{"job":"morning"}` |
-| afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon"}` |
+| morning | 09:00 | 00:00 | `port-alerts.yml` | `{"job":"morning","oneoff_mode":"auto"}` |
+| afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon","oneoff_mode":"auto"}` |
 | flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
 | trend | 15:40 | 06:40 | `trend-monitor.yml` | 없음 (반복 잡 "cwally trend-monitor (15:40 KST)", `action=register_trend`. 잡 번호는 머지 후 등록할 때 생김) |
-| 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0"}` |
+| 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0","oneoff_mode":"auto"}` |
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 11:00 (~11/05, 2026-10-26부터 하루 1회) | 02:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 11 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인, 2026-10-26 승인으로 11시만) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
@@ -39,10 +39,11 @@ POST https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows
 Authorization: Bearer <token>
 Accept: application/vnd.github+json
 X-GitHub-Api-Version: 2022-11-28
-Body: {"ref":"main","inputs":{"job":"morning"}}
+Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
 ```
 
-성공 응답은 `204 No Content`. `gh`가 있으면 `gh workflow run cwally-port-alerts -R sosmos3218-bot/cwally-alerts -f job=morning`과 같다.
+성공 응답은 `204 No Content`. morning/afternoon/0090b0 도 `oneoff_mode=auto` 가 필요하다(pt20u: 기본값 dry 는 테스트 dry 로 쓰므로, 없으면 슬롯이 dry 로 돈다).
+ `gh`가 있으면 `gh workflow run cwally-port-alerts -R sosmos3218-bot/cwally-alerts -f job=morning`과 같다.
 
 토큰: fine-grained PAT, 저장소 `cwally-alerts`만, **Actions: Read and write** (Metadata read는 자동). 다른 권한은 주지 않는다.
 
