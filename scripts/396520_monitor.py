@@ -71,7 +71,7 @@ def zone_message(zone: str, prev: str, price: float, pct: float, stamp: str) -> 
     """One zone per message (normal / loss30 / loss40); there is no buy line in this alert."""
     if zone == "loss40":
         title = "[396520] 기준 대비 -40% | 테마 재점검"
-        action = "비중 재검토. 지정학·자립 진전 확인. 추가 금지."
+        action = "비중 재검토. 지정학 및 자립 진전 확인. 추가 금지."
     elif zone == "loss30":
         title = "[396520] 기준 대비 -30% | 점검"
         action = LOSS30_TODO
@@ -109,6 +109,9 @@ def selftest() -> int:
     check("-30% priority unchanged", p, 4)
     check("-30% title unchanged", t, "[396520] 기준 대비 -30% | 점검")
     check("six-part body", [x.split(":")[0] for x in lines[1:7]], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    t40, m40, _ = zone_message("loss40", "loss30", 6800.0, -40.1, stamp)
+    check("-40% no middle dot / em-dash", any(ch in t40 + m40 for ch in "\u00b7\u30fb\u2027\u2014"), False)
+    check("-40% action phrasing", "지정학 및 자립 진전 확인" in m40, True)
     check("-40% priority unchanged", zone_message("loss40", "loss30", 6800.0, -40.1, stamp)[2], 5)
     check("normal priority unchanged", zone_message("normal", "loss30", 9000.0, -20.7, stamp)[2], 3)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
