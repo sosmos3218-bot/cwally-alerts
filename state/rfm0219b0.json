@@ -53,8 +53,8 @@
   ],
   "seeded_at": "2026-10-27 11:19 KST",
   "price": {
-    "last_date": "2026-11-05",
-    "last_close": 8435.0,
+    "last_date": "2026-11-06",
+    "last_close": 7920.0,
     "down_armed": false,
     "up_armed": true,
     "seed_note": "seed 2026-10-27 11:19 KST: 마지막 확정 종가 2026-10-26 9,800원"

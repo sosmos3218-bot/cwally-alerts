@@ -1,14 +1,39 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-11-06T19:02:48.927361+09:00",
   "price_low_armed": true,
-  "price_last_date": null,
+  "price_last_date": "2026-11-06",
   "n225_low_armed": true,
-  "n225_last": null,
+  "n225_last": {
+    "date": "2026-11-06",
+    "close": 57434.76953125
+  },
   "jpy_up_armed": true,
-  "jpy100_last": null,
-  "jpy100_base": null,
-  "jpy_chg_pct_last": null,
-  "last_summary_date": null,
-  "fail": {},
+  "jpy100_last": {
+    "date": "2026-11-06",
+    "value": 851.5999794006348
+  },
+  "jpy100_base": {
+    "date": "2026-10-09",
+    "value": 849.5425224304199
+  },
+  "jpy_chg_pct_last": 0.24218410684480052,
+  "last_summary_date": "2026-11-06",
+  "fail": {
+    "bars": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "n225": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "jpy100": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    }
+  },
   "init_note": "2026-11-06 시드: 이벤트 조건 무장. 일일 요약은 첫 19:00 실행에서 보냄. Daum 미지원 ETN이라 종가는 krx_close minute1530."
 }

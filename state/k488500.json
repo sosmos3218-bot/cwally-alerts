@@ -1,16 +1,38 @@
 {
-  "updated_at": null,
+  "updated_at": "2026-11-06T19:02:54.580721+09:00",
   "breadth_down_armed": true,
   "breadth_up_armed": false,
-  "breadth_last": null,
-  "breadth_base": null,
-  "breadth_chg_pct_last": null,
+  "breadth_last": {
+    "date": "2026-11-05",
+    "ratio": 0.29586629620353
+  },
+  "breadth_base": {
+    "date": "2026-10-08",
+    "ratio": 0.27375860494134535
+  },
+  "breadth_chg_pct_last": 8.075615108763934,
   "price_low_armed": true,
   "price_high_armed": true,
-  "price_last_date": null,
+  "price_last_date": "2026-11-06",
   "last_dist_date": "2026-10-29",
   "last_dist_amt": 43.0,
-  "last_summary_date": null,
-  "fail": {},
+  "last_summary_date": "2026-11-06",
+  "fail": {
+    "bars": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "ratio": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    },
+    "dists": {
+      "days": 0,
+      "last": null,
+      "notified": false
+    }
+  },
   "init_note": "2026-11-06 시드: 종가 12,425원(11/6), 분배금 43원(2026-10-29 funetf KR7488500000), RSP/SPY 약 0.2959(+8.08%/20d, 2026-11-05). 폭 강화(+3% 초과)가 이미 켜져 있어 breadth_up_armed=false. 폭 약화/가격 밴드는 무장. 일일 요약은 첫 19:00 실행에서 보냄."
 }
