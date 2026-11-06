@@ -938,14 +938,6 @@ def run_register_portlight(now: datetime) -> int:
     return 0
 
 
-     }
-        })
-        touched += 1
-    print(f"fix_slot_oneoff done touched={touched} candidates={candidates}")
-    return 0
-
-
-
 def main() -> int:
     now = datetime.now(KST)
     try:
