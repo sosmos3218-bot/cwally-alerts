@@ -1,0 +1,25 @@
+{
+  "name": "sndk3",
+  "title_prefix": "[005930][000660]",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 부착. 2026-11-09 1회 발송, 그날 실행이 실패하면 2026-11-10 09:00에 1회 보충. 이후 자동 종료.",
+  "year_guard": 2026,
+  "send_date": "2026-11-09",
+  "window_end": "2026-11-10",
+  "explain": "SNDK 체크리스트 스위치 3개가 모두 켜져 삼성전자와 SK하이닉스를 SNDK와 같은 방향으로 관찰 전환한다는 1회 메모. 매수 신호가 아님.",
+  "facts": {
+    "sndk_rev_busd": 110.31,
+    "sndk_guide_busd": "103~108",
+    "sndk_gm_nongaap": 85.1,
+    "sndk_dc_busd": 48.02,
+    "sndk_dc_q4_busd": 29.77,
+    "sndk_dc_qoq_pct": 61,
+    "sndk_report_date": "2026-10-29",
+    "switch3_basis": "서버 RDIMM 계약가 상승, 리드타임 19주, 삼성과 SK하이닉스 HBM 품절, 10월 반도체 수출 +259% (2. trade+invest/ 판정, 2026-11-06)",
+    "switch3_counter": "낸드 약세, PC 재고"
+  },
+  "ends_kst": "2026-11-10 09:00",
+  "ends_note": "1회성 메모, 11/9 발송(실패 시 11/10 보충) 후 종료"
+}
