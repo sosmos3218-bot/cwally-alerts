@@ -1,0 +1,14 @@
+{
+  "updated_at": null,
+  "price_low_armed": true,
+  "price_last_date": null,
+  "n225_low_armed": true,
+  "n225_last": null,
+  "jpy_up_armed": true,
+  "jpy100_last": null,
+  "jpy100_base": null,
+  "jpy_chg_pct_last": null,
+  "last_summary_date": null,
+  "fail": {},
+  "init_note": "2026-11-06 시드: 이벤트 조건 무장. 일일 요약은 첫 19:00 실행에서 보냄. Daum 미지원 ETN이라 종가는 krx_close minute1530."
+}

@@ -1,0 +1,34 @@
+{
+  "name": "k570100",
+  "title_prefix": "[570100]",
+  "code": "570100",
+  "name_kr": "한투 일본종합상사TOP5 ETN",
+  "created_at": "2026-11-06T15:10:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-06 (pt13u): 570100 진입 19,000 이하, 닛케이 55,000 하회, 엔원(100엔당) 20거래일 대비 +5% 이상, KRX 마감 후 일일 요약. 소신껏.",
+  "holding": "관심(관망), 평균가 미입력",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 장 마감 후 슬롯(KRX 거래일 19:00 KST)에 부착. job=k570100 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "rules": {
+    "price_low": 19000,
+    "price_low_rearm": 19400,
+    "price_low_rearm_note": "19,000 x 1.021 ≈ 19,400. 종가가 이 선 위로 올라와야 진입 구간 재무장.",
+    "n225_low": 55000,
+    "n225_low_rearm": 56000,
+    "jpy_up_pct": 5.0,
+    "jpy_up_rearm_pct": 3.0,
+    "jpy_lookback_bars": 20,
+    "fail_ops_after_days": 2
+  },
+  "rule_note": "1) 종가 19,000원 이하 교차 1번, 19,400원 위 재무장. 2) 닛케이225(^N225) 완료 일봉 종가 55,000 미만 1번, 56,000 위 재무장. 제목 '570100/N225'. 3) Yahoo JPYKRW=X*100(100엔당 원)이 약 20거래일 전 대비 +5% 초과 교차 1번(엔화 강세=환노출 ETN 매력 하락 점검), +3% 미만으로 돌아오면 재무장. 제목 '570100 / JPYKRW'. 4) KRX 거래일 19:00 일일 요약: 종가/전일대비%, 닛케이, 100엔당 원, 19,000까지 거리.",
+  "facts_2026_11_06": "장중(약 15시) 약 20,765~20,840원대, 전일비 -6% 내외. 닛케이 Yahoo ^N225 약 57,500(전일 61,078에서 급락). 100엔당 원 Yahoo JPYKRW=X*100 약 860원. Daum quote는 ETN 570100을 400/404로 거부해 종가는 krx_close 분봉 15:30 폴백(Naver minute).",
+  "sources": {
+    "price": "scripts/krx_close.py 정규장 종가. Daum 미지원(ETN)이라 Naver minute 15:30 폴백.",
+    "n225": "Yahoo Finance chart ^N225 완료 일봉 종가(query1, 실패 시 query2).",
+    "jpy100": "Yahoo Finance chart JPYKRW=X 일봉 * 100 = 100엔당 원. 약 20거래일 전 대비 변화율."
+  },
+  "ends_kst": "2027-11-06 23:59",
+  "ends_note": "2027-11-06 까지(설치 1년). 밴드/환율/닛케이 기준을 다시 정하면 연장"
+}
