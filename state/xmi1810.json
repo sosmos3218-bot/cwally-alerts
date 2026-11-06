@@ -1,9 +1,22 @@
 {
-  "seeded": false,
-  "seen": [],
-  "fingerprints": [],
+  "seeded": true,
+  "seen": [
+    "hkex:2026042402548",
+    "hkex:2026052600770",
+    "hkex:2026071700987",
+    "hkex:2026081801014",
+    "hkex:2026102301169"
+  ],
+  "fingerprints": [
+    "0040d63736c4f4aad5d4cfef2e69a74fa5cb18d9",
+    "12e4187fbf2576f8b59440295ea5c939ff4fae8a",
+    "2bfb12aef62f80499365296781f1e031fc7c7d97",
+    "5d5355ab2ed2950866f2151c4097c6aeebe85a86",
+    "d7d5bda287ec96058df6697b512a27ea12fa0906"
+  ],
   "last_board_date": "2026-11-24",
   "last_board_date_source": "hkex:2026102301169 will be held on November 24, 2026. 일정이지 실적 공개 시각이 아님. 더 늦은 일정 공시가 첫 시드에 있으면 비움.",
   "ops_day": "",
-  "updated_at": ""
+  "updated_at": "2026-11-07 02:22 KST",
+  "seeded_at": "2026-11-07 02:22 KST"
 }
