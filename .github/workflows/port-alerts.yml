@@ -1421,6 +1421,7 @@ jobs:
           if [ "${{ steps.pick.outputs.job }}" = "morning" ]; then python scripts/jyp_monitor.py snap; else python scripts/jyp_monitor.py auto; fi
       - name: Run SDI Q4 2026 disclosure check (existing morning, afternoon, 19:00 slots)
         # Q4 release date unconfirmed; observation window is in configs/sdiq3.json. No new cron.
+        # workflow_dispatch with oneoff_mode!=auto is dry on morning/afternoon/k203780 (pt19u); schedule and oneoff_mode=auto stay auto.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780') }}
         env:
           NTFY_TOPIC: cwally-port
@@ -1429,7 +1430,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/sdiq3_monitor.py "$MODE" --part q4
       - name: Run SDI (sdimix 006400/006405 discount bands + common verdict, merged [SDI-PREF] + sdichg 2026-11-04; existing 19:00 slot)
         # Event-only: band or sdichg verdict change. Seeded 2026-11-04 (Z_HIGH1, 보유). Verdict part ends 2027-01-15 09:00, then bands only. No NXT.
@@ -1463,7 +1464,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "k079900" ]; then MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/k079900_monitor.py "$MODE"
       - name: Run KR-HC (krhc weekly summary + k227540v [227540] weekly ETF vs stock verdict on k203780 19:00 slot + morning catch-up; krhcfile filings on morning/afternoon/k203780 slots)
         # approved in chat 2026-10-23 10:28 KST. job=krhc dispatch is always dry: no ntfy, no state.
@@ -1476,7 +1477,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "krhc" ]; then MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           rc=0
           if [ "$PICK_JOB" != "afternoon" ]; then python scripts/krhc_monitor.py "$MODE" || rc=1; fi
           if [ "$PICK_JOB" != "afternoon" ]; then python scripts/k227540v_monitor.py "$MODE" || rc=1; fi
@@ -1716,7 +1717,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "krrate" ]; then MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/krrate_monitor.py "$MODE"
           # job=krrate dispatch only (dry): also rebuild the last MPC summary with live sources (2026-10-24 12:44 KST, no ntfy, no state)
           if [ "$PICK_JOB" = "krrate" ]; then python scripts/krrate_monitor.py selftest >/dev/null && python scripts/krrate_monitor.py dry --mpc-date last; fi
@@ -1731,7 +1732,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "usdiv" ]; then MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           python scripts/usdiv_monitor.py "$MODE"
       - name: Run US-BOND (IEF 2nd-tranche price, break-even USD/KRW, rate/FX regime, FOMC next-day summary; k203780 19:00 slot)
         # approved in chat 2026-10-24 11:04 KST. job=usbond dispatch is always dry: no ntfy, no state.
@@ -1745,7 +1746,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$PICK_JOB" = "usbond" ]; then MODE=dry; fi
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$PICK_JOB" = "k203780" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/usbond_monitor.py selftest; fi
           python scripts/usbond_monitor.py "$MODE"
       - name: Run LGESFOR (LG Energy Solution 373220 foreign ownership ratio 5.50/5.45 breach, 5.55 release; k203780 19:00 slot)
