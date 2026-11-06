@@ -106,7 +106,7 @@ def sec_release(net: Net, cfg: dict, pf: dict, since: str) -> tuple[str, str, st
 
 def get_price(net: Net, cfg: dict, release_date: str) -> tuple[float | None, float | None, str]:
     try:
-        data = json.loads(net.get(cfg["sources"]["quote"]))
+        data = json.loads(net.get(cfg["sources"]["quote"], sec=True))  # Yahoo 429s the browser UA; soq3 used this one
         res = ((data.get("chart") or {}).get("result") or [None])[0]
         if not res:
             return None, None, "시세 없음"
@@ -629,7 +629,7 @@ def reach(net: Net, cfg: dict) -> None:
     for name, url, sec in (("sec", cfg["sources"]["sec"], True), ("fool_quote", cfg["sources"]["fool_quote"], False),
                            ("fool_q3", Q3_URL, False), ("stockanalysis", cfg["sources"]["stockanalysis"], False), ("sa_q3", Q3_SA_URL, False),
                            ("news_rss", cfg["sources"]["news_rss"].format(q="Southern+Company+earnings"), False),
-                           ("yahoo", cfg["sources"]["quote"], False)):
+                           ("yahoo", cfg["sources"]["quote"], True)):
         try:
             t = net.get(url, sec=sec)
             note = "challenge" if re.search(r"Enable JavaScript and cookies|Just a moment|cf-chl", t) else "ok"
