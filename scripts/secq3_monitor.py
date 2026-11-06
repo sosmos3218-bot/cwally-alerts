@@ -450,10 +450,10 @@ def cut(s: str | None, n: int) -> str:
 def sec_bands() -> str:
     try:
         b = json.loads(SEC_CFG.read_text(encoding="utf-8"))["bands"]
-        return (f"[SEC] 가격 기준을 따릅니다(1차 {b['sell1_lo']//10000}만~{b['sell1_hi']//10000}만원, "
+        return (f"[SEC] 005930 가격 기준을 따릅니다(1차 {b['sell1_lo']//10000}만~{b['sell1_hi']//10000}만원, "
                 f"2차 {b['sell2_lo']//10000}만~{b['sell2_hi']//10000}만원).")
     except Exception:
-        return "[SEC] 가격 구간 알림 기준을 따릅니다."
+        return "[SEC] 005930 가격 구간 알림 기준을 따릅니다."
 
 
 
