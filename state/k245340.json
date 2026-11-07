@@ -1,0 +1,17 @@
+{
+  "updated_at": null,
+  "seed": "pending",
+  "seed_note": "검증된 2주 연속 기준이 없어 대기. 참인 첫 유효 주만 1회차. 거짓이거나 무효인 주는 세지 않음. 소급 발송 없음.",
+  "last_eval_week": null,
+  "streak": 0,
+  "last_true_week": null,
+  "latched": false,
+  "last_signal_week": null,
+  "signal_weeks": null,
+  "fail": {
+    "days": 0,
+    "last": null,
+    "notified": false
+  },
+  "last_check": null
+}

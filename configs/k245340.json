@@ -1,0 +1,38 @@
+{
+  "name": "k245340",
+  "title_prefix": "[245340]",
+  "code": "245340",
+  "name_kr": "TIGER 미국다우존스30",
+  "created_at": "2026-11-07T15:40:00+09:00",
+  "approval": "사용자 요청 2026-11-07: 매수 지시 없이 상대성과와 주의점만 전달하는 [245340] 주간 검토 알림. 245340 미보유. 저평가 연구는 시점 맞는 과거 시계열이 없어 중단. 합의된 휴리스틱만 검토 기회로 알림.",
+  "holding": "미보유. 보유는 S&P500과 배당다우 ETF이며 정확한 티커는 모름. 수량 매수나 보유 교체 지시 없음.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 k203780 슬롯(KRX 거래일 19:00 KST)에 부착. ISO 주마다 첫 유효 판단 1번. 그 주 안에서 아직 유효 판단이 없으면 다음 KRX 거래일 19:00이 따라잡음. 휴장일은 침묵. job=k245340 또는 job=k203780 수동 dispatch는 oneoff_mode=auto가 아니면 selftest + dry.",
+  "rules": {
+    "symbols": ["DIA", "SPY", "SCHD"],
+    "yahoo_range": "2y",
+    "min_sessions": 300,
+    "ret_3m_sessions": 63,
+    "ret_6m_sessions": 126,
+    "sma_sessions": 200,
+    "stale_calendar_days": 5,
+    "fail_ops_after_days": 2,
+    "fail_gap_reset_days": 4,
+    "dividend_old_ratio_max": 0.995,
+    "dividend_last_ratio_tol": 0.02
+  },
+  "rule_note": "검토 조건(모두 엄격한 초과, 같으면 미충족). 1) DIA 수정 총수익(Yahoo adjclose, 분할+분배)이 63 공통 거래일 구간에서 SPY와 SCHD를 각각 이긴다. 2) 같은 정의로 126 공통 거래일 구간에서도 둘 다 이긴다. 공통 거래일은 세 종목 모두 유한한 adjclose와 분할수정 종가가 있는 미국 정규장 날짜만. 수익률 = 마지막 수정종가 / N거래일 전 수정종가 - 1. 3) DIA 분할수정 보통 종가(Yahoo close. 배당 수정 아님)가 그 종가의 200거래일 단순평균보다 위. 4) 서로 다른 ISO 주 2번의 유효 판단이 연속으로 참. 같은 주 두 번 세지 않음. 무효/누락 주는 2주를 이어 붙이지 않음. 참이 된 뒤 반복 발송 없음. 유효한 주에서 조건이 깨져야만 재무장. 첫 주는 대기(streak 1)라 소급 2주 알림 없음. 저평가/매수 타이밍 검증 아님.",
+  "limitations": "시점 맞는 245340 역사적 저평가 시계열은 쓰지 않음(신뢰할 공개 시계열 없음). DIA/SPY/SCHD 달러 수정 총수익은 245340 원화 수익의 대리지표. 겹치는 보유, 환율, 보수, 괴리로 결론이 달라질 수 있고 손실이 날 수 있음. 수량이나 교체를 정하지 않음. adjclose가 없으면 총수익을 무수정 종가로 대체하지 않고 그 주는 무효.",
+  "sources": {
+    "checked": "2026-11-07",
+    "total_return": "Yahoo chart v8 query1/query2 range=2y interval=1d events=div|split includeAdjustedClose=true 의 adjclose. 2026-11-07 확인: DIA/SPY/SCHD 각 501봉, null 0, 마지막 봉 2026-11-06 14:30 UTC(09:30 ET). 맨 앞 adj/close는 DIA 0.970, SPY 0.977, SCHD 0.930, 맨 끝은 1.0(배당 반영 후 최신 종가에 재기준). 2년 창에 분할 이벤트 없음.",
+    "sma_price": "같은 응답의 quote.close. 배당을 빼지 않은 분할수정 보통 종가. NVDA 10:1(2024-06-10) 전후 close가 연속이라 현재 Yahoo close는 이미 분할수정. SMA는 이 close만 사용하고 adjclose와 섞지 않음. 창 안에 분할이 있고 점프가 애매하면 그 주는 무효(추측으로 보정하지 않음).",
+    "session_date": "봉 시각을 America/New_York 날짜로 변환. 19:00 KST는 미국 당일 16:00 ET 이전이므로 직전 완료 정규장(주말은 금요일)만 사용. 그 날짜보다 늦은 봉은 버림. 공통 마지막 날이 기대 세션보다 5달력일보다 더 오래되면 무효.",
+    "kr_context": "알림 후보가 생긴 실행에서만. 245340 정규장 종가는 scripts/krx_close.py(Daum, 실패 시 네이버 15:30 분봉). NAV는 네이버 etfKeyIndicator(날짜 미확인이면 그대로 적고 괴리를 단정하지 않음). 원달러는 Yahoo USDKRW=X 일봉. 이름 TIGER 미국다우존스30은 2026-11-07 네이버 basic stockName. ISIN은 그 응답에 없어 운용사 NAV 표는 호출하지 않음. 참고 값이 없어도 상대성과 알림은 유지하고 확인 불가로 적음."
+  },
+  "ends_kst": "2027-11-07 23:59",
+  "ends_note": "2027-11-07 까지(요청 약 1년). 저평가 판정으로 늘리지 말 것. 기준을 바꾸면 새로 승인"
+}
