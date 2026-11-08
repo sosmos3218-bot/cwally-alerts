@@ -16,7 +16,9 @@
    filings.rules contract.ess_large) -> p5 'ESS 대형 수주 (정정/해지) 공시' title. Everything else stays p3. Body fetch or
    amount parse failure = not large, body says '금액 확인 필요' (fail open, the filing is still sent).
 3. Q4 2026 checklist: a new 영업(잠정)실적 filing inside q4.window (2027-01-01..02-28) also sends the
-   checklist once (q4_checklist_sent).
+   checklist once (q4_checklist_sent). The prelim notice and that checklist append a reference line
+   (세전손익, 연결 당기순손익, 지배/비지배, 일회성) from the KIND body. A body failure says 확인 불가
+   and still sends. The line is not a buy signal and does not change priority or the checklist.
 
 Runs on the existing k203780 19:00 KST slot (KRX trading days). No new cron.
 Modes: auto | force (re-evaluate the last bar even if seen) | dry (print only, no ntfy, no state)
@@ -38,6 +40,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_topic  # noqa: E402
+from earnings_parse import safe_reference  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 CFG = ROOT / "configs" / "lgeswatch.json"
@@ -336,7 +339,17 @@ def price_msg(cfg: dict, fired: list[str], close: float, day: str, prev: float |
     return title, "\n".join(lines), int(top["priority"])
 
 
-def filing_msg(cfg: dict, f: dict, rule: dict, ci: dict | None = None) -> tuple[str, str, int]:
+def prelim_ref(f: dict, body: str | None, err: str | None) -> str:
+    """Reference line for one prelim filing. Never raises, never turns a read failure into 0."""
+    return safe_reference(
+        None if err or not (body or "").strip() else body,
+        source=f"KIND {f.get('acptno', '')} {clean(f.get('title', ''))}",
+        filed=str(f.get("filed") or ""),
+        fetch_error=err or (None if (body or "").strip() else "본문 없음"),
+    )
+
+
+def filing_msg(cfg: dict, f: dict, rule: dict, ci: dict | None = None, ref: str | None = None) -> tuple[str, str, int]:
     t = clean(f["title"])
     link = cfg["sources"]["kind_view"].format(acpt=f["acptno"])
     extra = {
@@ -358,29 +371,37 @@ def filing_msg(cfg: dict, f: dict, rule: dict, ci: dict | None = None) -> tuple[
             title = f"[LGES] 373220 LG에너지솔루션 ESS 대형 수주 {tag}공시 {big_won(ci['p']['amount'])} | 원문 확인"
             extra = ("ESS 대형 계약 해지: 해지 사유, 잔여 금액, 수주 잔고 영향을 확인." if ci["kind"] == "해지" else
                      "ESS 대형 수주: 계약상대, 기간, GWh 규모, 연간 ESS 수주 90GWh 목표 대비 비중을 원문으로 확인.")
+    ref_txt = ""
+    dont = "하지 말 것: 제목만 보고 주문, 장중 급변동 추격. 투자 권유 아님."
+    if rule["key"] == "prelim":
+        ref_txt = " " + (ref if ref else prelim_ref(f, None, "본문 없음"))
+        dont = ("하지 말 것: 제목만 보고 주문, 장중 급변동 추격, "
+                "AMPC 제외 영업이익을 보상금 제외 경상 영업이익으로 보기, "
+                "세전손익이나 순손익 참고를 매수 조건으로 쓰기. 투자 권유 아님.")
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {f['filed']} 공시 '{t}' (KIND 접수번호 {f['acptno']}).{status_extra} {link}",
+        f"지금 결과/상태: {f['filed']} 공시 '{t}' (KIND 접수번호 {f['acptno']}).{status_extra} {link}{ref_txt}",
         "지금 할 일: " + extra,
         "나중에: 같은 공시는 다시 보내지 않습니다. 정정 공시는 새 접수번호라 1번 더 옵니다.",
         "익절/줄일 때: 횡령/배임 금액이 크거나 거래정지, 불성실공시법인 지정이 나오면 비중 축소 검토.",
-        "하지 말 것: 제목만 보고 주문, 장중 급변동 추격. 투자 권유 아님.",
+        dont,
     ]
     return title, "\n".join(lines), prio
 
 
-def q4_msg(cfg: dict, f: dict) -> tuple[str, str, int]:
+def q4_msg(cfg: dict, f: dict, ref: str | None = None) -> tuple[str, str, int]:
     link = cfg["sources"]["kind_view"].format(acpt=f["acptno"])
     title = "[LGES] 373220 4분기 잠정실적 확인 | 체크리스트 4개"
+    ref_txt = ref if ref else prelim_ref(f, None, "본문 없음")
     lines = [
         f"{datetime.now(KST):%Y-%m-%d %H:%M} KST | 373220 | LG에너지솔루션",
         "이게 뭐 알림: " + cfg["explain"],
-        f"지금 결과/상태: {f['filed']} '{clean(f['title'])}' 공시. {cfg['q4']['checklist']}",
+        f"지금 결과/상태: {f['filed']} '{clean(f['title'])}' 공시. {cfg['q4']['checklist']} {ref_txt}",
         f"지금 할 일: 원문에서 위 4개를 직접 확인. {link}",
         "나중에: 사업보고서(3월)에서 연간 ESS 수주와 AMPC 금액을 다시 대조.",
         "익절/줄일 때: AMPC 제외 영업이익 3,000억원 미달이나 FEOC/AMPC 불리한 변화면 비중 축소 검토.",
-        "하지 말 것: 헤드라인 영업이익(AMPC 포함)만 보고 판단, 실적 당일 추격. 투자 권유 아님.",
+        "하지 말 것: 헤드라인 영업이익(AMPC 포함)만 보고 판단, AMPC 제외 영업이익을 보상금 제외 경상 영업이익으로 보기, 세전손익이나 순손익 참고를 매수 조건으로 쓰기, 실적 당일 추격. 투자 권유 아님.",
     ]
     return title, "\n".join(lines), 4
 
@@ -537,6 +558,70 @@ def selftest() -> int:
     for t, b, p in msgs:
         check(f"no middle dot / em-dash: {t[:30]}", any(ch in t + b for ch in "\u00b7\u2014\u318d"), False)
         print(p, t)
+    def ref_slice(body: str) -> str:
+        line = next(ln for ln in body.split("\n") if "참고(판정에 쓰지 않음)" in ln)
+        return line.split("참고(판정에 쓰지 않음)", 1)[-1]
+
+    # Earnings reference is text-only. Checklist, title, priority, and price/contract paths stay put.
+    q4_title, q4_body, q4_prio = q4_msg(cfg, f)
+    check("q4 title unchanged", q4_title, "[LGES] 373220 4분기 잠정실적 확인 | 체크리스트 4개")
+    check("q4 priority unchanged", q4_prio, 4)
+    check("q4 checklist unchanged", cfg["q4"]["checklist"] in q4_body and "AMPC 제외 영업이익 3,000억원" in q4_body, True)
+    check("q4 todo unchanged", "지금 할 일: 원문에서 위 4개를 직접 확인" in q4_body, True)
+    q4_gap = ref_slice(q4_body)
+    check("q4 no body says 확인 불가", "세전손익 확인 불가" in q4_gap and "0억원" not in q4_gap, True)
+    check("q4 six-part", [ln.split(":")[0] for ln in q4_body.split("\n")[1:]],
+          ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+    prule = classify(cfg, "연결재무제표기준영업(잠정)실적(공정공시)")
+    pt, pb, pp = filing_msg(cfg, f, prule)
+    check("prelim title unchanged", pt, "[LGES] 373220 LG에너지솔루션 새 공시 영업(잠정)실적 | 원문 확인")
+    check("prelim priority unchanged", pp, 4)
+    check("prelim todo unchanged", "지금 할 일: AMPC 제외 영업이익, ESS 매출과 수주, AMPC 비중을 확인." in pb, True)
+    prelim_gap = ref_slice(pb)
+    check("prelim missing body", "세전손익 확인 불가" in prelim_gap and "0억원" not in prelim_gap, True)
+    check("price has no earn ref", "참고(판정에 쓰지 않음)" in price_msg(cfg, ["buy330"], 329000, "d", None)[1], False)
+    check("contract has no earn ref", "참고(판정에 쓰지 않음)" in filing_msg(cfg, ff, crule, c2)[1], False)
+    body_ok = (
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원, % "
+        "법인세비용차감전계속사업이익 당해실적 -1,800 당기순이익 당해실적 2,200 "
+        "지배기업 소유주지분 순이익 당해실적 - 비지배지분 순이익 당해실적 - "
+        "2026년 4분기 일회성 위약금은 150억원. 2026년 3분기 일회성 보상금은 3,000억원."
+    )
+    ref_ok = prelim_ref(f, body_ok, None)
+    t_ok, b_ok, p_ok = q4_msg(cfg, f, ref=ref_ok)
+    part = ref_slice(b_ok)
+    check("q4 numbers do not change decision", (t_ok, p_ok, cfg["q4"]["checklist"] in b_ok), (q4_title, 4, True))
+    check("q4 negative pretax", "세전손익(법인세비용차감전계속사업이익) -1,800억원" in part, True)
+    check("q4 positive net", "연결 당기순손익(지배주주와 비지배 합계) 2,200억원" in part, True)
+    check("q4 parent missing waits", "지배주주순손익 미공개" in part and "상세 공시(분기보고서)를 기다림" in part, True)
+    check("q4 parent not swapped", "지배주주순손익 2,200억원" not in part, True)
+    check("q4 oneoff period", "위약금 150억원" in part and "3,000" not in part, True)
+    q3_prose = (
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원. "
+        "2026년 3분기 법인세 차감 전 순손실은 2,312억 원. 2026년 3분기 당기순손실은 2,969억 원. "
+        "2026년 4분기 실적에서 전년 보상금은 1,500억원."
+    )
+    q3_slice = ref_slice(q4_msg(cfg, f, ref=prelim_ref(f, q3_prose, None))[1])
+    check("q4 q3 prose not current", "미공개" in q3_slice and "-2,312억원" not in q3_slice and "1,500" not in q3_slice, True)
+    check("q4 q3 prose keeps checklist title", q4_msg(cfg, f, ref=prelim_ref(f, q3_prose, None))[0], q4_title)
+    check("q4 unit period", "기간 2026년 4분기" in part and "단위 억원" in part, True)
+    zero_body = "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원 법인세비용차감전계속사업이익 당해실적 0 당기순이익 당해실적 0 2026년 4분기 일회성 보상금은 0억원."
+    zpart = ref_slice(q4_msg(cfg, f, ref=prelim_ref(f, zero_body, None))[1])
+    check("q4 disclosed zero", zpart.count("0억원(공시된 0)") >= 2, True)
+    miss_body = "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원 법인세비용차감전계속사업이익 당해실적 - 당기순이익 당해실적 -"
+    mpart = ref_slice(q4_msg(cfg, f, ref=prelim_ref(f, miss_body, None))[1])
+    check("q4 dash not zero", "세전손익(법인세비용차감전계속사업이익) 미공개" in mpart and "0억원" not in mpart, True)
+    bad_body = "단위 : 억원 당기실적('26.4Q) 법인세비용차감전계속사업이익 당해실적 해당없음 당기순이익 당해실적 적자전환"
+    bpart = ref_slice(filing_msg(cfg, f, prule, ref=prelim_ref(f, bad_body, None))[1])
+    check("prelim nonnumeric", "세전손익(법인세비용차감전계속사업이익) 확인 불가" in bpart and "연결 당기순손익(지배주주와 비지배 합계) 확인 불가" in bpart, True)
+    check("prelim nonnumeric title stays", filing_msg(cfg, f, prule, ref=prelim_ref(f, bad_body, None))[0], pt)
+    err_ref = prelim_ref(f, None, "KIND 본문 조회 실패: TimeoutError")
+    et, eb, ep = q4_msg(cfg, f, ref=err_ref)
+    err_slice = ref_slice(eb)
+    check("source failure still checklist", (et, ep, "3,000억원" in eb, "세전손익 확인 불가" in err_slice, "0억원" not in err_slice),
+          (q4_title, 4, True, True, True))
+    check("earn ref no dot", any(ch in b_ok + eb + zpart for ch in "\u00b7\u2014\u318d"), False)
+    check("not recurring op", "경상 영업이익이 아님" in b_ok, True)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 
@@ -650,6 +735,7 @@ def main() -> int:
                 rule = classify(cfg, f["title"])
                 if rule:
                     ci = None
+                    eref = None
                     if rule["key"] == "contract":
                         body, berr = None, None
                         try:
@@ -659,10 +745,21 @@ def main() -> int:
                             print(berr)
                         ci = contract_info(cfg, f["title"], body, berr)
                         print(f"contract {f['acptno']}: ess={ci['ess']} large={ci['large']} prio={ci['priority']} check={ci['check_amount']}")
-                    t, m, p = filing_msg(cfg, f, rule, ci)
+                    elif rule["key"] == "prelim":
+                        pbody, perr = None, None
+                        try:
+                            pbody = kind_body(f["acptno"])
+                            if not (pbody or "").strip():
+                                perr = "본문 없음"
+                                pbody = None
+                        except Exception as exc:  # noqa: BLE001  fail open: still send the filing and the checklist
+                            perr = f"KIND 본문 조회 실패: {type(exc).__name__}"
+                            print(perr)
+                        eref = prelim_ref(f, pbody, perr)
+                    t, m, p = filing_msg(cfg, f, rule, ci, ref=eref)
                     send(dry, port, t, m, p, ["page_facing_up"], dedup_key=f["acptno"])
                     if rule["key"] == "prelim" and in_q4(cfg, f["filed"]) and not st.get("q4_checklist_sent"):
-                        t, m, p = q4_msg(cfg, f)
+                        t, m, p = q4_msg(cfg, f, ref=eref)
                         send(dry, port, t, m, p, ["clipboard"], dedup_key=f"{f['acptno']}:q4")
                         st["q4_checklist_sent"] = f["acptno"]
                 else:

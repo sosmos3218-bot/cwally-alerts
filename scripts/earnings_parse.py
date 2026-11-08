@@ -5,6 +5,11 @@ Used by lges1103_monitor.py; meant for later one-shots such as a 4분기 잠정�
 All amounts are 억원 ints. Losses are negative. Nothing here sends ntfy or writes state by itself:
 safe_parse() only calls the notify callback you pass and sets one state key.
 
+reference_line() is display-only. It does not feed a buy or sell verdict. A missing figure stays
+미공개, a disclosed 0 stays 0, and a failed read stays 확인 불가. Parent and NCI are never
+copied from consolidated net, and an one-off amount is kept only when the same local phrase
+names the filing period.
+
 usage: python scripts/earnings_parse.py selftest
 """
 from __future__ import annotations
@@ -108,6 +113,455 @@ def parse_results(text: str, subsidy: str = SUBSIDY_LABELS, extra: dict[str, str
     for key, label in (extra or {}).items():
         out[key] = grab(text, label)
     return out
+
+
+# ---------------- reference-only P&L (not a verdict input) ----------------
+
+_PRETAX_LABEL = r"법인세\s*비용\s*차감\s*전\s*계속\s*사업\s*이익|법인세\s*비용\s*차감\s*전\s*순이익"
+_PARENT_LABEL = r"지배기업\s*소유주\s*지분\s*순이익|지배주주(?:에\s*귀속되는)?\s*(?:당기)?\s*순이익"
+_NCI_LABEL = r"비지배(?:주주|지분)(?:에\s*귀속되는)?\s*(?:당기)?\s*순이익"
+_PRETAX_GAIN = r"법인세\s*(?:비용\s*)?차감\s*전\s*(?:계속사업\s*)?(?:순)?이익"
+_PRETAX_LOSS = r"법인세\s*(?:비용\s*)?차감\s*전\s*(?:계속사업\s*)?(?:순)?손실"
+_PARENT_GAIN = r"지배주주(?:에\s*귀속되는)?\s*(?:당기\s*)?순이익|지배기업\s*소유주\s*지분\s*순이익"
+_PARENT_LOSS = r"지배주주(?:에\s*귀속되는)?\s*(?:당기\s*)?순손실|지배기업\s*소유주\s*지분\s*순손실"
+_NCI_GAIN = r"비지배(?:주주|지분)(?:에\s*귀속되는)?\s*(?:당기\s*)?순이익"
+_NCI_LOSS = r"비지배(?:주주|지분)(?:에\s*귀속되는)?\s*(?:당기\s*)?순손실"
+_ONEOFF_RE = re.compile(
+    r"(?P<name>일회성(?:\s*[가-힣A-Za-z]{1,12}){0,4}|고객\s*보상금|보상금|위약금|충당금(?:\s*환입)?|손상차손)"
+    r"(?:은|는|이|가)?\s*(?:약\s*)?(?P<sign>[+\-△])?\s*"
+    r"(?P<num>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>조|억|백만)\s*원?"
+    r"(?:\s*(?P<extra>\d[\d,]*)\s*억\s*원?)?"
+)
+_MENTION_RE = re.compile(r"일회성|보상금|위약금|충당금|손상차손")
+_Q_START = {"01": "1", "04": "2", "07": "3", "10": "4"}
+_Q_END = {"1": "03", "2": "06", "3": "09", "4": "12"}
+
+
+def _finish(text: str) -> str:
+    """Drop middle dots and em dashes, then collapse whitespace. Alert copy forbids both."""
+    out = (text or "")
+    for ch in ("\u00b7", "\u318d", "\u2014", "\u2013", "\u2015"):
+        out = out.replace(ch, " ")
+    return re.sub(r"\s+", " ", out).strip()
+
+
+# 전년/전분기/누적은 이번 분기 금액이 아니다. 문장 안 이 말이 있으면 그 문장 숫자는 쓰지 않는다.
+_REL_RE = re.compile(r"전년|전\s*분기|전분기|누적|누계|연간|YTD|작년|동기")
+_PAREN_NUM = re.compile(r"^[（(]\s*[+\-]?\d[\d,]*(?:\.\d+)?\s*[）)]$")
+_PAREN_ONEOFF = re.compile(
+    r"(?:일회성|보상금|위약금|충당금|손상차손)[^.]{0,40}[（(]\s*\d[\d,]*(?:\.\d+)?\s*[）)]"
+)
+
+
+def _quantize_eok(eok: float) -> tuple[str, int | float | None]:
+    """억원. A literal 0 stays 0. A nonzero source is never stored as 0."""
+    if eok == 0:
+        return "value", 0
+    if not (RANGE[0] < eok < RANGE[1]):
+        return "nonnumeric", None
+    nearest = round(eok)
+    if abs(eok - nearest) <= 1e-9:
+        iv = int(nearest)
+        if iv == 0:
+            shown = round(eok, 4)
+            return ("value", shown) if shown != 0 else ("nonnumeric", None)
+        return "value", iv
+    shown = round(eok, 2)
+    if shown == 0:
+        shown = round(eok, 4)
+    return ("value", shown) if shown != 0 else ("nonnumeric", None)
+
+
+def _token(tok: str, million: bool) -> tuple[str, int | float | None]:
+    """One 당해실적 cell. A parenthetical amount is 확인 불가, not a profit."""
+    t = (tok or "").strip()
+    if _PAREN_NUM.fullmatch(t):
+        return "nonnumeric", None
+    if t in {"-", "\u2013", "\u2014", "\u2015", ".", "\u2026", ""} or re.fullmatch(r"-+", t):
+        return "missing", None
+    raw = t.replace(",", "").replace("△", "-").replace("−", "-").replace("＋", "+")
+    if not re.fullmatch(r"[+\-]?\d+(?:\.\d+)?", raw):
+        return "nonnumeric", None
+    number = float(raw)
+    return _quantize_eok(number / 100.0 if million else number)
+
+
+def _unit(text: str) -> str:
+    m = re.search(r"단위\s*[:：]\s*(백만원|억원)", text[:1200])
+    if not m:
+        return "unknown"
+    return "million" if m.group(1) == "백만원" else "eok"
+
+
+def _table_cells(text: str, label: str, unit: str, skip=None) -> list[tuple[str, int | float | None]]:
+    pat = re.compile(r"(?:" + label + r")\s*[\(（]?\s*당해실적\s*[\)）]?\s+(\S+)")
+    million = unit == "million"
+    known = unit in {"eok", "million"}
+    out = []
+    for m in pat.finditer(text):
+        pre = text[max(0, m.start() - 30):m.start()]
+        if skip and skip(pre):
+            continue
+        status, val = _token(m.group(1), million)
+        if status == "value" and not known:
+            status, val = "unit_missing", None
+        out.append((status, val))
+    return out
+
+
+def _pick(cells: list[tuple[str, int | float | None]]) -> tuple[str, int | float | None]:
+    """Prefer a real number over an earlier dash header. Never invent one."""
+    if not cells:
+        return "absent", None
+    for status, val in cells:
+        if status == "value":
+            return "value", val
+    for status, _val in cells:
+        if status == "nonnumeric":
+            return "nonnumeric", None
+    for status, _val in cells:
+        if status == "unit_missing":
+            return "unit_missing", None
+    return "missing", None
+
+
+def _explicit_periods(snippet: str) -> set[str]:
+    found: set[str] = set()
+    for m in re.finditer(r"(20\d{2})\s*년\s*([1-4])\s*분기", snippet):
+        found.add(f"{m.group(1)}년 {m.group(2)}분기")
+    for m in re.finditer(r"'(\d{2})\s*\.\s*([1-4])\s*Q", snippet):
+        found.add(f"20{m.group(1)}년 {int(m.group(2))}분기")
+    for m in re.finditer(r"(20\d{2})-(01|04|07|10)-01\s*[~\-]\s*\1-(03|06|09|12)-(?:30|31)", snippet):
+        q = _Q_START[m.group(2)]
+        if _Q_END[q] == m.group(3):
+            found.add(f"{m.group(1)}년 {q}분기")
+    return found
+
+
+def _money_eok(num: str, unit: str, extra: str | None, sign: int) -> int | float | None:
+    n = float(num.replace(",", ""))
+    if unit == "조":
+        eok = n * 10000
+    elif unit == "백만":
+        eok = n / 100.0
+    else:
+        eok = n
+    if extra:
+        eok += float(extra.replace(",", ""))
+    status, val = _quantize_eok(eok * sign)
+    return val if status == "value" else None
+
+
+_PROSE_MONEY = (
+    r"(?P<psign>[+\-△])?\s*(?P<num>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>조|억|백만)\s*원?"
+    r"(?:\s*(?P<extra>\d[\d,]*)\s*억\s*원?)?"
+)
+
+
+def _prose_amounts(text: str, gain: str, loss: str, period: str | None, reject=None) -> tuple[str, int | float | None]:
+    """Prose amounts only when the same sentence names this filing period and no 전년/전분기/누적.
+
+    A number with no year-quarter, or only another period, is not the current figure.
+    """
+    hit_re = re.compile(
+        r"(?P<label>(?:" + loss + r")|(?:" + gain + r"))(?:은|는|이|가)?\s*(?:약\s*)?" + _PROSE_MONEY
+    )
+    loss_re = re.compile(loss)
+    label_re = re.compile(r"(?:" + gain + r"|" + loss + r")")
+    current: list[int | float] = []
+    saw_unbound = False
+    saw_other = False
+    saw_label = False
+    parts = [p for p in re.split(r"(?<=[\.다임])\s+|\n+", text) if p] or [text]
+    for part in parts:
+        if reject and reject(part):
+            continue
+        if label_re.search(part):
+            saw_label = True
+        if _REL_RE.search(part):
+            if hit_re.search(part):
+                saw_unbound = True
+            continue
+        for m in hit_re.finditer(part):
+            sign = -1 if loss_re.search(m.group("label")) else 1
+            if m.group("psign") in {"-", "△"}:
+                sign *= -1
+            kind_window = part[max(0, m.start() - 90):m.start("num")]
+            periods = _explicit_periods(kind_window)
+            val = _money_eok(m.group("num"), m.group("unit"), m.group("extra"), sign)
+            if val is None:
+                saw_unbound = True
+                continue
+            if period and periods == {period}:
+                current.append(val)
+            elif periods:
+                saw_other = True
+            else:
+                saw_unbound = True
+    if current:
+        uniq: list[int | float] = []
+        for v in current:
+            if all(v != u for u in uniq):
+                uniq.append(v)
+        if len(uniq) == 1:
+            return "value", uniq[0]
+        return "nonnumeric", None
+    if saw_unbound:
+        return "nonnumeric", None
+    if saw_other or saw_label:
+        return "missing", None
+    return "absent", None
+
+
+def _field(text: str, label: str, gain: str, loss: str, unit: str, period: str | None,
+           skip=None, reject=None) -> tuple[str, int | float | None]:
+    """당해실적 column is the current figure. Prose fills it only for that same period."""
+    cells = _table_cells(text, label, unit, skip)
+    table = _pick(cells) if cells else ("absent", None)
+    prose = _prose_amounts(text, gain, loss, period, reject)
+    if table[0] == "value":
+        if prose[0] == "value" and prose[1] != table[1]:
+            return "nonnumeric", None
+        return table
+    if table[0] == "missing":
+        # A blank current cell is 미공개. Do not copy another period's sentence into it.
+        if prose[0] == "value":
+            return "nonnumeric", None
+        return "missing", None
+    if table[0] in {"nonnumeric", "unit_missing"}:
+        return table
+    return prose
+
+
+def _skip_attrib(pre: str) -> bool:
+    return bool(re.search(r"지배|비지배|귀속|지분|주주", pre))
+
+
+def _reject_attrib(part: str) -> bool:
+    return bool(re.search(r"지배주주|비지배|소유주지분", part))
+
+
+def filing_period(text: str) -> str | None:
+    """Current-period label from the 당기실적 header only. Later guidance quarters are ignored."""
+    head = text[:900]
+    m = re.search(
+        r"당기실적[^0-9]{0,40}(20\d{2})-(01|04|07|10)-01\s*[~\-]\s*(20\d{2})-(03|06|09|12)-(?:30|31)",
+        head,
+    )
+    if m and m.group(1) == m.group(3) and _Q_END[_Q_START[m.group(2)]] == m.group(4):
+        return f"{m.group(1)}년 {_Q_START[m.group(2)]}분기"
+    m = re.search(r"당기실적[\s\S]{0,220}?'(\d{2})\s*\.\s*([1-4])\s*Q", head)
+    if m:
+        return f"20{m.group(1)}년 {int(m.group(2))}분기"
+    return None
+
+
+def _nearest_period(window: str) -> tuple[str | None, int]:
+    """(period label, end index) of the token closest to the amount."""
+    best, best_at = None, -1
+
+    def take(end: int, label: str) -> None:
+        nonlocal best, best_at
+        if end >= best_at:
+            best, best_at = label, end
+
+    for m in re.finditer(r"(20\d{2})\s*년\s*([1-4])\s*분기", window):
+        take(m.end(), f"{m.group(1)}년 {m.group(2)}분기")
+    for m in re.finditer(r"'(\d{2})\s*\.\s*([1-4])\s*Q", window):
+        take(m.end(), f"20{m.group(1)}년 {int(m.group(2))}분기")
+    for m in re.finditer(r"(20\d{2})-(01|04|07|10)-01", window):
+        take(m.end(), f"{m.group(1)}년 {_Q_START[m.group(2)]}분기")
+    return best, best_at
+
+
+def _oneoff_kind(text: str, start: int, period: str | None) -> str:
+    """match only when the words between the period token and the name are this quarter.
+
+    전년, 전분기, 누적 in that span reject the amount even if a current-quarter token is nearby.
+    """
+    if not period:
+        return "none"
+    window = text[max(0, start - 120):start]
+    label, at = _nearest_period(window)
+    if label is None:
+        return "none"
+    local = window[at:]
+    if _REL_RE.search(local) or (_explicit_periods(local) - {period}):
+        return "ambiguous"
+    if label != period:
+        return "other"
+    return "match"
+
+
+def _oneoff_amount(m: re.Match) -> int | float | None:
+    sign = -1 if m.group("sign") in {"-", "△"} else 1
+    return _money_eok(m.group("num"), m.group("unit"), m.group("extra"), sign)
+
+
+def _oneoffs(text: str, period: str | None) -> tuple[list[dict], bool, bool, bool]:
+    """Explicit amounts for this filing period only. Relative and other periods stay out."""
+    items: list[dict] = []
+    mention = bool(_MENTION_RE.search(text))
+    other = False
+    paren = bool(_PAREN_ONEOFF.search(text))
+    seen: set[tuple[str, int | float]] = set()
+    for m in _ONEOFF_RE.finditer(text):
+        name = re.sub(r"\s+", " ", m.group("name")).strip()
+        name = re.sub(r"(은|는|이|가)$", "", name).strip()
+        blob = text[max(0, m.start() - 12):m.start()] + name
+        if re.search(r"AMPC|세액공제|보조금|Tax\s*Credit", blob, re.I):
+            continue
+        kind = _oneoff_kind(text, m.start(), period)
+        if kind == "other":
+            other = True
+            continue
+        if kind != "match":
+            if kind == "ambiguous":
+                other = True
+            continue
+        amount = _oneoff_amount(m)
+        if amount is None:
+            continue
+        key = (name, amount)
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append({"name": name[:24], "amount": amount, "period": period})
+        if len(items) >= 3:
+            break
+    return items, mention, other, paren
+
+
+def ref_fields(text: str) -> dict:
+    """Structured reference fields. status is value|missing|nonnumeric|unit_missing|absent."""
+    flat = re.sub(r"\s+", " ", text or "")
+    unit = _unit(flat)
+    period = filing_period(flat)
+    net = _field(flat, r"당기순이익", r"당기\s*순이익", r"당기\s*순손실", unit, period, _skip_attrib, _reject_attrib)
+    pretax = _field(flat, _PRETAX_LABEL, _PRETAX_GAIN, _PRETAX_LOSS, unit, period)
+    parent = _field(flat, _PARENT_LABEL, _PARENT_GAIN, _PARENT_LOSS, unit, period)
+    nci = _field(flat, _NCI_LABEL, _NCI_GAIN, _NCI_LOSS, unit, period)
+    oneoffs, mention, other, paren = _oneoffs(flat, period)
+    return {
+        "period": period, "unit": unit, "pretax": pretax, "net": net, "parent": parent, "nci": nci,
+        "oneoffs": oneoffs, "oneoff_mention": mention, "oneoff_other_period": other,
+        "oneoff_ambiguous": paren,
+    }
+
+
+def _fmt_eok(value: int | float) -> str:
+    if isinstance(value, float) and not float(value).is_integer():
+        text = f"{value:,.4f}".rstrip("0").rstrip(".")
+        return f"{text}억원"
+    iv = int(value)
+    if iv == 0:
+        return "0억원(공시된 0)"
+    return f"{iv:,}억원"
+
+
+def _won(status: str, value: int | float | None) -> str:
+    if status == "value":
+        return _fmt_eok(value if value is not None else 0)
+    if status in {"nonnumeric", "unit_missing"}:
+        return "확인 불가"
+    return "미공개"
+
+
+def _whole(v: int | float | None) -> bool:
+    return isinstance(v, int) or (isinstance(v, float) and float(v).is_integer())
+
+
+def _split_note(parent: tuple, nci: tuple, net: tuple) -> str:
+    pv, nv = parent[0] == "value", nci[0] == "value"
+    if pv and nv and net[0] == "value" and all(_whole(x) for x in (parent[1], nci[1], net[1])):
+        if int(parent[1]) + int(nci[1]) != int(net[1]):
+            return "지배주주와 비지배의 합이 연결 당기순손익과 같지 않음. 공시 숫자를 고치지 않음."
+    if pv and nv:
+        return "지배주주순손익과 비지배지분순손익은 연결 합계와 따로 적음. 서로 바꾸지 않음."
+    if pv or nv:
+        return "없는 쪽은 추정하지 않음. 상세 공시(분기보고서)를 기다림. 연결 합계로 바꾸지 않음."
+    return "이번 공시에 지배주주와 비지배 숫자가 없음. 상세 공시(분기보고서)를 기다림. 연결 합계로 바꾸지 않음."
+
+
+def _oneoff_text(fields: dict, source: str, filed: str) -> str:
+    if fields.get("oneoff_ambiguous") and not fields["oneoffs"]:
+        return "일회성 항목 확인 불가(괄호 금액은 이익으로 읽지 않음)."
+    items = fields["oneoffs"]
+    if items:
+        bits = []
+        for it in items:
+            bits.append(f"{it['name']} {_fmt_eok(it['amount'])}(기간 {it['period']}, 출처 {source}, {filed})")
+        extra = " 다른 기간 숫자는 넣지 않음." if fields["oneoff_other_period"] else ""
+        if fields.get("oneoff_ambiguous"):
+            extra += " 괄호 금액은 부호를 단정하지 않아 적지 않음."
+        return "일회성 항목: " + "; ".join(bits) + "." + extra
+    if fields["oneoff_other_period"]:
+        return "일회성 항목: 이번 기간 금액 미공개(다른 기간 숫자는 넣지 않음, 0으로 두지 않음)."
+    if fields["oneoff_mention"]:
+        return "일회성 항목: 언급은 있으나 이번 기간 금액 미공개(0으로 두지 않음)."
+    return "일회성 항목 미공개(0으로 두지 않음)."
+
+
+def reference_line(text: str | None, *, source: str, filed: str, fetch_error: str | None = None) -> str:
+    """One reference sentence. Never a verdict. Missing is 미공개, not 0. Read failure is 확인 불가."""
+    src, when = _finish(source), _finish(filed).replace("T", " ")
+    tail = " AMPC 제외 영업이익은 보상금이나 일회성을 뺀 경상 영업이익이 아님."
+    if fetch_error or text is None or not str(text).strip():
+        err = _finish(fetch_error or "본문 없음")
+        return _finish(
+            "참고(판정에 쓰지 않음): 세전손익 확인 불가, 연결 당기순손익 확인 불가, "
+            "지배주주순손익 확인 불가, 비지배지분순손익 확인 불가, 일회성 항목 확인 불가. "
+            f"본문 확인 불가({err}). 숫자를 추정하지 않음. 출처 {src} {when}."
+            + tail
+        )
+    fields = ref_fields(text)
+    had_value = any(fields[k][0] == "value" for k in ("pretax", "net", "parent", "nci")) or bool(fields["oneoffs"])
+    had_blocked = any(fields[k][0] == "unit_missing" for k in ("pretax", "net", "parent", "nci"))
+    fractional = any(
+        fields[k][0] == "value" and isinstance(fields[k][1], float) and not float(fields[k][1]).is_integer()
+        for k in ("pretax", "net", "parent", "nci")
+    ) or any(isinstance(it["amount"], float) and not float(it["amount"]).is_integer() for it in fields["oneoffs"])
+    if fields["unit"] == "million" and had_value:
+        unit_txt = "단위 억원(공시 단위 백만원에서 환산)."
+    elif fields["unit"] == "million":
+        unit_txt = "단위 억원(공시 단위 백만원)."
+    elif fields["unit"] == "eok" or had_value:
+        unit_txt = "단위 억원."
+    elif had_blocked:
+        unit_txt = "표 단위 확인 불가."
+    else:
+        unit_txt = "단위 확인 불가."
+    if fractional:
+        unit_txt += " 억원 미만은 소수로 적고 0으로 반올림하지 않음."
+    period_txt = fields["period"] or "확인 불가"
+    line = (
+        "참고(판정에 쓰지 않음). "
+        f"기간 {period_txt}. {unit_txt} "
+        f"세전손익(법인세비용차감전계속사업이익) {_won(*fields['pretax'])}. "
+        f"연결 당기순손익(지배주주와 비지배 합계) {_won(*fields['net'])}. "
+        f"지배주주순손익 {_won(*fields['parent'])}. "
+        f"비지배지분순손익 {_won(*fields['nci'])}. "
+        f"{_split_note(fields['parent'], fields['nci'], fields['net'])} "
+        f"{_oneoff_text(fields, src, when)} "
+        f"출처 {src} {when}."
+        + tail
+    )
+    return _finish(line)
+
+
+def safe_reference(text: str | None, *, source: str, filed: str, fetch_error: str | None = None) -> str:
+    """reference_line that cannot raise. A formatter bug becomes 확인 불가 and the alert still sends."""
+    try:
+        if fetch_error or text is None or not str(text).strip():
+            return reference_line(None, source=source, filed=filed, fetch_error=fetch_error or "본문 없음")
+        return reference_line(text, source=source, filed=filed)
+    except Exception as exc:  # noqa: BLE001
+        return _finish(
+            "참고(판정에 쓰지 않음): 세전손익 확인 불가, 연결 당기순손익 확인 불가, "
+            "지배주주순손익 확인 불가, 비지배지분순손익 확인 불가, 일회성 항목 확인 불가. "
+            f"참고 정리 실패({type(exc).__name__}). 숫자를 추정하지 않음. "
+            "AMPC 제외 영업이익은 보상금이나 일회성을 뺀 경상 영업이익이 아님."
+        )
 
 
 def unwrap_pdf(text: str) -> str:
@@ -316,6 +770,161 @@ def selftest() -> int:
     safe_parse(boom, state=d, day="2026-11-03", ops_notify=sent.append, dry=True)
     check("safe_parse dry no state", d, {})
     check("safe_parse ok", safe_parse(lambda: {"op": 1}, state={}, day="x", ops_notify=sent.append), {"op": 1})
+
+    # Reference line is display-only. Q3 figures below are the parser fixture already in this file,
+    # not defaults to copy into a later quarter.
+    q3f = ref_fields(Q3_NOTICE)
+    check("q3 period", q3f["period"], "2026년 3분기")
+    check("q3 pretax", q3f["pretax"], ("value", -2312))
+    check("q3 net total", q3f["net"], ("value", -2969))
+    check("q3 parent dash is missing not zero", q3f["parent"], ("missing", None))
+    check("q3 nci absent", q3f["nci"], ("absent", None))
+    check("q3 no oneoff amount", q3f["oneoffs"], [])
+    q3_line = reference_line(Q3_NOTICE, source="DART 공시", filed="2026-11-03")
+    check("q3 line waits for split", "상세 공시(분기보고서)를 기다림" in q3_line, True)
+    check("q3 line not parent=total", "지배주주순손익 -2,969억원" in q3_line, False)
+    check("q3 line ampc not recurring", "경상 영업이익이 아님" in q3_line, True)
+    check("q3 line no dot", any(c in q3_line for c in "\u00b7\u318d\u2014"), False)
+    check("q3 current column not prior or ytd",
+          all(s not in q3_line for s in ("-3,286", "-1,278", "-15,696", "-12,176")), True)
+    scr_line = reference_line(script, source="IR", filed="2026-10-30")
+    check("script period unnamed", "기간 확인 불가" in scr_line, True)
+    check("script unbound pretax", "세전손익(법인세비용차감전계속사업이익) 확인 불가" in scr_line, True)
+    check("script unbound net", "연결 당기순손익(지배주주와 비지배 합계) 확인 불가" in scr_line, True)
+    check("script does not claim q3 prose", "-2,312억원" not in scr_line and "-2,969억원" not in scr_line, True)
+    check("script comp not 7560", "7,560" in scr_line, False)
+    check("script mention not zero", "금액 미공개" in scr_line and "일회성 항목 0억원" not in scr_line, True)
+    q4_line = reference_line(Q4_2025_NOTICE, source="DART 2025 4Q", filed="2026-01-09")
+    check("q4'25 period", "기간 2025년 4분기" in q4_line, True)
+    check("q4'25 pretax missing", "세전손익(법인세비용차감전계속사업이익) 미공개" in q4_line, True)
+    check("q4'25 net missing", "연결 당기순손익(지배주주와 비지배 합계) 미공개" in q4_line, True)
+    check("q4'25 does not reuse op as pretax", "1,220" not in q4_line and "4,548" not in q4_line, True)
+    check("q4'25 not q3 numbers", "2,312" not in q4_line and "2,969" not in q4_line, True)
+    zero = "단위 : 억원 법인세비용차감전계속사업이익 당해실적 0 당기순이익 당해실적 0 지배기업 소유주지분 순이익 당해실적 0 비지배지분 순이익 당해실적 0"
+    zf = ref_fields("실적기간 당기실적 2026-10-01 ~ 2026-12-31 " + zero)
+    check("disclosed zero", (zf["pretax"], zf["net"], zf["parent"], zf["nci"]),
+          (("value", 0), ("value", 0), ("value", 0), ("value", 0)))
+    check("zero wording", "0억원(공시된 0)" in reference_line(zero, source="공시", filed="2027-01-08"), True)
+    missing = "단위 : 억원 법인세비용차감전계속사업이익 당해실적 - 당기순이익 당해실적 - 지배기업 소유주지분 순이익 당해실적 -"
+    mf = ref_fields("실적기간 당기실적 2026-10-01 ~ 2026-12-31 " + missing)
+    check("dash is missing", (mf["pretax"][0], mf["net"][0], mf["parent"][0], mf["nci"][0]),
+          ("missing", "missing", "missing", "absent"))
+    miss_line = reference_line("실적기간 당기실적 2026-10-01 ~ 2026-12-31 " + missing, source="공시", filed="2027-01-08")
+    check("dash wording not zero", "미공개" in miss_line and "0억원" not in miss_line, True)
+    check("dash keeps declared unit", "단위 억원." in miss_line and "기간 2026년 4분기" in miss_line, True)
+    bad = "단위 : 억원 법인세비용차감전계속사업이익 당해실적 해당없음 당기순이익 당해실적 적자전환"
+    bf = ref_fields(bad)
+    check("nonnumeric", (bf["pretax"][0], bf["net"][0]), ("nonnumeric", "nonnumeric"))
+    check("nonnumeric wording", "세전손익(법인세비용차감전계속사업이익) 확인 불가" in reference_line(bad, source="공시", filed="2027-01-08"), True)
+    mil = "단위 : 백만원 법인세비용차감전계속사업이익 당해실적 -231,000 당기순이익 당해실적 120,000"
+    mil_line = reference_line("당기실적('26.4Q) " + mil, source="공시", filed="2027-01-08")
+    check("million pretax", "-2,310억원" in mil_line, True)
+    check("million net positive", "연결 당기순손익(지배주주와 비지배 합계) 1,200억원" in mil_line, True)
+    check("million unit note", "백만원에서 환산" in mil_line, True)
+    check("million period", "기간 2026년 4분기" in mil_line, True)
+    split = (
+        "단위 : 억원 당기실적('26.4Q) 당기순이익 당해실적 -900 "
+        "지배기업 소유주지분 순이익 당해실적 -100 비지배지분 순이익 당해실적 -50"
+    )
+    sf = ref_fields(split)
+    check("split kept apart", (sf["net"][1], sf["parent"][1], sf["nci"][1]), (-900, -100, -50))
+    split_line = reference_line(split, source="공시", filed="2027-01-08")
+    check("split not summed into total", "연결 당기순손익(지배주주와 비지배 합계) -900억원" in split_line, True)
+    check("split mismatch note", "같지 않음" in split_line, True)
+    check("split does not invent -150 as total", "합계) -150억원" in split_line, False)
+    only_parent = "단위 : 억원 당기실적('26.4Q) 지배주주 순이익 당해실적 -100"
+    op_line = reference_line(only_parent, source="공시", filed="2027-01-08")
+    check("parent not used as total", "연결 당기순손익(지배주주와 비지배 합계) 미공개" in op_line and "지배주주순손익 -100억원" in op_line, True)
+    check("parent does not invent nci", "비지배지분순손익 미공개" in op_line and "-800억원" not in op_line, True)
+    q4_body = (
+        "일회성 충당금은 500억원. "
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원 "
+        "2026년 3분기 일회성 보상금은 3,000억원. "
+        "2026년 4분기 일회성 위약금은 150억원. "
+        "2026년 4분기 일회성 보상금은 0억원."
+    )
+    of = ref_fields(q4_body)
+    check("oneoff keeps matching period only", [(i["name"], i["amount"]) for i in of["oneoffs"]],
+          [("일회성 위약금", 150), ("일회성 보상금", 0)])
+    ol = reference_line(q4_body, source="KIND 20270108000055", filed="2027-01-08 08:30")
+    check("oneoff drops other period amount", "3,000" not in ol and "500억원" not in ol, True)
+    check("oneoff zero disclosed", "0억원(공시된 0)" in ol, True)
+    check("oneoff source date", "KIND 20270108000055" in ol and "2027-01-08 08:30" in ol, True)
+    check("oneoff other note", "다른 기간 숫자는 넣지 않음" in ol, True)
+    bare = reference_line("고객으로부터 일회성 물량 보상금 반영으로 영업이익은 7,560억 원", source="IR", filed="2026-10-30")
+    check("bare mention not 7560 and not zero", "7,560" not in bare and "일회성 항목 0억원" not in bare and "금액 미공개" in bare, True)
+    err = reference_line(None, source="KIND 1", filed="2027-01-08", fetch_error="TimeoutError")
+    check("fetch error", "세전손익 확인 불가" in err and "0억원" not in err and "추정하지 않음" in err, True)
+    check("fetch error no dot", any(c in err for c in "\u00b7\u318d\u2014"), False)
+    real_ref = reference_line
+
+    def _boom(*_a, **_k):
+        raise RuntimeError("bad")
+
+    globals()["reference_line"] = _boom
+    try:
+        safe = safe_reference("단위 : 억원 당기순이익 당해실적 10", source="공시", filed="2027-01-08")
+    finally:
+        globals()["reference_line"] = real_ref
+    check("safe_reference swallows formatter error", "참고 정리 실패(RuntimeError)" in safe and "10억원" not in safe, True)
+
+    # Period binding. Pieces below reuse the real Q3 script sentence and the real Q4'25 header,
+    # plus short clauses that name a different period. They must not become this quarter's figure.
+    q3_prose = "법인세 차감 전 순손실은 2,312억 원, 당기순손실은 2,969억 원이었습니다."
+    q4_header = "실적기간 당기실적 2025-10-01 ~ 2025-12-31 ('25.4Q) 단위 : 억원. "
+    only_q3 = reference_line(q4_header + "2026년 3분기 " + q3_prose, source="공시", filed="2026-01-09")
+    check("q4 header plus q3 prose pretax", "세전손익(법인세비용차감전계속사업이익) 미공개" in only_q3, True)
+    check("q4 header plus q3 prose net", "연결 당기순손익(지배주주와 비지배 합계) 미공개" in only_q3, True)
+    check("q4 header plus q3 prose no attach", "-2,312억원" not in only_q3 and "-2,969억원" not in only_q3, True)
+    named = reference_line(
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원. "
+        "2026년 4분기 당기순손실은 900억 원. 누적 당기순손실은 5,000억 원.",
+        source="공시", filed="2027-01-08")
+    check("quarterly kept ytd dropped", "연결 당기순손익(지배주주와 비지배 합계) -900억원" in named and "5,000" not in named, True)
+    mixed = reference_line(
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원. "
+        "2026년 4분기 당기순손실은 900억 원이고 누적 당기순손실은 5,000억 원.",
+        source="공시", filed="2027-01-08")
+    check("mixed quarterly ytd unbound", "연결 당기순손익(지배주주와 비지배 합계) 확인 불가" in mixed and "900억원" not in mixed and "5,000" not in mixed, True)
+    clash = reference_line(
+        "단위 : 억원 당기실적('26.4Q) 당기순이익 당해실적 -900. "
+        "2026년 4분기 당기순손실은 1,500억 원.",
+        source="공시", filed="2027-01-08")
+    check("table prose conflict", "연결 당기순손익(지배주주와 비지배 합계) 확인 불가" in clash and "-900억원" not in clash and "1,500억원" not in clash, True)
+    mil_small = (
+        "단위 : 백만원 당기실적('26.4Q) 법인세비용차감전계속사업이익 당해실적 50 "
+        "당기순이익 당해실적 -50 지배기업 소유주지분 순이익 당해실적 0"
+    )
+    ms = ref_fields(mil_small)
+    check("plus 50 million not zero", ms["pretax"], ("value", 0.5))
+    check("minus 50 million not floored", ms["net"], ("value", -0.5))
+    check("literal zero million stays zero", ms["parent"], ("value", 0))
+    ms_line = reference_line(mil_small, source="공시", filed="2027-01-08")
+    check("small million wording", "0.5억원" in ms_line and "-0.5억원" in ms_line and "지배주주순손익 0억원(공시된 0)" in ms_line, True)
+    check("small million not fake zero", "세전손익(법인세비용차감전계속사업이익) 0억원(공시된 0)" not in ms_line, True)
+    paren = reference_line(
+        "단위 : 억원 당기실적('26.4Q) 당기순이익 당해실적 (1,200) 법인세비용차감전계속사업이익 당해실적 (50)",
+        source="공시", filed="2027-01-08")
+    check("paren loss not profit", "연결 당기순손익(지배주주와 비지배 합계) 확인 불가" in paren and "1,200억원" not in paren, True)
+    check("paren pretax not profit", "세전손익(법인세비용차감전계속사업이익) 확인 불가" in paren and "50억원" not in paren, True)
+    rel = reference_line(
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원. "
+        "2025년 4분기 일회성 보상금은 3,000억원. "
+        "2026년 4분기 실적에서 전년 보상금은 1,500억원. "
+        "2026년 4분기 실적에서 전분기 보상금은 800억원. "
+        "2026년 4분기 누적 일회성 보상금은 500억원. "
+        "2026년 4분기 일회성 위약금은 150억원.",
+        source="공시", filed="2027-01-08")
+    check("relative oneoffs dropped", "위약금 150억원" in rel and all(s not in rel for s in ("3,000", "1,500", "800억원", "500억원")), True)
+    paren_off = reference_line(
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31. 2026년 4분기 일회성 보상금 (1,200)억원.",
+        source="공시", filed="2027-01-08")
+    check("paren oneoff not profit", "일회성 항목 확인 불가" in paren_off and "1,200억원" not in paren_off, True)
+    # parse_results on the real notices is unchanged by the reference-only rules above.
+    check("parse_results q3 net still", parse_results(Q3_NOTICE)["net"], -2969)
+    check("parse_results q3 pretax still", parse_results(Q3_NOTICE)["pretax"], -2312)
+    check("parse_results script net still", parse_results(script)["net"], -2969)
+    check("parse_results q4'25 net still", parse_results(Q4_2025_NOTICE)["net"], None)
     print("earnings_parse selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 

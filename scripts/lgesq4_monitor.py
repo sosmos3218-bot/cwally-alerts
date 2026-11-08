@@ -5,6 +5,7 @@ Window 2027-01-05 ~ 01-15 KST (configs/lgesq4.json oneshot_kst). When the DART
 연결재무제표기준영업(잠정)실적(공정공시) for '26.4Q shows up in the Naver notice feed, parse it with
 scripts/earnings_parse.py, compare to 3분기 (매출 96,434억, 영업이익 7,560억, AMPC 4,169억, AMPC 제외 3,391억)
 and to the company's 4분기 guidance (매출 약 +10% QoQ, 수익성 일부 둔화), send one p4 message. Once only.
+The same message adds a reference line (세전손익, 연결 당기순손익, 지배/비지배, 일회성). It is not a verdict input.
 No filing by the last run (01-15 16:47) -> one 미게시 notice (routed to cwally-ops by the title).
 Parse error -> one cwally-ops notice per day (earnings_parse.safe_parse). No consensus numbers.
 
@@ -22,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from naver_api import notices  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
-from earnings_parse import parse_results, safe_parse  # noqa: E402  shared parser
+from earnings_parse import parse_results, safe_parse, safe_reference  # noqa: E402  shared parser
 
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "lgesq4.json"
@@ -110,7 +111,9 @@ def message(cfg: dict, p: dict, item: dict, now: datetime) -> tuple[str, list[st
     else:
         prof = f"AMPC 제외 이익률 {q3['ex_margin_pct']}% -> {m:.1f}%" + (
             " (둔화 예상과 일치)" if 0 <= m < q3["ex_margin_pct"] else " (예상보다 나쁨, 적자)" if m < 0 else " (둔화 예상보다 좋음)")
-    net = "" if p.get("net") is None else (f", 당기순손실 {-p['net']:,}억원" if p["net"] < 0 else f", 당기순이익 {p['net']:,}억원")
+    # Reference only. verdict() above does not read pretax, net, parent, NCI, or one-offs.
+    ref = safe_reference(item.get("title", "") + "\n" + item.get("text", ""),
+                         source=f"공시 {item.get('title', '')}", filed=(item.get("datetime") or "")[:16])
     title = f"[LGESF] 373220 LG엔솔 4Q 잠정 {TITLE_LABEL.get(label, label)}"
     lines = [
         "이게 뭐 알림: LG에너지솔루션(373220) 2026년 4분기 잠정실적을 3분기와 회사 4분기 가이던스(매출 약 +10%, 수익성 일부 둔화)에 대 보고 신규 매수 여부를 봅니다. 미보유, 참고용, 투자 권유 아님.",
@@ -118,13 +121,13 @@ def message(cfg: dict, p: dict, item: dict, now: datetime) -> tuple[str, list[st
          f"매출 {eok_txt(p.get('sales'))}{qoq_txt(p.get('sales'), q3['sales_eok'])}{sales_vs}, "
          f"영업이익 {eok_txt(p.get('op'))}{qoq_txt(p.get('op'), q3['op_eok'])}, "
          f"AMPC {eok_txt(p.get('ampc'))}{qoq_txt(p.get('ampc'), q3['ampc_eok'])}, "
-         f"AMPC 제외 영업이익 {eok_txt(p.get('ex'))}{qoq_txt(p.get('ex'), q3['ex_ampc_eok'])}, {prof}{net}. "
+         f"AMPC 제외 영업이익 {eok_txt(p.get('ex'))}{qoq_txt(p.get('ex'), q3['ex_ampc_eok'])}, {prof}. "
          f"컨센서스는 쓰지 않음. 공시 {item.get('title', '')} ({item.get('datetime', '')[:16]}), {item.get('url', '')} , {cfg['disclosures']}. "
-         f"조회 {now:%Y-%m-%d %H:%M} KST."),
+         f"조회 {now:%Y-%m-%d %H:%M} KST. {ref}"),
         f"지금 할 일: {action}",
         "나중에: 1월 말 확정 실적과 실적콜에서 보조금 제외 손익, 일회성, 2027년 가이던스를 다시 확인하세요. 가격 구간은 [LGES] 알림이 따로 봅니다.",
         "익절/줄일 때: 미보유라 해당 없음. 사게 되면 AMPC 제외 적자 전환이 확인될 때 비중 재검토.",
-        "하지 말 것: 잠정 숫자를 확정으로 보기, AMPC가 낀 영업이익을 본업 이익으로 보기, 한 번에 다 사기. 투자 권유 아님.",
+        "하지 말 것: 잠정 숫자를 확정으로 보기, AMPC가 낀 영업이익을 본업 이익으로 보기, AMPC 제외 영업이익을 보상금 제외 경상 영업이익으로 보기, 세전손익이나 순손익 참고를 매수 조건으로 쓰기, 한 번에 다 사기. 투자 권유 아님.",
     ]
     return title, lines
 
@@ -204,15 +207,18 @@ def run(cfg: dict, state: dict, now: datetime, mode: str) -> int:
 # ---------------- selftest ----------------
 # FIXTURE (not real 4Q26 numbers): text in the real DART 공정공시 format of the 2026-01-09 4Q25 and
 # 2026-10-08/11-03 3Q26 filings, with made-up '26.4Q figures to exercise each verdict.
-def fixture(sales: str, op: str, ex: str, margin: str) -> str:
+def fixture(sales: str, op: str, ex: str, margin: str, pretax: str = "-", net: str = "-",
+            parent: str = "-", nci: str = "-", extra: str = "") -> str:
     return (
         "연결재무제표 기준 영업(잠정)실적(공정공시) 실적기간 당기실적 2026-10-01 ~ 2026-12-31 전기실적 2026-07-01 ~ 2026-09-30 "
         "1. 연결실적내용 단위 : 억원, % 구분 당기실적 전기실적 ('26.4Q) ('26.3Q) "
         f"매출액 당해실적 {sales} 96,434 - - - 누계실적 - - - 영업이익 당해실적 {op} 7,560 - - - "
-        "법인세비용차감전계속사업이익 당해실적 - - - - 당기순이익 당해실적 - - - - "
+        f"법인세비용차감전계속사업이익 당해실적 {pretax} - - - 당기순이익 당해실적 {net} - - - "
+        f"지배기업 소유주지분 순이익 당해실적 {parent} - - - 비지배지분 순이익 당해실적 {nci} - - - "
         f"4. 기타 투자판단과 관련한 중요사항 나. 상기 1. 연결실적내용 중, '26.4Q 영업이익 당기실적' 금액인 {op}억원은 미국 IRA Tax Credit "
         "(Inflation Reduction Act) 첨단 제조 생산 세액공제(Advanced Manufacturing Production Credit) 제도(45X) 등에 따른 "
         f"2026년 4분기 예상 세액 공제 금액을 포함한 수치이며, 이를 제외한 2026년 4분기 영업이익은 {ex}억원, 영업이익률은 {margin}%임"
+        + (f" {extra}" if extra else "")
     )
 
 
@@ -269,9 +275,13 @@ def selftest() -> int:
                 run(cfg, st if st is not None else {}, at, mode)
             return buf.getvalue()
         at = datetime(2027, 1, 8, 13, 47, tzinfo=KST)
-        check("dry found", out_of([item(cases[0][1])], at).splitlines()[0], "[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능")
+        found = out_of([item(cases[0][1])], at)
+        check("dry found", found.splitlines()[0], "[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능")
+        check("dry found keeps ref", "참고(판정에 쓰지 않음)" in found and "세전손익" in found, True)
         check("dry none mid-window silent", out_of([q3_corr], at).strip(), "4Q prelim not posted yet; silent")
-        check("dry none last run", out_of([], datetime(2027, 1, 15, 16, 47, tzinfo=KST)).splitlines()[0], "[LGESF] 373220 LG엔솔 4Q 잠정 미게시 | 판정 유보")
+        empty = out_of([], datetime(2027, 1, 15, 16, 47, tzinfo=KST))
+        check("dry none last run", empty.splitlines()[0], "[LGESF] 373220 LG엔솔 4Q 잠정 미게시 | 판정 유보")
+        check("미게시 invents no pl", "세전손익" not in empty, True)
         check("dry fetch fail", out_of(RuntimeError("x"), at).splitlines()[0], "[LGESF] 373220 LG엔솔 4Q 잠정 조회 실패 | 판정 유보")
         check("dry sends nothing", sent, [])
         st = {}
@@ -295,6 +305,68 @@ def selftest() -> int:
     from ntfy_util import route_topic
     check("미게시 routes to ops", route_topic("cwally-port", "[LGESF] 373220 LG엔솔 4Q 잠정 미게시 | 판정 유보"), "cwally-ops")
     check("result routes to port", route_topic("cwally-port", "[LGESF] 373220 LG엔솔 4Q 잠정 관망"), "cwally-port")
+    # Reference block: missing stays 미공개, and pretax/net/one-offs do not move the verdict.
+    base_txt = cases[0][1]
+    t_ref, lines_ref = message(cfg, parse(item(base_txt)), item(base_txt), datetime(2027, 1, 8, 13, 5, tzinfo=KST))
+    body_ref = "\n".join(lines_ref)
+    ref_part = body_ref.split("참고(판정에 쓰지 않음)", 1)[-1]
+    check("ref labelled", "참고(판정에 쓰지 않음)" in body_ref, True)
+    check("ref missing not zero", "세전손익(법인세비용차감전계속사업이익) 미공개" in body_ref and "연결 당기순손익(지배주주와 비지배 합계) 미공개" in body_ref, True)
+    check("ref dash is not 0억원", "0억원" not in ref_part, True)
+    check("ref does not seed q3 pretax net", all(s not in ref_part for s in ("2,310", "2,312", "2,969", "7,560", "3,391")), True)
+    check("ref period unit", "기간 2026년 4분기" in body_ref and "단위 억원" in body_ref, True)
+    check("ref waits for parent split", "상세 공시(분기보고서)를 기다림" in body_ref, True)
+    check("ref not recurring op", "경상 영업이익이 아님" in body_ref, True)
+    check("ref keeps review action", "지금 할 일: 신규 매수 검토 가능" in body_ref, True)
+    check("ref title unchanged", t_ref, "[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능")
+    actions = {
+        "검토 가능": "신규 매수 검토 가능. 계획 금액의 일부만 나눠서 들어가고, 1월 말 확정 실적과 실적콜 전까지 추가는 보류하세요.",
+        "관망": "아직 사지 말고 관망하세요. 1월 말 확정 실적과 실적콜을 기다리세요.",
+        "보류": "신규 매수 보류. AMPC 제외 이익이 다시 흑자로 확인되기 전에는 사지 마세요.",
+    }
+    rich = [
+        ("neg does not block review", fixture("106,100", "6,300", "2,350", "+2.3", pretax="-9,999", net="-8,000", parent="-", nci="-", extra="2026년 4분기 일회성 보상금은 4,000억원."), "검토 가능", "-9,999억원", "4,000억원"),
+        ("pos does not lift hold", fixture("101,000", "-500", "-4,600", "-4.6", pretax="5,000", net="4,000"), "보류", "5,000억원", "4,000억원"),
+        ("disclosed zero", fixture("106,100", "6,300", "2,350", "+2.3", pretax="0", net="0", extra="2026년 4분기 일회성 보상금은 0억원."), "검토 가능", "0억원(공시된 0)", "0억원(공시된 0)"),
+        ("nonnumeric", fixture("98,000", "6,500", "2,500", "+2.6", pretax="해당없음", net="적자전환"), "관망", "세전손익(법인세비용차감전계속사업이익) 확인 불가", "연결 당기순손익(지배주주와 비지배 합계) 확인 불가"),
+        ("parent not total", fixture("106,100", "6,300", "2,350", "+2.3", net="-900", parent="-100", nci="-"), "검토 가능", "지배주주순손익 -100억원", "비지배지분순손익 미공개"),
+        ("other period oneoff dropped", fixture("106,100", "6,300", "2,350", "+2.3", extra="2026년 3분기 일회성 보상금은 3,000억원. 2026년 4분기 일회성 위약금은 150억원."), "검토 가능", "위약금 150억원", "3,000"),
+    ]
+    for name, text, want, left, right in rich:
+        p = parse(item(text))
+        check(f"{name} verdict", verdict(p, cfg)[0], want)
+        t, lines = message(cfg, p, item(text), datetime(2027, 1, 8, 13, 5, tzinfo=KST))
+        body = "\n".join(lines)
+        check(f"{name} title", t, f"[LGESF] 373220 LG엔솔 4Q 잠정 {want}")
+        check(f"{name} action", f"지금 할 일: {actions[want]}" in body, True)
+        part = body.split("참고(판정에 쓰지 않음)", 1)[-1]
+        if name == "other period oneoff dropped":
+            check(f"{name} kept", left in part, True)
+            check(f"{name} dropped", right not in part, True)
+        elif name == "parent not total":
+            check(f"{name} parent shown", left in part and right in part, True)
+            check(f"{name} not inferred", "-800억원" not in part and "합계) -100억원" not in part, True)
+        else:
+            check(f"{name} left", left in part, True)
+            check(f"{name} right", right in part, True)
+        check(f"{name} no dot", any(c in t + body for c in "\u00b7\u318d\u2014"), False)
+    import earnings_parse
+    real_ref = earnings_parse.reference_line
+    earnings_parse.reference_line = lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("bad"))
+    try:
+        t_boom, lines_boom = message(cfg, parse(item(base_txt)), item(base_txt), datetime(2027, 1, 8, tzinfo=KST))
+    finally:
+        earnings_parse.reference_line = real_ref
+    boom_body = "\n".join(lines_boom)
+    q3_only = fixture("106,100", "6,300", "2,350", "+2.3", extra="2026년 3분기 법인세 차감 전 순손실은 2,312억 원. 2026년 3분기 당기순손실은 2,969억 원.")
+    t_q3, lines_q3 = message(cfg, parse(item(q3_only)), item(q3_only), datetime(2027, 1, 8, 13, 5, tzinfo=KST))
+    part_q3 = "\n".join(lines_q3).split("참고(판정에 쓰지 않음)", 1)[-1]
+    check("q3 prose keeps review", (t_q3, verdict(parse(item(q3_only)), cfg)[0]), ("[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능", "검토 가능"))
+    check("q3 prose not attached", "미공개" in part_q3 and "-2,312억원" not in part_q3 and "-2,969억원" not in part_q3, True)
+    check("formatter failure still sends review", t_boom, "[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능")
+    check("formatter failure keeps action", f"지금 할 일: {actions['검토 가능']}" in boom_body, True)
+    check("formatter failure says 확인 불가", "참고 정리 실패(RuntimeError)" in boom_body and "세전손익 확인 불가" in boom_body, True)
+    check("thresholds unchanged", (cfg["thresholds"]["ex_review_eok"], cfg["thresholds"]["sales_qoq_review_pct"]), (2000, 5))
     check("oneshot count", len(cfg["oneshot_kst"]), len(cfg["cron_utc"]))
     print("lgesq4 selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
