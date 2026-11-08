@@ -282,21 +282,17 @@ def naver_list(co: dict, since: str, until: str) -> list[dict]:
 
 
 def fetch_company(co: dict, since: str, until: str) -> tuple[list[dict], str]:
-    kind_err = "0건"
+    """KIND 목록이 예외 없이 오면 그 결과(0건 포함)를 쓴다. 0건은 기간 안 공시 없음이지 실패가 아니다.
+    KIND 가 예외일 때만 네이버로 넘어간다. 둘 다 예외일 때만 조회 실패."""
     try:
-        rows = kind_list(co, since, until)
-        if rows:
-            return rows, "KIND"
+        return kind_list(co, since, until), "KIND"
     except Exception as exc:  # noqa: BLE001
         kind_err = str(exc)
-    nav_err = "0건"
+        print(f"{co['code']} KIND 목록 실패, 네이버로 대체: {kind_err[:180]}", file=sys.stderr)
     try:
-        rows = naver_list(co, since, until)
-        if rows:
-            return rows, "네이버"
+        return naver_list(co, since, until), "네이버"
     except Exception as exc:  # noqa: BLE001
-        nav_err = str(exc)
-    raise RuntimeError(f"KIND {kind_err} / 네이버 {nav_err}")
+        raise RuntimeError(f"KIND {kind_err} / 네이버 {exc}") from exc
 
 
 def default_body(row: dict) -> str:
@@ -419,12 +415,12 @@ def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_ge
             keys.add(tkey)
         pending.discard(did)
         if silent:
-            print(f"seed (no send): {did} {row.get('filed')} {decision} {show_title(title)[:60]}")
+            print(f"seed plan (not saved until auto): {did} {row.get('filed')} {decision} {show_title(title)[:60]}")
             continue
         alerts.append(build_message(stamp, code, name, row, decision, tokens if decision == "해외투자문구" else []))
     if first:
         bucket["seeded_at"] = stamp
-        print(f"first run {code}: seen {len(seen)}, pending {len(pending)}, no send")
+        print(f"seed plan {code}: seen {len(seen)}, pending {len(pending)}, no send this pass")
     bucket["seen"] = sorted(seen)
     bucket["title_keys"] = sorted(keys)
     bucket["seed_pending"] = sorted(pending)
@@ -475,7 +471,7 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, state_path: Path | Non
         check_text(*ops)
         print(f"OPS TITLE: {ops[0]} -> {route_topic(topic, ops[0])}\n{ops[1]}\n")
     if dry:
-        print("DRY RUN: no publish, state not written")
+        print("DRY RUN: no publish, state not written, not seeded")
         return 0
     for title, message, pri, key in alerts:
         pub(topic, title, message, pri, ["memo"], server, config_name=NAME, dedup_key=str(key))
@@ -666,28 +662,42 @@ def selftest() -> int:
     assert len(nav) == 1 and nav[0]["id"] == "naver:7" and nav[0]["title"].startswith("분기보고서") and "본문" in nav[0]["body"]
     assert parse_naver_rows([{"no": "8", "datetime": "2026-11-07T18:01:00", "title": "분기보고서"}], co, "2026-11-08", "2026-11-08") == []
 
-    saved = {"k": None, "n": None}
+    saved = {"k": 0, "n": 0}
 
-    def fake_kind(c, s, u):
-        saved["k"] = (c["code"], s, u)
+    def fake_kind_empty(c, s, u):
+        saved["k"] += 1
         return []
 
-    def fake_nav(c, s, u):
-        saved["n"] = c["code"]
+    def fake_nav_down(c, s, u):
+        saved["n"] += 1
         raise RuntimeError("down")
 
+    def fake_kind_down(c, s, u):
+        saved["k"] += 1
+        raise RuntimeError("403")
+
+    def fake_nav_empty(c, s, u):
+        saved["n"] += 1
+        return []
+
     orig_k, orig_n = kind_list, naver_list
-    globals()["kind_list"] = fake_kind
-    globals()["naver_list"] = fake_nav
     try:
+        globals()["kind_list"] = fake_kind_empty
+        globals()["naver_list"] = fake_nav_down
+        rows, src = fetch_company(co, "2026-11-08", "2026-11-08")
+        assert rows == [] and src == "KIND" and saved["n"] == 0
+        globals()["kind_list"] = fake_kind_down
+        globals()["naver_list"] = fake_nav_empty
+        rows, src = fetch_company(co, "2026-11-08", "2026-11-08")
+        assert rows == [] and src == "네이버"
+        globals()["naver_list"] = fake_nav_down
         try:
             fetch_company(co, "2026-11-08", "2026-11-08")
-            raise AssertionError("empty kind and failed naver must raise")
+            raise AssertionError("both sources down must raise")
         except RuntimeError as exc:
             msg = str(exc)
-            assert "조회" not in msg or "KIND" in msg
-            assert "0건" in msg and "down" in msg
-        assert saved["k"][0] == "009540" and saved["n"] == "009540"
+            assert "403" in msg and "down" in msg
+            assert "0건" not in msg
     finally:
         globals()["kind_list"] = orig_k
         globals()["naver_list"] = orig_n
