@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-05T20:08:14.920169+09:00",
+  "updated_at": "2026-11-09T08:17:11.065097+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -135,6 +135,15 @@
       "parts_done": 2,
       "done": true,
       "at": "2026-11-05T20:08:14.920169+09:00"
+    },
+    "20261109-weekly-discovery.json#29e4c37b710d62b1": {
+      "file": "20261109-weekly-discovery.json",
+      "title": "[BRIEF] 주간 종목 발굴 11/9: TPL, SCCO, AEM, 111770",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-09T08:17:11.065097+09:00"
     }
   },
   "rejected": {},
