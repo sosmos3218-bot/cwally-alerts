@@ -1,0 +1,18 @@
+{
+  "updated_at": null,
+  "ops_day": null,
+  "tickers": {
+    "009540": {
+      "seeded_at": null,
+      "seen": [],
+      "title_keys": [],
+      "seed_pending": []
+    },
+    "329180": {
+      "seeded_at": null,
+      "seen": [],
+      "title_keys": [],
+      "seed_pending": []
+    }
+  }
+}
