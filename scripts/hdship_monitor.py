@@ -2,8 +2,9 @@
 """009540 HD한국조선해양, 329180 HD현대중공업 공식 공시 변경 알림.
 
 평일 19:00 k203780 슬롯. 매매 신호가 아니다. 가격, 비중, 매수 횟수는 보지 않는다.
-KIND 최신 100건, 실패하면 네이버 KRX 공시 100건. OpenDART 키와 회사 IR 페이지는 쓰지 않는다.
-첫 실행은 이미 있는 해당 공시를 종목별로 시드만 하고 보내지 않는다.
+KIND 최신 100건. KIND 가 예외(HTTP 오류, 형식 이상)일 때만 네이버 KRX 공시 100건으로 대체한다.
+KIND 정상 빈 목록('조회된 결과값이 없습니다')은 공시 없음으로 보고 대체하지 않는다. OpenDART 키와 회사 IR 페이지는 쓰지 않는다.
+첫 실행은 감시 시작일(window_start) 이전 공시만 시드하고, 시작일 이후 공시는 첫 실행에서도 보낸다.
 modes: auto | dry (발송 없음, state 안 씀) | selftest
 """
 from __future__ import annotations
@@ -56,6 +57,8 @@ YARD = (
 GEO_LABELS = {a for a, _ in GEO}
 YARD_LABELS = {a for a, _ in YARD}
 BAD_CHARS = re.compile("[\u00b7\u318d\u2014\u2015]")
+KIND_EMPTY = "조회된 결과값이 없습니다"
+LAST_COUNTS: dict[str, tuple[int, int]] = {}  # code -> (원본 행 수, 기간 필터 후 행 수)
 
 
 def load_cfg() -> dict:
@@ -227,8 +230,10 @@ def parse_kind_html(page: str, co: dict, since: str, until: str) -> list[dict]:
             "src": "KIND",
             "url": sd.KIND_VIEW.format(acpt=ac),
         })
-    if rows == 0 and "조회된 결과값이 없습니다" not in (page or "") and "<table" not in (page or ""):
-        raise RuntimeError("KIND 응답 형식 이상")
+    if rows == 0 and KIND_EMPTY not in (page or ""):
+        # 표만 있고 행도 '결과 없음' 문구도 없으면 차단/점검 페이지로 보고 실패 처리한다.
+        raise RuntimeError("KIND 응답 형식 이상(행 0, 결과없음 문구 없음)")
+    LAST_COUNTS[co["code"]] = (rows, len(out))
     return sorted(out, key=lambda r: r["id"])
 
 
@@ -255,7 +260,9 @@ def kind_list(co: dict, since: str, until: str) -> list[dict]:
 def parse_naver_rows(raw, co: dict, since: str, until: str) -> list[dict]:
     names = names_of(co)
     out = []
-    for r in raw if isinstance(raw, list) else []:
+    if not isinstance(raw, list):
+        raise RuntimeError(f"네이버 응답 형식 이상({type(raw).__name__})")
+    for r in raw:
         day, filed = norm_when(str(r.get("datetime") or ""))
         nid = str(r.get("no") or r.get("bizdateSeq") or "")
         if not nid or not in_window(day, since, until):
@@ -271,6 +278,7 @@ def parse_naver_rows(raw, co: dict, since: str, until: str) -> list[dict]:
             "url": f"https://finance.naver.com/item/news_notice.naver?code={co['code']}",
             "body": body,
         })
+    LAST_COUNTS[co["code"]] = (len(raw), len(out))
     return sorted(out, key=lambda r: r["id"])
 
 
@@ -368,7 +376,9 @@ def _body_of(row: dict, body_get) -> str:
     return str(text)
 
 
-def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_get=None) -> tuple[list, list]:
+def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_get=None, since: str | None = None) -> tuple[list, list]:
+    """since 가 주어지면 첫 실행에서도 since 이후 공시는 보낸다. since 이전 공시만 조용히 시드한다.
+    since 가 없으면 예전 방식대로 첫 실행의 모든 해당 공시를 시드만 한다."""
     code = co["code"]
     name = co["name"]
     names = names_of(co)
@@ -379,6 +389,8 @@ def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_ge
     alerts, errors = [], []
     for row in rows:
         did = f"{code}:{row['id']}"
+        day = norm_when(row.get("filed") or "")[0]
+        old = first and (since is None or not day or day < since)
         tkey = title_key(code, row)
         if did in seen or (tkey and tkey in keys):
             if did not in seen:
@@ -396,7 +408,7 @@ def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_ge
                     body = scrub(_body_of(row, body_get), names)
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"{code} 본문 {row['id']}: {exc}")
-                    if first:
+                    if old:
                         pending.add(did)
                     continue
                 tokens = token_labels(title + " " + body)
@@ -409,7 +421,7 @@ def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_ge
                 keys.add(tkey)
             pending.discard(did)
             continue
-        silent = first or did in pending
+        silent = old or did in pending
         seen.add(did)
         if tkey:
             keys.add(tkey)
@@ -420,7 +432,10 @@ def process_ticker(co: dict, bucket: dict, rows: list[dict], stamp: str, body_ge
         alerts.append(build_message(stamp, code, name, row, decision, tokens if decision == "해외투자문구" else []))
     if first:
         bucket["seeded_at"] = stamp
-        print(f"seed plan {code}: seen {len(seen)}, pending {len(pending)}, no send this pass")
+        if since is None:
+            print(f"seed plan {code}: seen {len(seen)}, pending {len(pending)}, no send this pass")
+        else:
+            print(f"first pass {code}: seen {len(seen)}, pending {len(pending)}, send {len(alerts)} (since {since}; older rows seeded only)")
     bucket["seen"] = sorted(seen)
     bucket["title_keys"] = sorted(keys)
     bucket["seed_pending"] = sorted(pending)
@@ -449,13 +464,16 @@ def run(mode: str, now: datetime, cfg: dict, pub=publish, state_path: Path | Non
     for co in cfg["companies"]:
         code = co["code"]
         try:
+            LAST_COUNTS.pop(code, None)
             rows, src = (fetch or fetch_company)(co, since, today)
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{code} 목록 조회 실패: {exc}")
-            print(f"{code} fetch failed: {exc}", file=sys.stderr)
+            print(f"{code} fetch failed (not seeded, retry next run): {exc}", file=sys.stderr)
             continue
-        print(f"{code} source={src} rows={len(rows)}")
-        got, errs = process_ticker(co, st["tickers"][code], rows, stamp, body_get=body_get)
+        raw_n, win_n = LAST_COUNTS.get(code, (None, len(rows)))
+        kind = "empty-ok" if raw_n == 0 else "ok"
+        print(f"{code} source={src} raw={raw_n if raw_n is not None else '?'} window={win_n} ({since}~{today}) {kind}")
+        got, errs = process_ticker(co, st["tickers"][code], rows, stamp, body_get=body_get, since=since)
         alerts.extend(got)
         errors.extend(f"{code} {e}" if not str(e).startswith(code) else e for e in errs)
     ops = None
@@ -650,11 +668,33 @@ def selftest() -> int:
     assert len(parsed) == 1 and parsed[0]["id"] == "kind:20261108000111" and parsed[0]["title"] == "현금ㆍ현물 배당 결정"
     assert parse_kind_html(html, co, "2026-11-09", "2026-11-09") == []
     assert parse_kind_html("<html>조회된 결과값이 없습니다</html>", co, "2026-11-08", "2026-11-08") == []
+    for bad in ("<html>blocked</html>", "<table><tr><td>점검 중</td></tr></table>"):
+        try:
+            parse_kind_html(bad, co, "2026-11-08", "2026-11-08")
+            raise AssertionError("bad kind page should raise: " + bad)
+        except RuntimeError as exc:
+            assert "형식" in str(exc)
+    real_empty = "<table><tbody><tr class='first'><td class='first null' colspan='6'>조회된 결과값이 없습니다.</td></tr></tbody></table>"
+    assert parse_kind_html(real_empty, co, "2026-11-08", "2026-11-08") == [] and LAST_COUNTS["009540"] == (0, 0)
+    parse_kind_html(html, co, "2026-11-09", "2026-11-09")
+    assert LAST_COUNTS["009540"] == (1, 0)  # 원본 1행, 기간 필터 후 0행
     try:
-        parse_kind_html("<html>blocked</html>", co, "2026-11-08", "2026-11-08")
-        raise AssertionError("bad kind page should raise")
+        parse_naver_rows({"error": "blocked"}, co, "2026-11-08", "2026-11-08")
+        raise AssertionError("bad naver payload should raise")
     except RuntimeError as exc:
-        assert "형식" in str(exc)
+        assert "네이버" in str(exc)
+
+    # 첫 실행 + since: 시작일 이후 공시는 보내고, 이전 공시만 시드한다.
+    b4 = empty_bucket()
+    nov9 = _row("kind:20261109000051", "현금ㆍ현물 배당 결정", "2026-11-09 16:00")
+    nov9_need = _row("kind:20261109000052", "신규시설투자등", "2026-11-09 16:30")
+    alerts, errs = process_ticker(co, b4, [old_div, nov9, nov9_need], stamp, body_get=body_get, since="2026-11-08")
+    assert len(alerts) == 1 and alerts[0][3] == "009540:kind:20261109000051", alerts
+    assert errs and "본문" in errs[0]
+    assert "009540:kind:20260729000001" in b4["seen"] and b4["seeded_at"] == stamp
+    assert "009540:kind:20261109000052" not in b4["seed_pending"] and "009540:kind:20261109000052" not in b4["seen"]
+    retry, _ = process_ticker(co, b4, [nov9_need], stamp, body_get=lambda r: us_body, since="2026-11-08")
+    assert len(retry) == 1 and "해외투자문구" in retry[0][0]  # 본문 실패한 신규 공시는 다음 실행에서 보냄
     nav = parse_naver_rows(
         [{"no": "7", "datetime": "2026-11-08T18:01:00", "title": "에이치디한국조선해양(주) 분기보고서 (2026.09)", "contents": "<p>본문</p>"}],
         co, "2026-11-08", "2026-11-08",
@@ -724,7 +764,10 @@ def selftest() -> int:
         assert sent == [] and path.read_bytes() == before
 
         assert run("auto", now, cfg, pub=pub, state_path=path, fetch=listing, body_get=body_get) == 0
-        assert len(sent) == 1
+        # 첫 실행이어도 window_start 이후 공시(329180 11/20 배당)는 보내고, 009540 조회 실패는 ops 로 알린다.
+        assert len(sent) == 2, sent
+        assert sent[0][0][0] == "cwally-port" and "329180" in sent[0][0][1] and sent[0][0][1].endswith("| 현금배당")
+        sent.pop(0)
         assert sent[0][0][0] == "cwally-ops"
         assert "조회 실패" in sent[0][0][1] and "009540/329180" in sent[0][0][1]
         saved_st = json.loads(path.read_text(encoding="utf-8"))
@@ -760,11 +803,46 @@ def selftest() -> int:
     return 0
 
 
+class _Prefix:
+    """selftest 출력 줄마다 [selftest] 를 붙인다. 실패 로그는 그대로 보이게 둔다."""
+
+    def __init__(self, inner, tag: str = "[selftest] "):
+        self.inner, self.tag, self.bol = inner, tag, True
+
+    def write(self, s: str) -> int:
+        for part in s.splitlines(keepends=True):
+            if self.bol:
+                self.inner.write(self.tag)
+            self.inner.write(part)
+            self.bol = part.endswith("\n")
+        return len(s)
+
+    def flush(self) -> None:
+        self.inner.flush()
+
+
+def run_selftest() -> int:
+    import traceback
+    out, err = sys.stdout, sys.stderr
+    sys.stdout, sys.stderr = _Prefix(out), _Prefix(err)
+    try:
+        rc = selftest()
+        print("note: [selftest] 403/timeout 줄은 테스트가 일부러 만든 가짜 장애, 실제 조회 아님")
+        return rc
+    except BaseException:  # noqa: BLE001
+        traceback.print_exc()
+        print("selftest FAILED", file=sys.stderr)
+        return 1
+    finally:
+        sys.stdout.flush(); sys.stderr.flush()
+        sys.stdout, sys.stderr = out, err
+
+
 def main() -> int:
     args = sys.argv[1:]
     mode = (args[0] if args and not args[0].startswith("--") else "auto").lower()
     if mode == "selftest":
-        return selftest()
+        return run_selftest()
     if mode not in {"auto", "dry"}:
         print(f"usage: {NAME}_monitor.py <auto|dry|selftest>")
         return 2
