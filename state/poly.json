@@ -1,7 +1,7 @@
 {
   "weekly_sent_week": "2026-W45",
-  "updated_at": "2026-11-08 21:00 KST",
-  "last_skip_reason": null,
+  "updated_at": "2026-11-09T02:38:17.895871+09:00",
+  "last_skip_reason": "not_sunday",
   "last_count": 8,
   "catchup_note": "2026-10-26 10:54 KST forced catch-up for the 2026-10-25 (W43) week; recorded as W43 so Sunday 2026-11-01 (W44) still sends"
 }
