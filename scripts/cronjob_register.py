@@ -10,6 +10,10 @@ env:
   CRONJOB_KST          "YYYY-MM-DD HH:MM" (KST), must be a `oneshot_kst` entry run by the picker
   CRONJOB_EXPIRES_KST  "YYYY-MM-DD HH:MM:SS" (KST), same year, not before CRONJOB_KST
   CRONJOB_DRY_RUN      "1" = run every check but do not create the job
+  CRONJOB_RETRY_429    "1" = on HTTP 429, sleep and retry up to 3 attempts (default: one attempt, fail fast)
+  CRONJOB_MAX_CALLS    max HTTP calls this process (default 90, under the regular 100/day quota).
+                       Exit 4 before the call that would pass the cap. Sustaining members (5000/day) can raise it.
+  CRONJOB_GAP_SEC      seconds before each extra fix_slot_oneoff call (default 1.5; API max is 5 requests/second)
 
 Checks (stop before any write):
   1. inputs: formats, CRONJOB_KST in the future, expiry >= time, same year
@@ -199,11 +203,62 @@ def check_oneshot_kst(at: datetime) -> list[str]:
     return picked
 
 
+# Regular accounts: 100 requests/day. Sustaining members: 5000/day. Also max 5 requests/second.
+# Default cap stays under the regular daily quota so one fix_slot_oneoff run cannot 429 the account.
+# 90 leaves room for the current live set (about 80 detail reads when the list has no body).
+DEFAULT_MAX_CALLS = 90
+_STATS = {"n": 0, "by": {}}
+
+
+def reset_call_stats() -> None:
+    _STATS["n"] = 0
+    _STATS["by"] = {}
+
+
+def max_calls() -> int:
+    raw = env("CRONJOB_MAX_CALLS")
+    if not raw:
+        return DEFAULT_MAX_CALLS
+    if not re.fullmatch(r"\d{1,6}", raw):
+        raise Stop(BAD_INPUT, f"CRONJOB_MAX_CALLS must be a non-negative integer, got {raw!r}")
+    return int(raw)
+
+
+def budget_message(used: int, limit: int, method: str, path: str) -> str:
+    return (
+        f"cron-job.org call budget reached ({used}/{limit}) before {method} {path}; "
+        "aborting so the daily quota is not blown "
+        "(regular accounts 100/day, sustaining members 5000/day; set CRONJOB_MAX_CALLS to raise this run's cap)"
+    )
+
+
+def reserve_call(method: str, path: str) -> None:
+    limit = max_calls()
+    if _STATS["n"] >= limit:
+        raise Stop(API_ERROR, budget_message(_STATS["n"], limit, method, path))
+    _STATS["n"] += 1
+    _STATS["by"][method] = _STATS["by"].get(method, 0) + 1
+
+
+def print_call_summary() -> None:
+    raw = env("CRONJOB_MAX_CALLS")
+    if not raw:
+        budget = str(DEFAULT_MAX_CALLS)
+    elif re.fullmatch(r"\d{1,6}", raw):
+        budget = raw
+    else:
+        budget = "invalid"
+    parts = " ".join(f"{m}={_STATS['by'].get(m, 0)}" for m in ("GET", "PATCH", "PUT", "DELETE"))
+    print(f"cronjob api calls: total={_STATS['n']} budget={budget} {parts}")
+
+
 def call(method: str, path: str, key: str, payload: dict | None = None) -> dict:
     data = json.dumps(payload).encode() if payload is not None else None
     # Default: fail fast on 429 (pt21u). Set CRONJOB_RETRY_429=1 only for non-urgent register flows.
+    # Every attempt counts toward CRONJOB_MAX_CALLS, and the cap is checked before the request is sent.
     retries = (1, 2, 3) if env("CRONJOB_RETRY_429") == "1" else (1,)
     for attempt in retries:
+        reserve_call(method, path)
         req = urllib.request.Request(
             API + path,
             data=data,
@@ -878,153 +933,328 @@ def run_register_portlight(now: datetime) -> int:
     return 0
 
 
-def run_fix_slot_oneoff(now: datetime) -> int:
-    """pt21u: one light pass — list once, patch morning/afternoon/0090b0 (+ any
-    other port-alerts dispatcher missing oneoff_mode=auto when the job uses it),
-    read back each. Fail fast on 429. No long warmup/retry loops.
+def slot_oneoff_targets() -> dict[str, dict]:
+    """Bodies that keep a port-alerts dispatch live.
+
+    workflow_dispatch oneoff_mode defaults to dry. A stored body that omits
+    oneoff_mode therefore runs as a dry test (pt21u). These targets always
+    send oneoff_mode=auto. The morning template job (TEMPLATE_JOB_ID) stays
+    job=morning.
     """
-    key = env("CRONJOB_API_KEY")
-    if not key:
-        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
-    wanted = {
+    return {
         "morning": TEMPLATE_BODY,
         "afternoon": {"ref": "main", "inputs": {"job": "afternoon", "oneoff_mode": "auto"}},
         "0090b0": {"ref": "main", "inputs": {"job": "0090b0", "oneoff_mode": "auto"}},
         "k203780": SLOT_BODY,
         "tslaspcx": TSLASPCX_BODY,
         "tsla": TSLA_BODY,
-        # oneshot/portlight ignore some oneoff paths, but with workflow default=dry they must
-        # send auto explicitly or the scheduled run becomes a dry test (pt21u).
         "oneshot": {"ref": "main", "inputs": {"job": "oneshot", "oneoff_mode": "auto"}},
         "portlight": {"ref": "main", "inputs": {"job": "portlight", "oneoff_mode": "auto"}},
     }
+
+
+def parse_extended(job: dict) -> tuple[str, object, dict | None]:
+    """(status, body, headers) from a list row or a jobDetails object.
+
+    status is 'absent' when extendedData.body is missing. The documented GET /jobs
+    Job object has no extendedData, so a list row is usually 'absent'. 'bad' means
+    the body is not JSON. headers is None when the payload has no headers dict,
+    so a PATCH does not invent or wipe the GitHub Authorization header.
+    """
+    if "extendedData" not in job or not isinstance(job.get("extendedData"), dict):
+        return "absent", None, None
+    ext = job["extendedData"]
+    if "headers" in ext and isinstance(ext.get("headers"), dict):
+        headers: dict | None = dict(ext["headers"])
+    else:
+        headers = None
+    if "body" not in ext:
+        return "absent", None, headers
+    raw = ext.get("body")
+    if raw is None or raw == "":
+        return "present", None, headers
+    if not isinstance(raw, str):
+        return "bad", None, headers
+    try:
+        return "present", json.loads(raw), headers
+    except json.JSONDecodeError:
+        return "bad", None, headers
+
+
+def dispatch_job_name(jid: int, body: object) -> str | None:
+    # The morning template keeps its job name even if the stored body says otherwise.
+    if jid == TEMPLATE_JOB_ID:
+        return "morning"
+    if not isinstance(body, dict):
+        return None
+    inputs = body.get("inputs")
+    if not isinstance(inputs, dict):
+        return None
+    name = inputs.get("job")
+    return name if isinstance(name, str) else None
+
+
+def oneoff_mode_of(body: object):
+    if not isinstance(body, dict):
+        return None
+    inputs = body.get("inputs")
+    if not isinstance(inputs, dict):
+        return None
+    return inputs.get("oneoff_mode")
+
+
+def oneoff_decision(jid: int, body: object) -> tuple[str, str | None, dict | None]:
+    """('unchanged'|'patch'|'pending', job_name, target or None)."""
+    name = dispatch_job_name(jid, body)
+    targets = slot_oneoff_targets()
+    if name in targets:
+        target = targets[name]
+        if body == target and oneoff_mode_of(body) == "auto":
+            return "unchanged", name, target
+        return "patch", name, target
+    if oneoff_mode_of(body) == "auto":
+        return "unchanged", name, None
+    return "pending", name, None
+
+
+def expires_at(job: dict) -> int | None:
+    sched = job.get("schedule")
+    if not isinstance(sched, dict) or "expiresAt" not in sched:
+        return None
+    try:
+        return int(sched.get("expiresAt") or 0)
+    except (TypeError, ValueError):
+        return None
+
+
+def job_expired(job: dict, now: datetime) -> bool:
+    """True only when the schedule says the job can no longer fire.
+
+    expiresAt 0 (or missing) is not expired. A missing schedule is not expired:
+    the caller must not skip a job it cannot prove is finished.
+    """
+    exp = expires_at(job)
+    if not exp:
+        return False
+    return exp < int(now.strftime("%Y%m%d%H%M%S"))
+
+
+def is_port_dispatch(job: dict) -> bool:
+    return (job.get("url") or "").rstrip("/") == DISPATCH_URL
+
+
+def fix_rank(job: dict) -> tuple[int, int]:
+    """Must slots first, then the known recurring jobs, then the rest by id.
+
+    Title match is the port slot title, not any oneshot that happens to say 09:00.
+    That keeps the morning template (TEMPLATE_JOB_ID) ahead of the oneshot tail
+    when the call budget runs out.
+    """
+    jid = int(job.get("jobId") or 0)
+    title = (job.get("title") or "").strip().lower()
+    if jid == TEMPLATE_JOB_ID or "port morning" in title:
+        return (0, jid)
+    if "port afternoon" in title:
+        return (1, jid)
+    if "0090b0" in title:
+        return (2, jid)
+    if (jid in (SLOT_JOB_ID, PULSE_JOB_ID, TSLASPCX_JOB_ID)
+            or "after-close" in title or "mktpulse" in title or "tslaspcx" in title
+            or "portlight" in title or "tsla us regular" in title):
+        return (3, jid)
+    return (4, jid)
+
+
+def run_fix_slot_oneoff(now: datetime) -> int:
+    """pt21u: live port-alerts dispatches must send oneoff_mode=auto.
+
+    One GET /jobs. Diff from the list when the row already has extendedData.body.
+    Otherwise fetch detail only for a job that can still fire (enabled, this
+    repo's port-alerts URL, not expired). Disabled jobs, other URLs, and expired
+    jobs cost no extra call. PATCH only when the body differs, and read back
+    only that write. Fail fast on 429 unless CRONJOB_RETRY_429=1.
+    """
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
     gap = float(env("CRONJOB_GAP_SEC") or "1.5")
+    counts = {
+        "detail": 0, "patch": 0, "readback": 0,
+        "unchanged": 0, "expired": 0, "unrelated": 0, "disabled": 0,
+    }
+    must = {"morning", "afternoon", "0090b0"}
+    must_ok: set[str] = set()
+    confirmed_auto: list[str] = []
+    patched: list[str] = []
+    pending: list[str] = []
 
     def pause() -> None:
         time.sleep(gap)
 
-    print("fix_slot_oneoff: GET /jobs (once)")
-    res = call("GET", "/jobs", key)
-    if res.get("someFailed"):
-        raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed)")
-    port_ids: list[tuple[int, str]] = []
-    for j in res.get("jobs") or []:
-        jid = int(j.get("jobId") or 0)
-        if not jid or not j.get("enabled"):
-            continue
-        if (j.get("url") or "").rstrip("/") != DISPATCH_URL:
-            continue
-        port_ids.append((jid, (j.get("title") or "").strip()))
-    print(f"port-alerts dispatchers enabled: {len(port_ids)}")
-    for jid, title in port_ids:
-        print(f"  listed id={jid} title={title!r}")
+    def line_for(jid: int, title: str, name, body: object) -> str:
+        return (f"id={jid} title={title!r} job={name!r} oneoff_mode={oneoff_mode_of(body)!r} "
+                f"body={json.dumps(body, separators=(',', ':'))}")
 
-    # Prefer known/hint order: morning template, then afternoon/0090b0 by title, then rest
-    def rank(item: tuple[int, str]) -> tuple[int, int]:
-        jid, title = item
-        tl = title.lower()
-        if jid == TEMPLATE_JOB_ID or "morning" in tl or "09:00" in tl:
-            return (0, jid)
-        if "afternoon" in tl or "15:20" in tl:
-            return (1, jid)
-        if "0090b0" in tl or "15:41" in tl:
-            return (2, jid)
-        return (3, jid)
-
-    port_ids.sort(key=rank)
-    confirmed_auto: list[str] = []
-    patched: list[str] = []
-    pending: list[str] = []
-    must = {"morning", "afternoon", "0090b0"}
-    must_ok: set[str] = set()
-
-    for jid, title in port_ids:
-        pause()
-        print(f"GET /jobs/{jid}")
-        detail = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
-        ext = detail.get("extendedData") or {}
-        try:
-            body = json.loads(ext.get("body") or "null")
-        except json.JSONDecodeError:
-            body = None
-        inputs = (body.get("inputs") or {}) if isinstance(body, dict) else {}
-        job_name = inputs.get("job")
-        if jid == TEMPLATE_JOB_ID:
-            job_name = "morning"
-        oneoff = inputs.get("oneoff_mode")
-        line = f"id={jid} title={title!r} job={job_name!r} oneoff_mode={oneoff!r} body={json.dumps(body, separators=(',', ':'))}"
-        print(f"read: {line}")
-
-        if job_name in wanted:
-            target = wanted[job_name]
-            if body == target and oneoff == "auto":
-                print(f"ok: {job_name} already auto")
-                confirmed_auto.append(line)
-                if job_name in must:
-                    must_ok.add(job_name)
-                continue
-            print(f"update: {job_name} {json.dumps(body)} -> {json.dumps(target)}")
-            if env("CRONJOB_DRY_RUN") == "1":
-                pending.append(f"dry-run would patch {line}")
-                continue
-            pause()
-            headers = dict(ext.get("headers") or {})
-            call("PATCH", f"/jobs/{jid}", key, {
-                "job": {
-                    "extendedData": {
-                        "headers": headers,
-                        "body": json.dumps(target, separators=(",", ":")),
-                    }
-                }
-            })
-            pause()
-            detail2 = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
-            try:
-                body2 = json.loads((detail2.get("extendedData") or {}).get("body") or "null")
-            except json.JSONDecodeError:
-                body2 = None
-            inputs2 = (body2.get("inputs") or {}) if isinstance(body2, dict) else {}
-            if body2 == target and inputs2.get("oneoff_mode") == "auto":
-                print(f"confirmed: id={jid} job={job_name} oneoff_mode=auto")
-                confirmed_auto.append(
-                    f"id={jid} title={title!r} job={job_name!r} oneoff_mode=auto body={json.dumps(body2, separators=(',', ':'))}"
-                )
-                patched.append(job_name)
-                if job_name in must:
-                    must_ok.add(job_name)
-            else:
-                pending.append(f"patch verify failed id={jid} got={body2}")
-            continue
-
-        # Other port-alerts dispatchers not in wanted map
-        if oneoff == "auto":
-            print(f"ok-other: already auto job={job_name!r}")
-            confirmed_auto.append(line)
-        elif oneoff is None:
-            pending.append(f"missing oneoff_mode: {line}")
+    def mark_unchanged(jid: int, title: str, name, body: object, via: str) -> None:
+        counts["unchanged"] += 1
+        if name in must:
+            must_ok.add(name)
+        text = line_for(jid, title, name, body)
+        confirmed_auto.append(text)
+        if via == "list":
+            print(f"unchanged-from-list: {text}")
+            return
+        print(f"read: {text}")
+        if name in slot_oneoff_targets():
+            print(f"ok: {name} already auto")
         else:
-            pending.append(f"unexpected oneoff={oneoff!r}: {line}")
+            print(f"ok-other: already auto job={name!r}")
 
-    print("--- summary ---")
-    print(f"must_ok={sorted(must_ok)} patched={patched}")
-    print(f"confirmed_auto_count={len(confirmed_auto)}")
-    for x in confirmed_auto:
-        print(f"CONFIRMED {x}")
-    for x in pending:
-        print(f"PENDING {x}")
-    if must - must_ok:
-        raise Stop(API_ERROR, f"required slots not confirmed auto: {sorted(must - must_ok)}; pending={pending}")
-    if pending:
-        raise Stop(API_ERROR, f"required slots OK but other dispatchers not verified auto: {pending}")
-    print("fix_slot_oneoff: all port-alerts dispatchers verified oneoff_mode=auto")
-    print("ALL_DISPATCHERS_AUTO=1")
-    return 0
+    def other_pending(jid: int, title: str, name, body: object) -> str:
+        text = line_for(jid, title, name, body)
+        oneoff = oneoff_mode_of(body)
+        if oneoff is None:
+            return f"missing oneoff_mode: {text}"
+        return f"unexpected oneoff={oneoff!r}: {text}"
+
+    def finish_patch(jid: int, title: str, name: str, target: dict, headers: dict, prev: object) -> None:
+        text = line_for(jid, title, name, prev)
+        print(f"update: {name} {json.dumps(prev)} -> {json.dumps(target)}")
+        if env("CRONJOB_DRY_RUN") == "1":
+            pending.append(f"dry-run would patch {text}")
+            return
+        # PATCH and the read-back are one pair. Do not write when the read-back would pass the cap.
+        if max_calls() - _STATS["n"] < 2:
+            raise Stop(API_ERROR, budget_message(_STATS["n"], max_calls(), "PATCH", f"/jobs/{jid} + read-back"))
+        pause()
+        call("PATCH", f"/jobs/{jid}", key, {
+            "job": {
+                "extendedData": {
+                    "headers": headers,
+                    "body": json.dumps(target, separators=(",", ":")),
+                }
+            }
+        })
+        counts["patch"] += 1
+        pause()
+        detail2 = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
+        counts["readback"] += 1
+        print(f"GET /jobs/{jid}")
+        status2, body2, _headers2 = parse_extended(detail2)
+        if status2 == "present" and body2 == target and oneoff_mode_of(body2) == "auto":
+            print(f"confirmed: id={jid} job={name} oneoff_mode=auto")
+            confirmed_auto.append(
+                f"id={jid} title={title!r} job={name!r} oneoff_mode=auto "
+                f"body={json.dumps(body2, separators=(',', ':'))}"
+            )
+            patched.append(name)
+            if name in must:
+                must_ok.add(name)
+        else:
+            pending.append(f"patch verify failed id={jid} got={body2}")
+
+    def from_detail(row: dict) -> None:
+        jid = int(row.get("jobId") or 0)
+        title = (row.get("title") or "").strip()
+        pause()
+        detail = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
+        counts["detail"] += 1
+        print(f"GET /jobs/{jid}")
+        if job_expired(detail, now):
+            counts["expired"] += 1
+            print(f"skip-expired-after-read: id={jid}")
+            return
+        status, body, headers = parse_extended(detail)
+        if status != "present":
+            pending.append(f"no body after detail: id={jid} title={title!r}")
+            return
+        decision, name, target = oneoff_decision(jid, body)
+        if decision == "unchanged":
+            mark_unchanged(jid, title, name, body, via="detail")
+            return
+        if decision != "patch" or not isinstance(name, str) or not isinstance(target, dict):
+            pending.append(other_pending(jid, title, name, body))
+            return
+        if headers is None:
+            pending.append(f"refusing patch without headers: id={jid} title={title!r}")
+            return
+        finish_patch(jid, title, name, target, headers, body)
+
+    try:
+        print("fix_slot_oneoff: GET /jobs (once)")
+        res = call("GET", "/jobs", key)
+        if res.get("someFailed"):
+            raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed)")
+        live: list[dict] = []
+        for j in res.get("jobs") or []:
+            if not isinstance(j, dict):
+                counts["disabled"] += 1
+                continue
+            jid = int(j.get("jobId") or 0)
+            if not jid or not j.get("enabled"):
+                counts["disabled"] += 1
+                continue
+            if not is_port_dispatch(j):
+                counts["unrelated"] += 1
+                continue
+            if job_expired(j, now):
+                counts["expired"] += 1
+                continue
+            live.append(j)
+        live.sort(key=fix_rank)
+        print(
+            f"port-alerts dispatchers live: {len(live)} "
+            f"(expired_skip={counts['expired']} unrelated_skip={counts['unrelated']} "
+            f"disabled_skip={counts['disabled']})"
+        )
+        for row in live:
+            jid = int(row.get("jobId") or 0)
+            title = (row.get("title") or "").strip()
+            status, body, headers = parse_extended(row)
+            if status != "present":
+                from_detail(row)
+                continue
+            decision, name, target = oneoff_decision(jid, body)
+            if decision == "unchanged":
+                mark_unchanged(jid, title, name, body, via="list")
+                continue
+            if decision != "patch" or not isinstance(name, str) or not isinstance(target, dict):
+                pending.append(other_pending(jid, title, name, body))
+                continue
+            if headers is None:
+                from_detail(row)
+                continue
+            finish_patch(jid, title, name, target, headers, body)
+
+        print("--- summary ---")
+        print(f"must_ok={sorted(must_ok)} patched={patched}")
+        print(f"confirmed_auto_count={len(confirmed_auto)}")
+        for x in confirmed_auto:
+            print(f"CONFIRMED {x}")
+        for x in pending:
+            print(f"PENDING {x}")
+        if must - must_ok:
+            raise Stop(API_ERROR, f"required slots not confirmed auto: {sorted(must - must_ok)}; pending={pending}")
+        if pending:
+            raise Stop(API_ERROR, f"required slots OK but other dispatchers not verified auto: {pending}")
+        print("fix_slot_oneoff: live port-alerts dispatchers verified oneoff_mode=auto")
+        print("ALL_DISPATCHERS_AUTO=1")
+        return 0
+    finally:
+        print(
+            "fix_slot_oneoff calls: "
+            f"detail={counts['detail']} patch={counts['patch']} readback={counts['readback']} "
+            f"unchanged={counts['unchanged']} expired_skip={counts['expired']} "
+            f"unrelated_skip={counts['unrelated']} disabled_skip={counts['disabled']}"
+        )
 
 
 
 def main() -> int:
+    reset_call_stats()
     now = datetime.now(KST)
     try:
+        max_calls()
         action = (env("CRONJOB_ACTION") or "register").lower()
         if action == "delete":
             return run_delete()
@@ -1073,6 +1303,8 @@ def main() -> int:
     except Stop as stop:
         print(f"::error::{stop}")
         return stop.code
+    finally:
+        print_call_summary()
 
 
 if __name__ == "__main__":
