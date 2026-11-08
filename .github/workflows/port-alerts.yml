@@ -1523,6 +1523,19 @@ jobs:
           python scripts/005930_monitor.py "$MODE" || rc=1
           python scripts/000660_monitor.py "$MODE" || rc=1
           exit "$rc"
+      - name: Run HBMASP outlook (005930/000660 HBM outlook, LTA, capacity human review; k203780 19:00)
+        # Extends hbmasp. No new cron. Morning 09:00 baseline and notice path stays on the morning step.
+        # job=k203780 dispatch without oneoff_mode=auto is dry (selftest + outlook dry: no ntfy, no state).
+        if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "dry" ]; then python scripts/hbmasp_monitor.py selftest >/dev/null; fi
+          python scripts/hbmasp_monitor.py outlook "$MODE"
       - name: Run SECEARN (005930 earnings call auto-check, manual trigger for the one-time 2026 Q3 backfill)
         # approved in the 005930_autocheck spec (2026-10-30). The quarterly auto-check itself runs inside the 005930 step above on the
         # k203780 19:00 slot (no new cron). job=secearn dispatch is dry (selftest + backfill-dry: no ntfy, no state) unless oneoff_mode=auto,

@@ -12,7 +12,42 @@
   "ntfy_ops_topic": "cwally-ops",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 port-alerts morning 평일 09:00 KST 슬롯에 붙임. 월요일 기준 리마인더 1회, 평일은 새 공시 제목만.",
+  "schedule_note": "새 cron 없음. 기준 유지와 공시 제목은 기존 port-alerts morning 평일 09:00 KST. HBM 전망/LTA/생산능력 사람 검토는 outlook 인자로 기존 k203780 평일 19:00에만.",
+  "outlook": {
+    "schedule_kst": "19:00",
+    "schedule_note": "새 cron 없음. 기존 k203780 평일 19:00 KST(cron-job.org 8698629, GitHub 0 10 * * 1-5 백업)에서 python scripts/hbmasp_monitor.py outlook 만 실행. 아침 기준 유지/공시 경로는 그대로. 토/일은 스크립트가 조용히 끝남. 하루 한 슬롯.",
+    "ends_kst": "2027-11-30 19:00",
+    "ends_note": "2027년 HBM 전망, 장기공급, 생산능력 공개 자료의 사람 검토. 자동 매매 없음. 아침 [HBMASP] 기준 알림의 종료(2027-02-06 09:00)와 별개.",
+    "stale_days": 120,
+    "max_send": 3,
+    "coverage_note": "2026-11-08 확인한 공개 목록만 사용. 트렌드포스 /presscenter/rss.html 은 RSS가 아니라 구독 안내라 제외하고 Semiconductors 첫 페이지만 사용(페이지 넘김 없음). 삼성 전체 feed 는 스마트폰 기사가 많아 Corporate 카테고리 feed 로 좁힘. SK하이닉스 홈 /en/feed/ 는 기술 연재 중복이 실적을 밀어내 제외하고 문서화된 PRESS 카테고리 feed 만 사용. IR 카테고리 feed 는 실적 글이 PRESS 와 겹치고 애널리스트 인터뷰가 섞여 제외. 카운터포인트리서치, 유료 리포트, 구글 뉴스, bit.ly guid 는 쓰지 않음. 검증되지 않은 가격 배수, 달러 단가, 증권사 점추정은 기준값으로 넣지 않음.",
+    "sources": [
+      {
+        "id": "trendforce",
+        "kind": "third_party",
+        "label": "제3자 전망(트렌드포스 Press Center). 삼성전자나 SK하이닉스 공식 발표가 아님.",
+        "list_url": "https://www.trendforce.com/presscenter/news/Semiconductors",
+        "allowed_hosts": ["www.trendforce.com"],
+        "format": "trendforce_html"
+      },
+      {
+        "id": "samsung",
+        "kind": "issuer",
+        "label": "발행사 공식 발표(삼성전자 글로벌 뉴스룸 Corporate).",
+        "list_url": "https://news.samsung.com/global/category/corporate/feed",
+        "allowed_hosts": ["news.samsung.com"],
+        "format": "rss"
+      },
+      {
+        "id": "skhynix",
+        "kind": "issuer",
+        "label": "발행사 공식 발표(SK하이닉스 뉴스룸 PRESS).",
+        "list_url": "https://news.skhynix.com/en/category/press/feed/",
+        "allowed_hosts": ["news.skhynix.com"],
+        "format": "rss"
+      }
+    ]
+  },
   "baseline": {
     "lock": "블렌디드 ASP",
     "offer_not_contract": "매일경제 2026-10-02 삼성 HBM4 제시가 1Gb당 4달러대 중후반, HBM3E 약 1.5달러 대비 3배 이상. 확정 계약가 아님.",
