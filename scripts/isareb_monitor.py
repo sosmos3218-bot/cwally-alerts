@@ -201,6 +201,49 @@ def plan(cfg: dict, rows: list[dict]) -> dict:
     }
 
 
+def ptj_regime(cfg: dict):
+    """PTJ200 regime from state/ptj200.json: 1 공격, -1 방어, None 미확인."""
+    link = cfg.get("ptj200_link") or {}
+    path = ROOT / link.get("state", "state/ptj200.json")
+    try:
+        reg = json.loads(path.read_text(encoding="utf-8")).get("regime")
+    except Exception:  # noqa: BLE001
+        return None
+    return reg if reg in (1, -1) else None
+
+
+def target_message(cfg: dict, stamp: str, regime) -> tuple[str, str]:
+    """Holdings-free monthly note (use_holdings=false, 2026-11-08): target weights only, PTJ200 regime applied."""
+    t = cfg["targets"]
+    link = cfg["ptj200_link"]
+    names = {"448290": "TIGER 미국S&P500(H) 448290", "452360": "SOL 미국배당다우존스(H) 452360",
+             "456610": "TIGER 미국달러SOFR금리액티브(합성) 456610"}
+    us = link["bear"] if regime == -1 else link["bull"]
+    reg_txt = {1: "PTJ200 공격 국면", -1: "PTJ200 방어 국면", None: "PTJ200 국면 미확인(공격 기준으로 표시)"}[regime]
+    us_line = ", ".join(f"{names.get(k, k)} {pct(v)}" for k, v in us.items())
+    lines = [
+        f"- 삼성전자 005930 {pct(t['single_cap'])} 이하, 삼성전자+우선주 005935 합산 {pct(t['samsung_group_cap'])} 이하",
+        f"- 국내주식 합계 {pct(t['kr_equity_cap'])} 이하 (코스닥150 270810 {pct(t['kosdaq_cap'])} 이하, LG씨엔에스 064400 {pct(t['lgcns_cap'])} 이하)",
+        f"- 미국주식 몫: {us_line}",
+        f"- SOL 국제금커버드콜액티브 0022T0 {pct(t['gold_cc_target'])} ({pct(t['gold_cc_band'][0])}~{pct(t['gold_cc_band'][1])})",
+        f"- RISE 미국단기투자등급회사채액티브 437350 {pct(t['us_ig_target'])} ({pct(t['us_ig_band'][0])}~{pct(t['us_ig_band'][1])})",
+    ]
+    short = "방어" if regime == -1 else "공격"
+    title = f"[ISAREB] 448290/452360/456610 ISA 월간 목표 비중 | {short} 국면 기준, {pct(t['action_gap'])}p 넘게 벗어난 것만 조정"
+    msg = "\n".join(
+        [
+            f"{stamp} | ISA 월 1회 목표 비중 ({reg_txt})",
+            "이게 뭐 알림: ISA 목표 비중 월 1회 안내. 보유 현황과 관계없이 목표만 보냄(수량 계산 없음). 미국주식 몫은 [PTJ200] 국면을 따름.",
+            "지금 결과/상태: " + reg_txt + ". 목표(ISA 총액 기준):\n" + "\n".join(lines),
+            f"지금 할 일: 증권앱에서 실제 비중을 보고 목표와 {pct(t['action_gap'])}p 넘게 차이 나는 것만 맞추기. 매도 대금으로 부족한 쪽을 채우기.",
+            "나중에: PTJ200 국면이 바뀌면 그날 09:00 [PTJ200] 알림이 미국주식 몫 변경을 따로 알림. 목표는 configs/isareb.json.",
+            "익절/줄일 때: 목표보다 많이 오른 것부터 줄여서 부족한 쪽을 채움. 전량 매도 아님.",
+            "하지 말 것: 신용/미수. 밴드 안 매매. LG씨엔에스와 코스닥150 물타기. 이 알림을 주문으로 실행.",
+        ]
+    )
+    return title, msg
+
+
 def status_line(rows, p) -> str:
     w = p["weights"]
     bits = [
@@ -248,6 +291,21 @@ def main() -> int:
 
     if not due(now, state, mode):
         print("isareb not due; silent")
+        return 0
+
+    if not cfg.get("use_holdings", True):
+        title, msg = target_message(cfg, stamp, ptj_regime(cfg))
+        print(title)
+        print(msg)
+        if dry:
+            print("dry-run; no ntfy")
+            return 0
+        publish(resolve_topic("port"), title, msg, 3, ["chart_with_upwards_trend"], resolve_server(cfg.get("ntfy_server")))
+        state["updated_at"] = stamp
+        state["last_sent_month"] = now.strftime("%Y-%m")
+        state["last_title"] = title
+        state["fail_sent_date"] = None
+        save_state(state)
         return 0
 
     rows, missing = value_rows(cfg)

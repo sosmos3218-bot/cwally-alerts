@@ -442,7 +442,7 @@ def selftest() -> int:
     # account moves text
     acc = {a["id"]: a for a in cfg["accounts"]}
     isa = "\n".join(account_moves(acc["isa"], 1, -1, cfg["assets"]))
-    ok("225040 전량 매도" in isa and "360750 50% 매수" in isa and "456610 50% 매수" in isa, f"isa moves {isa}")
+    ok("448290 12%에서 6%로 (6%p 매도)" in isa and "452360 8%에서 4%로 (4%p 매도)" in isa and "456610 10% 매수" in isa, f"isa moves {isa}")
     irp = "\n".join(account_moves(acc["irp"], 1, -1, cfg["assets"]))
     ok("360750 70%에서 50%로 (20%p 매도)" in irp and "0025N0 전량 매도" in irp, f"irp moves {irp}")
     us = "\n".join(account_moves(acc["us"], -1, 1, cfg["assets"]))
