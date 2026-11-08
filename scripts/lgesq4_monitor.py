@@ -358,6 +358,11 @@ def selftest() -> int:
     finally:
         earnings_parse.reference_line = real_ref
     boom_body = "\n".join(lines_boom)
+    q3_only = fixture("106,100", "6,300", "2,350", "+2.3", extra="2026년 3분기 법인세 차감 전 순손실은 2,312억 원. 2026년 3분기 당기순손실은 2,969억 원.")
+    t_q3, lines_q3 = message(cfg, parse(item(q3_only)), item(q3_only), datetime(2027, 1, 8, 13, 5, tzinfo=KST))
+    part_q3 = "\n".join(lines_q3).split("참고(판정에 쓰지 않음)", 1)[-1]
+    check("q3 prose keeps review", (t_q3, verdict(parse(item(q3_only)), cfg)[0]), ("[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능", "검토 가능"))
+    check("q3 prose not attached", "미공개" in part_q3 and "-2,312억원" not in part_q3 and "-2,969억원" not in part_q3, True)
     check("formatter failure still sends review", t_boom, "[LGESF] 373220 LG엔솔 4Q 잠정 검토 가능")
     check("formatter failure keeps action", f"지금 할 일: {actions['검토 가능']}" in boom_body, True)
     check("formatter failure says 확인 불가", "참고 정리 실패(RuntimeError)" in boom_body and "세전손익 확인 불가" in boom_body, True)

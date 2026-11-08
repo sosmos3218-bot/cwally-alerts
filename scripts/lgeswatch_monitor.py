@@ -596,6 +596,14 @@ def selftest() -> int:
     check("q4 parent missing waits", "지배주주순손익 미공개" in part and "상세 공시(분기보고서)를 기다림" in part, True)
     check("q4 parent not swapped", "지배주주순손익 2,200억원" not in part, True)
     check("q4 oneoff period", "위약금 150억원" in part and "3,000" not in part, True)
+    q3_prose = (
+        "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원. "
+        "2026년 3분기 법인세 차감 전 순손실은 2,312억 원. 2026년 3분기 당기순손실은 2,969억 원. "
+        "2026년 4분기 실적에서 전년 보상금은 1,500억원."
+    )
+    q3_slice = ref_slice(q4_msg(cfg, f, ref=prelim_ref(f, q3_prose, None))[1])
+    check("q4 q3 prose not current", "미공개" in q3_slice and "-2,312억원" not in q3_slice and "1,500" not in q3_slice, True)
+    check("q4 q3 prose keeps checklist title", q4_msg(cfg, f, ref=prelim_ref(f, q3_prose, None))[0], q4_title)
     check("q4 unit period", "기간 2026년 4분기" in part and "단위 억원" in part, True)
     zero_body = "실적기간 당기실적 2026-10-01 ~ 2026-12-31 단위 : 억원 법인세비용차감전계속사업이익 당해실적 0 당기순이익 당해실적 0 2026년 4분기 일회성 보상금은 0억원."
     zpart = ref_slice(q4_msg(cfg, f, ref=prelim_ref(f, zero_body, None))[1])
