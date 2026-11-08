@@ -1,0 +1,42 @@
+{
+  "name": "ptj200",
+  "title_prefix": "[PTJ200]",
+  "created_at": "2026-11-08T20:30:00+09:00",
+  "approval": "사용자 요청 2026-11-08: TradingView 지표 'PTJ 200일선 ±1% 하이브리드'(PTJ_KR_US_Hybrid v6)의 국면 전환을 cwally-alerts ntfy로 받기(경로 2번 선택). 전환 때 계좌별로 어떤 종목을 몇 % 팔고 사는지 알림. TradingView의 savipww 200-Day Rule (SPY) 알림은 그대로 둠(사용자 지시).",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 morning 슬롯(평일 09:00 KST)에 부착. 09:00 KST는 미국 정규장 마감 뒤라 직전 미국 세션 종가가 확정돼 있음. 국내 계좌는 같은 날 정규장, 미국 직투는 그날 밤 미국장에서 실행.",
+  "rules": {
+    "symbol": "SPY",
+    "sma_len": 200,
+    "band_pct": 1.0,
+    "yahoo_range": "5y",
+    "min_bars": 260,
+    "stale_calendar_days": 5,
+    "fail_ops_after_runs": 2,
+    "monthly_status": true
+  },
+  "rule_note": "Pine 지표와 같은 규칙. SPY 일봉 종가(Yahoo close, 분할수정, 배당 미수정. TradingView 기본 차트와 같은 기준)의 200거래일 단순평균을 SPY 자체 봉으로 계산. 종가 > SMA x 1.01 이면 공격(BULL), 종가 < SMA x 0.99 이면 방어(BEAR), 그 사이는 이전 국면 유지. 첫 실행은 5년 일봉으로 현재 국면만 기록하고 발송하지 않음. 이후에는 state의 마지막 처리일 다음 봉부터 순서대로 적용해 국면이 바뀌면 1번 발송. 매달 첫 유효 실행에 현재 국면과 목표 비중 요약 1번(monthly_status=false면 끔).",
+  "assets": {
+    "225040": "TIGER 미국S&P500레버리지(합성 H) 225040",
+    "360750": "TIGER 미국S&P500 360750",
+    "0025N0": "TIGER TDF2045 적격 0025N0",
+    "456610": "TIGER 미국달러SOFR금리액티브(합성) 456610",
+    "SSO": "SSO(S&P500 2배)",
+    "SPY": "SPY",
+    "BIL": "BIL 또는 SGOV(미국 단기채)"
+  },
+  "assets_checked": "2026-11-08 네이버 증권 basic stockName으로 국내 코드 5개 확인(225040, 360750, 0025N0, 360200, 456610).",
+  "accounts": [
+    {"id": "isa", "label": "중개형 ISA", "market": "kr", "bull": {"225040": 1.0}, "bear": {"360750": 0.5, "456610": 0.5}},
+    {"id": "irp", "label": "퇴직연금 IRP", "market": "kr", "bull": {"360750": 0.7, "0025N0": 0.3}, "bear": {"360750": 0.5, "456610": 0.5}},
+    {"id": "pension", "label": "연금저축펀드", "market": "kr", "bull": {"360750": 1.0}, "bear": {"360750": 0.5, "456610": 0.5}, "note": "ACE 미국S&P500(360200)을 쓰면 360750 자리에 그대로 대입"},
+    {"id": "us", "label": "미국 직투", "market": "us", "bull": {"SSO": 1.0}, "bear": {"SPY": 0.5, "BIL": 0.5}}
+  ],
+  "accounts_note": "비중은 TradingView 지표에 적힌 계좌별 목표 비중 그대로. 각 비율은 그 계좌 총액 기준. 실제 잔고는 모름. 계좌를 빼려면 이 목록에서 지우면 됨.",
+  "limitations": "자동 주문 아님. 실제 보유를 모르므로 '목표 비중 기준 지시'. 매매를 건너뛴 적이 있으면 실제 잔고를 목표 비중에 맞춰 조정. 456610이 IRP 안전자산으로 인정되는지는 확인 안 함(증권사 확인 필요). 225040은 환헤지(H) 상품.",
+  "ends_kst": null,
+  "ends_note": "끄라고 할 때까지 계속"
+}

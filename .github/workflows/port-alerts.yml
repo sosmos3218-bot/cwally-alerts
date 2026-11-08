@@ -685,6 +685,8 @@ jobs:
             python scripts/coin_monitor.py auto
             python scripts/fltw_monitor.py auto
             python scripts/nflxq4_monitor.py auto
+            # [PTJ200] SPY 200일선 ±1% 국면 전환 + 계좌별 매도/매수 비율 (2026-11-08 사용자 요청, 경로 2번). 새 cron 없음, 바뀔 때만 + 월 1회 점검
+            python scripts/ptj200_monitor.py auto
           fi
           # [SEMIUS] 005930 000660 big tech 2027 capex cut (SEC EDGAR). Approved 2026-11-05 (pt58u). The Texas part runs on the box routine
           # (scripts/semius_texas_box.sh, state/semius_tx.json; runners get 'connection refused' from Texas state sites; pt59u), not here.

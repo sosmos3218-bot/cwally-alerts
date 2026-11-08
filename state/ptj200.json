@@ -1,0 +1,10 @@
+{
+  "updated_at": null,
+  "regime": null,
+  "last_date": null,
+  "last_close": null,
+  "last_sma": null,
+  "last_switch": null,
+  "last_status_month": null,
+  "fail": {"runs": 0, "notified_day": null}
+}
