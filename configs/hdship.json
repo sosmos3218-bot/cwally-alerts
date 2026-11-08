@@ -26,7 +26,7 @@
   "ends_kst": "2027-09-30 23:59",
   "ends_note": "4분기 2026부터 3분기 2027 공시 확인 구간, 2027-09-30에 끝",
   "sources": {
-    "list": "KIND 상세검색 searchDetailsSub (키 없음, 종목당 최신 100건, reportNm 없이 제목으로 거름). 목록이 비거나 형식 오류면 네이버 KRX 공시 피드 stock.naver.com notice pageSize=100.",
+    "list": "KIND 상세검색 searchDetailsSub (키 없음, 종목당 최신 100건, reportNm 없이 제목으로 거름). KIND 요청 오류나 형식 이상(행 0개인데 '조회된 결과값이 없습니다' 문구도 없음)일 때만 네이버 KRX 공시 피드 stock.naver.com notice pageSize=100 로 대체. KIND 정상 빈 목록은 공시 없음으로 보고 대체하지 않음. 로그에 원본 행 수(raw)와 기간 필터 후 행 수(window)를 남김. 첫 실행도 window_start 이후 공시는 발송하고 그 이전 공시만 시드.",
     "body": "미국/인도 조선소 문구 확인이 필요한 신규시설투자, 타법인 출자 결정만 KIND 공시뷰어 본문. 배당, 기준일, 기업가치 제고, 실적, 정기보고서는 제목만 보고 본문은 읽지 않음.",
     "link": "KIND 공시뷰어. 네이버로 대체된 경우에만 네이버 공시 목록 링크.",
     "not_used": "OpenDART API 키는 이 워크플로에 없음. 회사 IR HTML, 언론, 영문 자료는 수집하지 않음."
