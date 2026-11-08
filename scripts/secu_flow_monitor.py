@@ -32,6 +32,19 @@ def to_int(s: str) -> int:
     return int(str(s).replace(",", "").replace("+", "").strip() or 0)
 
 
+def regular_close(code: str, day: str) -> float:
+    """KRX regular-session close for day (YYYYMMDD) via krx_close (Daum, else Naver 15:30 bar).
+
+    Naver trend closePrice mixes NXT and after-hours prints (2026-11-08). Quantities stay Naver.
+    """
+    import krx_close
+
+    for b in krx_close.regular_bars(code, 5):
+        if krx_close.ymd(b.day) == day:
+            return b.close
+    raise RuntimeError(f"{code} {day} KRX 정규장 종가 없음")
+
+
 def fetch(code: str, day: str) -> dict | None:
     import requests
 
@@ -39,7 +52,7 @@ def fetch(code: str, day: str) -> dict | None:
     r.raise_for_status()
     for row in r.json():
         if row.get("bizdate") == day:
-            close = to_int(row["closePrice"])
+            close = regular_close(code, day)
             fq, oq = to_int(row["foreignerPureBuyQuant"]), to_int(row["organPureBuyQuant"])
             return {"close": close, "frgn_q": fq, "inst_q": oq, "frgn_won": fq * close, "inst_won": oq * close}
     return None  # 오늘 행 없음 = 휴장 또는 미집계
@@ -129,7 +142,7 @@ def main() -> int:
         "익절/줄일 때: 이 알림만으로 팔지 않습니다. 보유 알림([SEC] 등) 기준을 따르세요.",
         "하지 말 것: 첫 B 하루만 보고 몰빵, C에서 급매수·급매도.",
         "",
-        "금액=순매수 주식 수 x 종가 추정. 15:40 수치는 잠정치라 저녁 확정치와 다를 수 있습니다.",
+        "금액=순매수 주식 수 x KRX 정규장 종가 추정. 15:40 수치는 잠정치라 저녁 확정치와 다를 수 있습니다.",
     ]
     msg = "\n".join(lines)
     print(msg)

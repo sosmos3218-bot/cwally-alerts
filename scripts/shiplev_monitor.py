@@ -3,7 +3,7 @@
 
 조건 1 (ma): 466920 확정 종가 > 20일선(그날 포함 20거래일 단순평균, 같으면 위 아님) 3거래일 연속이면 p3 1번
   '[SHIPLEV] 466920 20일선 위 3일 | 2배 단기 검토'. 종가 < 20일선 2거래일 연속이면 재무장.
-  15:20 은 장 마감 전이라 오늘 행은 항상 뺀다. Daum KRX 일별 우선, 실패 시 Naver siseJson.
+  15:20 은 장 마감 전이라 오늘 행은 항상 뺀다. Daum KRX 일별 우선, 실패 시 krx_close 15:30 분봉(이력이 짧아 20일선은 판정 보류).
   state px.last_date 보다 새 날짜만 날짜순 판정. state 가 비면 이력을 조용히 재생해 seed(첫 실행 몰아 보내기 없음).
 조건 2 (nbi): 직전 달 클락슨 신조선가지수가 state 에 없을 때만 네이버 뉴스 검색으로 'N월 말 ... 신조선가지수 ... 186.59'
   꼴을 파싱. 새 달 값이 들어온 날만 판정, 전월보다 낮은 달이 3개월 연속이면 그 달 키로 p3 1번.
@@ -46,21 +46,6 @@ def _get(url: str, headers: dict | None = None, timeout: int = 20) -> bytes:
         return r.read()
 
 
-def naver_sise(code: str, days: int = 90) -> list[tuple[str, float]]:
-    end = datetime.now(KST).date()
-    start = end - timedelta(days=days)
-    url = (f"https://api.finance.naver.com/siseJson.naver?symbol={code}&requestType=1"
-           f"&startTime={start:%Y%m%d}&endTime={end:%Y%m%d}&timeframe=day")
-    txt = _get(url).decode("utf-8", "ignore")
-    out = []
-    for m in re.finditer(r'\[\s*"(\d{8})"\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)', txt):
-        d = m.group(1)
-        out.append((f"{d[:4]}-{d[4:6]}-{d[6:]}", float(m.group(5))))
-    if not out:
-        raise RuntimeError(f"{code} Naver siseJson 0건")
-    return sorted(set(out))
-
-
 def closes(code: str, n: int = 60) -> tuple[list[tuple[str, float]], str]:
     """Oldest-first (day, close). Today's row is NOT removed here."""
     try:
@@ -71,8 +56,10 @@ def closes(code: str, n: int = 60) -> tuple[list[tuple[str, float]], str]:
             raise RuntimeError(f"Daum {len(rows)}건")
         return rows[-n:], "daum"
     except Exception as exc:  # noqa: BLE001
-        print(f"daum {code} failed: {type(exc).__name__}: {exc}; naver siseJson fallback")
-        return naver_sise(code)[-n:], "naver"
+        # Naver daily candles mix NXT/after-hours; only the 15:30 minute bar is allowed (2026-11-08).
+        print(f"daum {code} failed: {type(exc).__name__}: {exc}; krx_close 15:30 minute fallback")
+        import krx_close
+        return [(b.day, b.close) for b in krx_close.minute_bars(code, 8)][-n:], "minute1530"
 
 
 def fx_latest(today: str) -> tuple[str, float] | None:
@@ -415,7 +402,7 @@ def run(mode: str, now: datetime, cfg: dict, st: dict | None = None, pub=publish
         print(f"price fail: {exc}")
         if ops.get("price") != today:
             ops["price"] = today
-            out.append(msg_ops("price", f"Daum, Naver 시세 {type(exc).__name__} {str(exc)[:120]}. 오늘은 20일선을 판정하지 않았습니다.", stamp, cfg))
+            out.append(msg_ops("price", f"Daum, 15:30 분봉 시세 {type(exc).__name__} {str(exc)[:120]}. 오늘은 20일선을 판정하지 않았습니다.", stamp, cfg))
 
     # condition 2
     want = prev_month(now.date())

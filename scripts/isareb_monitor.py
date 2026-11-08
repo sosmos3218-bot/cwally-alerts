@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import sys
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,7 +14,6 @@ from ntfy_util import publish, resolve_server, resolve_topic  # noqa: E402
 KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "isareb.json"
 STATE_PATH = ROOT / "state" / "isareb.json"
-UA = {"User-Agent": "Mozilla/5.0 cwally-alerts"}
 
 
 def load_json(path: Path, fallback: dict) -> dict:
@@ -35,16 +33,18 @@ def save_state(state: dict) -> None:
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def naver_price(code: str):
-    url = f"https://m.stock.naver.com/api/stock/{code}/basic"
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        data = json.loads(resp.read().decode())
-    raw = str(data.get("closePrice") or "").replace(",", "")
-    name = data.get("stockName")
-    if not raw:
-        return None, name
-    return float(raw), name
+def regular_close(code: str):
+    """Latest completed KRX regular-session close via krx_close (Daum, else Naver 15:30 bar).
+
+    Naver basic closePrice on a weekend is the NXT/after-hours last print, not the KRX close (2026-11-08).
+    Returns (close, None); the second slot used to carry the Naver stock name and is unused.
+    """
+    import krx_close
+
+    bars = krx_close.completed(krx_close.regular_bars(code, 5), datetime.now(KST))
+    if not bars:
+        return None, None
+    return bars[-1].close, None
 
 
 def won(n: float) -> str:
@@ -75,7 +75,7 @@ def value_rows(cfg: dict):
     missing = []
     for h in cfg["holdings"]:
         try:
-            price, live_name = naver_price(h["code"])
+            price, live_name = regular_close(h["code"])
         except Exception as exc:
             print(f"price fail {h['code']}: {exc}", file=sys.stderr)
             price, live_name = None, None

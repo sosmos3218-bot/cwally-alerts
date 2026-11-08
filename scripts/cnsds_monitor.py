@@ -13,7 +13,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from naver_api import get_json, num  # noqa: E402
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
@@ -46,14 +45,14 @@ def save_state(state: dict, now: datetime) -> None:
 
 
 def last_close(code: str) -> float | None:
-    rows = get_json(f"https://m.stock.naver.com/api/stock/{code}/trend?pageSize=5")
-    if not isinstance(rows, list):
-        return None
-    for row in rows:
-        price = num((row or {}).get("closePrice"))
-        if price:
-            return price
-    return None
+    """Latest completed KRX regular-session close via krx_close (Daum, else Naver 15:30 bar).
+
+    Naver trend closePrice mixes NXT and after-hours prints, so it is not used (2026-11-08).
+    """
+    import krx_close
+
+    bars = krx_close.completed(krx_close.regular_bars(code, 5), datetime.now(KST))
+    return bars[-1].close if bars else None
 
 
 def verdict(cns: float, sds: float, cfg: dict) -> str:

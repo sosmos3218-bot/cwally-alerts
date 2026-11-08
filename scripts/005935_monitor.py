@@ -12,8 +12,8 @@ Old five-zone names in state (EXPAND/UPPER/LOWER/REDUCE) are migrated from last_
 
 Price source: Daum KRX daily rows (KRX only, no NXT mix; the same source as doosan_monitor).
 During the session today's row is the live KRX price, after the close it is the KRX close.
-Fallback: Naver polling quote (`closePrice` is KRX during the session, may carry
-after-hours prices after 15:30; labelled as such).
+Fallback: Naver 15:30 minute bar via krx_close.minute_bars (completed KRX closes only, no NXT;
+2026-11-08, replaces the Naver polling quote that could carry after-hours prices).
 
 Modes (argv[1]):
   (none)  morning slot: latest *completed* KRX close. Sends only on a zone change or the
@@ -38,7 +38,6 @@ KST = timezone(timedelta(hours=9))
 CFG_PATH = ROOT / "configs" / "005935.json"
 STATE_PATH = ROOT / "state" / "005935.json"
 DAUM = "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=1&perPage=5&pagination=true"
-NAVER = "https://polling.finance.naver.com/api/realtime/domestic/stock/{code}"
 UA = "Mozilla/5.0 (Macintosh; cwally-alerts)"
 
 ZONE_LABEL = {
@@ -91,25 +90,23 @@ def daum_rows(code: str) -> list[dict]:
     return out  # newest first
 
 
-def naver_quote(code: str) -> dict | None:
-    raw = http_json(NAVER.format(code=code))
-    d = (raw.get("datas") or [{}])[0]
-    price = to_num(d.get("closePrice"))
-    chg = to_num(d.get("compareToPreviousClosePrice"))
-    if not price:
+def minute_quote(code: str) -> dict | None:
+    """Daum fallback: latest completed KRX close from the Naver 15:30 minute bar (krx_close)."""
+    import krx_close
+
+    bars = krx_close.minute_bars(code, 2)
+    if not bars:
         return None
-    traded = str(d.get("localTradedAt") or "")
+    last = bars[-1]
     return {
-        "day": traded[:10].replace("-", ""),
-        "price": price,
-        "prev": price - chg if chg is not None else None,
-        "status": d.get("marketStatus"),
+        "day": krx_close.ymd(last.day),
+        "price": last.close,
+        "prev": bars[-2].close if len(bars) > 1 else None,
     }
 
 
 def quote(code: str, live: bool, today: str, now: datetime) -> dict | None:
     """Return {price, prev, day, basis, source}. basis: 장중/KRX 종가/전일 KRX 종가."""
-    session_open = now.hour * 60 + now.minute >= 9 * 60
     session_over = now.hour * 60 + now.minute >= 15 * 60 + 31
     try:
         rows = daum_rows(code)
@@ -130,19 +127,14 @@ def quote(code: str, live: bool, today: str, now: datetime) -> dict | None:
             basis = "전일 KRX 종가"
         return {"price": top["price"], "prev": top["prev"], "day": top["day"], "basis": basis, "source": "Daum(KRX)"}
     try:
-        q = naver_quote(code)
+        q = minute_quote(code)
     except Exception as exc:
-        print(f"naver fail {code}: {exc}")
+        print(f"minute fallback fail {code}: {exc}")
         q = None
     if not q:
         return None
-    if q["day"] == today and session_open and not session_over:
-        basis = "장중"
-    elif q["day"] == today:
-        basis = "종가(시간외 섞일 수 있음)"
-    else:
-        basis = "전일 종가"
-    q.update({"basis": basis, "source": "네이버(대체)"})
+    basis = "KRX 종가" if q["day"] == today else "전일 KRX 종가"
+    q.update({"basis": basis, "source": "네이버 15:30 분봉(대체)"})
     return q
 
 
@@ -199,7 +191,7 @@ def run(mode: str = "") -> int:
                     "cwally-ops",
                     f"{cfg['title_prefix']} 시세 조회 실패 | 원샷 결과 없음",
                     "이게 뭐 알림: 삼성전자우 괴리율 원샷이 시세를 못 읽었어요.\n"
-                    "지금 결과/상태: Daum KRX와 네이버 대체 시세가 모두 실패했거나 날짜가 서로 달라요.\n"
+                    "지금 결과/상태: Daum KRX와 15:30 분봉 대체 시세가 모두 실패했거나 날짜가 서로 달라요.\n"
                     "지금 할 일: 증권 앱에서 두 종목 현재가를 직접 보세요.\n"
                     "나중에: 다음 원샷이나 평일 09:00 슬롯에서 다시 확인해요.\n"
                     "익절/줄일 때: 해당 없음.\n"
