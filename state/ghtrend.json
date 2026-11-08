@@ -1,5 +1,5 @@
 {
-  "last_week": "2026-W44",
+  "last_week": "2026-W45",
   "last_repos": [
     "thedotmack/claude-mem",
     "lightpanda-io/browser",
@@ -12,7 +12,7 @@
     "kornia/kornia",
     "beenuar/AiSOC"
   ],
-  "updated_at": "2026-11-02T02:51:12.415576+09:00",
-  "last_skip_reason": "not_sunday",
+  "updated_at": "2026-11-08T21:00:51.823293+09:00",
+  "last_skip_reason": "fetch_fail",
   "catchup_note": "2026-10-26 10:54 KST forced catch-up for the 2026-10-25 (W43) week; recorded as W43 so Sunday 2026-11-01 (W44) still sends"
 }

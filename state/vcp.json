@@ -1,3 +1,9 @@
 {
-  "weekly_done_week": null
+  "weekly_done_week": "2026-W45",
+  "updated_at": "2026-11-08T21:01:45.738416+09:00",
+  "asof": "2026-11-06",
+  "kospi": 5059.69,
+  "kospi_sma200": 6511.09,
+  "last_result": "regime_off",
+  "last_count": 0
 }

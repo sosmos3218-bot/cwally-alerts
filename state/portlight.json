@@ -1,11 +1,11 @@
 {
-  "weekly_sent_week": "2026-W44",
-  "updated_at": "2026-11-02T02:51:10.447898+09:00",
-  "last_skip_reason": "not_sunday",
+  "weekly_sent_week": "2026-W45",
+  "updated_at": "2026-11-08 21:00 KST",
+  "last_skip_reason": null,
   "last_stance": "보수",
   "last_rate": "황",
   "last_chip": "홍",
-  "last_ktb10": 4.008,
-  "last_ktb10_bp5": -8.900000000000041,
+  "last_ktb10": 3.853,
+  "last_ktb10_bp5": -15.49999999999998,
   "catchup_note": "2026-10-26 10:54 KST forced catch-up for the 2026-10-25 (W43) week; recorded as W43 so Sunday 2026-11-01 (W44) still sends"
 }
