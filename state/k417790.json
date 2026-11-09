@@ -1,17 +1,25 @@
 {
-  "updated_at": "2026-11-07T02:21:08.313838+09:00",
+  "updated_at": "2026-11-09T19:03:16.661101+09:00",
   "seeded": true,
   "high_armed": true,
   "low_armed": true,
-  "price_last_date": "2026-11-06",
-  "last_summary_date": "2026-11-06",
+  "price_last_date": "2026-11-09",
+  "last_summary_date": "2026-11-09",
   "seen": [
     "kind:20251114000548",
     "kind:20251114001297",
     "kind:20251124000148",
     "kind:20251215000349",
     "kind:20260304000728",
-    "kind:20260515000649"
+    "kind:20260515000649",
+    "naver:1361121",
+    "naver:1389360",
+    "naver:1403929",
+    "naver:1487140",
+    "naver:1501279",
+    "naver:1570558",
+    "naver:1577658",
+    "naver:1606298"
   ],
   "fail": {
     "filings": {
