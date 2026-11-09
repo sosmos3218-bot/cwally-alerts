@@ -1,1 +1,12 @@
-{}
+{
+  "updated_at": "2026-11-09 15:41 KST",
+  "notified": true,
+  "empty_notified": false,
+  "last_fail_day": null,
+  "last_sent": {
+    "at": "2026-11-09 15:41 KST",
+    "op": 4594,
+    "base": 1353825.0368119401,
+    "avg": 11.325943490489712
+  }
+}

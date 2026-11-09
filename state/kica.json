@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-11-06 15:41 KST",
+  "updated_at": "2026-11-09 15:41 KST",
   "fired": {
     "band_high": false,
     "band_low": false,
-    "l4800": true,
+    "l4800": false,
     "w3950": false
   },
-  "last_move_day": "2026-10-29",
+  "last_move_day": "2026-11-09",
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-06",
-    "close": 4800,
-    "chg_pct": -2.64
+    "day": "2026-11-09",
+    "close": 5060,
+    "chg_pct": 5.42
   },
   "last_sent": {
-    "at": "2026-11-06 15:41 KST",
+    "at": "2026-11-09 15:41 KST",
     "hits": [
-      "l4800"
+      "move_up"
     ]
   },
   "earnings_notified": false,

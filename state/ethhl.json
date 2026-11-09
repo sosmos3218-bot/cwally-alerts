@@ -1,23 +1,25 @@
 {
-  "verdict": "CLOSE_2500",
+  "verdict": "CLOSE_2500+LONG_GONE+SHORT_HALF",
   "hits": [
-    "CLOSE_2500"
+    "CLOSE_2500",
+    "LONG_GONE",
+    "SHORT_HALF"
   ],
   "fail_notified": false,
-  "updated_at": "2026-11-06T15:41:04.838199+09:00",
+  "updated_at": "2026-11-09T15:41:14.380140+09:00",
   "snap": {
-    "close": 2234.61,
-    "close_note": "coinbase UTC 일봉 2026-11-05 종가 2234.61",
-    "long_note": "",
+    "close": 2125.32,
+    "close_note": "coinbase UTC 일봉 2026-11-08 종가 2125.32",
+    "long_note": "ETH 포지션 없음",
     "short_note": "",
-    "long_entry": 2518.71,
-    "long_liq": 2133.2829760035,
-    "long_value": 58064491.50921,
-    "long_upnl": -7485230.579835,
+    "long_entry": null,
+    "long_liq": null,
+    "long_value": null,
+    "long_upnl": null,
     "short_entry": 2322.72,
-    "short_liq": 3988.531424929,
-    "short_value": 176557745.76309,
-    "short_upnl": 7250671.082269,
+    "short_liq": 4127.8669016296,
+    "short_value": 137859592.06539,
+    "short_upnl": 13948714.559108,
     "short_baseline": 278000000.0
   }
 }
