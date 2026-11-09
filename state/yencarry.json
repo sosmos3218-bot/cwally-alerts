@@ -6,11 +6,11 @@
   "weekly_sent_week": "2026-W45",
   "last_event_key": "달러/엔 158.2 → 158 돌파",
   "last_quotes": {
-    "usdjpy": 158.196,
-    "usdkrw": 1359.18,
-    "jgb30": 3.929
+    "usdjpy": 158.214,
+    "usdkrw": 1348.42,
+    "jgb30": 3.925
   },
-  "updated_at": "2026-11-09T09:00:55.479567+09:00",
+  "updated_at": "2026-11-09T15:20:39.821709+09:00",
   "active_levels": {
     "jpy158": true
   },

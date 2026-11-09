@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-11-06 15:20 KST",
+  "updated_at": "2026-11-09 15:20 KST",
   "last_status": "ATTRACTIVE",
-  "last_price_sq": 729000.0,
-  "last_price_hx": 1143000.0,
-  "discount": 0.4402,
-  "last_sent": false,
-  "last_weekly_week": "2026-W45"
+  "last_price_sq": 724000.0,
+  "last_price_hx": 1146000.0,
+  "discount": 0.4454,
+  "last_sent": true,
+  "last_weekly_week": "2026-W46"
 }

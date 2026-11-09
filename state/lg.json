@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-09 09:00 KST",
+  "updated_at": "2026-11-09 15:20 KST",
   "zone": "STOP",
-  "price": 90600.0,
-  "below_hits": 22,
+  "price": 89900.0,
+  "below_hits": 23,
   "stop_sent": true,
   "shock_sent": false,
   "last_event_ids": [
