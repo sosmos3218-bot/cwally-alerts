@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-06T09:10:28.750551+09:00",
-  "warn_armed": true,
+  "updated_at": "2026-11-09T09:10:47.832126+09:00",
+  "warn_armed": false,
   "down_active": false,
   "a_armed": true,
   "a_hold_sent": false,
@@ -8,7 +8,7 @@
   "top_armed": true,
   "earn_parsed": false,
   "earn_manual_sent": false,
-  "last_bar_date": "2026-11-05",
-  "last_close": 136.82000732421875,
+  "last_bar_date": "2026-11-06",
+  "last_close": 134.75999450683594,
   "fetch_fail_date": null
 }

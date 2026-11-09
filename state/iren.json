@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-06 09:00 KST",
-  "price": 18.03,
+  "updated_at": "2026-11-09 09:00 KST",
+  "price": 21.64,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24",
@@ -172,61 +172,25 @@
     "https://stocktwits.com/news-articles/markets/equity/iren-stock-drops-after-report-says-it-s-behind-microsoft-s-ai-spending-delay-as-investors-turn-to-earnings/cNG15gfR9Ef?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/bc-most-active-stocks-153422188.html?.tsrc=rss",
     "https://www.tikr.com/blog/cleanspark-lost-21-in-a-week-to-a-new-52-week-low-bernstein-still-sees-62-upside?ref=yahoofinance&tlnk=yf-261105-p7rhc5w8&.tsrc=rss",
-    "https://finance.yahoo.com/m/2e601466-99b5-3e96-b356-1d6e19eb6e46/coreweave-stock-is-plunging.html?.tsrc=rss"
+    "https://finance.yahoo.com/m/2e601466-99b5-3e96-b356-1d6e19eb6e46/coreweave-stock-is-plunging.html?.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/08/microsoft-is-reportedly-getting-pickier-about-ai-data-center-deals-is-the-stock-a-buy-now/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/08/is-americas-ai-data-center-boom-about-to-hit-a-brick-wall/?.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/06/why-iren-stock-soared-today/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-price-rallies-021423209.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-ltd-iren-cuts-net-014345470.html?.tsrc=rss",
+    "https://blockspace.media/short/why-iren-stock-jumped-nearly-20-after-earnings/?.tsrc=rss",
+    "https://blockspace.media/podcast/inside-irens-earnings-200m-ai-cloud-plus-terawulf-bitcoin-mining/?.tsrc=rss",
+    "https://www.thestreet.com/crypto/markets/popular-bitcoin-miner-seeks-6-billion-for-ai-expansion?.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/06/stock-market-today-nov-6-iren-soars-20-on-strong-ai-cloud-revenue-growth/?.tsrc=rss",
+    "https://finance.yahoo.com/m/1bb59cf7-9dbb-3c72-aa16-34a903263558/bitcoin-tumbles-on-etf-flows%2C.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-may-still-201040967.html?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-ceo-old-nvidia-h100s-just-recontracted-at-double-the-original-contract-price?ref=yahoofinance&tlnk=yf-261106-j3qqpw48&.tsrc=rss",
+    "https://finance.yahoo.com/technology/articles/microsoft-msft-pulling-back-key-031936381.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/06/applied-digital-is-still-down-39-in-the-past-month-is-apld-stock-hopeless-or-ready-for-a-rebound/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/record-revenue-52-week-lows-232539659.html?.tsrc=rss"
   ],
-  "last_digest_at": "2026-11-02 09:00 KST",
-  "pending_news": [
-    {
-      "title": "Cipher Digital Falls 5% on Q3 Revenue Miss as First HPC Lease Revenue Arrives",
-      "url": "https://www.tikr.com/blog/cipher-digital-falls-5-on-q3-revenue-miss-as-first-hpc-lease-revenue-arrives?ref=yahoofinance&tlnk=yf-261102-vfpc362f&.tsrc=rss",
-      "seen_at": "2026-11-03 09:00 KST"
-    },
-    {
-      "title": "Nvidia, Microsoft, and JPMorgan object to OKXICE tokenized stocks",
-      "url": "https://finance.yahoo.com/video/nvidia-microsoft-jpmorgan-object-okxice-203000548.html?.tsrc=rss",
-      "seen_at": "2026-11-03 09:00 KST"
-    },
-    {
-      "title": "Nvidia and Nike Lead Biggest Wave Yet of Tokenized Stock Objections",
-      "url": "https://decrypt.co/382348/nvidia-nike-biggest-wave-yet-tokenized-stock-objections?.tsrc=rss",
-      "seen_at": "2026-11-03 09:00 KST"
-    },
-    {
-      "title": "Bitcoin Rises, Crypto Miners Sharply Divided As Midterms Dampen AI Outlook",
-      "url": "https://finance.yahoo.com/m/c5d0833e-fe1d-3e77-b792-4b103f8d64bf/bitcoin-rises%2C-crypto-miners.html?.tsrc=rss",
-      "seen_at": "2026-11-05 09:00 KST"
-    },
-    {
-      "title": "Bernstein Cuts Price Targets on Seven Bitcoin Miners After Democrats’ Texas Win Threatens AI Data Center Boom",
-      "url": "https://www.cryptoprowl.com/releases/bernstein-cuts-price-targets-on-seven-bitcoin-miners-after-democrats-texas-win-threatens-ai-data-center-boom-7670?.tsrc=rss",
-      "seen_at": "2026-11-05 09:00 KST"
-    },
-    {
-      "title": "IREN stock plunges 18% as Microsoft raises concerns over data center delays",
-      "url": "https://finance.yahoo.com/markets/stocks/articles/iren-stock-plunges-18-microsoft-162134051.html?.tsrc=rss",
-      "seen_at": "2026-11-06 09:00 KST"
-    },
-    {
-      "title": "IREN Sinks 20% on Report It’s Behind Microsoft’s AI Spending Delay Ahead of Earnings",
-      "url": "https://www.tikr.com/blog/iren-sinks-20-on-report-its-behind-microsofts-ai-spending-delay-ahead-of-earnings?ref=yahoofinance&tlnk=yf-261105-qr7pp429&.tsrc=rss",
-      "seen_at": "2026-11-06 09:00 KST"
-    },
-    {
-      "title": "IREN Sinks 9% After Report Links It to Microsoft’s AI Spending Delay; Nebius Tumbles 11%, CoreWeave Slides 7%",
-      "url": "https://247wallst.com/investing/2026/11/05/iren-sinks-9-after-report-links-it-to-microsofts-ai-spending-delay-nebius-tumbles-11-coreweave-slides-7/?.tsrc=rss",
-      "seen_at": "2026-11-06 09:00 KST"
-    },
-    {
-      "title": "US Futures Mixed After Rally On Wednesday — MU, TSLA, AAPL, MSFT, APP, NVDA, IREN In Focus",
-      "url": "https://stocktwits.com/news-articles/markets/equity/us-futures-mixed-after-rally-on-wednesday-mu-tsla-aapl-msft-app-nvda-iren-in-focus/cNG1WKIR9EY?.tsrc=rss",
-      "seen_at": "2026-11-06 09:00 KST"
-    },
-    {
-      "title": "IREN Stock Drops After Report Says It’s Behind Microsoft’s AI Spending Delay, As Investors Turn To Earnings",
-      "url": "https://stocktwits.com/news-articles/markets/equity/iren-stock-drops-after-report-says-it-s-behind-microsoft-s-ai-spending-delay-as-investors-turn-to-earnings/cNG15gfR9Ef?.tsrc=rss",
-      "seen_at": "2026-11-06 09:00 KST"
-    }
-  ],
+  "last_digest_at": "2026-11-09 09:00 KST",
+  "pending_news": [],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
-  "last_digest_items": 1
+  "last_digest_items": 17
 }

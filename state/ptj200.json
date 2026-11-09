@@ -1,10 +1,14 @@
 {
-  "updated_at": null,
-  "regime": null,
-  "last_date": null,
-  "last_close": null,
-  "last_sma": null,
+  "updated_at": "2026-11-09T09:10:49+09:00",
+  "regime": 1,
+  "last_date": "2026-11-06",
+  "last_close": 735.29,
+  "last_sma": 730.3825,
   "last_switch": null,
-  "last_status_month": null,
-  "fail": {"runs": 0, "notified_day": null}
+  "last_status_month": "2026-11",
+  "fail": {
+    "runs": 0,
+    "notified_day": null
+  },
+  "seed_at": "2026-11-09T09:10:49+09:00"
 }

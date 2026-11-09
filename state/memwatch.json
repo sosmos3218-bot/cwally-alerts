@@ -66,6 +66,11 @@
     "13294": {
       "date": "2026-11-03",
       "title": "Marvell’s Acquisition of Lumentum to Unite Optical and Electronic Capabilities, Potentially Challenging Broadcom’s Market Leadership, Says TrendForce"
+    },
+    "13297": {
+      "date": "2026-11-06",
+      "title": "Persistently High DRAM Prices Drive Adoption of Reballed Memory, with Smartphone Penetration Expected to Reach 7–9% in 2027, Says TrendForce",
+      "figs": []
     }
   },
   "tf_latest": {
@@ -204,5 +209,5 @@
     "news": 0,
     "cxmt": 0
   },
-  "updated_at": "2026-11-06T09:01:23.228580+09:00"
+  "updated_at": "2026-11-09T09:01:29.859683+09:00"
 }

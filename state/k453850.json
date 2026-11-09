@@ -1,11 +1,11 @@
 {
   "seeded": true,
-  "updated_at": "2026-11-07T02:22:35.950068+09:00",
+  "updated_at": "2026-11-09T09:14:54.066532+09:00",
   "last_day": "2026-11-06",
   "last_fail_day": null,
   "ops_day": null,
   "last": {
-    "y30": 5.25,
+    "y30": 5.260000228881836,
     "y30_day": "2026-11-06",
     "y30_src": "Yahoo ^TYX"
   },

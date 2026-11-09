@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-06T09:10:19.688421+09:00",
-  "last_day": "20261105",
-  "last_close": 63280.0,
-  "max_tier": 2,
+  "updated_at": "2026-11-09T09:10:38.159431+09:00",
+  "last_day": "20261106",
+  "last_close": 59525.0,
+  "max_tier": 3,
   "gate": "wait",
   "gate_op_trn": null,
   "gate_title": null,

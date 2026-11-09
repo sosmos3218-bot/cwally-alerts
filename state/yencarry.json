@@ -4,13 +4,15 @@
   "boj_sent_date": "2026-10-30",
   "boj_press_sent_date": "2026-10-30",
   "weekly_sent_week": "2026-W45",
-  "last_event_key": "달러/엔 158.5 → 158 돌파|원달러 1,343원 → 1,340 이탈",
+  "last_event_key": "달러/엔 158.2 → 158 돌파",
   "last_quotes": {
-    "usdjpy": 157.884,
-    "usdkrw": 1358.68,
+    "usdjpy": 158.196,
+    "usdkrw": 1359.18,
     "jgb30": 3.929
   },
-  "updated_at": "2026-11-06T15:20:49.126098+09:00",
-  "active_levels": {},
+  "updated_at": "2026-11-09T09:00:55.479567+09:00",
+  "active_levels": {
+    "jpy158": true
+  },
   "active_note": "2026-10-30 hysteresis install: 1,340 already sent (last_event_key), seeded active"
 }

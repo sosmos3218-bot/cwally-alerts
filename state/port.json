@@ -1,23 +1,16 @@
 {
-  "updated_at": "2026-11-06 09:00 KST",
+  "updated_at": "2026-11-09 09:00 KST",
   "zone": "BASE",
   "last_alert_key": "BASE",
   "last_sent_key": "BASE",
-  "last_sent_date": "2026-11-03",
+  "last_sent_date": "2026-11-09",
   "last_sent_sig": "BASE",
-  "last_skip_reason": "same_as_last_sent",
-  "fx": 1357.28,
-  "wti": 91.25,
-  "ktb3": 3.669,
-  "ktb10": 3.887,
+  "last_skip_reason": null,
+  "fx": 1358.88,
+  "wti": 90.34,
+  "ktb3": 3.613,
+  "ktb10": 3.853,
   "history": [
-    {
-      "date": "2026-10-28",
-      "fx": 1327.28,
-      "wti": 100.06,
-      "ktb3": 3.758,
-      "ktb10": 4.032
-    },
     {
       "date": "2026-10-29",
       "fx": 1340.88,
@@ -66,6 +59,13 @@
       "wti": 91.25,
       "ktb3": 3.669,
       "ktb10": 3.887
+    },
+    {
+      "date": "2026-11-09",
+      "fx": 1358.88,
+      "wti": 90.34,
+      "ktb3": 3.613,
+      "ktb10": 3.853
     }
   ]
 }

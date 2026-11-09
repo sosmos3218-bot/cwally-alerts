@@ -3,5 +3,6 @@
   "call_sent": false,
   "missing_sent": false,
   "fail_notified": false,
-  "attempts": []
+  "attempts": [],
+  "updated_at": "2026-11-09T09:10:49.705197+09:00"
 }

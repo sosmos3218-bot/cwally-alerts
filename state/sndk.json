@@ -3,6 +3,46 @@
   "sndk_pre_notified": true,
   "sndk_post_notified": true,
   "fail_notified": true,
-  "last_phase": "sndk_post",
-  "updated_at": "2026-11-06T09:01:29.420009+09:00"
+  "last_phase": "switch3",
+  "updated_at": "2026-11-09T09:01:37.084448+09:00",
+  "switch3_verdict": "ON",
+  "switch3_week_key": "2026-W46",
+  "switch3_last_result": {
+    "verdict": "ON",
+    "valid_count": 3,
+    "pass_count": 3,
+    "min_valid": 2,
+    "min_pass_for_on": 2,
+    "conditions": [
+      {
+        "id": "rdimm_lead",
+        "label": "RDIMM 리드타임",
+        "valid": true,
+        "pass": true,
+        "detail": "19주 (기준 16주 이상). asof 2026-11-02. 출처: TrendForce Weekly Radar 008 (Very Tight, esp. 32/64GB RDIMM)"
+      },
+      {
+        "id": "ddr5_ma4",
+        "label": "DDR5 현물 4주 이동평균 +1.0% 이상",
+        "valid": true,
+        "pass": true,
+        "detail": "주간평균 2026-11-02 $61.056 (전주 $61.420, w/w -0.59%). MA4 60.863 vs 직전창 60.201 (+1.10%, 기준 +1.0% 이상) (통과). 당일 세션평균 $60.167.",
+        "ma4_now": 60.8634,
+        "ma4_prev": 60.2007,
+        "latest_weekly": 61.0557,
+        "latest_label": "2026-11-02",
+        "daily_session_avg": 60.167,
+        "ma4_min_rise_pct": 1.0,
+        "ma4_rise_pct": 1.1009
+      },
+      {
+        "id": "hbm_or_contract",
+        "label": "HBM 품절 또는 서버 계약가",
+        "valid": true,
+        "pass": true,
+        "detail": "HBM 품절 플래그 true (asof 2026-11-01); 서버 계약가 가이던스 +12.5% QoQ (기준 +10%)"
+      }
+    ]
+  },
+  "switch3_last_alerted_verdict": "ON"
 }

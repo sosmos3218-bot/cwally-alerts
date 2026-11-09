@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-06T09:08:20.275873+09:00",
-  "last_price": 166865.0,
+  "updated_at": "2026-11-09T09:08:33.859906+09:00",
+  "last_price": 161300.0,
   "last_pe": null,
-  "zone": "mid",
-  "last_weekly": "2026-11-02",
+  "zone": "up_price",
+  "last_weekly": "2026-11-09",
   "fetch_fail_date": null
 }
