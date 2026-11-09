@@ -787,7 +787,7 @@ def send(cfg: dict, kind: str, title: str, lines: list[str], prio: int, dry: boo
 
 def base_lines(cfg: dict, now: datetime, what: str, detail: str, source: str) -> list[str]:
     bl = cfg.get("baseline") or {}
-    return [
+    lines = [
         f"이게 뭐 알림: 우리금융지주({TICKER}) 4Q26/FY2026 감시 신호입니다. {what} 투자 권유가 아닙니다.",
         (f"지금 결과/상태: {detail}. 기준 맥락: 3Q26 CET1 {bl.get('q3_cet1_pct')}%"
          f"(일회성 제외 {bl.get('q3_cet1_ex_oneoffs')}), 회사 연말 전망 {bl.get('year_end_outlook_pct')}%, "
@@ -796,6 +796,10 @@ def base_lines(cfg: dict, now: datetime, what: str, detail: str, source: str) ->
         "지금 할 일: 공시/IR 원문을 확인하고 포지션을 재검토하세요. 이 알림은 모니터링 신호입니다.",
         "하지 말 것: 파싱 실패나 언론 추정을 확정 실적으로 보기. 투자 권유 아님.",
     ]
+    note = (cfg.get("shinhan_compare_note") or "").strip()
+    if note:
+        lines.insert(-1, f"신한 비교: {note}")
+    return lines
 
 
 # ================================================================ run
