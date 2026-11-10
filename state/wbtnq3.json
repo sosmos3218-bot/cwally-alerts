@@ -1,7 +1,7 @@
 {
-  "final_notified": false,
-  "verdict": null,
-  "mau_missing": null,
+  "final_notified": true,
+  "verdict": "보유",
+  "mau_missing": false,
   "supplement_notified": false,
   "date_notified": false,
   "release_date": null,
@@ -9,12 +9,23 @@
   "fail_notified": false,
   "empty_final_notified": false,
   "parsed": {
-    "published": false
+    "is_quarter": true,
+    "published": true,
+    "rev_m": 362.775,
+    "rev_prev_m": 378.041,
+    "cc_growth": 0.1560677281035705,
+    "ebitda_m": 2.206,
+    "margin": 0.6,
+    "jp_cc_growth": -11.621098565243704,
+    "jp_mpu_growth": -13.09408025582296,
+    "jp_rev_growth": -17.8812707502056,
+    "global_mpu_growth": -3.225039154547682
   },
   "tenq": {
-    "mau_m": null,
-    "mau_growth": null,
-    "mau_is_period": false
+    "mau_m": 159.6,
+    "mau_growth": 2.7,
+    "mau_is_period": true
   },
-  "updated_at": "2026-11-07T12:10:36.917843+09:00"
+  "updated_at": "2026-11-10T12:10:33.096031+09:00",
+  "met": 0
 }
