@@ -54,16 +54,16 @@
       "ma4_min_rise_pct": 1.0
     },
     "rdimm_lead": {
-      "weeks": 19,
+      "weeks": 18,
       "min_weeks": 16,
-      "asof": "2026-11-02",
-      "source": "TrendForce Weekly Radar 008 (Very Tight, esp. 32/64GB RDIMM)",
+      "asof": "2026-11-09",
+      "source": "TrendForce Weekly Radar 009 (DRAM lead time 19->18wk, Very Tight; overall DRAM, RDIMM proxy) https://insights.trendforce.com/p/weekly-radar-009",
       "max_age_days": 14
     },
     "hbm_sold_out": {
       "value": true,
-      "asof": "2026-11-01",
-      "source": "Samsung 3Q call 2027 HBM sold out; SK hynix DRAM+HBM sold out through 2029 (restated Korean press 11/01)",
+      "asof": "2026-11-10",
+      "source": "Samsung 3Q call 2027 HBM sold out; SK hynix DRAM+HBM effectively sold out through 2029 (restated Hankook Ilbo 11/10) https://www.hankookilbo.com/news/article/A2026111015030001446",
       "max_age_days": 21
     },
     "server_contract": {
