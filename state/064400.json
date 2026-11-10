@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-10T05:38:07.476237+09:00",
+  "updated_at": "2026-11-10T19:02:09.130393+09:00",
   "seeded": true,
-  "last_day": "2026-11-09",
-  "last_close": 77300.0,
+  "last_day": "2026-11-10",
+  "last_close": 80100.0,
   "last_fail_day": null,
   "lines": {
     "buy3": {
@@ -31,12 +31,12 @@
       "fired_day": "migrated"
     },
     "z80_dn": {
-      "armed": false,
+      "armed": true,
       "fired_day": "migrated"
     },
     "z80_up": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-10"
     },
     "z90_dn": {
       "armed": false,

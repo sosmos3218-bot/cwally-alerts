@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-10T15:21:27.094262+09:00",
+  "updated_at": "2026-11-10T19:02:11.464183+09:00",
   "seeded": true,
-  "last_day": "2026-11-09",
-  "last_close": 86700.0,
+  "last_day": "2026-11-10",
+  "last_close": 87400.0,
   "last_fail_day": null,
   "lines": {
     "stop": {
