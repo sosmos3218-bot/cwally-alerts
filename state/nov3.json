@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10 09:06 KST",
+  "updated_at": "2026-11-10 15:21 KST",
   "fired": {
     "spx": false,
     "kospi": true,
@@ -8,7 +8,7 @@
   },
   "last": {
     "spx": 7549.94,
-    "kospi": 5018.85,
+    "kospi": 5255.74,
     "sox": 10033.933,
     "ust10": 4.864
   },
