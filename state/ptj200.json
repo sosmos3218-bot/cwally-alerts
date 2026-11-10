@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-11-09T09:10:49+09:00",
+  "updated_at": "2026-11-10T09:09:58+09:00",
   "regime": 1,
-  "last_date": "2026-11-06",
-  "last_close": 735.29,
-  "last_sma": 730.3825,
+  "last_date": "2026-11-09",
+  "last_close": 752.69,
+  "last_sma": 730.6998,
   "last_switch": null,
   "last_status_month": "2026-11",
   "fail": {

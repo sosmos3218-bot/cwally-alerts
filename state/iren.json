@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-09 09:00 KST",
-  "price": 21.64,
+  "updated_at": "2026-11-10 09:00 KST",
+  "price": 21.41,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24",
@@ -187,10 +187,40 @@
     "https://www.tikr.com/blog/iren-ceo-old-nvidia-h100s-just-recontracted-at-double-the-original-contract-price?ref=yahoofinance&tlnk=yf-261106-j3qqpw48&.tsrc=rss",
     "https://finance.yahoo.com/technology/articles/microsoft-msft-pulling-back-key-031936381.html?.tsrc=rss",
     "https://247wallst.com/investing/2026/11/06/applied-digital-is-still-down-39-in-the-past-month-is-apld-stock-hopeless-or-ready-for-a-rebound/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/record-revenue-52-week-lows-232539659.html?.tsrc=rss"
+    "https://finance.yahoo.com/technology/ai/articles/record-revenue-52-week-lows-232539659.html?.tsrc=rss",
+    "https://www.tikr.com/blog/could-iren-actually-climb-117-or-is-cantor-fitzgerald-totally-wrong?ref=yahoofinance&tlnk=yf-261109-4cgmr9mq&.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/why-iren-iren-exiting-bitcoin-180842605.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-could-70-undervalued-172050899.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/irens-4b-revenue-goal-delayed-152100248.html?.tsrc=rss",
+    "https://blockspace.media/insight/cantor-cuts-iren-price-target/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/09/iren-falls-5-after-fridays-20-surge-as-ai-lending-worries-mount-terawulf-and-applied-digital-rise-2/?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-rises-5-nebius-up-7-as-ai-stocks-rebound-ahead-of-earnings-levered-trades-to-ai?ref=yahoofinance&tlnk=yf-261109-899fm45r&.tsrc=rss",
+    "https://finance.yahoo.com/m/924b4b61-b764-3fb4-8040-388cd6dcccc3/the-stock-market-doesn%E2%80%99t.html?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-borrowed-at-9-earlier-this-year-its-debt-now-yields-15-going-into-tuesdays-report?ref=yahoofinancedividend&tlnk=yf-261109-463m6r78&.tsrc=rss"
   ],
   "last_digest_at": "2026-11-09 09:00 KST",
-  "pending_news": [],
+  "pending_news": [
+    {
+      "title": "Why Is IREN (IREN) Exiting Bitcoin Mining To Focus On AI Infrastructure?",
+      "url": "https://finance.yahoo.com/technology/ai/articles/why-iren-iren-exiting-bitcoin-180842605.html?.tsrc=rss",
+      "seen_at": "2026-11-10 09:00 KST"
+    },
+    {
+      "title": "IREN's $4B Revenue Goal Delayed: Is the Stock Losing Its Appeal?",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/irens-4b-revenue-goal-delayed-152100248.html?.tsrc=rss",
+      "seen_at": "2026-11-10 09:00 KST"
+    },
+    {
+      "title": "Cantor cuts IREN price target to $47 from $99 as Microsoft deployment slips",
+      "url": "https://blockspace.media/insight/cantor-cuts-iren-price-target/?.tsrc=rss",
+      "seen_at": "2026-11-10 09:00 KST"
+    },
+    {
+      "title": "The Stock Market Doesn’t Understand the Nvidia Spy Scandal",
+      "url": "https://finance.yahoo.com/m/924b4b61-b764-3fb4-8040-388cd6dcccc3/the-stock-market-doesn%E2%80%99t.html?.tsrc=rss",
+      "seen_at": "2026-11-10 09:00 KST"
+    }
+  ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
   "last_digest_items": 17
 }

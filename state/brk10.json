@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-09 09:00 KST",
-  "price_zone": "BUY1",
+  "updated_at": "2026-11-10 09:00 KST",
+  "price_zone": "BETWEEN",
   "fx_zone": "FX_BASE",
-  "price": 14640.0,
-  "fx": 1358.88,
+  "price": 14740.0,
+  "fx": 1343.88,
   "last_alert_key": "BUY1"
 }
