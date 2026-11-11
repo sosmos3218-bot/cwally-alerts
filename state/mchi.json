@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-11-10T09:09:57.512076+09:00",
+  "updated_at": "2026-11-11T09:10:09.078632+09:00",
   "breakdown_armed": true,
   "reclaim_armed": true,
   "above_ma": false,
-  "rs_regime": "lead",
+  "rs_regime": "neutral",
   "holding_alerted": {},
-  "last_bar_date": "2026-11-09",
-  "last_close": 51.52000045776367,
-  "last_ma": 55.38,
-  "last_rs_pct": 2.06,
+  "last_bar_date": "2026-11-10",
+  "last_close": 51.099998474121094,
+  "last_ma": 55.32,
+  "last_rs_pct": 1.62,
   "fetch_fail_date": null
 }

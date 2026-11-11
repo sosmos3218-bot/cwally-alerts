@@ -1,10 +1,9 @@
 {
-  "updated_at": "2026-11-10 09:00 KST",
-  "price": 21.41,
+  "updated_at": "2026-11-11 09:00 KST",
+  "price": 19.73,
   "tag": "REVIEW",
   "last_event_ids": [
-    "h24",
-    "midterm"
+    "h24"
   ],
   "seen_ids": [
     "https://finance.yahoo.com/m/e7396a5f-59db-30ad-b0ed-49dbca81119f/why-gartner-ai-outlook-sent.html?.tsrc=rss",
@@ -196,7 +195,17 @@
     "https://247wallst.com/investing/2026/11/09/iren-falls-5-after-fridays-20-surge-as-ai-lending-worries-mount-terawulf-and-applied-digital-rise-2/?.tsrc=rss",
     "https://www.tikr.com/blog/coreweave-rises-5-nebius-up-7-as-ai-stocks-rebound-ahead-of-earnings-levered-trades-to-ai?ref=yahoofinance&tlnk=yf-261109-899fm45r&.tsrc=rss",
     "https://finance.yahoo.com/m/924b4b61-b764-3fb4-8040-388cd6dcccc3/the-stock-market-doesn%E2%80%99t.html?.tsrc=rss",
-    "https://www.tikr.com/blog/coreweave-borrowed-at-9-earlier-this-year-its-debt-now-yields-15-going-into-tuesdays-report?ref=yahoofinancedividend&tlnk=yf-261109-463m6r78&.tsrc=rss"
+    "https://www.tikr.com/blog/coreweave-borrowed-at-9-earlier-this-year-its-debt-now-yields-15-going-into-tuesdays-report?ref=yahoofinancedividend&tlnk=yf-261109-463m6r78&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-stock-falls-even-jpmorgan-224457686.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-stocks-fall-3-41-191112639.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/10/iren-sinks-10-as-analyst-target-cuts-pile-up-after-microsoft-delay-cipher-digital-falls-6-terawulf-slides-2/?.tsrc=rss",
+    "https://www.tikr.com/blog/jpmorgan-cut-its-iren-target-to-55-it-still-sees-148-upside?ref=yahoofinance&tlnk=yf-261110-7vwcm6xp&.tsrc=rss",
+    "https://blockspace.media/insight/goldman-cuts-iren-price-target/?.tsrc=rss",
+    "https://blockspace.media/insight/iren-stock-205-percent-upside/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-stock-climbs-6-after-hours-as-132-b-revenue-backlog-reinforces-ai-compute-demand-nbis-iren-tick-higher/cNGuwW0R9JL?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-rallies-ahead-of-quarterly-report-wells-fargo-calls-core-weave-highest-quality-firm-among-neocloud-peers-sees-upside/cNGu4iQR97k?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/3-ai-stocks-revenue-growth-191330590.html?.tsrc=rss",
+    "https://www.tikr.com/blog/microsoft-dumps-oracle-good-news-those-old-chips-renew-at-a-20-premium?ref=yahoofinance&tlnk=yf-261110-hp4jrccf&.tsrc=rss"
   ],
   "last_digest_at": "2026-11-09 09:00 KST",
   "pending_news": [
@@ -219,6 +228,21 @@
       "title": "The Stock Market Doesn’t Understand the Nvidia Spy Scandal",
       "url": "https://finance.yahoo.com/m/924b4b61-b764-3fb4-8040-388cd6dcccc3/the-stock-market-doesn%E2%80%99t.html?.tsrc=rss",
       "seen_at": "2026-11-10 09:00 KST"
+    },
+    {
+      "title": "IREN Stocks Fall 3.41% as Rating Cut Follows Slip in $4 Billion ARR Target",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/iren-stocks-fall-3-41-191112639.html?.tsrc=rss",
+      "seen_at": "2026-11-11 09:00 KST"
+    },
+    {
+      "title": "IREN Sinks 10% as Analyst Target Cuts Pile Up After Microsoft Delay; Cipher Digital Falls 6%, TeraWulf Slides 2%",
+      "url": "https://247wallst.com/investing/2026/11/10/iren-sinks-10-as-analyst-target-cuts-pile-up-after-microsoft-delay-cipher-digital-falls-6-terawulf-slides-2/?.tsrc=rss",
+      "seen_at": "2026-11-11 09:00 KST"
+    },
+    {
+      "title": "Microsoft Dumps Oracle. Good News: Those Old Chips Renew at a “20% Premium”",
+      "url": "https://www.tikr.com/blog/microsoft-dumps-oracle-good-news-those-old-chips-renew-at-a-20-premium?ref=yahoofinance&tlnk=yf-261110-hp4jrccf&.tsrc=rss",
+      "seen_at": "2026-11-11 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
