@@ -2,13 +2,13 @@
   "scaleup": {
     "armed": true,
     "last_bar": {
-      "day": "2026-11-10",
-      "close": 814.31
+      "day": "2026-11-11",
+      "close": 838.32
     },
     "last_sent": null,
     "last_fail_day": null,
     "seed_note": "2026-11-05 seed (t56u): armed, 11/5 close 837.78 below SMA20 903.85, vol20 62.1%; no spurious fire.",
-    "updated_at": "2026-11-10 15:40 KST"
+    "updated_at": "2026-11-11 15:41 KST"
   },
   "tranche": {
     "armed": {
@@ -18,8 +18,8 @@
       "t4": true
     },
     "last_bar": {
-      "day": "2026-11-10",
-      "close": 5239.13
+      "day": "2026-11-11",
+      "close": 5375.36
     },
     "last_sent": {
       "at": "2026-11-09 15:41 KST",
@@ -30,7 +30,7 @@
     },
     "last_fail_day": null,
     "seed_note": "2026-11-05 seed (t55u): all 4 tranches armed, baseline KOSPI 11/5 close 5,383.80 (above every level, so nothing fires on the first run).",
-    "updated_at": "2026-11-10 15:40 KST"
+    "updated_at": "2026-11-11 15:41 KST"
   },
   "retired_lines_state": {
     "armed": {
