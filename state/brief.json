@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-10T08:09:25.599397+09:00",
+  "updated_at": "2026-11-11T19:38:39.868451+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -153,6 +153,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-10T08:09:25.599397+09:00"
+    },
+    "20261111-sntholdings-q3div.json#a82f3a63ba3f321c": {
+      "file": "20261111-sntholdings-q3div.json",
+      "title": "[BRIEF] 036530 SNT홀딩스 3분기 배당 350원 | 철회 조건",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-11T19:38:39.868451+09:00"
     }
   },
   "rejected": {},
