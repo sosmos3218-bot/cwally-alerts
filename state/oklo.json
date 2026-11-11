@@ -5,8 +5,10 @@
     "2026-11-11"
   ],
   "fail_dates": [],
-  "verify_dates": [],
-  "updated_at": "2026-11-11T09:08:03.184443+09:00",
+  "verify_dates": [
+    "2026-11-12"
+  ],
+  "updated_at": "2026-11-12T08:20:28.542951+09:00",
   "last_price": 25.09,
   "final_notified": true,
   "nov11_class": "원문 없음",
@@ -18,5 +20,7 @@
     "atm_gross_bil": null,
     "aurora": "확인 불가"
   },
-  "nov11_class_date": "2026-11-11"
+  "nov11_class_date": "2026-11-11",
+  "last_verify_class": "체크리스트 채점",
+  "last_doc_url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
 }
