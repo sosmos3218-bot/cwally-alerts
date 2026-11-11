@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W46",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-11 02:39 KST",
+  "updated_at": "2026-11-11 19:02 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -18,7 +18,9 @@
           "u:www.trendforce.com/presscenter/news/20261029-13284.html",
           "t:ai inference drives cpu and ddr5 demand with high capacitance mlcc shortages expected to persist through 1h27 says trendforce",
           "u:www.trendforce.com/presscenter/news/20261022-13279.html",
-          "t:server cpu shipments projected to grow over 40% yoy in 2027 with arm based products continuing to gain market share says trendforce"
+          "t:server cpu shipments projected to grow over 40% yoy in 2027 with arm based products continuing to gain market share says trendforce",
+          "u:www.trendforce.com/presscenter/news/20261111-13303.html",
+          "t:mounting finished goods inventories prompt some pc oems to adjust memory procurement plans for 2027 says trendforce"
         ],
         "claims": {},
         "ops_day": null,

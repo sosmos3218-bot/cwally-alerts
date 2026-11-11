@@ -1,27 +1,27 @@
 {
   "armed": {
     "l25000": false,
-    "l22000": false,
+    "l22000": true,
     "l20700": true,
     "ma20": true
   },
-  "last_date": "2026-11-10",
+  "last_date": "2026-11-11",
   "last_close": [
-    "2026-11-10",
-    22025.0
+    "2026-11-11",
+    22765.0
   ],
-  "last_volume": 4233039.0,
-  "ma20": 25717.5,
-  "ma200": 36236.7,
+  "last_volume": 3926830.0,
+  "ma20": 25321.5,
+  "ma200": 36218.4,
   "support_armed": true,
-  "above_streak": 5,
+  "above_streak": 6,
   "low_armed": true,
-  "recovery_sent": null,
-  "updated_at": "2026-11-11 02:40 KST",
+  "recovery_sent": "2026-11-11",
+  "updated_at": "2026-11-11 19:03 KST",
   "reminders_sent": {},
   "last_sent": {
-    "at": "2026-11-06 15:41 KST",
-    "title": "[487240] 487240 종가 20,490 | 추가 매수 중단선 (52주 저점 -5%)"
+    "at": "2026-11-11 19:03 KST",
+    "title": "[487240] 487240 종가 22,765 | 22,680원 회복 (11/5 종가)"
   },
   "merge_note": "t119u: kept ladder armed from k487240; imported support_armed/above_streak/low_armed/recovery_sent from kr487240 seed 11/6 close 20490."
 }
