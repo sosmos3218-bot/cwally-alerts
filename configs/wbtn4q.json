@@ -1,0 +1,28 @@
+{
+  "name": "wbtn4q",
+  "title_prefix": "[WBTN4Q]",
+  "ticker": "WBTN",
+  "display": "웹툰엔터테인먼트",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "event_year": 2027,
+  "window_start_kst": "2027-02-01 00:00",
+  "ends_kst": "2027-03-15 23:59",
+  "ends_note": "2027-03-15 이후 조용히 종료 (연도 가드, 2028 재실행 없음)",
+  "cik": "0001997859",
+  "thresholds": {
+    "cc_growth_min": 9.0,
+    "japan_cc_max_decline": -11.4,
+    "close_usd": 8.5
+  },
+  "sources": {
+    "ir_news": "https://ir.webtoon.com/news-releases/",
+    "globenewswire_rss": [
+      "https://www.globenewswire.com/RssFeed/ticker/WBTN"
+    ],
+    "sec": "https://data.sec.gov/submissions/CIK0001997859.json",
+    "quote": "https://query1.finance.yahoo.com/v8/finance/chart/WBTN?interval=1d&range=2mo&includePrePost=false"
+  },
+  "schedule_note": "공식 4Q26 발표일 미공지(2026-11-12 확인, Q3는 2026-11-09 ET 장 마감 후). 과거 4분기는 2025-03-03, 2024-02-25. 시장 추정은 2027-03-02 장 마감 후이나 확정 아님. 새 cron 없이 평일 09:00 KST morning 슬롯(미국 정규장 마감 다음 아침)에 부착. 창 2027-02-01~2027-03-15, event_year=2027 가드로 2028년 2월 morning 은 침묵.",
+  "explain": "WBTN 4분기 2026 실적 보도자료가 나온 뒤, 그다음 미국 정규장 종가로 고정환율 매출 성장 9%, 일본 고정환율 -11.4%, 종가 8.5달러를 대조해 축소 여부를 한 번만 판정합니다."
+}
