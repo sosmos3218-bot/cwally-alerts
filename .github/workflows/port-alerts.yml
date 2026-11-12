@@ -1961,6 +1961,7 @@ jobs:
           PICK_JOB: ${{ steps.pick.outputs.job }}
         run: |
           MODE=auto
+          rc=0
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/figpx_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/figpx_monitor.py "$MODE" || rc=1
