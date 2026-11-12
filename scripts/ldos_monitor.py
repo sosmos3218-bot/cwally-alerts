@@ -4,7 +4,7 @@
 평일 09:00 KST (port-alerts morning 슬롯에 부착). Yahoo LDOS 일봉, 뉴욕 16:00 이후 끝난 날만(전일 미국 정규장 종가).
 선(상태가 바뀔 때만 1번, 재무장 완충):
   up152            : 종가 >= 152    -> p3 컨센서스 목표가 도달, 추격 보류 (146 미만 재무장)
-  dn130            : 종가 <= 130    -> p3 관심 가격 검토 (134 이상 재무장)
+  dn127            : 종가 <= 127    -> p3 관심 가격 검토 (131 이상 재무장)
   rebound_giveback : 종가 <= 117.74 -> p3 반등분 전액 반납, 논리 재점검 (122.45 이상 재무장). 경고라 매수 문구 없음.
 실적: 2027-02-01~03-15 창에서 SEC EDGAR 8-K Item 2.02 가 보이면 다음 09:00 에 p3 1번, 창 끝까지 없으면 '직접 확인' 1번.
 같은 실행에서 걸린 것은 한 건. 첫 실행은 조용히 시드. 조회 실패는 3회 연속일 때 cwally-ops 하루 1번. ends_kst 뒤 조용히 종료.
@@ -68,6 +68,15 @@ def sec_202(cfg: dict) -> list[dict]:
     return out
 
 
+def migrate_armed(armed: dict) -> dict:
+    """Rename legacy dn130 key after the 127 watch-line change; no extra send."""
+    if "dn130" in armed and "dn127" not in armed:
+        armed["dn127"] = armed.pop("dn130")
+    else:
+        armed.pop("dn130", None)
+    return armed
+
+
 def judge(cfg: dict, armed: dict, p: float) -> list[dict]:
     fired = []
     for ln in cfg["lines"]:
@@ -89,7 +98,7 @@ def line_text(ln: dict) -> tuple[str, str]:
     if k == "up152":
         return ("컨센서스 평균 목표가(약 $152)까지의 업사이드를 다 썼다는 뜻. 추격 보류, 증권사 목표가 상향(가이던스 추가 상향, 대형 수주)이 따라오는지 기다리세요.",
                 "목표가 도달을 추가 상승 신호로 읽기, 추격.")
-    if k == "dn130":
+    if k == "dn127":
         return ("관심 가격 검토(fwd PER 약 10배대). 확인: (1) 가이던스(EPS 12.50~12.70) 유지 여부, (2) Health 부문 추세, (3) 정부 예산, 셧다운 뉴스, "
                 "(4) book-to-bill 1 이상. 자금: 미보유, 아직 정한 매수 계획(금액, 비중) 없음, 계획부터 정하기.",
                 "계획 없이 한 번에 사기, 하루 하락을 바닥으로 읽기.")
@@ -109,7 +118,7 @@ def message(cfg: dict, fired: list[dict], day: str, p: float, stamp: str) -> tup
         f"지금 결과/상태: {day} 종가 {usd(p)}(Yahoo, 뉴욕 정규장). 걸린 선: {', '.join(x['title'] for x in shown)}. "
         f"참고 11/2 종가 $144.16, 컨센서스 목표가 약 $152, 2026 EPS 가이던스 12.50~12.70.",
         f"지금 할 일: {todo}",
-        "나중에: 같은 선은 재무장 뒤에만 다시 옵니다($152 선은 $146 미만, $130 선은 $134 이상, $117.74 선은 $122.45 이상). "
+        "나중에: 같은 선은 재무장 뒤에만 다시 옵니다($152 선은 $146 미만, $127 선은 $131 이상, $117.74 선은 $122.45 이상). "
         f"4분기 실적(2027-02 중순 추정)은 8-K 로 확인 뒤 다음 날 점검 알림. 종료 {cfg['ends_kst'][:10]}.",
         "익절/줄일 때: 미보유, 해당 없음.",
         f"하지 말 것: {dont}",
@@ -132,7 +141,7 @@ def earn_message(cfg: dict, filing: dict | None, st: dict, stamp: str) -> tuple[
         f"{stamp} | LDOS | Leidos Holdings",
         f"지금 결과/상태: {state} 최근 종가 {lc[0]} {usd(lc[1])}.",
         f"지금 할 일: 실적 자료와 컨콜에서 확인: {checks}.",
-        "나중에: 가격 선($152, $130, $117.74)은 그대로 상태가 바뀔 때만 옵니다. 결과로 관심 유지 여부와 선 조정을 정하세요.",
+        "나중에: 가격 선($152, $127, $117.74)은 그대로 상태가 바뀔 때만 옵니다. 결과로 관심 유지 여부와 선 조정을 정하세요.",
         "익절/줄일 때: 미보유, 해당 없음.",
         "하지 말 것: 헤드라인 EPS 하나로 판단, 실적 당일 변동 추격.",
     ])
@@ -151,7 +160,7 @@ def run(mode: str, now: datetime, cfg: dict, io: dict | None = None) -> tuple[li
         if not rows:
             raise ValueError("확정 종가 없음")
         day, p = rows[-1]
-        armed = st.setdefault("armed", {})
+        armed = migrate_armed(st.setdefault("armed", {}))
         last = st.get("last_date")
         fired: list[dict] = []
         for d, c in rows:
@@ -228,22 +237,26 @@ def selftest(cfg: dict) -> int:
         print(("ok  " if ok else "FAIL"), label, "" if ok else f"got {got!r} want {want!r}")
 
     a: dict = {}
-    check("seed 144.16 silent, all armed", (judge(cfg, a, 144.16), a), ([], {"up152": True, "dn130": True, "rebound_giveback": True}))
+    check("seed 144.16 silent, all armed", (judge(cfg, a, 144.16), a), ([], {"up152": True, "dn127": True, "rebound_giveback": True}))
+    legacy = {"up152": True, "dn130": True, "rebound_giveback": True}
+    check("migrate dn130 -> dn127", migrate_armed(legacy), {"up152": True, "dn127": True, "rebound_giveback": True})
+    a_old = migrate_armed({"up152": True, "dn130": True, "rebound_giveback": True})
+    check("133.89 does not fire new 127 line", (judge(cfg, a_old, 133.89), a_old["dn127"]), ([], True))
     a2: dict = {}
     judge(cfg, a2, 153.0)
     check("seed above 152 -> up152 seeded as fired (disarmed)", a2["up152"], False)
-    walk = [150, 152, 151, 146.5, 145.99, 152.1, 131, 130, 133.9, 134, 129.5, 117.74, 122.4, 117.0, 122.45, 117.7]
-    a = {"up152": True, "dn130": True, "rebound_giveback": True}
+    walk = [150, 152, 151, 146.5, 145.99, 152.1, 128, 127, 130.9, 131, 126.5, 117.74, 122.4, 117.0, 122.45, 117.7]
+    a = {"up152": True, "dn127": True, "rebound_giveback": True}
     got = [[x["key"] for x in judge(cfg, a, p)] for p in walk]
-    check("walk with buffers", got, [[], ["up152"], [], [], [], ["up152"], [], ["dn130"], [], [], ["dn130"], ["rebound_giveback"], [], [], [], ["rebound_giveback"]])
+    check("walk with buffers", got, [[], ["up152"], [], [], [], ["up152"], [], ["dn127"], [], [], ["dn127"], ["rebound_giveback"], [], [], [], ["rebound_giveback"]])
     L = {x["key"]: x for x in cfg["lines"]}
     t1, b1, p1 = message(cfg, [L["up152"]], "2026-11-10", 152.3, "s")
-    t2, b2, p2 = message(cfg, [L["dn130"]], "2026-12-01", 129.0, "s")
-    t3, b3, p3 = message(cfg, [L["dn130"], L["rebound_giveback"]], "2026-12-02", 117.0, "s")
+    t2, b2, p2 = message(cfg, [L["dn127"]], "2026-12-01", 126.0, "s")
+    t3, b3, p3 = message(cfg, [L["dn127"], L["rebound_giveback"]], "2026-12-02", 117.0, "s")
     check("titles", (t1, t2, t3), ("[LDOS] LDOS 종가 $152.30 | 컨센서스 목표가 도달, 추격 보류",
-                                   "[LDOS] LDOS 종가 $129.00 | 관심 가격 검토 (fwd PER 약 10배대)",
+                                   "[LDOS] LDOS 종가 $126.00 | 관심 가격 검토 (fwd PER 약 10배대)",
                                    "[LDOS] LDOS 종가 $117.00 | 반등분 전액 반납, 논리 재점검"))
-    check("dn130 checklist + funding note", all(k in b2 for k in ("가이던스", "Health", "셧다운", "book-to-bill", "미보유", "매수 계획")), True)
+    check("dn127 checklist + funding note", all(k in b2 for k in ("가이던스", "Health", "셧다운", "book-to-bill", "미보유", "매수 계획")), True)
     check("warning has no buy wording", [w for w in BUY_WORDS if w in t3 + b3], [])
     allt = t1 + b1 + t2 + b2 + t3 + b3
     check("no dot/dash", any(ch in allt for ch in "\u00b7\u2014"), False)
@@ -256,9 +269,9 @@ def selftest(cfg: dict) -> int:
     io["state"] = st
     out, st = run("dry", datetime(2026, 11, 4, 9, 0, tzinfo=KST), cfg, io)
     check("11/3 151 no fire", out, [])
-    rows.append(("2026-11-04", 129.9))
+    rows.append(("2026-11-04", 126.9))
     out, st = run("dry", datetime(2026, 11, 5, 9, 0, tzinfo=KST), cfg, io)
-    check("drop to 129.9 fires dn130 once", [o[0] for o in out], ["[LDOS] LDOS 종가 $129.90 | 관심 가격 검토 (fwd PER 약 10배대)"])
+    check("drop to 126.9 fires dn127 once", [o[0] for o in out], ["[LDOS] LDOS 종가 $126.90 | 관심 가격 검토 (fwd PER 약 10배대)"])
     out, st = run("dry", datetime(2026, 11, 5, 9, 5, tzinfo=KST), cfg, io)
     check("re-run same day silent", out, [])
     io["sec"] = lambda: [{"date": "2027-02-16", "acc": "0001336920-27-000010", "doc": "ldos-20270216.htm"},
@@ -293,7 +306,7 @@ def confirm(cfg: dict) -> int:
         "이게 뭐 알림: Leidos(LDOS) 관심 종목 종가 선 알림 설치 확인입니다. 매매 신호 아님.",
         f"{datetime.now(KST).strftime('%Y-%m-%d %H:%M KST')} | LDOS | Leidos Holdings",
         f"지금 결과/상태: 최근 확정 종가 {lc[0]} {usd(lc[1])}. 모든 선 무장, 지금은 발송 대상 없음. 3분기 실적 반영 11/3 종가는 내일 09:00 첫 판정.",
-        "지금 할 일: 없음. 평일 09:00 KST 에 전일 미국 종가로 $152 이상(목표가 도달, 추격 보류), $130 이하(관심 가격 점검), "
+        "지금 할 일: 없음. 평일 09:00 KST 에 전일 미국 종가로 $152 이상(목표가 도달, 추격 보류), $127 이하(관심 가격 점검), "
         "$117.74 이하(반등분 반납, 논리 재점검)를 상태가 바뀔 때만 봅니다.",
         f"나중에: 4분기 FY2026 실적(2027-02 중순 추정)은 SEC 8-K 로 확인 뒤 다음 날 점검 알림. 종료 {cfg['ends_kst'][:10]}.",
         "익절/줄일 때: 미보유, 해당 없음.",

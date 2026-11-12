@@ -28,11 +28,11 @@
       "title": "컨센서스 목표가 도달, 추격 보류"
     },
     {
-      "key": "dn130",
+      "key": "dn127",
       "op": "le",
-      "level": 130.0,
+      "level": 127.0,
       "rearm_op": "ge",
-      "rearm": 134.0,
+      "rearm": 131.0,
       "priority": 3,
       "warn": false,
       "title": "관심 가격 검토 (fwd PER 약 10배대)"

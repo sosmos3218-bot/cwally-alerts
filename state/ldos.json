@@ -1,8 +1,8 @@
 {
   "armed": {
     "up152": true,
-    "dn130": true,
-    "rebound_giveback": true
+    "rebound_giveback": true,
+    "dn127": true
   },
   "last_date": "2026-11-11",
   "last_close": [
