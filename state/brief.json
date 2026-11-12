@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-11T19:38:39.868451+09:00",
+  "updated_at": "2026-11-12T18:42:55.478469+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -162,6 +162,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-11T19:38:39.868451+09:00"
+    },
+    "20261112-020560-q3.json#a7e3f132c9086966": {
+      "file": "20261112-020560-q3.json",
+      "title": "[BRIEF] 020560 아시아나항공 3분기 | 회피 유지",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-12T18:42:55.478469+09:00"
     }
   },
   "rejected": {},
