@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-13 03:10 KST",
+  "updated_at": "2026-11-13 07:30 KST",
   "items": [
+    {
+      "id": "zfziiCiwE1Iz",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts oneshot",
+      "message": "2026-11-13 07:26 KST | OPS | port-alerts / oneshot\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/43319718823",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1794522361
+    },
     {
       "id": "s6MexcL0Dcmt",
       "topic": "cwally-ops",
@@ -4437,17 +4448,6 @@
         "white_check_mark"
       ],
       "time": 1793685622
-    },
-    {
-      "id": "UGA7XvG0mCqM",
-      "topic": "cwally-port",
-      "title": "[453810] KODEX 인도Nifty50 설치 확인 | 매매 신호 아님",
-      "message": "이게 뭐 알림: KODEX 인도Nifty50(453810) 분할 계획 알림 설치 확인입니다. 매매 신호 아님.\n2026-11-03 14:53 KST | 453810 | KODEX 인도Nifty50\n지금 결과/상태: ETF 2026-11-02 종가 11,040원, Brent 2026-11-02 104.77달러(85 이하 연속 0일, 120 이상 연속 0일), Nifty 50 2026-11-02 23,440.8, USD/INR 2026-11-02 94.90. 모든 선 무장, 지금은 발송 대상 없음.\n지금 할 일: 없음. 평일 09:00 KST 에 ETF 10,800, 10,500, 12,000(p3), 10,315 하회(p4), Brent 85 2주, 80(p3), 120 2주(p4), Nifty 23,000, 24,000(p3), USD/INR 93(p3), 100(p4)을 상태가 바뀔 때만 봅니다.\n나중에: 점검일 11/27, 12/15, 1/15, 2/15, 3/15. 평균가를 알려 주면 -20% 비중 축소 검토 선이 켜집니다. Nifty PE, FII 흐름은 자동 점검 안 함. 종료 2027-04-30.\n익절/줄일 때: 해당 없음.\n하지 말 것: 이 설치 확인을 매수/매도 신호로 읽기.\n꺼지는 때: 2027-04-30 23:59 KST (평일 09:00 전일 확정 종가 점검, 2027-04-30 까지(3차 마감 뒤 한 달))",
-      "priority": 3,
-      "tags": [
-        "white_check_mark"
-      ],
-      "time": 1793685202
     }
   ]
 }
