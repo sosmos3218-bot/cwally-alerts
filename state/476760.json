@@ -1,20 +1,20 @@
 {
-  "updated_at": "2026-11-12T19:01:15.579849+09:00",
+  "updated_at": "2026-11-13T03:04:29.281700+09:00",
   "last_day": "2026-11-12",
   "seeded": true,
   "last_fail_day": null,
   "last": {
-    "y30": 5.356,
-    "fx": 1331.48,
-    "fx_move": -1.8328712894098986
+    "y30": 5.432,
+    "fx": 1335.62,
+    "fx_move": -1.5276380806032774
   },
   "add": {
     "armed": true,
     "fired_day": null
   },
   "raise": {
-    "armed": true,
-    "fired_day": null
+    "armed": false,
+    "fired_day": "2026-11-12"
   },
   "review_y": {
     "armed": true,
