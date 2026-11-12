@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-11-12T02:50:39.789095+09:00",
+  "updated_at": "2026-11-12T19:02:21.146477+09:00",
   "seeded": true,
   "high_armed": true,
   "low_armed": true,
-  "price_last_date": "2026-11-11",
-  "last_summary_date": "2026-11-11",
+  "price_last_date": "2026-11-12",
+  "last_summary_date": "2026-11-12",
   "seen": [
     "kind:20251114000548",
     "kind:20251114001297",

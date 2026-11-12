@@ -5,19 +5,19 @@
     "l20700": true,
     "ma20": true
   },
-  "last_date": "2026-11-11",
+  "last_date": "2026-11-12",
   "last_close": [
-    "2026-11-11",
-    22765.0
+    "2026-11-12",
+    23050.0
   ],
-  "last_volume": 3926830.0,
-  "ma20": 25321.5,
-  "ma200": 36218.4,
+  "last_volume": 4032091.0,
+  "ma20": 25117.25,
+  "ma200": 36200.07,
   "support_armed": true,
-  "above_streak": 6,
+  "above_streak": 7,
   "low_armed": true,
   "recovery_sent": "2026-11-11",
-  "updated_at": "2026-11-12 02:51 KST",
+  "updated_at": "2026-11-12 19:03 KST",
   "reminders_sent": {},
   "last_sent": {
     "at": "2026-11-11 19:03 KST",
