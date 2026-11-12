@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-11T09:10:09.839679+09:00",
+  "updated_at": "2026-11-12T09:10:24.058656+09:00",
   "warn_armed": false,
   "down_active": false,
   "a_armed": true,
@@ -8,7 +8,7 @@
   "top_armed": true,
   "earn_parsed": false,
   "earn_manual_sent": false,
-  "last_bar_date": "2026-11-10",
-  "last_close": 132.1300048828125,
+  "last_bar_date": "2026-11-11",
+  "last_close": 136.27000427246094,
   "fetch_fail_date": null
 }

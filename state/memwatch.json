@@ -71,6 +71,10 @@
       "date": "2026-11-06",
       "title": "Persistently High DRAM Prices Drive Adoption of Reballed Memory, with Smartphone Penetration Expected to Reach 7–9% in 2027, Says TrendForce",
       "figs": []
+    },
+    "13303": {
+      "date": "2026-11-11",
+      "title": "Mounting Finished-Goods Inventories Prompt Some PC OEMs to Adjust Memory Procurement Plans for 2027, Says TrendForce"
     }
   },
   "tf_latest": {
@@ -209,5 +213,5 @@
     "news": 0,
     "cxmt": 0
   },
-  "updated_at": "2026-11-11T09:01:30.179322+09:00"
+  "updated_at": "2026-11-12T09:01:33.794290+09:00"
 }

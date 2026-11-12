@@ -90,11 +90,17 @@
       "price": 78.71,
       "ytm": 16.08,
       "spread_bp": null
+    },
+    {
+      "date": "2026-11-12",
+      "price": 78.845,
+      "ytm": 16.04,
+      "spread_bp": null
     }
   ],
   "last_kind": "WEEKLY",
   "shock_sent_date": "2026-11-06",
   "weekly_sent_date": "2026-11-09",
   "fail_active": false,
-  "updated_at": "2026-11-11T09:08:20.826011+09:00"
+  "updated_at": "2026-11-12T09:08:31.440534+09:00"
 }

@@ -50,9 +50,9 @@
     "warn8300": true,
     "high11300": true
   },
-  "last_date": "2026-11-10",
-  "last_close": 9840.0,
+  "last_date": "2026-11-11",
+  "last_close": 9800.0,
   "init_note": "initialized from 2026-10-28 close 9,550, no send",
-  "updated_at": "2026-11-12T02:52:12+09:00",
+  "updated_at": "2026-11-12T09:11:27+09:00",
   "reminders_sent": []
 }

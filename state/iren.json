@@ -1,24 +1,11 @@
 {
-  "updated_at": "2026-11-11 09:00 KST",
-  "price": 19.73,
+  "updated_at": "2026-11-12 09:00 KST",
+  "price": 20.84,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://finance.yahoo.com/m/e7396a5f-59db-30ad-b0ed-49dbca81119f/why-gartner-ai-outlook-sent.html?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/iren-s-redbank-campus-adds-900-mw-to-its-plans-but-power-is-not-secured-yet/cZxfkVMRBpn?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/14/cipher-digital-falls-5-as-850m-zero-coupon-note-pricing-extends-slide-applied-digital-declines-6-iren-drops-4/?.tsrc=rss",
-    "https://blockspace.media/insight/iren-redbank-data-center-wagga-wagga/?.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/14/why-coreweave-stock-tumbled-today/?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/crwv-nbis-iren-stocks-extend-slide-overnight-retail-eyes-the-dip-as-core-weave-ceo-says-market-acting-irrationally/cZxWLMRRBqw?.tsrc=rss",
-    "https://www.barchart.com/story/news/7835506/debt-laden-neocloud-stocks-are-collapsing-as-inflation-comes-in-hot?.tsrc=rss",
-    "https://finance.yahoo.com/m/b697c544-62e5-34ac-8c38-72ae2903e53d/treasury-yields-dive-for.html?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-iren-starts-consultation-900-150843079.html?.tsrc=rss",
-    "https://blockspace.media/short/heres-why-ai-stocks-crashed-today/?.tsrc=rss",
-    "https://www.marketbeat.com/instant-alerts/event-niocorp-advances-elk-creek-mine-as-exim-deal-highlights-us-critical-minerals-push-2026-10-14/?utm_source=yahoofinance&utm_medium=yahoofinance&.tsrc=rss",
-    "https://finance.yahoo.com/m/e7396a5f-59db-30ad-b0ed-49dbca81119f/coreweave-reverses-up-as-wall.html?.tsrc=rss",
-    "https://www.marketbeat.com/articles/iren-limiteds-ai-pivot-gains-tractionbut-can-its-data-centers-deliver/?utm_source=yahoofinance&utm_medium=yahoofinance&.tsrc=rss",
     "https://blockspace.media/podcast/ai-stocks-selloff-and-coreweave-debt-iren-proposes-900-mw-aussie-site-keels-new-80-mw-site/?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/iren-expands-liquid-cooling-across-124800746.html?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/15/ai-cloud-stocks-sink-as-gartner-warns-most-neoclouds-wont-survive-independently-iren-and-coreweave-fall-5-nebius-drops-4/?.tsrc=rss",
@@ -205,7 +192,20 @@
     "https://stocktwits.com/news-articles/markets/equity/crwv-stock-climbs-6-after-hours-as-132-b-revenue-backlog-reinforces-ai-compute-demand-nbis-iren-tick-higher/cNGuwW0R9JL?.tsrc=rss",
     "https://stocktwits.com/news-articles/markets/equity/crwv-rallies-ahead-of-quarterly-report-wells-fargo-calls-core-weave-highest-quality-firm-among-neocloud-peers-sees-upside/cNGu4iQR97k?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/3-ai-stocks-revenue-growth-191330590.html?.tsrc=rss",
-    "https://www.tikr.com/blog/microsoft-dumps-oracle-good-news-those-old-chips-renew-at-a-20-premium?ref=yahoofinance&tlnk=yf-261110-hp4jrccf&.tsrc=rss"
+    "https://www.tikr.com/blog/microsoft-dumps-oracle-good-news-those-old-chips-renew-at-a-20-premium?ref=yahoofinance&tlnk=yf-261110-hp4jrccf&.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/11/stock-market-today-nov-11-iren-rises-as-ai-cloud-peers-rally-on-coreweave-results/?.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/11/1-unstoppable-ai-stock-to-buy-hand-over-fist-befor/?.tsrc=rss",
+    "https://blockspace.media/podcast/anthropic-ipo-pricing-ben-gagnon-on-keels-q3-earnings-maras-earnings-and-goldman-sachs-on-iren/?.tsrc=rss",
+    "https://blockspace.media/short/goldman-sachs-cuts-iren-price-target-to-30-from-50-keeps-neutral/?.tsrc=rss",
+    "https://www.tikr.com/blog/nebius-stock-dropped-30-in-a-week-is-it-time-to-sell-or-load-up?ref=yahoofinance&tlnk=yf-261111-f4q927x2&.tsrc=rss",
+    "https://www.tikr.com/blog/that-stops-when-im-governor-cipher-digital-and-cleanspark-sink-nearly-20-in-a-week?ref=yahoofinance&tlnk=yf-261111-ww2284cx&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/core-weave-says-demand-is-outstripping-capacity-cfo-defends-ai-expansion-today-s-environment-very-profitable-for-differentiated-technology/cNGD7CpR9Jl?.tsrc=rss",
+    "https://decrypt.co/383099/nvidia-backed-coreweave-surging-what-means-for-ai-boom?.tsrc=rss",
+    "https://finance.yahoo.com/m/70db5656-a3a8-363b-9a8f-fe7f4b584fee/ai-stocks%2C-neoclouds-rebound.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/11/applied-digital-rallies-8-as-coreweaves-results-revive-the-ai-data-center-trade-cipher-digital-jumps-10-iren-surges-9/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/bc-most-active-stocks-153019828.html?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-soars-17-on-raised-outlook-rules-out-unsecured-debt-nor-do-we-need-to?ref=yahoofinance&tlnk=yf-261111-r7w7f56j&.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/11/coreweave-jumps-16-as-beat-and-raise-quarter-eases-financing-fears-nebius-surges-13-oracle-rises-5/?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-09 09:00 KST",
   "pending_news": [
@@ -243,6 +243,11 @@
       "title": "Microsoft Dumps Oracle. Good News: Those Old Chips Renew at a “20% Premium”",
       "url": "https://www.tikr.com/blog/microsoft-dumps-oracle-good-news-those-old-chips-renew-at-a-20-premium?ref=yahoofinance&tlnk=yf-261110-hp4jrccf&.tsrc=rss",
       "seen_at": "2026-11-11 09:00 KST"
+    },
+    {
+      "title": "Nvidia-Backed CoreWeave Is Surging: Here’s What It Means for the AI Boom",
+      "url": "https://decrypt.co/383099/nvidia-backed-coreweave-surging-what-means-for-ai-boom?.tsrc=rss",
+      "seen_at": "2026-11-12 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
