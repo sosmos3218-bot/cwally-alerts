@@ -218,7 +218,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, k316140, k055550, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, k316140, k055550, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1512,6 +1512,30 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/hdship_monitor.py selftest >/dev/null; fi
           python scripts/hdship_monitor.py "$MODE"
+      - name: Run aptscn (KOSPI apartment scenario, send only when the label changes; Thu 19:00, Fri 09:00 catch-up)
+        # 2026-11-12. Existing k203780 Thursday 19:00 and Friday morning catch-up. No new cron.
+        # Weekly REB workbook plus BOK rate/loans and KDI housing stats. Quiet when the scenario is unchanged.
+        # Manual job=aptscn is dry unless oneoff_mode=auto (oneoff_mode defaults to auto, so set dry).
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'aptscn') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          PICK_JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          DOW=$(TZ=Asia/Seoul date +%u)
+          RUN=0
+          if [ "$MODE" = "dry" ] || [ "$PICK_JOB" = "aptscn" ]; then RUN=1
+          elif [ "$PICK_JOB" = "k203780" ] && [ "$DOW" = "4" ]; then RUN=1
+          elif [ "$PICK_JOB" = "morning" ] && [ "$DOW" = "5" ]; then RUN=1
+          fi
+          if [ "$RUN" != "1" ]; then echo "aptscn skip job=$PICK_JOB dow=$DOW"; exit 0; fi
+          pip install -q openpyxl pypdf
+          if [ "$MODE" = "dry" ]; then python scripts/aptscn_monitor.py selftest; fi
+          python scripts/aptscn_monitor.py "$MODE"
       - name: Run k417790 (트루엔 - earn/return filings, close bands 7600/5500, daily summary; k203780 19:00)
         # approved in chat 2026-11-05 (pt2u). Attached to existing k203780 after-close slot, no new cron.
         # Separate from oneshot [TRUEN] truen417790. Dedupe: state/k417790.json seen + high/low_armed + last_summary_date.
