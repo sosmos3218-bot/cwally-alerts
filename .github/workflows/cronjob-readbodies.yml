@@ -1,0 +1,101 @@
+name: cwally-cronjob-readbodies
+
+# Read-only audit (approved in chat 2026-11-12): reads each cron-job.org job's request body
+# (GET /jobs, then GET /jobs/{id}) and reports which port-alerts dispatch bodies lack oneoff_mode.
+# Never creates, updates or deletes a job. 3 s between calls, stops on HTTP 429, max calls per run
+# is capped, progress is kept in the Actions cache so the next run resumes where this one stopped.
+# Prints only id, title, job and oneoff_mode (no headers, no auth, no full body).
+# Delete this file after the audit is complete.
+
+concurrency:
+  group: cwally-cronjob-readbodies
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_calls:
+        description: "max cron-job.org API calls this run (default 90)"
+        type: string
+        default: "90"
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Restore progress
+        uses: actions/cache/restore@v4
+        with:
+          path: rb-state.json
+          key: readbodies-none
+          restore-keys: readbodies-
+      - name: Read bodies (read-only)
+        env:
+          CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+          MAX_CALLS: ${{ inputs.max_calls }}
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.request, urllib.error
+          KEY = os.environ["CRONJOB_API_KEY"]
+          MAX = int(os.environ.get("MAX_CALLS") or 90)
+          calls = 0
+          def get(path):
+              global calls
+              calls += 1
+              req = urllib.request.Request("https://api.cron-job.org" + path,
+                  headers={"Authorization": "Bearer " + KEY, "Accept": "application/json"})
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  return json.loads(r.read())
+          st = {"jobs": {}}
+          if os.path.exists("rb-state.json"):
+              st = json.load(open("rb-state.json"))
+          stopped = ""
+          try:
+              lst = get("/jobs")["jobs"]
+              print("jobs listed:", len(lst), "already read:", len(st["jobs"]))
+              for j in lst:
+                  jid = str(j["jobId"])
+                  if jid in st["jobs"]:
+                      continue
+                  if calls >= MAX:
+                      stopped = "call cap reached"
+                      break
+                  time.sleep(3)
+                  d = get("/jobs/" + jid)["jobDetails"]
+                  body = (d.get("extendedData") or {}).get("body") or ""
+                  job = mode = None
+                  try:
+                      b = json.loads(body)
+                      inp = b.get("inputs") or {}
+                      job, mode = inp.get("job"), inp.get("oneoff_mode")
+                  except Exception:
+                      pass
+                  st["jobs"][jid] = {"title": j.get("title"), "url": (j.get("url") or "")[-60:],
+                                     "job": job, "oneoff_mode": mode, "hasBody": bool(body)}
+          except urllib.error.HTTPError as e:
+              stopped = "HTTP %s" % e.code
+          json.dump(st, open("rb-state.json", "w"))
+          rows = st["jobs"]
+          miss = {k: v for k, v in rows.items() if v["job"] and not v["oneoff_mode"]}
+          print("api calls this run:", calls)
+          print("stopped early:", stopped or "no")
+          print("read so far:", len(rows))
+          print("dispatch bodies with job but NO oneoff_mode:", len(miss))
+          for k, v in sorted(miss.items()):
+              print("MISSING", k, "|", v["title"], "| job=", v["job"])
+          for k, v in sorted(rows.items()):
+              print("ROW", k, "|", v["title"], "| job=", v["job"], "| oneoff_mode=", v["oneoff_mode"])
+          PY
+      - name: Save progress
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: rb-state.json
+          key: readbodies-${{ github.run_id }}
