@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-13T20:01:25.771266+09:00",
+  "updated_at": "2026-11-14T07:58:32.402307+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -207,6 +207,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-13T20:01:25.771266+09:00"
+    },
+    "20261114-yc-q3.json#13b40e7d59a32269": {
+      "file": "20261114-yc-q3.json",
+      "title": "[와이씨] 232140 3분기 실적 | 이연 확인, 관망",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-14T07:58:32.402307+09:00"
     }
   },
   "rejected": {},
