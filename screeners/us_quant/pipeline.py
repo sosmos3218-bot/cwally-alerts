@@ -13,6 +13,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
+from screeners.us_quant.edgar_atom import atom_page_url, dedupe_accessions, parse_atom, within_cutoff
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
 from screeners.us_quant.facts import EXTRACT_VERSION, extract_companyfacts
 from screeners.us_quant.http_util import HttpClient
@@ -125,12 +126,24 @@ def run(as_of: date, run_date: date, config: dict, out_root: Path, cache: Path) 
     sic_map = phase("sic", lambda: _sic_map(client, cache, config))
     candidates, price_rows = _candidates(listings, shares, prices, failures, sic_map, config, client, cache)
     print(f"CANDIDATES {len(candidates)} price_failures {len(price_rows)}", flush=True)
-    index_rows, filings_through = phase("index", lambda: _index(client, cache, as_of, int(config["insider"]["lookback_days"])))
+    index_rows, form4_meta = phase("index", lambda: _index(client, cache, as_of, int(config["insider"]["lookback_days"])))
     facts_map, fact_errors = phase("facts", lambda: _facts(client, cache, candidates, index_rows))
     screened = _screen(candidates, facts_map, fact_errors, as_of, config)
-    insider_rows = phase("insider", lambda: _insiders(client, cache, index_rows, screened["universe_ciks"], as_of, int(config["insider"]["lookback_days"]), screened["by_cik"]))
+    insider_rows = phase(
+        "insider",
+        lambda: _insiders(
+            client,
+            cache,
+            index_rows,
+            screened["universe_ciks"],
+            as_of,
+            int(config["insider"]["lookback_days"]),
+            screened["by_cik"],
+            form4_meta["form4_acceptance_cutoff"],
+        ),
+    )
     trade_s = as_of.isoformat()
-    meta = _meta(config, run_date, as_of, screened, filings_through, phases)
+    meta = _meta(config, run_date, as_of, screened, form4_meta, phases)
     folder = out_root / trade_s
     _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s)
     digest = hash_folder(folder)
@@ -413,27 +426,29 @@ def _prefer_sic(base: dict, extra: dict) -> dict:
     return merged
 
 
+def acceptance_cutoff(as_of: date) -> datetime:
+    """End of the trade date in New York. Filings accepted later stay out."""
+    return datetime(as_of.year, as_of.month, as_of.day, 23, 59, 59, tzinfo=NY)
+
+
 def _index(client: HttpClient, cache: Path, as_of: date, lookback_days: int):
     start = as_of - timedelta(days=lookback_days + 7)
+    cutoff = acceptance_cutoff(as_of)
     rows = []
     received = None
     for year, quarter in quarter_labels(start, as_of):
         url = f"https://www.sec.gov/Archives/edgar/full-index/{year}/QTR{quarter}/master.idx"
         path = cache / "index" / f"{year}-QTR{quarter}-master.idx"
-        if path.exists():
-            text = path.read_bytes()
-        else:
-            text = client.get(url, timeout=120, missing_ok=True)
-            if text:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(text)
+        text = _cached_bytes(client, path, url, timeout=120)
         if not text:
             continue
         parsed, stamp = parse_master(text)
+        for row in parsed:
+            row["source"] = "index"
         rows.extend(parsed)
         if stamp and (received is None or stamp > received):
             received = stamp
-    # Days after the compiled master, when that daily file exists.
+    missing_days = []
     cursor = (received + timedelta(days=1)) if received else start
     while cursor <= as_of:
         if cursor.weekday() < 5:
@@ -441,22 +456,98 @@ def _index(client: HttpClient, cache: Path, as_of: date, lookback_days: int):
             quarter = (cursor.month - 1) // 3 + 1
             url = f"https://www.sec.gov/Archives/edgar/daily-index/{cursor.year}/QTR{quarter}/master.{ymd}.idx"
             path = cache / "index" / f"master.{ymd}.idx"
-            if path.exists():
-                text = path.read_bytes()
-            else:
-                text = client.get(url, timeout=60, missing_ok=True)
-                if text:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_bytes(text)
+            text = _cached_bytes(client, path, url, timeout=60, attempts=1)
             if text:
                 parsed, _stamp = parse_master(text)
+                for row in parsed:
+                    row["source"] = "index"
                 rows.extend(parsed)
+            else:
+                missing_days.append(cursor)
         cursor += timedelta(days=1)
     rows = dedupe_rows(rows)
-    filed = [row["filed"] for row in rows if row["filed"] <= as_of.isoformat()]
-    through = max(filed) if filed else (received.isoformat() if received else None)
-    print(f"INDEX rows {len(rows)} filings_through {through}", flush=True)
-    return rows, through
+    if missing_days:
+        gap = min(missing_days)
+        atom_rows = _atom_filings(client, cache, as_of, gap, cutoff)
+        print(f"ATOM gap {gap.isoformat()} rows {len(atom_rows)}", flush=True)
+        rows.extend(atom_rows)
+    else:
+        print("ATOM skipped daily index covers the trade date", flush=True)
+    rows = dedupe_accessions(rows)
+    rows = [row for row in rows if row["form"] not in {"4", "4/A"} or _row_in_window(row, start, cutoff)]
+    form4_dates = [row["filed"] for row in rows if row["form"] in {"4", "4/A"}]
+    accepted = [row["accepted"] for row in rows if row["form"] in {"4", "4/A"} and row.get("accepted")]
+    meta = {
+        "form4_acceptance_cutoff": cutoff.isoformat(),
+        "form4_latest_filing_date": max(form4_dates) if form4_dates else None,
+        "form4_latest_acceptance": max(accepted) if accepted else None,
+        "insider_filings_through": max(form4_dates) if form4_dates else None,
+    }
+    print(
+        f"INDEX rows {len(rows)} form4_through {meta['form4_latest_filing_date']} cutoff {meta['form4_acceptance_cutoff']}",
+        flush=True,
+    )
+    return rows, meta
+
+
+def _cached_bytes(client: HttpClient, path: Path, url: str, timeout: int, attempts: int = 4) -> bytes | None:
+    if path.exists() and path.stat().st_size > 0:
+        return path.read_bytes()
+    text = client.get(url, timeout=timeout, missing_ok=True, attempts=attempts)
+    if text:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(text)
+    return text
+
+
+def _atom_filings(client: HttpClient, cache: Path, as_of: date, gap: date, cutoff: datetime) -> list[dict]:
+    path = cache / "index" / f"atom-{as_of.isoformat()}.json"
+    if path.exists():
+        return _read_json(path)
+    collected: list[dict] = []
+    gap_start = datetime(gap.year, gap.month, gap.day, tzinfo=NY)
+    for form in ("4", "4/A"):
+        for start_at in range(0, 100 * 80, 100):
+            raw = client.get(atom_page_url(form, start_at), timeout=60, missing_ok=True, attempts=3)
+            if not raw:
+                break
+            page = parse_atom(raw)
+            if not page:
+                break
+            collected.extend(page)
+            oldest = None
+            for row in page:
+                stamp = _accepted_stamp(row.get("accepted"))
+                if stamp is not None and (oldest is None or stamp < oldest):
+                    oldest = stamp
+            if oldest is not None and oldest < gap_start:
+                break
+    kept = dedupe_accessions(
+        [row for row in collected if within_cutoff(row, cutoff) and row["filed"] >= gap.isoformat()]
+    )
+    _write_json(path, kept)
+    return kept
+
+
+def _accepted_stamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        stamp = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=NY)
+    return stamp
+
+
+def _row_in_window(row: dict, start: date, cutoff: datetime) -> bool:
+    filed = row.get("filed") or ""
+    if filed < start.isoformat() or filed > cutoff.date().isoformat():
+        return False
+    if row["form"] in {"4", "4/A"}:
+        return within_cutoff(row, cutoff)
+    return True
 
 
 def _facts(client: HttpClient, cache: Path, candidates: list[dict], index_rows: list[dict]):
@@ -679,13 +770,17 @@ def _fscore_public(base: dict, scored: dict) -> dict:
     return row
 
 
-def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookback_days: int, by_cik: dict):
+def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookback_days: int, by_cik: dict, cutoff_text: str):
     start = (as_of - timedelta(days=lookback_days + 7)).isoformat()
     end = as_of.isoformat()
+    cutoff = datetime.fromisoformat(cutoff_text)
     wanted = [
         row
         for row in index_rows
-        if row["form"] in {"4", "4/A"} and start <= row["filed"] <= end and row["cik"] in universe
+        if row["form"] in {"4", "4/A"}
+        and start <= row["filed"] <= end
+        and row["cik"] in universe
+        and within_cutoff(row, cutoff)
     ]
     print(f"FORM4 files {len(wanted)}", flush=True)
 
@@ -743,7 +838,7 @@ def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookba
     return rows
 
 
-def _meta(config, run_date, as_of, screened, filings_through, phases) -> dict:
+def _meta(config, run_date, as_of, screened, form4_meta, phases) -> dict:
     del phases
     dates = [row["price_date"] for row in screened["magic"]]
     price_as_of = as_of.isoformat()
@@ -761,7 +856,10 @@ def _meta(config, run_date, as_of, screened, filings_through, phases) -> dict:
         "fscore_basis": config["fscore"]["basis"],
         "fscore_min_score": config["fscore"]["min_score"],
         "data_sources": DATA_SOURCES,
-        "insider_filings_through": filings_through,
+        "insider_filings_through": form4_meta.get("insider_filings_through"),
+        "form4_acceptance_cutoff": form4_meta.get("form4_acceptance_cutoff"),
+        "form4_latest_filing_date": form4_meta.get("form4_latest_filing_date"),
+        "form4_latest_acceptance": form4_meta.get("form4_latest_acceptance"),
         "config": config,
         "counts": {
             "magic_input_rows": screened["magic_ranked_count"],

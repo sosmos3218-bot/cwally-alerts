@@ -1,11 +1,12 @@
-# US quant screen. workflow_dispatch only.
-# Owner enables the schedule after verification. Weekdays 07:30 KST.
-# schedule:
-#   - cron: "30 22 * * 0-4"
+# US quant screen. Weekdays 07:30 KST. Manual dispatch remains available.
+# contents: write lets the job commit screeners/output/us.
+# actions/cache restores screeners/cache/us_quant so a later day reuses filings and prices.
 
 name: us-quant-screen
 
 on:
+  schedule:
+    - cron: "30 22 * * 0-4"
   workflow_dispatch:
     inputs:
       as_of:
@@ -32,6 +33,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
 
       - uses: actions/setup-python@v6
         with:

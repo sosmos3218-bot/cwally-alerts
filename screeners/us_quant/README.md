@@ -65,7 +65,7 @@ Revenue uses the first concept that exists for both years: `RevenueFromContractW
 
 ## Insider list
 
-EDGAR daily index rows (and the quarterly master index, which is the compilation of those days) supply Form 4 and 4/A filenames. The submission text is parsed for `ownershipDocument` transactions with code `P` and acquired code `A`. Dollars are shares times price. The lookback is calendar days of the transaction date, default 30, and the filing date cannot be after the trade date. Rows are summed by issuer inside the same universe: distinct reporting owners, total dollars, director / officer / 10% owner, latest transaction date.
+EDGAR daily index rows (and the quarterly master index, which is the compilation of those days) supply Form 4 and 4/A filenames. When the daily index for the trade date is not published yet, the current-filings Atom feed (`browse-edgar?action=getcurrent&type=4&output=atom`, then `4/A`, paginated) fills that gap. A filing is kept only when its acceptance time is at or before 23:59:59 America/New_York on the trade date. That cutoff and the latest Form 4 filing date are stored on every output. The same as-of reuses the saved feed page so a later EDGAR update does not change the file. Issuer entries win over the reporting-owner copy of the same accession. The submission text is parsed for `ownershipDocument` transactions with code `P` and acquired code `A`. Dollars are shares times price. The lookback is calendar days of the transaction date, default 30. Rows are summed by issuer inside the same universe: distinct reporting owners, total dollars, director / officer / 10% owner, latest transaction date.
 
 Intersection is the Magic Formula top N or an F-score at the list minimum, and also an open-market purchase in the window.
 

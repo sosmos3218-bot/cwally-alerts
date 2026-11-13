@@ -14,6 +14,7 @@ DATA_SOURCES = [
     "SEC EDGAR XBRL frames (share-count prefilter)",
     "SEC EDGAR companyfacts",
     "SEC EDGAR daily index and quarterly master index",
+    "SEC EDGAR current filings Atom feed",
     "SEC EDGAR Form 4 submission text",
     "Yahoo Finance chart daily close",
 ]

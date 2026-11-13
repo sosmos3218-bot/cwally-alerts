@@ -43,11 +43,12 @@ class HttpClient:
         self.ua = ua or user_agent()
         self.limiter = RateLimiter(per_sec)
 
-    def get(self, url: str, timeout: int = 60, missing_ok: bool = False) -> bytes | None:
+    def get(self, url: str, timeout: int = 60, missing_ok: bool = False, attempts: int = 4) -> bytes | None:
         """Return the body. None when the resource is absent and missing_ok is set."""
         headers = {"User-Agent": self.ua, "Accept-Encoding": "identity", "Accept": "*/*"}
         last: Exception | None = None
-        for attempt in range(4):
+        tries = max(1, attempts)
+        for attempt in range(tries):
             self.limiter.wait()
             req = urllib.request.Request(url, headers=headers)
             try:
@@ -57,7 +58,7 @@ class HttpClient:
                 last = exc
                 if exc.code in (404, 400):
                     return None
-                if exc.code in (429, 500, 502, 503, 403) and attempt < 3:
+                if exc.code in (429, 500, 502, 503, 403) and attempt < tries - 1:
                     time.sleep(1.2 * (attempt + 1))
                     continue
                 if missing_ok:
@@ -65,7 +66,7 @@ class HttpClient:
                 raise
             except Exception as exc:  # noqa: BLE001
                 last = exc
-                if attempt < 3:
+                if attempt < tries - 1:
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if missing_ok:
