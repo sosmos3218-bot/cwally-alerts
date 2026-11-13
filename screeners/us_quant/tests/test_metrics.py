@@ -12,6 +12,7 @@ from screeners.us_quant.facts import select_debt, select_ttm_ebit
 from screeners.us_quant.fscore import score_f
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
 from screeners.us_quant.magic import earnings_yield, rank_magic, return_on_capital
+from screeners.us_quant.prices import parse_chart
 from screeners.us_quant.output_io import hash_folder, write_table
 from screeners.us_quant.universe import foreign_filer, is_common_listing, sic_block_reason
 
@@ -294,6 +295,40 @@ def test_open_market_purchases_ignore_sales():
     assert bucket["officer_titles"] == ["CFO"]
     old = aggregate_purchases(rows, date(2026, 12, 15), 30)
     assert old == {}
+
+
+def test_purchase_total_does_not_depend_on_arrival_order():
+    base = {
+        "issuer_cik": "0000000001",
+        "symbol": "X",
+        "owners": [{"owner_cik": "0000000002", "director": True, "officer": False, "ten_percent": False, "officer_title": ""}],
+    }
+    trades = []
+    for index, accn in enumerate(("b", "a", "c")):
+        trades.append({**base, "trade_date": "2026-11-01", "shares": 1, "price": 0.1, "value": 0.1 + index * 1e-12, "accn": accn})
+    forward = aggregate_purchases(trades, AS_OF, 30)
+    backward = aggregate_purchases(list(reversed(trades)), AS_OF, 30)
+    assert forward == backward
+    assert forward["0000000001"]["accessions"] == ["a"]
+
+
+def test_missing_session_close_uses_regular_session_price():
+    payload = {
+        "chart": {
+            "result": [
+                {
+                    "timestamp": [1794407400, 1794493800],
+                    "indicators": {"quote": [{"close": [10.0, None], "volume": [100, 250]}]},
+                    "meta": {"regularMarketTime": 1794517201, "regularMarketPrice": 10.5},
+                }
+            ]
+        }
+    }
+    got = parse_chart(payload, date(2026, 11, 12))
+    assert got["price"] == 10.5
+    assert got["price_date"] == "2026-11-12"
+    assert got["price_source"] == "yahoo_regular_market_price"
+    assert got["volume"] == 250
 
 
 def test_index_parses_both_date_styles_and_dedupes():

@@ -148,10 +148,36 @@ def in_window(trade_date: str, as_of: date, lookback_days: int) -> bool:
     return start <= day <= as_of
 
 
+def _trade_sort_key(trade: dict) -> tuple:
+    owners = tuple(sorted((owner.get("owner_cik") or "") for owner in trade.get("owners") or []))
+    return (
+        str(trade.get("accn") or ""),
+        str(trade.get("issuer_cik") or ""),
+        str(trade.get("trade_date") or ""),
+        owners,
+        float(trade.get("shares") or 0),
+        float(trade.get("price") or 0),
+    )
+
+
+def prepare_trades(trades: list[dict]) -> list[dict]:
+    """Stable order and one row per identical fill, so totals do not depend on arrival order."""
+    ordered = sorted(trades, key=_trade_sort_key)
+    seen = set()
+    out = []
+    for trade in ordered:
+        key = _trade_sort_key(trade)[1:]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(trade)
+    return out
+
+
 def aggregate_purchases(trades: list[dict], as_of: date, lookback_days: int) -> dict[str, dict]:
     """Aggregate code-P rows by issuer CIK."""
     grouped: dict[str, dict] = {}
-    for trade in trades:
+    for trade in prepare_trades(trades):
         if not in_window(trade["trade_date"], as_of, lookback_days):
             continue
         cik = trade.get("issuer_cik") or ""

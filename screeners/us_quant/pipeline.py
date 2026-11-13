@@ -208,7 +208,7 @@ def _prices(cache: Path, listings: list[dict], shares: dict, as_of: date):
             return symbol, {"error": "price_unavailable"}
         return symbol, quote
 
-    if missing:
+        if missing:
         print(f"PRICE fetch {len(missing)}", flush=True)
         with ThreadPoolExecutor(max_workers=12) as pool:
             futures = [pool.submit(one, symbol) for symbol in missing]
@@ -221,6 +221,7 @@ def _prices(cache: Path, listings: list[dict], shares: dict, as_of: date):
                     print(f"PRICE {done}/{len(missing)}", flush=True)
                     _write_json(path, stored)
         _write_json(path, stored)
+        stored = _read_json(path)
     failures = []
     good = {}
     for symbol in needed:
@@ -716,7 +717,7 @@ def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookba
                 done += 1
                 if done % 400 == 0:
                     print(f"FORM4 {done}/{len(wanted)}", flush=True)
-    grouped = aggregate_purchases(_dedupe_trades(trades), as_of, lookback_days)
+    grouped = aggregate_purchases(trades, as_of, lookback_days)
     rows = []
     for cik, bucket in grouped.items():
         base = by_cik.get(cik)
@@ -740,25 +741,6 @@ def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookba
         )
     rows.sort(key=lambda row: (-float(row["total_value_usd"]), row["ticker"]))
     return rows
-
-
-def _dedupe_trades(trades: list[dict]) -> list[dict]:
-    seen = set()
-    out = []
-    for trade in trades:
-        owners = tuple(sorted((owner.get("owner_cik") or "") for owner in trade.get("owners") or []))
-        key = (
-            trade.get("issuer_cik"),
-            owners,
-            trade.get("trade_date"),
-            round(float(trade.get("shares") or 0), 4),
-            round(float(trade.get("price") or 0), 4),
-        )
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(trade)
-    return out
 
 
 def _meta(config, run_date, as_of, screened, filings_through, phases) -> dict:

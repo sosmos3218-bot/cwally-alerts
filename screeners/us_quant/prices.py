@@ -32,12 +32,18 @@ def parse_chart(payload: dict, as_of: date) -> dict | None:
     volumes = quote.get("volume") or []
     meta = result.get("meta") or {}
     chosen = None
+    as_of_volume = 0
+    as_of_close_missing = False
     for index, stamp in enumerate(stamps):
         session = datetime.fromtimestamp(int(stamp), NY).date()
         if session > as_of:
             continue
         close = closes[index] if index < len(closes) else None
         volume = volumes[index] if index < len(volumes) else None
+        if session == as_of and close is None:
+            as_of_close_missing = True
+            as_of_volume = int(volume or 0)
+            continue
         if close is None:
             continue
         chosen = {
@@ -46,8 +52,15 @@ def parse_chart(payload: dict, as_of: date) -> dict | None:
             "volume": int(volume or 0),
             "price_source": "yahoo_chart_close",
         }
-    if chosen is not None:
-        return chosen
+    if as_of_close_missing:
+        stamped = _regular_session_price(meta, as_of, as_of_volume)
+        if stamped is not None:
+            return stamped
+    return chosen
+
+
+def _regular_session_price(meta: dict, as_of: date, volume: int) -> dict | None:
+    """Use the close print when the daily bar exists but its close is still null."""
     market_time = meta.get("regularMarketTime")
     market_price = meta.get("regularMarketPrice")
     if market_time is None or market_price is None:
@@ -55,13 +68,6 @@ def parse_chart(payload: dict, as_of: date) -> dict | None:
     session = datetime.fromtimestamp(int(market_time), NY).date()
     if session != as_of:
         return None
-    # The session bar can exist with a null close while the regular-session
-    # price is already stamped at the close.
-    volume = 0
-    if stamps:
-        last_session = datetime.fromtimestamp(int(stamps[-1]), NY).date()
-        if last_session == as_of and volumes:
-            volume = int(volumes[-1] or 0)
     return {
         "price": float(market_price),
         "price_date": session.isoformat(),
