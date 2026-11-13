@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-13T18:43:31.574824+09:00",
+  "updated_at": "2026-11-13T20:01:25.771266+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -198,6 +198,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-13T18:43:31.574824+09:00"
+    },
+    "20261113-079900-q3.json#e867e19635cf2cfd": {
+      "file": "20261113-079900-q3.json",
+      "title": "[BRIEF] 079900 전진건설로봇 3분기 실적 재평가 | 매력도 하향",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-13T20:01:25.771266+09:00"
     }
   },
   "rejected": {},
