@@ -533,7 +533,7 @@ def _screen(candidates, facts_map, fact_errors, as_of: date, config: dict) -> di
         if blocked:
             continue
         primary = next(row for row in item["tickers"] if row["ticker"] == item["primary"])
-        price = float(primary["price"])
+        price = round(float(primary["price"]), 4)
         if (as_of - date.fromisoformat(primary["price_date"])).days > int(limits["max_price_age_days"]):
             excluded.append(_drop(item, "stale_price", primary["price_date"]))
             continue
