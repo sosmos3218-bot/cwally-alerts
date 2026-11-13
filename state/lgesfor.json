@@ -1,7 +1,7 @@
 {
   "warn_armed": false,
   "extra_armed": false,
-  "last_date": "2026-11-12",
+  "last_date": "2026-11-13",
   "last_ratio": 5.42,
   "seeded": {
     "at": "2026-10-24 KST",
@@ -42,7 +42,8 @@
     "2026-11-09": 5.42,
     "2026-11-10": 5.39,
     "2026-11-11": 5.4,
-    "2026-11-12": 5.42
+    "2026-11-12": 5.42,
+    "2026-11-13": 5.42
   },
   "obs": [
     {
@@ -268,6 +269,14 @@
       "latest_ratio": 5.42,
       "session_row": "없음",
       "live_foreignRate": 5.42
+    },
+    {
+      "run": "2026-11-14 02:39 KST",
+      "session": "2026-11-13",
+      "latest_date": "2026-11-13",
+      "latest_ratio": 5.42,
+      "session_row": "5.42%",
+      "live_foreignRate": 5.42
     }
   ],
   "events": [
@@ -284,5 +293,5 @@
       "at": "2026-11-05 19:02 KST"
     }
   ],
-  "last_run": "2026-11-13 19:04 KST"
+  "last_run": "2026-11-14 02:39 KST"
 }
