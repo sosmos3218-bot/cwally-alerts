@@ -1,0 +1,5461 @@
+{
+  "meta": {
+    "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+    "config": {
+      "domestic_forms": [
+        "10-K",
+        "10-K/A",
+        "10-Q",
+        "10-Q/A"
+      ],
+      "exchanges": [
+        "Nasdaq",
+        "NYSE",
+        "TXSE"
+      ],
+      "foreign_forms": [
+        "20-F",
+        "20-F/A",
+        "40-F",
+        "40-F/A"
+      ],
+      "fscore": {
+        "basis": "annual",
+        "min_score": 8
+      },
+      "future_markets": [
+        "KR"
+      ],
+      "insider": {
+        "lookback_days": 30,
+        "transaction_codes": [
+          "P"
+        ]
+      },
+      "magic": {
+        "ebit_basis": "ttm",
+        "top_n": 30
+      },
+      "market": "US",
+      "market_cap_prefilter_ratio": 0.5,
+      "min_market_cap": 100000000,
+      "price_vendor": "yahoo_chart",
+      "sec_max_per_second": 7,
+      "share_frame_periods": [
+        "CY2025Q1",
+        "CY2025Q2",
+        "CY2025Q3",
+        "CY2025Q4",
+        "CY2026Q1",
+        "CY2026Q2",
+        "CY2026Q3"
+      ],
+      "sic_dataset_quarters": [
+        "2025q1",
+        "2025q2",
+        "2025q3",
+        "2025q4",
+        "2026q1",
+        "2026q2",
+        "2026q3"
+      ],
+      "sic_exclude": [
+        {
+          "name": "utilities",
+          "note": "SIC major group 49: electric, gas, and sanitary services",
+          "sic_from": 4900,
+          "sic_to": 4999
+        },
+        {
+          "name": "financials",
+          "note": "SIC division H: depository and credit institutions, brokers, insurance, real estate, holding and investment offices (includes REITs)",
+          "sic_from": 6000,
+          "sic_to": 6799
+        }
+      ],
+      "staleness": {
+        "max_annual_age_days": 540,
+        "max_price_age_days": 7,
+        "max_statement_age_days": 160
+      }
+    },
+    "counts": {
+      "excluded": 760,
+      "fscore_listed": 100,
+      "fscore_scored": 1018,
+      "fscore_skip_reasons": {
+        "annual_assets_missing": 73,
+        "annual_gap": 7,
+        "annual_income_missing": 111,
+        "equity_issuance_unknown": 272,
+        "missing_cfo_t": 46,
+        "missing_gross_profit": 452,
+        "missing_liquidity": 70,
+        "missing_revenue": 107,
+        "revenue_non_positive": 7,
+        "stale_annual": 67
+      },
+      "insider": 165,
+      "intersection": 4,
+      "magic_input_rows": 1474,
+      "magic_top": 30,
+      "price_failures": 137,
+      "universe": 2230
+    },
+    "data_sources": [
+      "SEC EDGAR company_tickers_exchange.json",
+      "SEC EDGAR financial statement data set SUB (SIC and form)",
+      "SEC EDGAR XBRL frames (share-count prefilter)",
+      "SEC EDGAR companyfacts",
+      "SEC EDGAR daily index and quarterly master index",
+      "SEC EDGAR current filings Atom feed",
+      "SEC EDGAR Form 4 submission text",
+      "Yahoo Finance chart daily close"
+    ],
+    "form4_acceptance_cutoff": "2026-11-12T23:59:59-05:00",
+    "form4_latest_acceptance": "2026-11-12T21:55:03-05:00",
+    "form4_latest_filing_date": "2026-11-12",
+    "fscore_basis": "annual",
+    "fscore_min_score": 8,
+    "insider_filings_through": "2026-11-12",
+    "insider_lookback_days": 30,
+    "magic_top_n": 30,
+    "min_market_cap": 100000000,
+    "previous_trade_date": "2026-11-10",
+    "price_as_of": "2026-11-12",
+    "run_date": "2026-11-13",
+    "trade_date": "2026-11-12"
+  },
+  "rows": [
+    {
+      "accessions": [
+        "0001104659-26-121502",
+        "0001104659-26-121503"
+      ],
+      "cik": "0000084839",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-29",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ROLLINS INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7340,
+      "symbols": [
+        "ROL"
+      ],
+      "ticker": "ROL",
+      "total_value_usd": 99913330.66559999,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001011438-26-000643"
+      ],
+      "cik": "0000789570",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MGM RESORTS INTERNATIONAL",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7011,
+      "symbols": [
+        "MGM"
+      ],
+      "ticker": "MGM",
+      "total_value_usd": 51740827.48,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001012975-26-001013",
+        "0001012975-26-001014"
+      ],
+      "cik": "0001806952",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 14,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LYELL IMMUNOPHARMA, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "LYEL"
+      ],
+      "ticker": "LYEL",
+      "total_value_usd": 49999983.48,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001213900-26-113031",
+        "0001213900-26-113987",
+        "0001213900-26-115698",
+        "0001213900-26-117633",
+        "0001567675-26-000007"
+      ],
+      "cik": "0001157408",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 4,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STRIDE, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8200,
+      "symbols": [
+        "LRN"
+      ],
+      "ticker": "LRN",
+      "total_value_usd": 39585245.03,
+      "trade_date": "2026-11-12",
+      "transaction_count": 18
+    },
+    {
+      "accessions": [
+        "0001193125-26-452132"
+      ],
+      "cik": "0001157601",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 6,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MADRIGAL PHARMACEUTICALS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "MDGL"
+      ],
+      "ticker": "MDGL",
+      "total_value_usd": 35023032.1012,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0000921895-26-002941"
+      ],
+      "cik": "0001651562",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 5,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "COURSERA, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "COUR"
+      ],
+      "ticker": "COUR",
+      "total_value_usd": 31450844.1298,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0000950142-26-002870",
+        "0001003078-26-000112"
+      ],
+      "cik": "0001003078",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-23",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MSC INDUSTRIAL DIRECT CO INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5084,
+      "symbols": [
+        "MSM"
+      ],
+      "ticker": "MSM",
+      "total_value_usd": 29034298.9015,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001193125-26-445930"
+      ],
+      "cik": "0000908937",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SIRIUS XM HOLDINGS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4832,
+      "symbols": [
+        "SIRI"
+      ],
+      "ticker": "SIRI",
+      "total_value_usd": 26894245.1765,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-451994"
+      ],
+      "cik": "0001468748",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 6,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "KODIAK SCIENCES INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "KOD"
+      ],
+      "ticker": "KOD",
+      "total_value_usd": 24340835.9,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0000905148-26-004561"
+      ],
+      "cik": "0001031203",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "GROUP 1 AUTOMOTIVE INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5500,
+      "symbols": [
+        "GPI"
+      ],
+      "ticker": "GPI",
+      "total_value_usd": 24232208.7706,
+      "trade_date": "2026-11-12",
+      "transaction_count": 30
+    },
+    {
+      "accessions": [
+        "0000921895-26-002784"
+      ],
+      "cik": "0001326380",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-13",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "GAMESTOP CORP.",
+      "officer_titles": [
+        "President, CEO and Chairman"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5734,
+      "symbols": [
+        "GME"
+      ],
+      "ticker": "GME",
+      "total_value_usd": 22774727.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001104659-26-120789",
+        "0001193125-26-428018",
+        "0001193125-26-429071",
+        "0001193125-26-429073",
+        "0001193125-26-429074",
+        "0001193125-26-429075",
+        "0001193125-26-430397"
+      ],
+      "cik": "0002012593",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 7,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-28",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "RAPPORT THERAPEUTICS, INC.",
+      "officer_titles": [
+        "Chief Financial Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "RAPP"
+      ],
+      "ticker": "RAPP",
+      "total_value_usd": 22023904.3417,
+      "trade_date": "2026-11-12",
+      "transaction_count": 11
+    },
+    {
+      "accessions": [
+        "0000921895-26-002845",
+        "0000921895-26-002932"
+      ],
+      "cik": "0001857475",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 5,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "DOLE PLC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 100,
+      "symbols": [
+        "DOLE"
+      ],
+      "ticker": "DOLE",
+      "total_value_usd": 21475853.8063,
+      "trade_date": "2026-11-12",
+      "transaction_count": 6
+    },
+    {
+      "accessions": [
+        "0001061272-26-000004"
+      ],
+      "cik": "0000077476",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-14",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PEPSICO INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2080,
+      "symbols": [
+        "PEP"
+      ],
+      "ticker": "PEP",
+      "total_value_usd": 17904167.88,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001999001-26-000109",
+        "0001999001-26-000111",
+        "0001999001-26-000113"
+      ],
+      "cik": "0001999001",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SIX FLAGS ENTERTAINMENT CORPORATION/NEW",
+      "officer_titles": [
+        "Chief Legal Officer",
+        "Executive Chair"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7900,
+      "symbols": [
+        "FUN"
+      ],
+      "ticker": "FUN",
+      "total_value_usd": 15066320,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001253170-26-000014"
+      ],
+      "cik": "0001727196",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SCHOLAR ROCK HOLDING CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "SRRK"
+      ],
+      "ticker": "SRRK",
+      "total_value_usd": 11999922.3,
+      "trade_date": "2026-11-12",
+      "transaction_count": 6
+    },
+    {
+      "accessions": [
+        "0000050863-26-000195"
+      ],
+      "cik": "0000050863",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "INTEL CORP",
+      "officer_titles": [
+        "CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3674,
+      "symbols": [
+        "INTC"
+      ],
+      "ticker": "INTC",
+      "total_value_usd": 9709680,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001104659-26-119177",
+        "0001104659-26-119180",
+        "0001104659-26-126281",
+        "0001104659-26-126283"
+      ],
+      "cik": "0001793229",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 11,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CLARITEV CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7389,
+      "symbols": [
+        "CTEV"
+      ],
+      "ticker": "CTEV",
+      "total_value_usd": 9227469.308,
+      "trade_date": "2026-11-12",
+      "transaction_count": 8
+    },
+    {
+      "accessions": [
+        "0000947871-26-000985",
+        "0000947871-26-000986",
+        "0000947871-26-001010",
+        "0000947871-26-001011"
+      ],
+      "cik": "0002088082",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 4,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "Electra Therapeutics, Inc.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "ETRA"
+      ],
+      "ticker": "ETRA",
+      "total_value_usd": 8699293.98,
+      "trade_date": "2026-11-12",
+      "transaction_count": 32
+    },
+    {
+      "accessions": [
+        "0001391935-26-000009",
+        "0001900445-26-000006"
+      ],
+      "cik": "0001144879",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-16",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "APPLIED DIGITAL CORP.",
+      "officer_titles": [
+        "CEO; Chairman",
+        "President"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7374,
+      "symbols": [
+        "APLD"
+      ],
+      "ticker": "APLD",
+      "total_value_usd": 6664686.12,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001104659-26-116094",
+        "0001104659-26-119719"
+      ],
+      "cik": "0001591588",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-28",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "GOLD.COM, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5094,
+      "symbols": [
+        "GOLD"
+      ],
+      "ticker": "GOLD",
+      "total_value_usd": 6629742.3841,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001104659-26-124530",
+        "0001104659-26-124536",
+        "0001104659-26-124537",
+        "0001104659-26-124539",
+        "0001231919-26-001568"
+      ],
+      "cik": "0001814114",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 6,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ORCHESTRA BIOMED HOLDINGS, INC.",
+      "officer_titles": [
+        "Chief Financial Officer",
+        "See Remarks"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3841,
+      "symbols": [
+        "OBIO"
+      ],
+      "ticker": "OBIO",
+      "total_value_usd": 6230000,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0000937797-26-000039",
+        "0001724519-26-000014"
+      ],
+      "cik": "0001712184",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LIBERTY LATIN AMERICA LTD.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4841,
+      "symbols": [
+        "LILA"
+      ],
+      "ticker": "LILAK",
+      "total_value_usd": 5283184.3863,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001794034-26-000008"
+      ],
+      "cik": "0000884624",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ORTHOFIX MEDICAL INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3841,
+      "symbols": [
+        "OFIX"
+      ],
+      "ticker": "OFIX",
+      "total_value_usd": 5106708.5806,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001012975-26-001005"
+      ],
+      "cik": "0001803914",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 4,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PLAYBOY, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5900,
+      "symbols": [
+        "PLBY"
+      ],
+      "ticker": "PLBY",
+      "total_value_usd": 5000000.25,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000937797-26-000037",
+        "0001058725-26-000011",
+        "0001570585-26-000156"
+      ],
+      "cik": "0001570585",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LIBERTY GLOBAL LTD.",
+      "officer_titles": [
+        "EVP, Chief Technology Officer",
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4841,
+      "symbols": [
+        "LBTY"
+      ],
+      "ticker": "LBTYA",
+      "total_value_usd": 4486300.1512,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001031609-26-000009",
+        "0001831686-26-000010",
+        "0001832050-26-000010"
+      ],
+      "cik": "0001801368",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MP MATERIALS CORP. / DE",
+      "officer_titles": [
+        "Chief Financial Officer",
+        "Chief Operating Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1000,
+      "symbols": [
+        "MP"
+      ],
+      "ticker": "MP",
+      "total_value_usd": 3353605.68,
+      "trade_date": "2026-11-12",
+      "transaction_count": 6
+    },
+    {
+      "accessions": [
+        "0001045463-26-000021",
+        "0001045463-26-000022",
+        "0001045463-26-000024"
+      ],
+      "cik": "0001559053",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PROTHENA CORP PUBLIC LTD CO",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "PRTA"
+      ],
+      "ticker": "PRTA",
+      "total_value_usd": 3336252,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001369240-26-000014",
+        "0001487630-26-000022"
+      ],
+      "cik": "0001467373",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ACCENTURE PLC",
+      "officer_titles": [
+        "Chair and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7389,
+      "symbols": [
+        "ACN"
+      ],
+      "ticker": "ACN",
+      "total_value_usd": 3200889,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001182684-26-000022"
+      ],
+      "cik": "0001559432",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TXO PARTNERS, L.P.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1311,
+      "symbols": [
+        "TXO"
+      ],
+      "ticker": "TXO",
+      "total_value_usd": 3078748.6663,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001166152-26-000014"
+      ],
+      "cik": "0000275053",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 5,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NATURES SUNSHINE PRODUCTS INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "NATR"
+      ],
+      "ticker": "NATR",
+      "total_value_usd": 2849810.84,
+      "trade_date": "2026-11-12",
+      "transaction_count": 20
+    },
+    {
+      "accessions": [
+        "0001193125-26-436557",
+        "0001193125-26-436562",
+        "0001193125-26-449379",
+        "0001193125-26-452897"
+      ],
+      "cik": "0001116942",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TTM TECHNOLOGIES INC",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3672,
+      "symbols": [
+        "TTMI"
+      ],
+      "ticker": "TTMI",
+      "total_value_usd": 2283951.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001666120-26-000033"
+      ],
+      "cik": "0001650372",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ATLASSIAN CORP",
+      "officer_titles": [
+        "CEO, Co-Founder"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "TEAM"
+      ],
+      "ticker": "TEAM",
+      "total_value_usd": 2013990.1764,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0000064803-26-000112"
+      ],
+      "cik": "0000064803",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CVS HEALTH CORP",
+      "officer_titles": [
+        "EVP and Group President"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5912,
+      "symbols": [
+        "CVS"
+      ],
+      "ticker": "CVS",
+      "total_value_usd": 2001315.225,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-437864",
+        "0001193125-26-447393",
+        "0001193125-26-447394",
+        "0001193125-26-447395",
+        "0001193125-26-447396",
+        "0001193125-26-447404",
+        "0001193125-26-447407",
+        "0001193125-26-449973",
+        "0001193125-26-453688",
+        "0001193125-26-455581"
+      ],
+      "cik": "0000933036",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 8,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "UPBOUND GROUP, INC.",
+      "officer_titles": [
+        "Chief Executive Officer",
+        "EVP, Chief Financial Officer",
+        "EVP, Chief Growth Officer",
+        "EVP, Chief Operating Officer",
+        "EVP, Chief Technology Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7359,
+      "symbols": [
+        "UPBD"
+      ],
+      "ticker": "UPBD",
+      "total_value_usd": 1840818.17,
+      "trade_date": "2026-11-12",
+      "transaction_count": 11
+    },
+    {
+      "accessions": [
+        "0001294357-26-000018",
+        "0001315319-26-000002"
+      ],
+      "cik": "0001287032",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PROSPECT CAPITAL CORP",
+      "officer_titles": [
+        "CHIEF EXECUTIVE OFFICER"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": null,
+      "symbols": [
+        "PSEC"
+      ],
+      "ticker": "PSEC",
+      "total_value_usd": 1747413.9408,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001293167-26-000006",
+        "0001293167-26-000008",
+        "0001518992-26-000004",
+        "0001704241-26-000004",
+        "0001738096-26-000003"
+      ],
+      "cik": "0000350698",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 4,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "AUTONATION, INC.",
+      "officer_titles": [
+        "CEO and Director",
+        "EVP & CFO",
+        "EVP, Gen Counsel & Corp Sec"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5500,
+      "symbols": [
+        "AN"
+      ],
+      "ticker": "AN",
+      "total_value_usd": 1729867.6093,
+      "trade_date": "2026-11-12",
+      "transaction_count": 10
+    },
+    {
+      "accessions": [
+        "0001628280-26-072835",
+        "0001899883-26-000044"
+      ],
+      "cik": "0001899883",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "FTAI INFRASTRUCTURE INC.",
+      "officer_titles": [
+        "CEO and President",
+        "CFO  and CAO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4011,
+      "symbols": [
+        "FIP"
+      ],
+      "ticker": "FIP",
+      "total_value_usd": 1548950,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001515154-26-000003"
+      ],
+      "cik": "0001024478",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ROCKWELL AUTOMATION, INC",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3829,
+      "symbols": [
+        "ROK"
+      ],
+      "ticker": "ROK",
+      "total_value_usd": 1545449.5356,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-454344",
+        "0001193125-26-455960"
+      ],
+      "cik": "0001325702",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MAGNACHIP SEMICONDUCTOR CORP",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3674,
+      "symbols": [
+        "MX"
+      ],
+      "ticker": "MX",
+      "total_value_usd": 1526506.0274,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001225208-26-008641",
+        "0001225208-26-008642"
+      ],
+      "cik": "0000012927",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BOEING CO",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3721,
+      "symbols": [
+        "BA"
+      ],
+      "ticker": "BA",
+      "total_value_usd": 1508847.7,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001284591-26-000002"
+      ],
+      "cik": "0000866829",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HELIX ENERGY SOLUTIONS GROUP INC",
+      "officer_titles": [
+        "PRESIDENT & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1389,
+      "symbols": [
+        "HOS"
+      ],
+      "ticker": "HOS",
+      "total_value_usd": 1500009.139819,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001193125-26-450429",
+        "0001193125-26-453692",
+        "0001193125-26-453693",
+        "0001193125-26-454576"
+      ],
+      "cik": "0002035149",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "FLOWCO HOLDINGS INC.",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3533,
+      "symbols": [
+        "FLOC"
+      ],
+      "ticker": "FLOC",
+      "total_value_usd": 1494075.028,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0000921895-26-002902"
+      ],
+      "cik": "0000925528",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HUDSON TECHNOLOGIES INC /NY",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5080,
+      "symbols": [
+        "HDSN"
+      ],
+      "ticker": "HDSN",
+      "total_value_usd": 1313588.258,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0000899140-26-001275",
+        "0000899140-26-001276"
+      ],
+      "cik": "0000820318",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "COHERENT CORP.",
+      "officer_titles": [
+        "CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3827,
+      "symbols": [
+        "COHR"
+      ],
+      "ticker": "COHR",
+      "total_value_usd": 1220285,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001213900-26-112593"
+      ],
+      "cik": "0001702780",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 4,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-23",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "OPTIMUM COMMUNICATIONS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4841,
+      "symbols": [
+        "OPTU"
+      ],
+      "ticker": "OPTU",
+      "total_value_usd": 1163551.2948,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001193125-26-438100"
+      ],
+      "cik": "0001915657",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-29",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HF SINCLAIR CORP",
+      "officer_titles": [
+        "CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4610,
+      "symbols": [
+        "DINO"
+      ],
+      "ticker": "DINO",
+      "total_value_usd": 1108000,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-458972",
+        "0001193125-26-458974"
+      ],
+      "cik": "0001517228",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "VISTANCE NETWORKS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3663,
+      "symbols": [
+        "VISN"
+      ],
+      "ticker": "VISN",
+      "total_value_usd": 1029255,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001213900-26-118288"
+      ],
+      "cik": "0001980088",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MACH NATURAL RESOURCES LP",
+      "officer_titles": [
+        "See Remarks"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1311,
+      "symbols": [
+        "MNR"
+      ],
+      "ticker": "MNR",
+      "total_value_usd": 1008700,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001437749-26-034881"
+      ],
+      "cik": "0000855658",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LATTICE SEMICONDUCTOR CORP",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3674,
+      "symbols": [
+        "LSCC"
+      ],
+      "ticker": "LSCC",
+      "total_value_usd": 1003689.3342,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001104659-26-122247"
+      ],
+      "cik": "0001650729",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SITEONE LANDSCAPE SUPPLY, INC.",
+      "officer_titles": [
+        "CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5040,
+      "symbols": [
+        "SITE"
+      ],
+      "ticker": "SITE",
+      "total_value_usd": 1003684.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0000905148-26-004745"
+      ],
+      "cik": "0001439725",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BIODESIX INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8071,
+      "symbols": [
+        "BDSX"
+      ],
+      "ticker": "BDSX",
+      "total_value_usd": 1001990,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001524472-26-000150"
+      ],
+      "cik": "0001524472",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-29",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "XYLEM INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3561,
+      "symbols": [
+        "XYL"
+      ],
+      "ticker": "XYL",
+      "total_value_usd": 985600,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000902664-26-004286"
+      ],
+      "cik": "0001703647",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "KORRO BIO, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "KRRO"
+      ],
+      "ticker": "KRRO",
+      "total_value_usd": 884751.9106,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001164644-26-000008"
+      ],
+      "cik": "0001569345",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-13",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SPRINKLR, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "CXM"
+      ],
+      "ticker": "CXM",
+      "total_value_usd": 850500,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-454019",
+        "0001193125-26-454020",
+        "0001193125-26-458287"
+      ],
+      "cik": "0000926282",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ADTRAN HOLDINGS, INC.",
+      "officer_titles": [
+        "Chairman & CEO",
+        "SVP of Finance; CFO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3661,
+      "symbols": [
+        "ADTN"
+      ],
+      "ticker": "ADTN",
+      "total_value_usd": 847008.224,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001366074-26-000006"
+      ],
+      "cik": "0002007919",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-14",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "INHIBRX BIOSCIENCES, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "INBX"
+      ],
+      "ticker": "INBX",
+      "total_value_usd": 840400.8365,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0000950103-26-017397",
+        "0001628280-26-073491"
+      ],
+      "cik": "0001693736",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "EQUIPMENTSHARE.COM INC",
+      "officer_titles": [
+        "Founder & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7359,
+      "symbols": [
+        "EQPT"
+      ],
+      "ticker": "EQPT",
+      "total_value_usd": 804105.04,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001214659-26-013690",
+        "0001214659-26-013691",
+        "0001214659-26-013801"
+      ],
+      "cik": "0001065696",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LKQ CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5010,
+      "symbols": [
+        "LKQ"
+      ],
+      "ticker": "LKQ",
+      "total_value_usd": 792615.473,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001540655-26-000027",
+        "0001540655-26-000029",
+        "0001786877-26-000007",
+        "0001934692-26-000008",
+        "0001981193-26-000006",
+        "0002015754-26-000003",
+        "0002020286-26-000011",
+        "0002020289-26-000008",
+        "0002054635-26-000006",
+        "0002074755-26-000008"
+      ],
+      "cik": "0001520006",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 9,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MATADOR RESOURCES CO",
+      "officer_titles": [
+        "Chairman and CEO",
+        "EVP and CFO",
+        "EVP and COO",
+        "EVP, Reservoir Engineering",
+        "President",
+        "SVP & Chief Accounting Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1311,
+      "symbols": [
+        "MTDR"
+      ],
+      "ticker": "MTDR",
+      "total_value_usd": 765395,
+      "trade_date": "2026-11-12",
+      "transaction_count": 12
+    },
+    {
+      "accessions": [
+        "0000849395-26-000015",
+        "0000849395-26-000017"
+      ],
+      "cik": "0000849395",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CRH PUBLIC LTD CO",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3241,
+      "symbols": [
+        "CRH"
+      ],
+      "ticker": "CRH",
+      "total_value_usd": 758960,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001460471-26-000009"
+      ],
+      "cik": "0001043509",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-14",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SONIC AUTOMOTIVE INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5500,
+      "symbols": [
+        "SAH"
+      ],
+      "ticker": "SAH",
+      "total_value_usd": 752044.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000853816-26-000069"
+      ],
+      "cik": "0000853816",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LANDSTAR SYSTEM INC",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4213,
+      "symbols": [
+        "LSTR"
+      ],
+      "ticker": "LSTR",
+      "total_value_usd": 714619,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001834449-26-000009"
+      ],
+      "cik": "0001703057",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ABCELLERA BIOLOGICS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "ABCL"
+      ],
+      "ticker": "ABCL",
+      "total_value_usd": 698920.1,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-432207",
+        "0001193125-26-432218"
+      ],
+      "cik": "0000903129",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-23",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "GENTHERM INC",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3714,
+      "symbols": [
+        "THRM"
+      ],
+      "ticker": "THRM",
+      "total_value_usd": 662600,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001213900-26-118354",
+        "0001630805-26-000085"
+      ],
+      "cik": "0001630805",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 5,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BABCOCK & WILCOX ENTERPRISES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3433,
+      "symbols": [
+        "BW"
+      ],
+      "ticker": "BW",
+      "total_value_usd": 652732.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001289408-26-000006",
+        "0001555392-26-000004"
+      ],
+      "cik": "0001350653",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ALPHATEC HOLDINGS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3841,
+      "symbols": [
+        "ATEC"
+      ],
+      "ticker": "ATEC",
+      "total_value_usd": 651150,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001628280-26-067906",
+        "0001628280-26-071186",
+        "0001628280-26-071187"
+      ],
+      "cik": "0001694028",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LIBERTY ENERGY INC.",
+      "officer_titles": [
+        "CEO and President",
+        "Chief Accounting Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1389,
+      "symbols": [
+        "LBRT"
+      ],
+      "ticker": "LBRT",
+      "total_value_usd": 645635,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001490816-26-000002",
+        "0001490816-26-000004"
+      ],
+      "cik": "0000088205",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SPX TECHNOLOGIES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3540,
+      "symbols": [
+        "SPXC"
+      ],
+      "ticker": "SPXC",
+      "total_value_usd": 633770,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001078543-26-000003",
+        "0001158463-26-000098"
+      ],
+      "cik": "0001158463",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "JETBLUE AIRWAYS CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4512,
+      "symbols": [
+        "JBLU"
+      ],
+      "ticker": "JBLU",
+      "total_value_usd": 623843.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001104659-26-121809"
+      ],
+      "cik": "0000018230",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CATERPILLAR INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3531,
+      "symbols": [
+        "CAT"
+      ],
+      "ticker": "CAT",
+      "total_value_usd": 620390,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-453812",
+        "0001193125-26-453825"
+      ],
+      "cik": "0000929008",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "WESCO INTERNATIONAL INC",
+      "officer_titles": [
+        "EVP & CFO",
+        "EVP & CHRO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5063,
+      "symbols": [
+        "WCC"
+      ],
+      "ticker": "WCC",
+      "total_value_usd": 603430.27,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001674168-26-000111",
+        "0001674168-26-000112"
+      ],
+      "cik": "0001674168",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HILTON GRAND VACATIONS INC.",
+      "officer_titles": [
+        "See Remarks"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7000,
+      "symbols": [
+        "HGV"
+      ],
+      "ticker": "HGV",
+      "total_value_usd": 603099,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001213900-26-117150",
+        "0001213900-26-117660",
+        "0001213900-26-118281",
+        "0001213900-26-118289"
+      ],
+      "cik": "0001979414",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NEONC TECHNOLOGIES HOLDINGS, INC.",
+      "officer_titles": [
+        "CEO, President",
+        "CMO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "NTHI"
+      ],
+      "ticker": "NTHI",
+      "total_value_usd": 583610.756,
+      "trade_date": "2026-11-12",
+      "transaction_count": 8
+    },
+    {
+      "accessions": [
+        "0001493152-26-047631",
+        "0001493152-26-048562"
+      ],
+      "cik": "0001655923",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-23",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ALPHA COGNITION INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "ACOG"
+      ],
+      "ticker": "ACOG",
+      "total_value_usd": 574395.6078,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0000921895-26-003021",
+        "0001193805-26-001382",
+        "0001193805-26-001456"
+      ],
+      "cik": "0001274737",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "EXAGEN INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8071,
+      "symbols": [
+        "XGN"
+      ],
+      "ticker": "XGN",
+      "total_value_usd": 568659.55,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001628280-26-072106"
+      ],
+      "cik": "0001005229",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "COLUMBUS MCKINNON CORP",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3531,
+      "symbols": [
+        "CMCO"
+      ],
+      "ticker": "CMCO",
+      "total_value_usd": 551349.34,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001178670-26-000085",
+        "0001178670-26-000087"
+      ],
+      "cik": "0001178670",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ALNYLAM PHARMACEUTICALS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "ALNY"
+      ],
+      "ticker": "ALNY",
+      "total_value_usd": 543126.2,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001232377-26-000016"
+      ],
+      "cik": "0001701605",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BAKER HUGHES CO",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3533,
+      "symbols": [
+        "BKR"
+      ],
+      "ticker": "BKR",
+      "total_value_usd": 531000,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001719998-26-000016"
+      ],
+      "cik": "0001546417",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BLOOMIN' BRANDS, INC.",
+      "officer_titles": [
+        "CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5812,
+      "symbols": [
+        "BLMN"
+      ],
+      "ticker": "BLMN",
+      "total_value_usd": 502000,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000018926-26-000074",
+        "0000018926-26-000076"
+      ],
+      "cik": "0000018926",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LUMEN TECHNOLOGIES, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4813,
+      "symbols": [
+        "LUMN"
+      ],
+      "ticker": "LUMN",
+      "total_value_usd": 494605,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0002019299-26-000018",
+        "0002088880-26-000008"
+      ],
+      "cik": "0001883685",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "DRAFTKINGS INC.",
+      "officer_titles": [
+        "Chief Financial Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7990,
+      "symbols": [
+        "DKNG"
+      ],
+      "ticker": "DKNG",
+      "total_value_usd": 448787.08,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0000950142-26-002995",
+        "0000950142-26-003013"
+      ],
+      "cik": "0002105398",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CSQUARE, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7370,
+      "symbols": [
+        "CSQR"
+      ],
+      "ticker": "CSQR",
+      "total_value_usd": 419428.6,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001225208-26-008735"
+      ],
+      "cik": "0000021076",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CLOROX CO /DE/",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2842,
+      "symbols": [
+        "CLX"
+      ],
+      "ticker": "CLX",
+      "total_value_usd": 400250.8,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-458830",
+        "0001193125-26-458834",
+        "0001193125-26-458845",
+        "0001193125-26-458847",
+        "0001193125-26-458848",
+        "0001193125-26-458853",
+        "0001193125-26-459008"
+      ],
+      "cik": "0001374690",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 7,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LARIMAR THERAPEUTICS, INC.",
+      "officer_titles": [
+        "Chief Development Officer",
+        "Chief Financial Officer",
+        "President and CEO",
+        "President and COO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "LRMR"
+      ],
+      "ticker": "LRMR",
+      "total_value_usd": 382085.821,
+      "trade_date": "2026-11-12",
+      "transaction_count": 7
+    },
+    {
+      "accessions": [
+        "0001332349-26-000074"
+      ],
+      "cik": "0001332349",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BROOKDALE SENIOR LIVING INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8050,
+      "symbols": [
+        "BKD"
+      ],
+      "ticker": "BKD",
+      "total_value_usd": 358068,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000897069-26-001913"
+      ],
+      "cik": "0001720635",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NVENT ELECTRIC PLC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3550,
+      "symbols": [
+        "NVT"
+      ],
+      "ticker": "NVT",
+      "total_value_usd": 339435,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-436418",
+        "0001193125-26-458723"
+      ],
+      "cik": "0000717605",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HEXCEL CORP /DE/",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2821,
+      "symbols": [
+        "HXL"
+      ],
+      "ticker": "HXL",
+      "total_value_usd": 322840,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001712189-26-000063"
+      ],
+      "cik": "0001712189",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TARGET HOSPITALITY CORP.",
+      "officer_titles": [
+        "Director and CEO and President"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7000,
+      "symbols": [
+        "TH"
+      ],
+      "ticker": "TH",
+      "total_value_usd": 312675,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001337887-26-000007",
+        "0001543777-26-000006"
+      ],
+      "cik": "0001463101",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ENPHASE ENERGY, INC.",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3674,
+      "symbols": [
+        "ENPH"
+      ],
+      "ticker": "ENPH",
+      "total_value_usd": 298104,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001213900-26-109187",
+        "0001213900-26-109523",
+        "0001213900-26-110401"
+      ],
+      "cik": "0001956741",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-16",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ZONE FRONTIER INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2842,
+      "symbols": [
+        "ZONE"
+      ],
+      "ticker": "ZONE",
+      "total_value_usd": 286425,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001562356-26-000004"
+      ],
+      "cik": "0001610250",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BOOT BARN HOLDINGS, INC.",
+      "officer_titles": [
+        "CFO & SECRETARY"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5661,
+      "symbols": [
+        "BOOT"
+      ],
+      "ticker": "BOOT",
+      "total_value_usd": 270740,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001225028-26-000007"
+      ],
+      "cik": "0002028336",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-14",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NEW ERA ENERGY & DIGITAL, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1311,
+      "symbols": [
+        "NUAI"
+      ],
+      "ticker": "NUAI",
+      "total_value_usd": 241750,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000891839-26-000478"
+      ],
+      "cik": "0000099302",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TRANSCAT INC",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3825,
+      "symbols": [
+        "TRNS"
+      ],
+      "ticker": "TRNS",
+      "total_value_usd": 230366.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001700266-26-000004",
+        "0001782435-26-000005"
+      ],
+      "cik": "0000055242",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "KENNAMETAL INC",
+      "officer_titles": [
+        "President and CEO",
+        "Vice President and CFO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3541,
+      "symbols": [
+        "KMT"
+      ],
+      "ticker": "KMT",
+      "total_value_usd": 212368,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0002160413-26-000005"
+      ],
+      "cik": "0001050377",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PC CONNECTION INC",
+      "officer_titles": [
+        "President & COO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5045,
+      "symbols": [
+        "CNXN"
+      ],
+      "ticker": "CNXN",
+      "total_value_usd": 199698,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001225208-26-008783"
+      ],
+      "cik": "0000007084",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ARCHER-DANIELS-MIDLAND CO",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2070,
+      "symbols": [
+        "ADM"
+      ],
+      "ticker": "ADM",
+      "total_value_usd": 196756,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-455831",
+        "0001193125-26-455833"
+      ],
+      "cik": "0000105319",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "WW INTERNATIONAL, INC.",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7200,
+      "symbols": [
+        "WW"
+      ],
+      "ticker": "WW",
+      "total_value_usd": 192750,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001685591-26-000006"
+      ],
+      "cik": "0000096021",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SYSCO CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5140,
+      "symbols": [
+        "SYY"
+      ],
+      "ticker": "SYY",
+      "total_value_usd": 191550,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000921895-26-003018",
+        "0001193805-26-001455"
+      ],
+      "cik": "0001799191",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STARLING ONCOLOGY, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8011,
+      "symbols": [
+        "STLN"
+      ],
+      "ticker": "STLN",
+      "total_value_usd": 188843.65,
+      "trade_date": "2026-11-12",
+      "transaction_count": 6
+    },
+    {
+      "accessions": [
+        "0001628280-26-073457"
+      ],
+      "cik": "0000031462",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ECOLAB INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2840,
+      "symbols": [
+        "ECL"
+      ],
+      "ticker": "ECL",
+      "total_value_usd": 184875,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001268071-26-000011",
+        "0001647660-26-000019",
+        "0002140162-26-000008"
+      ],
+      "cik": "0000929351",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STARZ ENTERTAINMENT CORP /CN/",
+      "officer_titles": [
+        "CFO and Treasurer",
+        "President and CEO",
+        "SEE REMARKS"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7812,
+      "symbols": [
+        "STRZ"
+      ],
+      "ticker": "STRZ",
+      "total_value_usd": 176706.4,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-450443"
+      ],
+      "cik": "0001598428",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "METALLUS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3312,
+      "symbols": [
+        "MTUS"
+      ],
+      "ticker": "MTUS",
+      "total_value_usd": 166100,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001859730-26-000004",
+        "0001945821-26-000004"
+      ],
+      "cik": "0001013934",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STRATEGIC EDUCATION, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8200,
+      "symbols": [
+        "STRA"
+      ],
+      "ticker": "STRA",
+      "total_value_usd": 163118.2,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0000915389-26-000174"
+      ],
+      "cik": "0000915389",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "EASTMAN CHEMICAL CO",
+      "officer_titles": [
+        "SVP, Regions & Chf SupChn Ofcr"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2821,
+      "symbols": [
+        "EMN"
+      ],
+      "ticker": "EMN",
+      "total_value_usd": 159989.025,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-455945",
+        "0001193125-26-458960",
+        "0001193125-26-458961"
+      ],
+      "cik": "0001420800",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ENOVIS CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3842,
+      "symbols": [
+        "ENOV"
+      ],
+      "ticker": "ENOV",
+      "total_value_usd": 149941.75,
+      "trade_date": "2026-11-12",
+      "transaction_count": 6
+    },
+    {
+      "accessions": [
+        "0001493152-26-050692",
+        "0001493152-26-051304"
+      ],
+      "cik": "0001509470",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NEOSTELLAR CAPITAL CORP.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": null,
+      "symbols": [
+        "NSLR"
+      ],
+      "ticker": "NSLR",
+      "total_value_usd": 145700,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001724571-26-000004"
+      ],
+      "cik": "0000071829",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NPK INTERNATIONAL INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7350,
+      "symbols": [
+        "NPKI"
+      ],
+      "ticker": "NPKI",
+      "total_value_usd": 138600,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001654954-26-009738",
+        "0001654954-26-009739"
+      ],
+      "cik": "0001375205",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "UR-ENERGY INC",
+      "officer_titles": [
+        "CHIEF FINANCIAL OFFICER",
+        "VICE PRESIDENT FINANCE"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1040,
+      "symbols": [
+        "URG"
+      ],
+      "ticker": "URG",
+      "total_value_usd": 129529.26,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0000898243-26-000025",
+        "0000898243-26-000027",
+        "0000898243-26-000029"
+      ],
+      "cik": "0001362190",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "AUDIOEYE INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "AEYE"
+      ],
+      "ticker": "AEYE",
+      "total_value_usd": 127910.2,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001836156-26-000008"
+      ],
+      "cik": "0001793659",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "RUSH STREET INTERACTIVE, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7990,
+      "symbols": [
+        "RSI"
+      ],
+      "ticker": "RSI",
+      "total_value_usd": 118310,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-066127",
+        "0001628280-26-072763"
+      ],
+      "cik": "0001136893",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "FIDELITY NATIONAL INFORMATION SERVICES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7389,
+      "symbols": [
+        "FIS"
+      ],
+      "ticker": "FIS",
+      "total_value_usd": 109894,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001628280-26-070223",
+        "0001628280-26-070228"
+      ],
+      "cik": "0001443669",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PROTO LABS INC",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3440,
+      "symbols": [
+        "PRLB"
+      ],
+      "ticker": "PRLB",
+      "total_value_usd": 101229.6,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001189819-26-000002"
+      ],
+      "cik": "0001736946",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ARLO TECHNOLOGIES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7381,
+      "symbols": [
+        "ARLO"
+      ],
+      "ticker": "ARLO",
+      "total_value_usd": 100401.675,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000764065-26-000117"
+      ],
+      "cik": "0000764065",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-22",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CLEVELAND-CLIFFS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1000,
+      "symbols": [
+        "CLF"
+      ],
+      "ticker": "CLF",
+      "total_value_usd": 99826,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001214659-26-014004"
+      ],
+      "cik": "0001398733",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "AQUESTIVE THERAPEUTICS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "AQST"
+      ],
+      "ticker": "AQST",
+      "total_value_usd": 99330.625,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001193125-26-446216"
+      ],
+      "cik": "0002042347",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SEAPORT THERAPEUTICS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "SPTX"
+      ],
+      "ticker": "SPTX",
+      "total_value_usd": 99325,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001183010-26-000067"
+      ],
+      "cik": "0000058361",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LEE ENTERPRISES, INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2711,
+      "symbols": [
+        "LEE"
+      ],
+      "ticker": "LEE",
+      "total_value_usd": 99305.64,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0000891103-26-000164"
+      ],
+      "cik": "0000891103",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MATCH GROUP, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7370,
+      "symbols": [
+        "MTCH"
+      ],
+      "ticker": "MTCH",
+      "total_value_usd": 97084.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001708055-26-000089"
+      ],
+      "cik": "0001708055",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "RIBBON COMMUNICATIONS INC.",
+      "officer_titles": [
+        "President & CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7373,
+      "symbols": [
+        "RBBN"
+      ],
+      "ticker": "RBBN",
+      "total_value_usd": 96240,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-072428",
+        "0001628280-26-073406"
+      ],
+      "cik": "0001840572",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-12",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LUCKY STRIKE ENTERTAINMENT CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7900,
+      "symbols": [
+        "LUCK"
+      ],
+      "ticker": "LUCK",
+      "total_value_usd": 95994.31,
+      "trade_date": "2026-11-12",
+      "transaction_count": 5
+    },
+    {
+      "accessions": [
+        "0001193125-26-455576"
+      ],
+      "cik": "0002089661",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SUNOCOCORP LLC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2911,
+      "symbols": [
+        "SUNC"
+      ],
+      "ticker": "SUNC",
+      "total_value_usd": 94132.2,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001393025-26-000007"
+      ],
+      "cik": "0001415404",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ECHOSTAR CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 4899,
+      "symbols": [
+        "ECHO"
+      ],
+      "ticker": "ECHO",
+      "total_value_usd": 90410,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001213900-26-114242",
+        "0001213900-26-116801"
+      ],
+      "cik": "0000910329",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "MEDIFAST INC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2090,
+      "symbols": [
+        "MED"
+      ],
+      "ticker": "MED",
+      "total_value_usd": 76636.9824,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-421089",
+        "0001193125-26-423068"
+      ],
+      "cik": "0002019804",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-14",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TERRESTRIAL ENERGY INC. /DE/",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3443,
+      "symbols": [
+        "IMSR"
+      ],
+      "ticker": "IMSR",
+      "total_value_usd": 72943.3,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001733614-26-000005"
+      ],
+      "cik": "0000706698",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-29",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "UTAH MEDICAL PRODUCTS INC",
+      "officer_titles": [
+        "Chairman, CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3841,
+      "symbols": [
+        "UTMD"
+      ],
+      "ticker": "UTMD",
+      "total_value_usd": 66750,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001140361-26-042891"
+      ],
+      "cik": "0001530804",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "TRONOX HOLDINGS PLC",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2810,
+      "symbols": [
+        "TROX"
+      ],
+      "ticker": "TROX",
+      "total_value_usd": 52600,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001493152-26-048971"
+      ],
+      "cik": "0001718405",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-28",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HYCROFT MINING HOLDING CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1040,
+      "symbols": [
+        "HYMC"
+      ],
+      "ticker": "HYMC",
+      "total_value_usd": 50075.1,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000931148-26-000092"
+      ],
+      "cik": "0000931148",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "GRAFTECH INTERNATIONAL LTD",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3620,
+      "symbols": [
+        "EAF"
+      ],
+      "ticker": "EAF",
+      "total_value_usd": 50000,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001062822-26-000130"
+      ],
+      "cik": "0001062822",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LEXICON PHARMACEUTICALS, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "LXRX"
+      ],
+      "ticker": "LXRX",
+      "total_value_usd": 49999.4384,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001104659-26-126208"
+      ],
+      "cik": "0001653384",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "RUNWAY GROWTH FINANCE CORP.",
+      "officer_titles": [
+        "Co-CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": null,
+      "symbols": [
+        "RWAY"
+      ],
+      "ticker": "RWAY",
+      "total_value_usd": 49725,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001940272-26-000025",
+        "0001940272-26-000026",
+        "0001940272-26-000028",
+        "0001940272-26-000031"
+      ],
+      "cik": "0001728328",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "INMED PHARMACEUTICALS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "INM",
+        "MTRI"
+      ],
+      "ticker": "INM",
+      "total_value_usd": 48730.5116,
+      "trade_date": "2026-11-12",
+      "transaction_count": 7
+    },
+    {
+      "accessions": [
+        "0001225208-26-008474",
+        "0001225208-26-008475",
+        "0001225208-26-008548"
+      ],
+      "cik": "0001852551",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 3,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NOVA MINERALS CORP",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1040,
+      "symbols": [
+        "NVA"
+      ],
+      "ticker": "NVA",
+      "total_value_usd": 46933.8301,
+      "trade_date": "2026-11-12",
+      "transaction_count": 4
+    },
+    {
+      "accessions": [
+        "0001193125-26-450238"
+      ],
+      "cik": "0001162194",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STANDARD BIOTOOLS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "LAB"
+      ],
+      "ticker": "LAB",
+      "total_value_usd": 46897.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-068348"
+      ],
+      "cik": "0001287750",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-28",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ARES CAPITAL CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": null,
+      "symbols": [
+        "ARCC"
+      ],
+      "ticker": "ARCC",
+      "total_value_usd": 46150,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001563411-26-000202"
+      ],
+      "cik": "0001563411",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-02",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CONSTELLIUM SE",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3341,
+      "symbols": [
+        "CSTM"
+      ],
+      "ticker": "CSTM",
+      "total_value_usd": 42138,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001070235-26-000145"
+      ],
+      "cik": "0001070235",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-03",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "BLACKBERRY LTD",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "BB"
+      ],
+      "ticker": "BB",
+      "total_value_usd": 40900,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000921895-26-002891"
+      ],
+      "cik": "0001227636",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "NEURONETICS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3841,
+      "symbols": [
+        "STIM"
+      ],
+      "ticker": "STIM",
+      "total_value_usd": 40860,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-449902"
+      ],
+      "cik": "0001347178",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "VANDA PHARMACEUTICALS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "VNDA"
+      ],
+      "ticker": "VNDA",
+      "total_value_usd": 38093.6846,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-457093"
+      ],
+      "cik": "0000728387",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-11",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PERSPECTIVE THERAPEUTICS, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2834,
+      "symbols": [
+        "CATX"
+      ],
+      "ticker": "CATX",
+      "total_value_usd": 37943.1,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001609253-26-000161"
+      ],
+      "cik": "0001609253",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CALIFORNIA RESOURCES CORP",
+      "officer_titles": [
+        "President and CEO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1311,
+      "symbols": [
+        "CRC"
+      ],
+      "ticker": "CRC",
+      "total_value_usd": 37307.84,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-436256"
+      ],
+      "cik": "0001968487",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-15",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "WORTHINGTON STEEL, INC.",
+      "officer_titles": [
+        "CEO Americas Kloeckner Metals"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3310,
+      "symbols": [
+        "WS"
+      ],
+      "ticker": "WS",
+      "total_value_usd": 31492,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001712741-26-000011"
+      ],
+      "cik": "0001738827",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "KLX ENERGY SERVICES HOLDINGS, INC.",
+      "officer_titles": [
+        "See Remarks"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1389,
+      "symbols": [
+        "KLXE"
+      ],
+      "ticker": "KLXE",
+      "total_value_usd": 30600,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-454091",
+        "0001628280-26-071701"
+      ],
+      "cik": "0001718227",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CONSTRUCTION PARTNERS, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1600,
+      "symbols": [
+        "ROAD"
+      ],
+      "ticker": "ROAD",
+      "total_value_usd": 30052.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001193125-26-447640",
+        "0001193125-26-449849"
+      ],
+      "cik": "0000880117",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "SANFILIPPO JOHN B & SON INC",
+      "officer_titles": [
+        "Sr. VP, Corporate Controller"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2060,
+      "symbols": [
+        "JBSS"
+      ],
+      "ticker": "JBSS",
+      "total_value_usd": 27586,
+      "trade_date": "2026-11-12",
+      "transaction_count": 3
+    },
+    {
+      "accessions": [
+        "0001193125-26-458918"
+      ],
+      "cik": "0001054905",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "INNOSPEC INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2800,
+      "symbols": [
+        "IOSP"
+      ],
+      "ticker": "IOSP",
+      "total_value_usd": 27493.05,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-458707"
+      ],
+      "cik": "0000916540",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "DARLING INGREDIENTS INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2070,
+      "symbols": [
+        "DAR"
+      ],
+      "ticker": "DAR",
+      "total_value_usd": 25595,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001225208-26-008441"
+      ],
+      "cik": "0000039368",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-16",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "FULLER H B CO",
+      "officer_titles": [
+        "Senior VP, BAS"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2891,
+      "symbols": [
+        "FUL"
+      ],
+      "ticker": "FUL",
+      "total_value_usd": 24999.99753448,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001625641-26-000195"
+      ],
+      "cik": "0001625641",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "CS DISCO, INC.",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7372,
+      "symbols": [
+        "LAW"
+      ],
+      "ticker": "LAW",
+      "total_value_usd": 24470.5,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001822928-26-000091"
+      ],
+      "cik": "0001822928",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HOLLEY INC.",
+      "officer_titles": [
+        "Chief Financial Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3714,
+      "symbols": [
+        "HLLY"
+      ],
+      "ticker": "HLLY",
+      "total_value_usd": 22770,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001813477-26-000008"
+      ],
+      "cik": "0001144215",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-16",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ACUITY INC. (DE)",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3640,
+      "symbols": [
+        "AYI"
+      ],
+      "ticker": "AYI",
+      "total_value_usd": 22069.36,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001320461-26-000144"
+      ],
+      "cik": "0001320461",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "COOPER-STANDARD HOLDINGS INC.",
+      "officer_titles": [
+        "EVP and CFO"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3714,
+      "symbols": [
+        "CPS"
+      ],
+      "ticker": "CPS",
+      "total_value_usd": 17250,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0002078488-26-000005"
+      ],
+      "cik": "0001680247",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-30",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PROPETRO HOLDING CORP.",
+      "officer_titles": [
+        "Chief Financial Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1389,
+      "symbols": [
+        "PUMP"
+      ],
+      "ticker": "PUMP",
+      "total_value_usd": 15560,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001140361-26-043461"
+      ],
+      "cik": "0000037785",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 2,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-10",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "FMC CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "ten_percent_owner"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2800,
+      "symbols": [
+        "FMC"
+      ],
+      "ticker": "FMC",
+      "total_value_usd": 14078.4,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-072207"
+      ],
+      "cik": "0001484778",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-06",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "THREDUP INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 5961,
+      "symbols": [
+        "TDUP"
+      ],
+      "ticker": "TDUP",
+      "total_value_usd": 13375,
+      "trade_date": "2026-11-12",
+      "transaction_count": 2
+    },
+    {
+      "accessions": [
+        "0001339498-26-000005"
+      ],
+      "cik": "0001501697",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-16",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "X4 PHARMACEUTICALS, INC",
+      "officer_titles": [
+        "Executive Chairman"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2836,
+      "symbols": [
+        "XFOR"
+      ],
+      "ticker": "XFOR",
+      "total_value_usd": 11883.64,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0000897069-26-001897"
+      ],
+      "cik": "0001825088",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "DREAM FINDERS HOMES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1531,
+      "symbols": [
+        "DFH"
+      ],
+      "ticker": "DFH",
+      "total_value_usd": 10530,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001193125-26-431955"
+      ],
+      "cik": "0000060714",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-15",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "LSB INDUSTRIES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 2810,
+      "symbols": [
+        "LXU"
+      ],
+      "ticker": "LXU",
+      "total_value_usd": 10170,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-071913"
+      ],
+      "cik": "0001779128",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-05",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "STRATA CRITICAL MEDICAL, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 8000,
+      "symbols": [
+        "SRTA"
+      ],
+      "ticker": "SRTA",
+      "total_value_usd": 9998,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001934884-26-000007"
+      ],
+      "cik": "0001428336",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-15",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "HEALTHEQUITY, INC.",
+      "officer_titles": [
+        "EVP Chief Prod & Strat Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 7389,
+      "symbols": [
+        "HQY"
+      ],
+      "ticker": "HQY",
+      "total_value_usd": 9755.64,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001213900-26-117672"
+      ],
+      "cik": "0001758021",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-09",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "KARAT PACKAGING INC.",
+      "officer_titles": [
+        "Chief Financial Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3089,
+      "symbols": [
+        "KRT"
+      ],
+      "ticker": "KRT",
+      "total_value_usd": 6003.72,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001123292-26-001443"
+      ],
+      "cik": "0001134115",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-26",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "INTERNATIONAL TOWER HILL MINES LTD",
+      "officer_titles": [
+        "Chief Executive Officer"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director",
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1000,
+      "symbols": [
+        "THM"
+      ],
+      "ticker": "THM",
+      "total_value_usd": 5850,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001628280-26-070264"
+      ],
+      "cik": "0000915779",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-31",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "DAKTRONICS INC /SD/",
+      "officer_titles": [
+        "VP of Design & Development"
+      ],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "officer"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3990,
+      "symbols": [
+        "DAKT"
+      ],
+      "ticker": "DAKT",
+      "total_value_usd": 3302.18,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001692983-26-000012"
+      ],
+      "cik": "0000006845",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-11-04",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "APOGEE ENTERPRISES, INC.",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 3231,
+      "symbols": [
+        "APOG"
+      ],
+      "ticker": "APOG",
+      "total_value_usd": 2416.44,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    },
+    {
+      "accessions": [
+        "0001216725-26-000014"
+      ],
+      "cik": "0001361538",
+      "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "distinct_insiders": 1,
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "latest_trade_date": "2026-10-15",
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "PRIMORIS SERVICES CORP",
+      "officer_titles": [],
+      "price_as_of": "2026-11-12",
+      "roles": [
+        "director"
+      ],
+      "run_date": "2026-11-13",
+      "sic": 1623,
+      "symbols": [
+        "PRIM"
+      ],
+      "ticker": "PRIM",
+      "total_value_usd": 1719.9699,
+      "trade_date": "2026-11-12",
+      "transaction_count": 1
+    }
+  ]
+}

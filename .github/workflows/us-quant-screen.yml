@@ -1,0 +1,92 @@
+# US quant screen. Weekdays 07:30 KST. Manual dispatch remains available.
+# contents: write lets the job commit screeners/output/us.
+# actions/cache restores screeners/cache/us_quant so a later day reuses filings and prices.
+
+name: us-quant-screen
+
+on:
+  schedule:
+    - cron: "30 22 * * 0-4"
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: "Trade date YYYY-MM-DD. Empty uses the latest NY weekday."
+        required: false
+        default: ""
+        type: string
+      run_date:
+        description: "Label date YYYY-MM-DD. Empty uses today in Asia/Seoul."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cwally-us-quant
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Restore screen cache
+        uses: actions/cache@v4
+        with:
+          path: screeners/cache/us_quant
+          key: us-quant-${{ github.run_id }}
+          restore-keys: |
+            us-quant-
+
+      - name: Install test runner
+        run: python -m pip install pytest==9.2.0
+
+      - name: Offline tests
+        run: python -m pytest screeners/us_quant/tests -q
+
+      - name: Run US screen
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -n "${{ inputs.as_of }}" ]; then
+            args+=(--as-of "${{ inputs.as_of }}")
+          fi
+          if [ -n "${{ inputs.run_date }}" ]; then
+            args+=(--run-date "${{ inputs.run_date }}")
+          fi
+          python -m screeners.us_quant run "${args[@]}"
+
+      - name: Upload screen outputs
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: us-quant-output
+          path: screeners/output/us/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit compact outputs
+        if: success()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add screeners/output/us
+          if git diff --cached --quiet; then
+            echo "no output changes"
+            exit 0
+          fi
+          git commit -m "Record US quant screen outputs"
+          git push
