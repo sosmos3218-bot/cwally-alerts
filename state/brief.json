@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-13T18:35:20.957657+09:00",
+  "updated_at": "2026-11-13T18:43:31.574824+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -189,6 +189,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-13T18:35:20.957657+09:00"
+    },
+    "20261113-032350-q3.json#53308705e9b055d4": {
+      "file": "20261113-032350-q3.json",
+      "title": "[BRIEF] 032350 롯데관광개발 3분기 | 회피 유지",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-13T18:43:31.574824+09:00"
     }
   },
   "rejected": {},
