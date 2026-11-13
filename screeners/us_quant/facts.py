@@ -13,11 +13,11 @@ If that bridge is incomplete, the last four quarter facts are summed when the
 gaps between them stay inside 70 to 140 days. Fewer than four quarters is incomplete.
 
 Total debt, on one balance-sheet date, avoids adding a total and its parts:
-- DebtCurrent + LongTermDebtNoncurrent when either tag is present.
-  If DebtCurrent is absent, add LongTermDebtCurrent, ShortTermBorrowings, and CommercialPaper.
-- Else LongTermDebt, plus ShortTermBorrowings and CommercialPaper (current maturities
-  stay inside LongTermDebt).
-- Else LongTermDebtAndCapitalLeaseObligations.
+- DebtCurrent + LongTermDebtNoncurrent when both are present.
+- Else LongTermDebtNoncurrent plus LongTermDebtCurrent, ShortTermBorrowings, and CommercialPaper.
+- Else LongTermDebtAndCapitalLeaseObligations (a total that already includes leases).
+- Else LongTermDebt plus ShortTermBorrowings and CommercialPaper.
+- Else the short-term tags that are present, including a lone DebtCurrent.
 - If no debt tag is present, debt is 0 and the source is no_debt_tag.
 
 Cash is CashAndCashEquivalentsAtCarryingValue, else Cash. The restricted-cash
@@ -55,6 +55,7 @@ INSTANT_TAGS = {
     "AssetsCurrent",
     "LiabilitiesCurrent",
     "PropertyPlantAndEquipmentNet",
+    "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
     "CashAndCashEquivalentsAtCarryingValue",
     "Cash",
     "DebtCurrent",
@@ -69,7 +70,7 @@ INSTANT_TAGS = {
 
 DEI_INSTANT = {"EntityCommonStockSharesOutstanding"}
 
-EXTRACT_VERSION = 1
+EXTRACT_VERSION = 2
 
 REVENUE_PRIORITY = [
     "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -389,24 +390,26 @@ def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
         if tag in present:
             components.append(present[tag])
 
-    if "DebtCurrent" in present or "LongTermDebtNoncurrent" in present:
+    if "DebtCurrent" in present and "LongTermDebtNoncurrent" in present:
         add("DebtCurrent")
         add("LongTermDebtNoncurrent")
-        if "DebtCurrent" not in present:
-            add("LongTermDebtCurrent")
-            add("ShortTermBorrowings")
-            add("CommercialPaper")
         source = "current_plus_noncurrent"
+    elif "LongTermDebtNoncurrent" in present:
+        add("LongTermDebtNoncurrent")
+        add("LongTermDebtCurrent")
+        add("ShortTermBorrowings")
+        add("CommercialPaper")
+        source = "current_plus_noncurrent"
+    elif "LongTermDebtAndCapitalLeaseObligations" in present:
+        add("LongTermDebtAndCapitalLeaseObligations")
+        source = "debt_and_leases"
     elif "LongTermDebt" in present:
         add("LongTermDebt")
         add("ShortTermBorrowings")
         add("CommercialPaper")
         source = "long_term_debt_total"
-    elif "LongTermDebtAndCapitalLeaseObligations" in present:
-        add("LongTermDebtAndCapitalLeaseObligations")
-        source = "debt_and_leases"
     elif present:
-        for tag in ("LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper"):
+        for tag in ("DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper"):
             add(tag)
         source = "short_term_only"
     else:
@@ -424,6 +427,21 @@ def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
         "end": end,
         "components": components,
     }
+
+
+PPE_TAGS = (
+    "PropertyPlantAndEquipmentNet",
+    "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
+)
+
+
+def select_net_fixed_assets(facts: dict, as_of: date, end: str) -> dict | None:
+    """Net PPE on the balance-sheet date. An older fact is not reused."""
+    for tag in PPE_TAGS:
+        item = _on_date(facts, tag, end, as_of)
+        if item is not None:
+            return item
+    return None
 
 
 def select_cash(facts: dict, as_of: date, end: str | None = None) -> dict:

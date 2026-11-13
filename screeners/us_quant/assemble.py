@@ -14,6 +14,7 @@ from screeners.us_quant.facts import (
     revenue_pair,
     select_cash,
     select_debt,
+    select_net_fixed_assets,
     select_point,
     select_shares,
     select_ttm_ebit,
@@ -52,9 +53,11 @@ def build_magic_inputs(facts: dict, as_of: date, price: float, limits: dict) -> 
     current_liab = select_point(facts, "LiabilitiesCurrent", as_of, end)
     if current_assets is None or current_liab is None:
         return {"ok": False, "reason": "working_capital_missing", "detail": end}
-    fixed = select_point(facts, "PropertyPlantAndEquipmentNet", as_of, end)
-    fixed_value = 0.0 if fixed is None else fixed["value"]
-    fixed_source = "unreported_as_zero" if fixed is None else "PropertyPlantAndEquipmentNet"
+    fixed = select_net_fixed_assets(facts, as_of, end)
+    if fixed is None:
+        return {"ok": False, "reason": "net_fixed_assets_missing", "detail": end}
+    fixed_value = fixed["value"]
+    fixed_source = fixed["concept"]
 
     cash = select_cash(facts, as_of, end)
     if not cash.get("ok"):

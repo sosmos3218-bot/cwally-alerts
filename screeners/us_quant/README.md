@@ -40,10 +40,10 @@ Foreign filers are issuers whose forms include 20-F or 40-F and do not include a
 - If that bridge is missing, EBIT is the sum of the last four quarter-length facts when each gap is 70 to 140 days. Anything shorter is incomplete and the issuer is listed under excluded.
 - Enterprise value = market cap + total debt - cash.
 - Market cap = close times shares. Shares prefer `dei:EntityCommonStockSharesOutstanding`, then `us-gaap:CommonStockSharesOutstanding`. A weighted-average share count is not used as shares outstanding.
-- Debt, on the latest balance-sheet date: `DebtCurrent` + `LongTermDebtNoncurrent` when either is present. If `DebtCurrent` is absent, also add `LongTermDebtCurrent`, `ShortTermBorrowings`, and `CommercialPaper`. If neither current nor noncurrent debt is tagged, use `LongTermDebt` plus `ShortTermBorrowings` and `CommercialPaper` (current maturities stay inside `LongTermDebt`). If no debt tag exists, debt is 0 (`no_debt_tag`).
+- Debt, on the latest balance-sheet date: `DebtCurrent` + `LongTermDebtNoncurrent` when both are present. If only the noncurrent tag is present, add `LongTermDebtCurrent`, `ShortTermBorrowings`, and `CommercialPaper`. If that split is absent, use `LongTermDebtAndCapitalLeaseObligations`. Otherwise `LongTermDebt` plus `ShortTermBorrowings` and `CommercialPaper`. If no debt tag exists, debt is 0 (`no_debt_tag`).
 - Cash is `CashAndCashEquivalentsAtCarryingValue`, else `Cash`. The restricted-cash total is not used.
 - Net working capital = `AssetsCurrent` - `LiabilitiesCurrent`.
-- Net fixed assets = `PropertyPlantAndEquipmentNet`. If that tag is absent it is stored as 0 and the source says `unreported_as_zero`.
+- Net fixed assets = `PropertyPlantAndEquipmentNet` on that balance-sheet date, else `PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization`. If neither tag is on that date, the issuer is excluded (`net_fixed_assets_missing`). An older equipment fact is not carried forward.
 - Return on capital = EBIT / (net working capital + net fixed assets). Non-positive enterprise value or capital drops the row.
 - Earnings yield and return on capital are ranked high-to-low. Equal values break ties by ticker ascending. Combined rank is the sum. The output keeps `magic.top_n` rows (default 30) and every input used in the ratios.
 
@@ -77,7 +77,7 @@ Intersection is the Magic Formula top N or an F-score at the list minimum, and a
 - Cash is cash and cash equivalents only. Short-term marketable securities stay inside enterprise value.
 - Return on capital is large when net working capital is thin. That is the arithmetic of this definition.
 - Share frames are a prefilter. Issuers with no frame share count are not priced.
-- Unreported debt tags are treated as zero. Unreported net PPE is treated as zero and labeled.
+- Unreported debt tags are treated as zero. Missing net equipment on the balance-sheet date drops the issuer from the Magic Formula list.
 - Dual-class market cap is not estimated.
 - Point-in-time: facts with `filed` after the trade date are ignored.
 - A statement older than `max_statement_age_days` (default 160) or an annual period older than `max_annual_age_days` (default 540) is stale.

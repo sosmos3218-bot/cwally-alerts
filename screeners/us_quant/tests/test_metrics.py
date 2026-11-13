@@ -124,6 +124,37 @@ def test_debt_does_not_add_a_total_and_its_parts():
     other = select_debt(only_total, AS_OF)
     assert other["value"] == 33
     assert other["source"] == "long_term_debt_total"
+    lease_total = {
+        "concepts": {
+            "us-gaap:Assets": [_inst("Assets", end, 1000)],
+            "us-gaap:DebtCurrent": [_inst("DebtCurrent", end, 491)],
+            "us-gaap:LongTermDebtAndCapitalLeaseObligations": [
+                _inst("LongTermDebtAndCapitalLeaseObligations", end, 4688)
+            ],
+        }
+    }
+    leased = select_debt(lease_total, AS_OF)
+    assert leased["value"] == 4688
+    assert leased["source"] == "debt_and_leases"
+
+
+def test_net_fixed_assets_uses_the_successor_tag_or_drops_the_row():
+    from screeners.us_quant.facts import select_net_fixed_assets
+
+    end = "2026-09-03"
+    successor = "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"
+    facts = {
+        "concepts": {
+            "us-gaap:Assets": [_inst("Assets", end, 1000)],
+            "us-gaap:PropertyPlantAndEquipmentNet": [_inst("PropertyPlantAndEquipmentNet", "2020-05-28", 30)],
+            f"us-gaap:{successor}": [_inst(successor, end, 63310)],
+        }
+    }
+    got = select_net_fixed_assets(facts, AS_OF, end)
+    assert got["concept"] == successor
+    assert got["value"] == 63310
+    missing = {"concepts": {"us-gaap:Assets": [_inst("Assets", end, 1000)]}}
+    assert select_net_fixed_assets(missing, AS_OF, end) is None
 
 
 def _healthy_inputs():
