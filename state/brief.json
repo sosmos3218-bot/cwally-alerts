@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-13T08:20:46.445812+09:00",
+  "updated_at": "2026-11-13T18:35:20.957657+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -180,6 +180,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-13T08:20:46.445812+09:00"
+    },
+    "20261113-016920-kas-q3.json#2e6853f1245c9730": {
+      "file": "20261113-016920-kas-q3.json",
+      "title": "[BRIEF] 016920 카스 3분기 | 회피로 하향",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-13T18:35:20.957657+09:00"
     }
   },
   "rejected": {},
