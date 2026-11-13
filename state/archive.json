@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-13 15:41 KST",
+  "updated_at": "2026-11-13 15:51 KST",
   "items": [
+    {
+      "id": "IkcmOOFWELlq",
+      "topic": "cwally-port",
+      "title": "[TREND] KOSPI 추세점검 11/13: 후보 0, 시장폭 18.0%",
+      "message": "매도\n보유 없음.\n신규\n신규 후보 없음.\n시장폭 18.0%. 시가총액 상위 종목 중 50일선 위 비율입니다.\n꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1794552375
+    },
     {
       "id": "md8plaxoF5wi",
       "topic": "cwally-port",
@@ -4438,17 +4449,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1793736686
-    },
-    {
-      "id": "viOUFbo52dTy",
-      "topic": "cwally-port",
-      "title": "[TREND] KOSPI 추세점검 11/03: 후보 0, 시장폭 14.0%",
-      "message": "매도\n보유 없음.\n신규\n신규 후보 없음.\n시장폭 14.0%. 시가총액 상위 종목 중 50일선 위 비율입니다.\n꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1793716936
     }
   ]
 }
