@@ -1,9 +1,64 @@
 {
   "scenario": "완만한 둔화",
   "seeded_at": "2026-11-12",
-  "last_week": null,
-  "last_ok_iso": null,
-  "last_fetch_day": null,
+  "last_week": "2026-11-09",
+  "last_ok_iso": "2026-W46",
+  "last_fetch_day": "2026-11-13",
   "ops_day": null,
-  "note": "2026-11-12 사용자 기준 시나리오. 판정이 같으면 발송하지 않는다. 첫 성공 주는 숫자만 기록한다."
+  "note": "2026-11-12 사용자 기준 시나리오. 판정이 같으면 발송하지 않는다. 첫 성공 주는 숫자만 기록한다.",
+  "updated_at": "2026-11-13 09:11 KST",
+  "monthly": {
+    "decision": {
+      "date": "2026-10-22",
+      "rate": 3.0,
+      "decision": "hold",
+      "source": "한은 기준금리 표 + 금통위 일정",
+      "link": "https://www.bok.or.kr/portal/singl/baseRate/list.do?dataSeCd=01&menuNo=200643"
+    },
+    "mortgage": {
+      "month": "2026-09",
+      "rate": 4.88,
+      "prior_month": "2026-06",
+      "prior_rate": 4.36,
+      "delta": 0.5199999999999996,
+      "source": "ECOS 121Y006 주택담보대출 신규취급액",
+      "link": "https://ecos.bok.or.kr/"
+    },
+    "loans": {
+      "month": "2026-10",
+      "change": 5.0,
+      "prev_change": 0.5,
+      "source": "한은 금융시장 동향",
+      "link": "https://www.bok.or.kr/portal/bbs/B0000502/view.do?nttId=11066468",
+      "title": "2026년 10월 금융시장 동향"
+    },
+    "tx": {
+      "month": "2026-09",
+      "seoul_apt": 3915,
+      "gyeonggi_housing": 14850,
+      "source": "KDI 재게시 국토부 주택통계",
+      "link": "https://eiec.kdi.re.kr/policy/materialView.do?num=288812",
+      "title": "2026년 9월 주택통계"
+    }
+  },
+  "last_values": {
+    "week": "2026-11-09",
+    "seoul": 0.07172598058482471,
+    "gyeonggi": 0.21317881047726583,
+    "jeonse": 0.1661946934966796,
+    "seoul_4w": 0.09042030305051463,
+    "gangnam3": -0.2866053634621594,
+    "streak": 0,
+    "decision": "hold",
+    "rate": 3.0,
+    "decision_date": "2026-10-22",
+    "loans": 5.0,
+    "loans_month": "2026-10",
+    "mortgage": 4.88,
+    "mortgage_month": "2026-09",
+    "mortgage_delta": 0.5199999999999996,
+    "tx_seoul": 3915,
+    "tx_gg": 14850,
+    "tx_month": "2026-09"
+  }
 }

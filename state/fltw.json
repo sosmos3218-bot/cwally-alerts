@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-12T09:10:24.339413+09:00",
+  "updated_at": "2026-11-13T09:10:20.772118+09:00",
   "buy1_armed": true,
   "buy2_armed": true,
   "buy3_done": false,
@@ -8,7 +8,7 @@
   "tsmc_verdict": null,
   "tsmc_done": false,
   "tsmc_manual_sent": false,
-  "last_bar_date": "2026-11-11",
-  "last_close": 95.66999816894531,
+  "last_bar_date": "2026-11-12",
+  "last_close": 93.0,
   "fetch_fail_date": null
 }

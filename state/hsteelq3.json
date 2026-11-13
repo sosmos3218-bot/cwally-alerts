@@ -1,7 +1,7 @@
 {
   "result_notified": true,
-  "empty_notified": false,
+  "empty_notified": true,
   "fail_notified": false,
-  "last_key": "{\"op\": 871.0, \"tag\": \"\\ud558\\ud5a5\"}",
-  "updated_at": "2026-11-12T15:21:47.212450+09:00"
+  "last_key": "{\"op\": null, \"tag\": \"\\ubbf8\\ud655\\uc778\"}",
+  "updated_at": "2026-11-13T09:06:19.661948+09:00"
 }

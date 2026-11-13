@@ -98,9 +98,9 @@
       "spread_bp": null
     }
   ],
-  "last_kind": "WEEKLY",
+  "last_kind": "FAIL",
   "shock_sent_date": "2026-11-06",
   "weekly_sent_date": "2026-11-09",
-  "fail_active": false,
-  "updated_at": "2026-11-12T09:08:31.440534+09:00"
+  "fail_active": true,
+  "updated_at": "2026-11-13T09:08:28.332185+09:00"
 }
