@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-11-13T03:06:31.449101+09:00",
+  "updated_at": "2026-11-13T19:03:29.076287+09:00",
   "seeded": true,
   "y10": {
     "armed": true,
-    "last_day": "2026-11-12",
+    "last_day": "2026-11-13",
     "fired_day": null
   },
   "spread": {
     "armed": true,
-    "last_day": "2026-11-12",
+    "last_day": "2026-11-13",
     "fired_day": null,
     "seeded": true
   },
@@ -322,6 +322,11 @@
       "y3": 3.729,
       "y10": 3.937,
       "aa": 4.407
+    },
+    "2026-11-13": {
+      "y3": 3.759,
+      "y10": 4.001,
+      "aa": 4.434
     }
   },
   "fail_notice": {},
