@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-11-12 15:40 KST",
+  "updated_at": "2026-11-13 15:40 KST",
   "fired": {
     "close_break": true,
-    "intraday_break": false,
-    "flow_expand": false,
+    "intraday_break": true,
+    "flow_expand": true,
     "reversal": false
   },
   "flow_days": [
@@ -74,27 +74,32 @@
     {
       "day": "2026-11-12",
       "foreign": 3708.0
+    },
+    {
+      "day": "2026-11-13",
+      "foreign": -5505.0
     }
   ],
   "seen_links": [],
   "last_sent": {
-    "at": "2026-11-06 15:40 KST",
+    "at": "2026-11-13 15:40 KST",
     "hits": [
-      "low"
+      "low",
+      "flow"
     ]
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-12",
-    "close": 5342.73,
-    "low": 5293.05
+    "day": "2026-11-13",
+    "close": 5290.53,
+    "low": 5259.09
   },
   "reversal": {
-    "day": "2026-11-12",
-    "streak": 3,
-    "streak_sum": 13793.0,
-    "streak_start": "2026-11-10",
-    "close": 5342.73,
+    "day": "2026-11-13",
+    "streak": 0,
+    "streak_sum": 0.0,
+    "streak_start": null,
+    "close": 5290.53,
     "hold": false,
     "fired": false
   }
