@@ -109,3 +109,30 @@ The leverage point uses `LongTermDebt`, not the lease-inclusive total used for e
 ## Result
 
 SEC concept, period, accession, and value matched the stored EBIT, debt pieces, cash, share count, working-capital pieces, net equipment, and F-score inputs for all three names. No mismatched fact. Enterprise value and both ratios equal the arithmetic of those facts and the close.
+
+The 2026-11-12 folder was regenerated after the Form 4 feed change (`f2f66eedb28e96324de6ee4d8fdc6363c0983f36`). CVSA, OTEX, and MU still show the same EBIT, enterprise value, and net equipment figures.
+
+## Form 4 coverage for 2026-11-12
+
+Acceptance cutoff recorded in the output: `2026-11-12T23:59:59-05:00`. Latest Form 4 filing date included: `2026-11-12`. Latest acceptance time included: `2026-11-12T21:55:03-05:00`. The Nov 11 daily index is absent (US holiday). The current-filings feed supplied 1,673 Form 4 rows for that gap, and the Nov 12 daily index is now present as well. Filings accepted on Nov 13 are after the cutoff and are not included.
+
+### ABCL open-market purchase
+
+Issuer ABCELLERA BIOLOGICS INC., CIK `0001703057`, ticker ABCL. One reporting owner in the screen row.
+
+| Field | Screen row | EDGAR Form 4 |
+| --- | --- | --- |
+| Accession | 0001834449-26-000009 | 0001834449-26-000009 |
+| Insider | Thermopylae Holdings Ltd. | `rptOwnerName` Thermopylae Holdings Ltd., `rptOwnerCik` 0001834449 |
+| Role | ten_percent_owner | `isTenPercentOwner` 1, `isDirector` 0, `isOfficer` 0 |
+| Date | 2026-11-12 | `transactionDate` 2026-11-12 |
+| Code | P, acquired A | `transactionCode` P, `transactionAcquiredDisposedCode` A |
+| Shares | 60,565 | `transactionShares` 60565 |
+| Price | 11.54 | `transactionPricePerShare` 11.54 |
+| Value | 698,920.10 | 60,565 times 11.54 = 698,920.10 |
+
+The form's footnote says 11.54 is the weighted-average price of several fills from 11.29 to 11.86. The screen uses the price the form reports. Match.
+
+Filing: https://www.sec.gov/Archives/edgar/data/1834449/000183444926000009/0001834449-26-000009-index.htm
+
+Submission text: https://www.sec.gov/Archives/edgar/data/1834449/000183444926000009/0001834449-26-000009.txt

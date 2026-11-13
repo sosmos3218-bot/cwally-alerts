@@ -1,5 +1,5 @@
 {
-  "code_version": "01d380697968c74519ae239499906ab4c608a647",
+  "code_version": "f2f66eedb28e96324de6ee4d8fdc6363c0983f36",
   "config": {
     "domestic_forms": [
       "10-K",
@@ -94,8 +94,8 @@
       "revenue_non_positive": 7,
       "stale_annual": 67
     },
-    "insider": 136,
-    "intersection": 3,
+    "insider": 165,
+    "intersection": 4,
     "magic_input_rows": 1474,
     "magic_top": 30,
     "price_failures": 137,
@@ -107,12 +107,16 @@
     "SEC EDGAR XBRL frames (share-count prefilter)",
     "SEC EDGAR companyfacts",
     "SEC EDGAR daily index and quarterly master index",
+    "SEC EDGAR current filings Atom feed",
     "SEC EDGAR Form 4 submission text",
     "Yahoo Finance chart daily close"
   ],
+  "form4_acceptance_cutoff": "2026-11-12T23:59:59-05:00",
+  "form4_latest_acceptance": "2026-11-12T21:55:03-05:00",
+  "form4_latest_filing_date": "2026-11-12",
   "fscore_basis": "annual",
   "fscore_min_score": 8,
-  "insider_filings_through": "2026-11-10",
+  "insider_filings_through": "2026-11-12",
   "insider_lookback_days": 30,
   "magic_top_n": 30,
   "min_market_cap": 100000000,
