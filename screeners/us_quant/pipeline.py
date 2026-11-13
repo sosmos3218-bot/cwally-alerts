@@ -470,10 +470,14 @@ def _index(client: HttpClient, cache: Path, as_of: date, lookback_days: int):
         gap = min(missing_days)
         atom_rows = _atom_filings(client, cache, as_of, gap, cutoff)
         print(f"ATOM gap {gap.isoformat()} rows {len(atom_rows)}", flush=True)
-        rows.extend(atom_rows)
+        known = {row["accn"] for row in rows}
+        accepted = {row["accn"]: row.get("accepted") for row in atom_rows if row.get("accepted")}
+        for row in rows:
+            if not row.get("accepted") and row["accn"] in accepted:
+                row["accepted"] = accepted[row["accn"]]
+        rows.extend(row for row in atom_rows if row["accn"] not in known)
     else:
         print("ATOM skipped daily index covers the trade date", flush=True)
-    rows = dedupe_accessions(rows)
     rows = [row for row in rows if row["form"] not in {"4", "4/A"} or _row_in_window(row, start, cutoff)]
     form4_dates = [row["filed"] for row in rows if row["form"] in {"4", "4/A"}]
     accepted = [row["accepted"] for row in rows if row["form"] in {"4", "4/A"} and row.get("accepted")]
