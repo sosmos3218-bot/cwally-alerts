@@ -208,7 +208,7 @@ def _prices(cache: Path, listings: list[dict], shares: dict, as_of: date):
             return symbol, {"error": "price_unavailable"}
         return symbol, quote
 
-        if missing:
+    if missing:
         print(f"PRICE fetch {len(missing)}", flush=True)
         with ThreadPoolExecutor(max_workers=12) as pool:
             futures = [pool.submit(one, symbol) for symbol in missing]
