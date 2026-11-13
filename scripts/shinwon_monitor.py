@@ -5,7 +5,7 @@
   오늘 행은 15:40 KST 뒤에만 확정 종가로 씀(09:00 은 전날 종가, 15:20 은 장중이라 제외). 종가 >= 1,000원이면 해제(여유폭 없음).
 동전주 카운트: 2026-07-01 이후 Daum KRX 종가 < 1,000원 연속 거래일 수. 10, 20일 p3, 25, 30일 p4 1번씩(연속 구간별),
   종가 >= 1,000원이면 0으로 리셋. 카운트는 Daum 이력으로만 계산(네이버는 NXT 포함 통합시세라 카운트에 안 씀).
-알림 끝: 2026-11-20 23:59 KST (3Q 분기보고서 공시 감지 포함). 그 뒤 조용히 종료, state 안 씀.
+알림 끝: 2027-01-29 23:59 KST (공시 감지 포함, 2026-11-13 3Q 분기보고서 재확인으로 11/20 에서 연장). 그 뒤 조용히 종료, state 안 씀.
 modes: event | force | weekly | dry (발송 없음, state 안 씀) | selftest (가짜 값, 네트워크 없음)
 """
 from __future__ import annotations
@@ -124,7 +124,7 @@ CLOSE_HM = (15, 40)
 COIN_FROM = "2026-07-01"
 COIN_LEVEL = 1000.0
 MILESTONES = {10: 3, 20: 3, 25: 4, 30: 4}
-END_LINE = "꺼지는 때: 2026-11-20 23:59 KST 이후 자동 발송 없음"
+END_LINE = "꺼지는 때: 2027-01-29 23:59 KST 이후 자동 발송 없음"
 DAUM = "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page={page}&perPage=100&pagination=true"
 
 
@@ -349,7 +349,7 @@ def run(mode: str, now: datetime, cfg: dict, prev: dict, price_fn, daum_fn, nave
 
     lines = [
         f"{stamp} | SHINWON | {cfg['display']}({cfg['code']})",
-        "이게 뭐 알림: 신원 190주 감시. 평단 1,451원. 시간손절 11/13, 알림은 11/20까지(3Q 분기보고서 포함).",
+        "이게 뭐 알림: 신원 190주 감시. 평단 1,451원. 시간손절 11/13, 알림은 2027-01-29까지(공시 감지 포함).",
         f"지금 상태: {px} | 평단 대비 {pnl} | 평가 {value} | {ZONE_KO.get(z, z)}",
         f"- {close_txt}. 1,000원 손절은 확정 종가 1,000원 미만일 때만.",
         f"- {coin_line(cs, 'KRX')}",
@@ -509,9 +509,14 @@ def selftest() -> int:
     ck(not [t for t, _, _ in sent if "동전주" in t] and r["coin"]["sent"] == [10])
     # 7) 종료 뒤 조용히: 발송, state 쓰기 없음
     sent.clear(), saved.clear()
-    r = run("force", T("2026-11-21"), cfg, base, px(990.0), lambda c: hist(30), nonav, nodisc, pub, wr)
+    r = run("force", T("2027-01-30"), cfg, base, px(990.0), lambda c: hist(30), nonav, nodisc, pub, wr)
     ck(r.get("ended") and not sent and not saved)
-    ck(not ended(T("2026-11-20", 23, 0), cfg) and ended(T("2026-11-21", 0, 0), cfg))
+    ck(not ended(T("2027-01-29", 23, 0), cfg) and ended(T("2027-01-30", 0, 0), cfg))
+    # 2026-11-13 연장: 11/21 뒤에도 1,000원 종가 판정 유지, 시간손절은 되살리지 않음
+    ck(not ended(T("2026-11-21", 9, 0), cfg) and zone(1050.0, cfg, "2026-11-23", close_below=True) == "STOP1000")
+    sent.clear(), saved.clear()
+    r = run("event", T("2026-11-23"), cfg, dict(base, zone="TIME", time_stop_sent=True), px(1100.0), lambda c: {"2026-11-20": 1100.0}, nonav, nodisc, pub, wr)
+    ck(r["zone"] == "TIME" and not sent and r["state"]["time_stop_sent"], sent)
     ck(zone(1100.0, cfg, "2026-11-13") == "TIME" and zone(1100.0, cfg, "2026-11-12") == "WATCH", "시간손절은 11/13 그대로")
     # 8) Daum 실패 -> 네이버로 손절 판정, 카운트는 보류
     sent.clear()
