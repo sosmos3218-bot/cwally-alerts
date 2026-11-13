@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-13T15:40:36+09:00",
+  "trade_date": "2026-11-13",
+  "demo": false,
+  "params": {
+    "account_krw": 100000000,
+    "risk_pct": 1.0,
+    "max_position_weight_pct": 20,
+    "max_total_open_risk_pct": 6,
+    "cash_krw": null,
+    "stop_mode": "pct",
+    "stop_pct": 7.5,
+    "atr_k": 2,
+    "max_stop_distance_pct": 10,
+    "panic_enabled": true,
+    "panic_pct": 12,
+    "ma_window": 50,
+    "ma_arm_gain_pct": 8,
+    "chase_max_distance_pct": 5,
+    "liquidity_avg_days": 20,
+    "liquidity_min_avg_value_krw": 5000000000,
+    "base_min_days": 35,
+    "base_max_days": 60,
+    "base_min_depth_pct": 10,
+    "base_max_depth_pct": 35,
+    "high52_days": 252,
+    "trend_mas": [
+      50,
+      150,
+      200
+    ],
+    "eps_min_yoy_pct": 15,
+    "eps_require": false,
+    "breadth_top_n": 200,
+    "breadth_ma_window": 50,
+    "breadth_min_pct": 30,
+    "download_min_marcap_krw": 0,
+    "download_min_amount_krw": 0,
+    "ntfy_enabled": true
+  },
+  "data_status": {
+    "source": "FinanceDataReader 0.9.202 KRX 일봉 (종목코드 기본 경로는 Naver 일봉)",
+    "ok": true,
+    "warnings": [
+      "시가총액 상위 200종목 중 50일선을 계산한 200종목에서 36종목(18.0%)이 50일선 위입니다. 30% 미만이라 신규 수량을 절반으로 줄입니다."
+    ],
+    "watchlist": []
+  },
+  "holdings": [],
+  "candidates": [],
+  "risk": {
+    "total_open_risk_pct": 0.0,
+    "cash_after": 100000000,
+    "exposure_pct": 0.0,
+    "breadth_pct_above_ma50": 18.0
+  }
+}
