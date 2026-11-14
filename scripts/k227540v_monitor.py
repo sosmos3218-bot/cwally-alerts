@@ -202,7 +202,9 @@ def evaluate(cfg: dict, data: dict, snaps: dict, last: date) -> dict:
     if etf_rev is None:
         comps.append(("가중 EPS 수정 방향", 0, "미확인(주간 저장값이 쌓이는 중)"))
     else:
-        comps.append(("가중 EPS 수정 방향", 1 if etf_rev > 0 else -1 if etf_rev < 0 else 0, f"{etf_rev:+.2f}%"))
+        db = float(r.get("sector_revision_deadband_pct", 0.0))
+        sc = 1 if etf_rev > db else -1 if etf_rev < -db else 0
+        comps.append(("가중 EPS 수정 방향", sc, f"{etf_rev:+.2f}%" + (f", ±{db:.1f}% 안쪽은 0점" if sc == 0 and db > 0 else "")))
     eg = ma_gap(etf, r["ma_days"])
     comps.append(("227540 200일선", 0 if eg is None else (1 if eg >= 0 else -1), NA if eg is None else f"{eg:+.1f}%"))
     score = sum(c[1] for c in comps)
@@ -392,6 +394,11 @@ def selftest() -> int:
     check("sector 비매력 (-3)", (ev["sector"], ev["score"]), ("비매력", -3))
     ev = evaluate(cfg, mk({}, etf_trend=(18000, 20000), bench=(80000, 90000)), {}, last)
     check("sector 중립 (rs -, rev 0, ma +)", (ev["sector"], ev["score"]), ("중립", 0))
+    tiny = {(last - timedelta(days=7)).isoformat(): {h["code"]: 10.0 for h in cfg["holdings_fallback"]}}
+    ev = evaluate(cfg, mk({"068270": {"eps": 10.01}}), tiny, last)
+    check("weighted rev inside deadband scores 0", (ev["comps"][1][1], "안쪽은 0점" in ev["comps"][1][2]), (0, True))
+    ev = evaluate(cfg, mk({}), {(last - timedelta(days=7)).isoformat(): {h["code"]: 9.9 for h in cfg["holdings_fallback"]}}, last)
+    check("weighted rev +1.0% beyond deadband scores +1", ev["comps"][1][1], 1)
     d = mk({"068270": {"target": 135}})
     ev = evaluate(cfg, d, base_snap, last)
     now = datetime(2026, 11, 6, 19, 0, tzinfo=KST)
