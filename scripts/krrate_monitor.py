@@ -9,6 +9,9 @@
    근원물가(농산물및석유류제외 전년동월비): 새 달 수치가 처음 보이는 실행에서 1회, 2.5% 미만이면 강조.
 3) 신용 스프레드(회사채 AA- 3년 - 국고채 3년)가 20거래일 전보다 widen_trigger_bp 넘게 확대 -> 1회.
    확대폭 < rearm_below_bp 면 다시 무장. 일별 값은 state hist 에 저장.
+4) 관리재정수지 연초누계: 열린재정에 새 기준월이 처음 보이면 요약 1번. 연간 계획을 넘거나
+   전년 동월보다 설정 폭 넘게 나쁘면 강조. 계획 초과와 국고 10년 종가가 기존 기준 이상이면 한 줄 추가.
+   첫 성공은 시드만. 조회 실패는 cwally-ops 하루 1번. 매매 신호 아님.
 데이터: 한국은행 ECOS (KOFIA 최종호가, 기존 ECOS_API_KEY secret, 없으면 sample 키), 네이버 시장지표(대체, 출처 표시),
 한국은행 금통위 일정/보도자료/기준금리 표(scripts/bok_mpc.py 함수 재사용, 읽기 전용. 2026-10-26 ktb148070_monitor 에서 이동).
 값의 날짜가 판정 거래일과 같을 때만 쓴다. 없으면 '확인 불가', 조회 실패는 cwally-ops.
@@ -24,6 +27,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -46,7 +50,8 @@ ECOS_ITEMS = {"y3": "010200000", "y10": "010210000", "aa": "010300000"}
 def load_state() -> dict:
     base = {"updated_at": None, "seeded": False, "y10": {"armed": True, "last_day": None, "fired_day": None},
             "spread": {"armed": True, "last_day": None, "fired_day": None, "seeded": False},
-            "cpi_last_month": None, "mpc_done": [], "hist": {}, "fail_notice": {}}
+            "cpi_last_month": None, "mpc_done": [], "hist": {}, "fail_notice": {},
+            "fiscal": {"seeded": False, "last_month": None, "months": {}}}
     if STATE_PATH.exists():
         try:
             base.update(json.loads(STATE_PATH.read_text(encoding="utf-8")))
@@ -59,6 +64,17 @@ def get(url: str, timeout: int = 25) -> str:
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8", errors="replace")
+
+
+def post_json(url: str, body: dict, timeout: int = 25):
+    data = json.dumps(body).encode("utf-8")
+    headers = dict(UA)
+    headers["Content-Type"] = "application/json"
+    headers["Accept"] = "application/json"
+    headers["AJAX"] = "true"
+    req = urllib.request.Request(url, data=data, headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
 def num(v) -> float | None:
@@ -685,6 +701,224 @@ def cpi_msg(cfg, stamp, c):
     return title, msg, (4 if emph else 3), (["rotating_light"] if emph else ["chart_with_downwards_trend"])
 
 
+# ---------------- 4) 관리재정수지 (열린재정, 월간 재정동향 원천) ----------------
+FISCAL_TABLE = "TB_OPFI172"
+FISCAL_COLS = {"ITG_PFIN_RAD_AMT": "integrated", "SGU_FND_RAD_AMT": "social", "MNG_PFIN_RAD_AMT": "managed"}
+
+
+def fiscal_box(st: dict) -> dict:
+    fs = st.setdefault("fiscal", {})
+    fs.setdefault("seeded", False)
+    fs.setdefault("last_month", None)
+    fs.setdefault("months", {})
+    return fs
+
+
+def jo_text(v: float | None, unit: str = "조원") -> str:
+    if v is None:
+        return NA
+    if v < 0:
+        return f"{abs(v):.1f}{unit} 적자"
+    if v > 0:
+        return f"{v:.1f}{unit} 흑자"
+    return f"0{unit}"
+
+
+def month_ko(month: str) -> str:
+    y, m = month.split("-")
+    return f"{y}년 {int(m)}월"
+
+
+def prev_year_month(month: str) -> str:
+    y, m = month.split("-")
+    return f"{int(y) - 1}-{m}"
+
+
+def parse_snapshot(rows: list) -> dict:
+    """열린재정 주요 지표 목록에서 TB_OPFI172 최신월 관리/통합/사회보장성기금 수지(조원)."""
+    picked: dict[str, float | None] = {}
+    months: set[str] = set()
+    for row in rows or []:
+        if str(row.get("ofdStngDtsCrtrAtcNm") or "") != FISCAL_TABLE:
+            continue
+        key = FISCAL_COLS.get(str(row.get("colId") or ""))
+        if not key:
+            continue
+        yy, mm = str(row.get("acntYr") or ""), str(row.get("acntMm") or "")
+        if not (len(yy) == 4 and yy.isdigit() and mm.isdigit()):
+            continue
+        months.add(f"{yy}-{int(mm):02d}")
+        picked[key] = num(row.get("ofdStngDtsCrtrAtcDes"))
+    if len(months) != 1 or picked.get("managed") is None:
+        raise RuntimeError("열린재정 관리재정수지 최신월을 읽지 못함")
+    return {"month": next(iter(months)), "managed": picked.get("managed"),
+            "integrated": picked.get("integrated"), "social": picked.get("social")}
+
+
+def parse_budget_xml(text: str) -> list[dict]:
+    """BudgetBalance XML. 인증키 없으면 연초 5개월만 온다."""
+    root = ET.fromstring(text)
+    code = root.findtext("head/RESULT/CODE") or root.findtext("RESULT/CODE") or root.findtext("CODE")
+    if code and code != "INFO-000":
+        msg = root.findtext("head/RESULT/MESSAGE") or root.findtext("MESSAGE") or code
+        raise RuntimeError(f"BudgetBalance {code} {str(msg)[:80]}")
+    out = []
+    for row in root.findall("row"):
+        yy, mm = (row.findtext("OJ_YY") or ""), (row.findtext("OJ_M") or "")
+        if not (len(yy) == 4 and yy.isdigit() and mm.isdigit()):
+            continue
+        out.append({"month": f"{yy}-{int(mm):02d}", "managed": num(row.findtext("MG_PFIN_RAD_AMT")),
+                    "integrated": num(row.findtext("ITG_PFIN_RAD_AMT")),
+                    "social": num(row.findtext("SGU_CLAS_FND_RAD_AMT"))})
+    return out
+
+
+def remember_months(fs: dict, rows: list[dict], keep: int = 36) -> None:
+    box = fs.setdefault("months", {})
+    for row in rows:
+        month = row.get("month")
+        if not month or row.get("managed") is None:
+            continue
+        cur = dict(box.get(month) or {})
+        for key in ("managed", "integrated", "social"):
+            if row.get(key) is not None:
+                cur[key] = row[key]
+        box[month] = cur
+    if len(box) > keep:
+        for key in sorted(box)[:-keep]:
+            box.pop(key, None)
+
+
+def fiscal_crosscheck(rel: dict, series: dict[str, float], tol: float) -> None:
+    """ECOS 901Y013/C 통합(십억원)과 열린재정 통합(조원). 같은 달이 있고 차이가 tol 초과면 예외."""
+    if rel.get("integrated") is None:
+        rel["ecos_note"] = "통합 없음"
+        return
+    key = rel["month"].replace("-", "")
+    if key not in series:
+        rel["ecos_note"] = "없음"
+        return
+    ecos_jo = series[key] / 1000.0
+    rel["ecos_integrated"] = ecos_jo
+    if abs(ecos_jo - float(rel["integrated"])) > tol:
+        raise RuntimeError(
+            f"통합재정수지 불일치 열린재정 {rel['integrated']}조 ECOS {ecos_jo:.1f}조 ({rel['month']})")
+    rel["ecos_note"] = "맞음"
+
+
+def plan_status(cfg: dict, month: str, managed: float) -> tuple[bool, str]:
+    g = cfg.get("fiscal") or {}
+    plan, year = g.get("plan_trillion"), g.get("plan_year")
+    if plan is None or year is None:
+        return False, "연간 계획 숫자는 설정에 없어 비교하지 않음."
+    if str(year) != month[:4]:
+        return False, f"연간 계획은 {year}년 숫자라 이번 {month[:4]}년과 비교하지 않음."
+    plan_f = float(plan)
+    if managed < plan_f:
+        return True, f"연간 계획 {jo_text(plan_f)}보다 누계 적자가 큼."
+    return False, f"연간 계획 {jo_text(plan_f)} 안."
+
+
+def yoy_status(cfg: dict, managed: float, prev: float | None) -> tuple[bool, str]:
+    if prev is None:
+        return False, f"전년 동월 {NA}."
+    gap = prev - managed
+    worse_by = float((cfg.get("fiscal") or {}).get("yoy_worse_trillion", 10))
+    if gap > 0:
+        line = f"전년 동월 {jo_text(prev)}보다 {gap:.1f}조원 더 나쁨."
+    elif gap < 0:
+        line = f"전년 동월 {jo_text(prev)}보다 {abs(gap):.1f}조원 나아짐."
+    else:
+        line = f"전년 동월과 같음 ({jo_text(prev)})."
+    if gap > worse_by:
+        return True, line + f" 기준 {worse_by:.1f}조원 초과."
+    return False, line
+
+
+def fiscal_msg(cfg, stamp, rel, yoy_line, plan_line, over_plan, yoy_worse, y10, combined):
+    g = cfg["yield10"]
+    label = month_ko(rel["month"])
+    title = f"[KR-RATE] KOSPI 148070 {label} 관리재정수지 {jo_text(rel['managed'], '조')}"
+    if over_plan:
+        title += " | 연간 계획 초과"
+    elif yoy_worse:
+        title += " | 전년 동월보다 악화"
+    bits = [f"{label} 누계 관리재정수지 {jo_text(rel['managed'])}.", yoy_line, plan_line,
+            f"통합재정수지 {jo_text(rel.get('integrated'))}, 사회보장성기금수지 {jo_text(rel.get('social'))}.",
+            "출처 열린재정(월간 재정동향)."]
+    note = rel.get("ecos_note")
+    if note == "맞음":
+        bits.append("통합은 한국은행 ECOS와 맞음.")
+    elif note == "없음":
+        bits.append("ECOS에는 이 달이 아직 없음.")
+    elif note == "오류":
+        bits.append("ECOS 교차확인은 확인 불가.")
+    if combined and y10 is not None:
+        bits.append(
+            f"재정과 장기금리 악화 조건 충족: 관리재정수지가 연간 계획을 넘고, "
+            f"국고채 10년 종가 {y10:.3f}%가 기준 {float(g['trigger_pct']):.2f}% 이상. 투자 권유 아님.")
+    what = ("관리재정수지(연초부터 그 달까지 누계) 새 기준월이 처음 보이면 1번 오는 알림. "
+            "국고채 10년(148070)과 같이 보는 참고. 매매 신호 아님, 투자 권유 아님.")
+    return title, body(stamp, what, " ".join(bits),
+                       "적자 규모와 국고 10년 금리만 확인. 이 알림으로 비중을 바꾸지 않기.",
+                       "다음 기준월이 열린재정에 새로 반영되면 다시 1번 옵니다. 같은 달은 다시 보내지 않습니다.",
+                       "해당 없음. 보유 비중 계획은 그대로.",
+                       "이 알림만 보고 주문하기, 한 달 누계로 금리 방향을 단정하기, 확인 불가 값을 0이나 정상으로 읽기."), (
+                           4 if (over_plan or yoy_worse) else 3), (
+                               ["rotating_light"] if (over_plan or yoy_worse) else ["chart_with_downwards_trend"])
+
+
+def fiscal_eval(st: dict, rel: dict, cfg: dict, stamp: str, y10: float | None) -> dict:
+    """seed | dedup | send. 첫 성공은 발송 없이 last_month 만 남긴다."""
+    fs = fiscal_box(st)
+    remember_months(fs, list(rel.get("history") or []))
+    remember_months(fs, [rel])
+    prev = (fs["months"].get(prev_year_month(rel["month"])) or {}).get("managed")
+    over, plan_line = plan_status(cfg, rel["month"], float(rel["managed"]))
+    worse, yoy_line = yoy_status(cfg, float(rel["managed"]), None if prev is None else float(prev))
+    hot = y10 is not None and y10 >= float(cfg["yield10"]["trigger_pct"])
+    combined = bool(over and hot)
+    base = {"month": rel["month"], "over": over, "worse": worse, "combined": combined}
+    if not fs.get("seeded") or not fs.get("last_month"):
+        fs["seeded"] = True
+        fs["last_month"] = rel["month"]
+        return dict(base, action="seed")
+    if rel["month"] <= fs["last_month"]:
+        return dict(base, action="dedup")
+    title, msg, pri, tags = fiscal_msg(cfg, stamp, rel, yoy_line, plan_line, over, worse, y10, combined)
+    fs["last_month"] = rel["month"]
+    fs["seeded"] = True
+    return dict(base, action="send", title=title, message=msg, priority=pri, tags=tags)
+
+
+def fiscal_release(cfg: dict) -> dict:
+    g = cfg["fiscal"]
+    raw = post_json(g["latest_url"], {"dataVO": {}})
+    if not isinstance(raw, list):
+        raise RuntimeError("열린재정 주요 지표 응답이 목록이 아님")
+    rel = parse_snapshot(raw)
+    hist: list[dict] = []
+    errors: list[str] = []
+    year = int(rel["month"][:4])
+    for yy in (year, year - 1):
+        try:
+            hist.extend(parse_budget_xml(get(f"{g['history_url']}?OJ_YY={yy}&Type=xml&pIndex=1&pSize=20")))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{yy}:{type(exc).__name__}")
+    rel["history"] = hist
+    rel["history_errors"] = errors
+    try:
+        series = ecos("901Y013", "M", f"{year - 1}01", f"{year}12", "C")
+    except Exception as exc:  # noqa: BLE001
+        series = {}
+        rel["ecos_note"] = "오류"
+        rel["ecos_error"] = type(exc).__name__
+        print(f"fiscal ecos crosscheck skipped: {exc}", file=sys.stderr)
+    if rel.get("ecos_note") != "오류":
+        fiscal_crosscheck(rel, series, float(g.get("ecos_tolerance_jo", 0.2)))
+    return rel
+
+
 # ---------------- main ----------------
 def trading_days_between(a: str | None, b: date, cap: int) -> list[str]:
     out, d = [], b
@@ -900,6 +1134,37 @@ def main() -> int:
             ops_once("cpi", "[KR-RATE] 148070 근원물가 조회 실패 | 새 달 수치 판정 못 함",
                      ops_body("근원물가 알림의 데이터 조회 실패 안내.", f"ECOS 소비자물가지수(특수분류) {NA} ({str(exc)[:200]})."))
 
+    # --- 4) 관리재정수지 (열린재정 최신월, 같은 19:00 실행) ---
+    y10_now = close("y10", sess.isoformat())[0]
+    try:
+        rel = fiscal_release(cfg)
+        decided = fiscal_eval(state, rel, cfg, stamp, y10_now)
+        prev_m = (state.get("fiscal") or {}).get("months", {}).get(prev_year_month(rel["month"]), {}).get("managed")
+        print(f"fiscal {rel['month']} managed={rel.get('managed')} integrated={rel.get('integrated')} "
+              f"social={rel.get('social')} prev={prev_m} ecos={rel.get('ecos_note')} hist={len(rel.get('history') or [])} "
+              f"hist_err={rel.get('history_errors')} -> {decided['action']} "
+              f"over={decided['over']} worse={decided['worse']} combined={decided['combined']}")
+        if rel.get("history_errors") and late:
+            ops_once("fiscal_hist", "[KR-RATE] KOSPI 148070 관리재정수지 전년 조회 실패 | 비교 못 함",
+                     body(stamp, "관리재정수지 전년 동월 조회 실패 안내.",
+                          f"최신월 {rel['month']} 누계는 읽었고, 전년 이력 조회는 실패 ({', '.join(rel['history_errors'])[:160]}).",
+                          "최신월 요약은 전년 동월을 확인 불가로 적습니다.",
+                          "다음 19:00 실행 때 전년 조회를 다시 합니다.",
+                          "이번 안내로 비중을 바꾸지 마세요.",
+                          "조회 실패를 전년과 같다고 읽기."))
+        if decided["action"] == "send":
+            out.append((decided["title"], decided["message"], decided["priority"], decided["tags"]))
+    except Exception as exc:  # noqa: BLE001
+        print(f"fiscal failed: {exc}", file=sys.stderr)
+        if late:
+            ops_once("fiscal", "[KR-RATE] KOSPI 148070 관리재정수지 조회 실패 | 새 달 판정 못 함",
+                     body(stamp, "관리재정수지 알림의 데이터 조회 실패 안내.",
+                          f"열린재정 관리재정수지 {NA} ({str(exc)[:180]}).",
+                          "기획예산처 월간 재정동향이나 열린재정에서 직접 확인.",
+                          "다음 19:00 실행 때 다시 봅니다.",
+                          "이번 안내로 비중을 바꾸지 마세요.",
+                          "조회 실패를 조건 미충족으로 읽기."))
+
     if now_sp:
         print(f"spread now {now_sp[0]} {now_sp[1]:.1f}bp, 20obs widen {now_sp[2]:+.1f}bp vs {now_sp[3]} ({now_sp[4]:.1f}bp)")
     if seeding:
@@ -980,6 +1245,102 @@ def mpc_selftest(cfg: dict) -> list:
     assert "동결 1회 후 재인상, 올해 3번째 인상" in out[0][1] and "1명(동결 주장" in out[0][1]
     assert "재동결 예" in out[1][1] and "..." in out[1][1]
     print(f"mpc extras ok: hike {len(out[0][1].encode())}B, hold {len(out[1][1].encode())}B")
+    return out
+
+
+def fiscal_selftest(cfg: dict, stamp: str) -> list:
+    """가짜 열린재정 값. 네트워크 없음. 시드, 새 달, 중복, 계획 초과, 같이 맞음, 금지 문자."""
+    snap = [
+        {"ofdStngDtsCrtrAtcNm": "TB_OPFI172", "colId": "ITG_PFIN_RAD_AMT", "colNm": "통합재정수지",
+         "acntYr": "2026", "acntMm": "08", "ofdStngDtsCrtrAtcDes": "5.0"},
+        {"ofdStngDtsCrtrAtcNm": "TB_OPFI172", "colId": "SGU_FND_RAD_AMT", "colNm": "사회보장성기금수지",
+         "acntYr": "2026", "acntMm": "08", "ofdStngDtsCrtrAtcDes": "48.1"},
+        {"ofdStngDtsCrtrAtcNm": "TB_OPFI172", "colId": "MNG_PFIN_RAD_AMT", "colNm": "관리재정수지",
+         "acntYr": "2026", "acntMm": "08", "ofdStngDtsCrtrAtcDes": "-43.0"},
+        {"ofdStngDtsCrtrAtcNm": "TB_OPFI170", "colId": "X", "acntYr": "2026", "acntMm": "01",
+         "ofdStngDtsCrtrAtcDes": "1"},
+    ]
+    got = parse_snapshot(snap)
+    assert got == {"month": "2026-08", "managed": -43.0, "integrated": 5.0, "social": 48.1}, got
+    try:
+        parse_snapshot([snap[0]])
+        raise AssertionError("managed missing should fail")
+    except RuntimeError:
+        pass
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<BudgetBalance><head><list_total_count>2</list_total_count>
+<RESULT><CODE>INFO-000</CODE><MESSAGE>ok</MESSAGE></RESULT></head>
+<row><OJ_YY>2026</OJ_YY><OJ_M>01</OJ_M><MG_PFIN_RAD_AMT>11.3</MG_PFIN_RAD_AMT>
+<ITG_PFIN_RAD_AMT>14.3</ITG_PFIN_RAD_AMT><SGU_CLAS_FND_RAD_AMT>3</SGU_CLAS_FND_RAD_AMT></row>
+<row><OJ_YY>2026</OJ_YY><OJ_M>05</OJ_M><MG_PFIN_RAD_AMT>-54.2</MG_PFIN_RAD_AMT>
+<ITG_PFIN_RAD_AMT>-23.4</ITG_PFIN_RAD_AMT><SGU_CLAS_FND_RAD_AMT>30.8</SGU_CLAS_FND_RAD_AMT></row>
+</BudgetBalance>"""
+    rows = parse_budget_xml(xml)
+    assert [r["month"] for r in rows] == ["2026-01", "2026-05"], rows
+    assert "2026-08" not in {r["month"] for r in rows}
+    try:
+        parse_budget_xml("<RESULT><CODE>ERROR-290</CODE><MESSAGE>bad</MESSAGE></RESULT>")
+        raise AssertionError("error xml should fail")
+    except RuntimeError:
+        pass
+    rel = dict(got, history=[{"month": "2025-08", "managed": -88.3, "integrated": -53.7, "social": 34.6}],
+               ecos_note="맞음")
+    fiscal_crosscheck(dict(rel), {"202608": 5030.0}, 0.2)
+    try:
+        fiscal_crosscheck(dict(rel), {"202608": 8000.0}, 0.2)
+        raise AssertionError("mismatch should fail")
+    except RuntimeError:
+        pass
+    fiscal_crosscheck(dict(rel), {}, 0.2)
+    st: dict = {}
+    d0 = fiscal_eval(st, rel, cfg, stamp, 4.40)
+    assert d0["action"] == "seed" and st["fiscal"]["last_month"] == "2026-08" and st["fiscal"]["seeded"]
+    assert st["fiscal"]["months"]["2025-08"]["managed"] == -88.3
+    d1 = fiscal_eval(st, rel, cfg, stamp, 4.40)
+    assert d1["action"] == "dedup" and "title" not in d1
+    rel9 = {"month": "2026-09", "managed": -32.0, "integrated": 20.4, "social": 52.4, "ecos_note": "없음",
+            "history": [{"month": "2025-09", "managed": -102.4, "integrated": -63.5, "social": 39.0}]}
+    d2 = fiscal_eval(st, rel9, cfg, stamp, 4.20)
+    assert d2["action"] == "send" and d2["priority"] == 3 and not d2["over"] and not d2["worse"]
+    assert "102.4" in d2["message"] and "나아짐" in d2["message"] and "연간 계획 숫자는 설정에 없어" in d2["message"]
+    assert "재정과 장기금리" not in d2["message"] and "ECOS에는 이 달이 아직 없음" in d2["message"]
+    d3 = fiscal_eval(st, rel9, cfg, stamp, 4.40)
+    assert d3["action"] == "dedup"
+    plan_cfg = json.loads(json.dumps(cfg))
+    plan_cfg["fiscal"] = dict(cfg["fiscal"], plan_trillion=-30.0, plan_year=2026, yoy_worse_trillion=10)
+    st2: dict = {}
+    fiscal_eval(st2, rel, plan_cfg, stamp, 4.40)
+    hot = {"month": "2026-09", "managed": -43.0, "integrated": 5.0, "social": 48.1, "ecos_note": "맞음",
+           "history": [{"month": "2025-09", "managed": -20.0}]}
+    d4 = fiscal_eval(st2, hot, plan_cfg, stamp, 4.40)
+    assert d4["action"] == "send" and d4["priority"] == 4 and d4["over"] and d4["worse"] and d4["combined"]
+    assert "연간 계획 초과" in d4["title"] and "재정과 장기금리 악화 조건 충족" in d4["message"]
+    assert "4.400%" in d4["message"] and "KOSPI" in d4["title"] and "148070" in d4["title"]
+    d5 = fiscal_eval({"fiscal": {"seeded": True, "last_month": "2026-08", "months": {"2025-09": {"managed": -20.0}}}},
+                     dict(hot, history=[]), plan_cfg, stamp, 4.20)
+    assert d5["action"] == "send" and d5["over"] and not d5["combined"] and "재정과 장기금리" not in d5["message"]
+    yoy_only = json.loads(json.dumps(cfg))
+    yoy_only["fiscal"] = dict(cfg["fiscal"], plan_trillion=None, plan_year=None, yoy_worse_trillion=10)
+    st3 = {"fiscal": {"seeded": True, "last_month": "2026-08", "months": {}}}
+    mild = {"month": "2026-09", "managed": -55.0, "integrated": None, "social": None,
+            "history": [{"month": "2025-09", "managed": -40.0}]}
+    d6 = fiscal_eval(st3, mild, yoy_only, stamp, None)
+    assert d6["action"] == "send" and d6["worse"] and not d6["over"] and "전년 동월보다 악화" in d6["title"]
+    assert "연간 계획 초과" not in d6["title"] and not d6["combined"]
+    missing = {"month": "2026-09", "managed": -32.0, "integrated": 20.4, "social": 52.4, "history": []}
+    d7 = fiscal_eval({"fiscal": {"seeded": True, "last_month": "2026-08", "months": {}}}, missing, cfg, stamp, 4.0)
+    assert d7["action"] == "send" and NA in d7["message"] and not d7["worse"]
+    out = []
+    for dec in (d2, d4, d5, d6, d7):
+        text = dec["title"] + dec["message"]
+        assert "\u00b7" not in text and "\u2014" not in text, text
+        assert route_topic("cwally-port", dec["title"]) == "cwally-port", dec["title"]
+        for word in ("매수", "매도", "분할 진입", "비중 확대"):
+            assert word not in text, (word, dec["title"])
+        out.append((dec["title"], dec["message"], dec["priority"], dec["tags"]))
+    ops = "[KR-RATE] KOSPI 148070 관리재정수지 조회 실패 | 새 달 판정 못 함"
+    assert route_topic("cwally-port", ops) == "cwally-ops"
+    print("fiscal selftest ok: seed, dedup, new month, over-plan, combined, yoy, banned chars")
     return out
 
 
@@ -1075,6 +1436,7 @@ def selftest(cfg: dict) -> int:
             assert macroir_ktb_hold(cfg, "2026-11-02") is None
     print("macroir zone active -> only 추가매수 보류 ok; missing state ignored ok")
     samples += [(t1, m1, p1, []), (t2, m2, p2, []), (t4, m4, 4, [])]
+    samples += fiscal_selftest(cfg, stamp)
     for t, m, p, tg in samples:
         assert "\u00b7" not in t + m and "\u2014" not in t + m
         assert route_topic("cwally-port", t) == "cwally-port", t
