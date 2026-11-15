@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T07:58:32.402307+09:00",
+  "updated_at": "2026-11-16T08:01:22.097574+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -216,6 +216,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-14T07:58:32.402307+09:00"
+    },
+    "20261116-weekly-discovery.json#9827a376b86132cd": {
+      "file": "20261116-weekly-discovery.json",
+      "title": "[BRIEF] 주간 종목 발굴 11/16: PBR, 036570",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-16T08:01:22.097574+09:00"
     }
   },
   "rejected": {},
