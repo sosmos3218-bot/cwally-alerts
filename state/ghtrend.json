@@ -1,18 +1,18 @@
 {
-  "last_week": "2026-W45",
+  "last_week": "2026-W46",
   "last_repos": [
-    "thedotmack/claude-mem",
-    "lightpanda-io/browser",
-    "shiyu-coder/Kronos",
-    "pingdotgg/t3code",
-    "milind-soni/OpenMausBot",
-    "public-apis/public-apis",
-    "cjpais/Handy",
-    "Donchitos/Claude-Code-Game-Studios",
-    "kornia/kornia",
-    "beenuar/AiSOC"
+    "backnotprop/plannotator",
+    "GoogleChrome/modern-web-guidance-src",
+    "tradermonty/claude-trading-skills",
+    "ChromeDevTools/chrome-devtools-mcp",
+    "alibaba/open-code-review",
+    "QwenLM/qwen-code",
+    "dream-num/univer",
+    "ag-ui-protocol/ag-ui",
+    "ashhart/TensorFold",
+    "JuliusBrussee/caveman"
   ],
-  "updated_at": "2026-11-09T02:38:17.828067+09:00",
-  "last_skip_reason": "not_sunday",
+  "updated_at": "2026-11-15 21:00 KST",
+  "last_skip_reason": null,
   "catchup_note": "2026-10-26 10:54 KST forced catch-up for the 2026-10-25 (W43) week; recorded as W43 so Sunday 2026-11-01 (W44) still sends"
 }
