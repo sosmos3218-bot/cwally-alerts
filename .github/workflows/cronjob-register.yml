@@ -7,6 +7,9 @@ name: cwally-cronjob-register
 # action=update_slot (approved in chat 2026-10-22 18:29 KST) moves only that job (id 8698629) to
 # "cwally port after-close (19:00 KST)", weekdays 19:00 Asia/Seoul; URL, body and auth unchanged.
 # action=list (2026-10-23) is read-only: one GET /jobs, prints schedule and last/next execution, no headers.
+# action=list_bodies is read-only: GET /jobs, then GET /jobs/{id} for each port-alerts.yml
+# dispatch. 3s between calls, stops on HTTP 429 with no retry, writes a checkpoint artifact.
+# It does not create, update, or delete a job, and it does not notify.
 # action=register_pulse (mktpulse recurring job approved in chat 2026-10-22 09:43, configs/mktpulse.json
 # cron_approved) creates only "cwally mktpulse 10/11/13/15 KST weekdays"; skips if it already exists.
 # action=update_pulse (approved in chat 2026-10-26) moves only job 8705009 to "cwally mktpulse 11 KST weekdays"
@@ -31,9 +34,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | list_bodies = read-only GET of each port-alerts.yml dispatch body | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
         type: choice
-        options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
+        options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"
@@ -56,12 +59,18 @@ on:
         description: "run every check but do not create/delete any job"
         type: boolean
         default: false
+      resume_after:
+        description: "action=list_bodies only: skip job ids at or below this id when the checkpoint has no row for them. Empty starts at the beginning, or continues a restored checkpoint."
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 jobs:
   register:
+    if: inputs.action != 'list_bodies'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -95,3 +104,59 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
           REGISTER_KST: ${{ inputs.kst }}
         run: python scripts/ops_notify.py cronjob-register "$REGISTER_KST"
+
+  list_bodies:
+    if: inputs.action == 'list_bodies'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Restore list_bodies checkpoint
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p list-bodies-prev
+          rid="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=cronjob-list-bodies&per_page=5" \
+            --jq '[.artifacts[] | select(.expired == false and .workflow_run.id != ${{ github.run_id }})][0].workflow_run.id // empty')"
+          if [ -z "${rid}" ] || [ "${rid}" = "null" ]; then
+            echo "no previous list_bodies checkpoint"
+            exit 0
+          fi
+          gh run download "${rid}" -n cronjob-list-bodies -D list-bodies-prev
+          found="$(find list-bodies-prev -name checkpoint.json -type f -print -quit)"
+          if [ -z "${found}" ]; then
+            echo "previous artifact had no checkpoint.json"
+            exit 0
+          fi
+          if [ "${found}" != "list-bodies-prev/checkpoint.json" ]; then
+            cp "${found}" list-bodies-prev/checkpoint.json
+          fi
+          echo "restored checkpoint from run ${rid}"
+      - name: Read dispatch bodies
+        env:
+          CRONJOB_API_KEY: ${{ secrets.CRONJOB_API_KEY }}
+          CRONJOB_ACTION: list_bodies
+          CRONJOB_RESUME_AFTER: ${{ inputs.resume_after }}
+          CRONJOB_CHECKPOINT: list-bodies-prev/checkpoint.json
+          CRONJOB_LIST_BODIES_DIR: list-bodies
+        run: python scripts/cronjob_register.py
+      - name: Upload list_bodies checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cronjob-list-bodies
+          path: |
+            list-bodies/checkpoint.json
+            list-bodies/bodies.csv
+          if-no-files-found: warn
+          retention-days: 14

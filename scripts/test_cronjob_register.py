@@ -8,10 +8,13 @@ this file at api.cron-job.org, ntfy.sh, or a workflow dispatch.
 from __future__ import annotations
 
 import copy
+import csv
 import io
 import json
 import os
+import re
 import sys
+import tempfile
 import unittest
 import urllib.error
 import urllib.request
@@ -21,6 +24,8 @@ from email.message import Message
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cronjob_register as reg  # noqa: E402
+
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 NOW = datetime(2026, 11, 8, 10, 0, tzinfo=reg.KST)
 HEADERS = {"Authorization": "Bearer test-token", "Accept": "application/vnd.github+json"}
@@ -235,15 +240,69 @@ class CronjobCallTests(unittest.TestCase):
         urllib.request.urlopen = self._tripwire
         reg.time.sleep = lambda _s: None
         reg.reset_call_stats()
+        self._mono = reg.time.monotonic
+        self._call = reg.call
+        self._summary_env = os.environ.get("GITHUB_STEP_SUMMARY")
         self.sleeps: list[float] = []
 
     def tearDown(self):
         urllib.request.urlopen = self._urlopen
         reg.time.sleep = self._sleep
+        reg.time.monotonic = self._mono
+        reg.call = self._call
         for k in list(os.environ):
             if k.startswith("CRONJOB_"):
                 os.environ.pop(k, None)
         os.environ.update(self._env)
+        if self._summary_env is None:
+            os.environ.pop("GITHUB_STEP_SUMMARY", None)
+        else:
+            os.environ["GITHUB_STEP_SUMMARY"] = self._summary_env
+
+    def install_clock(self) -> list[float]:
+        sleeps: list[float] = []
+        clock = {"t": 0.0}
+
+        def mono() -> float:
+            return clock["t"]
+
+        def sleeper(seconds: float) -> None:
+            sleeps.append(float(seconds))
+            clock["t"] += float(seconds)
+
+        reg.time.monotonic = mono
+        reg.time.sleep = sleeper
+        return sleeps
+
+    def run_list_bodies(self, fake: FakeAPI, root: str, **extra: str):
+        inner = fake.urlopen
+
+        def urlopen(req, timeout=20):
+            if getattr(req, "method", None) != "GET" or getattr(req, "data", None):
+                raise AssertionError("list_bodies sent a write")
+            return inner(req, timeout)
+
+        fake.urlopen = urlopen
+        self.use(fake)
+        sleeps = self.install_clock()
+
+        def banned(*_args, **_kwargs):
+            raise AssertionError("list_bodies must not use call()")
+
+        reg.call = banned
+        vals = {
+            "CRONJOB_API_KEY": "test-key",
+            "CRONJOB_ACTION": "list_bodies",
+            "CRONJOB_LIST_BODIES_DIR": os.path.join(root, "out"),
+            "CRONJOB_CHECKPOINT": os.path.join(root, "prev", "checkpoint.json"),
+            "GITHUB_STEP_SUMMARY": os.path.join(root, "summary.md"),
+        }
+        vals.update(extra)
+        self.env(**vals)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = reg.main()
+        return rc, buf.getvalue(), sleeps
 
     @staticmethod
     def _tripwire(req, timeout=20):
@@ -688,6 +747,261 @@ class CronjobCallTests(unittest.TestCase):
         self.assertEqual(rc, reg.API_ERROR)
         self.assertEqual(fake.calls, [("GET", "/jobs")])
         self.assertIn("someFailed", buf.getvalue())
+
+    def test_list_bodies_classifies_and_never_writes(self):
+        self.assertEqual(reg.LIST_BODIES_GAP_SEC, 3.0)
+        targets = reg.slot_oneoff_targets()
+        afternoon = make_job(
+            8588897, "cwally port afternoon (15:20 KST), extra | note",
+            without_auto(targets["afternoon"]), hours=[15], minutes=[20],
+        )
+        bad = make_job(8850001, "cwally bad body", targets["oneshot"])
+        bad["extendedData"]["body"] = "not-json"
+        jobs = [
+            make_job(8588894, "cwally port morning (09:00 KST)", targets["morning"]),
+            afternoon,
+            make_job(8588895, "cwally port 0090b0 (15:41 KST)", targets["0090b0"],
+                     hours=[15], minutes=[41]),
+            make_job(8810001, "cwally oneshot 09:10 KST (Dec 1) fut", targets["oneshot"],
+                     expires=20271201120000, mdays=[1], months=[12], wdays=[-1]),
+            make_job(8821001, "cwally custom odd",
+                     {"ref": "main", "inputs": {"job": "grab", "oneoff_mode": "dry"}}),
+            make_job(8830001, "cwally oneshot 09:10 KST (Dec 2) off",
+                     without_auto(targets["oneshot"]), enabled=False,
+                     expires=20271202120000, mdays=[2], months=[12], wdays=[-1]),
+            bad,
+            make_job(8840001, "cwally trend-monitor (15:40 KST)",
+                     {"ref": "main", "inputs": {}}, url=reg.TREND_URL,
+                     hours=[15], minutes=[40]),
+        ]
+        fake = FakeAPI(jobs, list_body=False, some_failed=True)
+        with tempfile.TemporaryDirectory() as root:
+            rc, text, sleeps = self.run_list_bodies(
+                fake, root, CRONJOB_DRY_RUN="1", CRONJOB_RETRY_429="1", CRONJOB_MAX_CALLS="1",
+            )
+            self.assertEqual(rc, 0, text)
+            self.assertEqual(fake.patches, [])
+            self.assertTrue(all(method == "GET" for method, _path in fake.calls))
+            self.assertNotIn(("GET", "/jobs/8840001"), fake.calls)
+            detail = [path for method, path in fake.calls if path != "/jobs"]
+            self.assertEqual(detail, [
+                "/jobs/8588894", "/jobs/8588895", "/jobs/8588897", "/jobs/8810001",
+                "/jobs/8821001", "/jobs/8830001", "/jobs/8850001",
+            ])
+            self.assertEqual(sleeps, [3.0] * (len(fake.calls) - 1))
+            self.assertNotIn("call budget reached", text)
+            blob = json.loads(open(os.path.join(root, "out", "checkpoint.json"), encoding="utf-8").read())
+            self.assertEqual(blob["status"], "completed")
+            self.assertFalse(blob["stopped_on_429"])
+            self.assertIsNone(blob["stopping_jobId"])
+            self.assertTrue(blob["read_only"])
+            self.assertEqual(blob["methods"], ["GET"])
+            self.assertEqual(blob["gap_sec"], 3.0)
+            self.assertTrue(blob["list_some_failed"])
+            self.assertEqual(blob["total_dispatchers"], 7)
+            self.assertEqual(blob["auto_count"], 3)
+            self.assertEqual(blob["missing_or_not_auto"], [8588897, 8821001, 8830001, 8850001])
+            self.assertEqual(blob["not_yet_read"], [])
+            by_id = {row["jobId"]: row for row in blob["jobs"]}
+            self.assertEqual(by_id[8588894]["class"], "morning")
+            self.assertEqual(by_id[8588894]["oneoff_mode"], "auto")
+            self.assertEqual(by_id[8588894]["job"], "morning")
+            self.assertEqual(by_id[8588897]["class"], "afternoon")
+            self.assertEqual(by_id[8588897]["oneoff_mode"], "MISSING")
+            self.assertEqual(by_id[8588895]["class"], "0090b0")
+            self.assertEqual(by_id[8810001]["class"], "oneshot")
+            self.assertEqual(by_id[8821001]["class"], "other")
+            self.assertEqual(by_id[8821001]["oneoff_mode"], "dry")
+            self.assertEqual(by_id[8830001]["enabled"], False)
+            self.assertEqual(by_id[8830001]["class"], "oneshot")
+            self.assertEqual(by_id[8850001]["job"], "MISSING")
+            self.assertEqual(by_id[8850001]["oneoff_mode"], "MISSING")
+            self.assertEqual(by_id[8850001]["class"], "other")
+            self.assertNotIn(8840001, by_id)
+            raw = json.dumps(blob)
+            summary = open(os.path.join(root, "summary.md"), encoding="utf-8").read()
+            with open(os.path.join(root, "out", "bodies.csv"), encoding="utf-8", newline="") as fh:
+                csv_rows = list(csv.reader(fh))
+            dumped = text + raw + summary + json.dumps(csv_rows)
+            for secret in ("test-key", "test-token", "Bearer", "Authorization", "extendedData"):
+                self.assertNotIn(secret, dumped)
+            self.assertEqual(csv_rows[0], ["jobId", "title", "enabled", "schedule", "job", "oneoff_mode", "class"])
+            titles = {row[0]: row[1] for row in csv_rows[1:]}
+            self.assertEqual(titles["8588897"], "cwally port afternoon (15:20 KST), extra | note")
+            self.assertIn("extra \\| note", summary)
+            self.assertIn("status: completed", summary)
+            self.assertIn("stopped on 429: no", summary)
+            self.assertIn("total dispatchers: 7", summary)
+            self.assertIn("oneoff_mode=auto: 3", summary)
+            self.assertIn("missing or not auto jobIds: 8588897, 8821001, 8830001, 8850001", summary)
+            self.assertIn("LIST_BODIES status=completed stopped_on_429=0 total_dispatchers=7 auto=3", text)
+            self.assertIn("list_bodies api: GET=8 PATCH=0 PUT=0 DELETE=0 POST=0 gap_sec=3", text)
+            self.assertIn("::warning::cron-job.org job list is incomplete (someFailed)", text)
+
+    def test_list_bodies_stops_on_429_without_retry_and_resumes(self):
+        targets = reg.slot_oneoff_targets()
+        jobs = [
+            make_job(10, "cwally port morning (09:00 KST)", targets["morning"]),
+            make_job(20, "cwally port afternoon (15:20 KST)", targets["afternoon"], hours=[15], minutes=[20]),
+            make_job(30, "cwally oneshot 09:10 KST (Dec 1) a", targets["oneshot"],
+                     expires=20271201120000, mdays=[1], months=[12], wdays=[-1]),
+            make_job(40, "cwally oneshot 09:10 KST (Dec 1) b", targets["oneshot"],
+                     expires=20271201120000, mdays=[1], months=[12], wdays=[-1]),
+        ]
+
+        class StopAt(FakeAPI):
+            def __init__(self):
+                super().__init__(jobs, list_body=False)
+                self.stop_hits = 0
+
+            def urlopen(self, req, timeout=20):
+                path = str(req.full_url)[len(API):]
+                if path == "/jobs/30":
+                    self.calls.append((req.method, path))
+                    self.stop_hits += 1
+                    raise http_error(429, "1")
+                return super().urlopen(req, timeout)
+
+        fake = StopAt()
+        with tempfile.TemporaryDirectory() as root:
+            rc, text, sleeps = self.run_list_bodies(
+                fake, root, CRONJOB_RETRY_429="1", CRONJOB_MAX_CALLS="2",
+            )
+            self.assertEqual(rc, 0, text)
+            self.assertEqual(fake.stop_hits, 1)
+            self.assertEqual(fake.calls, [
+                ("GET", "/jobs"), ("GET", "/jobs/10"), ("GET", "/jobs/20"), ("GET", "/jobs/30"),
+            ])
+            self.assertEqual(sleeps, [3.0, 3.0, 3.0])
+            self.assertNotIn(1.0, sleeps)
+            self.assertNotIn(40, sleeps)
+            self.assertEqual(fake.patches, [])
+            blob = json.loads(open(os.path.join(root, "out", "checkpoint.json"), encoding="utf-8").read())
+            self.assertEqual(blob["status"], "stopped_429")
+            self.assertTrue(blob["stopped_on_429"])
+            self.assertEqual(blob["stopping_jobId"], 30)
+            self.assertEqual(blob["last_read_jobId"], 20)
+            self.assertEqual(blob["resume_after"], 20)
+            self.assertEqual([row["jobId"] for row in blob["jobs"]], [10, 20])
+            self.assertEqual(blob["not_yet_read"], [30, 40])
+            self.assertIn("HTTP 429 on GET /jobs/30, stopped without retry", text)
+            self.assertIn("LIST_BODIES status=stopped_429 stopped_on_429=1", text)
+            self.assertIn("stopping_jobId=30", text)
+            summary = open(os.path.join(root, "summary.md"), encoding="utf-8").read()
+            self.assertIn("stopped on 429: yes", summary)
+            self.assertIn("stopping jobId: 30", summary)
+
+            class Open(FakeAPI):
+                def urlopen(self, req, timeout=20):
+                    if req.method != "GET":
+                        raise AssertionError(req.method)
+                    return FakeAPI.urlopen(self, req, timeout)
+
+            nxt = Open(jobs, list_body=False)
+            os.makedirs(os.path.join(root, "prev"), exist_ok=True)
+            checkpoint = os.path.join(root, "out", "checkpoint.json")
+            os.replace(checkpoint, os.path.join(root, "prev", "checkpoint.json"))
+            rc2, text2, sleeps2 = self.run_list_bodies(nxt, root)
+            self.assertEqual(rc2, 0, text2)
+            self.assertEqual(nxt.calls, [
+                ("GET", "/jobs"), ("GET", "/jobs/30"), ("GET", "/jobs/40"),
+            ])
+            self.assertEqual(sleeps2, [3.0, 3.0])
+            blob2 = json.loads(open(os.path.join(root, "out", "checkpoint.json"), encoding="utf-8").read())
+            self.assertEqual(blob2["status"], "completed")
+            self.assertEqual(blob2["total_dispatchers"], 4)
+            self.assertEqual(blob2["auto_count"], 4)
+            self.assertEqual(blob2["missing_or_not_auto"], [])
+            self.assertEqual(blob2["not_yet_read"], [])
+            self.assertIsNone(blob2["stopping_jobId"])
+            self.assertIn("LIST_BODIES status=completed", text2)
+
+    def test_list_bodies_resume_after_skips_ids_missing_from_checkpoint(self):
+        targets = reg.slot_oneoff_targets()
+        jobs = [
+            make_job(10, "cwally port morning (09:00 KST)", targets["morning"]),
+            make_job(20, "cwally port afternoon (15:20 KST)", targets["afternoon"]),
+            make_job(30, "cwally oneshot 09:10 KST (Dec 1) a", targets["oneshot"],
+                     expires=20271201120000, mdays=[1], months=[12], wdays=[-1]),
+            make_job(40, "cwally custom odd",
+                     {"ref": "main", "inputs": {"job": "grab"}}),
+        ]
+        fake = FakeAPI(jobs, list_body=False)
+        with tempfile.TemporaryDirectory() as root:
+            rc, text, sleeps = self.run_list_bodies(fake, root, CRONJOB_RESUME_AFTER="20")
+            self.assertEqual(rc, 0, text)
+            self.assertEqual([path for _method, path in fake.calls], ["/jobs", "/jobs/30", "/jobs/40"])
+            self.assertEqual(sleeps, [3.0, 3.0])
+            blob = json.loads(open(os.path.join(root, "out", "checkpoint.json"), encoding="utf-8").read())
+            self.assertEqual(blob["status"], "incomplete")
+            self.assertEqual(blob["not_yet_read"], [10, 20])
+            self.assertEqual(blob["auto_count"], 1)
+            self.assertEqual(blob["missing_or_not_auto"], [40])
+            self.assertEqual(blob["total_dispatchers"], 4)
+            self.assertFalse(blob["stopped_on_429"])
+
+    def test_list_bodies_429_on_list(self):
+        class List429(FakeAPI):
+            def urlopen(self, req, timeout=20):
+                path = str(req.full_url)[len(API):]
+                self.calls.append((req.method, path))
+                raise http_error(429)
+
+        fake = List429([])
+        with tempfile.TemporaryDirectory() as root:
+            rc, text, sleeps = self.run_list_bodies(fake, root, CRONJOB_RETRY_429="1")
+            self.assertEqual(rc, 0, text)
+            self.assertEqual(fake.calls, [("GET", "/jobs")])
+            self.assertEqual(sleeps, [])
+            blob = json.loads(open(os.path.join(root, "out", "checkpoint.json"), encoding="utf-8").read())
+            self.assertEqual(blob["status"], "stopped_429")
+            self.assertIsNone(blob["stopping_jobId"])
+            self.assertIsNone(blob["total_dispatchers"])
+            self.assertIn("total_dispatchers=unknown", text)
+            self.assertIn("HTTP 429 on GET /jobs, stopped without retry", text)
+
+    def test_list_bodies_bad_input_makes_no_request(self):
+        fake = FakeAPI([make_job(10, "cwally port morning (09:00 KST)", reg.TEMPLATE_BODY)])
+        with tempfile.TemporaryDirectory() as root:
+            rc, text, _sleeps = self.run_list_bodies(fake, root, CRONJOB_RESUME_AFTER="nope")
+            self.assertEqual(rc, reg.BAD_INPUT, text)
+            self.assertEqual(fake.calls, [])
+            self.assertNotIn("test-key", text)
+            bad = os.path.join(root, "prev", "checkpoint.json")
+            os.makedirs(os.path.dirname(bad), exist_ok=True)
+            with open(bad, "w", encoding="utf-8") as fh:
+                fh.write("{")
+            rc2, text2, _sleeps2 = self.run_list_bodies(fake, root, CRONJOB_RESUME_AFTER="10")
+            self.assertEqual(rc2, reg.BAD_INPUT, text2)
+            self.assertEqual(fake.calls, [])
+        fake2 = FakeAPI([])
+        self.use(fake2)
+        os.environ.pop("CRONJOB_API_KEY", None)
+        self.env(CRONJOB_ACTION="list_bodies")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc3 = reg.main()
+        self.assertEqual(rc3, reg.BAD_INPUT)
+        self.assertEqual(fake2.calls, [])
+        self.assertIn("CRONJOB_API_KEY is not set", buf.getvalue())
+
+    def test_workflow_list_bodies_is_read_only_and_oneoff_default_stays_auto(self):
+        workflow = open(os.path.join(REPO, ".github/workflows/cronjob-register.yml"), encoding="utf-8").read()
+        head, job = workflow.split("\n  list_bodies:\n", 1)
+        self.assertIn("list_bodies", head.split("options:", 1)[1].split("\n", 1)[0])
+        self.assertIn("fix_slot_oneoff", head.split("options:", 1)[1].split("\n", 1)[0])
+        self.assertIn("if: inputs.action != 'list_bodies'", head)
+        self.assertIn("ops_notify.py", head)
+        self.assertNotIn("ops_notify", job)
+        self.assertNotIn("ntfy", job)
+        self.assertNotIn("PATCH", job)
+        self.assertNotIn("DELETE", job)
+        self.assertIn("CRONJOB_ACTION: list_bodies", job)
+        self.assertIn("actions/upload-artifact@v4", job)
+        port = open(os.path.join(REPO, ".github/workflows/port-alerts.yml"), encoding="utf-8").read()
+        match = re.search(r"\n      oneoff_mode:\n        description:.*\n        default: (\w+)\n", port)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), "auto")
 
 
 if __name__ == "__main__":

@@ -52,6 +52,15 @@ List mode, CRONJOB_ACTION=list (read-only, approved in chat 2026-10-23):
   One GET /jobs. Prints jobId, title, enabled, schedule (timezone, hours, minutes, wdays, mdays,
   months, expiresAt), url, lastStatus, lastExecution, nextExecution. Never prints headers, bodies or keys.
 
+List bodies, CRONJOB_ACTION=list_bodies (read-only):
+  GET /jobs, then GET /jobs/{id} for every job whose URL is the port-alerts.yml dispatch.
+  Never PATCH, PUT, DELETE, or POST, and it does not call call() (that helper can write and
+  can retry HTTP 429). At least 3 seconds between requests. HTTP 429 stops immediately,
+  with no retry and no Retry-After sleep. Writes a JSON checkpoint and a CSV, and appends
+  a summary to GITHUB_STEP_SUMMARY. CRONJOB_CHECKPOINT reuses rows already read.
+  CRONJOB_RESUME_AFTER skips ids at or below that id only when the checkpoint has no row.
+  Exit 0 when the read finishes or stops on 429. No ntfy.
+
 Pulse update, CRONJOB_ACTION=update_pulse (approved in chat 2026-10-26, mktpulse once a day at 11:00 KST):
   PATCHes only job PULSE_JOB_ID (title + schedule to PULSE_TITLE / PULSE_SCHEDULE: hour 11 Mon-Fri,
   expiresAt PULSE_EXPIRES). URL, body, headers and auth are left as they are. Refuses unless that job still
@@ -93,6 +102,7 @@ Output is the job ID and the KST time only. Response bodies and header values ar
 """
 from __future__ import annotations
 
+import csv
 import json
 import os
 import re
@@ -1250,6 +1260,389 @@ def run_fix_slot_oneoff(now: datetime) -> int:
 
 
 
+LIST_BODIES_GAP_SEC = 3.0
+_LIST_BODY_CLASSES = ("morning", "afternoon", "0090b0", "oneshot")
+
+
+class ListBodiesRateLimit(Exception):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self.path = path
+
+
+def list_bodies_class(job_name: str | None) -> str:
+    if job_name in _LIST_BODY_CLASSES:
+        return job_name
+    return "other"
+
+
+def list_bodies_schedule(job: dict) -> str:
+    sc = job.get("schedule") if isinstance(job.get("schedule"), dict) else {}
+
+    def compact(field: str) -> str:
+        vals = sc.get(field)
+        if not isinstance(vals, list):
+            return "-"
+        return "[" + ",".join(str(v) for v in vals) + "]"
+
+    tz = sc.get("timezone") or "-"
+    exp = sc.get("expiresAt", "-")
+    return (
+        f"tz={tz} h={compact('hours')} m={compact('minutes')} wd={compact('wdays')} "
+        f"md={compact('mdays')} mo={compact('months')} exp={exp}"
+    )
+
+
+def list_bodies_job_mode(body: object) -> tuple[str | None, object]:
+    if not isinstance(body, dict):
+        return None, None
+    inputs = body.get("inputs")
+    if not isinstance(inputs, dict):
+        return None, None
+    name = inputs.get("job") if "job" in inputs else None
+    if not isinstance(name, str) or not name:
+        name = None
+    mode = inputs.get("oneoff_mode") if "oneoff_mode" in inputs else None
+    return name, mode
+
+
+def list_bodies_mode_text(mode: object) -> str:
+    if isinstance(mode, str) and mode:
+        return mode
+    if mode is None or mode == "":
+        return "MISSING"
+    return str(mode)
+
+
+def list_bodies_row(list_row: dict, detail: dict) -> dict:
+    src = detail if detail else list_row
+    jid = int(list_row.get("jobId") or src.get("jobId") or 0)
+    raw_title = src.get("title") if src.get("title") is not None else list_row.get("title")
+    title = str(raw_title or "").replace("\r", " ").replace("\n", " ").strip()
+    if "enabled" in src:
+        enabled = bool(src.get("enabled"))
+    else:
+        enabled = bool(list_row.get("enabled"))
+    sched_src = src if isinstance(src.get("schedule"), dict) else list_row
+    status, body, headers = parse_extended(detail)
+    del headers  # GitHub Authorization lives here; never print or store it
+    name: str | None = None
+    mode: object = None
+    if status == "present":
+        name, mode = list_bodies_job_mode(body)
+    return {
+        "jobId": jid,
+        "title": title,
+        "enabled": enabled,
+        "schedule": list_bodies_schedule(sched_src),
+        "job": name or "MISSING",
+        "oneoff_mode": list_bodies_mode_text(mode) if status == "present" else "MISSING",
+        "class": list_bodies_class(name),
+    }
+
+
+def list_bodies_emit(rec: dict) -> None:
+    print(
+        f"jobId={rec['jobId']} title={rec['title']!r} enabled={rec['enabled']} "
+        f"schedule={rec['schedule']!r} job={rec['job']} oneoff_mode={rec['oneoff_mode']} "
+        f"class={rec['class']}"
+    )
+
+
+def list_bodies_load_checkpoint(path: str) -> dict[int, dict]:
+    if not path or not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise Stop(BAD_INPUT, f"list_bodies checkpoint is not readable JSON ({type(exc).__name__})")
+    jobs = data.get("jobs") if isinstance(data, dict) else None
+    if not isinstance(jobs, list):
+        raise Stop(BAD_INPUT, "list_bodies checkpoint has no jobs list")
+    out: dict[int, dict] = {}
+    for rec in jobs:
+        if not isinstance(rec, dict) or not re.fullmatch(r"\d{1,12}", str(rec.get("jobId"))):
+            continue
+        jid = int(rec["jobId"])
+        job_text = str(rec.get("job") or "MISSING")
+        mode_text = str(rec.get("oneoff_mode") or "MISSING")
+        cls = rec.get("class")
+        if cls not in _LIST_BODY_CLASSES and cls != "other":
+            cls = list_bodies_class(None if job_text == "MISSING" else job_text)
+        out[jid] = {
+            "jobId": jid,
+            "title": str(rec.get("title") or "").replace("\n", " ").strip(),
+            "enabled": bool(rec.get("enabled")),
+            "schedule": str(rec.get("schedule") or ""),
+            "job": job_text,
+            "oneoff_mode": mode_text,
+            "class": cls,
+        }
+    return out
+
+
+def list_bodies_md(text: object) -> str:
+    return str(text).replace("|", "\\|").replace("\n", " ")
+
+
+def list_bodies_write(out_dir: str, state: dict, summary: bool) -> None:
+    os.makedirs(out_dir, exist_ok=True)
+    rows = state["jobs"]
+    blob = {
+        "action": "list_bodies",
+        "read_only": True,
+        "methods": ["GET"],
+        "gap_sec": LIST_BODIES_GAP_SEC,
+        "status": state["status"],
+        "stopped_on_429": state["status"] == "stopped_429",
+        "stopping_jobId": state["stopping_jobId"],
+        "last_read_jobId": state["last_read_jobId"],
+        "resume_after": state["resume_after"],
+        "first_unread_jobId": state["first_unread_jobId"],
+        "total_dispatchers": state["total_dispatchers"],
+        "auto_count": state["auto_count"],
+        "missing_or_not_auto": state["missing_or_not_auto"],
+        "not_yet_read": state["not_yet_read"],
+        "list_some_failed": state["list_some_failed"],
+        "jobs": rows,
+    }
+    dest = os.path.join(out_dir, "checkpoint.json")
+    tmp = dest + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(blob, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    os.replace(tmp, dest)
+    csv_dest = os.path.join(out_dir, "bodies.csv")
+    tmp_csv = csv_dest + ".tmp"
+    with open(tmp_csv, "w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["jobId", "title", "enabled", "schedule", "job", "oneoff_mode", "class"])
+        for rec in rows:
+            writer.writerow([
+                rec["jobId"],
+                rec["title"],
+                "true" if rec["enabled"] else "false",
+                rec["schedule"],
+                rec["job"],
+                rec["oneoff_mode"],
+                rec["class"],
+            ])
+    os.replace(tmp_csv, csv_dest)
+    if not summary:
+        return
+    total = state["total_dispatchers"]
+    total_s = "unknown" if total is None else str(total)
+    miss = ", ".join(str(i) for i in state["missing_or_not_auto"]) or "(none)"
+    unread = ", ".join(str(i) for i in state["not_yet_read"]) or "(none)"
+    stop_s = "(none)" if state["stopping_jobId"] is None else str(state["stopping_jobId"])
+    last_s = "(none)" if state["last_read_jobId"] is None else str(state["last_read_jobId"])
+    stopped = "yes" if state["status"] == "stopped_429" else "no"
+    print(
+        "LIST_BODIES "
+        f"status={state['status']} stopped_on_429={1 if stopped == 'yes' else 0} "
+        f"total_dispatchers={total_s} auto={state['auto_count']} "
+        f"missing_or_not_auto={','.join(str(i) for i in state['missing_or_not_auto']) or '-'} "
+        f"not_yet_read={len(state['not_yet_read'])} stopping_jobId={stop_s if stop_s != '(none)' else '-'} "
+        f"last_read_jobId={last_s if last_s != '(none)' else '-'} "
+        f"resume_after={last_s if last_s != '(none)' else '-'}"
+    )
+    print(
+        f"list_bodies api: GET={_STATS['by'].get('GET', 0)} "
+        f"PATCH=0 PUT=0 DELETE=0 POST=0 gap_sec={LIST_BODIES_GAP_SEC:g}"
+    )
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    lines = [
+        "## cron-job.org list_bodies",
+        "",
+        f"- status: {state['status']}",
+        f"- stopped on 429: {stopped}",
+        f"- stopping jobId: {stop_s}",
+        f"- total dispatchers: {total_s}",
+        f"- oneoff_mode=auto: {state['auto_count']}",
+        f"- missing or not auto jobIds: {miss}",
+        f"- not yet read: {unread}",
+        f"- last read jobId: {last_s}",
+        f"- resume_after for the next run: {last_s}",
+        "",
+        "Read-only. Every cron-job.org request was GET. No job was created, updated, or deleted.",
+        "Pass resume_after only when the checkpoint artifact is not available.",
+        "A restored checkpoint already holds rows, and ids missing from it are fetched.",
+        "",
+        "| jobId | title | enabled | schedule | job | oneoff_mode | class |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for rec in rows:
+        lines.append(
+            f"| {rec['jobId']} | {list_bodies_md(rec['title'])} | "
+            f"{'true' if rec['enabled'] else 'false'} | {list_bodies_md(rec['schedule'])} | "
+            f"{list_bodies_md(rec['job'])} | {list_bodies_md(rec['oneoff_mode'])} | {rec['class']} |"
+        )
+    lines.append("")
+    with open(summary_path, "a", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
+def _list_bodies_stopping_id(path: str) -> int | None:
+    match = re.fullmatch(r"/jobs/(\d{1,12})", path)
+    return int(match.group(1)) if match else None
+
+
+def run_list_bodies() -> int:
+    """Read port-alerts.yml dispatch bodies. GET only. Stops on HTTP 429."""
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    raw_resume = env("CRONJOB_RESUME_AFTER")
+    if raw_resume and not re.fullmatch(r"\d{1,12}", raw_resume):
+        raise Stop(BAD_INPUT, f"resume_after must be a job id, got {raw_resume!r}")
+    resume_after = int(raw_resume) if raw_resume else 0
+    known = list_bodies_load_checkpoint(env("CRONJOB_CHECKPOINT"))
+    out_dir = env("CRONJOB_LIST_BODIES_DIR") or "list-bodies"
+    os.makedirs(out_dir, exist_ok=True)
+    some_failed = False
+    dispatch_ids: list[int] | None = None
+    printed: set[int] = set()
+    gap = {"last": None}
+
+    def note_get() -> None:
+        _STATS["n"] += 1
+        _STATS["by"]["GET"] = _STATS["by"].get("GET", 0) + 1
+
+    def get_json(path: str) -> dict:
+        # GET only. Do not route this through call(): that helper can PATCH and retry 429.
+        if not path.startswith("/jobs"):
+            raise Stop(BAD_INPUT, "list_bodies only reads /jobs")
+        last = gap["last"]
+        if last is not None:
+            wait = LIST_BODIES_GAP_SEC - (time.monotonic() - last)
+            if wait > 0:
+                time.sleep(wait)
+        req = urllib.request.Request(
+            API + path,
+            data=None,
+            method="GET",
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+                "User-Agent": "cwally-cronjob-register",
+            },
+        )
+        note_get()
+        try:
+            try:
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    final = getattr(resp, "geturl", lambda: req.full_url)()
+                    if not str(final).startswith(API + "/"):
+                        raise Stop(API_ERROR, "cron-job.org GET left the API host")
+                    raw = resp.read().decode() or "{}"
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429:
+                    raise ListBodiesRateLimit(path) from None
+                raise Stop(API_ERROR, f"cron-job.org GET {path} -> HTTP {exc.code}") from None
+            except (urllib.error.URLError, TimeoutError) as exc:
+                raise Stop(API_ERROR, f"cron-job.org GET {path} -> {type(exc).__name__}") from None
+        finally:
+            gap["last"] = time.monotonic()
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            raise Stop(API_ERROR, f"cron-job.org GET {path} -> response was not JSON")
+        if not isinstance(parsed, dict):
+            raise Stop(API_ERROR, f"cron-job.org GET {path} -> response was not a JSON object")
+        return parsed
+
+    def assemble(status: str, stopping: int | None) -> dict:
+        if dispatch_ids is None:
+            rows = [known[jid] for jid in sorted(known)]
+            not_yet: list[int] = []
+            total: int | None = None
+        else:
+            rows = [known[jid] for jid in dispatch_ids if jid in known]
+            not_yet = [jid for jid in dispatch_ids if jid not in known]
+            total = len(dispatch_ids)
+        read_ids = [rec["jobId"] for rec in rows]
+        last_read = read_ids[-1] if read_ids else None
+        return {
+            "status": status,
+            "stopping_jobId": stopping,
+            "last_read_jobId": last_read,
+            "resume_after": last_read,
+            "first_unread_jobId": not_yet[0] if not_yet else None,
+            "total_dispatchers": total,
+            "auto_count": sum(1 for rec in rows if rec["oneoff_mode"] == "auto"),
+            "missing_or_not_auto": [rec["jobId"] for rec in rows if rec["oneoff_mode"] != "auto"],
+            "not_yet_read": not_yet,
+            "list_some_failed": some_failed,
+            "jobs": rows,
+        }
+
+    def persist(status: str, stopping: int | None, final: bool) -> dict:
+        state = assemble(status, stopping)
+        list_bodies_write(out_dir, state, summary=final)
+        return state
+
+    def remember(rec: dict) -> None:
+        known[int(rec["jobId"])] = rec
+        jid = int(rec["jobId"])
+        if jid not in printed:
+            list_bodies_emit(rec)
+            printed.add(jid)
+
+    try:
+        print("list_bodies: GET /jobs")
+        listed = get_json("/jobs")
+        some_failed = bool(listed.get("someFailed"))
+        if some_failed:
+            print("::warning::cron-job.org job list is incomplete (someFailed)")
+        incoming = [j for j in (listed.get("jobs") or []) if isinstance(j, dict)]
+        by_id: dict[int, dict] = {}
+        for row in incoming:
+            jid = int(row.get("jobId") or 0)
+            if jid and is_port_dispatch(row):
+                by_id[jid] = row
+        dispatch_ids = sorted(by_id)
+        print(
+            f"list_bodies: dispatchers={len(dispatch_ids)} "
+            f"cached={sum(1 for jid in dispatch_ids if jid in known)} "
+            f"resume_after={resume_after or '-'}"
+        )
+        for jid in dispatch_ids:
+            row = by_id[jid]
+            if jid in known:
+                rec = dict(known[jid])
+                rec["jobId"] = jid
+                rec["title"] = str(row.get("title") or rec["title"]).replace("\r", " ").replace("\n", " ").strip()
+                rec["enabled"] = bool(row.get("enabled"))
+                if isinstance(row.get("schedule"), dict):
+                    rec["schedule"] = list_bodies_schedule(row)
+                remember(rec)
+                continue
+            if resume_after and jid <= resume_after:
+                print(f"list_bodies: skip jobId={jid} resume_after={resume_after} (no checkpoint row)")
+                continue
+            print(f"list_bodies: GET /jobs/{jid}")
+            detail = get_json(f"/jobs/{jid}").get("jobDetails") or {}
+            if not isinstance(detail, dict):
+                detail = {}
+            remember(list_bodies_row(row, detail))
+            persist("running", None, final=False)
+        unread = [jid for jid in dispatch_ids if jid not in known]
+        persist("completed" if not unread else "incomplete", None, final=True)
+        return 0
+    except ListBodiesRateLimit as limited:
+        stopping = _list_bodies_stopping_id(limited.path)
+        print(f"list_bodies: HTTP 429 on GET {limited.path}, stopped without retry")
+        persist("stopped_429", stopping, final=True)
+        return 0
+    except Stop:
+        if dispatch_ids is not None or known:
+            persist("error", None, final=True)
+        raise
+
+
 def main() -> int:
     reset_call_stats()
     now = datetime.now(KST)
@@ -1264,6 +1657,8 @@ def main() -> int:
             return run_update_slot(now)
         if action == "list":
             return run_list()
+        if action == "list_bodies":
+            return run_list_bodies()
         if action == "register_pulse":
             return run_register_pulse(now)
         if action == "update_pulse":
@@ -1279,7 +1674,7 @@ def main() -> int:
         if action == "fix_slot_oneoff":
             return run_fix_slot_oneoff(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, fix_slot_oneoff, list, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, fix_slot_oneoff, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")
