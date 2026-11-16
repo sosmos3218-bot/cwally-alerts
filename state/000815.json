@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-14T02:38:21.368995+09:00",
+  "updated_at": "2026-11-16T19:04:47.835855+09:00",
   "seeded": true,
-  "last_day": "2026-11-13",
-  "last_close": 364500.0,
+  "last_day": "2026-11-16",
+  "last_close": 365000.0,
   "last_fail_day": null,
   "lines": {
     "l340": {
@@ -12,12 +12,16 @@
     "l360": {
       "armed": true,
       "fired_day": "2026-11-12"
+    },
+    "l400": {
+      "armed": false,
+      "fired_day": "2026-11-16"
     }
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-11-13",
-    "last": 31.0964,
+    "last_day": "2026-11-16",
+    "last": 32.6568,
     "lines": {
       "resolve": {
         "armed": true,
@@ -32,8 +36,8 @@
   "notice_done": {},
   "notice_seen": [],
   "sec": {
-    "last_day": "2026-11-13",
-    "last_close": 206000.0,
+    "last_day": "2026-11-16",
+    "last_close": 196800.0,
     "armed": true,
     "fired_day": null
   },

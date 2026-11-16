@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T02:38:41.714272+09:00",
+  "updated_at": "2026-11-16T19:05:58.863200+09:00",
   "seeded": true,
   "base": {
     "y10": 5.0,
@@ -14,20 +14,20 @@
   },
   "add2": {
     "armed": true,
-    "last_day": "2026-11-13",
+    "last_day": "2026-11-16",
     "fired_day": null
   },
   "fx": {
     "level": 0,
-    "last_day": "2026-11-13",
+    "last_day": "2026-11-16",
     "fired_day": null
   },
   "regime": {
     "armed": true,
-    "last_day": "2026-11-13",
+    "last_day": "2026-11-16",
     "fired_day": null,
     "streak_true": 0,
-    "streak_false": 24
+    "streak_false": 25
   },
   "fomc_done": [
     "2026-01-28",
@@ -165,6 +165,14 @@
       "ief": 90.21,
       "ief_date": "2026-11-12",
       "fx": 1332.4,
+      "fx_src": "ECOS 매매기준율"
+    },
+    "2026-11-16": {
+      "y10": 5.15,
+      "y10_date": "2026-11-13",
+      "ief": 90.04,
+      "ief_date": "2026-11-13",
+      "fx": 1333.7,
       "fx_src": "ECOS 매매기준율"
     }
   },

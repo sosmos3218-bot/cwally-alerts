@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W47",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-16 09:01 KST",
+  "updated_at": "2026-11-16 19:04 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -24,7 +24,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-13"
+        "last_ok": "2026-11-16"
       },
       "samsung": {
         "seeded": true,
@@ -122,11 +122,13 @@
           "u:news.samsung.com/global/samsung-reimagines-the-future-of-design-at-ces-2026-guiding-technology-for-humanity",
           "t:samsung reimagines the future of design at ces 2026 guiding technology for humanity",
           "u:news.samsung.com/global/samsung-explores-how-trust-security-and-privacy-shape-the-future-of-ai-at-ces-2026",
-          "t:samsung explores how trust security and privacy shape the future of ai at ces 2026"
+          "t:samsung explores how trust security and privacy shape the future of ai at ces 2026",
+          "u:news.samsung.com/global/samsungs-latest-products-recognized-by-consumer-technology-association-ahead-of-ces-2027",
+          "t:samsung s latest products recognized by consumer technology association ahead of ces 2027"
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-13"
+        "last_ok": "2026-11-16"
       },
       "skhynix": {
         "seeded": true,
@@ -154,7 +156,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-13"
+        "last_ok": "2026-11-16"
       }
     }
   }
