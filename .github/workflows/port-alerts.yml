@@ -218,7 +218,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k316140, k055550, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, k316140, k055550, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1566,6 +1566,19 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
           if [ "$MODE" = "dry" ]; then python scripts/truentrust_monitor.py selftest >/dev/null; fi
           python scripts/truentrust_monitor.py "$MODE"
+      - name: Run K036570 (엔씨소프트 036570 close <= 175,000 p3 1차 분할매수 50%, re-arm > 181,000; <= 160,000 p3 2차 30%, re-arm > 166,000; <= 145,000 p4 3차 20% + 논리 재점검, re-arm > 151,000; same-day multi-line = one deepest message; 19:00 k203780 slot; ends 2027-05-31)
+        # approved in chat 2026-11-16 (pt128u). attached to the existing k203780 slot after truentrust, no new cron.
+        # Regular-session closes via scripts/krx_close.py. Dedupe state/k036570.json last_date + armed.
+        # Manual dispatch (job=k203780 or job=k036570) is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k036570') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; python scripts/k036570_monitor.py selftest; fi
+          python scripts/k036570_monitor.py "$MODE"
       - name: Run 005930 / 000660 (Samsung Electronics, SK hynix close-based plan lines, US 10Y 5.30% shared warning, earnings check; k203780 19:00 slot)
         # attached to the existing k203780 slot, no new cron. job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'k203780' }}

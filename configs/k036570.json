@@ -1,0 +1,64 @@
+{
+  "name": "k036570",
+  "title_prefix": "[036570]",
+  "code": "036570",
+  "display": "엔씨소프트 (KOSPI 036570) 종가 175,000원 1차 / 160,000원 2차 / 145,000원 3차 분할매수 검토",
+  "short": "엔씨소프트",
+  "approval": "사용자 채팅 승인 2026-11-16 (pt128u): 175,000 / 160,000 / 145,000원 종가 분할매수 알림, 기존 19:00 k203780 슬롯에 부착, 새 cron 없음.",
+  "holding": "미보유. 자동 주문 아님. 시작 조건: 4분기 초반 자료로 성장 지속 확인 후 시작 권장.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인에 부착(truentrust 바로 뒤). 정규장 확정 종가 scripts/krx_close.py. 수동 job=k036570 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "daily_window": {"start": "2026-11-16", "end": "2027-05-31"},
+  "price_source": "정규장 종가 scripts/krx_close.py (Daum A036570 days, 실패 시 네이버 15:30 분봉). 네이버 일봉은 시간외 포함이라 안 씀",
+  "week52_low": 176100,
+  "week52_low_note": "52주 저점 176,100원(참고, 판정 선 아님)",
+  "checklist": [
+    "아이온2 매출 안정 여부",
+    "4분기 잠정실적 영업이익률",
+    "신작 일정"
+  ],
+  "start_condition": "시작 조건: 4분기 초반 자료로 성장 지속 확인 후 시작 권장. 자동 주문이 아님.",
+  "lines": [
+    {
+      "key": "buy1",
+      "op": "le",
+      "level": 175000,
+      "rearm_op": "gt",
+      "rearm": 181000,
+      "priority": 3,
+      "weight": "50%",
+      "title": "1차 분할매수 검토 (계획 비중 50%)"
+    },
+    {
+      "key": "buy2",
+      "op": "le",
+      "level": 160000,
+      "rearm_op": "gt",
+      "rearm": 166000,
+      "priority": 3,
+      "weight": "30%",
+      "title": "2차 분할매수 검토 (30%)"
+    },
+    {
+      "key": "buy3",
+      "op": "le",
+      "level": 145000,
+      "rearm_op": "gt",
+      "rearm": 151000,
+      "priority": 4,
+      "weight": "20%",
+      "title": "3차 분할매수 검토 (20%), 추가 하락 시 논리 재점검"
+    }
+  ],
+  "stale_trading_days": 2,
+  "seed": {
+    "day": "2026-11-13",
+    "close": 179000,
+    "volume": 158358,
+    "note": "11/13 정규장 확정 종가 179,000원(Daum krx_close). 175,000원 위라 1/2/3차 모두 무장. 이 날짜까지는 판정하지 않음. 11/16 장중 값은 확정 종가가 아니라 시드에 쓰지 않음."
+  },
+  "ends_kst": "2027-05-31 23:59",
+  "ends_note": "KRX 거래일 19:00, 2027-05-31까지(4분기와 1분기 실적 이후). 뒤에는 조용히 끝남"
+}
