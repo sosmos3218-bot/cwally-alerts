@@ -3,7 +3,7 @@
 
 KRX 거래일 19:00 k203780 슬롯(장 마감 후). 기존 oneshot [TRUEN] truen417790 과 별개.
   1) 실적 공시(분기보고서, 영업(잠정)실적, 매출액 또는 손익구조 변동) 신규 1번/건
-  2) 주주환원 공시(자기주식 취득/처분/소각 결정, 현금배당 결정, 신탁계약 체결/해지) 신규 1번/건
+  2) 주주환원 공시(자기주식 취득/처분 결정, 현금배당 결정, 신탁계약 체결) 신규 1번/건. 주식소각 결정, 신탁 해지 결정, 해지결과보고서는 truentrust가 담당.
   3) 종가 >= 7,600 또는 < 5,500 교차 1번, 1% 버퍼 재무장
   4) 거래일 일일 요약: 종가, 전일 대비 %, 순현금 주당 7,100원 대비 배수(2026-11-13 3Q 갱신)
 공시: KIND 상세검색, 실패 시 네이버 KRX 공시 피드(OpenDART 키는 port-alerts 미주입).
@@ -79,10 +79,18 @@ def show_title(t: str) -> str:
     return re.sub(r"\s*" + DOT + r"\s*", ", ", t or "").strip()
 
 
+# 소각 결정, 신탁 해지 결정, 해지결과보고서는 truentrust가 전담(중복 발송 방지)
+RET_HANDOFF = re.compile(
+    r"(자기)?주식\s*소각\s*결정|해지\s*결과\s*보고서|(자기주식\s*취득\s*)?신탁\s*계약\s*해지"
+)
+
+
 def classify(title: str) -> tuple[str, str] | None:
     """Return (bucket, label) or None. bucket: earn | return."""
     t = title or ""
     if RET_SKIP.search(t):
+        return None
+    if RET_HANDOFF.search(t):
         return None
     if EARN_RE.search(t):
         return "earn", "실적 공시"
@@ -473,7 +481,10 @@ def selftest() -> int:
     check("earn 손익구조", classify("매출액또는손익구조30%이상변경"), ("earn", "실적 공시"))
     check("ret 배당", classify("현금ㆍ현물배당 결정"), ("return", "현금배당"))
     check("ret 신탁 체결", classify("자기주식취득 신탁계약 체결 결정"), ("return", "신탁계약"))
-    check("ret 소각", classify("주식소각 결정"), ("return", "주식 소각"))
+    check("handoff 소각", classify("주식소각 결정"), None)
+    check("handoff 자기주식소각", classify("자기주식소각결정"), None)
+    check("handoff 해지 결정", classify("자기주식취득 신탁계약 해지 결정"), None)
+    check("handoff 해지결과", classify("신탁계약 해지 결과보고서"), None)
     check("ret 취득", classify("자기주식 취득 결정"), ("return", "자기주식 취득"))
     check("skip 상황보고서", classify("신탁계약에의한 취득 상황보고서"), None)
     check("skip 변경상장", classify("변경상장(주식소각)"), None)

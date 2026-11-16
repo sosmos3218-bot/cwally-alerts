@@ -1,0 +1,49 @@
+{
+  "name": "truentrust",
+  "title_prefix": "[417790]",
+  "ticker": "417790",
+  "code": "417790",
+  "corp_name": "트루엔",
+  "corp_cik": "01134216",
+  "created_at": "2026-11-16T11:20:00+09:00",
+  "approval": "사용자 채팅 요청 2026-11-16 (t19u): 트루엔 자사주 신탁 계약 종료일과 해지결과보고서를 확인하고, 소각 결정이 나오면 알려주는 알림",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 반복 cron 없음. 기존 k203780 장 마감 후 슬롯(KRX 거래일 19:00 KST)에 부착. job=truentrust 또는 job=k203780 수동 dispatch 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "trust": {
+    "start": "2025-12-15",
+    "end": "2026-12-14",
+    "amount_won": 3000000000,
+    "trustee": "미래에셋증권",
+    "purpose": "주가안정 및 주주가치 제고, 양도제한조건부주식 부여수량 확보",
+    "board_date": "2025-12-15",
+    "signed_date": "2025-12-15",
+    "dart_rcept": "20251215000083",
+    "kind_acpt": "20251215000349",
+    "planned_shares": 361011,
+    "ref_price": 8310
+  },
+  "latest_status": {
+    "as_of": "2026-09-16",
+    "shares": 370722,
+    "amount_won": 2544381390,
+    "fill_pct": 84.81,
+    "ratio_pct": 3.54,
+    "shares_out": 10468391,
+    "dart_rcept": "20260916000292",
+    "note": "2026-09-16 취득상황보고서 기준. 3분기 분기보고서(DART 20261113000343) 기준일도 370,722주. 이후 추가 취득은 해지결과보고서에서 확인."
+  },
+  "d7_date": "2026-12-07",
+  "d7_until": "2026-12-18",
+  "rules": {
+    "fail_ops_after_days": 2
+  },
+  "related_alert": "기존 k417790는 실적, 배당, 자기주식 취득/처분, 신탁 체결을 유지. 주식소각 결정, 신탁계약 해지 결정, 해지결과보고서는 이 알림이 담당(중복 발송 방지).",
+  "sources": {
+    "filings": "KIND 상세검색(A417790), 실패 시 stock.naver.com domestic notice API. DART 원문 번호는 dart.fss.or.kr 회사별 검색(01134216)으로 맞춤. OpenDART 키는 port-alerts에 미주입이라 사용 안 함."
+  },
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "신탁 종료(2026-12-14) 이후 늦은 소각 결정까지 감시. 소각 확인 후 종료하거나 연장할 수 있음."
+}
