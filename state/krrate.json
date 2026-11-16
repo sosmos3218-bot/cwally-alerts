@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-16T19:05:24.937466+09:00",
+  "updated_at": "2026-11-17T05:15:11.676130+09:00",
   "seeded": true,
   "y10": {
     "armed": true,
@@ -338,9 +338,65 @@
     "fiscal": "2026-11-16"
   },
   "fiscal": {
-    "seeded": false,
-    "last_month": null,
-    "months": {}
+    "seeded": true,
+    "last_month": "2026-08",
+    "months": {
+      "2026-01": {
+        "managed": 11.3,
+        "integrated": 14.3,
+        "social": 3.0
+      },
+      "2026-02": {
+        "managed": -14.0,
+        "integrated": -7.1,
+        "social": 6.9
+      },
+      "2026-03": {
+        "managed": -39.6,
+        "integrated": -22.8,
+        "social": 16.8
+      },
+      "2026-04": {
+        "managed": -36.6,
+        "integrated": -13.2,
+        "social": 23.3
+      },
+      "2026-05": {
+        "managed": -54.2,
+        "integrated": -23.4,
+        "social": 30.8
+      },
+      "2025-01": {
+        "managed": 11.5,
+        "integrated": 13.5,
+        "social": 2.1
+      },
+      "2025-02": {
+        "managed": -17.9,
+        "integrated": -13.7,
+        "social": 4.2
+      },
+      "2025-03": {
+        "managed": -61.3,
+        "integrated": -50.0,
+        "social": 11.3
+      },
+      "2025-04": {
+        "managed": -46.1,
+        "integrated": -31.2,
+        "social": 14.8
+      },
+      "2025-05": {
+        "managed": -54.2,
+        "integrated": -35.5,
+        "social": 18.7
+      },
+      "2026-08": {
+        "managed": -43.0,
+        "integrated": 5.0,
+        "social": 48.1
+      }
+    }
   },
   "note": "설치 시 시드(2026-10-23): 국고10년 10/22 KOFIA 4.152% (ECOS) < 4.30% 라 무장, 10/23 부터 판정. 근원물가 2026-09 (농산물및석유류제외 2.7%) 보고된 것으로 처리. 지난 금통위 처리 완료. 신용 스프레드는 첫 실행에서 가장 최근 하루로 조용히 무장 상태를 정함(발송 없음)."
 }
