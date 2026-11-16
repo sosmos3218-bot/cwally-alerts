@@ -1,0 +1,11 @@
+{
+  "updated_at": null,
+  "seeded": false,
+  "seen": [],
+  "ds_low_armed": true,
+  "ds_high_armed": true,
+  "kc_low_armed": true,
+  "rel_up_armed": true,
+  "rel_down_armed": true,
+  "fail": {}
+}
