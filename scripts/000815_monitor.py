@@ -5,8 +5,9 @@ Replaces the [000810] common-share price levels (615,000 / 580,000, configs/k000
 2026-11-03) with the preferred share as the vehicle. One run, one state file (state/000815.json), topic cwally-port,
 failures to cwally-ops. Parts:
   lines        configs/000815.json "lines" through the 005930 engine (scripts/005930_monitor.py): KRX regular close
-               (Yahoo 000815.KS) <= 360,000 (1차, 1/3 of target) and <= 340,000 (3차 대안). Once each, re-arm after the
-               close moves more than 1% back above. No 400,000 line (2차 is decided in the [000810] Q3 verdict).
+               (Yahoo 000815.KS) <= 360,000 (1차, 1/3 of target), <= 400,000 (2차, formal from 2026-11-16 after the
+               11/12 Q3 conditions passed), and <= 340,000 (3차 대안). Once each, re-arm after the close moves more
+               than 1% back above.
   ratio        engine "pair" + "ratio_lines": same-session discount (000810 - 000815) / 000810, <= 25.0% 우선주 이점 소멸
                (추가 매수 중단), >= 48.0% 할인 확대 경고, 1%p re-arm. Hold when either close is missing.
   sec_line     this file: Samsung Electronics (Yahoo 005930.KS regular close) <= 171,750 (11/2 official 229,000 -25%)
@@ -155,11 +156,11 @@ def install_msg(cfg: dict, data: dict, srows: list[dict], fails: list[str], stam
         engine.head(cfg, stamp),
         f"이게 뭐 알림: 삼성화재우 신규 매수 알림 설치 확인입니다. KRX 거래일 19:00에 조건을 새로 넘을 때만 옵니다. 끝: {cfg['ends_kst']} KST. [000810] 보통주 615,000원/580,000원 가격대는 이 알림으로 옮겼습니다.",
         f"지금 결과/상태: {px}{sx} 판단은 Yahoo KRX 정규장 종가만 씁니다. 종가가 없으면 판단 보류, 운영 알림 하루 1회." + (" 조회 실패: " + ", ".join(fails) + "." if fails else ""),
-        "지금 할 일: 없음. 감시 1) 우선주 종가 360,000원 이하 1차(목표의 3분의 1, 지정가), 340,000원 이하 3차 대안. 선마다 1회, 1% 넘게 위로 돌아와야 재무장. 400,000원 선은 없음. "
+        "지금 할 일: 없음. 감시 1) 우선주 종가 360,000원 이하 1차(목표의 3분의 1, 지정가), 400,000원 이하 2차, 340,000원 이하 3차 대안. 선마다 1회, 1% 넘게 위로 돌아와야 재무장. "
         "2) 괴리율((보통주 - 우선주) / 보통주) 25% 이하 우선주 이점 소멸(추가 매수 중단), 48% 이상 할인 확대 경고, 1%p 재무장. "
         f"3) 삼성전자 종가 {fmt(s['level'])} 이하(11/2 공식 종가 {fmt(s['base_close'])} 대비 -{s['drop_pct']}%) 철회 조건 충족 검토 1회. "
         "4) 삼성화재 보통주, 우선주 공시(배당 결정, 주식 소각, 자기주식, 기업가치 제고 계획, 삼성전자 지분 처분, IR 개최, 종류주식, 우선주) 건마다 1회, 11/4부터, 정정 제외.",
-        "나중에: 11/12 10:00 KST 3분기 컨퍼런스콜. 실적 1회 판정(지배순익 4,600억 미만 하회, 5,200억 이상 상회)과 2차(우선주 400,000원 이하, 조건 충족 때만) 안내는 [000810] 알림이 보냅니다. "
+        "나중에: 2차(400,000원 이하)는 11/12 3분기 확인 통과 뒤 이 알림의 정식 선입니다. 3분기 실적 1회 판정(지배순익 4,600억 미만 하회, 5,200억 이상 상회)은 [000810] 알림이 맡습니다. "
         "수동 철회 항목: " + ", ".join(s["manual"]) + ".",
         "익절/줄일 때: 괴리율 25% 이하 알림 때 추가 매수 중단과 보유분 점검.",
         "하지 말 것: 이 설치 확인을 매수 신호로 읽기, 시장가 주문, 391,000원대 추격 매수.",
@@ -328,8 +329,9 @@ def selftest() -> int:
         sd = cfg["seed"]
         seed = seed_state(cfg)
         check("seed: config seed only, cursors 11-02", (seed["last_day"], seed["ratio"]["last_day"], seed["sec"]["last_day"]), ("2026-11-02",) * 3)
-        check("seed: all armed (391,500 / 39.86% / 229,000)", (all(v["armed"] for v in seed["lines"].values()),
-                                                                all(v["armed"] for v in seed["ratio"]["lines"].values()), seed["sec"]["armed"]), (True, True, True))
+        check("seed: 1차/3차 armed, 2차 disarmed (391,500 already <= 400,000)",
+              (seed["lines"]["l360"]["armed"], seed["lines"]["l340"]["armed"], seed["lines"]["l400"]["armed"],
+               all(v["armed"] for v in seed["ratio"]["lines"].values()), seed["sec"]["armed"]), (True, True, False, True, True))
         check("seed discount 39.86%", round(engine.discount(sd["close"], sd["pair_close"]), 2), 39.86)
         base = dict(rows=rows(("2026-11-02", 391500)), pair=rows(("2026-11-02", 651000)), sec=rows(("2026-11-02", 229000)))
         reset(**base)
@@ -367,10 +369,19 @@ def selftest() -> int:
         check("gap message names both lines", ("1차 매수선" in msg and "3차 대안 매수선" in msg), True)
         check("gap message: yield and discount shown", ("후행 배당수익률 5.75%" in msg, "괴리율 39.46%" in msg), (True, True))
         check("price message priority 4, cwally-port", (sent[0][3], sent[0][0]), (4, "cwally-port"))
-        check("no 400,000 line in config", [ln["level"] for ln in cfg["lines"]], [340000, 360000])
+        check("400,000 line in config", [ln["level"] for ln in cfg["lines"]], [340000, 360000, 400000])
         reset(rows=rows(("2026-11-04", 395000)), pair=rows(("2026-11-04", 650000)), sec=rows(("2026-11-04", 220000)))
         st = copy.deepcopy(seed)
-        check("395,000 (under 400,000) silent", run("auto", at("2026-11-04"), st), [])
+        check("395,000 silent while 2차 still disarmed from seed", run("auto", at("2026-11-04"), st), [])
+        st = copy.deepcopy(seed)
+        days2 = iter(f"2026-11-{i:02d}" for i in range(4, 31))
+        def feed400(close):
+            d = next(days2)
+            return sorted(e["key"] for e in engine.eval_lines(cfg, st, rows((d, close)), d, at(d)))
+        check("404,000 no re-arm of 2차", feed400(404000), [])
+        check("404,001 re-arms 2차 (silent)", feed400(404001), [])
+        check("400,000 2차 fires after re-arm", feed400(400000), ["l400"])
+        check("399,000 no repeat", feed400(399000), [])
 
         # ---- ratio lines (engine)
         st = copy.deepcopy(seed)
@@ -509,7 +520,7 @@ def selftest() -> int:
         s = run("install", at("2026-11-03", 15), None)
         check("install: one send to cwally-port", [(tp, t) for tp, t, _, _ in sent], [("cwally-port", f"{pfx} 설치 확인 | 매매 신호 아님")])
         im = sent[0][2]
-        check("install lists every watch", all(k in im for k in ("360,000원 이하 1차", "340,000원 이하 3차 대안", "25% 이하", "48% 이상", "171,750원 이하", "공시", "2027-03-31 23:59")), True)
+        check("install lists every watch", all(k in im for k in ("360,000원 이하 1차", "400,000원 이하 2차", "340,000원 이하 3차 대안", "25% 이하", "48% 이상", "171,750원 이하", "공시", "2027-03-31 23:59")), True)
         check("install: no state", saved, [])
 
         # ---- post-midnight backup must still confirm prior session close
