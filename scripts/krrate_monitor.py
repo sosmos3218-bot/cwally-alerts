@@ -813,10 +813,13 @@ def plan_status(cfg: dict, month: str, managed: float) -> tuple[bool, str]:
         return False, "연간 계획 숫자는 설정에 없어 비교하지 않음."
     if str(year) != month[:4]:
         return False, f"연간 계획은 {year}년 숫자라 이번 {month[:4]}년과 비교하지 않음."
-    plan_f = float(plan)
-    if managed < plan_f:
-        return True, f"연간 계획 {jo_text(plan_f)}보다 누계 적자가 큼."
-    return False, f"연간 계획 {jo_text(plan_f)} 안."
+    # plan_trillion is the full-year deficit size in 조원 (107.6 = 107.6조원 적자).
+    # The monthly series is signed (negative = deficit). Over plan when the
+    # cumulative balance is more negative than minus that size.
+    ceiling = abs(float(plan))
+    if managed < -ceiling:
+        return True, f"연간 계획 {ceiling:.1f}조원 적자보다 누계 적자가 큼."
+    return False, f"연간 계획 {ceiling:.1f}조원 적자 안."
 
 
 def yoy_status(cfg: dict, managed: float, prev: float | None) -> tuple[bool, str]:
@@ -1302,7 +1305,10 @@ def fiscal_selftest(cfg: dict, stamp: str) -> list:
             "history": [{"month": "2025-09", "managed": -102.4, "integrated": -63.5, "social": 39.0}]}
     d2 = fiscal_eval(st, rel9, cfg, stamp, 4.20)
     assert d2["action"] == "send" and d2["priority"] == 3 and not d2["over"] and not d2["worse"]
-    assert "102.4" in d2["message"] and "나아짐" in d2["message"] and "연간 계획 숫자는 설정에 없어" in d2["message"]
+    assert "102.4" in d2["message"] and "나아짐" in d2["message"] and "107.6조원 적자 안" in d2["message"]
+    over_big, _ = plan_status(cfg, "2026-09", -110.0)
+    inside, inside_line = plan_status(cfg, "2026-08", -43.0)
+    assert over_big and not inside and "107.6조원 적자" in inside_line and "흑자" not in inside_line
     assert "재정과 장기금리" not in d2["message"] and "ECOS에는 이 달이 아직 없음" in d2["message"]
     d3 = fiscal_eval(st, rel9, cfg, stamp, 4.40)
     assert d3["action"] == "dedup"
