@@ -1,10 +1,8 @@
 {
-  "updated_at": "2026-11-13 09:00 KST",
+  "updated_at": "2026-11-16 09:00 KST",
   "zone": "KILL",
-  "price": 91500.0,
-  "last_event_ids": [
-    "gunsan"
-  ],
+  "price": 93000.0,
+  "last_event_ids": [],
   "print_date": "2026-10-26",
   "print_date_confirmed": true,
   "notice": {

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-13T09:10:53.655833+09:00",
+  "updated_at": "2026-11-16T09:11:12.863496+09:00",
   "sent": {
     "verdict": "유지",
     "basis": "IR 추정(자체사업 영업이익 - 비전자 몫)",
@@ -11,7 +11,11 @@
       "fin": null
     }
   },
-  "confirmed": null,
+  "confirmed": {
+    "rev": 8020.380000000001,
+    "op": 2353.1499999999996,
+    "opm": 29.339632286749495
+  },
   "correction_sent": false,
   "manual_sent": false,
   "ops_sent": false,

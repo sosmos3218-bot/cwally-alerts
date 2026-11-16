@@ -1,11 +1,12 @@
 {
-  "disparity": 47.3491773308958,
+  "disparity": 47.25274725274725,
   "zone": "watch",
-  "last_session": "2026-11-06",
+  "last_session": "2026-11-13",
   "weekly_sent": {
     "2026-W44": true,
     "2026-W45": true,
-    "2026-W46": true
+    "2026-W46": true,
+    "2026-W47": true
   },
-  "updated_at": "2026-11-09T09:01:06+09:00"
+  "updated_at": "2026-11-16T09:01:06+09:00"
 }

@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-13 15:21 KST",
-  "price": 69400.0,
+  "updated_at": "2026-11-16 09:01 KST",
+  "price": 69500.0,
   "seen_ids": [
     "147760:82870899",
     "147760:61135303",
@@ -134,5 +134,5 @@
   "c1_confirmed": false,
   "c1_reason": null,
   "prints": [],
-  "weekly_sent_week": "2026-W46"
+  "weekly_sent_week": "2026-W47"
 }
