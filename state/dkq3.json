@@ -1,7 +1,7 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
   "fail_notified": false,
-  "last_key": null,
-  "updated_at": "2026-11-16T09:06:24.943366+09:00"
+  "last_key": "{\"op\": null, \"sales\": 2501.0, \"share\": null, \"tag\": \"\\ubd80\\ubd84\\uc720\\uc9c0\"}",
+  "updated_at": "2026-11-16T15:21:15.153011+09:00"
 }
