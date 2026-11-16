@@ -103,13 +103,33 @@ def main() -> int:
     title = f"[SQUARE] 402340 {status_ko}" if changed or prev.get("last_status") is None else f"[SQUARE] 402340 주간 체크 | {status_ko}"
     print(f"TITLE: {title}")
     print(f"STATUS: {status} DISCOUNT: {discount*100:.1f}%")
-    if dry:
+    if dry and bool(cfg.get("nav_status_alerts", True)):
         print("DRY RUN: no publish, no state write")
         return 0
     # send only if the status changed, or once a week (first run of the ISO week; the afternoon slot runs Mon-Fri,
     # so normally Monday). The weekly message also carries the square_sell_alert status, so SELL/WATCH is not
     # repeated as a separate message.
-    if changed or weekly or prev.get("last_status") is None:
+    # 2026-11-16 (사용자 요청 2026-11-05 t60u, t61u): NAV 40%/45% 상태 변화 알림은 끄고 할인율 판정은
+    # [402340] k402340_monitor.py(KRX 확정 종가, 47/50/30 선) 하나로 모은다. nav_status_alerts=false 이면
+    # square_sell_alert 의 SELL/WATCH 상태 주간 반복(월요일 첫 실행)만 남긴다. HOLD 면 조용히.
+    nav_alerts = bool(cfg.get("nav_status_alerts", True))
+    if not nav_alerts:
+        sell_status = sell.get("last_status") or ""
+        if weekly and sell_status in ("SELL", "WATCH"):
+            title = f"[SQUARE] 402340 주간 매도 점검 | {sell_ko}"
+            print(f"TITLE: {title} (nav_status_alerts off)")
+            if dry:
+                print("DRY RUN: no publish, no state write")
+                return 0
+            ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, 4)
+            sent = True
+        else:
+            print("nav_status_alerts off; silent (sell status weekly repeat only)")
+            if dry:
+                print("DRY RUN: no publish, no state write")
+                return 0
+            sent = False
+    elif changed or weekly or prev.get("last_status") is None:
         ntfy_publish("https://ntfy.sh", "cwally-port", title, msg, 4 if high else 3)
         sent = True
     else:

@@ -307,9 +307,12 @@ def selftest() -> int:
     # formula check against the verified 11/5 closes (D 42.27%) and the company page 11/4 (43.2%)
     assert abs(disc(cfg, 809000, 1264000) - 0.4227) < 0.0005, disc(cfg, 809000, 1264000)
     assert abs(disc_company(cfg, 899000, 1396000) - 0.432) < 0.001, disc_company(cfg, 899000, 1396000)
-    # committed seed: 11/5 D 42.27%, all armed; a normal 11/6 sends nothing
+    # install seed: 11/5 D 42.27%, all armed; a normal 11/6 sends nothing. The live state file moves on every
+    # KRX day, so the selftest uses the seed values from configs (baseline) instead of reading state/k402340.json.
     st0 = json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    p0 = json.loads(json.dumps(st0["price"]))
+    assert "last_date" in st0.get("price", {}), st0
+    b = cfg["baseline"]
+    p0 = {"last_date": b["day"], "last_sq": float(b["sq_close"]), "last_hx": float(b["hx_close"]), "last_d": b["d"], "armed": {"t1": True, "t2": True, "narrow": True}}
     assert p0["last_date"] == "2026-11-05" and all(p0["armed"].values()), p0
     rows0 = [{"day": "2026-11-05", "sq": 809000.0, "hx": 1264000.0}, {"day": "2026-11-06", "sq": 820000.0, "hx": 1270000.0}]
     assert evaluate(cfg, p0, rows0, "2026-11-06") == [] and p0["last_date"] == "2026-11-06", p0

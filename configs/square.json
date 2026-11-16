@@ -14,5 +14,7 @@
   "high_attractive": 0.45,
   "year_guard": 2026,
   "ends_kst": null,
-  "ends_note": "하이닉스 사이클과 NAV 할인 모니터링. 종료 없음"
+  "ends_note": "하이닉스 사이클과 NAV 할인 모니터링. 종료 없음",
+  "nav_status_alerts": false,
+  "nav_status_alerts_note": "2026-11-16 끔(사용자 요청 2026-11-05 t60u, t61u 위임). 40%/45% NAV 상태 변화와 주간 체크는 [402340](k402340, KRX 확정 종가 D 47/50/30 선)과 겹쳐 그쪽으로 일원화. square_sell_alert.mjs 매도 점검(SELL/WATCH 변화 시 발송)과 그 상태의 월요일 주간 반복만 남김. 되돌리려면 true."
 }
