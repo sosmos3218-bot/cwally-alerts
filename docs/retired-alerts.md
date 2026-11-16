@@ -89,7 +89,7 @@ plan for both keys matched this diff. To restore: `git show <this PR merge>^:con
 
 | name | prefix | added | what it did | why retired |
 |---|---|---|---|---|
-| fig | `[FIG]` | 2026-10-16 | Figma Monday status and new SEC filings (price zones 20/27 off since 2026-10-26); ends 2026-11-15 | covered by `[FIG-PX]` 22 / 16.6 / 28.4 zones, `[FIG-EARN]` 11/4 reminder and 11/5 checklist, `[FIG-Q3]` 11/5 summary |
+| fig | `[FIG]` | 2026-10-16 | Figma Monday status and new SEC filings (price zones 20/27 off since 2026-10-26); ends 2026-11-15 | covered by `[FIG-PX]` 현재 22 / 17.1 / 29.1 (11/5 재조정; 내부자 매도 $20M), `[FIG-EARN]` 11/4 reminder and 11/5 checklist, `[FIG-Q3]` 11/5 summary |
 | ccrev | `[CCREV]` | 2026-09-17 | 091160 55→40% cut + covered call review when KOSPI held a 60-day box (range under 18%) for 45 days and 005930/000660 estimates fell 3%; no end date | condition far off (60-day range 29% on 2026-10-26), never sent in the 9/21~10/26 archive; 091160 levels stay in `[091160]` |
 
 ## 2026-10-26 audit: samup, hynixup, hynixlad, lgcns folded into the plan-line engine (approved in chat 2026-10-26 18:22 KST, audit item 4)
