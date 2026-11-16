@@ -20,7 +20,7 @@
     ]
   },
   "earnings_notified": false,
-  "empty_notified": false,
+  "empty_notified": true,
   "annual_notified": false,
   "annual_empty_notified": false,
   "disc_seen": [],
