@@ -1,7 +1,7 @@
 {
   "name": "krrate",
   "title_prefix": "[KR-RATE]",
-  "display": "국고채 10년 금리 조건(148070 금리 피크아웃 확인 후 검토) + 금통위 결정일 요약 + 근원물가 + 회사채 신용 스프레드 (148070 판단 보조)",
+  "display": "국고채 10년 금리 조건(148070 금리 피크아웃 확인 후 검토) + 금통위 결정일 요약 + 근원물가 + 회사채 신용 스프레드 + 관리재정수지 월간 누계 (148070 판단 보조)",
   "created_at": "2026-10-23T15:00:00+09:00",
   "ntfy_topic": "cwally-port",
   "ntfy_ops_topic": "cwally-ops",
@@ -33,6 +33,25 @@
   "cpi": {
     "emphasis_below_pct": 2.5,
     "note": "농산물및석유류제외지수(ECOS 901Y010/QB, 국가데이터처 소비자물가동향과 같은 지수) 전년동월비. 새 달 수치가 처음 보이는 실행에서 1회. 2.5% 미만이면 강조(priority 4). 식료품및에너지제외지수(901Y010/DB)는 참고로 같이 표시."
+  },
+  "fiscal": {
+    "note": "조건 4. 관리재정수지 연초누계. 열린재정에 새 기준월이 처음 보이면 요약 1번. 연간 계획을 넘거나 전년 동월보다 yoy_worse_trillion 조원 넘게 나쁘면 강조. 계획 초과이면서 같은 실행의 국고 10년 종가가 yield10.trigger_pct 이상이면 본문에 한 줄. 첫 성공은 시드만. 매매 신호 아님.",
+    "latest_url": "https://www.openfiscaldata.go.kr/op/ko/sm/selectMainIndcPfinStsList.do",
+    "history_url": "https://openapi.openfiscaldata.go.kr/BudgetBalance",
+    "page": "https://www.openfiscaldata.go.kr/op/ko/sm/UOPKOSMA03",
+    "detail_page": "https://www.openfiscaldata.go.kr/op/ko/sd/UOPKOSDA01?odtId=45DHAZ24H7WWJ0VG03Q666V46",
+    "table": "TB_OPFI172",
+    "unit": "조원",
+    "yoy_worse_trillion": 10,
+    "yoy_note": "올해 연초누계가 전년 동월보다 적자 방향으로 이 값(조원)을 넘으면 강조. 전년 동월을 못 읽으면 비교하지 않고 확인 불가.",
+    "history_note": "인증키 없는 BudgetBalance 호출은 연초 5개월만 돌려주고 pIndex를 무시한다. 6월에서 12월 전년 동월은 그 호출로 못 받는다. 예전에 받은 달은 state fiscal.months에 남겨 다음 해 비교에 쓴다.",
+    "ecos_tolerance_jo": 0.2,
+    "ecos_note": "같은 달 통합재정수지가 ECOS 901Y013/C(십억원)에 있으면 열린재정 통합과 0.2조원 넘게 다를 때 그 달은 보내지 않는다.",
+    "plan_trillion": 107.6,
+    "plan_year": 2026,
+    "plan_as_of": "2026-11-12",
+    "plan_source": "2026 추경 기준, 기획재정부 월간 재정동향 2026-10/2026-11호. 2026년 본예산 국회 확정(2025-12-02) 관리재정수지 적자는 107.8조원.",
+    "plan_source_url": null
   },
   "mpc": {
     "schedule": [
@@ -76,9 +95,12 @@
     "bok_meeting_page": "https://www.bok.or.kr/portal/singl/crncyPolicyDrcMtg/listYear.do?mtgSe=A&menuNo=200755&pYear={year}",
     "bok_news_list": "https://www.bok.or.kr/portal/singl/newsData/listCont.do?pageIndex=1&pageUnit=50&targetDepth=3&menuNo=201204&syncMenuChekKey=1",
     "bok_base_rate_table": "https://www.bok.or.kr/portal/singl/baseRate/list.do?dataSeCd=01&menuNo=200643",
-    "naver_base_rate": "네이버 standardInterest KROCRT=ECIX (한국은행 기준금리, 발표 시각 포함) 교차확인"
+    "naver_base_rate": "네이버 standardInterest KROCRT=ECIX (한국은행 기준금리, 발표 시각 포함) 교차확인",
+    "fiscal_latest": "열린재정 주요 재정 지표 POST selectMainIndcPfinStsList.do, TB_OPFI172 관리재정수지/통합재정수지/사회보장성기금수지(조원). 기획재정부 월간 재정동향이 원천. 인증키 없음.",
+    "fiscal_history": "열린재정 OpenAPI BudgetBalance (OJ_YY). 인증키 없으면 연초 5개월만. 6월 이후 전년 동월은 state에 쌓인 값만.",
+    "fiscal_ecos": "한국은행 ECOS 901Y013/C 통합재정수지 월 십억원(연초누계). 열린재정 통합과 교차확인. 기존 ECOS_API_KEY, 없으면 sample."
   },
   "year_guard": null,
   "ends_kst": null,
-  "ends_note": "수동 해제 전까지. 4.35/4.30%, 20/10bp, 2.5% 기준은 이 파일에서 조정"
+  "ends_note": "수동 해제 전까지. 4.35/4.30%, 20/10bp, 2.5%, 관리재정 전년 대비 악화 폭은 이 파일에서 조정"
 }
