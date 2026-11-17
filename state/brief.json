@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17T20:03:38.558107+09:00",
+  "updated_at": "2026-11-17T20:25:41.642036+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -243,6 +243,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-17T20:03:38.558107+09:00"
+    },
+    "20261117-089860-q3-report.json#cb9dbdd63a947023": {
+      "file": "20261117-089860-q3-report.json",
+      "title": "[BRIEF] 089860 롯데렌탈 분기보고서 후 판정 | 공개매수 59,000원, 알림 해제 권고",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-17T20:25:41.642036+09:00"
     }
   },
   "rejected": {},
