@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17T20:02:29.042420+09:00",
+  "updated_at": "2026-11-17T20:03:38.558107+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -234,6 +234,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-17T08:22:47.447133+09:00"
+    },
+    "20261117-nvda-memflow-pre.json#4effa616e7455133": {
+      "file": "20261117-nvda-memflow-pre.json",
+      "title": "[BRIEF] 005930 000660 엔비디아 실적 전 외국인 수급 | 삼성전자 반쪽 충족, SK하이닉스 미충족",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-17T20:03:38.558107+09:00"
     }
   },
   "rejected": {},
