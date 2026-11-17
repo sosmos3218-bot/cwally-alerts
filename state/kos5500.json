@@ -1,19 +1,19 @@
 {
-  "last_day": "2026-11-16",
+  "last_day": "2026-11-17",
   "last_report": {
-    "day": "2026-11-16",
+    "day": "2026-11-17",
     "label": "5500 재이탈 지속",
-    "close": 5100.5,
-    "low": 5069.83,
+    "close": 4968.48,
+    "low": 4957.0,
     "support": false,
     "below_twice": true,
     "above_twice": false,
     "low_rising": false,
-    "foreign_3d": -1506500000000,
+    "foreign_3d": -3316600000000,
     "semi_buy": null,
     "recovery_published": false,
-    "foreign": -1376900000000,
-    "institution": -451300000000,
+    "foreign": -1446000000000,
+    "institution": 543600000000,
     "krx_final_confirmed": false
   },
   "review_notified": true,
@@ -338,7 +338,23 @@
       "foreign": -1376900000000,
       "institution": -451300000000,
       "krx_final_confirmed": false
+    },
+    "2026-11-17": {
+      "day": "2026-11-17",
+      "label": "5500 재이탈 지속",
+      "close": 4968.48,
+      "low": 4957.0,
+      "support": false,
+      "below_twice": true,
+      "above_twice": false,
+      "low_rising": false,
+      "foreign_3d": -3316600000000,
+      "semi_buy": null,
+      "recovery_published": false,
+      "foreign": -1446000000000,
+      "institution": 543600000000,
+      "krx_final_confirmed": false
     }
   },
-  "updated_at": "2026-11-16T15:40:56.173089+09:00"
+  "updated_at": "2026-11-17T15:40:58.119199+09:00"
 }
