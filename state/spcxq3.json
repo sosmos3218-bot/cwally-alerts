@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-04 05:11 KST",
+  "updated_at": "2026-11-18 05:10 KST",
   "sent": {
     "2026-10-10": {
       "at": "2026-10-10 05:10 KST",
@@ -30,12 +30,22 @@
       "verify": "wait",
       "verify_match": null,
       "url": ""
+    },
+    "2026-11-18": {
+      "at": "2026-11-18 05:10 KST",
+      "kind": "q3b",
+      "price": 141.005,
+      "avg5": 92183473.4,
+      "earnings": "absent",
+      "verify": "wait",
+      "verify_match": null,
+      "url": ""
     }
   },
-  "last_price": 140.978,
+  "last_price": 141.005,
   "last_verdict": "145달러 아래. 신규만 분할. 추격 금지.",
   "check": {
-    "at": "2026-11-04 05:11 KST",
+    "at": "2026-11-18 05:10 KST",
     "url": "",
     "status": "wait",
     "match": null,
