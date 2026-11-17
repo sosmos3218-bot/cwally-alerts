@@ -1,7 +1,7 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
   "fail_notified": false,
-  "last_key": null,
-  "updated_at": null
+  "updated_at": "2026-11-18T07:10:33.000941+09:00",
+  "last_key": "유지"
 }
