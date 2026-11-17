@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17T20:25:41.642036+09:00",
+  "updated_at": "2026-11-18T08:00:46.562114+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -252,6 +252,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-17T20:25:41.642036+09:00"
+    },
+    "20261118-frde-event.json#e9a109c9baa2b91a": {
+      "file": "20261118-frde-event.json",
+      "title": "[FR-DE] VGK 하원 PLF 부결 후 상원 이송 | 영향 제한",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-18T08:00:46.562114+09:00"
     }
   },
   "rejected": {},
