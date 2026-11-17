@@ -1,29 +1,29 @@
 {
   "armed": {
     "l25000": false,
-    "l22000": true,
+    "l22000": false,
     "l20700": true,
     "ma20": true
   },
-  "last_date": "2026-11-16",
+  "last_date": "2026-11-17",
   "last_close": [
-    "2026-11-16",
-    22120.0
+    "2026-11-17",
+    21160.0
   ],
-  "last_volume": 3403101.0,
-  "ma20": 24562.0,
-  "ma200": 36156.68,
+  "last_volume": 4397559.0,
+  "ma20": 24282.25,
+  "ma200": 36130.12,
   "support_armed": false,
-  "above_streak": 9,
+  "above_streak": 10,
   "low_armed": true,
   "recovery_sent": "2026-11-11",
-  "updated_at": "2026-11-17 05:15 KST",
+  "updated_at": "2026-11-17 19:06 KST",
   "reminders_sent": {
     "customs_oct_2026": "2026-11-16 19:06 KST"
   },
   "last_sent": {
-    "at": "2026-11-16 19:06 KST",
-    "title": "[487240] 487240 298040 관세청 10월 품목별 수출 점검 (변압기, 개폐장치 대미)"
+    "at": "2026-11-17 19:06 KST",
+    "title": "[487240] 487240 종가 21,160 | 2차 매수 검토 (52주 저점 21,799 근처)"
   },
   "merge_note": "t119u: kept ladder armed from k487240; imported support_armed/above_streak/low_armed/recovery_sent from kr487240 seed 11/6 close 20490."
 }

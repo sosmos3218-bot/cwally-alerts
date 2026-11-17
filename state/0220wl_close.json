@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-17T05:15:06.704299+09:00",
+  "updated_at": "2026-11-17T19:04:53.135084+09:00",
   "seeded": true,
-  "last_day": "2026-11-16",
-  "last_close": 2315.0,
+  "last_day": "2026-11-17",
+  "last_close": 2255.0,
   "last_fail_day": null,
   "lines": {
     "review": {
@@ -16,8 +16,8 @@
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-11-16",
-    "last": 70.3585,
+    "last_day": "2026-11-17",
+    "last": 71.0897,
     "lines": {
       "resolve": {
         "armed": true,
