@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-16T09:10:23.128364+09:00",
+  "updated_at": "2026-11-17T09:10:13.413748+09:00",
   "breakdown_armed": false,
   "reclaim_armed": true,
   "above_ma": false,
@@ -7,9 +7,9 @@
   "holding_alerted": {
     "BABA": "2026-11-12"
   },
-  "last_bar_date": "2026-11-13",
-  "last_close": 49.56999969482422,
-  "last_ma": 55.11,
-  "last_rs_pct": -2.02,
+  "last_bar_date": "2026-11-16",
+  "last_close": 49.04999923706055,
+  "last_ma": 55.05,
+  "last_rs_pct": -0.12,
   "fetch_fail_date": null
 }
