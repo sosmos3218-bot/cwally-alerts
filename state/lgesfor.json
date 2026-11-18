@@ -1,8 +1,8 @@
 {
   "warn_armed": false,
   "extra_armed": false,
-  "last_date": "2026-11-17",
-  "last_ratio": 5.41,
+  "last_date": "2026-11-18",
+  "last_ratio": 5.43,
   "seeded": {
     "at": "2026-10-24 KST",
     "source": "네이버 trend",
@@ -45,17 +45,10 @@
     "2026-11-12": 5.42,
     "2026-11-13": 5.43,
     "2026-11-16": 5.42,
-    "2026-11-17": 5.41
+    "2026-11-17": 5.41,
+    "2026-11-18": 5.43
   },
   "obs": [
-    {
-      "run": "2026-10-28 19:01 KST",
-      "session": "2026-10-28",
-      "latest_date": "2026-10-27",
-      "latest_ratio": 5.54,
-      "session_row": "없음",
-      "live_foreignRate": 5.54
-    },
     {
       "run": "2026-10-29 01:27 KST",
       "session": "2026-10-28",
@@ -287,6 +280,14 @@
       "latest_ratio": 5.41,
       "session_row": "없음",
       "live_foreignRate": 5.41
+    },
+    {
+      "run": "2026-11-19 04:02 KST",
+      "session": "2026-11-18",
+      "latest_date": "2026-11-18",
+      "latest_ratio": 5.43,
+      "session_row": "5.43%",
+      "live_foreignRate": 5.41
     }
   ],
   "events": [
@@ -303,5 +304,5 @@
       "at": "2026-11-05 19:02 KST"
     }
   ],
-  "last_run": "2026-11-18 19:04 KST"
+  "last_run": "2026-11-19 04:02 KST"
 }

@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W47",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-18 19:03 KST",
+  "updated_at": "2026-11-19 04:00 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -24,7 +24,7 @@
         ],
         "claims": {},
         "ops_day": "2026-11-18",
-        "last_ok": "2026-11-18"
+        "last_ok": "2026-11-19"
       },
       "samsung": {
         "seeded": true,
@@ -128,7 +128,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-18"
+        "last_ok": "2026-11-19"
       },
       "skhynix": {
         "seeded": true,
@@ -156,7 +156,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-18"
+        "last_ok": "2026-11-19"
       }
     }
   }

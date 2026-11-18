@@ -1,6 +1,83 @@
 {
-  "updated_at": "2026-11-18 19:05 KST",
+  "updated_at": "2026-11-19 04:06 KST",
   "items": [
+    {
+      "id": "zWSqiaPsTVcv",
+      "topic": "cwally-ops",
+      "title": "[0219B0] 데이터 파싱 실패 | 원문 확인 필요",
+      "message": "2026-11-19 04:02 KST | 0219B0 | 데이터 읽기 실패\n이게 뭐 알림: 0219B0 감시(종가, 우리로 공시, RF머트리얼즈 3Q, 3개 조건 판정)의 데이터 읽기 실패 안내. 하루 1번. 매매 신호 아님.\n지금 결과/상태: 우리로 KIND 목록 확인 불가: https://kind.krx.co.kr/disclosure/details.do: HTTP Error 403: Forbidden\n지금 할 일: 네이버 시세나 KIND 원문을 직접 보세요.\n나중에: 다음 거래일 19:00 에 다시 읽습니다. 가격과 공시는 데이터 날짜, 접수번호로 이어서 판정.\n익절/줄일 때: 이 안내로 비중을 바꾸지 않기.\n하지 말 것: 읽기 실패를 실적 부진이나 가격 이탈로 읽기.\n꺼지는 때: 2027-02-26 23:59 KST (2027-02-26 까지 매일 19:00 (0219B0 종가 9,700 / 7,805 / 11,300, 우리로 계약 공시), 3Q 점검과 3개 조건 판정은 2026-11-16 ~ 11-20 중 한 번)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795028730
+    },
+    {
+      "id": "bCtu5rIbymXM",
+      "topic": "cwally-ops",
+      "title": "[LGES] 373220 공시 조회 실패 | 매매 신호 아님",
+      "message": "KIND 공시 목록 조회 실패: https://kind.krx.co.kr/disclosure/details.do: HTTP Error 403: Forbidden. 다음 19:00 실행에서 다시 봅니다.\n꺼지는 때: 2027-10-31 23:59 KST (LGES 가격 구간과 공시 감시, 12개월(연장은 채팅 승인))",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795028543
+    },
+    {
+      "id": "56iawiSza2N9",
+      "topic": "cwally-ops",
+      "title": "[OPS] KOSPI 아파트 시나리오 주간 미게시",
+      "message": "이게 뭐 알림: KOSPI 아파트 시나리오 이번 주 조사치가 아직 없음. 매매 신호 아님.\n지금 결과/상태: 시계열 마지막 주 2026-11-09, 이번 주 월요일 2026-11-16. 시나리오는 바꾸지 않음.\n지금 할 일: 목요일 보도가 늦으면 금요일에 다시 본다.\n나중에: 다음 실행.\n익절/줄일 때: 없음.\n하지 말 것: 지난 주를 이번 주 변경으로 보지 말 것.\n꺼지는 때: 2027-11-12 23:59 KST (2026-11-12 기준 시나리오를 1년 뒤 다시 볼 때까지. 그 시각 이후 발송 없음)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795028117
+    },
+    {
+      "id": "8tJ9UvCuK3Nu",
+      "topic": "cwally-ops",
+      "title": "[KR-HC-RPT] 068270 셀트리온 정기보고서 목록 조회 실패 | 공시 판정 못 함",
+      "message": "2026-11-19 03:48 KST | 068270 | 셀트리온\n이게 뭐 알림: 셀트리온 정기보고서 알림의 데이터 조회 실패 안내.\n지금 결과/상태: KIND 공시 목록 확인 불가 (https://kind.krx.co.kr/disclosure/details.do: HTTP Error 403: Forbidden).\n지금 할 일: 필요하면 DART에서 셀트리온 공시를 직접 보세요.\n나중에: 다음 실행 때 다시 봅니다.\n익절/줄일 때: 이번 안내로 비중을 바꾸지 마세요.\n하지 말 것: 조회 실패를 새 보고서 없음으로 읽기.\n꺼지는 때: 종료일 없음 (수동 해제 전까지)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795027709
+    },
+    {
+      "id": "sfh4WLmSLBEY",
+      "topic": "cwally-ops",
+      "title": "[KR-HC-RPT] 207940 삼성바이오로직스 정기보고서 목록 조회 실패 | 공시 판정 못 함",
+      "message": "2026-11-19 03:48 KST | 207940 | 삼성바이오로직스\n이게 뭐 알림: 삼성바이오로직스 정기보고서 알림의 데이터 조회 실패 안내.\n지금 결과/상태: KIND 공시 목록 확인 불가 (https://kind.krx.co.kr/disclosure/details.do: HTTP Error 403: Forbidden).\n지금 할 일: 필요하면 DART에서 삼성바이오로직스 공시를 직접 보세요.\n나중에: 다음 실행 때 다시 봅니다.\n익절/줄일 때: 이번 안내로 비중을 바꾸지 마세요.\n하지 말 것: 조회 실패를 새 보고서 없음으로 읽기.\n꺼지는 때: 종료일 없음 (수동 해제 전까지)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795027709
+    },
+    {
+      "id": "CmZ93BNLhBZW",
+      "topic": "cwally-ops",
+      "title": "[079900] 정기보고서 목록 조회 실패 | 공시 판정 못 함",
+      "message": "2026-11-19 03:46 KST | 079900 | 전진건설로봇\n이게 뭐 알림: 전진건설로봇 정기보고서 알림의 데이터 조회 실패 안내.\n지금 결과/상태: KIND 공시 목록 확인 불가 (https://kind.krx.co.kr/disclosure/details.do: HTTP Error 403: Forbidden).\n지금 할 일: 필요하면 DART에서 전진건설로봇 공시를 직접 보세요.\n나중에: 다음 실행 때 다시 봅니다.\n익절/줄일 때: 이번 안내로 비중을 바꾸지 마세요.\n하지 말 것: 조회 실패를 새 보고서 없음으로 읽기.\n꺼지는 때: 종료일 없음 (수동 해제 전까지. 35,000/33,000원 구간은 2026-10-22 밸류에이션 기준이라 실적 추정치가 바뀌면 다시 설정)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795027689
+    },
+    {
+      "id": "qcO6VekbEPwu",
+      "topic": "cwally-ops",
+      "title": "[SDI] 006400/006405 종가 조회 실패 | 판정 보류",
+      "message": "2026-11-18 같은 날 KRX 종가 확인 실패: <urlopen error timed out>. 매매 신호 아님. 구간과 판정 상태는 바꾸지 않습니다.\n꺼지는 때: 종료일 없음 (괴리율 구간은 삭제 요청 전까지. 보통주 변경 조건 판정은 2027-01-15 09:00 까지, 그 뒤는 괴리율 구간만)",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795027612
+    },
     {
       "id": "X2GOpBHIZevi",
       "topic": "cwally-ops",
@@ -4360,91 +4437,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1794182457
-    },
-    {
-      "id": "olcBwcBa16pf",
-      "topic": "cwally-port",
-      "title": "[YENCARRY] USDJPY 엔 약세 경계 구간, 160 근처 개입 위험. 엔 추격 금지.",
-      "message": "2026-11-09 09:00 KST | YENCARRY | 이벤트 레벨 탈출\n이게 뭐 알림: 정해둔 레벨이 깨졌습니다.\n지금 결과/상태: 달러/엔 158.2 | 원달러 1,359원 | 일본 30년 3.93% | 깨진 것: 달러/엔 158.2 → 158 돌파\n지금 할 일: 엔 약세 경계 구간, 160 근처 개입 위험. 엔 추격 금지.\n나중에: 같은 레벨은 버퍼(원달러 10원, 달러/엔 0.5엔, 일본 30년 0.05%p)만큼 되돌아간 뒤 다시 깨질 때만 또 보냅니다. 주간 점검은 월요일 09:00.\n익절/줄일 때: 160 재돌파면 엔 롱 접기. 1,340 아래면 달러 줄이기.\n하지 말 것: 깨진 레벨 없이 추격. 엔 강세=원 강세로 같이 베팅.\n꺼지는 때: 종료일 없음 (일본은행/연준 일회 알림은 12/18까지, 구간 감시와 월요일 점검은 수동 해제 전까지)",
-      "priority": 5,
-      "tags": [
-        "jp",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182456
-    },
-    {
-      "id": "wAu3BoBI5SVI",
-      "topic": "cwally-port",
-      "title": "[IREN] 주간 뉴스 요약 (11/02~11/09)",
-      "message": "2026-11-09 09:00 KST | IREN | IREN | 보유 없음, 관심 종목\n이게 뭐 알림: IREN 키워드 뉴스(Horizon, Microsoft, NVIDIA, ARR, ERCOT, 채굴 종료 등)를 매일 모아 월요일 09:00 에 1번 보내는 주간 요약입니다. SEC 공시는 [IREN-PX], 실적은 [IREN-EARN] 이 따로 보냅니다.\n지금 결과/상태: $21.64 | $30 아래. 재검토. 계약 ARR $40억 / 가동 $10억 / 갭 $30억. 지난 요약 뒤 새 뉴스 17건(최신순). 1) Microsoft Is Reportedly Getting Pickier About AI Data Center Deals. Is the Stock a Buy Now? (11/09) https://www.fool.com/investing/2026/11/08/microsoft-is-reportedly-getting-pickier-about-ai-data-center-deals-is-the-stock-a-buy-now/?.tsrc=rss 2) Inside IREN’s Earnings ($200M AI Cloud). Plus TeraWulf & Bitcoin Mining (11/09) https://blockspace.media/podcast/inside-irens-earnings-200m-ai-cloud-plus-terawulf-bitcoin-mining/?.tsrc=rss 3) Popular Bitcoin miner seeks $6 billion for AI expansion (11/09) https://www.thestreet.com/crypto/markets/popular-bitcoin-miner-seeks-6-billion-for-ai-expansion?.tsrc=rss 4) Bitcoin Tumbles On ETF Flows, Liquidations. IREN Leads Miner Rebound Attempt. (11/09) https://finance.yahoo.com/m/1bb59cf7-9dbb-3c72-aa16-34a903263558/bitcoin-tumbles-on-etf-flows%2C.html?.tsrc=rss 5) IREN (IREN) Stock May Still Be A Bargain Following Contract Delays (11/09) https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-may-still-201040967.html?.tsrc=rss 6) IREN CEO: Old Nvidia H100s Just Recontracted at “Double the Original Contract Price” (11/09) https://www.tikr.com/blog/iren-ceo-old-nvidia-h100s-just-recontracted-at-double-the-original-contract-price?ref=yahoofinance&tlnk=yf-261106-j3qqpw48&.tsrc=rss 7) Microsoft (MSFT) Is Pulling Back From Key Neocloud Data Center Deals (11/09) https://finance.yahoo.com/technology/articles/microsoft-msft-pulling-back-key-031936381.html?.tsrc=rss 8) IREN stock plunges 18% as Microsoft raises concerns over data center delays (11/06) https://finance.yahoo.com/markets/stocks/articles/iren-stock-plunges-18-microsoft-162134051.html?.tsrc=rss 9) IREN Sinks 20% on Report It’s Behind Microsoft’s AI Spending Delay Ahead of Earnings (11/06) https://www.tikr.com/blog/iren-sinks-20-on-report-its-behind-microsofts-ai-spending-delay-ahead-of-earnings?ref=yahoofinance&tlnk=yf-261105-qr7pp429&.tsrc=rss 10) IREN Sinks 9% After Report Links It to Microsoft’s AI Spending Delay; Nebius Tumbles 11%, CoreWeave Slides 7% (11/06) https://247wallst.com/investing/2026/11/05/iren-sinks-9-after-report-links-it-to-microsofts-ai-spending-delay-nebius-tumbles-11-coreweave-slides-7/?.tsrc=rss 외 7건.\n지금 할 일: 관망 유지. 보유 없음, 관망 유지, 추가매수 보류. Horizon 2~4 인수와 채굴 종료 일정을 먼저 확인하세요. 헤드라인보다 회사 공시와 보도자료로 사실 확인.\n나중에: MS Horizon 2~4 인도(올 4분기 목표, 유예는 27년 2분기 초), NVDA $34억은 27년 램프.\n익절/줄일 때: 보유 없음이라 해당 없음. 경고 신호는 $30 하회, Horizon 미인수, ERCOT/스위트워터 지연, 채굴 종료 후 현금흐름 공백.\n하지 말 것: 뉴스 헤드라인만 보고 추격 매수, 신용/미수, 이 알림만 보고 주문. 투자 권유 아님.\n꺼지는 때: 종료일 없음 (수동 해제 전까지 발송. 뉴스는 월요일 09:00 주간 요약(p2), 새 일정 구간 시작은 바로(p3). SEC 공시는 [IREN-PX], 실적은 [IREN-EARN])",
-      "priority": 2,
-      "tags": [
-        "newspaper"
-      ],
-      "time": 1794182455
-    },
-    {
-      "id": "AlEkd8PhwZPX",
-      "topic": "cwally-port",
-      "title": "[HCE] 267270 주간 체크 | 11.4만 이탈 폐기",
-      "message": "2026-11-09 09:00 KST | HCE | HD현대건설기계\n이게 뭐 알림: HD현대건설기계(267270) 3~6개월 스윙 카드입니다. 발표일 2026-10-26 확정.\n지금 상태: 80,000원 | 폐기선 11.4만 이하\n지금 할 일: 3~6개월 스윙을 버리세요. 선취하지 마세요.\n나중에: 실적은 익일 종가로 확인. OP 1,500억 미만 폐기, 1,700억 축소, 1,701~1,899억 미확정, 1,900억 이상 유지 대기.\n익절/줄일 때: 종가 114,000원 이탈 또는 OP 1,500억 미만이면 폐기. 114,000~122,000원은 축소.\n하지 말 것: 선취, 추격, 신용/미수, 총자산 7% 초과. 2Q 10.2% 재현을 기대하지 말 것.\n\n지금 진행 중인 일정:\n- 군산 완공·방산 SOP 2026-10-20~2026-11-15: 완공 공시만으로 비중 확대 금지. 3Q 카드가 먼저\n꺼지는 때: 2026-12-31 09:00 KST (월요일 09:00 정기 발송과 평일 변화 알림, 2026년 말 종료)",
-      "priority": 5,
-      "tags": [
-        "tractor",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182454
-    },
-    {
-      "id": "4NcuxVtYetMb",
-      "topic": "cwally-port",
-      "title": "[ALUX] 475580 주간 체크 | 관망 유지",
-      "message": "2026-11-09 09:00 KST | ALUX | 에이럭스 475580\n이게 뭐 알림: 에이럭스 주간 상태 요약입니다. 매주 월요일에 한 번만 옵니다.\n지금 결과: 종가 5,500원 (7,600까지 +2,100원). 3분기: 3분기 실적 발표 전. 돌파 알림 대기.\n지금 할 일: 관망입니다. 3분기 판정이 나오기 전에는 사지 않습니다.\n나중에: 3분기 실적 발표는 11월 중순으로 추정합니다. 해안정찰 결과는 연말 예정입니다.\n줄일 때: 이미 들고 있다면 종가 5,600원 이탈 때 정리합니다.\n하지 말 것: 추격매수, 신용과 미수.\n꺼지는 때: 2027-03-31 09:00 KST (평일 09:00 점검. 2027-03 사업보고서 확인 뒤 연장 여부 검토, 이후 자동 침묵)",
-      "priority": 3,
-      "tags": [
-        "calendar"
-      ],
-      "time": 1794182452
-    },
-    {
-      "id": "Iqx9lFhMUiQB",
-      "topic": "cwally-port",
-      "title": "[STEEL] 005490/004020/103140 줄일 재검토",
-      "message": "2026-11-09 09:00 KST | STEEL | 철강 3종목\n이게 뭐 알림: 포스코홀딩스 60% / 현대제철 25% / 풍산 15% 매매 구간 점검입니다. 주식 한도는 총자산 30%입니다.\n지금 상태:\n- POSCO홀딩스 60% | 265,000원 (2026-11-06 KRX 종가) | 매수가 아니라 현금 유지\n- 현대제철 25% | 28,150원 (2026-11-06 KRX 종가) | 3차 마지막 매수 구간\n- 풍산 15% | 52,400원 (2026-11-06 KRX 종가) | 줄일 재검토 구간\n\n지금 할 일: 현대제철: 남은 25%만 소량 사세요. 물타기 금지. 풍산: 비중을 줄이고 논거를 다시 보세요.\n나중에: 2차, 3차 가격에 내려왔을 때만 더 삽니다. 포스코 30.0~31.5만 / 현대제철 2.95~3.15만 / 풍산 6.8~7.3만이 2차입니다.\n익절: 포스코 40만, 46만 / 현대제철 4.0만, 4.3만 / 풍산 9.5만, 10.5만. 2차 목표에서 전체 40~50% 줄입니다.\n줄일 때: 포스코 26만, 현대제철 2.5만, 풍산 5.6만 아래면 비중을 줄이고 다시 봅니다.\n하지 말 것: 위에서 추격매수, 신용/미수, 철강 비중 30% 초과.",
-      "priority": 5,
-      "tags": [
-        "factory",
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182444
-    },
-    {
-      "id": "vxqrLRrZhAV1",
-      "topic": "cwally-port",
-      "title": "218420 [C1]",
-      "message": "C1 충족: 218420 종가 19,490원으로 19,200~19,600원 구간입니다(11/6 종가, 기준일 11/6). A1은 아직 아니므로 마지막 추가매수 1회 허용 구간입니다.\n\n수치: XLE 61.62달러(A1 임계 61.5달러, 0.2% 여유), WTI 12월물 90.83달러(A2 연속 0일), 브렌트 98.32달러, 원/달러 1,356.6원(11/6 서울 15:30), 218420 NAV 19,539.40원, 괴리율 -0.25%, 추정 iNAV 약 19,536원(추정치).\n\n권고: 보수안, 중립안, 공격안 모두 계획된 마지막 추가매수 1회만 분할/지정가로 검토. XLE가 61.5달러 미만이면 A1이 충족되어 추가매수 보류. C2는 평균단가 기준으로 직접 확인하세요.\n\n이 기준선은 판단이며 통계 검증값이 아닙니다.\n이 알림은 수동으로 삭제하기 전까지 계속 실행됩니다.",
-      "priority": 3,
-      "tags": [
-        "chart_with_downwards_trend"
-      ],
-      "time": 1794180631
-    },
-    {
-      "id": "3r8UIy0fH1uC",
-      "topic": "cwally-port",
-      "title": "[BRIEF] 주간 종목 발굴 11/9: TPL, SCCO, AEM, 111770",
-      "message": "판단: 신규 후보 4개(미국 3, 한국 1). 공시 기준 수익성과 재무 여력은 TPL이 가장 탄탄함.\n모두 연구 후보이며 매수 추천이 아님.\n\n기준 변경: 수치 기준은 그대로. 섹터를 통째로 빼지 않고 시장별 섹터당 2개 상한을 적용함(기존 추적 후보와 알림 종목 포함). 미국 기술, 산업재, 커뮤니케이션, 헬스케어, 경기소비재, 유틸리티와 한국 반도체/IT, 헬스케어, 산업재, 소재, 에너지, 필수소비재, 커뮤니케이션은 이미 상한이라 이번 신규 없음. 은행/보험/모기지 리츠는 영업이익률 기준이 맞지 않아 제외.\n\n통과 수: 미국 100개(finviz 4개 조건, 레버리지는 후보만 공시로 검증), 한국 60개(네이버 최신 분기 2Q26, 수정주가 고가 기준).\n공시 검증 탈락: MLM(LNA 인수 후 순부채/EBITDA 3배 초과), MKC(3Q GAAP 영업이익률 약 11%).\n\n[미국 3개] 11/6 종가, 하락률은 분할 수정 52주 고가 기준\n1) TPL 텍사스 퍼시픽 랜드, 퍼미안 토지/로열티(에너지)\n- 시총 $18.8B, 3Q 매출 $273.4M (+34.6%), GAAP 영업이익률 76.0%\n- 차입 없음(신용한도 미인출), 현금 $370M\n- 고가 $547.20(2/23, 3:1 분할 반영) 대비 -50.2%\n- 위험: 유가와 퍼미안 개발 속도에 실적이 연동됨\n- 출처: 8-K EX-99.1 (11/4), 10-Q\n2) SCCO 서던 코퍼, 구리 광산(소재)\n- 시총 $142.7B, 3Q 매출 $4,696.6M (+39.1%), GAAP 영업이익률 59.9%\n- 순현금 약 $0.07B (현금 및 단기투자 $8.06B, 장기차입 $8.00B)\n- 고가 $218.59(8/24) 대비 -23.5%\n- 위험: 구리 생산 전분기 대비 -1.1%, 이익 증가는 가격 효과 위주\n- 출처: 8-K EX-99.1 (10/20)\n3) AEM 아그니코 이글, 금 광산(소재)\n- 시총 $97.6B, 3Q 매출 $3,583.6M (+17.1%), 영업이익률 약 55.8%(IFRS, 매출총이익에서 탐사비, 관리비, 유지비를 빼서 계산)\n- 순현금 $3,416.0M\n- 고가 $255.24(3/2) 대비 -24.9%\n- 위험: 금값 민감, 매출 성장률이 기준선에 가까움\n- 출처: 6-K EX-99.1 (10/28)\n\n[한국 1개] 11/6 종가, 수정주가 52주 고가 기준\n1) 111770 영원무역, 아웃도어 의류 OEM(경기소비재), 잠정 후보\n- 시총 3.20조, 2Q 매출 12,317억 (+18.6%), 영업이익률 14.3%\n- 부채비율 37.3% (6월말)\n- 고가 103,200(3/3) 대비 -29.5%\n- 3Q 실적 미공시라 2Q 기준, 분기보고서 법정기한 11/16\n- 위험: SCOTT 자전거 부문 상반기 영업손실 280억\n- 출처: KIND 반기보고서 (8/14)\n\n이전 후보 변화: 145020 휴젤은 3Q 잠정 매출 -7.9%, 영업이익 -61.8%로 매출 기준 탈락. 068270 셀트리온은 수정 고가 대비 -12.9%로 하락률 기준 이탈. 326030 SK바이오팜 3Q 잠정 매출 +34.8%, 영업이익률 45.0%로 유지. 003230 삼양식품 3Q 잠정 매출 +25.3%, 영업이익률 24.8%로 유지. ANET 3Q 매출 +58.5%, GAAP 영업이익률 44.9%로 유지.\n\n판단이 바뀌는 조건\n1) 영원무역 3Q 매출이 +15% 미만이면 제외.\n2) 구리나 금 가격이 추세적으로 꺾이면 SCCO, AEM 순위 강등.\n\n검증 범위: 미국 재무는 SEC 원문, 시총은 finviz, 고가는 Yahoo 분할 수정 일봉. 한국 재무는 KIND 원문, 시총은 네이버, 고가는 네이버 수정주가 일봉.\n꺼지는 때: 종료일 없음 (수동 해제 전까지. 이 값을 지금으로 바꾸면 브리프 발송이 막힘)",
-      "priority": 3,
-      "tags": [
-        "discovery",
-        "weekly",
-        "TPL",
-        "SCCO",
-        "AEM",
-        "111770"
-      ],
-      "time": 1794179831
     }
   ]
 }
