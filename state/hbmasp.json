@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W47",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-18 04:05 KST",
+  "updated_at": "2026-11-18 19:03 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -23,7 +23,7 @@
           "t:mounting finished goods inventories prompt some pc oems to adjust memory procurement plans for 2027 says trendforce"
         ],
         "claims": {},
-        "ops_day": null,
+        "ops_day": "2026-11-18",
         "last_ok": "2026-11-18"
       },
       "samsung": {
