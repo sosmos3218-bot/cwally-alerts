@@ -129,15 +129,45 @@
     "https://polling.finance.naver.com/api/realtime/domestic/stock/{codes}",
     "https://m.stock.naver.com/api/stock/{code}/trend?pageSize=3 (순매수 주식 수)",
     "https://m.stock.naver.com/api/research/{industry|company}?page=N&pageSize=50 + /api/research/{kind}/{id}",
-    "https://news.google.com/rss/search"
+    "https://news.google.com/rss/search",
+    "configs/000660.json lines(key buy*) = 000660 매수 사다리, state/nixeps.json episode = [NIX-EPS] 에피소드"
   ],
   "not_auto": [
     "업종 단위 장중 투자자 수급은 무료 공개 소스가 없다(KRX는 로그인 필요). 업종은 등락률과 상승/하락 종목 수, 수급은 바스켓 종목 합으로 대신한다",
     "바스켓 금액은 순매수 주식 수 x 종가(또는 현재가) 추정치다",
-    "뮤즈 코멘트는 제목, 요약 키워드로만 고른다. 원문 확인 필요"
+    "뮤즈 코멘트는 제목, 요약 키워드로만 고른다. 원문 확인 필요",
+    "종목별 장중 외국인 추정은 무료 공개 소스가 없다(m.stock.naver.com trend 와 stock.naver.com investor-trend v2 모두 11:00 에 당일 행 없음, 2026-11-18 확인). 경고등 수급 등은 코스피 잠정 외국인으로 대신하고 종목 잠정 행이 생기면 같이 쓴다"
   ],
   "ends_kst": "2026-11-19 11:45",
   "ends_note": "장중 시장 점검, 2026-11-04 사용자 승인으로 11/19 11:00 까지 연장(원래 11/5)",
   "cron_change_approved": "2026-10-26",
-  "cron_change_note": "사용자 채팅 승인 2026-10-26: 데일리로 바꾸고 하루 1회 11:00 KST 선택. 10:00, 13:00, 15:00 슬롯 제거, 종료일(11/5) 유지."
+  "cron_change_note": "사용자 채팅 승인 2026-10-26: 데일리로 바꾸고 하루 1회 11:00 KST 선택. 10:00, 13:00, 15:00 슬롯 제거, 종료일(11/5) 유지.",
+  "items": {
+    "semi_light": true,
+    "nix_ladder": true,
+    "note": "2026-11-18 추가(사용자 2026-11-04 사전 승인 작업): semi_light = 반도체 경고등 장중 점수 줄, nix_ladder = 000660 매수 사다리 거리 줄. false 로 끄면 그 줄만 빠진다. 둘 다 mktpulse 본문 줄일 뿐 별도 발송 없음([FLOW], [000660] 중복 발송 금지)."
+  },
+  "semi_light": {
+    "codes": [
+      "005930",
+      "000660"
+    ],
+    "warn_at": 2.0,
+    "hard_at": 2.5,
+    "supply_scores": {
+      "ok": 0.0,
+      "mixed": 0.5,
+      "warn": 1.0
+    },
+    "supply_rule": "11:00 실행 때 수급 등만 장중 재계산: 외국인 방향(코스피 잠정 외국인 + 005930, 000660 종목별 잠정 행이 있으면 포함, 과반) 과 두 종목 장중 등락률 평균. 순매도 과반이고 평균 하락이면 warn, 순매수 과반이고 평균 0 이상이면 ok, 나머지 mixed. 점수 값은 기준 판정 원문을 못 찾아 임시값이며 원문 확인 후 맞출 것.",
+    "baseline": {
+      "as_of": null,
+      "earnings": null,
+      "valuation": null,
+      "narrative": null,
+      "source": null,
+      "note": "가장 최근 실제 반도체 경고등 판정(부모 대화의 11/6 16:00 보고)을 repo, state, brief, box 파일, 봇 메일함에서 찾지 못했다(2026-11-18 검색). 그래서 실적(incl [NIX-EPS] 비중), 밸류, 내러티브 등은 '확인 불가'로 표시하고 합계도 확인 불가다. 판정 원문을 확인하면 as_of(판정 날짜), 세 값, source 를 채운다."
+    },
+    "freeze_rule": "합계 >= warn_at 또는 state/nixeps.json episode.active 면 'SK하이닉스 신규 진입 동결 조건 충족'"
+  }
 }

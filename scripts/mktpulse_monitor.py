@@ -288,6 +288,101 @@ def news_hits(cfg: dict, now: datetime, log: list[str]) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------- 2026-11-18 additions
+# 2026-11-18 유용성 검토(10/26~11/17 실제 발송 20건): 전력기기 바스켓 수급(전일) 줄은 잡음 11, 쓸모 5 이고
+# 쓸모 있음 사례 5건 모두 전기장비 업종 줄도 같은 방향이라 유일 신호였던 적이 없어 뺐다. config 플래그가 없어 코드에서 끈다.
+FLOW_BASKETS_OFF = {"전력기기"}
+NIX_CFG_PATH = ROOT / "configs" / "000660.json"
+NIXEPS_STATE_PATH = ROOT / "state" / "nixeps.json"
+
+
+def load_ladder(log: list[str]) -> list[tuple[str, float]]:
+    """[000660] 매수 사다리(lines 중 key buy*, op le)를 config 에서 읽는다. 하드코딩 없음."""
+    try:
+        raw = json.loads(NIX_CFG_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        log.append(f"000660 config {type(exc).__name__}")
+        return []
+    out = []
+    for ln in raw.get("lines") or []:
+        if str(ln.get("key", "")).startswith("buy") and ln.get("op") == "le" and num(ln.get("level")):
+            out.append((str(ln["key"]), float(num(ln["level"]))))
+    return sorted(out, key=lambda kv: -kv[1])
+
+
+def ladder_line(ladder: list[tuple[str, float]], price: float | None, log: list[str]) -> str:
+    head = "- 000660 매수 사다리 거리(장중 기준이며 [000660]은 KRX 종가에 발화): "
+    if not ladder:
+        return head + "확인 불가(configs/000660.json 사다리 없음)"
+    if not price:
+        log.append("000660 장중가 없음")
+        return head + "확인 불가(장중가 조회 실패)"
+    parts = []
+    for i, (_key, lvl) in enumerate(ladder, 1):
+        d = (lvl / price - 1) * 100
+        parts.append(f"{i}차 {lvl:,.0f}원 " + (f"장중 도달(선 대비 {(price / lvl - 1) * 100:+.1f}%)" if price <= lvl else f"{d:+.1f}%"))
+    return head + f"현재 {price:,.0f}원 기준 남은 거리, " + ", ".join(parts)
+
+
+def load_nixeps_active(log: list[str]) -> bool | None:
+    try:
+        st = json.loads(NIXEPS_STATE_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        log.append(f"nixeps state {type(exc).__name__}")
+        return None
+    return bool((st.get("episode") or {}).get("active"))
+
+
+def supply_light(kospi_foreign: float | None, stock_foreign: dict[str, float | None], pcts: dict[str, float | None],
+                 scores: dict) -> tuple[float | None, str]:
+    """수급 등 장중 재계산. 외국인 방향(코스피 잠정 + 종목 잠정이 있으면 종목) 과 두 종목 장중 등락률 평균."""
+    dirs = [v for v in [kospi_foreign, *stock_foreign.values()] if v is not None]
+    pv = [v for v in pcts.values() if v is not None]
+    if not dirs or len(pv) < len(pcts):
+        return None, "확인 불가"
+    sell = sum(1 for v in dirs if v < 0) > len(dirs) / 2
+    buy = sum(1 for v in dirs if v > 0) > len(dirs) / 2
+    avg = sum(pv) / len(pv)
+    if sell and avg < 0:
+        return float(scores.get("warn", 1.0)), "경고(외국인 순매도, 주가 하락)"
+    if buy and avg >= 0:
+        return float(scores.get("ok", 0.0)), "양호(외국인 순매수, 주가 상승)"
+    return float(scores.get("mixed", 0.5)), "혼조"
+
+
+def semi_light_line(cfg: dict, flows: dict, px: dict, stock_rows: dict, nix_active: bool | None, log: list[str]) -> str:
+    sl = cfg.get("semi_light") or {}
+    codes = sl.get("codes") or ["005930", "000660"]
+    kf = (flows.get("KOSPI") or {}).get("외국인")
+    if kf is None:
+        log.append("경고등: 코스피 잠정 외국인 없음")
+    sf = {c: (stock_rows[c]["f_won"] if c in stock_rows and stock_rows[c].get("provisional") else None) for c in codes}
+    if all(v is None for v in sf.values()):
+        log.append("경고등 종목별 장중 외국인(네이버 trend 당일 행 없음, 코스피 잠정으로 대신)")
+    pcts = {c: (px.get(c) or {}).get("pct") for c in codes}
+    s_score, s_why = supply_light(kf, sf, pcts, sl.get("supply_scores") or {})
+    base = sl.get("baseline") or {}
+    others = []
+    total = s_score
+    for key, label in (("earnings", "실적"), ("valuation", "밸류"), ("narrative", "내러티브")):
+        v = num(base.get(key))
+        others.append(f"{label} {v:g}" if v is not None else f"{label} 확인 불가")
+        total = None if (v is None or total is None) else total + v
+    pct_txt = ", ".join(f"{c} {signed(v, '%', 2)}" if v is not None else f"{c} 확인 불가" for c, v in pcts.items())
+    s_txt = f"수급 {s_score:g}({s_why}; 코스피 외국인 {signed(kf, '억') if kf is not None else '확인 불가'}, {pct_txt})" \
+        if s_score is not None else f"수급 확인 불가({pct_txt})"
+    bdate = f"기준값 {base['as_of']} 판정" if base.get("as_of") else "기준값: 판정 기록 없음"
+    warn, hard = sl.get("warn_at", 2.0), sl.get("hard_at", 2.5)
+    tot_txt = f"합계 {total:.1f} (기준 {float(warn):.1f}, {float(hard):.1f})" if total is not None else f"합계 확인 불가 (기준 {float(warn):.1f}, {float(hard):.1f})"
+    if nix_active or (total is not None and total >= float(warn)):
+        verdict = "SK하이닉스 신규 진입 동결 조건 충족" + (" ([NIX-EPS] 에피소드 활성)" if nix_active else "")
+    elif total is None:
+        verdict = "점수 조건 판단 불가, [NIX-EPS] 에피소드 " + ("없음" if nix_active is False else "확인 불가")
+    else:
+        verdict = "동결 조건 아님"
+    return f"- 반도체 경고등 장중 점수 (005930, 000660): {s_txt}, {', '.join(others)} ({bdate}). {tot_txt}. {verdict}"
+
+
 # ---------------------------------------------------------------- message
 def fmt_flow(f: dict) -> str:
     return ", ".join(f"{k} {signed(v, '억')}" for k, v in f.items())
@@ -332,13 +427,14 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         except Exception as exc:
             flows[mk] = None
             log.append(f"{mk} 수급 {type(exc).__name__}")
+    flow_lines = []
     for mk, label in (("KOSPI", "코스피"), ("KOSDAQ", "코스닥")):
         f = flows.get(mk)
         if f is None:
-            lines.append(f"- {label} 수급: 아직 없음(장 초반 또는 조회 실패)")
+            flow_lines.append(f"- {label} 수급: 아직 없음(장 초반 또는 조회 실패)")
             continue
         # 하루 1회(11:00)라 같은 날 직전 점검이 없다. '직전 대비' 줄은 2026-10-26 에 뺐다.
-        lines.append(f"- {label} 수급(잠정, 억원): {fmt_flow(f).replace('억', '')}")
+        flow_lines.append(f"- {label} 수급(잠정, 억원): {fmt_flow(f).replace('억', '')}")
 
     secs = []
     for s in cfg["sectors"]:
@@ -348,6 +444,7 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
             g = None
             log.append(f"업종 {s['no']} {type(exc).__name__}")
         secs.append((s["name"], g))
+    # 2026-11-18 유용성 검토: 가격 계열(쓸모 있음 76%)을 수급 계열(54%)보다 먼저 보여 준다.
     lines.append("- 업종: " + ", ".join(
         f"{n} {signed(g['chg'], '%', 2)} (상승 {g['up']}, 하락 {g['down']})" if g else f"{n} 조회 실패" for n, g in secs))
 
@@ -363,9 +460,16 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
             p = px.get(x["code"])
             parts.append(f"{x['name']} {p['price']:,.0f}원 {signed(p['pct'], '%', 2)}" if p and p["price"] else f"{x['name']} 조회 실패")
         lines.append(f"- {bname} 가격: " + ", ".join(parts))
+    items_on = cfg.get("items") or {}
+    if items_on.get("nix_ladder", True):
+        lines.append(ladder_line(load_ladder(log), (px.get("000660") or {}).get("price"), log))
 
+    lines += flow_lines
     provisional_seen = []
+    stock_rows: dict[str, dict] = {}
     for bname, members in cfg["baskets"].items():
+        if bname in FLOW_BASKETS_OFF:
+            continue
         tot_f = tot_o = tot_f3 = tot_o3 = 0.0
         days, got, per = set(), 0, []
         for x in members:
@@ -377,6 +481,7 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
             print(f"trend {x['code']}: latest={fl and fl['day']} provisional_today={bool(fl and fl['provisional'])}")
             if not fl:
                 continue
+            stock_rows[x["code"]] = fl
             got += 1
             days.add(fl["day"] + ("(잠정)" if fl["provisional"] else ""))
             if fl["provisional"]:
@@ -389,6 +494,8 @@ def build(cfg: dict, state: dict, now: datetime, slot: str | None, mode: str) ->
         dlabel = ", ".join(sorted(f"{d[4:6]}/{d[6:8]}{d[8:]}" for d in days))
         lines.append(f"- {bname} 바스켓 수급({dlabel} 기준, 추정): 외국인 {eok_from_won(tot_f)}, 기관 {eok_from_won(tot_o)}"
                      f" (3일 합 외국인 {eok_from_won(tot_f3)}, 기관 {eok_from_won(tot_o3)}; {', '.join(per)})")
+    if items_on.get("semi_light", True):
+        lines.append(semi_light_line(cfg, flows, px, stock_rows, load_nixeps_active(log), log))
 
     muse_items: list[dict] = []
     try:
@@ -504,6 +611,29 @@ def self_test() -> int:
     check("filter drops plain app news", bool(re.search(m["topic_re"], "메타 뮤즈 공유 링크 노출 논란", re.I)), False)
     check("Muse word boundary", bool(re.search(m["muse_re"], "Museum opening")), False)
     check("norm_title strips source", norm_title("메타 뮤즈 D램 - 한국경제") == norm_title("메타 뮤즈 D램"), True)
+    # 2026-11-18: 000660 사다리 거리, 반도체 경고등 장중 점수, 전력기기 바스켓 수급 제거
+    lad = load_ladder([])
+    check("ladder read from 000660 config (3 buy lines, high first)", [k for k, _ in lad], ["buy1", "buy2", "buy3"])
+    ll = ladder_line([("buy1", 1270000.0), ("buy2", 1160000.0), ("buy3", 1050000.0)], 1127000.0, [])
+    check("ladder pct distance", "1차 1,270,000원 장중 도달(선 대비 -11.3%)" in ll and "3차 1,050,000원 -6.8%" in ll, True)
+    check("ladder notes close-based [000660]", "[000660]은 KRX 종가에 발화" in ll, True)
+    check("ladder touched intraday", "장중 도달" in ladder_line([("buy1", 1270000.0)], 1200000.0, []), True)
+    check("ladder no price -> 확인 불가", "확인 불가" in ladder_line([("buy1", 1270000.0)], None, []), True)
+    sc = {"ok": 0.0, "mixed": 0.5, "warn": 1.0}
+    check("supply warn", supply_light(-5000.0, {}, {"005930": -1.0, "000660": -2.0}, sc)[0], 1.0)
+    check("supply ok", supply_light(1300.0, {}, {"005930": 0.2, "000660": 2.6}, sc)[0], 0.0)
+    check("supply mixed", supply_light(1300.0, {}, {"005930": -1.0, "000660": -2.0}, sc)[0], 0.5)
+    check("supply no price -> None", supply_light(1300.0, {}, {"005930": None, "000660": 1.0}, sc)[0], None)
+    lcfg = {"semi_light": {"baseline": {"as_of": "2026-11-06", "earnings": 1.0, "valuation": 0.5, "narrative": 0.0}}}
+    pxs = {"005930": {"pct": -1.0}, "000660": {"pct": -2.0}}
+    line = semi_light_line(lcfg, {"KOSPI": {"외국인": -5000.0}}, pxs, {}, False, [])
+    check("light total 2.5 -> freeze", "합계 2.5 (기준 2.0, 2.5)" in line and "신규 진입 동결 조건 충족" in line, True)
+    line = semi_light_line({"semi_light": {}}, {"KOSPI": {"외국인": 1300.0}}, {"005930": {"pct": 0.2}, "000660": {"pct": 2.6}}, {}, False, [])
+    check("light no baseline -> 확인 불가, no freeze", "합계 확인 불가" in line and "동결 조건 충족" not in line and "실적 확인 불가" in line, True)
+    line = semi_light_line({"semi_light": {}}, {"KOSPI": {"외국인": 1300.0}}, {"005930": {"pct": 0.2}, "000660": {"pct": 2.6}}, {}, True, [])
+    check("light NIX-EPS active -> freeze", "신규 진입 동결 조건 충족 ([NIX-EPS] 에피소드 활성)" in line, True)
+    check("power basket flow line off", "전력기기" in FLOW_BASKETS_OFF and "반도체" not in FLOW_BASKETS_OFF, True)
+    check("new item flags default on", (cfg.get("items") or {}).get("semi_light") is True and (cfg.get("items") or {}).get("nix_ladder") is True, True)
     # muse cap / order / carryover
     check("muse max_items is 3", int(m["max_items"]), 3)
     items = [
