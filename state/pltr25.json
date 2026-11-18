@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-11-17T09:06:45.316399+09:00",
-  "last_date": "2026-11-16",
-  "close": 160.39,
-  "ma50": 184.51,
-  "ma200": 153.79,
+  "updated_at": "2026-11-18T09:06:28.441758+09:00",
+  "last_date": "2026-11-17",
+  "close": 156.56,
+  "ma50": 184.24,
+  "ma200": 153.84,
   "levels": {
     "chase": 209.05,
-    "b1": 188.2,
-    "b2": 161.48,
-    "brk": 153.79
+    "b1": 187.92,
+    "b2": 161.53,
+    "brk": 153.84
   },
   "range": {
     "hi": [
@@ -24,16 +24,16 @@
   "zone_sent": "2차 매수",
   "pending": null,
   "valuation": {
-    "fwd_pe": 63.17626,
-    "trail_pe": 112.95071,
-    "ps": 53.024906,
-    "date": "2026-11-17"
+    "fwd_pe": 61.75401,
+    "trail_pe": 110.253525,
+    "ps": 51.758713,
+    "date": "2026-11-18"
   },
   "last_weekly": "2026-W47",
   "fetch_fail_date": null,
   "review": {
-    "last_session": "2026-11-16",
-    "close": 160.39,
+    "last_session": "2026-11-17",
+    "close": 156.56,
     "armed": {
       "review": true,
       "warn": true

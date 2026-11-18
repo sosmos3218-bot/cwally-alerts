@@ -1,14 +1,14 @@
 {
   "zone": "중립",
-  "last_date": "2026-11-13",
-  "last_ten": 5.1539998054504395,
+  "last_date": "2026-11-16",
+  "last_ten": 5.120999813079834,
   "fomc_seen": {},
   "note_sent": false,
   "seeded_at": "2026-11-02 13:20 KST",
   "seed_note": "install seed, no send (Yahoo ^TNX)",
-  "updated_at": "2026-11-16 09:06 KST",
+  "updated_at": "2026-11-18 09:06 KST",
   "bands": {
-    "date": "2026-11-13",
+    "date": "2026-11-16",
     "in": {}
   }
 }

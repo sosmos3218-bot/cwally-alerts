@@ -5,11 +5,11 @@
     "bear171": true,
     "base291": true
   },
-  "last_date": "2026-11-16",
-  "last_close": 19.41,
+  "last_date": "2026-11-17",
+  "last_close": 18.18,
   "init_note": "initialized from 2026-10-23 close 24.64 (Yahoo), no send. All three zones armed.",
   "fail_notified": false,
-  "updated_at": "2026-11-17T09:11:06+09:00",
+  "updated_at": "2026-11-18T09:10:27+09:00",
   "sec_seen": [
     "0000000000-25-004957",
     "0000000000-25-006040",
@@ -394,5 +394,5 @@
     "9999999995-25-002410"
   ],
   "sec_seed_note": "seeded 365 accession numbers from EDGAR submissions at install 2026-10-29 10:59 KST, no send",
-  "sec_checked": "2026-11-17T09:11:05+09:00"
+  "sec_checked": "2026-11-18T09:10:27+09:00"
 }

@@ -1,20 +1,11 @@
 {
-  "updated_at": "2026-11-17 09:00 KST",
-  "price": 16.39,
+  "updated_at": "2026-11-18 09:00 KST",
+  "price": 15.805,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://stocktwits.com/news-articles/markets/equity/iren-co-ceo-daniel-roberts-says-firm-s-data-centers-carry-no-debt-as-funding-worries-hit-stock/cZxqtl2RBuo?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/analyst-upgrade-optimism-impact-iren-121139548.html?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/20/iren-sinks-6-then-recovers-after-co-ceos-no-debt-reassurance-as-neocloud-worries-persist-terawulf-and-applied-digital-rise-3/?.tsrc=rss",
-    "https://www.fool.com/coverage/stock-market-today/2026/10/20/stock-market-today-oct-20-iren-slides-on-funding-worries-and-rate-fears/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/european-ecosystem-builds-world-most-093500135.html?.tsrc=rss",
-    "https://finance.yahoo.com/m/44db3ec0-badf-30eb-8d49-7a093c1252a4/neoclouds-in-the-%E2%80%98penalty.html?.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/21/did-spacex-just-save-coreweave-nebius-and-the-neocloud-sector/?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/21/terawulf-jumps-8-as-ceo-says-power-demand-remains-extremely-strong-applied-digital-surges-9-iren-climbs-6/?.tsrc=rss",
-    "https://blockspace.media/podcast/irens-childress-timeline-the-hidden-forces-behind-ai-builds-data-center-capex-is-rising/?.tsrc=rss",
     "https://blockspace.media/short/irens-childress-delivery-for-microsoft-on-track-for-q4-despite-delay-rumors/?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/21/iren-limted-crashed-40-this-month-three-wall-street-analysts-agree-its-going-to-quadruple/?.tsrc=rss",
     "https://stocktwits.com/news-articles/markets/equity/iren-stock-spain-ai-campus-launch-2028/cZxMTrDRBva?.tsrc=rss",
@@ -205,7 +196,16 @@
     "https://finance.yahoo.com/technology/ai/articles/wall-street-analyst-picks-winner-174329785.html?.tsrc=rss",
     "https://finance.yahoo.com/m/1a8be864-b04a-3d12-92c3-c84049e9f774/nebius-has-a-spending.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/nebius-stock-falls-10-q3-121900626.html?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/5-worst-ai-infrastructure-data-025634636.html?.tsrc=rss"
+    "https://finance.yahoo.com/technology/ai/articles/5-worst-ai-infrastructure-data-025634636.html?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/hedge-fund-lost-67-makes-175058822.html?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-nearly-tripled-ai-cloud-revenue-to-200-million-can-it-be-delivered-financed-and-run-at-a-profit?ref=yahoofinance&tlnk=yf-261117-22r3c6fc&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-stock-rises-overnight-as-intel-reveals-stake-anthropic-ipo-buzz-catches-on/cNbaFxaR9W3?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/situational-awareness-revives-ai-portfolio-after-summer-collapse-here-are-its-new-stock-bets/cNbakMGR9gx?.tsrc=rss",
+    "https://blockspace.media/short/morgan-stanley-other-banks-revalue-ai-stocks-on-financing-execution-fears/?.tsrc=rss",
+    "https://blockspace.media/short/jpmorgan-slashes-iren-price-target-on-microsoft-site-delays/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/17/sam-altman-just-delivered-a-warning-to-investors-betting-on-endless-ai-growth/?.tsrc=rss",
+    "https://www.tikr.com/blog/cleanspark-sank-26-in-two-days-after-the-texas-election-is-it-time-to-sell-or-load-up?ref=yahoofinance&tlnk=yf-261117-m7r78h82&.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-16 09:00 KST",
   "pending_news": [
@@ -213,6 +213,26 @@
       "title": "CoreWeave, Oracle and Nebius Plunge as Nvidia Fallout Rattles AI Stocks",
       "url": "https://finance.yahoo.com/technology/ai/articles/coreweave-oracle-nebius-plunge-nvidia-192652785.html?.tsrc=rss",
       "seen_at": "2026-11-17 09:00 KST"
+    },
+    {
+      "title": "IREN Nearly Tripled AI Cloud Revenue to $200 Million. Can It Be “Delivered, Financed, and Run at a Profit”?",
+      "url": "https://www.tikr.com/blog/iren-nearly-tripled-ai-cloud-revenue-to-200-million-can-it-be-delivered-financed-and-run-at-a-profit?ref=yahoofinance&tlnk=yf-261117-22r3c6fc&.tsrc=rss",
+      "seen_at": "2026-11-18 09:00 KST"
+    },
+    {
+      "title": "JPMorgan slashes IREN price target on Microsoft site delays",
+      "url": "https://blockspace.media/short/jpmorgan-slashes-iren-price-target-on-microsoft-site-delays/?.tsrc=rss",
+      "seen_at": "2026-11-18 09:00 KST"
+    },
+    {
+      "title": "Sam Altman Just Delivered a Warning to Investors Betting on Endless AI Growth",
+      "url": "https://247wallst.com/investing/2026/11/17/sam-altman-just-delivered-a-warning-to-investors-betting-on-endless-ai-growth/?.tsrc=rss",
+      "seen_at": "2026-11-18 09:00 KST"
+    },
+    {
+      "title": "CoreWeave Answered the Biggest Question About AI Stocks. Now Nvidia Has to Confirm It.",
+      "url": "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss",
+      "seen_at": "2026-11-18 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",

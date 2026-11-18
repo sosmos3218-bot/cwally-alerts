@@ -1,5 +1,5 @@
 {
-  "price": 100.99,
+  "price": 99.61,
   "band": "STRETCH",
   "buy1_sent": false,
   "buy2_sent": false,
@@ -8,7 +8,7 @@
   "q3_post_sent": true,
   "fail_sent_date": null,
   "last_kind": "STRETCH",
-  "updated_at": "2026-11-17T09:06:18.293464+09:00",
+  "updated_at": "2026-11-18T09:06:03.624862+09:00",
   "last_metrics": {
     "found": false,
     "source": "",

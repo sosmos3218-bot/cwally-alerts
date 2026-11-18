@@ -1,13 +1,17 @@
 {
-  "updated_at": "2026-11-17T15:20:49.129131+09:00",
+  "updated_at": "2026-11-18T09:01:08.288251+09:00",
   "tickers": {
     "NVDA": {
-      "phase": "idle",
-      "date_notified": false,
-      "results_notified": false,
+      "phase": "results",
+      "date_notified": true,
+      "results_notified": true,
       "miss_notified": false,
-      "source": null,
-      "parsed": null,
+      "source": "https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-third-quarter-fiscal-2027",
+      "parsed": {
+        "rev_bn": 115.8,
+        "gm_pct": 74.8,
+        "next_guide_bn": 130.0
+      },
       "fetch_fails": 0,
       "fetch_fails_sent": null
     },
