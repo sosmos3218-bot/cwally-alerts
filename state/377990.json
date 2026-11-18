@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17 15:41 KST",
+  "updated_at": "2026-11-18 15:41 KST",
   "fired": {
     "chase": false,
     "box_fail": true
@@ -12,7 +12,7 @@
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-17",
-    "close": 15085.0
+    "day": "2026-11-18",
+    "close": 15270.0
   }
 }

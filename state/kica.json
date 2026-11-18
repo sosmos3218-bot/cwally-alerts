@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-17 15:41 KST",
+  "updated_at": "2026-11-18 15:41 KST",
   "fired": {
     "band_high": false,
     "band_low": false,
@@ -9,9 +9,9 @@
   "last_move_day": "2026-11-09",
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-17",
-    "close": 5260,
-    "chg_pct": -4.54
+    "day": "2026-11-18",
+    "close": 5430,
+    "chg_pct": 3.23
   },
   "last_sent": {
     "at": "2026-11-09 15:41 KST",
