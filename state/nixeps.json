@@ -124,12 +124,20 @@
    "n_brokers": 21,
    "src": "WiseReport 컨센서스 표",
    "fetched": "2026-11-18 19:04 KST"
+  },
+  {
+   "date": "2026-11-18",
+   "eps27": 541186.0,
+   "eps26": 355971.0,
+   "n_brokers": 21,
+   "src": "WiseReport 컨센서스 표",
+   "fetched": "2026-11-19 19:05 KST"
   }
  ],
  "seeded_at": "2026-11-02 19:01 KST",
  "episode": {
   "active": false
  },
- "updated_at": "2026-11-18 19:04 KST",
+ "updated_at": "2026-11-19 19:05 KST",
  "ops_day": "2026-11-17"
 }

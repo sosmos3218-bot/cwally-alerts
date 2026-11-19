@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-11-19T04:00:58.386185+09:00",
+  "updated_at": "2026-11-19T19:04:06.980987+09:00",
   "seeded": true,
-  "last_day": "2026-11-18",
+  "last_day": "2026-11-19",
   "last_close": 362500.0,
   "last_fail_day": null,
   "lines": {
@@ -20,8 +20,8 @@
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-11-18",
-    "last": 33.1181,
+    "last_day": "2026-11-19",
+    "last": 30.9524,
     "lines": {
       "resolve": {
         "armed": true,
@@ -36,8 +36,8 @@
   "notice_done": {},
   "notice_seen": [],
   "sec": {
-    "last_day": "2026-11-18",
-    "last_close": 194700.0,
+    "last_day": "2026-11-19",
+    "last_close": 196900.0,
     "armed": true,
     "fired_day": null
   },
