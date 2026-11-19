@@ -2,10 +2,10 @@
   "px": {
     "armed": true,
     "above_streak": 0,
-    "below_streak": 39,
-    "last_date": "2026-11-17",
-    "last_close": 17495.0,
-    "last_ma20": 18864.75,
+    "below_streak": 40,
+    "last_date": "2026-11-18",
+    "last_close": 17395.0,
+    "last_ma20": 18684.5,
     "source": "daum",
     "seeded_at": "2026-11-03 21:50 KST, 11/3 확정 종가까지"
   },

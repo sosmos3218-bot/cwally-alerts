@@ -1,11 +1,11 @@
 {
-  "day": "20261118",
-  "flow_day": "20261117",
-  "updated_at": "2026-11-18T15:21:13.505327+09:00",
+  "day": "20261119",
+  "flow_day": "20261118",
+  "updated_at": "2026-11-19T15:21:41.040890+09:00",
   "flip": {
     "005930": {
       "armed": true,
-      "last_date": "20261117",
+      "last_date": "20261118",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -30,7 +30,7 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261117",
+      "last_date": "20261118",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -106,6 +106,23 @@
           "close": 1100000.0
         }
       }
+    },
+    {
+      "flow_day": "20261118",
+      "foreign": -220255065600,
+      "organ": 249463113600,
+      "stocks": {
+        "삼성전자": {
+          "foreign": -869394.0,
+          "organ": 1104534.0,
+          "close": 196400.0
+        },
+        "SK하이닉스": {
+          "foreign": -42531.0,
+          "organ": 27949.0,
+          "close": 1164000.0
+        }
+      }
     }
   ],
   "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
@@ -113,11 +130,11 @@
   "twowk": {
     "005930": {
       "armed": true,
-      "last_date": "20261117",
+      "last_date": "20261118",
       "last": {
-        "a": -10668840.0,
-        "b": 678060.0,
-        "total": -9990780.0,
+        "a": -4192015.0,
+        "b": -2839626.0,
+        "total": -7031641.0,
         "met": false
       },
       "seeded": {
@@ -134,11 +151,11 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261117",
+      "last_date": "20261118",
       "last": {
-        "a": -3558663.0,
-        "b": -1516513.0,
-        "total": -5075176.0,
+        "a": -2624550.0,
+        "b": -1657698.0,
+        "total": -4282248.0,
         "met": false
       },
       "seeded": {
@@ -150,15 +167,15 @@
   },
   "nix1": {
     "000660": {
-      "last_date": "20261117",
+      "last_date": "20261118",
       "last": {
         "verdict": "진입 보류",
-        "close": 1098000.0,
+        "close": 1144000.0,
         "support": "지지 이탈",
-        "foreign": -399323.0,
-        "foreign_ok": false,
-        "adr_dev_pct": -1.27,
-        "adr_ok": true
+        "foreign": -42531.0,
+        "foreign_ok": true,
+        "adr_dev_pct": 2.71,
+        "adr_ok": false
       },
       "brk_last": "20261105",
       "broke": {
