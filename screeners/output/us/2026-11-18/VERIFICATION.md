@@ -11,36 +11,36 @@ The weekday schedule is GitHub cron `30 22 * * 0-4` (07:30 Asia/Seoul). GitHub m
 
 | combined_rank | ticker | name | shares | shares_end | shares_source | shares_kind | market_cap | enterprise_value | earnings_yield |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 46 | COLL | COLLEGIUM PHARMACEUTICAL, INC | 31075424 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 8.0578574e+08 | 6.6098874e+08 | 0.18770819 |
-| 58 | ABUS | ARBUTUS BIOPHARMA CORP | 1.5329283e+08 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 6.3003351e+08 | 3.6584251e+08 | 0.40224959 |
-| 63 | SNDK | SANDISK CORP | 1.4228936e+08 | 2026-10-26 | dei:EntityCommonStockSharesOutstanding | instant | 1.1044785e+11 | 1.0531185e+11 | 0.19934129 |
-| 68 | IRWD | IRONWOOD PHARMACEUTICALS INC | 1.6555076e+08 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 7.9133263e+08 | 7.0495663e+08 | 0.35721204 |
-| 70 | SGU | STAR GROUP, L.P. | 32811216 | 2026-07-31 | dei:EntityCommonStockSharesOutstanding | instant | 4.3277994e+08 | 5.7834594e+08 | 0.23585019 |
-| 104 | CCLD | CARECLOUD, INC. | 42548859 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 1.0126628e+08 | 96630284 | 0.12992821 |
-| 116 | KBR | KBR, INC. | 1.2610899e+08 | 2026-10-21 | dei:EntityCommonStockSharesOutstanding | instant | 4.1716853e+09 | 6.2736853e+09 | 0.11619964 |
-| 131 | HON | HONEYWELL INTERNATIONAL INC | 3.1735852e+08 | 2026-09-30 | dei:EntityCommonStockSharesOutstanding | instant | 7.0675742e+10 | 7.5367742e+10 | 0.1135101 |
-| 139 | BBWI | BATH & BODY WORKS, INC. | 2.0164531e+08 | 2026-08-21 | dei:EntityCommonStockSharesOutstanding | instant | 3.7627015e+09 | 6.5827015e+09 | 0.18320746 |
-| 154 | AMN | AMN HEALTHCARE SERVICES INC | 38562904 | 2026-11-03 | dei:EntityCommonStockSharesOutstanding | instant | 1.4499652e+09 | 1.1939872e+09 | 0.16977904 |
-| 155 | HLF | HERBALIFE LTD. | 1.0489579e+08 | 2026-10-26 | dei:EntityCommonStockSharesOutstanding | instant | 1.6825284e+09 | 3.2025284e+09 | 0.15768791 |
-| 157 | OTEX | OPEN TEXT CORP | 2.4153991e+08 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 5.5481716e+09 | 1.0331257e+10 | 0.10293607 |
-| 171 | SD | SANDRIDGE ENERGY INC | 37107240 | 2026-10-29 | dei:EntityCommonStockSharesOutstanding | instant | 4.5233726e+08 | 3.8367126e+08 | 0.19477612 |
-| 174 | CROX | CROCS, INC. | 45725039 | 2026-10-22 | dei:EntityCommonStockSharesOutstanding | instant | 7.4422073e+09 | 8.5677943e+09 | 0.10794447 |
-| 176 | MGTX | MEIRAGTX HOLDINGS PLC | 97730540 | 2026-11-04 | dei:EntityCommonStockSharesOutstanding | instant | 8.1311809e+08 | 6.2846809e+08 | 0.28673214 |
-| 176 | MNR | MACH NATURAL RESOURCES LP | 1.7039579e+08 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 1.3631663e+09 | 2.4885073e+09 | 0.10066356 |
-| 178 | YELP | YELP INC | 54492897 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 1.089313e+09 | 9.6947301e+08 | 0.17412243 |
-| 189 | AOS | SMITH A O CORP | 25860239 | 2026-10-27 | dei:EntityCommonStockSharesOutstanding | instant | 1.6692784e+09 | 2.1078784e+09 | 0.31562541 |
-| 197 | DFIN | DONNELLEY FINANCIAL SOLUTIONS, INC. | 24353215 | 2026-10-23 | dei:EntityCommonStockSharesOutstanding | instant | 1.6221677e+09 | 1.7219677e+09 | 0.087922674 |
-| 199 | MAN | MANPOWERGROUP INC. | 46505570 | 2026-10-28 | dei:EntityCommonStockSharesOutstanding | instant | 2.1011217e+09 | 2.4308217e+09 | 0.12473149 |
-| 201 | MU | MICRON TECHNOLOGY INC | 1.1314232e+09 | 2026-10-02 | dei:EntityCommonStockSharesOutstanding | instant | 7.9795885e+11 | 7.6428285e+11 | 0.12997806 |
-| 202 | NATL | NCR ATLEOS CORP | 73939883 | 2026-10-28 | dei:EntityCommonStockSharesOutstanding | instant | 3.5550296e+09 | 5.7880296e+09 | 0.10003404 |
-| 205 | STRL | STERLING INFRASTRUCTURE, INC. | 30502537 | 2026-10-27 | dei:EntityCommonStockSharesOutstanding | instant | 8.4296811e+09 | 8.3080141e+09 | 0.094352752 |
-| 207 | CVSA | COVISTA INC. | 33255241 | 2026-10-23 | dei:EntityCommonStockSharesOutstanding | instant | 3.9843104e+09 | 4.2623184e+09 | 0.092889822 |
-| 207 | NGS | NATURAL GAS SERVICES GROUP INC | 12905548 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 3.7026017e+08 | 3.6955217e+08 | 0.11866525 |
-| 211 | LAUR | LAUREATE EDUCATION, INC. | 1.3574589e+08 | 2026-09-30 | dei:EntityCommonStockSharesOutstanding | instant | 4.5678493e+09 | 4.5626163e+09 | 0.10838146 |
-| 214 | PARR | PAR PACIFIC HOLDINGS, INC. | 50076962 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 3.2695248e+09 | 3.0346228e+09 | 0.4189229 |
-| 216 | AVAH | AVEANNA HEALTHCARE HOLDINGS, INC. | 2.184096e+08 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 2.3686521e+09 | 3.4660681e+09 | 0.08768062 |
-| 219 | YUM | YUM BRANDS INC | 2.6825866e+08 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 4.3135992e+10 | 5.0486992e+10 | 0.086240036 |
-| 221 | LOCO | EL POLLO LOCO HOLDINGS, INC. | 30218346 | 2026-11-03 | dei:EntityCommonStockSharesOutstanding | instant | 4.750324e+08 | 4.946174e+08 | 0.10387625 |
+| 46 | COLL | COLLEGIUM PHARMACEUTICAL, INC | 31075424 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 805785744.32 | 660988744.32 | 0.18770819 |
+| 58 | ABUS | ARBUTUS BIOPHARMA CORP | 153292826 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 630033514.86 | 365842514.86 | 0.40224959 |
+| 63 | SNDK | SANDISK CORP | 142289365 | 2026-10-26 | dei:EntityCommonStockSharesOutstanding | instant | 110447850900.3 | 105311850900.3 | 0.19934129 |
+| 68 | IRWD | IRONWOOD PHARMACEUTICALS INC | 165550760 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 791332632.8 | 704956632.8 | 0.35721204 |
+| 70 | SGU | STAR GROUP, L.P. | 32811216 | 2026-07-31 | dei:EntityCommonStockSharesOutstanding | instant | 432779939.04 | 578345939.04 | 0.23585019 |
+| 104 | CCLD | CARECLOUD, INC. | 42548859 | 2026-10-31 | dei:EntityCommonStockSharesOutstanding | instant | 101266284.42 | 96630284.42 | 0.12992821 |
+| 116 | KBR | KBR, INC. | 126108987 | 2026-10-21 | dei:EntityCommonStockSharesOutstanding | instant | 4171685289.96 | 6273685289.96 | 0.11619964 |
+| 131 | HON | HONEYWELL INTERNATIONAL INC | 317358518 | 2026-09-30 | dei:EntityCommonStockSharesOutstanding | instant | 70675741958.6 | 75367741958.6 | 0.1135101 |
+| 139 | BBWI | BATH & BODY WORKS, INC. | 201645313 | 2026-08-21 | dei:EntityCommonStockSharesOutstanding | instant | 3762701540.58 | 6582701540.58 | 0.18320746 |
+| 154 | AMN | AMN HEALTHCARE SERVICES INC | 38562904 | 2026-11-03 | dei:EntityCommonStockSharesOutstanding | instant | 1449965190.4 | 1193987190.4 | 0.16977904 |
+| 155 | HLF | HERBALIFE LTD. | 104895787 | 2026-10-26 | dei:EntityCommonStockSharesOutstanding | instant | 1682528423.48 | 3202528423.48 | 0.15768791 |
+| 157 | OTEX | OPEN TEXT CORP | 241539906 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 5548171640.82 | 10331256640.82 | 0.10293607 |
+| 171 | SD | SANDRIDGE ENERGY INC | 37107240 | 2026-10-29 | dei:EntityCommonStockSharesOutstanding | instant | 452337255.6 | 383671255.6 | 0.19477612 |
+| 174 | CROX | CROCS, INC. | 45725039 | 2026-10-22 | dei:EntityCommonStockSharesOutstanding | instant | 7442207347.64 | 8567794347.64 | 0.10794447 |
+| 176 | MGTX | MEIRAGTX HOLDINGS PLC | 97730540 | 2026-11-04 | dei:EntityCommonStockSharesOutstanding | instant | 813118092.8 | 628468092.8 | 0.28673214 |
+| 176 | MNR | MACH NATURAL RESOURCES LP | 170395787 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 1363166296 | 2488507296 | 0.10066356 |
+| 178 | YELP | YELP INC | 54492897 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 1089313011.03 | 969473011.03 | 0.17412243 |
+| 189 | AOS | SMITH A O CORP | 25860239 | 2026-10-27 | dei:EntityCommonStockSharesOutstanding | instant | 1669278427.45 | 2107878427.45 | 0.31562541 |
+| 197 | DFIN | DONNELLEY FINANCIAL SOLUTIONS, INC. | 24353215 | 2026-10-23 | dei:EntityCommonStockSharesOutstanding | instant | 1622167651.15 | 1721967651.15 | 0.08792267 |
+| 199 | MAN | MANPOWERGROUP INC. | 46505570 | 2026-10-28 | dei:EntityCommonStockSharesOutstanding | instant | 2101121652.6 | 2430821652.6 | 0.12473149 |
+| 201 | MU | MICRON TECHNOLOGY INC | 1131423212 | 2026-10-02 | dei:EntityCommonStockSharesOutstanding | instant | 797958848727.24 | 764282848727.24 | 0.12997806 |
+| 202 | NATL | NCR ATLEOS CORP | 73939883 | 2026-10-28 | dei:EntityCommonStockSharesOutstanding | instant | 3555029574.64 | 5788029574.64 | 0.10003404 |
+| 205 | STRL | STERLING INFRASTRUCTURE, INC. | 30502537 | 2026-10-27 | dei:EntityCommonStockSharesOutstanding | instant | 8429681125.32 | 8308014125.32 | 0.09435275 |
+| 207 | CVSA | COVISTA INC. | 33255241 | 2026-10-23 | dei:EntityCommonStockSharesOutstanding | instant | 3984310424.21 | 4262318424.21 | 0.09288982 |
+| 207 | NGS | NATURAL GAS SERVICES GROUP INC | 12905548 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 370260172.12 | 369552172.12 | 0.11866525 |
+| 211 | LAUR | LAUREATE EDUCATION, INC. | 135745894 | 2026-09-30 | dei:EntityCommonStockSharesOutstanding | instant | 4567849333.1 | 4562616333.1 | 0.10838146 |
+| 214 | PARR | PAR PACIFIC HOLDINGS, INC. | 50076962 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 3269524848.98 | 3034622848.98 | 0.4189229 |
+| 216 | AVAH | AVEANNA HEALTHCARE HOLDINGS, INC. | 218409599 | 2026-11-06 | dei:EntityCommonStockSharesOutstanding | instant | 2368652101.155 | 3466068101.155 | 0.08768062 |
+| 219 | YUM | YUM BRANDS INC | 268258657 | 2026-10-30 | dei:EntityCommonStockSharesOutstanding | instant | 43135992045.6 | 50486992045.6 | 0.08624004 |
+| 221 | LOCO | EL POLLO LOCO HOLDINGS, INC. | 30218346 | 2026-11-03 | dei:EntityCommonStockSharesOutstanding | instant | 475032399.12 | 494617399.12 | 0.10387625 |
 
 ## Exclusion counts
 

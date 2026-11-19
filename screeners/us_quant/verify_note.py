@@ -4,10 +4,16 @@ from __future__ import annotations
 
 
 def _fmt(value) -> str:
-    if value is None:
-        return ""
+    if value is None or isinstance(value, bool):
+        return "" if value is None else str(value)
+    if isinstance(value, int):
+        return str(value)
     if isinstance(value, float):
-        return f"{value:.8g}"
+        if abs(value) >= 1 and abs(value - round(value)) < 1e-4:
+            return str(int(round(value)))
+        if abs(value) >= 1:
+            return f"{value:.4f}".rstrip("0").rstrip(".")
+        return f"{value:.8f}".rstrip("0").rstrip(".")
     return str(value)
 
 
