@@ -32,7 +32,13 @@ def _annual_end_gap(newer: str, older: str) -> int:
     return (a - b).days
 
 
-def build_magic_inputs(facts: dict, as_of: date, price: float, limits: dict) -> dict:
+def build_magic_inputs(
+    facts: dict,
+    as_of: date,
+    price: float,
+    limits: dict,
+    share_rows: list[dict] | None = None,
+) -> dict:
     """Return ok plus a row of inputs, or a reason the issuer is left out."""
     ebit = select_ttm_ebit(facts, as_of)
     if not ebit.get("ok"):
@@ -65,9 +71,14 @@ def build_magic_inputs(facts: dict, as_of: date, price: float, limits: dict) -> 
     debt = select_debt(facts, as_of, end)
     if not debt.get("ok"):
         return {"ok": False, "reason": debt.get("reason") or "debt_missing"}
-    shares = select_shares(facts, as_of)
+    max_share_age = int(limits["max_share_age_days"]) if "max_share_age_days" in limits else 180
+    shares = select_shares(facts, as_of, max_age_days=max_share_age, extras=share_rows)
     if not shares.get("ok") or shares.get("provisional"):
-        return {"ok": False, "reason": "shares_outstanding_missing"}
+        return {
+            "ok": False,
+            "reason": shares.get("reason") or "shares_outstanding_missing",
+            "detail": shares.get("detail") or "",
+        }
 
     market_cap = price * float(shares["value"])
     try:
@@ -107,6 +118,7 @@ def build_magic_inputs(facts: dict, as_of: date, price: float, limits: dict) -> 
         "cash_component": cash["component"],
         "shares": float(shares["value"]),
         "shares_source": shares["source"],
+        "shares_kind": shares.get("kind") or "instant",
         "shares_component": shares["component"],
         "current_assets": float(current_assets["value"]),
         "current_assets_component": current_assets,

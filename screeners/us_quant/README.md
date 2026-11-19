@@ -10,7 +10,7 @@ python3 -m screeners.us_quant selftest
 python3 -m screeners.us_quant run --as-of YYYY-MM-DD --run-date YYYY-MM-DD
 ```
 
-Thresholds live in `config.json`: market-cap floor, prefilter ratio, Magic Formula top N, F-score basis (`annual` only; `ttm` is reserved and refused), F-score list minimum, insider lookback, and staleness windows.
+Thresholds live in `config.json`: market-cap floor, prefilter ratio, Magic Formula top N, enterprise-value guards, F-score basis (`annual` only; `ttm` is reserved and refused), F-score list minimum, insider lookback, and staleness windows (including `max_share_age_days`, default 180).
 
 Caches stay in `screeners/cache/us_quant/` (gitignored). A second run for the same trade date reads that cache and does not refetch EDGAR or prices. Fundamentals refresh only when the index shows a 10-K, 10-Q, or amendment accession that is not already in the companyfacts extract. Compact JSON and CSV go to `screeners/output/us/<trade date>/` and are copied to `screeners/output/us/latest/`.
 
@@ -21,7 +21,7 @@ Caches stay in `screeners/cache/us_quant/` (gitignored). A second run for the sa
 - Ticker shape drops preferred and unit-style suffixes with two or more letters after a hyphen (`BAC-PB`). A single letter class (`BRK-B`) stays in the listing file.
 - Names containing ETF, ETN, Fund, Warrant, Preferred, Debenture, Notes, Acquisition Corp, Closed-End, or Unit are left out.
 - Market cap floor is `min_market_cap` (default $100,000,000). The share-count prefilter keeps names at or above `market_cap_prefilter_ratio` times that floor so a stale share count does not drop every split. The published market cap uses the later companyfacts share count times the close. Names still under the floor are left out of the outputs.
-- More than one priced common ticker for the same CIK is `multi_class_shares_unsplit`. Those issuers are not ranked. Companyfacts has no per-class split once dimensions are removed.
+- More than one common ticker for the same CIK in `company_tickers_exchange.json` is `multi_class_shares_unsplit`, including when one ticker has no price. Companyfacts drops class-axis members, so when the undimensioned `dei:EntityCommonStockSharesOutstanding` fact is missing or older than `max_share_age_days` the latest 10-Q or 10-K instance is read. Two positive common-share classes, or two common or ordinary `dei:Security12bTitle` values, use the same reason. Market cap is not summed across classes, so those issuers are not ranked.
 
 SIC exclusions (inclusive), from the SEC financial-statement SUB table, with a submissions lookup when SUB has no row:
 
@@ -39,12 +39,13 @@ Foreign filers are issuers whose forms include 20-F or 40-F and do not include a
 - Otherwise EBIT = current year-to-date + prior fiscal year - the prior year-to-date of the same length. The prior year-to-date must end within 20 days of one year earlier.
 - If that bridge is missing, EBIT is the sum of the last four quarter-length facts when each gap is 70 to 140 days. Anything shorter is incomplete and the issuer is listed under excluded.
 - Enterprise value = market cap + total debt - cash.
-- Market cap = close times shares. Shares prefer `dei:EntityCommonStockSharesOutstanding`, then `us-gaap:CommonStockSharesOutstanding`. A weighted-average share count is not used as shares outstanding.
+- Market cap = close times shares. The newest count wins. An older `dei:EntityCommonStockSharesOutstanding` fact is never kept ahead of a newer one. A count older than `max_share_age_days` (default 180) is rejected. When that cover-page fact is stale or missing, the screen uses the latest 10-Q or 10-K cover value, then `us-gaap:CommonStockSharesOutstanding`, then `us-gaap:WeightedAverageNumberOfSharesOutstandingBasic` from the latest filing, each with the same age cap. If none of those is fresh, the issuer is excluded as `stale_shares`. `shares_source`, `shares_kind` (`instant` or `weighted_average`), and `shares_end` are stored on the row. A weighted-average value hundreds of times the latest instant count is ignored.
 - Debt, on the latest balance-sheet date: `DebtCurrent` + `LongTermDebtNoncurrent` when both are present. If only the noncurrent tag is present, add `LongTermDebtCurrent`, `ShortTermBorrowings`, and `CommercialPaper`. If that split is absent, use `LongTermDebtAndCapitalLeaseObligations`. Otherwise `LongTermDebt` plus `ShortTermBorrowings` and `CommercialPaper`. If no debt tag exists, debt is 0 (`no_debt_tag`).
 - Cash is `CashAndCashEquivalentsAtCarryingValue`, else `Cash`. The restricted-cash total is not used.
 - Net working capital = `AssetsCurrent` - `LiabilitiesCurrent`.
 - Net fixed assets = `PropertyPlantAndEquipmentNet` on that balance-sheet date, else `PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization`. If neither tag is on that date, the issuer is excluded (`net_fixed_assets_missing`). An older equipment fact is not carried forward.
 - Return on capital = EBIT / (net working capital + net fixed assets). Non-positive enterprise value or capital drops the row.
+- Near-zero enterprise value is dropped before the top N is cut. `magic.min_enterprise_value` (default 50,000,000), `magic.min_ev_to_market_cap` (default 0.1), and `magic.max_earnings_yield` (default 1.0) each exclude the issuer. The excluded table `reason` is `enterprise_value_below_min`, `ev_to_market_cap_below_min`, or `earnings_yield_above_max`, and `detail` keeps the figures.
 - Earnings yield and return on capital are ranked high-to-low. Equal values break ties by ticker ascending. Combined rank is the sum. The output keeps `magic.top_n` rows (default 30) and every input used in the ratios.
 
 ## F-Score
@@ -65,11 +66,13 @@ Revenue uses the first concept that exists for both years: `RevenueFromContractW
 
 ## Insider list
 
-EDGAR daily index rows (and the quarterly master index, which is the compilation of those days) supply Form 4 and 4/A filenames. When the daily index for the trade date is not published yet, the current-filings Atom feed (`browse-edgar?action=getcurrent&type=4&output=atom`, then `4/A`, paginated) fills that gap. A filing is kept only when its acceptance time is at or before 23:59:59 America/New_York on the trade date. That cutoff and the latest Form 4 filing date are stored on every output. The same as-of reuses the saved feed page so a later EDGAR update does not change the file. Issuer entries win over the reporting-owner copy of the same accession. The submission text is parsed for `ownershipDocument` transactions with code `P` and acquired code `A`. Dollars are shares times price. The lookback is calendar days of the transaction date, default 30. Rows are summed by issuer inside the same universe: distinct reporting owners, total dollars, director / officer / 10% owner, latest transaction date.
+EDGAR daily index rows (and the quarterly master index, which is the compilation of those days) supply Form 4 and 4/A filenames. When the daily index for the trade date is not published yet, the current-filings Atom feed (`browse-edgar?action=getcurrent&type=4&output=atom`, then `4/A`, paginated) fills that gap. A filing is kept only when its acceptance time is at or before 23:59:59 America/New_York on the trade date. That cutoff, the latest Form 4 filing date, and the latest acceptance time are stored on every output. The master index has no acceptance time. When none of the rows carry one, `form4_latest_acceptance` is `unknown (master.idx)` rather than empty. The same as-of reuses the saved feed page so a later EDGAR update does not change the file. Issuer entries win over the reporting-owner copy of the same accession. The submission text is parsed for `ownershipDocument` transactions with code `P` and acquired code `A`. Dollars are shares times price. The lookback is calendar days of the transaction date, default 30. Rows are summed by issuer inside the same universe: distinct reporting owners, total dollars, director / officer / 10% owner, latest transaction date.
 
 Intersection is the Magic Formula top N or an F-score at the list minimum, and also an open-market purchase in the window.
 
-`diff` compares ticker sets with the newest earlier trade-date folder. `entered` and `exited` are the only changes. The first saved date has no prior folder, so every current ticker is `entered`.
+`diff` compares ticker sets with the newest earlier trade-date folder that is already in `screeners/output/us`. `entered` and `exited` are the only changes. The first saved date has no prior folder, so every current ticker is `entered`. The commit step fetches and rebases before that comparison is saved, so the baseline is the newest trade date already on the branch.
+
+`screeners/output/us/VERIFICATION.md` is rewritten on every run, and a copy is stored in the trade-date folder. It carries the trade date, run date, and generated-at time. The weekday GitHub cron is `30 22 * * 0-4` (07:30 Asia/Seoul). GitHub may start that job 4 to 6 hours later. No external scheduler was added.
 
 ## Data limits
 
@@ -80,7 +83,7 @@ Intersection is the Magic Formula top N or an F-score at the list minimum, and a
 - Unreported debt tags are treated as zero. Missing net equipment on the balance-sheet date drops the issuer from the Magic Formula list.
 - Dual-class market cap is not estimated.
 - Point-in-time: facts with `filed` after the trade date are ignored.
-- A statement older than `max_statement_age_days` (default 160) or an annual period older than `max_annual_age_days` (default 540) is stale.
+- A statement older than `max_statement_age_days` (default 160) or an annual period older than `max_annual_age_days` (default 540) is stale. A share count older than `max_share_age_days` (default 180) is stale.
 - Form 4 amendments that change the share count or price can remain beside the original filing. Exact duplicates are collapsed.
 
 EDGAR requests send `SEC_USER_AGENT` when it is set. The fallback is `cwally-alerts research bot admin@cwally-alerts.local` because EDGAR returns 403 when the agent has no contact token. The client stays under 10 requests per second (`sec_max_per_second`, default 7).

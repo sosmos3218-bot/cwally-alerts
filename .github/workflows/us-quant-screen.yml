@@ -81,7 +81,7 @@ jobs:
         if: success()
         env:
           PERSIST_BRANCH: ${{ github.ref_name }}
-        # Same helper as port/flow state commits: fetch, rebase onto that branch, push.
-        # 5 tries, backoff 5/15/30/60s. No force-push. A conflict under
-        # screeners/output/us is not auto-resolved (the helper only keeps state/).
-        run: bash scripts/persist_state.sh "Record US quant screen outputs" screeners/output/us
+        # Fetch, rebase --autostash onto that branch, rebuild diff against the
+        # newest earlier trade folder, then push. 5 tries, backoff 5/15/30/60s.
+        # No force-push. A conflict under screeners/output/us keeps this run's files.
+        run: bash scripts/us_quant_persist.sh "Record US quant screen outputs"

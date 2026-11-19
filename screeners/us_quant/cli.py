@@ -35,9 +35,17 @@ def main(argv: list[str] | None = None) -> int:
     command.add_argument("--config")
     command.add_argument("--out")
     command.add_argument("--cache")
+    refresh = sub.add_parser("refresh-diff")
+    refresh.add_argument("--out")
     args = parser.parse_args(argv)
     if args.cmd == "selftest":
         return selftest()
+    if args.cmd == "refresh-diff":
+        from screeners.us_quant.pipeline import refresh_diff
+
+        out = Path(args.out) if args.out else ROOT / "screeners" / "output" / "us"
+        refresh_diff(out)
+        return 0
     config = load_config(Path(args.config) if args.config else None)
     as_of = _date(args.as_of) if args.as_of else default_as_of()
     run_date = _date(args.run_date) if args.run_date else default_run_date()

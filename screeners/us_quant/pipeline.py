@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import subprocess
 import zipfile
 from collections import Counter, defaultdict
@@ -13,12 +14,14 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
+from screeners.us_quant.cover import instance_name, parse_share_document, stamp_filing
 from screeners.us_quant.edgar_atom import atom_page_url, dedupe_accessions, parse_atom, within_cutoff
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
-from screeners.us_quant.facts import EXTRACT_VERSION, extract_companyfacts
+from screeners.us_quant.facts import EXTRACT_VERSION, extract_companyfacts, latest_domestic_row, select_shares, staleness_days
 from screeners.us_quant.http_util import HttpClient
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
-from screeners.us_quant.magic import rank_magic
+from screeners.us_quant.magic import apply_magic_guards, rank_magic
+from screeners.us_quant.verify_note import render_verification
 from screeners.us_quant.output_io import (
     DATA_SOURCES,
     copy_latest,
@@ -40,7 +43,7 @@ PERIODIC = DOMESTIC | {"20-F", "20-F/A", "40-F", "40-F/A"}
 MAGIC_COLUMNS = [
     "ticker", "cik", "name", "sic", "sic_description", "exchange",
     "price", "price_date", "price_source", "volume",
-    "shares", "shares_source", "shares_end", "shares_accession",
+    "shares", "shares_source", "shares_kind", "shares_end", "shares_accession",
     "market_cap", "total_debt", "debt_source", "cash", "cash_source",
     "enterprise_value", "ebit", "ebit_method", "ebit_period_end", "ebit_accession",
     "earnings_yield", "current_assets", "current_liabilities", "net_working_capital",
@@ -128,7 +131,8 @@ def run(as_of: date, run_date: date, config: dict, out_root: Path, cache: Path) 
     print(f"CANDIDATES {len(candidates)} price_failures {len(price_rows)}", flush=True)
     index_rows, form4_meta = phase("index", lambda: _index(client, cache, as_of, int(config["insider"]["lookback_days"])))
     facts_map, fact_errors = phase("facts", lambda: _facts(client, cache, candidates, index_rows))
-    screened = _screen(candidates, facts_map, fact_errors, as_of, config)
+    covers = phase("covers", lambda: _covers(client, cache, candidates, facts_map, as_of, config))
+    screened = _screen(candidates, facts_map, fact_errors, covers, as_of, config)
     insider_rows = phase(
         "insider",
         lambda: _insiders(
@@ -145,7 +149,7 @@ def run(as_of: date, run_date: date, config: dict, out_root: Path, cache: Path) 
     trade_s = as_of.isoformat()
     meta = _meta(config, run_date, as_of, screened, form4_meta, phases)
     folder = out_root / trade_s
-    _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s)
+    _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s, started.isoformat())
     digest = hash_folder(folder)
     elapsed = round((datetime.now(KST) - started).total_seconds(), 3)
     print(f"WROTE {folder} sha256 {digest} elapsed_sec {elapsed}", flush=True)
@@ -402,7 +406,8 @@ def _candidates(listings, shares, prices, failures, sic_map, config, client, cac
                     for row, quote in sorted(quotes, key=lambda item: item[0]["ticker"])
                 ],
                 "primary": primary[0]["ticker"],
-                "multi_class": len(quotes) > 1,
+                "listed_tickers": sorted({row["ticker"] for row in rows}),
+                "multi_class": listed_multi_class(rows),
                 "prefilter_shares": float(share["val"]),
                 "prefilter_share_source": share["source"],
                 "prefilter_mcap": estimated,
@@ -479,12 +484,12 @@ def _index(client: HttpClient, cache: Path, as_of: date, lookback_days: int):
     else:
         print("ATOM skipped daily index covers the trade date", flush=True)
     rows = [row for row in rows if row["form"] not in {"4", "4/A"} or _row_in_window(row, start, cutoff)]
-    form4_dates = [row["filed"] for row in rows if row["form"] in {"4", "4/A"}]
-    accepted = [row["accepted"] for row in rows if row["form"] in {"4", "4/A"} and row.get("accepted")]
+    form4_rows = [row for row in rows if row["form"] in {"4", "4/A"}]
+    form4_dates = [row["filed"] for row in form4_rows]
     meta = {
         "form4_acceptance_cutoff": cutoff.isoformat(),
         "form4_latest_filing_date": max(form4_dates) if form4_dates else None,
-        "form4_latest_acceptance": max(accepted) if accepted else None,
+        "form4_latest_acceptance": form4_acceptance_value(form4_rows),
         "insider_filings_through": max(form4_dates) if form4_dates else None,
     }
     print(
@@ -596,7 +601,7 @@ def _facts(client: HttpClient, cache: Path, candidates: list[dict], index_rows: 
     return out, errors
 
 
-def _screen(candidates, facts_map, fact_errors, as_of: date, config: dict) -> dict:
+def _screen(candidates, facts_map, fact_errors, covers, as_of: date, config: dict) -> dict:
     floor = float(config["min_market_cap"])
     limits = config["staleness"]
     min_score = int(config["fscore"]["min_score"])
@@ -635,11 +640,16 @@ def _screen(candidates, facts_map, fact_errors, as_of: date, config: dict) -> di
         magic = None
         if item["multi_class"]:
             magic_reason = "multi_class_shares_unsplit"
-            magic_detail = ",".join(row["ticker"] for row in item["tickers"])
+            magic_detail = ",".join(item.get("listed_tickers") or [row["ticker"] for row in item["tickers"]])
         else:
-            magic = build_magic_inputs(facts, as_of, price, limits)
+            magic = build_magic_inputs(facts, as_of, price, limits, share_rows=covers.get(cik) or None)
             magic_reason = "" if magic.get("ok") else magic.get("reason") or "magic_incomplete"
             magic_detail = "" if magic.get("ok") else str(magic.get("detail") or "")
+            if magic.get("ok"):
+                guarded = apply_magic_guards(magic, config.get("magic") or {})
+                if guarded:
+                    magic_reason, magic_detail = guarded
+                    magic = {"ok": False, "reason": magic_reason, "detail": magic_detail}
         if magic and magic.get("ok") and float(magic["market_cap"]) < floor:
             continue
         if magic_reason == "shares_outstanding_missing" and item["prefilter_mcap"] < floor:
@@ -724,6 +734,7 @@ def _magic_public(base: dict, magic: dict, multi: bool) -> dict:
         "volume": int(quote["volume"]),
         "shares": magic["shares"],
         "shares_source": magic["shares_source"],
+        "shares_kind": magic.get("shares_kind") or "instant",
         "shares_end": shares.get("end"),
         "shares_accession": shares.get("accn"),
         "market_cap": magic["market_cap"],
@@ -872,12 +883,13 @@ def _meta(config, run_date, as_of, screened, form4_meta, phases) -> dict:
             "fscore_listed": len(screened["fscore"]),
             "universe": len(screened["universe_ciks"]),
             "excluded": len(screened["excluded"]),
+            "excluded_reasons": dict(sorted(Counter(row["reason"] for row in screened["excluded"]).items())),
             "fscore_skip_reasons": screened["fscore_skip_reasons"],
         },
     }
 
 
-def _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s):
+def _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s, generated_at: str):
     # phases differ between a cold run and a warm run. Keep them out of the hashed files.
     public = dict(meta)
     magic_ids = {row["ticker"] for row in screened["magic"]}
@@ -927,6 +939,9 @@ def _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s):
     write_table(folder, "excluded", public, screened["excluded"], EXCLUDED_COLUMNS)
     write_table(folder, "price_failures", public, price_rows, PRICE_COLUMNS)
     write_table(folder, "diff", public, diff_rows, DIFF_COLUMNS)
+    note = render_verification(public, screened, generated_at)
+    (folder / "VERIFICATION.md").write_text(note, encoding="utf-8")
+    (out_root / "VERIFICATION.md").write_text(note, encoding="utf-8")
     copy_latest(folder, out_root / "latest")
 
 
@@ -960,3 +975,149 @@ def default_as_of() -> date:
     while day.weekday() >= 5:
         day -= timedelta(days=1)
     return day
+
+
+def form4_acceptance_value(rows: list[dict]) -> str | None:
+    """Latest acceptance time, or an explicit marker when the index has none."""
+    form4 = [row for row in rows if row.get("form") in {"4", "4/A"}]
+    accepted = [str(row["accepted"]) for row in form4 if row.get("accepted")]
+    if accepted:
+        return max(accepted)
+    if form4:
+        return "unknown (master.idx)"
+    return None
+
+
+def listed_multi_class(rows: list[dict]) -> bool:
+    """More than one common ticker in the exchange file, priced or not."""
+    return len({row.get("ticker") for row in rows if row.get("ticker")}) > 1
+
+
+def _covers(client: HttpClient, cache: Path, candidates, facts_map, as_of: date, config: dict) -> dict[str, list]:
+    """Filing share rows when the undimensioned cover count is stale or missing."""
+    limits = config["staleness"]
+    max_age = int(limits["max_share_age_days"]) if "max_share_age_days" in limits else 180
+    statement_cap = int(limits["max_statement_age_days"]) + 20
+    jobs = []
+    for item in candidates:
+        if item.get("multi_class"):
+            continue
+        facts = facts_map.get(item["cik"])
+        if not facts:
+            continue
+        preview = select_shares(facts, as_of, max_age_days=max_age)
+        if not preview.get("dei_stale_or_missing"):
+            continue
+        latest = latest_domestic_row(facts, as_of)
+        if latest is None or not latest.get("accn"):
+            continue
+        if staleness_days(latest["filed"], as_of) > statement_cap:
+            continue
+        jobs.append((item["cik"], latest["accn"], latest["form"], latest["filed"]))
+    print(f"COVER filings {len(jobs)}", flush=True)
+    if not jobs:
+        return {}
+
+    def one(job: tuple) -> tuple[str, list]:
+        cik, accn, form, filed = job
+        path = cache / "cover" / f"{accn}.json"
+        if path.exists():
+            cached = _read_json(path)
+            return cik, list(cached.get("rows") or [])
+        try:
+            rows = _download_cover(client, cik, accn, form, filed)
+        except Exception as exc:  # noqa: BLE001
+            print(f"COVER fail {cik} {accn} {type(exc).__name__}", flush=True)
+            return cik, []
+        _write_json(path, {"accn": accn, "rows": rows})
+        return cik, rows
+
+    out: dict[str, list] = {}
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(one, job) for job in jobs]
+        done = 0
+        for future in as_completed(futures):
+            cik, rows = future.result()
+            if rows:
+                out[cik] = rows
+            done += 1
+            if done % 100 == 0:
+                print(f"COVER {done}/{len(jobs)}", flush=True)
+    print(f"COVER parsed {len(out)}", flush=True)
+    return out
+
+
+def _download_cover(client: HttpClient, cik: str, accn: str, form: str, filed: str) -> list[dict]:
+    folder = accn.replace("-", "")
+    base = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{folder}"
+    raw = client.get(f"{base}/index.json", timeout=60, missing_ok=True)
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    items = ((payload.get("directory") or {}).get("item")) or []
+    if isinstance(items, dict):
+        items = [items]
+    name = instance_name(items)
+    if not name:
+        return []
+    body = client.get(f"{base}/{name}", timeout=120, missing_ok=True)
+    if not body:
+        return []
+    return stamp_filing(parse_share_document(body), accn, form, filed)
+
+
+def refresh_diff(out_root: Path) -> str | None:
+    """Point diff at the newest committed trade folder older than this run.
+
+    Returns that folder name, or None when this run is the first saved date.
+    """
+    if not out_root.exists():
+        return None
+    folders = [
+        path
+        for path in out_root.iterdir()
+        if path.is_dir() and path.name not in {"latest"} and (path / "metadata.json").exists() and (path / "magic_formula.json").exists()
+    ]
+    if not folders:
+        return None
+    current = max(folders, key=lambda path: path.name)
+    meta = _read_json(current / "metadata.json")
+    trade_s = str(meta.get("trade_date") or current.name)
+    previous = previous_trade_folder(out_root, trade_s)
+
+    def load_rows(name: str) -> list[dict]:
+        path = current / f"{name}.json"
+        if not path.exists():
+            return []
+        payload = _read_json(path)
+        return list(payload.get("rows") or [])
+
+    diff_rows = _diff(previous, load_rows("magic_formula"), load_rows("fscore"), load_rows("insider_buying"), load_rows("intersection"))
+    meta["previous_trade_date"] = None if previous is None else previous.name
+    write_meta(current, meta)
+    write_table(current, "diff", meta, diff_rows, DIFF_COLUMNS)
+    note = current / "VERIFICATION.md"
+    if note.exists():
+        text = note.read_text(encoding="utf-8")
+        text = _stamp_previous_line(text, meta["previous_trade_date"])
+        note.write_text(text, encoding="utf-8")
+        parent = out_root / "VERIFICATION.md"
+        if parent.exists() or current.name == max(path.name for path in folders):
+            parent.write_text(text, encoding="utf-8")
+    copy_latest(current, out_root / "latest")
+    print(f"DIFF baseline {meta['previous_trade_date']} -> {current.name}", flush=True)
+    return meta["previous_trade_date"]
+
+
+def _stamp_previous_line(text: str, previous: str | None) -> str:
+    shown = "None" if previous is None else previous
+    updated, count = re.subn(
+        r"Previous trade date for diff `[^`]*`",
+        f"Previous trade date for diff `{shown}`",
+        text,
+        count=1,
+    )
+    return updated if count else text
