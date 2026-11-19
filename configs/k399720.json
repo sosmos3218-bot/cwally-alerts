@@ -1,0 +1,146 @@
+{
+  "name": "k399720",
+  "title_prefix": "[K399720]",
+  "display": "가온칩스(399720) DART 공시와 KRX 종가 구간. 매수/매도 지시 아님.",
+  "approval": "사용자 요청 2026-11-19. 기존 k203780 19:00 슬롯에 부착. 새 cron, 새 워크플로 없음.",
+  "created_at": "2026-11-19T11:00:00+09:00",
+  "code": "399720",
+  "corp_name": "가온칩스",
+  "market": "KOSDAQ",
+  "dart_corp_code": "01364747",
+  "dart_corp_code_note": "2026-11-19 dart.fss.or.kr 회사검색 select('01364747'), 종목코드 399720. OpenDART corpCode.xml 은 이 환경에 OPENDART_API_KEY 가 없어 호출하지 않음. 목록 API 가 거절하면 공개 DART 검색으로 넘어감.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "k399720",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 평일 19:00 k203780 슬롯(cron-job.org 8698629 정시 + GitHub 0 10 * * 1-5 백업). KRX 거래일만. 수동 job=k399720 은 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "lookback_days": 400,
+  "sources": {
+    "filings": "OpenDART list.json (OPENDART_API_KEY, corp_code 01364747) 우선. 키가 없거나 실패하면 dart.fss.or.kr 회사명 검색. 그것도 실패하면 KIND, 그다음 네이버 공시.",
+    "documents": "공급계약과 연간 실적만 본문을 읽음. OpenDART document.xml 우선, 없으면 DART 뷰어.",
+    "annual_numbers": "사업보고서는 OpenDART fnlttSinglAcnt.json (2026, 11011, 연결 CFS 우선). 없으면 뷰어 손익계산서. 잠정은 본문만. 숫자를 못 읽으면 조건 a 를 충족으로 두지 않음.",
+    "price": "scripts/krx_close.py 정규장 종가(Daum, 실패 시 네이버 15:30 분봉). 네이버 일봉 종가는 쓰지 않음."
+  },
+  "verified": {
+    "checked_at": "2026-11-19",
+    "method": "공개 DART 뷰어(dart.fss.or.kr)로 rcept_no 20261116000452 본문을 읽음. 이 실행 환경에는 OPENDART_API_KEY 가 없어 OpenDART JSON API 는 호출하지 않음. 없는 값은 null.",
+    "provisional_rcept_no": null,
+    "provisional_note": "2026-01-01~2026-11-19 공개 DART 목록에 영업(잠정)실적 제목이 없음. 3분기는 이미 분기보고서로 제출됨.",
+    "quarterly_report": {
+      "report_nm": "분기보고서",
+      "rcept_no": "20261116000452",
+      "rcept_dt": "2026-11-16",
+      "dcm_no": "11657848",
+      "viewer": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20261116000452",
+      "period_label": "제15기 3분기 2026.01.01 부터 2026.09.30 까지",
+      "q3_column": "연결 포괄손익계산서와 별도 포괄손익계산서의 3개월 열. 단위 원.",
+      "consolidated_q3_revenue_won": 26642145856,
+      "consolidated_q3_operating_profit_won": 2986008422,
+      "consolidated_q3_net_income_won": -602489752,
+      "consolidated_q3_prior_revenue_won": 11063148053,
+      "consolidated_q3_prior_operating_profit_won": -7277192133,
+      "separate_q3_revenue_won": 26642145856,
+      "separate_q3_operating_profit_won": 3028666011,
+      "ytd_revenue_won": 68522129035,
+      "ytd_operating_profit_won": -591994126,
+      "ytd_net_income_won": -1412891030,
+      "ytd_prior_revenue_won": 35403074112,
+      "derived_q3_operating_margin": "11.21%",
+      "derived_q3_revenue_yoy": "+140.8%",
+      "derived_note": "이익률과 전년비는 공시에 적힌 비율이 아니라 위 원 단위 금액을 나눈 값."
+    },
+    "backlog": {
+      "rcept_no": "20261116000452",
+      "section": "II. 사업의 내용 4. 매출 및 수주상황",
+      "unit": "백만원",
+      "asof_note": "보고서 작성기준일. 분기보고서 기준일은 2026-09-30.",
+      "rows_million_won": [
+        {"name": "주문형 반도체 ASIC 설계 개발", "order_date": "2025-09-15", "end": "2027-06-30", "total": 9753, "recognized": null, "backlog": 9753},
+        {"name": "주문형 반도체 설계 개발", "order_date": "2025-10-29", "end": "2028-07-31", "total": 36716, "recognized": 16959, "backlog": 19757},
+        {"name": "주문형 반도체 설계 개발", "order_date": "2025-12-24", "end": "2027-10-01", "total": 17937, "recognized": 4789, "backlog": 13148},
+        {"name": "ASIC 반도체 설계 개발", "order_date": "2026-06-10", "end": "2028-06-30", "total": 27269, "recognized": 4701, "backlog": 22568}
+      ],
+      "backlog_million_won": 65226,
+      "backlog_won": 65226000000
+    },
+    "balance_sheet_2026_09_30_consolidated_won": {
+      "rcept_no": "20261116000452",
+      "section": "연결 재무상태표 제15기 3분기말",
+      "cash": 35702420967,
+      "short_term_financial_assets": 14508800000,
+      "convertible_bonds": 15324223767,
+      "long_term_borrowings": 4825000000,
+      "net_cash_won": null,
+      "net_cash_note": "공시에 순현금 376억이라는 행이 없음. 현금+단기금융상품-전환사채-장기차입금은 약 301억이라 376억과 맞지 않음. 순현금은 null."
+    },
+    "sales_table_million_won": {
+      "rcept_no": "20261116000452",
+      "ytd_2026_q3": 68522,
+      "fy2025": 68510,
+      "fy2024": 96492,
+      "note": "매출 및 수주상황 표. 단위 백만원(반올림). 2026년 3분기 열 68,522는 손익계산서 누적 68,522,129,035원과 맞음."
+    },
+    "two_nano": {
+      "rcept_no": "20261116000452",
+      "section": "II. 사업의 내용",
+      "quote": "2나노 GAA(Gate-All-Around) 공정을 기반으로 데이터센터 및 HPC용 대형(Big Die) AI 반도체부터 Edge 환경에서 구동되는 차세대 생성형 AI 반도체까지 다양한 AI 반도체 개발을 진행",
+      "deepx_or_dx_m2": null,
+      "deepx_note": "같은 사업의 내용에서 DeepX, 딥엑스, DX-M2 문자열은 없었음. 특정 고객 프로젝트로 확인하지 않음."
+    },
+    "price": {
+      "source": "scripts/krx_close.py Daum 정규장",
+      "close_2026_11_18": 36900,
+      "high_52w_intra": 83200,
+      "high_52w_day": "2026-04-27",
+      "low_52w_intra": 25750,
+      "low_52w_day": "2026-11-06",
+      "low_52w_close": 27150,
+      "window": "2025-11-18~2026-11-18"
+    }
+  },
+  "unverified": {
+    "ttm_revenue_won": null,
+    "ttm_net_income_won": null,
+    "net_cash_won": null,
+    "deepx_dx_m2": null,
+    "note": "붙여 넣은 분석의 TTM 매출 약 860억, TTM 순손실 약 55억, 순현금 약 376억, DeepX DX-M2 는 위 공시에서 확인하지 못해 null. 수주잔고는 65억이 아니라 65,226백만원(652.26억)."
+  },
+  "lines": [
+    {
+      "key": "low52",
+      "op": "le",
+      "level": 25750,
+      "rearm_op": "gt",
+      "rearm": 25750,
+      "priority": 4,
+      "label": "52주 저점 이탈 경고",
+      "why": "2025-11-18~2026-11-18 Daum 정규장 장중 저가 25,750원(2026-11-06). 종가가 그 장중 저가 이하로 들어온 날 1번. 같은 값 위로 나오면 재무장."
+    },
+    {
+      "key": "watch",
+      "op": "ge",
+      "level": 50000,
+      "rearm_op": "lt",
+      "rearm": 50000,
+      "priority": 3,
+      "label": "관찰 구간",
+      "why": "목표가 아님. 종가 50,000원 이상에 들어온 날 1번. 그 아래로 나오면 재무장. 수준은 이 값으로 바꿈."
+    }
+  ],
+  "annual": {
+    "year": 2026,
+    "fiscal_label": "제15기",
+    "revenue_min_won": 100000000000,
+    "op_gt": 0,
+    "business_report_from": "2027-01-01",
+    "provisional_from": "2027-01-01",
+    "provisional_until": "2027-03-31",
+    "reprt_code": "11011",
+    "note": "조건 a: 2026년 연간 매출 1,000억 이상이고 영업이익이 0보다 큼. 2027-01-01 이후 사업보고서, 또는 2027-03-31까지 연간 잠정실적. 분기 3개월 열은 연간으로 쓰지 않음. 숫자를 못 읽으면 충족이 아님."
+  },
+  "keywords": ["2nm", "2나노", "DeepX", "딥엑스", "지연", "해지", "취소"],
+  "first_run_note": "seeded 가 없으면 창 안의 대상 공시를 seen 으로만 기록하고 발송하지 않음. 종가가 있으면 구간 안/밖만 기록하고 발송하지 않음. 이미 구간 안이면 무장 해제.",
+  "ends_kst": "2027-11-19 23:59",
+  "ends_note": "2026년 연간 실적과 이후 수주, 해지, 2나노 문장을 1년 본다. 그 뒤 연장 또는 종료."
+}
