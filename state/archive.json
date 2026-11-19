@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-19 23:00 KST",
+  "updated_at": "2026-11-19 23:31 KST",
   "items": [
+    {
+      "id": "ttR2EG5f1Qfi",
+      "topic": "cwally-port",
+      "title": "[GRAB] 인도네시아 ojol 후속 규정 뉴스 1건 | 참고",
+      "message": "이게 뭐 알림: 인도네시아 8% 수수료 상한(ojol)이 음식, 물품 배달로 넓어지는지(Komdigi, Perpres 후속 규정) 새 기사 알림. GRAB 최악 시나리오의 핵심 위험입니다.\n지금 결과/상태: 조건: 규제 단어와 배달/후속 규정 단어가 함께 있는 새 제목 1건. 현재가 3.15달러. 시각 2026-11-19 23:30 KST.\n- 11/19 23:10 Dasco Minta Komdigi Bukan Ruang Diskusi Bahas Tarif Makanan dan Barang Ojol - MetroTVNews.com https://news.google.com/rss/articles/CBMiuAFBVV95cUxNNUk0N0xnbmdMMERudl91bURSN2VZYWZMYmRhbks4cjVmQ3k2T0pnZ2IzamVFTDBMYW9JdHcxdFlkbjlKbk5GOURPQUcxdVY2T1FEX3g5Z2JmRjBIdHNtYWI2VjBGRTVacWpPMUdLWnRnV1E5Vmkyc09vM3lfVHRlWUJYdGlYRFlIWGZvX2xJYUE3VTFTdlVzbnhCc2RsbS01ZjBsY2QwdjFQQkNpcGVWTlRxam1vVl9Q?oc=5\n지금 할 일: 후속 규정 일정과 배달 포함 여부만 확인. 아직 매매 판단 근거 아님.\n나중에: 같은 기사(링크, 제목)는 다시 보내지 않습니다. 미국 거래일마다 첫 정규장 실행에서 한 번 봅니다.\n익절/줄일 때: 배달 확대가 확정되면 적정가 4.15달러 가정을 낮추고 비중 축소 검토.\n하지 말 것: 제목만 보고 주문, 검토/제안 단계 기사를 확정으로 읽기.\n꺼지는 때: 종료일 없음 (수동 삭제 전까지 무기한)",
+      "priority": 3,
+      "tags": [
+        "motor_scooter"
+      ],
+      "time": 1795098628
+    },
     {
       "id": "vQiU46f3r7In",
       "topic": "cwally-ops",
@@ -4422,17 +4433,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1794182936
-    },
-    {
-      "id": "Quk862EDCDUE",
-      "topic": "cwally-port",
-      "title": "[280930] 주간 점검 | 신규 비추천",
-      "message": "이게 뭐 알림: KODEX 미국러셀2000(H) 280930 조건 점검. 2026-10-07 분석 기준. 매주 첫 거래일 정기 요약입니다.\n지금 결과/상태:\n- 종가 15,345원 (2026-11-06 완료 세션), 구간: 13,400원 초과 17,320원 미만\n- 러셀2000 2,754.11 (2026-11-06, 2,400 이상)\n- 미국 10년물 4.86% (2026-11-06, 4.50% 이상). 연준 인상 중단은 확인하지 않음\n- 원/달러 1,361.00원 (2026-11-09, 1,500원 미만)\n- 시가총액 209억원 (1,000억원 미만)\n- 하루 거래대금 약 1.48억원. 한 번에 1,475만원(10%)을 넘기지 마세요.\n지금 할 일: 2026-10-07 분석이 유지됩니다. 새로 담지 마세요. 환헤지가 꼭 필요하고 금액이 아주 작을 때만 기능합니다.\n나중에: 10년물 4.50% 아래, 러셀2000 2,400 아래, 시가총액 1,000억원 이상, 원/달러 1,500원 이상이 판단이 바뀌는 조건입니다.\n익절/줄일 때: 고점 돌파를 추격해 비중이 커졌으면 나눠 줄이세요. 원/달러 1,500원대면 환헤지 유지를 다시 계산하세요.\n하지 말 것: 추격매수, 가격만 보고 매수, iNAV보다 비싸게 매수, 하루 거래대금의 10%를 한 번에 매수.\n출처: https://m.stock.naver.com/domestic/stock/280930\n꺼지는 때: 2027-06-10 09:00 KST (2026-10-07 분석 구간 종료. 이후 발송 전 기준값 수동 갱신 필요)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182930
     }
   ]
 }
