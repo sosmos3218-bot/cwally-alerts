@@ -1,0 +1,10 @@
+{
+  "updated_at": null,
+  "seeded": false,
+  "price_seeded": false,
+  "seen": [],
+  "arms": {},
+  "last_close": null,
+  "ops_day": null,
+  "note": "첫 auto 실행이 기존 공시를 시드하고 종가 구간을 기록한다. 그 실행은 발송하지 않는다."
+}
