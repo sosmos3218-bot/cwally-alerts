@@ -319,8 +319,8 @@ def ladder_line(ladder: list[tuple[str, float]], price: float | None, log: list[
         return head + "확인 불가(장중가 조회 실패)"
     parts = []
     for i, (_key, lvl) in enumerate(ladder, 1):
-        d = (lvl / price - 1) * 100
-        parts.append(f"{i}차 {lvl:,.0f}원 " + (f"장중 도달(선 대비 {(price / lvl - 1) * 100:+.1f}%)" if price <= lvl else f"{d:+.1f}%"))
+        d = (price / lvl - 1) * 100
+        parts.append(f"{i}차 {lvl:,.0f}원 " + (f"장중 도달(선 대비 {d:+.1f}%)" if price <= lvl else f"선 대비 {d:+.1f}%"))
     return head + f"현재 {price:,.0f}원 기준 남은 거리, " + ", ".join(parts)
 
 
@@ -593,15 +593,17 @@ def self_test() -> int:
     check("slot stale 46 min", current_slot(cfg, t("2026-10-23 11:46"))[0], None)
     check("after close", current_slot(cfg, t("2026-10-23 15:31"))[0], None)
     check("weekend", current_slot(cfg, t("2026-10-24 11:05"))[0], None)
-    check("after ends", current_slot(cfg, t("2026-11-20 11:05"))[0], None)
+    check("after ends", current_slot(cfg, t("2026-12-03 11:50"))[0], None)
     check("year guard", current_slot(cfg, t("2027-10-22 11:05"))[0], None)
     check("13:00 slot removed", current_slot(cfg, t("2026-10-27 13:05"))[0], None)
     check("10:00 slot removed", current_slot(cfg, t("2026-10-27 10:05"))[0], None)
     check("11/5 11:00 still a slot", current_slot(cfg, t("2026-11-05 11:05"))[0], "2026-11-05 11:00")
-    check("last slot 11/19 11:00", current_slot(cfg, t("2026-11-19 11:05"))[0], "2026-11-19 11:00")
+    check("11/19 11:00 still a slot", current_slot(cfg, t("2026-11-19 11:05"))[0], "2026-11-19 11:00")
+    check("last slot 12/3 11:00", current_slot(cfg, t("2026-12-03 11:05"))[0], "2026-12-03 11:00")
     check("next after 10/30 is 11/2 11:00", next_slot(cfg, "2026-10-30 11:00", t("2026-10-30 11:05")), "2026-11-02 11:00")
     check("next after 11/5 is 11/6", next_slot(cfg, "2026-11-05 11:00", t("2026-11-05 11:05")), "2026-11-06 11:00")
-    check("no next after 11/19", next_slot(cfg, "2026-11-19 11:00", t("2026-11-19 11:05")), None)
+    check("next after 11/19 is 11/20", next_slot(cfg, "2026-11-19 11:00", t("2026-11-19 11:05")), "2026-11-20 11:00")
+    check("no next after 12/3", next_slot(cfg, "2026-12-03 11:00", t("2026-12-03 11:05")), None)
     m = cfg["muse"]
     block = re.compile(m["block_re"])
     check("spam blocked", bool(block.search("베트맨 토토 앱 설정 변경 전 확인할 적용 시점")), True)
@@ -615,7 +617,7 @@ def self_test() -> int:
     lad = load_ladder([])
     check("ladder read from 000660 config (3 buy lines, high first)", [k for k, _ in lad], ["buy1", "buy2", "buy3"])
     ll = ladder_line([("buy1", 1270000.0), ("buy2", 1160000.0), ("buy3", 1050000.0)], 1127000.0, [])
-    check("ladder pct distance", "1차 1,270,000원 장중 도달(선 대비 -11.3%)" in ll and "3차 1,050,000원 -6.8%" in ll, True)
+    check("ladder pct distance", "1차 1,270,000원 장중 도달(선 대비 -11.3%)" in ll and "3차 1,050,000원 선 대비 +7.3%" in ll, True)
     check("ladder notes close-based [000660]", "[000660]은 KRX 종가에 발화" in ll, True)
     check("ladder touched intraday", "장중 도달" in ladder_line([("buy1", 1270000.0)], 1200000.0, []), True)
     check("ladder no price -> 확인 불가", "확인 불가" in ladder_line([("buy1", 1270000.0)], None, []), True)

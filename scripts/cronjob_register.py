@@ -138,7 +138,7 @@ PULSE_TITLE = "cwally mktpulse 11 KST weekdays"
 PULSE_OLD_TITLES = ("cwally mktpulse 10/11/13/15 KST weekdays",)
 PULSE_HOURS = [11]
 PULSE_OLD_HOURS = [10, 11, 13, 15]
-PULSE_EXPIRES = 20261119115959  # configs/mktpulse.json ends_kst 2026-11-19 (last slot 11:00; extended from 11/5, chat 2026-11-04)
+PULSE_EXPIRES = 20261203115959  # configs/mktpulse.json ends_kst 2026-12-03 (last slot 11:00; extended from 11/19, chat 2026-11-19)
 PULSE_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": PULSE_EXPIRES, "minutes": [0], "hours": PULSE_HOURS,
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
 TSLASPCX_JOB_ID = 8711128  # created 2026-10-24 12:38 KST by register_tslaspcx
@@ -624,13 +624,13 @@ def run_update_pulse(now: datetime) -> int:
     if title not in (PULSE_TITLE,) + PULSE_OLD_TITLES:
         raise Stop(BAD_INPUT, f"job {PULSE_JOB_ID} has unexpected title {title!r}; not touching it")
     sc = got.get("schedule") or {}
-    if title == PULSE_TITLE and all(sc.get(k) == v for k, v in PULSE_SCHEDULE.items()):
+    if title == PULSE_TITLE and got.get("enabled") and all(sc.get(k) == v for k, v in PULSE_SCHEDULE.items()):
         print("skip: already at target")
         return SKIP
     if env("CRONJOB_DRY_RUN") == "1":
         print(f"dry run ok: would set job {PULSE_JOB_ID} to {PULSE_TITLE!r} Mon-Fri {PULSE_HOURS}:00 Asia/Seoul, expiresAt {PULSE_EXPIRES}")
         return 0
-    call("PATCH", f"/jobs/{PULSE_JOB_ID}", key, {"job": {"title": PULSE_TITLE, "schedule": dict(PULSE_SCHEDULE)}})
+    call("PATCH", f"/jobs/{PULSE_JOB_ID}", key, {"job": {"title": PULSE_TITLE, "enabled": True, "schedule": dict(PULSE_SCHEDULE)}})
     print("after:")
     print_job(call("GET", f"/jobs/{PULSE_JOB_ID}", key).get("jobDetails") or {})
     return 0
