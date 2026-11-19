@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-18T15:40:42+09:00",
-  "trade_date": "2026-11-18",
+  "generated_at": "2026-11-19T15:40:42+09:00",
+  "trade_date": "2026-11-19",
   "demo": false,
   "params": {
     "account_krw": 100000000,
