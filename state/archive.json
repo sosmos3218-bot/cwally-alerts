@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-19 11:43 KST",
+  "updated_at": "2026-11-19 12:44 KST",
   "items": [
+    {
+      "id": "634WpphN4kKY",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts",
+      "message": "2026-11-19 12:14 KST | OPS | port-alerts / \n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/44450056024",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795058095
+    },
     {
       "id": "ktbN7vlZlpXU",
       "topic": "cwally-port",
@@ -4422,17 +4433,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1794182487
-    },
-    {
-      "id": "U50POPfyQDWQ",
-      "topic": "cwally-port",
-      "title": "[2UB] 005387/005380 주간 | 추매",
-      "message": "2026-11-09 09:01 KST | 2UB | 현대차2우B 005387\n이게 뭐 알림: 현대차2우B 보유 전략 주간 체크입니다. 2우B만 보유.\n지금 상태: 2우B 149,800원 / 보통 279,500원 / 괴리 46.4% / 배당수익 6.7%\n지금 할 일: 16.5만~17.5만 또는 16.45만 이하에서만 추가.\n나중에: 다음 배당락은 11월 말. 락 당일 급락은 손절이 아님.\n익절/줄일 때: 괴리 35%(1차)·25%(2차)·20% 이하 또는 26~28만.\n하지 말 것: 단타, 21만·괴리 40% 미만 추매, 보통주 호환.",
-      "priority": 4,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182476
     }
   ]
 }
