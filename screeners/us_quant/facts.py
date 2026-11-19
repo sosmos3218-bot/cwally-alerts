@@ -26,6 +26,7 @@ roll-up is not used.
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta
 
 KEEP_FORMS = {"10-K", "10-K/A", "10-Q", "10-Q/A", "20-F", "20-F/A", "40-F", "40-F/A"}
@@ -455,16 +456,268 @@ def select_cash(facts: dict, as_of: date, end: str | None = None) -> dict:
     return {"ok": False, "reason": "cash_missing", "end": end}
 
 
-def select_shares(facts: dict, as_of: date) -> dict:
-    """Cover-page or common-stock shares. Weighted averages are not outstanding shares."""
-    for taxonomy, tag in (
-        ("dei", "EntityCommonStockSharesOutstanding"),
-        ("us-gaap", "CommonStockSharesOutstanding"),
-    ):
-        item = select_instant(facts, tag, as_of, taxonomy=taxonomy)
-        if item is not None and item["value"] > 0:
-            return {"ok": True, "provisional": False, "value": item["value"], "source": f"{taxonomy}:{tag}", "component": item}
-    return {"ok": False, "reason": "shares_outstanding_missing"}
+# A 10-for-1 split stays. A 500x jump is the known "three extra zeros" scale error.
+SHARE_SCALE_RATIO = 500
+
+_SHARE_SPECS = (
+    ("dei", "EntityCommonStockSharesOutstanding", "instant", 3),
+    ("us-gaap", "CommonStockSharesOutstanding", "instant", 2),
+    ("us-gaap", "WeightedAverageNumberOfSharesOutstandingBasic", "duration", 1),
+)
+
+_DEBT_MEMBER = re.compile(r"(Note|Bond|Debenture|Debt|Preferred|Warrant|Right|Unit)", re.IGNORECASE)
+_EQUITY_MEMBER = re.compile(
+    r"(CommonClass|Class[A-Z]Member|Voting|Nonvoting|Ordinary|CommonStockMember|CapitalStock)",
+    re.IGNORECASE,
+)
+_EQUITY_TITLE_SKIP = ("note", "bond", "debenture", "debt", "warrant", "preferred", "depositary", "right")
+_CLASS_HINT = re.compile(r"(class\s+[a-c]\b|voting|non-voting|nonvoting|series\s+[a-z0-9])", re.IGNORECASE)
+
+
+def _member_key(member: str) -> str:
+    return (member or "").split(":")[-1].strip()
+
+
+def _is_equity_member(member: str) -> bool:
+    if not member or _DEBT_MEMBER.search(member):
+        return False
+    return _EQUITY_MEMBER.search(member) is not None
+
+
+def _is_equity_title(text: str) -> bool:
+    low = re.sub(r"\s+", " ", text or "").strip().lower()
+    if not low or any(word in low for word in _EQUITY_TITLE_SKIP):
+        return False
+    if _CLASS_HINT.search(low) is None:
+        return False
+    return ("common stock" in low) or ("ordinary share" in low) or ("ordinary stock" in low) or ("common share" in low)
+
+
+def _title_key(text: str) -> str:
+    head = (text or "").split(",")[0]
+    return re.sub(r"\s+", " ", head).strip().lower()
+
+
+def _candidate_from_row(row: dict, source: str, kind: str, rank: int) -> dict | None:
+    try:
+        value = float(row.get("value", row.get("val")))
+    except (TypeError, ValueError):
+        return None
+    if value <= 0 or not row.get("end") or not row.get("filed"):
+        return None
+    start = row.get("start")
+    duration_days = 0
+    if kind == "duration":
+        if not start:
+            return None
+        duration_days = (_parse_date(row["end"]) - _parse_date(start)).days
+        if duration_days < 70 or duration_days > 400:
+            return None
+    elif not _is_instant_row(row):
+        return None
+    tag = source.split(":", 1)[-1]
+    return {
+        "tag": tag,
+        "source": source,
+        "kind": kind,
+        "rank": rank,
+        "start": start,
+        "end": row["end"],
+        "filed": row["filed"],
+        "val": value,
+        "value": value,
+        "accn": str(row.get("accn") or ""),
+        "form": str(row.get("form") or ""),
+        "fp": str(row.get("fp") or ""),
+        "fy": row.get("fy"),
+        "unit": row.get("unit") or "shares",
+        "member": str(row.get("member") or ""),
+        "duration_days": duration_days,
+    }
+
+
+def _share_candidates(facts: dict, as_of: date, extras: list[dict] | None) -> list[dict]:
+    found = []
+    for taxonomy, tag, kind, rank in _SHARE_SPECS:
+        for row in _as_of_rows(_rows(facts, tag, taxonomy), as_of):
+            item = _candidate_from_row(row, f"{taxonomy}:{tag}", kind, rank)
+            if item is not None:
+                found.append(item)
+    for row in extras or []:
+        if row.get("tag") == "Security12bTitle":
+            continue
+        source = str(row.get("source") or "")
+        if not source and row.get("taxonomy") and row.get("tag"):
+            source = f"{row['taxonomy']}:{row['tag']}"
+        kind = str(row.get("kind") or "instant")
+        rank = {"instant": 3, "duration": 1}.get(kind, 1)
+        for taxonomy, tag, spec_kind, spec_rank in _SHARE_SPECS:
+            if source == f"{taxonomy}:{tag}":
+                rank = spec_rank
+                kind = spec_kind
+                break
+        item = _candidate_from_row(row, source, kind, rank)
+        if item is None:
+            continue
+        if item["filed"] > as_of.isoformat() or item["end"] > as_of.isoformat():
+            continue
+        found.append(item)
+    return found
+
+
+def _drop_scaled_share_outliers(candidates: list[dict]) -> list[dict]:
+    """Drop a weighted-average count that is hundreds of times the latest instant count."""
+    instants = [row for row in candidates if row["kind"] == "instant" and row["value"] > 0]
+    if not instants:
+        return candidates
+    anchor = max(instants, key=lambda row: (row["end"], row["filed"], row["accn"]))
+    kept = []
+    for row in candidates:
+        if row["kind"] != "instant" and anchor["value"] > 0:
+            ratio = row["value"] / anchor["value"]
+            if ratio >= SHARE_SCALE_RATIO or ratio <= 1 / SHARE_SCALE_RATIO:
+                continue
+        kept.append(row)
+    return kept
+
+
+def _equity_classes(fresh: list[dict]) -> list[dict]:
+    instants = [
+        row
+        for row in fresh
+        if row["kind"] == "instant"
+        and row["source"] in {
+            "dei:EntityCommonStockSharesOutstanding",
+            "us-gaap:CommonStockSharesOutstanding",
+        }
+        and _is_equity_member(row.get("member") or "")
+        and row["value"] > 0
+    ]
+    if not instants:
+        return []
+    newest = max(row["end"] for row in instants)
+    newest_day = _parse_date(newest)
+    by_member: dict[str, dict] = {}
+    for row in instants:
+        end_day = _parse_date(row["end"])
+        if newest_day is None or end_day is None or (newest_day - end_day).days > 45:
+            continue
+        key = _member_key(row["member"])
+        current = by_member.get(key)
+        if current is None or (row["end"], row["filed"], row["accn"]) > (current["end"], current["filed"], current["accn"]):
+            by_member[key] = row
+    return [by_member[key] for key in sorted(by_member)]
+
+
+def equity_titles(extras: list[dict] | None) -> list[str]:
+    """Distinct common or ordinary class titles. Notes and preferred stock are not classes."""
+    found: dict[str, str] = {}
+    for row in extras or []:
+        if row.get("tag") != "Security12bTitle":
+            continue
+        text = str(row.get("text") or "").strip()
+        if not _is_equity_title(text):
+            continue
+        found.setdefault(_title_key(text), text)
+    return [found[key] for key in sorted(found)]
+
+
+def _class_detail(classes: list[dict]) -> str:
+    parts = []
+    for row in classes:
+        value = row["value"]
+        shown = int(value) if float(value).is_integer() else value
+        parts.append(f"{row['member']} {shown} end {row['end']} source {row['source']}")
+    return "; ".join(parts)
+
+
+def select_shares(facts: dict, as_of: date, max_age_days: int = 180, extras: list[dict] | None = None) -> dict:
+    """Newest fresh share count.
+
+    An older ``dei:EntityCommonStockSharesOutstanding`` fact never wins over a
+    newer count. Cover-page and common-stock instants outrank a weighted
+    average when the period end is the same. Counts older than ``max_age_days``
+    are rejected. Two positive common classes, or two class titles, are
+    ``multi_class_shares_unsplit``.
+    """
+    candidates = _drop_scaled_share_outliers(_share_candidates(facts, as_of, extras))
+    fresh = [row for row in candidates if staleness_days(row["end"], as_of) <= max_age_days]
+    dei_fresh = [
+        row
+        for row in fresh
+        if row["source"] == "dei:EntityCommonStockSharesOutstanding" and row["kind"] == "instant" and not row.get("member")
+    ]
+    classes = _equity_classes(fresh)
+    titles = equity_titles(extras)
+    if len(classes) >= 2:
+        return {
+            "ok": False,
+            "reason": "multi_class_shares_unsplit",
+            "detail": _class_detail(classes),
+            "classes": classes,
+            "dei_stale_or_missing": True,
+        }
+    if len(titles) >= 2:
+        return {
+            "ok": False,
+            "reason": "multi_class_shares_unsplit",
+            "detail": "titles " + " | ".join(titles),
+            "dei_stale_or_missing": not dei_fresh,
+        }
+    if not fresh:
+        if not candidates:
+            return {"ok": False, "reason": "shares_outstanding_missing", "detail": "", "dei_stale_or_missing": True}
+        newest = max(candidates, key=lambda row: (row["end"], row["filed"], row["accn"]))
+        age = staleness_days(newest["end"], as_of)
+        return {
+            "ok": False,
+            "reason": "stale_shares",
+            "detail": f"newest {newest['source']} end {newest['end']} age_days {age}",
+            "dei_stale_or_missing": True,
+            "newest_end": newest["end"],
+            "newest_source": newest["source"],
+        }
+    best_end = max(row["end"] for row in fresh)
+    pool = [row for row in fresh if row["end"] == best_end]
+    chosen = max(pool, key=lambda row: (row["rank"], row["duration_days"], row["filed"], row["accn"]))
+    component = {
+        "concept": chosen["tag"],
+        "start": chosen["start"],
+        "end": chosen["end"],
+        "value": chosen["value"],
+        "accn": chosen["accn"],
+        "form": chosen["form"],
+        "filed": chosen["filed"],
+        "fp": chosen["fp"],
+        "fy": chosen["fy"],
+        "member": chosen["member"],
+    }
+    return {
+        "ok": True,
+        "provisional": False,
+        "value": chosen["value"],
+        "source": chosen["source"],
+        "kind": "weighted_average" if chosen["kind"] == "duration" else "instant",
+        "end": chosen["end"],
+        "component": component,
+        "dei_stale_or_missing": not dei_fresh,
+    }
+
+
+def latest_domestic_row(facts: dict, as_of: date) -> dict | None:
+    """Latest 10-K or 10-Q fact filed on or before ``as_of``."""
+    best = None
+    domestic = {"10-K", "10-K/A", "10-Q", "10-Q/A"}
+    for rows in (facts.get("concepts") or {}).values():
+        for row in rows:
+            if row.get("form") not in domestic:
+                continue
+            filed = str(row.get("filed") or "")
+            if not filed or filed > as_of.isoformat():
+                continue
+            if best is None or (filed, str(row.get("accn") or "")) > (best["filed"], best["accn"]):
+                best = row
+    return best
 
 
 def select_point(facts: dict, tag: str, as_of: date, end: str) -> dict | None:

@@ -7,11 +7,13 @@ from datetime import date
 from pathlib import Path
 
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
+from screeners.us_quant.cover import instance_name, parse_share_document
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
-from screeners.us_quant.facts import select_debt, select_ttm_ebit
+from screeners.us_quant.facts import select_debt, select_shares, select_ttm_ebit
 from screeners.us_quant.fscore import score_f
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
-from screeners.us_quant.magic import earnings_yield, rank_magic, return_on_capital
+from screeners.us_quant.magic import apply_magic_guards, earnings_yield, rank_magic, return_on_capital
+from screeners.us_quant.pipeline import form4_acceptance_value, listed_multi_class, refresh_diff
 from screeners.us_quant.prices import parse_chart
 from screeners.us_quant.output_io import hash_folder, write_table
 from screeners.us_quant.universe import foreign_filer, is_common_listing, sic_block_reason
@@ -418,3 +420,272 @@ def test_output_hash_is_stable(tmp_path: Path):
     assert payload["meta"]["trade_date"] == "2026-11-12"
     assert payload["rows"][0]["run_date"] == "2026-11-13"
     assert payload["rows"][0]["earnings_yield"] == 0.125
+
+
+def _share_fact(tag, end, val, filed, accn, form="10-Q", start=None, fp="Q3", fy=2026):
+    row = _inst(tag, end, val, form=form, filed=filed, fp=fp, fy=fy, accn=accn, unit="shares")
+    if start:
+        row = _dur(tag, start, end, val, form=form, filed=filed, fp=fp, fy=fy, accn=accn)
+        row["unit"] = "shares"
+    return row
+
+
+def test_newer_share_count_beats_an_old_dei_fact():
+    """MA-like: 2010 cover count loses to the 2026 basic share count."""
+    facts = {
+        "concepts": {
+            "dei:EntityCommonStockSharesOutstanding": [
+                _share_fact("EntityCommonStockSharesOutstanding", "2010-10-27", 122530193, "2010-11-02", "0001193125-10-243917", fy=2010)
+            ],
+            "us-gaap:CommonStockSharesOutstanding": [
+                _share_fact("CommonStockSharesOutstanding", "2026-09-30", 871176114, "2026-10-29", "0001141391-26-000124")
+            ],
+            "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic": [
+                _share_fact(
+                    "WeightedAverageNumberOfSharesOutstandingBasic",
+                    "2026-09-30",
+                    883000000,
+                    "2026-10-29",
+                    "0001141391-26-000124",
+                    start="2026-01-01",
+                ),
+                _share_fact(
+                    "WeightedAverageNumberOfSharesOutstandingBasic",
+                    "2026-09-30",
+                    875000000,
+                    "2026-10-29",
+                    "0001141391-26-000124",
+                    start="2026-07-01",
+                ),
+            ],
+        }
+    }
+    got = select_shares(facts, date(2026, 11, 18), max_age_days=180)
+    assert got["ok"] is True
+    assert got["value"] == 871176114
+    assert got["source"] == "us-gaap:CommonStockSharesOutstanding"
+    assert got["end"] == "2026-09-30"
+    assert got["kind"] == "instant"
+    only_average = {
+        "concepts": {
+            "dei:EntityCommonStockSharesOutstanding": facts["concepts"]["dei:EntityCommonStockSharesOutstanding"],
+            "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic": facts["concepts"][
+                "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic"
+            ],
+        }
+    }
+    averaged = select_shares(only_average, date(2026, 11, 18), max_age_days=180)
+    assert averaged["ok"] is True
+    assert averaged["value"] == 883000000
+    assert averaged["source"] == "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic"
+    assert averaged["kind"] == "weighted_average"
+    assert averaged["dei_stale_or_missing"] is True
+
+
+def test_stale_share_count_is_excluded():
+    """TBLA-like: the 2024 cover count is too old, and a 1000x weighted average is ignored."""
+    facts = {
+        "concepts": {
+            "dei:EntityCommonStockSharesOutstanding": [
+                _share_fact("EntityCommonStockSharesOutstanding", "2024-10-31", 336208207, "2024-11-07", "0001140361-24-045484", fy=2024)
+            ],
+            "us-gaap:WeightedAverageNumberOfSharesOutstandingBasic": [
+                _share_fact(
+                    "WeightedAverageNumberOfSharesOutstandingBasic",
+                    "2026-09-30",
+                    274600849000,
+                    "2026-11-04",
+                    "0001840502-26-000018",
+                    start="2026-07-01",
+                ),
+                _share_fact(
+                    "WeightedAverageNumberOfSharesOutstandingBasic",
+                    "2026-03-31",
+                    282244774,
+                    "2026-05-06",
+                    "0001840502-26-000009",
+                    start="2026-01-01",
+                    fp="Q1",
+                ),
+            ],
+        }
+    }
+    got = select_shares(facts, date(2026, 11, 18), max_age_days=180)
+    assert got["ok"] is False
+    assert got["reason"] == "stale_shares"
+    assert "274600849000" not in got["detail"]
+    assert got["dei_stale_or_missing"] is True
+    only_old = {"concepts": {"dei:EntityCommonStockSharesOutstanding": facts["concepts"]["dei:EntityCommonStockSharesOutstanding"]}}
+    old = select_shares(only_old, date(2026, 11, 18), max_age_days=180)
+    assert old["reason"] == "stale_shares"
+    assert "2024-10-31" in old["detail"]
+    assert "dei:EntityCommonStockSharesOutstanding" in old["detail"]
+
+
+def test_multi_class_from_share_facts_and_titles():
+    old = _share_fact("EntityCommonStockSharesOutstanding", "2010-10-27", 122530193, "2010-11-02", "0001193125-10-243917", fy=2010)
+    facts = {"concepts": {"dei:EntityCommonStockSharesOutstanding": [old]}}
+    extras = [
+        {
+            "tag": "EntityCommonStockSharesOutstanding",
+            "taxonomy": "dei",
+            "source": "dei:EntityCommonStockSharesOutstanding",
+            "kind": "instant",
+            "start": None,
+            "end": "2026-10-26",
+            "filed": "2026-10-29",
+            "val": 864657109,
+            "accn": "0001141391-26-000124",
+            "form": "10-Q",
+            "member": "us-gaap:CommonClassAMember",
+        },
+        {
+            "tag": "EntityCommonStockSharesOutstanding",
+            "taxonomy": "dei",
+            "source": "dei:EntityCommonStockSharesOutstanding",
+            "kind": "instant",
+            "start": None,
+            "end": "2026-10-26",
+            "filed": "2026-10-29",
+            "val": 6519005,
+            "accn": "0001141391-26-000124",
+            "form": "10-Q",
+            "member": "us-gaap:CommonClassBMember",
+        },
+        {
+            "tag": "Security12bTitle",
+            "text": "Class A Common Stock, par value $0.0001 per share",
+            "member": "us-gaap:CommonClassAMember",
+        },
+        {"tag": "Security12bTitle", "text": "2.1% Notes due 2027", "member": "ma:NotesMember"},
+    ]
+    got = select_shares(facts, date(2026, 11, 18), max_age_days=180, extras=extras)
+    assert got["ok"] is False
+    assert got["reason"] == "multi_class_shares_unsplit"
+    assert "CommonClassAMember" in got["detail"]
+    assert "CommonClassBMember" in got["detail"]
+    assert "122530193" not in got["detail"]
+    titles_only = [
+        {"tag": "Security12bTitle", "text": "Class A Common Stock"},
+        {"tag": "Security12bTitle", "text": "Class B Common Stock"},
+    ]
+    titled = select_shares(facts, date(2026, 11, 18), max_age_days=180, extras=titles_only)
+    assert titled["reason"] == "multi_class_shares_unsplit"
+    assert "Class A Common Stock" in titled["detail"]
+    assert listed_multi_class([{"ticker": "MA"}, {"ticker": "MA"}]) is False
+    assert listed_multi_class([{"ticker": "GOOG"}, {"ticker": "GOOGL"}]) is True
+    assert listed_multi_class([{"ticker": "BRK-A"}]) is False
+
+
+def test_near_zero_enterprise_value_is_guarded():
+    guards = {"min_enterprise_value": 50000000, "min_ev_to_market_cap": 0.1, "max_earnings_yield": 1.0}
+    tiny = {"enterprise_value": 16300000, "market_cap": 400000000, "earnings_yield": 9.76}
+    reason, detail = apply_magic_guards(tiny, guards)
+    assert reason == "enterprise_value_below_min"
+    assert "16300000" in detail
+    assert "9.76" in detail
+    ratio = {"enterprise_value": 80000000, "market_cap": 1000000000, "earnings_yield": 0.4}
+    assert apply_magic_guards(ratio, guards)[0] == "ev_to_market_cap_below_min"
+    hot = {"enterprise_value": 200000000, "market_cap": 400000000, "earnings_yield": 2.5}
+    assert apply_magic_guards(hot, guards)[0] == "earnings_yield_above_max"
+    fine = {"enterprise_value": 500000000, "market_cap": 600000000, "earnings_yield": 0.08}
+    assert apply_magic_guards(fine, guards) is None
+    assert apply_magic_guards(tiny, {}) is None
+
+
+def test_cover_document_reads_class_members():
+    xml = """<?xml version="1.0"?>
+    <xbrl xmlns:dei="http://xbrl.sec.gov/dei/2024" xmlns:xbrldi="http://xbrl.org/2006/xbrldi">
+      <context id="c-a">
+        <entity>
+          <identifier>1141391</identifier>
+          <segment>
+            <xbrldi:explicitMember dimension="us-gaap:StatementClassOfStockAxis">us-gaap:CommonClassAMember</xbrldi:explicitMember>
+          </segment>
+        </entity>
+        <period><instant>2026-10-26</instant></period>
+      </context>
+      <context id="c-b">
+        <entity>
+          <identifier>1141391</identifier>
+          <segment>
+            <xbrldi:explicitMember dimension="us-gaap:StatementClassOfStockAxis">us-gaap:CommonClassBMember</xbrldi:explicitMember>
+          </segment>
+        </entity>
+        <period><instant>2026-10-26</instant></period>
+      </context>
+      <dei:EntityCommonStockSharesOutstanding contextRef="c-a" unitRef="shares">864657109</dei:EntityCommonStockSharesOutstanding>
+      <dei:EntityCommonStockSharesOutstanding contextRef="c-b" unitRef="shares">6519005</dei:EntityCommonStockSharesOutstanding>
+    </xbrl>
+    """
+    rows = parse_share_document(xml)
+    by_member = {row["member"]: row["val"] for row in rows}
+    assert by_member["us-gaap:CommonClassAMember"] == 864657109
+    assert by_member["us-gaap:CommonClassBMember"] == 6519005
+    assert rows[0]["end"] == "2026-10-26"
+    assert rows[0]["source"] == "dei:EntityCommonStockSharesOutstanding"
+    html = """
+    <html><body>
+    <ix:nonFraction name="dei:EntityCommonStockSharesOutstanding" contextRef="c1" scale="0" unitRef="shares">883,000,000</ix:nonFraction>
+    </body></html>
+    <context id="c1"><period><instant>2026-09-30</instant></period></context>
+    """
+    parsed = parse_share_document(html)
+    assert parsed[0]["val"] == 883000000
+    assert parsed[0]["end"] == "2026-09-30"
+    picked = instance_name(
+        [
+            {"name": "R1.htm", "size": "10"},
+            {"name": "exhibit31.htm", "size": "99"},
+            {"name": "ma-20260930.htm", "size": "50"},
+            {"name": "ma-20260930_htm.xml", "size": "20"},
+        ]
+    )
+    assert picked == "ma-20260930_htm.xml"
+
+
+def test_form4_acceptance_marker_when_the_index_has_no_time():
+    rows = [{"form": "4", "filed": "2026-11-18", "accn": "0000000001-26-000001"}]
+    assert form4_acceptance_value(rows) == "unknown (master.idx)"
+    rows.append({"form": "4", "filed": "2026-11-18", "accepted": "2026-11-18T21:55:03-05:00"})
+    assert form4_acceptance_value(rows) == "2026-11-18T21:55:03-05:00"
+    assert form4_acceptance_value([{"form": "10-Q", "filed": "2026-11-18"}]) is None
+
+
+def test_refresh_diff_uses_the_newest_prior_trade_date(tmp_path: Path):
+    def dump(folder: Path, trade: str, tickers: list[str], previous):
+        folder.mkdir()
+        meta = {
+            "trade_date": trade,
+            "run_date": trade,
+            "previous_trade_date": previous,
+            "code_version": "abc",
+            "price_as_of": trade,
+            "min_market_cap": 100000000,
+            "magic_top_n": 30,
+            "insider_lookback_days": 30,
+            "fscore_basis": "annual",
+            "fscore_min_score": 8,
+        }
+        payload = {"meta": meta, "rows": [{"ticker": ticker, "name": ticker} for ticker in tickers]}
+        text = json.dumps(payload)
+        for name in ("magic_formula", "fscore", "insider_buying", "intersection", "diff"):
+            (folder / f"{name}.json").write_text(text, encoding="utf-8")
+        (folder / "metadata.json").write_text(json.dumps(meta), encoding="utf-8")
+        (folder / "VERIFICATION.md").write_text(
+            f"Trade date `{trade}`. Run date `{trade}`. Generated at `{trade}`.\n"
+            f"Code `abc`. Previous trade date for diff `{previous}`.\n",
+            encoding="utf-8",
+        )
+
+    dump(tmp_path / "2026-11-12", "2026-11-12", ["OLD"], None)
+    dump(tmp_path / "2026-11-18", "2026-11-18", ["NEW"], None)
+    assert refresh_diff(tmp_path) == "2026-11-12"
+    meta = json.loads((tmp_path / "2026-11-18" / "metadata.json").read_text(encoding="utf-8"))
+    assert meta["previous_trade_date"] == "2026-11-12"
+    diff = json.loads((tmp_path / "2026-11-18" / "diff.json").read_text(encoding="utf-8"))
+    changes = {(row["change"], row["ticker"]) for row in diff["rows"] if row["list_name"] == "magic_formula"}
+    assert ("entered", "NEW") in changes
+    assert ("exited", "OLD") in changes
+    note = (tmp_path / "VERIFICATION.md").read_text(encoding="utf-8")
+    assert "Previous trade date for diff `2026-11-12`" in note
