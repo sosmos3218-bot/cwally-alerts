@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-11-19T19:02:15.290417+09:00",
+  "updated_at": "2026-11-20T03:57:54.274695+09:00",
   "price_low_armed": true,
   "price_last_date": "2026-11-13",
   "n225_low_armed": true,
   "n225_last": {
-    "date": "2026-11-19",
-    "close": 59444.2109375
+    "date": "2026-11-18",
+    "close": 59024.28125
   },
   "jpy_up_armed": true,
   "jpy100_last": {
     "date": "2026-11-19",
-    "value": 829.3000221252441
+    "value": 832.1000099182129
   },
   "jpy100_base": {
     "date": "2026-10-22",
     "value": 838.2224082946777
   },
-  "jpy_chg_pct_last": -1.064441379894121,
+  "jpy_chg_pct_last": -0.7304026134210106,
   "last_summary_date": "2026-11-13",
   "fail": {
     "bars": {

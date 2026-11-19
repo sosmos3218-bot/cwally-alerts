@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W47",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-19 19:03 KST",
+  "updated_at": "2026-11-20 03:58 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -20,11 +20,13 @@
           "u:www.trendforce.com/presscenter/news/20261022-13279.html",
           "t:server cpu shipments projected to grow over 40% yoy in 2027 with arm based products continuing to gain market share says trendforce",
           "u:www.trendforce.com/presscenter/news/20261111-13303.html",
-          "t:mounting finished goods inventories prompt some pc oems to adjust memory procurement plans for 2027 says trendforce"
+          "t:mounting finished goods inventories prompt some pc oems to adjust memory procurement plans for 2027 says trendforce",
+          "u:www.trendforce.com/presscenter/news/20261119-13314.html",
+          "t:nand flash prices set to decline in 2027 as chinese csp order cuts outweigh north american demand growth says trendforce"
         ],
         "claims": {},
         "ops_day": "2026-11-19",
-        "last_ok": "2026-11-19"
+        "last_ok": "2026-11-20"
       },
       "samsung": {
         "seeded": true,
@@ -128,7 +130,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-19"
+        "last_ok": "2026-11-20"
       },
       "skhynix": {
         "seeded": true,
@@ -156,7 +158,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-19"
+        "last_ok": "2026-11-20"
       }
     }
   }
