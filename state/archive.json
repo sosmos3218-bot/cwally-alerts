@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-20 05:30 KST",
+  "updated_at": "2026-11-20 07:30 KST",
   "items": [
+    {
+      "id": "tIWkTkGnR2CY",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | port-alerts oneshot",
+      "message": "2026-11-20 07:25 KST | OPS | port-alerts / oneshot\n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/44628448473",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795127140
+    },
     {
       "id": "zEInFh7v8PFP",
       "topic": "cwally-port",
@@ -4420,17 +4431,6 @@
       "priority": 4,
       "tags": [
         "chart_with_downwards_trend"
-      ],
-      "time": 1794183028
-    },
-    {
-      "id": "h3idpXe8aYYo",
-      "topic": "cwally-port",
-      "title": "[KOSOWN] 005930/000660 기준 유지 | 임계값 회복 전까지 관망",
-      "message": "2026-11-09 09:10 KST | KOSOWN\n이게 뭐 알림: 외국인 지분율·코스피 임계값 주간 점검입니다. 매수 신호가 아닙니다.\n지금 결과/상태: 관찰 기준: 삼성전자 47.0%, SK하이닉스 50.0%, 코스피 7000. 삼성전자 47% 회복, SK하이닉스 50% 회복이 7000 재안착 관찰 포인트. 현재 기준 대략 46.38% / 49.59%.\n지금 할 일: 지분율 회복 여부와 일별 순매수 규모를 함께 확인하세요.\n나중에: 가이던스와 매크로가 맞물릴 때 재안착 확률을 보세요.\n익절/줄일 때: 이 알림으로 즐이지 마세요.\n하지 말 것: 지분율만으로 즉각 수급 전환 판단하기.\n꺼지는 때: 2026-11-30 09:00 KST (10월 말~11월 가이던스·수급 확인 창 후 종료)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
       ],
       "time": 1794183028
     }
