@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-19 15:41 KST",
+  "updated_at": "2026-11-19 16:15 KST",
   "items": [
+    {
+      "id": "HFOr2KR2YOLR",
+      "topic": "cwally-port",
+      "title": "[TREND] KOSPI 추세점검 11/19: 후보 0, 시장폭 21.5%",
+      "message": "매도\n보유 없음.\n신규\n신규 후보 없음.\n시장폭 21.5%. 시가총액 상위 종목 중 50일선 위 비율입니다.\n꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1795070823
+    },
     {
       "id": "TNXHjs452Gdf",
       "topic": "cwally-port",
@@ -4424,17 +4435,6 @@
         "chart_with_downwards_trend"
       ],
       "time": 1794182778
-    },
-    {
-      "id": "JI7CVXykCjuZ",
-      "topic": "cwally-port",
-      "title": "[GVAL] 일상 Grok 4.7 medium | 유지",
-      "message": "2026-11-09 09:01 KST | GVAL | 주간 가성비 세팅\n이게 뭐 알림: 공식 가격 페이지로 API 단가를 읽고, 일상/난제/구독 기본 세팅만 고릅니다. 벤치 1위가 아니라 작업당 비용 기준입니다.\n지금 결과: 일상 Grok 4.7 medium (혼합 $3/1M) | 난제 GPT-6 Astra medium (혼합 $10.625/1M) | 구독 Plus Work/Codex Astra medium.\n단가: Astra $10/$12.5 (live) | Sol $4/$5 (live) | Grok4.7 $2/$6 (live). 혼합은 입력3:출력1.\n지금 할 일: 일반 코딩/조사는 일상 세팅. 컴퓨터 사용·장시간 에이전트만 Astra medium. ChatGPT 채팅창 최강이 필요하면 Pro이지 Plus medium이 아닙니다.\n나중에: 가격이 바뀌거나 Sol 프로모(2026-11-21)가 끝나면 다음 주 알림이 바뀝니다. 월요일 09:00만 옵니다.\n익절/줄일 때: 해당 없음. 구독 업그레이드는 한도가 반복해서 모자랄 때만.\n하지 말 것: Astra xhigh/max를 기본값으로 두기. 입력 27.2만 토큰 넘긴 채 Astra 상시 사용. 조회 실패를 무시.\n꺼지는 때: 종료일 없음 (수동 해제 전까지 매주 월요일 09:00)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182501
     }
   ]
 }
