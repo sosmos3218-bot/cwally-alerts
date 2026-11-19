@@ -604,11 +604,20 @@ def is_pulse_like(j: dict) -> bool:
             and sorted(int(w) for w in (sc.get("wdays") or [])) == [1, 2, 3, 4, 5])
 
 
-def pulse_body_ok(got: dict) -> bool:
+# Job 8705009 was created with this body (no oneoff_mode). ONESHOT_BODY later gained
+# oneoff_mode=auto (2026-11-06). update_pulse leaves the body unchanged, so both are accepted.
+PULSE_BODY_LEGACY = {"ref": "main", "inputs": {"job": "oneshot"}}
+
+
+def pulse_body(got: dict):
     try:
-        return json.loads((got.get("extendedData") or {}).get("body") or "null") == ONESHOT_BODY
+        return json.loads((got.get("extendedData") or {}).get("body") or "null")
     except ValueError:
-        return False
+        return None
+
+
+def pulse_body_ok(got: dict) -> bool:
+    return pulse_body(got) in (ONESHOT_BODY, PULSE_BODY_LEGACY)
 
 
 def run_update_pulse(now: datetime) -> int:
@@ -618,6 +627,7 @@ def run_update_pulse(now: datetime) -> int:
     print("before:")
     got = call("GET", f"/jobs/{PULSE_JOB_ID}", key).get("jobDetails") or {}
     print_job(got)
+    print(f"body={pulse_body(got)}")
     title = (got.get("title") or "").strip()
     if (got.get("url") or "").rstrip("/") != DISPATCH_URL or not pulse_body_ok(got):
         raise Stop(BAD_INPUT, f"job {PULSE_JOB_ID} is not the mktpulse oneshot pulse job; not touching it")
