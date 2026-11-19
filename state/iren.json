@@ -1,24 +1,11 @@
 {
-  "updated_at": "2026-11-18 09:00 KST",
-  "price": 15.805,
+  "updated_at": "2026-11-19 09:00 KST",
+  "price": 15.24,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://blockspace.media/short/irens-childress-delivery-for-microsoft-on-track-for-q4-despite-delay-rumors/?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/21/iren-limted-crashed-40-this-month-three-wall-street-analysts-agree-its-going-to-quadruple/?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/iren-stock-spain-ai-campus-launch-2028/cZxMTrDRBva?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/21/data-center-stocks-rise-as-iren-plans-300mw-ai-campus-in-spain-iren-and-cipher-digital-gain-4-core-scientific-climbs-3/?.tsrc=rss",
-    "https://blockspace.media/insight/iren-secures-badajoz-campus-license/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/short-sellers-gain-6bn-amid-135501347.html?.tsrc=rss",
-    "https://www.tikr.com/blog/coreweave-sinks-10-as-bernstein-slashes-target-to-51-the-fundamentals-are-probably-stuck?ref=yahoofinance&.tsrc=rss",
-    "https://www.fool.com/coverage/stock-market-today/2026/10/22/stock-market-today-oct-22-coreweave-slides-on-bernstein-downgrade-and-financing-worries/?.tsrc=rss",
-    "https://blockspace.media/podcast/spacex-q3-earnings-solunas-50-mw-applied-digital-jv-irens-300-mw-spain-site/?.tsrc=rss",
-    "https://blockspace.media/short/irens-300-mw-data-center-in-spain-would-be-on-of-europes-largest/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-iren-lands-300-mw-101556877.html?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-vs-terawulf-ai-infrastructure-133000461.html?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/22/the-neocloud-bloodbath-nbis-iren-and-crwv-selloff-continues/?.tsrc=rss",
     "https://www.tikr.com/blog/nebius-stock-fell-7-the-day-it-announced-a-3-5-billion-citi-facility-heres-what-its-ceo-said-about-how-long-the-ai-chip-shortage-lasts?ref=yahoofinance&.tsrc=rss",
     "https://www.cryptoprowl.com/releases/ai-pivot-fails-to-slow-bitcoin-mining-competition-as-hashrate-surges-7396?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/23/short-sellers-just-made-6-billion-betting-against-ai-data-center-stocks/?.tsrc=rss",
@@ -205,7 +192,20 @@
     "https://blockspace.media/short/jpmorgan-slashes-iren-price-target-on-microsoft-site-delays/?.tsrc=rss",
     "https://247wallst.com/investing/2026/11/17/sam-altman-just-delivered-a-warning-to-investors-betting-on-endless-ai-growth/?.tsrc=rss",
     "https://www.tikr.com/blog/cleanspark-sank-26-in-two-days-after-the-texas-election-is-it-time-to-sell-or-load-up?ref=yahoofinance&tlnk=yf-261117-m7r78h82&.tsrc=rss",
-    "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss"
+    "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss",
+    "https://www.fool.com/investing/2026/11/18/iren-coreweave-and-nebius-stock-prices-have-plunged-more-than-60-here-s-what-it-means-for-ai-investors/?.tsrc=rss",
+    "https://www.barchart.com/story/news/8898797/nvidia-shrinks-neocloud-backing-to-32-billion-as-coreweave-and-nebius-rallies-fade-fast?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/18/terawulf-rises-6-cipher-digital-gains-5-after-nvidias-record-quarter-iren-climbs-4/?.tsrc=rss",
+    "https://investorshub.advfn.com/market-news/article/40289/why-is-iren-stock-surging-today?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/nvidia-signals-ai-financing-flywheel-will-continue-but-disciplined-analyst-calls-neoclouds-its-biggest-sustained-bet-as-nbis-iren-mrvl-rally/cNbXVSvR9hZ?.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/18/stock-market-today-nov-18-coreweave-slides-as-nvidia-s-blowout-earnings-fail-to-ease-debt-concerns/?.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-sinks-5-after-nvidia-earnings-as-kress-vows-a-very-strong-look-at-neocloud-financing?ref=yahoofinance&tlnk=yf-261118-25647mpv&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/cipher-digital-stock-down-55-151700097.html?.tsrc=rss",
+    "https://www.tikr.com/blog/mara-sinks-13-in-a-week-as-bitcoin-falls-below-70000-its-ai-leases-could-move-into-next-year?ref=yahoofinance&tlnk=yf-261118-934jmqg2&.tsrc=rss",
+    "https://blockspace.media/short/situational-awareness-dumps-coreweave-as-book-shrinks-to-1-6b/?.tsrc=rss",
+    "https://finance.yahoo.com/m/48680d00-15e4-3932-a167-01f40e7d15e6/congress-lines-up-for%2C.html?.tsrc=rss",
+    "https://finance.yahoo.com/m/f79c4405-24a9-3c97-a267-ff7c20c2be1c/nvidia%E2%80%99s-cautious-tone-is-a.html?.tsrc=rss",
+    "https://www.thestreet.com/crypto/investing/nvidias-earnings-call-names-two-former-crypto-miners?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-16 09:00 KST",
   "pending_news": [
@@ -233,6 +233,46 @@
       "title": "CoreWeave Answered the Biggest Question About AI Stocks. Now Nvidia Has to Confirm It.",
       "url": "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss",
       "seen_at": "2026-11-18 09:00 KST"
+    },
+    {
+      "title": "Nvidia Shrinks Neocloud Backing to $32 Billion as CoreWeave and Nebius Rallies Fade Fast",
+      "url": "https://www.barchart.com/story/news/8898797/nvidia-shrinks-neocloud-backing-to-32-billion-as-coreweave-and-nebius-rallies-fade-fast?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "TeraWulf Rises 6%, Cipher Digital Gains 5% After NVIDIA’s Record Quarter; IREN Climbs 4%",
+      "url": "https://247wallst.com/investing/2026/11/18/terawulf-rises-6-cipher-digital-gains-5-after-nvidias-record-quarter-iren-climbs-4/?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "Nvidia Signals AI Financing Flywheel Will Continue, But ‘Disciplined’: Analyst Calls Neoclouds Its ‘Biggest Sustained Bet’ As NBIS, IREN, MRVL Rally",
+      "url": "https://stocktwits.com/news-articles/markets/equity/nvidia-signals-ai-financing-flywheel-will-continue-but-disciplined-analyst-calls-neoclouds-its-biggest-sustained-bet-as-nbis-iren-mrvl-rally/cNbXVSvR9hZ?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "Stock Market Today, Nov. 18: CoreWeave Slides as Nvidia's Blowout Earnings Fail to Ease Debt Concerns",
+      "url": "https://www.fool.com/coverage/stock-market-today/2026/11/18/stock-market-today-nov-18-coreweave-slides-as-nvidia-s-blowout-earnings-fail-to-ease-debt-concerns/?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "CoreWeave Sinks 5% After Nvidia Earnings as Kress Vows “A Very Strong Look” at Neocloud Financing",
+      "url": "https://www.tikr.com/blog/coreweave-sinks-5-after-nvidia-earnings-as-kress-vows-a-very-strong-look-at-neocloud-financing?ref=yahoofinance&tlnk=yf-261118-25647mpv&.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "MARA Sinks 13% in a Week as Bitcoin Falls Below $70,000. Its AI Leases Could “Move Into Next Year”",
+      "url": "https://www.tikr.com/blog/mara-sinks-13-in-a-week-as-bitcoin-falls-below-70000-its-ai-leases-could-move-into-next-year?ref=yahoofinance&tlnk=yf-261118-934jmqg2&.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "Nvidia’s Cautious Tone Is a Big Drag on CoreWeave, AI Cloud Stocks",
+      "url": "https://finance.yahoo.com/m/f79c4405-24a9-3c97-a267-ff7c20c2be1c/nvidia%E2%80%99s-cautious-tone-is-a.html?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
+    },
+    {
+      "title": "Nvidia’s earnings call names two former crypto miners",
+      "url": "https://www.thestreet.com/crypto/investing/nvidias-earnings-call-names-two-former-crypto-miners?.tsrc=rss",
+      "seen_at": "2026-11-19 09:00 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",

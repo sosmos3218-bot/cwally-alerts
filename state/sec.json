@@ -1,6 +1,6 @@
 {
   "zone": "BELOW",
-  "price": 190300.0,
+  "price": 194700.0,
   "action": "관찰",
   "last_alert_date": "2026-11-16",
   "warn": [],
@@ -8,7 +8,7 @@
   "earn_pending_notified": true,
   "earn_fail_notified": false,
   "earn_status": "CUT",
-  "updated_at": "2026-11-18 09:01 KST",
+  "updated_at": "2026-11-19 09:01 KST",
   "earn_op": 83.0,
   "earn_eps": null,
   "earn_q4_op": null,

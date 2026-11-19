@@ -2,14 +2,18 @@
   "armed": {
     "up152": true,
     "rebound_giveback": true,
-    "dn127": true
+    "dn127": false
   },
-  "last_date": "2026-11-17",
+  "last_date": "2026-11-18",
   "last_close": [
-    "2026-11-17",
-    128.25
+    "2026-11-18",
+    125.70999908447266
   ],
   "earn": {},
   "fail_streak": {},
-  "updated_at": "2026-11-18 09:10 KST"
+  "updated_at": "2026-11-19 09:11 KST",
+  "last_sent": {
+    "at": "2026-11-19 09:11 KST",
+    "title": "[LDOS] LDOS 종가 $125.71 | 관심 가격 검토 (fwd PER 약 10배대)"
+  }
 }

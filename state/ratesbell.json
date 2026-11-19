@@ -1,6 +1,6 @@
 {
-  "dgs10": 5.103,
-  "dgs10_date": "2026-11-17",
+  "dgs10": 5.066,
+  "dgs10_date": "2026-11-18",
   "mortgage": 7.11,
   "mortgage_date": "2026-11-12",
   "status": "WATCH",
@@ -9,7 +9,7 @@
   "fail_sent_date": null,
   "weekly_sent_date": "2026-11-16",
   "ten_band": "INSIDE",
-  "ten_band_date": "2026-11-17",
-  "ten_band_close": 5.103,
-  "updated_at": "2026-11-18T09:01:26.498493+09:00"
+  "ten_band_date": "2026-11-18",
+  "ten_band_close": 5.066,
+  "updated_at": "2026-11-19T09:01:37.439173+09:00"
 }

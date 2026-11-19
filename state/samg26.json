@@ -8,10 +8,10 @@
   },
   "consensus_reference": {
     "year": 2026,
-    "eps_krw": 1746.0,
-    "op_eok": 212.0,
-    "sales_eok": 1624.0,
-    "as_of": "2026-10-13",
+    "eps_krw": 1350.0,
+    "op_eok": 182.0,
+    "sales_eok": 1664.0,
+    "as_of": "2026-11-18",
     "source": "Naver FnGuide 컨센서스"
   },
   "earnings_gate": "broken",
@@ -34,18 +34,18 @@
     "2026-W44": "2026-10-23",
     "2026-W45": "2026-10-30",
     "2026-W46": "2026-11-06",
-    "2026-W47": "2026-11-16"
+    "2026-W47": "2026-11-18"
   },
   "sent_fingerprints": [],
   "ops_daily": {},
   "install_test_sent": "2026-10-07T15:45:26+09:00",
   "last_observation": {
-    "session": "2026-11-17",
-    "close": 13600.0,
-    "eps": 1746.0,
-    "op": 212.0
+    "session": "2026-11-18",
+    "close": 14130.0,
+    "eps": 1350.0,
+    "op": 182.0
   },
-  "updated_at": "2026-11-18T09:07:48+09:00",
+  "updated_at": "2026-11-19T09:08:06+09:00",
   "notices_seeded": true,
   "seen_notice_ids": [
     "191968720",
