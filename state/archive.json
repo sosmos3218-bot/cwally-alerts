@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-19 19:06 KST",
+  "updated_at": "2026-11-19 23:00 KST",
   "items": [
+    {
+      "id": "vQiU46f3r7In",
+      "topic": "cwally-ops",
+      "title": "[OPS] 워크플로 실패 | cronjob-register",
+      "message": "2026-11-19 22:49 KST | OPS | cronjob-register / \n이게 뭐 알림: 알림 워크플로 실행 중 스크립트가 실패했습니다. 매매 신호가 아닙니다.\n지금 상태: 실패한 스크립트만 빠졌고 나머지 스크립트와 state 저장은 계속 진행했습니다.\n지금 할 일: 로그에서 ::error:: 줄을 확인하세요. https://github.com/sosmos3218-bot/cwally-alerts/actions/runs/44537266590",
+      "priority": 3,
+      "tags": [
+        "warning"
+      ],
+      "time": 1795096166
+    },
     {
       "id": "0iyNwwzoAd7l",
       "topic": "cwally-ops",
@@ -4422,17 +4433,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1794182930
-    },
-    {
-      "id": "NGbunez9SOKZ",
-      "topic": "cwally-port",
-      "title": "[SAMG] 419530 주간 점검 | 매수 검토 보류",
-      "message": "이게 뭐 알림: SAMG엔터 419530 조건부 성장 논리 점검. 2026-10-07 분석 기준. 매주 첫 거래일 정기 요약입니다.\n지금 결과/상태:\n- 종가 14,220원 (2026-11-06 완료 세션), 구간: 20,000원 미만\n- 2026 전망(Naver/FnGuide): EPS 1,746원, 영업이익 212억, 예상 PER 8.1배\n- 실적 유지 조건(EPS 2,048원, 영업이익 233억 이상): 깨짐\n- 최근 확정 분기: 202606 영업이익 21억 | 다음 분기(202609) 컨센 영업이익 26억\n- 영업현금흐름: 2026H1 -5.1억 (2026-08-14 보고서 기준, 최신값 아닐 수 있음)\n지금 할 일: 실적 유지 조건이 깨졌습니다. 가격이 싸 보여도 매수 검토를 멈추고 하향 이유부터 확인하세요.\n나중에: 하반기 영업이익이 약 173억(전년 대비 +58%) 나와야 2026 전망이 맞습니다. 3분기 실적, 영업현금흐름 플러스 전환, 미국 Target 재주문 여부를 확인하세요.\n익절/줄일 때: 실적 유지 조건이 깨지거나, 해외 매출이 늘어도 이익률이 회복되지 않을 때 비중을 줄이세요.\n하지 말 것: 급등 추격, 가격만 보고 매수, 기사 제목만으로 재주문 확정 판단.\n출처: https://m.stock.naver.com/domestic/stock/419530/notice | 기준 보고서 https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260814003350\n꺼지는 때: 2026-12-31 09:00 KST (평일 09:00 점검, 2027년 첫 실행 때 기준값 갱신 안내 1회 후 종료)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794182924
     }
   ]
 }
