@@ -10,6 +10,7 @@ from screeners.us_quant.facts import (
     gross_profit_value,
     instant_on_or_before,
     issuance_value,
+    large_share_decline_after_balance_sheet,
     long_term_debt_value,
     revenue_pair,
     select_cash,
@@ -70,9 +71,13 @@ def build_magic_inputs(
         return {"ok": False, "reason": cash.get("reason") or "cash_missing", "detail": end}
     debt = select_debt(facts, as_of, end)
     if not debt.get("ok"):
-        return {"ok": False, "reason": debt.get("reason") or "debt_missing"}
+        return {
+            "ok": False,
+            "reason": debt.get("reason") or "debt_missing",
+            "detail": debt.get("detail") or end,
+        }
     max_share_age = int(limits["max_share_age_days"]) if "max_share_age_days" in limits else 180
-    shares = select_shares(facts, as_of, max_age_days=max_share_age, extras=share_rows)
+    shares = select_shares(facts, as_of, max_age_days=max_share_age, extras=share_rows, sum_classes=True)
     if not shares.get("ok") or shares.get("provisional"):
         return {
             "ok": False,
@@ -120,6 +125,9 @@ def build_magic_inputs(
         "shares_source": shares["source"],
         "shares_kind": shares.get("kind") or "instant",
         "shares_component": shares["component"],
+        "large_buyback_after_bs": large_share_decline_after_balance_sheet(
+            facts, as_of, float(shares["value"]), shares.get("end"), end
+        ),
         "current_assets": float(current_assets["value"]),
         "current_assets_component": current_assets,
         "current_liabilities": float(current_liab["value"]),

@@ -12,13 +12,37 @@ Otherwise TTM = current year-to-date + prior fiscal year - prior matching year-t
 If that bridge is incomplete, the last four quarter facts are summed when the
 gaps between them stay inside 70 to 140 days. Fewer than four quarters is incomplete.
 
-Total debt, on one balance-sheet date, avoids adding a total and its parts:
-- DebtCurrent + LongTermDebtNoncurrent when both are present.
-- Else LongTermDebtNoncurrent plus LongTermDebtCurrent, ShortTermBorrowings, and CommercialPaper.
-- Else LongTermDebtAndCapitalLeaseObligations (a total that already includes leases).
-- Else LongTermDebt plus ShortTermBorrowings and CommercialPaper.
-- Else the short-term tags that are present, including a lone DebtCurrent.
-- If no debt tag is present, debt is 0 and the source is no_debt_tag.
+Total debt, on one balance-sheet date, avoids adding a total and its parts.
+A reported total wins. Components are summed only when no total is present.
+
+1. DebtCurrent + LongTermDebtNoncurrent when both are present.
+2. Else LongTermDebtNoncurrent plus LongTermDebtCurrent, ShortTermBorrowings,
+   and CommercialPaper.
+3. Else LongTermDebtAndFinanceLeaseObligations or
+   LongTermDebtAndCapitalLeaseObligations (one figure; the larger one if both
+   are present). These totals already include finance leases.
+4. Else LongTermDebt plus ShortTermBorrowings and CommercialPaper.
+   Notes, loans, and credit lines are not added on top of this total.
+5. Else DebtInstrumentCarryingAmount when it covers the components below.
+6. Else the non-overlapping components on that same date:
+   loans (LongTermLoansPayable or the current/noncurrent split, plus
+   LoansPayableCurrent), notes (LongTermNotesPayable or NotesPayable, plus
+   NotesPayableCurrent; senior notes only when they are not already inside
+   that notes figure), convertible notes and convertible debt, drawn credit
+   lines (LineOfCredit or LongTermLineOfCredit, plus LinesOfCreditCurrent;
+   two line tags for the same drawn balance are not both added),
+   OtherLongTermDebt, and SecuredDebt / UnsecuredDebt only when no named
+   instrument above is present. FinanceLeaseLiability (or its current and
+   noncurrent parts, or the older capital-lease tags) is included here.
+   Facility capacity and unused commitments are not debt.
+7. A zero value on one of those tags is real zero debt when every other debt
+   tag on the date is also zero or absent.
+8. When the date has no debt tag, debt is not set to 0. The row is excluded
+   as debt_unconfirmed. Zero is kept when the filing reports a debt tag of 0,
+   or when no debt tag is on the date and Liabilities minus accounts payable,
+   accrued liabilities, contract liabilities or deferred revenue, operating
+   leases, and noncurrent deferred tax is within the greater of 1,000,000 and
+   2 percent of Liabilities (source liabilities_imply_no_debt).
 
 Cash is CashAndCashEquivalentsAtCarryingValue, else Cash. The restricted-cash
 roll-up is not used.
@@ -51,6 +75,67 @@ DURATION_TAGS = {
     "WeightedAverageNumberOfSharesOutstandingBasic",
 }
 
+# Balance-sheet debt concepts. A total is preferred over its parts.
+DEBT_TAGS = (
+    "DebtCurrent",
+    "LongTermDebtNoncurrent",
+    "LongTermDebtCurrent",
+    "LongTermDebt",
+    "ShortTermBorrowings",
+    "CommercialPaper",
+    "LongTermDebtAndCapitalLeaseObligations",
+    "LongTermDebtAndFinanceLeaseObligations",
+    "DebtInstrumentCarryingAmount",
+    "LongTermNotesPayable",
+    "NotesPayable",
+    "NotesPayableCurrent",
+    "NotesPayableNoncurrent",
+    "LoansPayable",
+    "LoansPayableCurrent",
+    "LongTermLoansPayable",
+    "LongTermLoansPayableCurrent",
+    "LongTermLoansPayableNoncurrent",
+    "LongTermLineOfCredit",
+    "LineOfCredit",
+    "LinesOfCreditCurrent",
+    "ConvertibleNotesPayable",
+    "ConvertibleNotesPayableCurrent",
+    "ConvertibleLongTermNotesPayable",
+    "ConvertibleDebt",
+    "ConvertibleDebtCurrent",
+    "ConvertibleDebtNoncurrent",
+    "SeniorNotes",
+    "SeniorLongTermNotes",
+    "UnsecuredDebt",
+    "SecuredDebt",
+    "OtherLongTermDebt",
+    "FinanceLeaseLiability",
+    "FinanceLeaseLiabilityCurrent",
+    "FinanceLeaseLiabilityNoncurrent",
+    "CapitalLeaseObligations",
+    "CapitalLeaseObligationsCurrent",
+    "CapitalLeaseObligationsNoncurrent",
+)
+
+# Operating liabilities used only to judge whether an untagged balance sheet
+# has room left for debt. Other liabilities are not in this list.
+NONDEBT_LIABILITY_TAGS = (
+    "Liabilities",
+    "AccountsPayableCurrent",
+    "AccountsPayableAndAccruedLiabilitiesCurrent",
+    "AccruedLiabilitiesCurrent",
+    "ContractWithCustomerLiability",
+    "ContractWithCustomerLiabilityCurrent",
+    "ContractWithCustomerLiabilityNoncurrent",
+    "DeferredRevenue",
+    "DeferredRevenueCurrent",
+    "DeferredRevenueNoncurrent",
+    "OperatingLeaseLiability",
+    "OperatingLeaseLiabilityCurrent",
+    "OperatingLeaseLiabilityNoncurrent",
+    "DeferredTaxLiabilitiesNoncurrent",
+)
+
 INSTANT_TAGS = {
     "Assets",
     "AssetsCurrent",
@@ -59,19 +144,18 @@ INSTANT_TAGS = {
     "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
     "CashAndCashEquivalentsAtCarryingValue",
     "Cash",
-    "DebtCurrent",
-    "LongTermDebtNoncurrent",
-    "LongTermDebtCurrent",
-    "LongTermDebt",
-    "ShortTermBorrowings",
-    "CommercialPaper",
-    "LongTermDebtAndCapitalLeaseObligations",
     "CommonStockSharesOutstanding",
-}
+} | set(DEBT_TAGS) | set(NONDEBT_LIABILITY_TAGS)
 
 DEI_INSTANT = {"EntityCommonStockSharesOutstanding"}
 
-EXTRACT_VERSION = 2
+EXTRACT_VERSION = 3
+
+# Residual liabilities at or under this band count as no debt.
+_NO_DEBT_RESIDUAL_RATIO = 0.02
+_NO_DEBT_RESIDUAL_FLOOR = 1_000_000
+# Share count after the balance sheet, more than this far below the prior instant.
+SHARE_DECLINE_AFTER_BS = 0.10
 
 REVENUE_PRIORITY = [
     "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -368,65 +452,311 @@ def _on_date(facts: dict, tag: str, end: str, as_of: date, taxonomy: str = "us-g
     return _component(chosen) | {"value": chosen["val"]}
 
 
-def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
-    end = end or balance_sheet_date(facts, as_of)
-    if end is None:
-        return {"ok": False, "reason": "balance_sheet_missing"}
+def _present_map(facts: dict, tags: tuple[str, ...] | set[str], end: str, as_of: date) -> dict[str, dict]:
     present = {}
-    for tag in (
-        "DebtCurrent",
-        "LongTermDebtNoncurrent",
-        "LongTermDebtCurrent",
-        "LongTermDebt",
-        "ShortTermBorrowings",
-        "CommercialPaper",
-        "LongTermDebtAndCapitalLeaseObligations",
-    ):
+    for tag in tags:
         item = _on_date(facts, tag, end, as_of)
         if item is not None:
             present[tag] = item
-    components = []
+    return present
 
-    def add(tag: str) -> None:
-        if tag in present:
-            components.append(present[tag])
 
-    if "DebtCurrent" in present and "LongTermDebtNoncurrent" in present:
-        add("DebtCurrent")
-        add("LongTermDebtNoncurrent")
-        source = "current_plus_noncurrent"
-    elif "LongTermDebtNoncurrent" in present:
-        add("LongTermDebtNoncurrent")
-        add("LongTermDebtCurrent")
-        add("ShortTermBorrowings")
-        add("CommercialPaper")
-        source = "current_plus_noncurrent"
-    elif "LongTermDebtAndCapitalLeaseObligations" in present:
-        add("LongTermDebtAndCapitalLeaseObligations")
-        source = "debt_and_leases"
-    elif "LongTermDebt" in present:
-        add("LongTermDebt")
-        add("ShortTermBorrowings")
-        add("CommercialPaper")
-        source = "long_term_debt_total"
-    elif present:
-        for tag in ("DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper"):
-            add(tag)
-        source = "short_term_only"
+def _outside_positive(present: dict[str, dict], included: set[str]) -> bool:
+    return any(item["value"] > 0 for tag, item in present.items() if tag not in included)
+
+
+def _covers(total: dict | None, parts: list[dict]) -> bool:
+    """True when one reported total already includes the parts."""
+    if total is None:
+        return False
+    if not parts:
+        return True
+    part_sum = sum(item["value"] for item in parts)
+    return total["value"] + 1 >= part_sum * 0.98
+
+
+def _one(item: dict | None) -> list[dict]:
+    return [] if item is None else [item]
+
+
+def _loan_components(present: dict[str, dict]) -> list[dict]:
+    split_non = present.get("LongTermLoansPayableNoncurrent")
+    split_cur = present.get("LongTermLoansPayableCurrent")
+    if split_non is not None or split_cur is not None:
+        parts = _one(split_non) + _one(split_cur)
     else:
+        parts = _one(present.get("LongTermLoansPayable"))
+    current = present.get("LoansPayableCurrent")
+    if (
+        current is not None
+        and split_cur is None
+        and not any(abs(current["value"] - item["value"]) <= 1 for item in parts)
+    ):
+        parts.append(current)
+    total = present.get("LoansPayable")
+    if _covers(total, parts):
+        return _one(total)
+    return parts
+
+
+def _note_components(present: dict[str, dict]) -> list[dict]:
+    if "LongTermNotesPayable" in present:
+        parts = [present["LongTermNotesPayable"]]
+    else:
+        parts = _one(present.get("NotesPayableNoncurrent"))
+    if "NotesPayableCurrent" in present:
+        parts.append(present["NotesPayableCurrent"])
+    total = present.get("NotesPayable")
+    if _covers(total, parts):
+        chosen = _one(total)
+    else:
+        chosen = parts
+    seniors = [present[tag] for tag in ("SeniorLongTermNotes", "SeniorNotes") if tag in present]
+    if not seniors:
+        return chosen
+    senior = max(seniors, key=lambda item: item["value"])
+    note_sum = sum(item["value"] for item in chosen)
+    senior_covers = senior["value"] >= note_sum and senior["value"] + 1 >= note_sum * 0.98
+    if not chosen or senior_covers:
+        return [senior]
+    return chosen
+
+
+def _convertible_components(present: dict[str, dict]) -> list[dict]:
+    split = [present[tag] for tag in ("ConvertibleDebtCurrent", "ConvertibleDebtNoncurrent") if tag in present]
+    total = present.get("ConvertibleDebt")
+    if _covers(total, split):
+        return _one(total)
+    if split:
+        return split
+    note_parts = [
+        present[tag]
+        for tag in ("ConvertibleLongTermNotesPayable", "ConvertibleNotesPayableCurrent")
+        if tag in present
+    ]
+    notes = present.get("ConvertibleNotesPayable")
+    if _covers(notes, note_parts):
+        return _one(notes)
+    return note_parts
+
+
+def _credit_components(present: dict[str, dict]) -> list[dict]:
+    """Drawn lines only. Two tags for the same drawn balance are not added twice."""
+    parts = [present[tag] for tag in ("LongTermLineOfCredit", "LinesOfCreditCurrent") if tag in present]
+    line = present.get("LineOfCredit")
+    if line is None:
+        return parts
+    if _covers(line, parts):
+        return [line]
+    if any(abs(line["value"] - item["value"]) <= max(1.0, 0.02 * abs(item["value"])) for item in parts):
+        return parts
+    return parts + [line]
+
+
+def _lease_components(present: dict[str, dict]) -> list[dict]:
+    parts = [
+        present[tag]
+        for tag in ("FinanceLeaseLiabilityCurrent", "FinanceLeaseLiabilityNoncurrent")
+        if tag in present
+    ]
+    total = present.get("FinanceLeaseLiability")
+    if _covers(total, parts):
+        return _one(total)
+    if parts:
+        return parts
+    legacy_parts = [
+        present[tag]
+        for tag in ("CapitalLeaseObligationsCurrent", "CapitalLeaseObligationsNoncurrent")
+        if tag in present
+    ]
+    legacy = present.get("CapitalLeaseObligations")
+    if _covers(legacy, legacy_parts):
+        return _one(legacy)
+    return legacy_parts
+
+
+def _short_components(present: dict[str, dict], named_current: bool) -> list[dict]:
+    short_tags = ("DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper")
+    if not named_current:
+        return [present[tag] for tag in short_tags if tag in present]
+    if "DebtCurrent" in present:
+        return []
+    return [present[tag] for tag in ("ShortTermBorrowings", "CommercialPaper") if tag in present]
+
+
+def _component_debt(present: dict[str, dict]) -> tuple[list[dict], str]:
+    loans = _loan_components(present)
+    notes = _note_components(present)
+    convertible = _convertible_components(present)
+    credit = _credit_components(present)
+    named = loans + notes + convertible + credit
+    named_current = any(
+        tag in {item["concept"] for item in named}
+        for tag in (
+            "LoansPayableCurrent",
+            "LongTermLoansPayableCurrent",
+            "NotesPayableCurrent",
+            "ConvertibleDebtCurrent",
+            "ConvertibleNotesPayableCurrent",
+            "LinesOfCreditCurrent",
+        )
+    )
+    other = _one(present.get("OtherLongTermDebt"))
+    if not any(item["value"] > 0 for item in named):
+        other.extend(present[tag] for tag in ("SecuredDebt", "UnsecuredDebt") if tag in present)
+    leases = _lease_components(present)
+    short = _short_components(present, named_current)
+    components = named + other + leases + short
+    positive = [item for item in components if item["value"] > 0]
+    if positive:
+        source = "component_sum"
+        if not named and not other and not leases:
+            source = "short_term_only"
+        return components, source
+    if components:
+        return components, "explicit_zero"
+    carrying = present.get("DebtInstrumentCarryingAmount")
+    if carrying is not None:
+        return [carrying], "debt_instrument_carrying_amount"
+    return [], ""
+
+
+def _explained_nondebt(facts: dict, as_of: date, end: str) -> float | None:
+    """Sum of operating liabilities. None when Liabilities itself is absent."""
+    present = _present_map(facts, NONDEBT_LIABILITY_TAGS, end, as_of)
+    if "Liabilities" not in present:
+        return None
+
+    def family(total: str, parts: tuple[str, ...]) -> float:
+        if total in present:
+            return float(present[total]["value"])
+        return sum(float(present[tag]["value"]) for tag in parts if tag in present)
+
+    if "AccountsPayableAndAccruedLiabilitiesCurrent" in present:
+        payables = float(present["AccountsPayableAndAccruedLiabilitiesCurrent"]["value"])
+    else:
+        payables = family("AccountsPayableCurrent", ()) + family("AccruedLiabilitiesCurrent", ())
+    contracts = family(
+        "ContractWithCustomerLiability",
+        ("ContractWithCustomerLiabilityCurrent", "ContractWithCustomerLiabilityNoncurrent"),
+    )
+    if contracts == 0:
+        contracts = family("DeferredRevenue", ("DeferredRevenueCurrent", "DeferredRevenueNoncurrent"))
+    leases = family(
+        "OperatingLeaseLiability",
+        ("OperatingLeaseLiabilityCurrent", "OperatingLeaseLiabilityNoncurrent"),
+    )
+    tax = family("DeferredTaxLiabilitiesNoncurrent", ())
+    return payables + contracts + leases + tax
+
+
+def _liabilities_imply_no_debt(facts: dict, as_of: date, end: str) -> tuple[bool, str]:
+    liabilities = _on_date(facts, "Liabilities", end, as_of)
+    if liabilities is None:
+        return False, f"no debt tag on {end}; Liabilities missing"
+    explained = _explained_nondebt(facts, as_of, end)
+    total = float(liabilities["value"])
+    covered = 0.0 if explained is None else explained
+    residual = total - covered
+    tolerance = max(_NO_DEBT_RESIDUAL_FLOOR, abs(total) * _NO_DEBT_RESIDUAL_RATIO)
+    detail = f"liabilities {total:.0f} explained {covered:.0f} residual {residual:.0f}"
+    if -tolerance <= residual <= tolerance:
+        return True, detail
+    return False, f"no debt tag on {end}; {detail}"
+
+
+def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
+    """Debt on one balance-sheet date.
+
+    Reported totals win over notes, loans, credit lines, and convertible
+    debt. A missing tag is not zero: the caller excludes ``debt_unconfirmed``
+    unless the filing reports zero or operating liabilities explain Liabilities.
+    """
+    end = end or balance_sheet_date(facts, as_of)
+    if end is None:
+        return {"ok": False, "reason": "balance_sheet_missing"}
+    present = _present_map(facts, DEBT_TAGS, end, as_of)
+    components: list[dict] = []
+    source = ""
+
+    def add(*tags: str) -> None:
+        for tag in tags:
+            if tag in present:
+                components.append(present[tag])
+
+    pair = {"DebtCurrent", "LongTermDebtNoncurrent"}
+    if pair <= present.keys() and (
+        present["DebtCurrent"]["value"] + present["LongTermDebtNoncurrent"]["value"] > 0
+        or not _outside_positive(present, pair | {"LongTermDebt", "LongTermDebtCurrent"})
+    ):
+        add("DebtCurrent", "LongTermDebtNoncurrent")
+        source = "current_plus_noncurrent"
+    elif "LongTermDebtNoncurrent" in present and (
+        present["LongTermDebtNoncurrent"]["value"] > 0
+        or not _outside_positive(
+            present,
+            {"LongTermDebtNoncurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper", "LongTermDebt"},
+        )
+    ):
+        add("LongTermDebtNoncurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper")
+        source = "current_plus_noncurrent"
+    elif "LongTermDebtAndFinanceLeaseObligations" in present or "LongTermDebtAndCapitalLeaseObligations" in present:
+        lease_tags = {"LongTermDebtAndFinanceLeaseObligations", "LongTermDebtAndCapitalLeaseObligations"}
+        chosen = max(
+            (present[tag] for tag in lease_tags if tag in present),
+            key=lambda item: item["value"],
+        )
+        if chosen["value"] > 0 or not _outside_positive(present, lease_tags | {"DebtCurrent"}):
+            components.append(chosen)
+            source = "debt_and_leases"
+    if not source and "LongTermDebt" in present and (
+        present["LongTermDebt"]["value"] > 0
+        or not _outside_positive(
+            present, {"LongTermDebt", "ShortTermBorrowings", "CommercialPaper", "LongTermDebtCurrent"}
+        )
+    ):
+        add("LongTermDebt", "ShortTermBorrowings", "CommercialPaper")
+        source = "long_term_debt_total"
+
+    if not source:
+        components, source = _component_debt(present)
+        carrying = present.get("DebtInstrumentCarryingAmount")
+        if carrying is not None and source not in {"", "explicit_zero"}:
+            comp_sum = sum(item["value"] for item in components if item["concept"] != "DebtInstrumentCarryingAmount")
+            if _covers(carrying, [item for item in components if item["concept"] != "DebtInstrumentCarryingAmount"]) and (
+                not comp_sum or carrying["value"] + 1 >= comp_sum * 0.98
+            ):
+                components = [carrying]
+                source = "debt_instrument_carrying_amount"
+
+    if source:
+        value = sum(item["value"] for item in components)
+        if value == 0 and source != "explicit_zero":
+            source = "explicit_zero"
+        return {
+            "ok": True,
+            "value": value,
+            "source": source,
+            "end": end,
+            "components": components,
+        }
+
+    implied, detail = _liabilities_imply_no_debt(facts, as_of, end)
+    if implied:
         return {
             "ok": True,
             "value": 0.0,
-            "source": "no_debt_tag",
+            "source": "liabilities_imply_no_debt",
             "end": end,
             "components": [],
+            "detail": detail,
         }
     return {
-        "ok": True,
-        "value": sum(item["value"] for item in components),
-        "source": source,
+        "ok": False,
+        "reason": "debt_unconfirmed",
         "end": end,
-        "components": components,
+        "detail": detail,
+        "source": "debt_unconfirmed",
     }
 
 
@@ -470,6 +800,7 @@ _EQUITY_MEMBER = re.compile(
     r"(CommonClass|Class[A-Z]Member|Voting|Nonvoting|Ordinary|CommonStockMember|CapitalStock)",
     re.IGNORECASE,
 )
+_STOCK_MEMBER = re.compile(r"(Common|Ordinary|Stock|Share|Class)", re.IGNORECASE)
 _EQUITY_TITLE_SKIP = ("note", "bond", "debenture", "debt", "warrant", "preferred", "depositary", "right")
 _CLASS_HINT = re.compile(r"(class\s+[a-c]\b|voting|non-voting|nonvoting|series\s+[a-z0-9])", re.IGNORECASE)
 
@@ -482,6 +813,23 @@ def _is_equity_member(member: str) -> bool:
     if not member or _DEBT_MEMBER.search(member):
         return False
     return _EQUITY_MEMBER.search(member) is not None
+
+
+def _is_share_class_member(member: str, dimension: str = "") -> bool:
+    """Any class-axis member counts, including a custom extension name.
+
+    A member on a different axis (a subsidiary or a product) is not a class.
+    When the filing did not carry the axis name, a stock-like member name is
+    enough. Notes, preferred stock, warrants, and units are not classes.
+    """
+    if not member or _DEBT_MEMBER.search(member):
+        return False
+    dim = (dimension or "").split(":")[-1]
+    if dim:
+        return dim.endswith("ClassOfStockAxis")
+    if _is_equity_member(member):
+        return True
+    return _STOCK_MEMBER.search(_member_key(member)) is not None
 
 
 def _is_equity_title(text: str) -> bool:
@@ -532,6 +880,7 @@ def _candidate_from_row(row: dict, source: str, kind: str, rank: int) -> dict | 
         "fy": row.get("fy"),
         "unit": row.get("unit") or "shares",
         "member": str(row.get("member") or ""),
+        "dimension": str(row.get("dimension") or ""),
         "duration_days": duration_days,
     }
 
@@ -590,7 +939,7 @@ def _equity_classes(fresh: list[dict]) -> list[dict]:
             "dei:EntityCommonStockSharesOutstanding",
             "us-gaap:CommonStockSharesOutstanding",
         }
-        and _is_equity_member(row.get("member") or "")
+        and _is_share_class_member(row.get("member") or "", row.get("dimension") or "")
         and row["value"] > 0
     ]
     if not instants:
@@ -631,14 +980,60 @@ def _class_detail(classes: list[dict]) -> str:
     return "; ".join(parts)
 
 
-def select_shares(facts: dict, as_of: date, max_age_days: int = 180, extras: list[dict] | None = None) -> dict:
+def _collapse_class_total(classes: list[dict]) -> list[dict]:
+    """Drop parts when one member already equals the sum of the others."""
+    if len(classes) < 3:
+        return classes
+    for row in classes:
+        others = sum(item["value"] for item in classes if item is not row)
+        if others > 0 and abs(row["value"] - others) / others <= 0.01:
+            return [row]
+    return classes
+
+
+def _summed_class_shares(classes: list[dict], dei_fresh: bool) -> dict:
+    total = sum(row["value"] for row in classes)
+    newest = max(classes, key=lambda row: (row["end"], row["filed"], row["accn"]))
+    return {
+        "ok": True,
+        "provisional": False,
+        "value": total,
+        "source": "class_sum",
+        "kind": "instant",
+        "end": newest["end"],
+        "component": {
+            "concept": newest["tag"],
+            "start": None,
+            "end": newest["end"],
+            "value": total,
+            "accn": newest["accn"],
+            "form": newest["form"],
+            "filed": newest["filed"],
+            "fp": newest["fp"],
+            "fy": newest["fy"],
+            "member": "+".join(row["member"] for row in classes),
+        },
+        "classes": classes,
+        "dei_stale_or_missing": not dei_fresh,
+    }
+
+
+def select_shares(
+    facts: dict,
+    as_of: date,
+    max_age_days: int = 180,
+    extras: list[dict] | None = None,
+    sum_classes: bool = False,
+) -> dict:
     """Newest fresh share count.
 
     An older ``dei:EntityCommonStockSharesOutstanding`` fact never wins over a
     newer count. Cover-page and common-stock instants outrank a weighted
     average when the period end is the same. Counts older than ``max_age_days``
-    are rejected. Two positive common classes, or two class titles, are
-    ``multi_class_shares_unsplit``.
+    are rejected. Two or more positive values on the class axis, whatever the
+    member names, are never reduced to one member. With ``sum_classes`` they
+    are added (one listed ticker prices the whole share base). Otherwise the
+    reason is ``multi_class_shares_unsplit``, as are two class titles.
     """
     candidates = _drop_scaled_share_outliers(_share_candidates(facts, as_of, extras))
     fresh = [row for row in candidates if staleness_days(row["end"], as_of) <= max_age_days]
@@ -647,9 +1042,15 @@ def select_shares(facts: dict, as_of: date, max_age_days: int = 180, extras: lis
         for row in fresh
         if row["source"] == "dei:EntityCommonStockSharesOutstanding" and row["kind"] == "instant" and not row.get("member")
     ]
-    classes = _equity_classes(fresh)
+    raw_classes = _equity_classes(fresh)
+    classes = _collapse_class_total(raw_classes)
+    if len(raw_classes) >= 2 and len(classes) == 1:
+        dropped = {_member_key(row["member"]) for row in raw_classes if row is not classes[0]}
+        fresh = [row for row in fresh if _member_key(row.get("member") or "") not in dropped]
     titles = equity_titles(extras)
     if len(classes) >= 2:
+        if sum_classes:
+            return _summed_class_shares(classes, bool(dei_fresh))
         return {
             "ok": False,
             "reason": "multi_class_shares_unsplit",
@@ -702,6 +1103,45 @@ def select_shares(facts: dict, as_of: date, max_age_days: int = 180, extras: lis
         "component": component,
         "dei_stale_or_missing": not dei_fresh,
     }
+
+
+def large_share_decline_after_balance_sheet(
+    facts: dict,
+    as_of: date,
+    shares_value: float,
+    shares_end: str | None,
+    balance_sheet_end: str | None,
+) -> bool:
+    """True when the share date is after the balance sheet and the count fell more than 10 percent.
+
+    The comparison uses the latest instant common-share count on or before the
+    balance-sheet date, within 120 days. A tender or repurchase after the
+    statement date sets the flag. The row stays in the ranking.
+    """
+    if not shares_end or not balance_sheet_end or shares_end <= balance_sheet_end:
+        return False
+    if shares_value is None or float(shares_value) <= 0:
+        return False
+    bs = _parse_date(balance_sheet_end)
+    if bs is None:
+        return False
+    priors = []
+    for taxonomy, tag in (
+        ("dei", "EntityCommonStockSharesOutstanding"),
+        ("us-gaap", "CommonStockSharesOutstanding"),
+    ):
+        for row in _as_of_rows(_rows(facts, tag, taxonomy), as_of):
+            if row.get("member") or not _is_instant_row(row) or row["val"] <= 0:
+                continue
+            end = _parse_date(row["end"])
+            if end is None or end > bs or (bs - end).days > 120:
+                continue
+            priors.append(row)
+    if not priors:
+        return False
+    latest = max(row["end"] for row in priors)
+    prior = max(row["val"] for row in priors if row["end"] == latest)
+    return (prior - float(shares_value)) / prior > SHARE_DECLINE_AFTER_BS
 
 
 def latest_domestic_row(facts: dict, as_of: date) -> dict | None:

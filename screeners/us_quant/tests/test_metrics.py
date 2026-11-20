@@ -9,7 +9,12 @@ from pathlib import Path
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
 from screeners.us_quant.cover import instance_name, parse_share_document
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
-from screeners.us_quant.facts import select_debt, select_shares, select_ttm_ebit
+from screeners.us_quant.facts import (
+    large_share_decline_after_balance_sheet,
+    select_debt,
+    select_shares,
+    select_ttm_ebit,
+)
 from screeners.us_quant.fscore import score_f
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
 from screeners.us_quant.magic import apply_magic_guards, earnings_yield, rank_magic, return_on_capital
@@ -138,6 +143,103 @@ def test_debt_does_not_add_a_total_and_its_parts():
     leased = select_debt(lease_total, AS_OF)
     assert leased["value"] == 4688
     assert leased["source"] == "debt_and_leases"
+
+
+def _debt_facts(end, values, filed="2026-11-05"):
+    concepts = {"us-gaap:Assets": [_inst("Assets", end, 1000, filed=filed)]}
+    for tag, val in values.items():
+        concepts[f"us-gaap:{tag}"] = [_inst(tag, end, val, filed=filed)]
+    return {"concepts": concepts}
+
+
+def test_notes_loans_and_credit_lines_are_debt_when_no_total_is_tagged():
+    """10-Q amounts that the LongTermDebt tags do not carry."""
+    end = "2026-09-30"
+    coll = _debt_facts(
+        end,
+        {
+            "LoansPayableCurrent": 60_500_000,
+            "LongTermLoansPayable": 782_007_000,
+            "ConvertibleLongTermNotesPayable": 238_996_000,
+        },
+    )
+    got = select_debt(coll, AS_OF)
+    assert got["ok"] is True
+    assert got["value"] == 1_081_503_000
+    assert got["source"] == "component_sum"
+
+    irwd = _debt_facts(end, {"LongTermLineOfCredit": 325_000_000})
+    irwd["concepts"]["us-gaap:LongTermDebt"] = [
+        _inst("LongTermDebt", "2025-09-30", 199_506_000, filed="2025-11-10")
+    ]
+    assert select_debt(irwd, AS_OF)["value"] == 325_000_000
+
+    amn = _debt_facts(end, {"LongTermNotesPayable": 743_370_000, "LongTermLineOfCredit": 0})
+    assert select_debt(amn, AS_OF)["value"] == 743_370_000
+
+    yelp = _debt_facts(end, {"LongTermLineOfCredit": 75_000_000})
+    assert select_debt(yelp, AS_OF)["value"] == 75_000_000
+
+    mgtx = _debt_facts(
+        end,
+        {
+            "LongTermNotesPayable": 121_900_000,
+            "FinanceLeaseLiability": 115_000,
+            "FinanceLeaseLiabilityCurrent": 41_000,
+            "FinanceLeaseLiabilityNoncurrent": 74_000,
+        },
+    )
+    got = select_debt(mgtx, AS_OF)
+    assert got["value"] == 122_015_000
+    assert "FinanceLeaseLiabilityCurrent" not in {item["concept"] for item in got["components"]}
+
+    same_line = _debt_facts(
+        end,
+        {"LineOfCredit": 340_000_000, "LongTermLineOfCredit": 340_000_000, "FinanceLeaseLiabilityCurrent": 570_000},
+    )
+    assert select_debt(same_line, AS_OF)["value"] == 340_570_000
+
+    covered = _debt_facts(end, {"LongTermDebt": 100, "LongTermNotesPayable": 100, "ShortTermBorrowings": 3})
+    total = select_debt(covered, AS_OF)
+    assert total["value"] == 103
+    assert total["source"] == "long_term_debt_total"
+
+    zero_total = _debt_facts(end, {"LongTermDebt": 0, "LongTermNotesPayable": 50})
+    assert select_debt(zero_total, AS_OF)["value"] == 50
+    current_zero = _debt_facts(end, {"DebtCurrent": 0, "LongTermDebtNoncurrent": 100})
+    paired = select_debt(current_zero, AS_OF)
+    assert paired["value"] == 100
+    assert paired["source"] == "current_plus_noncurrent"
+
+
+def test_missing_debt_tag_is_excluded_unless_the_filing_shows_none():
+    end = "2026-09-30"
+    bare = {
+        "concepts": {
+            "us-gaap:Assets": [_inst("Assets", end, 1000)],
+            "us-gaap:Liabilities": [_inst("Liabilities", end, 500_000_000)],
+        }
+    }
+    missing = select_debt(bare, AS_OF)
+    assert missing["ok"] is False
+    assert missing["reason"] == "debt_unconfirmed"
+    implied = {
+        "concepts": {
+            "us-gaap:Assets": [_inst("Assets", end, 1000)],
+            "us-gaap:Liabilities": [_inst("Liabilities", end, 100)],
+            "us-gaap:AccountsPayableCurrent": [_inst("AccountsPayableCurrent", end, 70)],
+            "us-gaap:OperatingLeaseLiability": [_inst("OperatingLeaseLiability", end, 30)],
+        }
+    }
+    zero = select_debt(implied, AS_OF)
+    assert zero["ok"] is True
+    assert zero["value"] == 0
+    assert zero["source"] == "liabilities_imply_no_debt"
+    explicit = _debt_facts(end, {"LongTermDebt": 0})
+    reported = select_debt(explicit, AS_OF)
+    assert reported["ok"] is True
+    assert reported["value"] == 0
+    assert reported["source"] == "explicit_zero"
 
 
 def test_net_fixed_assets_uses_the_successor_tag_or_drops_the_row():
@@ -575,6 +677,92 @@ def test_multi_class_from_share_facts_and_titles():
     assert listed_multi_class([{"ticker": "MA"}, {"ticker": "MA"}]) is False
     assert listed_multi_class([{"ticker": "GOOG"}, {"ticker": "GOOGL"}]) is True
     assert listed_multi_class([{"ticker": "BRK-A"}]) is False
+
+
+def test_custom_class_member_is_not_used_alone():
+    """AOS-like cover: Class A plus a custom member. One member is not the share count."""
+    facts = {
+        "concepts": {
+            "dei:EntityCommonStockSharesOutstanding": [
+                _share_fact(
+                    "EntityCommonStockSharesOutstanding",
+                    "2015-08-05",
+                    75732188,
+                    "2015-08-10",
+                    "0001193125-15-284570",
+                    fy=2015,
+                )
+            ]
+        }
+    }
+    extras = []
+    for member, val in (
+        ("us-gaap:CommonClassAMember", 25860239),
+        ("aos:CommonStockClassUndefinedMember", 108468717),
+    ):
+        extras.append(
+            {
+                "tag": "EntityCommonStockSharesOutstanding",
+                "taxonomy": "dei",
+                "source": "dei:EntityCommonStockSharesOutstanding",
+                "kind": "instant",
+                "start": None,
+                "end": "2026-10-27",
+                "filed": "2026-10-29",
+                "val": val,
+                "accn": "0000091142-26-000104",
+                "form": "10-Q",
+                "member": member,
+                "dimension": "us-gaap:StatementClassOfStockAxis",
+            }
+        )
+    blocked = select_shares(facts, date(2026, 11, 19), max_age_days=180, extras=extras)
+    assert blocked["ok"] is False
+    assert blocked["reason"] == "multi_class_shares_unsplit"
+    assert "CommonClassAMember" in blocked["detail"]
+    assert "CommonStockClassUndefinedMember" in blocked["detail"]
+    summed = select_shares(facts, date(2026, 11, 19), max_age_days=180, extras=extras, sum_classes=True)
+    assert summed["ok"] is True
+    assert summed["value"] == 25860239 + 108468717
+    assert summed["source"] == "class_sum"
+    assert summed["value"] != 25860239
+    xml = """<?xml version="1.0"?>
+    <xbrl xmlns:dei="http://xbrl.sec.gov/dei/2025" xmlns:us-gaap="http://fasb.org/us-gaap/2025" xmlns:aos="http://www.aosmith.com/20260930" xmlns:xbrldi="http://xbrl.org/2006/xbrldi">
+      <context id="c-a">
+        <entity><identifier>91142</identifier>
+          <segment><xbrldi:explicitMember dimension="us-gaap:StatementClassOfStockAxis">us-gaap:CommonClassAMember</xbrldi:explicitMember></segment>
+        </entity>
+        <period><instant>2026-10-27</instant></period>
+      </context>
+      <context id="c-b">
+        <entity><identifier>91142</identifier>
+          <segment><xbrldi:explicitMember dimension="us-gaap:StatementClassOfStockAxis">aos:CommonStockClassUndefinedMember</xbrldi:explicitMember></segment>
+        </entity>
+        <period><instant>2026-10-27</instant></period>
+      </context>
+      <dei:EntityCommonStockSharesOutstanding contextRef="c-a" unitRef="shares">25860239</dei:EntityCommonStockSharesOutstanding>
+      <dei:EntityCommonStockSharesOutstanding contextRef="c-b" unitRef="shares">108468717</dei:EntityCommonStockSharesOutstanding>
+    </xbrl>
+    """
+    parsed = {row["member"]: row["val"] for row in parse_share_document(xml)}
+    assert parsed["us-gaap:CommonClassAMember"] == 25860239
+    assert parsed["aos:CommonStockClassUndefinedMember"] == 108468717
+
+
+def test_share_decline_after_the_balance_sheet_is_flagged():
+    facts = {
+        "concepts": {
+            "dei:EntityCommonStockSharesOutstanding": [
+                _share_fact("EntityCommonStockSharesOutstanding", "2026-11-06", 153292826, "2026-11-10", "new")
+            ],
+            "us-gaap:CommonStockSharesOutstanding": [
+                _share_fact("CommonStockSharesOutstanding", "2026-09-30", 199275907, "2026-11-10", "bs")
+            ],
+        }
+    }
+    assert large_share_decline_after_balance_sheet(facts, date(2026, 11, 19), 153292826, "2026-11-06", "2026-09-30") is True
+    assert large_share_decline_after_balance_sheet(facts, date(2026, 11, 19), 190000000, "2026-11-06", "2026-09-30") is False
+    assert large_share_decline_after_balance_sheet(facts, date(2026, 11, 19), 153292826, "2026-09-30", "2026-09-30") is False
 
 
 def test_near_zero_enterprise_value_is_guarded():
