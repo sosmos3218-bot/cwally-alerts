@@ -218,7 +218,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, nvdaq3, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -373,6 +373,7 @@ jobs:
             elif printf '%s\n' "0 1 29 10 *" "0 1 30 10 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=secdiv
             elif echo "0 0 21 11 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=bke
             elif printf '%s\n' "40 12 18 2 *" "40 14 18 2 *" "0 23 18 2 *" "0 1 19 2 *" "0 4 19 2 *" "10 0 20 2 *" "10 0 21 2 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=soq4
+            elif [ "${{ github.event.schedule }}" = "10 22 17 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 18 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 19 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 25 11 *" ] || [ "${{ github.event.schedule }}" = "10 22 26 11 *" ]; then JOB=nvdaq3
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then JOB=tsla
@@ -1194,11 +1195,16 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/k195930_monitor.py selftest | tail -1; fi
           python scripts/k195930_monitor.py "$MODE"
       - name: Run nvdaq3
+        # GitHub backup crons and job=nvdaq3. Schedule / oneoff_mode=auto = live. Manual dispatch otherwise dry (no ntfy, no state).
         if: steps.pick.outputs.job == 'nvdaq3'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/nvdaq3_monitor.py auto
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          python scripts/nvdaq3_monitor.py "$MODE"
       - name: Run lgesq4
         # [LGESF] 373220 4Q26 잠정실적 일회 판정 (t49u). Uses scripts/earnings_parse.py. Schedule = configs/lgesq4.json oneshot_kst.
         # Any dispatch without oneoff_mode=auto is dry (selftest + dry: no ntfy, no state). Ends 2027-01-18.
