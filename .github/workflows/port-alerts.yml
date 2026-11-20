@@ -218,7 +218,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1112,6 +1112,14 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/k055550_monitor.py auto
+      - name: Run 195930 (195930 vs 458730/475350 weekly corr 0.60; 15:40 0090b0 slot)
+        # 2026-11-20 user approval (pt74u). Same slot, no new cron. Daum KRX close + FunETF divs, never Naver.
+        # Dedupe state/k195930.json last_week + armed. Complete weeks only (Thu if Friday is a KRX holiday). No expiry.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/k195930_monitor.py auto
       - name: Run VCP breakout (watchlist from the Sunday VCP review; 15:40 0090b0 slot)
         # approved in chat 2026-11-03 ("첫 점검에서 관심 유지로 남은 종목은 돌파가 나오면 ntfy로 알려 줘"; slot chosen on "네 소신껏"). Same slot, no new cron.
         # Watchlist in configs/vcp_breakout.json (config-only edits). Empty watchlist and no pending 5-day follow-up in state: no install, no fetch. Dedupe/cooldown: state/vcp_breakout.json.
@@ -1173,6 +1181,18 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
           if [ "$MODE" = "dry" ]; then python scripts/k055550_monitor.py selftest | tail -1; fi
           python scripts/k055550_monitor.py "$MODE"
+      - name: Run 195930 standalone (manual check)
+        # job=k195930 dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'k195930'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/k195930_monitor.py selftest | tail -1; fi
+          python scripts/k195930_monitor.py "$MODE"
       - name: Run nvdaq3
         if: steps.pick.outputs.job == 'nvdaq3'
         env:
