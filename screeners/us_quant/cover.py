@@ -65,9 +65,28 @@ def _contexts_from_tree(root: ElementTree.Element) -> dict[str, dict]:
             elif name == "explicitMember":
                 member = (child.text or "").strip()
                 if member:
-                    members.append(member)
+                    members.append((child.attrib.get("dimension") or "", member))
         found[cid] = {"instant": instant, "start": start, "end": end or instant, "members": members}
     return found
+
+
+def _pick_member(members: list) -> tuple[str, str]:
+    """Prefer the class-of-stock axis when a context carries more than one member."""
+    pairs = []
+    for item in members or []:
+        if isinstance(item, str):
+            dim, mem = "", item
+        else:
+            dim, mem = item
+        mem = str(mem or "").strip()
+        if mem:
+            pairs.append((str(dim or ""), mem))
+    for dim, mem in pairs:
+        if dim.split(":")[-1].endswith("ClassOfStockAxis"):
+            return dim, mem
+    if pairs:
+        return pairs[0]
+    return "", ""
 
 
 def _rows_from_tree(root: ElementTree.Element, contexts: dict[str, dict]) -> list[dict]:
@@ -78,10 +97,7 @@ def _rows_from_tree(root: ElementTree.Element, contexts: dict[str, dict]) -> lis
             continue
         cref = node.attrib.get("contextRef") or ""
         ctx = contexts.get(cref) or {}
-        member = ""
-        members = [item for item in ctx.get("members") or [] if item.strip()]
-        if members:
-            member = members[0]
+        dimension, member = _pick_member(ctx.get("members") or [])
         if tag == _TITLE_TAG:
             text = "".join(node.itertext()).strip()
             if not text:
@@ -117,6 +133,7 @@ def _rows_from_tree(root: ElementTree.Element, contexts: dict[str, dict]) -> lis
                 "val": value,
                 "unit": "shares",
                 "member": member,
+                "dimension": dimension,
                 "fp": "",
                 "fy": None,
             }
@@ -129,7 +146,10 @@ _FACT_RE = re.compile(
     r"""<(?:ix:)?(?:nonFraction|nonNumeric)\b([^>]*)>(.*?)</(?:ix:)?(?:nonFraction|nonNumeric)>""",
     re.IGNORECASE | re.DOTALL,
 )
-_MEMBER_RE = re.compile(r"""<(?:\w+:)?explicitMember\b[^>]*>(.*?)</(?:\w+:)?explicitMember>""", re.IGNORECASE | re.DOTALL)
+_MEMBER_RE = re.compile(
+    r"""<(?:\w+:)?explicitMember\b([^>]*)>(.*?)</(?:\w+:)?explicitMember>""",
+    re.IGNORECASE | re.DOTALL,
+)
 _ATTR_RE = re.compile(r"""([:\w-]+)\s*=\s*["']([^"']*)["']""")
 
 
@@ -147,8 +167,12 @@ def _contexts_from_text(text: str) -> dict[str, dict]:
         instant = _first_tag_text(body, "instant")
         start = _first_tag_text(body, "startDate")
         end = _first_tag_text(body, "endDate") or instant
-        members = [re.sub(r"\s+", " ", item).strip() for item in _MEMBER_RE.findall(body)]
-        members = [item for item in members if item]
+        members = []
+        for member_attrs, member_text in _MEMBER_RE.findall(body):
+            member = re.sub(r"\s+", " ", member_text).strip()
+            if not member:
+                continue
+            members.append((_attrs(member_attrs).get("dimension") or "", member))
         found[cid] = {"instant": instant, "start": start, "end": end, "members": members}
     return found
 
@@ -170,8 +194,7 @@ def _rows_from_text(text: str, contexts: dict[str, dict]) -> list[dict]:
         if tag not in _SHARE_TAGS and tag != _TITLE_TAG:
             continue
         ctx = contexts.get(meta.get("contextRef") or "") or {}
-        members = ctx.get("members") or []
-        member = members[0] if members else ""
+        dimension, member = _pick_member(ctx.get("members") or [])
         if tag == _TITLE_TAG:
             title = re.sub(r"<[^>]+>", " ", body)
             title = re.sub(r"\s+", " ", title).strip()
@@ -198,6 +221,7 @@ def _rows_from_text(text: str, contexts: dict[str, dict]) -> list[dict]:
                 "val": value,
                 "unit": "shares",
                 "member": member,
+                "dimension": dimension,
                 "fp": "",
                 "fy": None,
             }
