@@ -1,4 +1,4 @@
-# US quant screen. Weekdays 07:30 KST. Manual dispatch remains available.
+# US quant screen. Monday 07:30 KST (latest NY weekday close). Manual dispatch remains available.
 # contents: write lets the job commit screeners/output/us.
 # actions/cache restores screeners/cache/us_quant so a later day reuses filings and prices.
 
@@ -6,7 +6,7 @@ name: us-quant-screen
 
 on:
   schedule:
-    - cron: "30 22 * * 0-4"
+    - cron: "30 22 * * 0"
   workflow_dispatch:
     inputs:
       as_of:

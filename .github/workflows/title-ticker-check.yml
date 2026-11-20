@@ -1,19 +1,11 @@
 name: title-ticker-check
 
-# pt112u (2026-11-05): run scripts/title_ticker_check.py on pushes to main that touch titles.
-# STATIC (blocking) violations or a legacy FAIL -> one cwally-ops note per KST day, then the job fails.
-# Report-only lines (sent archive, body first line) never notify. Dedupe uses actions/cache, no commits.
-# workflow_dispatch dry=true (default) never sends and never writes the cache.
+# pt112u (2026-11-05): title_ticker_check.py.
+# Push and pull_request runs live in workflow-lint.yml (one job, so a push is one billed minute).
+# This file is the manual dry/live dispatch only. A push trigger here would bill a second minute.
+# STATIC violations still notify cwally-ops once per KST day from the workflow-lint job.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "scripts/**"
-      - "trend_monitor/**"
-      - "outbox/**"
-      - "configs/**"
-      - ".github/workflows/title-ticker-check.yml"
   workflow_dispatch:
     inputs:
       dry:

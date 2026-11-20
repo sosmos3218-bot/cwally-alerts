@@ -9,6 +9,10 @@
 #   artifact and the ops notice says so.
 set -u
 msg=${1:?commit message}; shift
+case "$msg" in
+  *"[skip ci]"*|*"[ci skip]"*|*"[skip actions]"*|*"[actions skip]"*) ;;
+  *) msg="$msg [skip ci]" ;;
+esac
 tries=${PERSIST_TRIES:-5}
 read -r -a delays <<<"${PERSIST_DELAYS:-5 15 30 60}"
 remote=${PERSIST_REMOTE:-origin}

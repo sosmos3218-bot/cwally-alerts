@@ -10,7 +10,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "job_id": "grab",
-  "schedule_kst": "미국 정규장 30분마다 (09:30-16:00 America/New_York, 평일). 기존 tsla 슬롯에 부착, 새 cron 없음",
+  "schedule_kst": "미국 정규장 매시 정각 (10:00-16:00 America/New_York, 평일). 기존 tsla 슬롯에 부착, 새 cron 없음",
   "schedule_note": "port-alerts.yml 의 job=tsla 실행(cron-job.org 뉴욕 30분 잡 + GitHub 백업 */30 13-21 * * 1-5 UTC)에 Run GRAB 단계로 붙는다. 가격은 정규장 실행마다, 실적 일정과 Komdigi 뉴스는 뉴욕 날짜마다 첫 정규장 실행에서 한 번. job=grab 수동 dispatch 는 oneoff_mode=auto 가 아니면 dry.",
   "alert_policy": "once_per_crossing",
   "dedupe_note": "state/grab.json price.armed 에 선마다 무장 여부. 선을 넘을 때 한 번, 반대로 rearm_pct 넘게 되돌아가면 재무장(구간 2.82 미만 또는 2.98 초과, 2.73 선은 2.76 이상, 2.67 선은 2.70 이상, 3.20 선은 3.10 미만, 4.15 선은 4.03 미만). 이미 넘어 있는 선은 현재가로 시드해서 설치만으로는 안 울림. 하락 쪽(구간, 2.73, 2.67)과 상승 쪽(3.20, 4.15) 각각 한 실행에 가장 깊은 선 하나만. 실적 일정은 earn.<분기>, 뉴스는 news.seen(링크와 정규화 제목), events_day 로 하루 한 번.",
@@ -160,7 +160,7 @@
     "ir": "https://investors.grab.com/rss/pressrelease.aspx",
     "quote_page": "https://finance.yahoo.com/quote/GRAB/"
   },
-  "explain": "그랩 홀딩스(GRAB, 나스닥) 현재가가 매수 구간, 하방 경고선, 회복선, 적정가를 지나는지 미국 정규장에 30분마다 보고, 실적 일정과 인도네시아 규제 뉴스를 하루 한 번 보는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
+  "explain": "그랩 홀딩스(GRAB, 나스닥) 현재가가 매수 구간, 하방 경고선, 회복선, 적정가를 지나는지 미국 정규장에 1시간마다 보고, 실적 일정과 인도네시아 규제 뉴스를 하루 한 번 보는 알림입니다. 자동 주문 아님, 투자 권유 아님.",
   "ends_kst": null,
   "ends_note": "수동 삭제 전까지 무기한",
   "fy_rule": {

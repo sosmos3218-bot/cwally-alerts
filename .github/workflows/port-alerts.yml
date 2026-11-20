@@ -201,9 +201,9 @@ on:
     - cron: "0 10 * * 1-5"
     # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
     - cron: "30 22 * * *"
-    # tsla US regular session, every 30 min. Broad UTC window covers EDT (13:30-20:00) and EST (14:30-21:00).
-    # Code gates to weekdays 09:30-16:00 America/New_York. Approved 2026-10-29. On-time: cron-job.org action=register_tsla.
-    - cron: "*/30 13-21 * * 1-5"
+    # tsla on-time is cron-job.org only (hourly 10:00-16:00 America/New_York). A GitHub */30 backup
+    # arrives hours late, misses the 09:30-16:00 gate, and still bills a whole minute, so it is not scheduled.
+    # A leftover event from the retired cron is skipped in Decide jobs.
   workflow_dispatch:
     inputs:
       job:
@@ -371,7 +371,7 @@ jobs:
             elif printf '%s\n' "47 4 5 1 *" "47 7 5 1 *" "47 4 6 1 *" "47 7 6 1 *" "47 1 7 1 *" "47 4 7 1 *" "47 7 7 1 *" "47 1 8 1 *" "47 4 8 1 *" "47 7 8 1 *" "47 1 11 1 *" "47 4 11 1 *" "47 7 11 1 *" "47 1 12 1 *" "47 7 12 1 *" "47 1 13 1 *" "47 7 13 1 *" "47 1 14 1 *" "47 7 14 1 *" "47 1 15 1 *" "47 7 15 1 *" | grep -qxF "${{ github.event.schedule }}"; then JOB=lgesq4
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "0 10 * * 1-5" ]; then JOB=k203780
             elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "30 22 * * *" ]; then JOB=tslaspcx
-            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then JOB=tsla
+            elif S="$(jq -r '.schedule // empty' "$GITHUB_EVENT_PATH")"; [ "$S" = "*/30 13-21 * * 1-5" ]; then echo "retired tsla github backup; skip"; JOB=skip
             else
               echo "unmatched schedule: ${{ github.event.schedule }}"
               exit 1
@@ -404,15 +404,27 @@ jobs:
             rc=0; python scripts/oneshot_pick.py pick --out "$RUNNER_TEMP/oneshot_plan.json" || rc=$?
             if [ "$rc" = "10" ]; then JOB=skip; elif [ "$rc" != "0" ]; then exit "$rc"; fi
           fi
-          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ]; then
+          if [ "$JOB" = "morning" ] || [ "$JOB" = "afternoon" ] || [ "$JOB" = "0090b0" ] || [ "$JOB" = "k203780" ] || [ "$JOB" = "tslaspcx" ]; then
             # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
             # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
             # Dry workflow_dispatch (oneoff_mode!=auto) skips check+mark so tests never burn the daily slot (pt20u).
+            # k203780 and tslaspcx are included so the late GitHub backup does not repeat the whole bundle.
             if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.oneoff_mode || 'dry' }}" != "auto" ]; then
               echo "dry dispatch: skip slot_guard check for $JOB"
             else
-              git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
-              if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+              # A k203780 backup that lands after 06:00 KST is already the next morning. Running it would
+              # mark today's slot and the real 19:00 dispatch would skip. Leave today unmarked.
+              if [ "$JOB" = "k203780" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+                HH=$((10#$(TZ=Asia/Seoul date +%H)))
+                if [ "$HH" -ge 6 ] && [ "$HH" -lt 18 ]; then
+                  echo "k203780 github backup at ${HH}:00 KST is the next morning; skip so today's 19:00 still runs"
+                  JOB=skip
+                fi
+              fi
+              if [ "$JOB" != "skip" ]; then
+                git fetch -q origin main && git show "origin/main:state/slots/$JOB.json" > /tmp/slot.json 2>/dev/null || echo '{}' > /tmp/slot.json
+                if ! SLOT_FILE=/tmp/slot.json python scripts/slot_guard.py check "$JOB"; then JOB=skip; fi
+              fi
             fi
           fi
           echo "job=$JOB" >> "$GITHUB_OUTPUT"
@@ -1401,6 +1413,7 @@ jobs:
         run: |
           MODE="${ONEOFF_MODE:-dry}"; [ "$MODE" = "force" ] && MODE=install
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then MODE=auto; fi
+          if [ "$MODE" = "auto" ]; then python scripts/slot_guard.py mark k203780; fi
           python scripts/k203780_monitor.py "$MODE"
       - name: Run k079900 (morning 09:00, afternoon 15:20, k203780 19:00 slots)
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'afternoon' || steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == 'k079900') }}
@@ -1949,6 +1962,7 @@ jobs:
         run: |
           MODE=auto
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" != "auto" ]; then MODE=dry; fi
+          if [ "$MODE" = "auto" ]; then python scripts/slot_guard.py mark tslaspcx; fi
           if [ "$MODE" = "dry" ]; then python scripts/tslaspcx_monitor.py selftest; fi
           python scripts/tslaspcx_monitor.py "$MODE"
       - name: Run CAPEX (MEMWATCH hyperscaler capex guidance cut watch; in the daily 07:30 KST tslaspcx flow)
@@ -1965,8 +1979,8 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/capex_monitor.py selftest; fi
           python scripts/capex_monitor.py "$MODE"
       - name: Run TSLA (last price <= 310 / <= 300 during US regular hours, once per NY day)
-        # approved 2026-10-29. Backup cron */30 13-21 * * 1-5 UTC; code gates to 09:30-16:00 America/New_York weekdays.
-        # cron-job.org dispatch (oneoff_mode=auto) and the backup cron send. Any other dispatch is dry (selftest + 305/295, no ntfy, no state).
+        # approved 2026-10-29. On-time: cron-job.org hourly 10:00-16:00 America/New_York. No GitHub */30 backup.
+        # cron-job.org dispatch (oneoff_mode=auto) sends. Any other dispatch is dry (selftest + 305/295, no ntfy, no state).
         # Dedupe: state/tsla.json sent.s310 / sent.s300 = NY date. Stage 2 marks stage 1 sent for that date.
         if: ${{ !cancelled() && steps.pick.outputs.job == 'tsla' }}
         env:
@@ -1984,7 +1998,7 @@ jobs:
             python scripts/tsla_monitor.py auto
           fi
       - name: Run GRAB (GRAB last price lines once per crossing; earnings date + Komdigi news once per NY day; on the tsla US-hours slot)
-        # merged [GRAB] + [GRAB-PX] 2026-11-03 (user request). Attached to the existing tsla slot, no new cron: cron-job.org NY 30-min dispatch (oneoff_mode=auto) and backup */30 13-21 * * 1-5.
+        # merged [GRAB] + [GRAB-PX] 2026-11-03 (user request). Attached to the existing tsla slot, no new cron: cron-job.org NY hourly dispatch (oneoff_mode=auto).
         # Code gates to 09:30-16:00 America/New_York weekdays. Any other dispatch (job=tsla or job=grab without oneoff_mode=auto) is dry (no ntfy, no state).
         # Dedupe: state/grab.json price.armed (seeded from current price), earn.<quarter>, news.seen, events_day.
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'tsla' || steps.pick.outputs.job == 'grab') }}
@@ -2554,7 +2568,7 @@ jobs:
         if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.oneoff_mode != 'auto')
         # retry pull --rebase + push 5 times (5/15/30/60 s), state conflicts keep this run's state (pt13u)
         run: |
-          bash scripts/persist_state.sh "chore: update alert state" state
+          bash scripts/persist_state.sh "chore: update alert state [skip ci]" state
       - name: Upload state artifact (persist failed)
         if: failure() && steps.persist.outputs.persist_failed == '1'
         uses: actions/upload-artifact@v4

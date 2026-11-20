@@ -82,11 +82,12 @@ TSLA-SPCX mode, CRONJOB_ACTION=register_tslaspcx (approved in chat 2026-10-24 12
   fires at the next 07:30 KST. Delete mode refuses it (not a one-shot title). CRONJOB_DRY_RUN=1 checks only.
 
 TSLA price mode, CRONJOB_ACTION=register_tsla (approved 2026-10-29, configs/tsla.json cron_approved):
-  Creates the ONE recurring job TSLA_TITLE: America/New_York, minutes 0 and 30, hours 9-16, Mon-Fri,
-  expiresAt 0 (no end date; configs/tsla.json ends_kst is null), body
+  ONE recurring job TSLA_TITLE. Since 2026-11-20 the schedule is America/New_York, minute 0,
+  hours 10-16, Mon-Fri (hourly, inside 09:30-16:00). expiresAt 0. Body
   {"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}.
-  09:00 and 16:30 ticks are outside the cash session; tsla_monitor.py stays silent. DST follows the NY timezone.
-  Skips (exit 10) if that title or the same NY 30-minute schedule already exists. Delete mode refuses it.
+  If that title or the old half-hour NY schedule already exists, PATCH only the schedule
+  (URL, body, headers untouched). Skip (exit 10) when the schedule is already hourly.
+  Creates the job only when none exists. Delete mode refuses it. DST follows the NY timezone.
 
 Trend mode, CRONJOB_ACTION=register_trend (2026-11-03, docs/ontime-dispatch.md):
   Creates the ONE recurring job TREND_TITLE: Asia/Seoul, minute 40, hour 15, Mon-Fri, no expiry, body
@@ -148,9 +149,13 @@ TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], 
                      "mdays": [-1], "months": [-1], "wdays": [-1]}
 TSLA_TITLE = "cwally tsla US regular 30min (NY)"
 TSLA_BODY = {"ref": "main", "inputs": {"job": "tsla", "oneoff_mode": "auto"}}
-TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0, 30],
-                 "hours": [9, 10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
+# Hourly 10:00-16:00 NY. The old half-hour 09:00-16:30 shape is still recognized so register_tsla patches it.
+TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0],
+                 "hours": [10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
                  "wdays": [1, 2, 3, 4, 5]}
+TSLA_SCHEDULE_OLD = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0, 30],
+                     "hours": [9, 10, 11, 12, 13, 14, 15, 16], "mdays": [-1], "months": [-1],
+                     "wdays": [1, 2, 3, 4, 5]}
 PORTLIGHT_TITLE = "cwally port portlight (Sun 21:00 KST)"
 PORTLIGHT_BODY = {"ref": "main", "inputs": {"job": "portlight", "oneoff_mode": "auto"}}
 PORTLIGHT_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [0], "hours": [21],
@@ -742,22 +747,42 @@ def run_register_tslaspcx(now: datetime) -> int:
     return 0
 
 
+def _schedule_key(sc: dict) -> tuple | None:
+    try:
+        return (
+            sc.get("timezone"),
+            int(sc.get("expiresAt") or 0),
+            tuple(sorted(int(x) for x in (sc.get("minutes") or []))),
+            tuple(sorted(int(x) for x in (sc.get("hours") or []))),
+            tuple(int(x) for x in (sc.get("mdays") or [])),
+            tuple(int(x) for x in (sc.get("months") or [])),
+            tuple(sorted(int(x) for x in (sc.get("wdays") or []))),
+        )
+    except (TypeError, ValueError):
+        return None
+
+
 def is_tsla_like(j: dict) -> bool:
+    """Old half-hour NY job or the hourly job. Same dispatch URL, weekdays, no expiry date."""
     sc = j.get("schedule") or {}
-    hours = sorted(int(h) for h in (sc.get("hours") or []))
-    minutes = sorted(int(m) for m in (sc.get("minutes") or []))
-    wdays = sorted(int(w) for w in (sc.get("wdays") or []))
+    key = _schedule_key(sc)
     return ((j.get("url") or "").rstrip("/") == DISPATCH_URL
-            and sc.get("timezone") == "America/New_York"
-            and hours == [9, 10, 11, 12, 13, 14, 15, 16]
-            and minutes == [0, 30]
-            and list(sc.get("mdays") or []) == [-1]
-            and list(sc.get("months") or []) == [-1]
-            and wdays == [1, 2, 3, 4, 5])
+            and (key == _schedule_key(TSLA_SCHEDULE) or key == _schedule_key(TSLA_SCHEDULE_OLD)))
+
+
+def _tsla_body_ok(job: dict) -> bool:
+    try:
+        return json.loads((job.get("extendedData") or {}).get("body") or "null") == TSLA_BODY
+    except ValueError:
+        return False
 
 
 def run_register_tsla(now: datetime) -> int:
-    """US regular-session TSLA price check. Timezone America/New_York keeps DST on the clock. No expiry."""
+    """US regular-session TSLA price check. Timezone America/New_York keeps DST on the clock. No expiry.
+
+    An existing job (same title, or the old 30-minute NY schedule) is patched to the hourly
+    schedule. URL, body and headers are not changed. A job already on the hourly schedule is skipped.
+    """
     del now  # same signature as the other register_* helpers; this job does not expire
     key = env("CRONJOB_API_KEY")
     if not key:
@@ -765,11 +790,27 @@ def run_register_tsla(now: datetime) -> int:
     res = call("GET", "/jobs", key)
     if res.get("someFailed"):
         raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
+    found = None
     for j in res.get("jobs") or []:
         if (j.get("title") or "").strip() == TSLA_TITLE or is_tsla_like(j):
-            print("skip: tsla price job already exists:")
-            print_job(j)
+            found = j
+            break
+    if found is not None:
+        jid = int(found["jobId"])
+        got = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
+        if (got.get("url") or "").rstrip("/") != DISPATCH_URL or not _tsla_body_ok(got):
+            raise Stop(API_ERROR, f"job {jid} is not the tsla auto dispatch; not patching")
+        if _schedule_key(got.get("schedule") or {}) == _schedule_key(TSLA_SCHEDULE):
+            print("skip: tsla price job already on the hourly schedule:")
+            print_job(got)
             return SKIP
+        if env("CRONJOB_DRY_RUN") == "1":
+            print(f"dry run ok: would patch job {jid} to hourly 10:00-16:00 America/New_York, minute 0")
+            return 0
+        call("PATCH", f"/jobs/{jid}", key, {"job": {"schedule": dict(TSLA_SCHEDULE)}})
+        print(f"patched tsla job {jid} to hourly 10:00-16:00 America/New_York")
+        print_job(call("GET", f"/jobs/{jid}", key).get("jobDetails") or {})
+        return 0
     template = load_template(key)
     job = {
         "enabled": True,
@@ -789,20 +830,16 @@ def run_register_tsla(now: datetime) -> int:
     if isinstance(template.get("notification"), dict):
         job["notification"] = template["notification"]
     if env("CRONJOB_DRY_RUN") == "1":
-        print(f"dry run ok: would create {TSLA_TITLE!r} Mon-Fri 09:00-16:30 America/New_York "
+        print(f"dry run ok: would create {TSLA_TITLE!r} Mon-Fri 10:00-16:00 America/New_York "
               f"(code gates 09:30-16:00), body {json.dumps(TSLA_BODY)}, expiresAt 0")
         return 0
     job_id = call("PUT", "/jobs", key, {"job": job}).get("jobId")
     if not job_id:
         raise Stop(API_ERROR, "cron-job.org returned no jobId")
     got = call("GET", f"/jobs/{int(job_id)}", key).get("jobDetails") or {}
-    try:
-        body_ok = json.loads((got.get("extendedData") or {}).get("body") or "null") == TSLA_BODY
-    except ValueError:
-        body_ok = False
     print("created:")
     print_job(got)
-    print(f"body_ok={body_ok}")
+    print(f"body_ok={_tsla_body_ok(got)}")
     return 0
 
 
