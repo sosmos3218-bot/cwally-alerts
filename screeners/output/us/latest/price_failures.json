@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+    "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -86,39 +86,39 @@
     "counts": {
       "excluded": 854,
       "excluded_reasons": {
-        "capital_non_positive": 75,
+        "capital_non_positive": 76,
         "cash_missing": 102,
+        "earnings_yield_above_max": 1,
         "ebit_missing": 113,
-        "ebit_provisional": 98,
-        "enterprise_value_below_min": 9,
+        "ebit_provisional": 97,
+        "enterprise_value_below_min": 11,
         "enterprise_value_non_positive": 9,
-        "multi_class_shares_unsplit": 297,
-        "net_fixed_assets_missing": 79,
-        "stale_balance_sheet": 1,
+        "multi_class_shares_unsplit": 296,
+        "net_fixed_assets_missing": 78,
         "stale_price": 2,
         "stale_statement": 50,
         "working_capital_missing": 19
       },
-      "fscore_listed": 101,
-      "fscore_scored": 1029,
+      "fscore_listed": 99,
+      "fscore_scored": 1031,
       "fscore_skip_reasons": {
-        "annual_assets_missing": 74,
+        "annual_assets_missing": 73,
         "annual_gap": 7,
         "annual_income_missing": 115,
         "equity_issuance_unknown": 282,
-        "missing_cfo_t": 44,
-        "missing_gross_profit": 464,
+        "missing_cfo_t": 43,
+        "missing_gross_profit": 462,
         "missing_liquidity": 72,
         "missing_revenue": 104,
         "revenue_non_positive": 8,
-        "stale_annual": 71
+        "stale_annual": 70
       },
-      "insider": 218,
+      "insider": 231,
       "intersection": 6,
-      "magic_input_rows": 1418,
+      "magic_input_rows": 1415,
       "magic_top": 30,
-      "price_failures": 9,
-      "universe": 2270
+      "price_failures": 8,
+      "universe": 2267
     },
     "data_sources": [
       "SEC EDGAR company_tickers_exchange.json",
@@ -130,24 +130,24 @@
       "SEC EDGAR Form 4 submission text",
       "Yahoo Finance chart daily close"
     ],
-    "form4_acceptance_cutoff": "2026-11-18T23:59:59-05:00",
+    "form4_acceptance_cutoff": "2026-11-19T23:59:59-05:00",
     "form4_latest_acceptance": "unknown (master.idx)",
-    "form4_latest_filing_date": "2026-11-18",
+    "form4_latest_filing_date": "2026-11-19",
     "fscore_basis": "annual",
     "fscore_min_score": 8,
-    "insider_filings_through": "2026-11-18",
+    "insider_filings_through": "2026-11-19",
     "insider_lookback_days": 30,
     "magic_top_n": 30,
     "min_market_cap": 100000000,
-    "previous_trade_date": "2026-11-12",
-    "price_as_of": "2026-11-18",
-    "run_date": "2026-11-19",
-    "trade_date": "2026-11-18"
+    "previous_trade_date": "2026-11-18",
+    "price_as_of": "2026-11-19",
+    "run_date": "2026-11-20",
+    "trade_date": "2026-11-19"
   },
   "rows": [
     {
       "cik": "0001937987",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -155,15 +155,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "Falcon's Beyond Global, Inc.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "FBYDW",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001905660",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -171,15 +171,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "Hub Cyber Security Ltd.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "HUBCZ",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001956648",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -187,15 +187,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CO2 Energy Transition Corp.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "NOEMW",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001846253",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -203,15 +203,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "OmniAb, Inc.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "OABIW",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001957538",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -219,15 +219,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "OIO Group",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "OIOWW",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001402328",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -235,15 +235,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "Sunshine Biopharma Inc.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "SBFMW",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001084201",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -251,15 +251,15 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SINOVAC BIOTECH LTD",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "SVA",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     },
     {
       "cik": "0001901203",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
+      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -267,27 +267,11 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CN Healthy Food Tech Group Corp.",
-      "price_as_of": "2026-11-18",
+      "price_as_of": "2026-11-19",
       "reason": "price_unavailable",
-      "run_date": "2026-11-19",
+      "run_date": "2026-11-20",
       "ticker": "UCFIW",
-      "trade_date": "2026-11-18"
-    },
-    {
-      "cik": "0001527541",
-      "code_version": "a327738f3a10707e98f0fc45d1a3d97553d130d3",
-      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
-      "fscore_basis": "annual",
-      "fscore_min_score": 8,
-      "insider_lookback_days": 30,
-      "magic_top_n": 30,
-      "min_market_cap": 100000000,
-      "name": "Wheeler Real Estate Investment Trust, Inc.",
-      "price_as_of": "2026-11-18",
-      "reason": "price_unavailable",
-      "run_date": "2026-11-19",
-      "ticker": "WHLRL",
-      "trade_date": "2026-11-18"
+      "trade_date": "2026-11-19"
     }
   ]
 }
