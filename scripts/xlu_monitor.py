@@ -15,6 +15,11 @@ FOMC 결과: 성명서 원문 'decided to raise / maintain / lower', 못 읽으�
   들어오면 1번, 경계 밖 0.3% 넘게 벗어나면 이탈 1번 (XLU 데이터 날짜로 중복 방지). filled=true 면 그 가격대 끝.
 판단이 바뀔 때만 p4. 안내와 조회 실패는 p3 (실패는 cwally-ops, 하루 1번). 10년물 데이터 날짜로 중복 방지.
 첫 실행은 오늘 판단을 조용히 저장. 2027-02-26 23:59 KST 이후 침묵.
+상대 매력(rotation, 2026-11-20): XLP / XLU / XLY. 기존 판단, 가격대, ends_kst 는 그대로.
+  XLU 상향: XLU/XLP 가 20일선과 60일선 위 + 20거래일 상대 성과 +2%p, 그리고 금리 완화 또는 NEE/CEG 주도.
+  XLY 상향: XLY/XLP 같은 조건 + AMZN/TSLA 강세. 금리 완화와 소매판매 반등이 같이 있으면 매크로 확인, 아니면 가격 선행.
+  XLP 우위: FRED 실질 소매판매 신규 월이 둔화이고 XLP 가 XLU, XLY 보다 강할 때 그 월 1번.
+  state 에 rotation 이 없으면 첫 실행은 조용히 시드. 조회가 실패해도 기존 판단은 그대로 가고, cwally-ops 는 하루 1번.
 modes: auto | dry (발송 없음, state 안 씀) | selftest (가짜 값, 네트워크 없음)
 """
 from __future__ import annotations
@@ -26,6 +31,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from html import unescape
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -430,6 +436,667 @@ def ops_message(now: datetime, what: str, errs: list[str]) -> tuple[str, str]:
     return t, m
 
 
+# ---------- rotation: XLP / XLU / XLY (pure rules + isolated fetch) ----------
+
+def _sma(vals: list[float], n: int) -> float | None:
+    if n <= 0 or len(vals) < n:
+        return None
+    return sum(vals[-n:]) / n
+
+
+def _ret(vals: list[float], n: int) -> float | None:
+    if len(vals) < n + 1:
+        return None
+    base = vals[-1 - n]
+    if base <= 0:
+        return None
+    return (vals[-1] / base - 1.0) * 100.0
+
+
+def expected_us_day(now: datetime) -> str:
+    """Last completed US regular session. Before 16:10 ET, the session is the prior weekday."""
+    et = now.astimezone(ET)
+    d = et.date()
+    if (et.hour, et.minute) < (16, 10):
+        d -= timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d.isoformat()
+
+
+def days_between(earlier: str, later: str) -> int:
+    a = datetime.strptime(earlier, "%Y-%m-%d").date()
+    b = datetime.strptime(later, "%Y-%m-%d").date()
+    return (b - a).days
+
+
+def _meta_close(meta: dict, day: str, ten: bool) -> float | None:
+    """Use regularMarketPrice only when the candle close is missing and the session stamp is 16:00 ET or later."""
+    rmt, px = meta.get("regularMarketTime"), meta.get("regularMarketPrice")
+    if rmt is None or px is None:
+        return None
+    try:
+        px = float(px)
+    except (TypeError, ValueError):
+        return None
+    if ten and px > 20:
+        px /= 10.0
+    if not px > 0:
+        return None
+    stamp = datetime.fromtimestamp(int(rmt), timezone.utc).astimezone(ET)
+    if stamp.strftime("%Y-%m-%d") != day or (stamp.hour, stamp.minute) < (16, 0):
+        return None
+    return px
+
+
+def bars_from_chart(payload: dict, now: datetime, ten: bool = False) -> list[tuple[str, float]]:
+    """Completed daily closes. Drop a null close and the in-progress ET session (before 16:10).
+
+    If the newest candle close is empty but regularMarketTime is 16:00 ET or later that day,
+    use regularMarketPrice. That is the value Yahoo writes into the candle once it fills
+    (fulldayPrice can differ and is not used).
+    """
+    res = payload["chart"]["result"][0]
+    quote = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+    meta = res.get("meta") or {}
+    out: dict[str, float] = {}
+    last_day = None
+    for ts, close in zip(res.get("timestamp") or [], quote.get("close") or []):
+        if ts is None:
+            continue
+        day = datetime.fromtimestamp(int(ts), timezone.utc).astimezone(ET).strftime("%Y-%m-%d")
+        last_day = day
+        if close is None:
+            continue
+        px = float(close)
+        if ten and px > 20:
+            px /= 10.0
+        if not px > 0:
+            continue
+        out[day] = px
+    if last_day and last_day not in out:
+        filled = _meta_close(meta, last_day, ten)
+        if filled is not None:
+            out[last_day] = filled
+    today = now.astimezone(ET).strftime("%Y-%m-%d")
+    et = now.astimezone(ET)
+    after = (et.hour, et.minute) >= (16, 10)
+    return [(d, out[d]) for d in sorted(out) if d < today or (d == today and after)]
+
+
+def fetch_completed(sym: str, now: datetime, span: str, ten: bool = False) -> list[tuple[str, float]]:
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(sym, safe='')}?interval=1d&range={span}"
+    rows = bars_from_chart(json.loads(fetch(url)), now, ten=ten)
+    if not rows:
+        raise RuntimeError(f"{sym} 완료 일봉 없음")
+    return rows
+
+
+def align_prices(series: dict[str, list[tuple[str, float]]], min_bars: int) -> tuple[list[str], dict[str, list[float]]]:
+    sets = [set(d for d, _ in rows) for rows in series.values()]
+    days = sorted(set.intersection(*sets)) if sets else []
+    if len(days) < min_bars:
+        raise RuntimeError(f"공통 거래일 {len(days)}개")
+    out = {}
+    for sym, rows in series.items():
+        mp = dict(rows)
+        out[sym] = [mp[d] for d in days]
+    return days, out
+
+
+def cover_days(rows: list[tuple[str, float]] | None, days: list[str]) -> list[float] | None:
+    """Prices on days, or None when the symbol is missing any of those sessions."""
+    if not rows:
+        return None
+    mp = dict(rows)
+    if any(d not in mp for d in days):
+        return None
+    return [mp[d] for d in days]
+
+
+def rs_view(num: list[float], den: list[float], rc: dict) -> dict:
+    fast, slow = int(rc["ma_fast"]), int(rc["ma_slow"])
+    if len(num) < slow or len(num) != len(den):
+        raise RuntimeError("상대강도 표본 부족")
+    if any(b <= 0 for b in den):
+        raise RuntimeError("비율 계산 불가")
+    ratio = [a / b for a, b in zip(num, den)]
+    ma20, ma60 = _sma(ratio, fast), _sma(ratio, slow)
+    rn, rd = _ret(num, fast), _ret(den, fast)
+    if ma20 is None or ma60 is None or rn is None or rd is None:
+        raise RuntimeError("상대강도 계산 불가")
+    excess = rn - rd
+    last = ratio[-1]
+    above = last > ma20 and last > ma60
+    below = last < ma20 and last < ma60
+    return {
+        "enter": bool(above and excess >= float(rc["rs_enter_pct"])),
+        "exit": bool(below and excess <= float(rc["rs_exit_pct"])),
+        "ratio": round(last, 6),
+        "ma20": round(ma20, 6),
+        "ma60": round(ma60, 6),
+        "excess": round(excess, 4),
+    }
+
+
+def lead_view(names: list[list[float]], base: list[float], rc: dict) -> dict:
+    fast = int(rc["ma_fast"])
+    details = []
+    for px in names:
+        ma, r, rb = _sma(px, fast), _ret(px, fast), _ret(base, fast)
+        if ma is None or r is None or rb is None:
+            raise RuntimeError("주도주 표본 부족")
+        details.append({"above": px[-1] > ma, "excess": round(r - rb, 4)})
+    enter = all(d["above"] and d["excess"] >= float(rc["leader_enter_pct"]) for d in details)
+    exit_ = any((not d["above"]) or d["excess"] <= float(rc["leader_exit_pct"]) for d in details)
+    return {
+        "enter": bool(enter), "exit": bool(exit_),
+        "nee_excess": details[0]["excess"], "ceg_excess": details[1]["excess"],
+        "nee_above": details[0]["above"], "ceg_above": details[1]["above"],
+    }
+
+
+def stock_view(names: list[list[float]], rc: dict) -> dict:
+    fast = int(rc["ma_fast"])
+    details = []
+    for px in names:
+        ma, r = _sma(px, fast), _ret(px, fast)
+        if ma is None or r is None:
+            raise RuntimeError("개별주 표본 부족")
+        details.append({"above": px[-1] > ma, "ret": round(r, 4)})
+    enter = all(d["above"] and d["ret"] >= float(rc["stock_enter_pct"]) for d in details)
+    exit_ = any((not d["above"]) or d["ret"] <= float(rc["stock_exit_pct"]) for d in details)
+    return {
+        "enter": bool(enter), "exit": bool(exit_),
+        "amzn_ret": details[0]["ret"], "tsla_ret": details[1]["ret"],
+        "amzn_above": details[0]["above"], "tsla_above": details[1]["above"],
+    }
+
+
+def rate_view(tens, zone, fomc_on: bool, rc: dict) -> dict:
+    n = int(rc["rate_ma"])
+    closes = [c for _, c in tens] if tens and isinstance(tens[0], (tuple, list)) else list(tens or [])
+    if len(closes) < n + 1:
+        raise RuntimeError("10년물 표본 부족")
+    ma = _sma(closes, n)
+    if ma is None:
+        raise RuntimeError("10년물 평균 불가")
+    drop = closes[-1 - n] - closes[-1]
+    last = closes[-1]
+    path = last <= ma and drop >= float(rc["rate_drop_enter"])
+    path_off = last > ma or drop < float(rc["rate_drop_exit"])
+    enter = zone == POS or bool(fomc_on) or path
+    exit_ = zone != POS and not fomc_on and path_off
+    return {
+        "enter": bool(enter), "exit": bool(exit_), "path": bool(path),
+        "last": round(float(last), 4), "ma": round(float(ma), 4), "drop": round(float(drop), 4),
+        "zone": zone, "fomc_cut": bool(fomc_on),
+    }
+
+
+def monthly_mom(rows: list[tuple[str, float]]) -> list[dict]:
+    out = []
+    for i in range(1, len(rows)):
+        prev, cur = rows[i - 1], rows[i]
+        if prev[1] <= 0:
+            continue
+        out.append({"month": cur[0][:7], "mom": (cur[1] / prev[1] - 1.0) * 100.0, "date": cur[0], "level": cur[1]})
+    return out
+
+
+def retail_regime(real_rows: list[tuple[str, float]], nom_rows: list[tuple[str, float]], rules: dict) -> dict | None:
+    real = {r["month"]: r for r in monthly_mom(real_rows)}
+    nom = {r["month"]: r for r in monthly_mom(nom_rows)}
+    common = sorted(set(real) & set(nom))
+    if not common:
+        return None
+    month = common[-1]
+    rm, nm = real[month]["mom"], nom[month]["mom"]
+    if rm <= float(rules["slow_real_mom_max"]) or (rm <= 0 and nm <= 0):
+        regime = "slowdown"
+    elif rm >= float(rules["rebound_real_mom_min"]) and nm >= float(rules["rebound_nominal_mom_min"]):
+        regime = "rebound"
+    else:
+        regime = "mixed"
+    return {
+        "month": month, "regime": regime,
+        "real_mom": round(rm, 4), "nominal_mom": round(nm, 4),
+        "real_date": real[month]["date"], "nominal_date": nom[month]["date"],
+        "real": real[month]["level"], "nominal": nom[month]["level"],
+    }
+
+
+def xlp_leads_view(xlu: list[float], xlp: list[float], xly: list[float], rc: dict) -> bool:
+    fast = int(rc["ma_fast"])
+    ru, rp, ry = _ret(xlu, fast), _ret(xlp, fast), _ret(xly, fast)
+    if None in (ru, rp, ry) or any(v <= 0 for v in xlu[-fast:] + xly[-fast:]):
+        raise RuntimeError("XLP 비교 표본 부족")
+    ratio_u = [a / b for a, b in zip(xlp, xlu)]
+    ratio_y = [a / b for a, b in zip(xlp, xly)]
+    mu, my = _sma(ratio_u, fast), _sma(ratio_y, fast)
+    if mu is None or my is None:
+        raise RuntimeError("XLP 비교 평균 불가")
+    return bool(rp > ru and rp > ry and ratio_u[-1] >= mu and ratio_y[-1] >= my)
+
+
+def cut_active(obj: dict | None) -> tuple[bool, str | None]:
+    sig = (obj or {}).get("signal") or {}
+    klass = sig.get("class")
+    if sig.get("active") and klass in ("인하 사이클 진입", "인하 신호 강화"):
+        return True, klass
+    return False, None
+
+
+def read_fomc_cut() -> tuple[bool, str | None]:
+    path = ROOT / "state" / "fomccut.json"
+    try:
+        return cut_active(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return False, None
+
+
+def fomc_phrase(flag: bool, klass: str | None) -> str:
+    if not flag:
+        return "FOMC 인하 사이클 표시 없음"
+    if klass == "인하 사이클 진입":
+        return "FOMC 인하 사이클 진입"
+    return "FOMC 인하 사이클 강화"
+
+
+def step_flag(prev: bool | None, enter: bool, exit_: bool) -> bool:
+    if prev is None:
+        return bool(enter)
+    if enter and not prev:
+        return True
+    if exit_ and prev:
+        return False
+    return bool(prev)
+
+
+def xlu_label(rs_on: bool, rate_on: bool, power_on: bool) -> str:
+    if rs_on and rate_on and power_on:
+        return "both"
+    if rs_on and rate_on:
+        return "rate"
+    if rs_on and power_on:
+        return "power"
+    return "off"
+
+
+def xly_label(rs_on: bool, stocks_on: bool, rate_on: bool, rebound: bool) -> str:
+    if not (rs_on and stocks_on):
+        return "off"
+    if rate_on and rebound:
+        return "full"
+    return "price"
+
+
+def _r2(v) -> float | None:
+    return None if v is None else round(float(v), 2)
+
+
+def advance_rotation(prev: dict | None, snap: dict, rc: dict) -> tuple[dict, list[dict]]:
+    """State transition only. prev None seeds the current picture and returns no events."""
+    seeded = prev is None
+    prev = prev or {}
+    rs_u = step_flag(None if seeded else bool(prev.get("xlu_rs")), snap["xlu_rs"]["enter"], snap["xlu_rs"]["exit"])
+    rs_y = step_flag(None if seeded else bool(prev.get("xly_rs")), snap["xly_rs"]["enter"], snap["xly_rs"]["exit"])
+    power = step_flag(None if seeded else bool(prev.get("power")), snap["power"]["enter"], snap["power"]["exit"])
+    rate = step_flag(None if seeded else bool(prev.get("rate_ease")), snap["rate"]["enter"], snap["rate"]["exit"])
+    stocks = step_flag(None if seeded else bool(prev.get("stocks")), snap["stocks"]["enter"], snap["stocks"]["exit"])
+    retail = snap["retail"]
+    rebound = bool(retail and retail["regime"] == "rebound")
+    label_u = xlu_label(rs_u, rate, power)
+    label_y = xly_label(rs_y, stocks, rate, rebound)
+    events: list[dict] = []
+    if seeded:
+        slow_month = retail["month"] if retail else None
+    else:
+        slow_month = prev.get("xlp_slow_month")
+        prev_u = prev.get("xlu_label") or "off"
+        prev_y = prev.get("xly_label") or "off"
+        if label_u != prev_u:
+            events.append({"kind": "xlu", "prev": prev_u, "label": label_u, "priority": _xlu_priority(prev_u, label_u)})
+        if label_y != prev_y:
+            events.append({"kind": "xly", "prev": prev_y, "label": label_y, "priority": _xly_priority(prev_y, label_y)})
+        if retail and retail["regime"] == "slowdown" and snap["xlp_leads"] and slow_month != retail["month"]:
+            events.append({"kind": "xlp", "month": retail["month"], "priority": 4})
+            slow_month = retail["month"]
+    rot = {
+        "asof": snap["asof"],
+        "xlu_rs": rs_u, "xly_rs": rs_y, "power": power, "rate_ease": rate, "stocks": stocks,
+        "xlu_label": label_u, "xly_label": label_y,
+        "retail_month": retail["month"] if retail else None,
+        "retail_regime": retail["regime"] if retail else None,
+        "xlp_slow_month": slow_month,
+        "px": {k: (None if v is None else round(float(v), 4)) for k, v in snap["px"].items()},
+        "ret20": {k: _r2(v) for k, v in snap["ret20"].items()},
+        "xlu_xlp": snap["xlu_rs"]["ratio"], "xly_xlp": snap["xly_rs"]["ratio"],
+        "xlu_excess": snap["xlu_rs"]["excess"], "xly_excess": snap["xly_rs"]["excess"],
+        "ten": snap["rate"]["last"], "ten_drop20": snap["rate"]["drop"],
+        "real_mom": retail["real_mom"] if retail else None,
+        "nominal_mom": retail["nominal_mom"] if retail else None,
+        "ten_src": snap.get("ten_src"),
+        "power_fresh": bool(snap["power"].get("fresh", True)),
+        "stocks_fresh": bool(snap["stocks"].get("fresh", True)),
+    }
+    return rot, events
+
+
+def _xlu_priority(prev: str, label: str) -> int:
+    if label == "off":
+        return 3
+    if prev == "off" or label == "both":
+        return 4
+    return 3
+
+
+def _xly_priority(prev: str, label: str) -> int:
+    if label == "full" and prev != "full":
+        return 4
+    return 3
+
+
+def _frozen_power() -> dict:
+    return {"enter": False, "exit": False, "nee_excess": None, "ceg_excess": None,
+            "nee_above": False, "ceg_above": False, "fresh": False}
+
+
+def _frozen_stocks() -> dict:
+    return {"enter": False, "exit": False, "amzn_ret": None, "tsla_ret": None,
+            "amzn_above": False, "tsla_above": False, "fresh": False}
+
+
+def make_snap(px: dict[str, list[float] | None], ten, ten_src: str, retail, zone, fomc_on: bool, fomc_class, rc: dict, asof: str) -> dict:
+    fast = int(rc["ma_fast"])
+    if px.get("NEE") is not None and px.get("CEG") is not None:
+        power = lead_view([px["NEE"], px["CEG"]], px["XLU"], rc)
+        power["fresh"] = True
+    else:
+        power = _frozen_power()
+    if px.get("AMZN") is not None and px.get("TSLA") is not None:
+        stocks = stock_view([px["AMZN"], px["TSLA"]], rc)
+        stocks["fresh"] = True
+    else:
+        stocks = _frozen_stocks()
+    closes, rets = {}, {}
+    for sym, series in px.items():
+        if not series:
+            closes[sym] = None
+            rets[sym] = None
+            continue
+        closes[sym] = round(float(series[-1]), 4)
+        rets[sym] = round(float(_ret(series, fast)), 4)
+    return {
+        "asof": asof, "ten_src": ten_src, "fomc_class": fomc_class,
+        "xlu_rs": rs_view(px["XLU"], px["XLP"], rc),
+        "xly_rs": rs_view(px["XLY"], px["XLP"], rc),
+        "power": power, "stocks": stocks,
+        "rate": rate_view(ten, zone, fomc_on, rc),
+        "retail": retail,
+        "xlp_leads": xlp_leads_view(px["XLU"], px["XLP"], px["XLY"], rc),
+        "px": closes, "ret20": rets,
+    }
+
+
+def build_snapshot(cfg: dict, series_10y, zone, now: datetime) -> dict:
+    rc = cfg["rotation"]
+    got: dict[str, list[tuple[str, float]]] = {}
+    errs: list[str] = []
+    for sym in rc["symbols"]:
+        try:
+            got[sym] = fetch_completed(sym, now, "2y")
+        except Exception as exc:  # noqa: BLE001
+            errs.append(f"{sym}: {exc}")
+    ten, ten_src = None, ""
+    try:
+        ten = fetch_completed("^TNX", now, "1y", ten=True)
+        ten_src = "Yahoo ^TNX"
+    except Exception as exc:  # noqa: BLE001
+        if series_10y and len(series_10y) >= int(rc["rate_ma"]) + 1:
+            ten, ten_src = list(series_10y), "기존 10년물"
+        else:
+            errs.append(f"^TNX: {exc}")
+    retail = None
+    try:
+        real = fred_series(rc["retail"]["real"], "2024-01-01")
+        nom = fred_series(rc["retail"]["nominal"], "2024-01-01")
+        retail = retail_regime(real, nom, rc["retail"])
+        if retail is None:
+            raise RuntimeError("공통 월 부족")
+    except Exception as exc:  # noqa: BLE001
+        errs.append(f"FRED 소매판매: {exc}")
+    if errs or ten is None:
+        raise RuntimeError("; ".join(errs)[:500] or "상대매력 데이터 없음")
+    # XLU, XLP, XLY set the session. A missing latest print on NEE/CEG/AMZN/TSLA/SPY
+    # does not fail the run and does not move that condition (enter and exit stay off).
+    days, core = align_prices({s: got[s] for s in ("XLU", "XLP", "XLY")}, int(rc["min_bars"]))
+    px = {s: core[s] for s in ("XLU", "XLP", "XLY")}
+    for sym in ("SPY", "NEE", "CEG", "AMZN", "TSLA"):
+        px[sym] = cover_days(got.get(sym), days)
+    last = days[-1]
+    expect = expected_us_day(now)
+    gap = days_between(last, expect)
+    if gap > int(rc["stale_days"]) or gap < 0:
+        raise RuntimeError(f"완료 일봉 {last}, 기대 세션 {expect}")
+    fomc_on, fomc_class = read_fomc_cut()
+    return make_snap(px, ten, ten_src, retail, zone, fomc_on, fomc_class, rc, last)
+
+
+XLU_TITLES = {
+    ("off", "rate"): "[XLU] XLP XLY 상대 매력 상향 | XLU XLP 금리 확인",
+    ("off", "power"): "[XLU] XLP XLY 상대 매력 상향 | XLU XLP NEE CEG 전력 확인",
+    ("off", "both"): "[XLU] XLP XLY 상대 매력 상향 | XLU XLP NEE CEG 금리와 전력 확인",
+    ("rate", "both"): "[XLU] XLP XLY 확인 보강 | XLU XLP NEE CEG 금리와 전력",
+    ("power", "both"): "[XLU] XLP XLY 확인 보강 | XLU XLP NEE CEG 금리와 전력",
+    ("both", "rate"): "[XLU] XLP XLY 확인 축소 | XLU XLP 금리만 유지",
+    ("both", "power"): "[XLU] XLP XLY 확인 축소 | XLU XLP NEE CEG 전력만 유지",
+    ("rate", "power"): "[XLU] XLP XLY 확인 전환 | XLU XLP NEE CEG 전력 확인",
+    ("power", "rate"): "[XLU] XLP XLY 확인 전환 | XLU XLP 금리 확인",
+    ("rate", "off"): "[XLU] XLP XLY 상대 매력 해제 | XLU XLP",
+    ("power", "off"): "[XLU] XLP XLY 상대 매력 해제 | XLU XLP",
+    ("both", "off"): "[XLU] XLP XLY 상대 매력 해제 | XLU XLP",
+}
+XLY_TITLES = {
+    ("off", "price"): "[XLU] XLP XLY 가격 선행 | XLY XLP AMZN TSLA 매크로 미확인",
+    ("off", "full"): "[XLU] XLP XLY 상대 매력 상향 | XLY XLP AMZN TSLA 매크로 확인",
+    ("price", "full"): "[XLU] XLP XLY 상대 매력 상향 | XLY XLP AMZN TSLA 매크로 확인",
+    ("full", "price"): "[XLU] XLP XLY 매크로 확인 해제 | XLY XLP AMZN TSLA",
+    ("price", "off"): "[XLU] XLP XLY 상대 매력 해제 | XLY XLP AMZN TSLA",
+    ("full", "off"): "[XLU] XLP XLY 상대 매력 해제 | XLY XLP AMZN TSLA",
+}
+
+
+def _fmt_pct(v) -> str:
+    return "없음" if v is None else f"{v:+.2f}%"
+
+
+def _fmt_pp(v) -> str:
+    return "없음" if v is None else f"{v:+.2f}%p"
+
+
+def _px_line(snap: dict) -> str:
+    px, r20, day = snap["px"], snap["ret20"], snap["asof"][5:].replace("-", "/")
+    return (f"종가 XLU {px['XLU']:.2f}, XLP {px['XLP']:.2f}, XLY {px['XLY']:.2f} ({day}). "
+            f"20거래일 XLU {_fmt_pct(r20['XLU'])}, XLP {_fmt_pct(r20['XLP'])}, XLY {_fmt_pct(r20['XLY'])}, SPY {_fmt_pct(r20.get('SPY'))}.")
+
+
+def _rate_line(snap: dict) -> str:
+    rt = snap["rate"]
+    bits = [f"10년물 {rt['last']:.2f}% (20일 {rt['ma']:.2f}%, 20거래일 변화 {-rt['drop']:+.2f}%p, {snap.get('ten_src') or '10년물'})."]
+    if rt["zone"] == POS:
+        bits.append("기존 판단 긍정.")
+    elif rt["zone"]:
+        bits.append(f"기존 판단 {rt['zone']}.")
+    bits.append(fomc_phrase(rt["fomc_cut"], snap.get("fomc_class")) + ".")
+    if rt["path"]:
+        bits.append("10년물 경로 완화.")
+    return " ".join(bits)
+
+
+def rotation_message(cfg: dict, ev: dict, snap: dict, rot: dict, now: datetime) -> tuple[str, str, int]:
+    kind, pri = ev["kind"], int(ev["priority"])
+    head = f"{now.strftime('%Y-%m-%d %H:%M')} KST | XLU XLP XLY | 섹터 상대 매력"
+    what = "이게 뭐 알림: XLP, XLU, XLY 상대 매력이 바뀔 때만 보내는 점검. 매일 반복하지 않음. 주문 지시가 아님."
+    nums = _px_line(snap)
+    rs_u, rs_y = snap["xlu_rs"], snap["xly_rs"]
+    pw, stc = snap["power"], snap["stocks"]
+    retail = snap["retail"] or {}
+    if kind == "xlu":
+        title = XLU_TITLES[(ev["prev"], ev["label"])]
+        path = {"rate": "금리 확인", "power": "전력주 확인", "both": "금리와 전력주 확인", "off": "확인 해제"}[ev["label"]]
+        if pw.get("fresh", True):
+            power_txt = f"NEE 상대 {_fmt_pp(pw['nee_excess'])}, CEG 상대 {_fmt_pp(pw['ceg_excess'])}."
+        else:
+            power_txt = "NEE 또는 CEG 완료 종가 없음, 전력 상태는 바꾸지 않음."
+        status = (f"XLU 상대 매력 {ev['prev']} -> {ev['label']} ({path}). "
+                  f"XLU/XLP {rs_u['ratio']:.4f} (20일 {rs_u['ma20']:.4f}, 60일 {rs_u['ma60']:.4f}), 20거래일 상대 {rs_u['excess']:+.2f}%p. "
+                  f"{power_txt} {_rate_line(snap)} {nums}")
+        if ev["label"] == "off":
+            todo = "XLU 를 XLP 보다 앞에 두지 않음. 기존 가격대와 긍정, 중립, 부정 판단을 그대로 봄."
+        elif ev["label"] == "power":
+            todo = "XLU 검토 순서를 올려 볼 자리. 다만 금리 완화는 아직 없고, NEE 와 CEG 주가 주도만 켜짐. 실적 반영은 이 알림이 확인하지 않음."
+        elif ev["label"] == "rate":
+            todo = "XLU 검토 순서를 XLP 보다 한 단계 올려 볼 자리. 금리 또는 인하 쪽 확인이 켜짐. NEE, CEG 주가 주도는 아직 없음."
+        else:
+            todo = "XLU 검토 순서를 XLP 보다 올려 볼 자리. 금리 쪽과 NEE, CEG 주가 주도 가 같이 켜짐. 실적 반영은 이 알림이 확인하지 않음."
+        later = "XLU/XLP 가 20일선과 60일선 아래로 내려오고 20거래일 상대 성과가 0%p 이하이면 해제 1번. 금리만 꺼지거나 전력주만 꺼지면 축소 1번."
+    elif kind == "xly":
+        title = XLY_TITLES[(ev["prev"], ev["label"])]
+        macro = "매크로 확인" if ev["label"] == "full" else ("가격만 선행, 매크로 미확인" if ev["label"] == "price" else "해제")
+        if stc.get("fresh", True):
+            stock_txt = f"AMZN 20거래일 {_fmt_pct(stc['amzn_ret'])}, TSLA 20거래일 {_fmt_pct(stc['tsla_ret'])}."
+        else:
+            stock_txt = "AMZN 또는 TSLA 완료 종가 없음, 개별주 상태는 바꾸지 않음."
+        status = (f"XLY 상대 매력 {ev['prev']} -> {ev['label']} ({macro}). "
+                  f"XLY/XLP {rs_y['ratio']:.4f} (20일 {rs_y['ma20']:.4f}, 60일 {rs_y['ma60']:.4f}), 20거래일 상대 {rs_y['excess']:+.2f}%p. "
+                  f"{stock_txt} {_rate_line(snap)} "
+                  f"소매 {retail.get('month') or '없음'} 실질 {retail.get('real_mom')}%, 명목 {retail.get('nominal_mom')}%, 판정 {retail.get('regime') or '없음'}. {nums}")
+        if ev["label"] == "full":
+            todo = "XLY 검토 순서를 올려 볼 자리. 가격과 AMZN, TSLA, 금리 완화, 소매 반등이 같이 켜짐."
+        elif ev["label"] == "price":
+            todo = "가격은 먼저 돌아섰으나 매크로 확인은 없음. XLY 순서를 올리지 말고 관망."
+        else:
+            todo = "XLY 상대 매력 상향은 해제. XLP 우위를 유지하고 XLY 는 후순위."
+        later = "AMZN 또는 TSLA 가 20일선 아래이거나 20거래일 성과가 0% 이하, 또는 XLY/XLP 상대 강도가 꺼지면 해제. 소매 반등과 금리 완화가 나중에 켜지면 매크로 확인 1번."
+    else:
+        title = "[XLU] XLP XLY 소비 둔화 확인 | XLP XLU XLY 우위 유지"
+        status = (f"FRED {retail.get('month')} 실질 소매판매 전월비 {retail.get('real_mom'):+.2f}% ({retail.get('real_date')}), "
+                  f"명목 전월비 {retail.get('nominal_mom'):+.2f}% ({retail.get('nominal_date')}). 둔화 확인. "
+                  f"XLP 20거래일 성과가 XLU, XLY 이상이고 XLP 비율이 20일선 위. {nums}")
+        todo = "XLP 우위를 유지. XLU 나 XLY 순서를 이 알림으로 올리지 않음."
+        later = "다음 소매판매 월이 새로 나오고 둔화가 이어지며 XLP 우위가 유지될 때만 다시 1번. 같은 월은 반복하지 않음."
+    trim = f"이 알림에는 익절 가격이 없음. 기존 재검토 {cfg['price_levels']['review_below']:.2f}달러, 추격 금지 {cfg['price_levels']['nochase_at']:.2f}달러를 그대로 봄."
+    avoid = "이 알림만 보고 비중을 한 번에 바꾸기. 장중 가격을 따라가기. 금리나 소매 숫자 없이 순서만 올리기."
+    lines = [head, what, f"지금 결과/상태: {status}", f"지금 할 일: {todo}", f"나중에: {later}",
+             f"익절/줄일 때: {trim}", f"하지 말 것: {avoid}", END_LINE, DISCLAIMER]
+    return title, "\n".join(lines), pri
+
+
+def rotation_ops_message(now: datetime, errs: list[str]) -> tuple[str, str]:
+    t = "[XLU] XLP XLY 상대매력 조회 실패"
+    m = "\n".join([
+        f"{now.strftime('%Y-%m-%d %H:%M')} KST | XLU XLP XLY",
+        "이게 뭐 알림: XLP, XLU, XLY 상대 매력에 쓰는 시세를 못 읽음. 기존 10년물 판단과 가격대는 그대로 진행.",
+        "지금 결과/상태: " + "; ".join(errs)[:400],
+        "지금 할 일: 야후 XLU, XLP, XLY 와 FRED RRSFS, RSAFS 를 직접 확인.",
+        "나중에: 다음 실행에서 다시 시도. 하루 1번만 이 안내를 보냄.",
+        "익절/줄일 때: 해당 없음.",
+        "하지 말 것: 이 조회 실패를 상대 매력 전환으로 읽기.",
+        END_LINE, DISCLAIMER,
+    ])
+    return t, m
+
+
+def rotation_step(base: dict, cfg: dict, series, zone, now: datetime, fetch=None):
+    """Returns (rotation dict or None, messages, ops pair or None). Never raises."""
+    try:
+        snap = fetch() if fetch is not None else build_snapshot(cfg, series, zone, now)
+        prev = base.get("rotation") if isinstance(base.get("rotation"), dict) else None
+        rot, events = advance_rotation(prev, snap, cfg["rotation"])
+        msgs = []
+        for ev in events:
+            t, m, p = rotation_message(cfg, ev, snap, rot, now)
+            check_text(t, m)
+            msgs.append((t, m, p))
+        return rot, msgs, None
+    except Exception as exc:  # noqa: BLE001
+        t, m = rotation_ops_message(now, [str(exc)[:300]])
+        try:
+            check_text(t, m)
+        except Exception:  # noqa: BLE001
+            t, m = rotation_ops_message(now, ["상대매력 계산 실패"])
+        return None, [], (t, m)
+
+
+def attach_rotation(container: dict, cfg: dict, series, zone, now: datetime):
+    """Print the rotation result and store it on container. Does not publish or set the ops day."""
+    missing = not isinstance(container.get("rotation"), dict)
+    rot, msgs, ops = rotation_step(container, cfg, series, zone, now)
+    if rot is not None:
+        evs = ",".join(t for t, _, _ in msgs) or "-"
+        tail = " silent seed (no alert)" if missing else ""
+        print(f"rotation: asof={rot['asof']} XLU={rot['px'].get('XLU')} XLP={rot['px'].get('XLP')} XLY={rot['px'].get('XLY')} "
+              f"xlu_label={rot['xlu_label']} xly_label={rot['xly_label']} power_fresh={rot.get('power_fresh')} "
+              f"stocks_fresh={rot.get('stocks_fresh')} retail={rot['retail_regime']} {rot['retail_month']} "
+              f"real_mom={rot['real_mom']} nom_mom={rot['nominal_mom']} events={evs}{tail}")
+        container["rotation"] = rot
+    else:
+        print(f"rotation: fetch failed ({ops[0] if ops else 'unknown'})")
+    for t, m, p in msgs:
+        print(f"rotation priority={p}\n{t}\n{m}")
+    if ops:
+        print(f"rotation ops: {ops[0]}\n{ops[1]}")
+    return msgs, ops
+
+
+def mark_rotation_ops(container: dict, base: dict, ops, now: datetime) -> bool:
+    if not ops or base.get("rotation_ops_day") == now.strftime("%Y-%m-%d"):
+        return False
+    container["rotation_ops_day"] = now.strftime("%Y-%m-%d")
+    return True
+
+
+def publish_rotation(cfg: dict, msgs, ops, send_ops: bool) -> None:
+    server = resolve_server(cfg.get("ntfy_server"))
+    topic = cfg["ntfy_topic"]
+    if send_ops and ops:
+        publish(route_topic(topic, ops[0]), ops[0], ops[1], 3, ["warning"], server, config_name="xlu")
+    for t, m, p in msgs:
+        publish(route_topic(topic, t), t, m, p, ["electric_plug"], server, config_name="xlu")
+
+
+def _finish_rotation_early(st: dict, cfg: dict, series, zone, now: datetime) -> None:
+    """10년물이 없어 본 판단이 여기서 끝나는 날. 상대 매력만 따로 처리하고 기존 조기 종료는 유지."""
+    work = dict(st)
+    msgs, ops = attach_rotation(work, cfg, series, zone, now)
+    send = mark_rotation_ops(work, st, ops, now)
+    if work != st:
+        save_state(work, now)
+    publish_rotation(cfg, msgs, ops, send)
+
+
+def rotation_example(cfg: dict, now: datetime) -> tuple[str, str, int]:
+    """Network-free sample of an XLU upgrade message. Not a live signal."""
+    rc = cfg["rotation"]
+    snap = {
+        "asof": "2026-11-19", "ten_src": "Yahoo ^TNX", "fomc_class": None,
+        "px": {"XLU": 43.01, "XLP": 89.86, "XLY": 115.88, "SPY": 715.87, "NEE": 83.79, "CEG": 252.03, "AMZN": 257.37, "TSLA": 374.41},
+        "ret20": {"XLU": 3.2, "XLP": 0.4, "XLY": -1.1, "SPY": -2.0, "NEE": 6.0, "CEG": 5.5, "AMZN": 4.0, "TSLA": 4.2},
+        "xlu_rs": {"enter": True, "exit": False, "ratio": 0.49, "ma20": 0.47, "ma60": 0.46, "excess": 2.8},
+        "xly_rs": {"enter": False, "exit": True, "ratio": 1.2, "ma20": 1.3, "ma60": 1.25, "excess": -1.5},
+        "power": {"enter": False, "exit": True, "nee_excess": -1.5, "ceg_excess": -2.0, "nee_above": False, "ceg_above": False, "fresh": True},
+        "stocks": {"enter": False, "exit": True, "amzn_ret": 4.0, "tsla_ret": 4.2, "amzn_above": True, "tsla_above": True},
+        "rate": {"enter": True, "exit": False, "path": True, "last": 4.40, "ma": 4.70, "drop": 0.30, "zone": NEU, "fomc_cut": False},
+        "retail": {"month": "2026-10", "regime": "mixed", "real_mom": -0.14, "nominal_mom": 0.21, "real_date": "2026-10-01", "nominal_date": "2026-10-01"},
+        "xlp_leads": False,
+    }
+    rot, events = advance_rotation({"xlu_rs": False, "xly_rs": False, "power": False, "rate_ease": False, "stocks": False,
+                                    "xlu_label": "off", "xly_label": "off", "xlp_slow_month": "2026-10"}, snap, rc)
+    ev = next(e for e in events if e["kind"] == "xlu")
+    return rotation_message(cfg, ev, snap, rot, now)
+
+
 # ---------- run ----------
 
 def run(mode: str, now: datetime | None = None) -> int:
@@ -452,6 +1119,7 @@ def run(mode: str, now: datetime | None = None) -> int:
         check_text(*ops)
         print(f"ops: {ops[0]}\n{ops[1]}")
         if dry:
+            attach_rotation(dict(st), cfg, series, st.get("zone"), now)
             print("DRY RUN: no publish, state not written")
             return 0
         if st.get("ops_day") != today:
@@ -459,6 +1127,7 @@ def run(mode: str, now: datetime | None = None) -> int:
             st["ops_day"] = today
             save_state(st, now)
         if not series:
+            _finish_rotation_early(st, cfg, series, st.get("zone"), now)
             return 0
     try:
         xs = yahoo_series("XLU")
@@ -487,9 +1156,11 @@ def run(mode: str, now: datetime | None = None) -> int:
         print(f"priority={pri}\n{t}\n{m}")
     elif st.get("zone") is None:
         print("install: seed silently (no send)")
+    rot_msgs, rot_ops = attach_rotation(new, cfg, series, new.get("zone"), now)
     if dry:
         print("DRY RUN: no publish, state not written")
         return 0
+    send_rot_ops = mark_rotation_ops(new, st, rot_ops, now)
     if new == st:
         return 0
     if st.get("zone") is None:
@@ -499,6 +1170,7 @@ def run(mode: str, now: datetime | None = None) -> int:
         publish(cfg["ntfy_topic"], t, m, pri, ["electric_plug"], resolve_server(cfg.get("ntfy_server")), config_name="xlu")
     for bt, bm, bp in band_out:
         publish(cfg["ntfy_topic"], bt, bm, bp, ["electric_plug"], resolve_server(cfg.get("ntfy_server")), config_name="xlu")
+    publish_rotation(cfg, rot_msgs, rot_ops, send_rot_ops)
     return 0
 
 
@@ -506,6 +1178,12 @@ def preview(now: datetime | None = None) -> None:
     """dry 에서 판단이 바뀌면 보낼 제목/본문 예시(지금 숫자로)."""
     cfg = load_cfg()
     now = now or datetime.now(KST)
+    try:
+        rt, rm, rp = rotation_example(cfg, now)
+        check_text(rt, rm)
+        print(f"--- rotation preview (example only, 샘플 숫자) priority={rp}\n{rt}\n{rm}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"rotation preview failed: {exc}")
     series, src10, _ = ten_series(now)
     if not series:
         return
@@ -691,6 +1369,238 @@ def selftest() -> int:
     check("not expired yet", datetime(2027, 2, 26, 23, 59, tzinfo=KST) > ENDS_AT, False)
     # fomc pending before known time (no network)
     check("pending", fomc_decisions(cfg, datetime(2026, 12, 10, 3, 59, tzinfo=KST))[0], {"2026-12": None, "2027-01": None})
+    # ---- rotation (fixtures only) ----
+    rc = cfg["rotation"]
+    check("rot thresholds", (rc["rs_enter_pct"], rc["rs_exit_pct"], rc["leader_enter_pct"], rc["leader_exit_pct"],
+                             rc["stock_enter_pct"], rc["stock_exit_pct"], rc["rate_drop_enter"], rc["rate_drop_exit"],
+                             rc["retail"]["slow_real_mom_max"], rc["retail"]["rebound_real_mom_min"], rc["retail"]["rebound_nominal_mom_min"]),
+          (2.0, 0.0, 1.0, -1.0, 3.0, 0.0, 0.25, 0.10, -0.20, 0.30, 0.20))
+    assert not BANNED_RE.search(json.dumps(rc, ensure_ascii=False)), "rotation config banned char"
+    check("step on", step_flag(False, True, False), True)
+    check("step stay", step_flag(True, False, False), True)
+    check("step off", step_flag(True, False, True), False)
+    check("step seed", step_flag(None, True, False), True)
+    # 2026-10 FRED print is mixed, not a slowdown and not a rebound
+    oct_real = [("2026-09-01", 222016.0), ("2026-10-01", 221711.0)]
+    oct_nom = [("2026-09-01", 746637.0), ("2026-10-01", 748220.0)]
+    oct = retail_regime(oct_real, oct_nom, rc["retail"])
+    check("oct regime", (oct["month"], oct["regime"]), ("2026-10", "mixed"))
+    check("oct not slow", oct["real_mom"] <= rc["retail"]["slow_real_mom_max"], False)
+    slow = retail_regime([("2026-10-01", 100.0), ("2026-11-01", 99.7)], [("2026-10-01", 100.0), ("2026-11-01", 100.5)], rc["retail"])
+    check("real drop slow", slow["regime"], "slowdown")
+    both_down = retail_regime([("2026-10-01", 100.0), ("2026-11-01", 99.9)], [("2026-10-01", 100.0), ("2026-11-01", 99.8)], rc["retail"])
+    check("both nonpositive slow", both_down["regime"], "slowdown")
+    reb = retail_regime([("2026-10-01", 100.0), ("2026-11-01", 100.4)], [("2026-10-01", 100.0), ("2026-11-01", 100.3)], rc["retail"])
+    check("rebound", reb["regime"], "rebound")
+    mixed = retail_regime([("2026-10-01", 100.0), ("2026-11-01", 99.95)], [("2026-10-01", 100.0), ("2026-11-01", 100.1)], rc["retail"])
+    check("tiny dip mixed", mixed["regime"], "mixed")
+    check("retail no overlap", retail_regime([("2026-10-01", 100.0), ("2026-11-01", 99.0)], [("2026-09-01", 100.0), ("2026-10-01", 99.0)], rc["retail"]), None)
+
+    def flat(v, n=80):
+        return [float(v)] * n
+
+    def rise(start, n=80, steps=20, end=None):
+        end = start if end is None else end
+        head = [float(start)] * (n - steps)
+        tail = [start + (end - start) * i / (steps - 1) for i in range(steps)]
+        return head + tail
+
+    xlp_flat = flat(100)
+    check("rs enter", rs_view(rise(40, end=50), xlp_flat, rc)["enter"], True)
+    check("rs exit", rs_view(rise(50, end=42), xlp_flat, rc)["exit"], True)
+    check("rs flat not enter", rs_view(flat(40), xlp_flat, rc)["enter"], False)
+    check("power enter", lead_view([rise(100, end=120), rise(100, end=120)], flat(40), rc)["enter"], True)
+    check("power flat exit", lead_view([flat(100), flat(100)], flat(40), rc)["exit"], True)
+    check("stocks enter", stock_view([rise(100, end=120), rise(100, end=120)], rc)["enter"], True)
+    check("stocks flat exit", stock_view([flat(100), flat(100)], rc)["exit"], True)
+    check("rate path on", rate_view([5.4] * 20 + [5.1], NEU, False, rc)["enter"], True)
+    hyst = rate_view([5.2] * 20 + [5.05], NEU, False, rc)
+    check("rate hyst band", (hyst["enter"], hyst["exit"]), (False, False))
+    check("rate path off", rate_view([5.0] * 20 + [5.2], NEU, False, rc)["exit"], True)
+    check("rate zone pos", rate_view([5.2] * 21, POS, False, rc)["enter"], True)
+    check("rate fomc", rate_view([5.2] * 21, NEU, True, rc)["enter"], True)
+    check("xlp leads", xlp_leads_view(flat(40), rise(80, end=100), flat(100), rc), True)
+    check("xlp tie no", xlp_leads_view(flat(40), flat(80), flat(100), rc), False)
+    check("cut on", cut_active({"signal": {"active": True, "class": "인하 사이클 진입"}}), (True, "인하 사이클 진입"))
+    check("cut off", cut_active({"signal": {"active": False, "class": "인하 사이클 진입"}}), (False, None))
+    check("cut missing", cut_active({}), (False, None))
+    check("phrase no raw", "신호" in fomc_phrase(True, "인하 신호 강화"), False)
+
+    def neutral_snap():
+        return {
+            "asof": "2026-11-19", "ten_src": "Yahoo ^TNX", "fomc_class": None,
+            "px": {"XLU": 43.0, "XLP": 90.0, "XLY": 116.0, "SPY": 716.0, "NEE": 84.0, "CEG": 252.0, "AMZN": 257.0, "TSLA": 374.0},
+            "ret20": {"XLU": 0.0, "XLP": 0.0, "XLY": 0.0, "SPY": 0.0, "NEE": 0.0, "CEG": 0.0, "AMZN": 0.0, "TSLA": 0.0},
+            "xlu_rs": {"enter": False, "exit": True, "ratio": 0.47, "ma20": 0.48, "ma60": 0.49, "excess": -1.0},
+            "xly_rs": {"enter": False, "exit": True, "ratio": 1.2, "ma20": 1.3, "ma60": 1.25, "excess": -1.0},
+            "power": {"enter": False, "exit": True, "nee_excess": -2.0, "ceg_excess": -3.0, "nee_above": False, "ceg_above": False},
+            "stocks": {"enter": False, "exit": True, "amzn_ret": -1.0, "tsla_ret": -2.0, "amzn_above": False, "tsla_above": False},
+            "rate": {"enter": False, "exit": True, "path": False, "last": 5.05, "ma": 5.0, "drop": -0.05, "zone": NEU, "fomc_cut": False},
+            "retail": {"month": "2026-10", "regime": "mixed", "real_mom": -0.14, "nominal_mom": 0.21, "real_date": "2026-10-01", "nominal_date": "2026-10-01"},
+            "xlp_leads": False,
+        }
+
+    gap = neutral_snap()
+    gap["px"] = {**gap["px"], "CEG": None}
+    gap["ret20"] = {**gap["ret20"], "CEG": None}
+    gap_rot, gap_ev = advance_rotation(None, gap, rc)
+    check("none close seed", (gap_ev, gap_rot["px"]["CEG"]), ([], None))
+    seeded, evs = advance_rotation(None, neutral_snap(), rc)
+    check("seed silent", (evs, seeded["xlu_label"], seeded["xly_label"], seeded["xlp_slow_month"]), ([], "off", "off", "2026-10"))
+    hot = neutral_snap()
+    hot["xlu_rs"] = {**hot["xlu_rs"], "enter": True, "exit": False, "excess": 3.0}
+    hot["rate"] = {**hot["rate"], "enter": True, "exit": False, "path": True, "drop": 0.30}
+    hot["power"] = {**hot["power"], "enter": True, "exit": False}
+    hot["xly_rs"] = {**hot["xly_rs"], "enter": True, "exit": False, "excess": 3.0}
+    hot["stocks"] = {**hot["stocks"], "enter": True, "exit": False, "amzn_ret": 4.0, "tsla_ret": 4.0, "amzn_above": True, "tsla_above": True}
+    hot["retail"] = {**hot["retail"], "month": "2026-11", "regime": "slowdown", "real_mom": -0.4, "nominal_mom": 0.1}
+    hot["xlp_leads"] = True
+    seeded_hot, evs = advance_rotation(None, hot, rc)
+    check("seed hot silent", (evs, seeded_hot["xlu_label"], seeded_hot["xly_label"], seeded_hot["xlp_slow_month"]), ([], "both", "price", "2026-11"))
+    again, evs = advance_rotation(seeded, neutral_snap(), rc)
+    check("seed next quiet", evs, [])
+    # rate enter/exit both false so the rate flag sticks, rs sticks, label stays, no event.
+    stick = neutral_snap()
+    stick["xlu_rs"] = {**stick["xlu_rs"], "enter": False, "exit": False, "excess": 1.0}
+    stick["rate"] = {**stick["rate"], "enter": False, "exit": False, "drop": 0.15}
+    base_on = {"xlu_rs": True, "xly_rs": False, "power": False, "rate_ease": True, "stocks": False,
+               "xlu_label": "rate", "xly_label": "off", "xlp_slow_month": "2026-10"}
+    stuck, evs = advance_rotation(base_on, stick, rc)
+    check("hyst no event", (stuck["xlu_label"], stuck["xlu_rs"], stuck["rate_ease"], evs), ("rate", True, True, []))
+    up, evs = advance_rotation(seeded, hot, rc)
+    check("xlu both alert", ("xlu", "both", 4) in [(e["kind"], e.get("label"), e["priority"]) for e in evs], True)
+    check("xly price alert", ("xly", "price", 3) in [(e["kind"], e.get("label"), e["priority"]) for e in evs], True)
+    check("xlp once setup", ("xlp", None, 4) in [(e["kind"], e.get("label"), e["priority"]) for e in evs], True)
+    check("xlp month marked", up["xlp_slow_month"], "2026-11")
+    again, evs = advance_rotation(up, hot, rc)
+    check("no repeat", evs, [])
+    # XLP slowdown suppressed when XLP is not leading, then fires once when it leads
+    pend = dict(seeded)
+    pend_snap = neutral_snap()
+    pend_snap["retail"] = {**pend_snap["retail"], "month": "2026-11", "regime": "slowdown", "real_mom": -0.4}
+    pend_snap["xlp_leads"] = False
+    held, evs = advance_rotation(pend, pend_snap, rc)
+    check("xlp waits", (evs, held["xlp_slow_month"]), ([], "2026-10"))
+    pend_snap["xlp_leads"] = True
+    fired, evs = advance_rotation(held, pend_snap, rc)
+    check("xlp fires later", ([e["kind"] for e in evs], fired["xlp_slow_month"]), (["xlp"], "2026-11"))
+    quiet, evs = advance_rotation(fired, pend_snap, rc)
+    check("xlp month dedupe", evs, [])
+    # macro confirmation upgrades price -> full
+    full_snap = neutral_snap()
+    full_snap["xly_rs"] = {**full_snap["xly_rs"], "enter": True, "exit": False}
+    full_snap["stocks"] = {**full_snap["stocks"], "enter": True, "exit": False}
+    full_snap["rate"] = {**full_snap["rate"], "enter": True, "exit": False, "path": True}
+    full_snap["retail"] = {**full_snap["retail"], "regime": "rebound", "real_mom": 0.4, "nominal_mom": 0.3}
+    price_state = {"xlu_rs": False, "xly_rs": True, "power": False, "rate_ease": False, "stocks": True,
+                   "xlu_label": "off", "xly_label": "price", "xlp_slow_month": "2026-10"}
+    full, evs = advance_rotation(price_state, full_snap, rc)
+    check("xly full", (full["xly_label"], [(e["kind"], e["label"], e["priority"]) for e in evs if e["kind"] == "xly"]), ("full", [("xly", "full", 4)]))
+    # clear XLU
+    off_snap = neutral_snap()
+    cleared, evs = advance_rotation(up, off_snap, rc)
+    check("xlu clear", (cleared["xlu_label"], any(e["kind"] == "xlu" and e["label"] == "off" for e in evs)), ("off", True))
+    # backward compatible state: no rotation key, existing judgement untouched
+    disk = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    disk.pop("rotation", None)
+    disk.pop("rotation_ops_day", None)
+    st_disk, ev_disk = advance(disk, [(disk["last_date"], disk["last_ten"])], {"2026-12": None, "2027-01": None}, r)
+    check("disk compat", (st_disk["zone"], st_disk["last_date"], "rotation" in st_disk), (disk["zone"], disk["last_date"], False))
+    merged = dict(disk)
+    merged["rotation"] = seeded
+    check("merge keeps zone", (merged["zone"], merged["last_date"], merged["bands"]), (disk["zone"], disk["last_date"], disk["bands"]))
+    # completed bar: null close dropped, in-progress session dropped, after 16:10 kept
+    def bar_payload(pairs):
+        ts, cs = [], []
+        for day, close in pairs:
+            dt = datetime(int(day[:4]), int(day[5:7]), int(day[8:10]), 14, 30, tzinfo=timezone.utc)
+            ts.append(int(dt.timestamp()))
+            cs.append(close)
+        return {"chart": {"result": [{"timestamp": ts, "indicators": {"quote": [{"close": cs}]}}]}}
+    before = datetime(2026, 11, 19, 15, 0, tzinfo=ET)
+    after = datetime(2026, 11, 19, 16, 30, tzinfo=ET)
+    payload = bar_payload([("2026-11-18", 43.55), ("2026-11-19", None)])
+    check("null close dropped", bars_from_chart(payload, after), [("2026-11-18", 43.55)])
+    closed = dict(payload)
+    closed["chart"]["result"][0]["meta"] = {
+        "regularMarketPrice": 252.03,
+        "regularMarketTime": int(datetime(2026, 11, 19, 21, 0, tzinfo=timezone.utc).timestamp()),
+    }
+    check("meta fills 16:00", bars_from_chart(closed, after)[-1], ("2026-11-19", 252.03))
+    early_meta = dict(payload)
+    early_meta["chart"]["result"][0]["meta"] = {
+        "regularMarketPrice": 252.03,
+        "regularMarketTime": int(datetime(2026, 11, 19, 20, 0, tzinfo=timezone.utc).timestamp()),
+    }
+    check("meta ignores 15:00", bars_from_chart(early_meta, after), [("2026-11-18", 43.55)])
+    filled = bar_payload([("2026-11-18", 43.55), ("2026-11-19", 43.01)])
+    check("intraday excluded", bars_from_chart(filled, before), [("2026-11-18", 43.55)])
+    check("after close kept", bars_from_chart(filled, after)[-1], ("2026-11-19", 43.01))
+    morning = datetime(2026, 11, 20, 9, 6, tzinfo=KST)
+    check("morning expects 11-19", expected_us_day(morning), "2026-11-19")
+    # align drops a symbol that has not printed the newest day
+    days, aligned = align_prices({"XLU": [("2026-11-18", 1.0), ("2026-11-19", 1.1)], "XLP": [("2026-11-18", 2.0)]}, 1)
+    check("align lag", (days, aligned["XLU"]), (["2026-11-18"], [1.0]))
+    check("cover miss", cover_days([("2026-11-18", 1.0)], ["2026-11-18", "2026-11-19"]), None)
+    check("cover hit", cover_days([("2026-11-18", 1.0), ("2026-11-19", 1.1)], ["2026-11-18", "2026-11-19"]), [1.0, 1.1])
+    stale_snap = neutral_snap()
+    stale_snap["xlu_rs"] = {**stale_snap["xlu_rs"], "enter": False, "exit": False}
+    stale_snap["power"] = {"enter": False, "exit": False, "nee_excess": None, "ceg_excess": None, "nee_above": False, "ceg_above": False, "fresh": False}
+    stale_prev = {"xlu_rs": True, "xly_rs": False, "power": True, "rate_ease": False, "stocks": False,
+                  "xlu_label": "power", "xly_label": "off", "xlp_slow_month": "2026-10"}
+    stale_rot, stale_ev = advance_rotation(stale_prev, stale_snap, rc)
+    check("stale power sticks", (stale_rot["power"], stale_rot["xlu_label"], stale_ev), (True, "power", []))
+    stale_t, stale_m, _ = rotation_message(cfg, {"kind": "xlu", "prev": "off", "label": "power", "priority": 4}, stale_snap, stale_rot,
+                                          datetime(2026, 11, 20, 9, 6, tzinfo=KST))
+    check_text(stale_t, stale_m)
+    check("stale body", "전력 상태는 바꾸지 않음" in stale_m, True)
+    # fetch failure is non-blocking: base state unchanged, ops title, no port send
+    base_state = {"zone": NEU, "last_date": "2026-11-18", "last_ten": 5.066, "bands": {"date": "2026-11-18", "in": {}}}
+    snapshot = json.dumps(base_state)
+
+    def boom():
+        raise RuntimeError("Yahoo XLP: timed out")
+
+    rot_fail, msgs_fail, ops_fail = rotation_step(base_state, cfg, [], NEU, morning, fetch=boom)
+    check("fail isolated", (rot_fail, msgs_fail, json.dumps(base_state) == snapshot, ops_fail is not None), (None, [], True, True))
+    check_text(*ops_fail)
+    check("fail topic", route_topic(cfg["ntfy_topic"], ops_fail[0]), "cwally-ops")
+    check("fail title", ops_fail[0], "[XLU] XLP XLY 상대매력 조회 실패")
+    # wiring: missing rotation key seeds and does not alert, even if the picture is already hot
+    rot_seed, msgs_seed, ops_seed = rotation_step({"zone": NEU}, cfg, [], NEU, morning, fetch=lambda: hot)
+    check("wire seed silent", (msgs_seed, ops_seed, rot_seed["xlu_label"], rot_seed["xlp_slow_month"]), ([], None, "both", "2026-11"))
+    # an existing rotation block does alert on the transition
+    held_state = {"zone": NEU, "rotation": seeded}
+    rot_ok, msgs_ok, ops_ok = rotation_step(held_state, cfg, [], NEU, morning, fetch=lambda: hot)
+    check("wire no ops", (ops_ok, held_state["rotation"]["xlu_label"]), (None, "off"))
+    check("wire count", len(msgs_ok), 3)
+    from title_ticker_check import has_ticker
+    bodies = []
+    for t, m, p in msgs_ok:
+        check_text(t, m)
+        bodies.append(t + "\n" + m)
+        check("ticker fn", has_ticker(t), True)
+        check("names xlp xly", ("XLP" in t and "XLY" in t), True)
+        check("topic port", route_topic("cwally-port", t), "cwally-port")
+        ls = m.splitlines()
+        check("six items", [x.split(":")[0] for x in ls if x.startswith(("이게 뭐", "지금 결과", "지금 할 일", "나중에", "익절", "하지 말 것"))],
+              ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
+        check("ends", ls[-2:], [END_LINE, DISCLAIMER])
+    assert any("금리와 전력" in t for t, _, _ in msgs_ok)
+    assert any("매크로 미확인" in t for t, _, _ in msgs_ok)
+    assert any("소비 둔화" in t for t, _, _ in msgs_ok)
+    ex_t, ex_m, ex_p = rotation_example(cfg, morning)
+    check_text(ex_t, ex_m)
+    check("example title", ex_t, "[XLU] XLP XLY 상대 매력 상향 | XLU XLP 금리 확인")
+    check("example pri", ex_p, 4)
+    check("example ticker", has_ticker(ex_t), True)
+    assert not BANNED_RE.search(ex_t + ex_m + "".join(bodies))
+    # labels
+    check("label both", xlu_label(True, True, True), "both")
+    check("label rs only", xlu_label(True, False, False), "off")
+    check("label price", xly_label(True, True, False, False), "price")
+    check("label full", xly_label(True, True, True, True), "full")
+    check("label no stock", xly_label(True, False, True, True), "off")
     print(f"SELFTEST OK: {n} checks (fixtures only, no network, no publish, no state)")
     return 0
 
