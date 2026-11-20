@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-19 09:01 KST",
+  "updated_at": "2026-11-20 09:01 KST",
   "zone": "ADD",
-  "pref": 148300.0,
-  "common": 267000.0,
-  "gap_pct": 44.456928838951306,
+  "pref": 144500.0,
+  "common": 267500.0,
+  "gap_pct": 45.981308411214954,
   "last_sent_zone": "ADD"
 }

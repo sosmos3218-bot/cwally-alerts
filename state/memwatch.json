@@ -75,6 +75,20 @@
     "13303": {
       "date": "2026-11-11",
       "title": "Mounting Finished-Goods Inventories Prompt Some PC OEMs to Adjust Memory Procurement Plans for 2027, Says TrendForce"
+    },
+    "13314": {
+      "date": "2026-11-19",
+      "title": "NAND Flash Prices Set to Decline in 2027 as Chinese CSP Order Cuts Outweigh North American Demand Growth, Says TrendForce",
+      "figs": [
+        {
+          "prod": "nand",
+          "lo": 0.0,
+          "hi": 5.0,
+          "dir": -1,
+          "kind": "forecast",
+          "q": "1Q27"
+        }
+      ]
     }
   },
   "tf_latest": {
@@ -88,13 +102,13 @@
       "id": "13258"
     },
     "nand": {
-      "lo": 15.0,
-      "hi": 20.0,
-      "dir": 1,
+      "lo": 0.0,
+      "hi": 5.0,
+      "dir": -1,
       "kind": "forecast",
-      "q": "4Q26",
-      "date": "2026-09-30",
-      "id": "13258"
+      "q": "1Q27",
+      "date": "2026-11-19",
+      "id": "13314"
     }
   },
   "px": {
@@ -203,7 +217,24 @@
       "b": 28.82
     }
   },
-  "news_seen": {},
+  "news_seen": {
+    "consumernandpricesdeclineby20asssdmarketfinallyshowssignsofreliefandisexpectedtoexperienceanother510declineinearly2027": {
+      "day": "2026-11-19",
+      "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBCR2l0RVNOTEcxSTFPU1VqODFESXh3MVdsS2JMLWRZd3ZLNkZMVkJkd19lMXlON0dRT0RGeE1FTUJVMDVMcEtRMHBBVVBOOTctV202YzhQQ2xoRTZHLU44MEEtRHNBTTDSAWxBVV95cUxOb01wTHp0NzhfWjJienRJTS1Hb0tCc0JNQ2xVQTFHVmlYYkh5TWk3cVlFcUtITW1HcGl0cWRVM1NFMGZiWWY0MmFETE5kVWludUNVX2FMWVRrYVN0cllsb0xFelBHN1RLSUkxNjc?oc=5"
+    },
+    "nandpricesfall20andbankofamericaexpectscheaperssdsin2027": {
+      "day": "2026-11-19",
+      "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPU19vZFlVaXEwRU1vNnpIMjZIQWh5UGlocWZ0dmZULUdKSzVid2ZqWjdBSHdRa3J5Wm93R0VodmZNVVFwaEZ1QzBXQUVfV2M5ZmdXOUZORVVGMEN5RXpGeWxqS01PTE1UVzlMVEM4RmFjb09SOVl1YjRrTVhaOS1waW1sNUVTeU5HZ1dBSW9PVng1cHVFajZpWU01bENHNWFYSVoyd1VRcjg?oc=5"
+    },
+    "nandmemorypricesdropby20overthelastmonth": {
+      "day": "2026-11-19",
+      "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5RUUpLTGhaRWIyX3g0eDEyZzJEVFlGTG8xVGlMUVl4enZTSVJ3emJlZFFjclc4cEpFSkZ5MjFiTmxfNjY1akpZQWNOMmpRcHZTYmg4cGJRU3oxLVJONnF5UWJjUExzanZ0UnN1c3dTajRsVGMwLWozY0dXLWNKQzg?oc=5"
+    },
+    "nandflashpricesfell20inthelasttwoweeksandarepredictedtofallfurtherin2027": {
+      "day": "2026-11-20",
+      "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOZEx1ZXhBTXQ2WWk4OENxUVBSZmR1QVRXQm42eWNyS0QwczlQRVRNTzA2bFphRUdybHVGVjRQZFBGc3gycV8xNnBzalBqeWhnVXBnWW9OalJGcTFMdVVYdVktWU9jQVVCRXdHNmkzUG11aUZxY01NSHppdmFTMWlYQnlqUWdPRm5HWnc?oc=5"
+    }
+  },
   "cx_seen": {},
   "yield_hits": [],
   "ops_day": {},
@@ -213,5 +244,11 @@
     "news": 0,
     "cxmt": 0
   },
-  "updated_at": "2026-11-19T09:01:28.766116+09:00"
+  "updated_at": "2026-11-20T09:01:21.996908+09:00",
+  "last_sent": {
+    "at": "2026-11-20 09:01 KST",
+    "titles": [
+      "[MEMWATCH] 005930/000660 메모리 계약가 10% 이상 하락 보도 4건 | 원문 확인, 추가 매수 보류 검토"
+    ]
+  }
 }

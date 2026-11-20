@@ -1,16 +1,16 @@
 {
   "fx": {
-    "last_date": "2026-11-18",
+    "last_date": "2026-11-19",
     "armed": true,
     "seeded": "2026-11-02"
   },
   "y10": {
-    "last_date": "2026-11-18",
+    "last_date": "2026-11-19",
     "high_armed": true,
     "settle_armed": true,
     "seeded": "2026-11-02"
   },
   "ops_day": null,
   "err_day": null,
-  "updated_at": "2026-11-19T09:06:21+09:00"
+  "updated_at": "2026-11-20T09:06:13+09:00"
 }

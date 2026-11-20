@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-19T09:06:16.946011+09:00",
-  "last_price": 36.31,
+  "updated_at": "2026-11-20T09:06:09.222936+09:00",
+  "last_price": 34.33,
   "zone": "above",
   "last_weekly": null,
   "div_alerted": false,
@@ -11,9 +11,16 @@
   "caution": {
     "div_seen": [
       "https://investors.nike.com/news-events/press-releases/detail/565/nike-inc-declares-0-41-quarterly-dividend",
-      "https://investors.nike.com/news-events/press-releases/detail/572/nike-inc-declares-0-41-quarterly-dividend"
+      "https://investors.nike.com/news-events/press-releases/detail/572/nike-inc-declares-0-41-quarterly-dividend",
+      "https://investors.nike.com/news-events/press-releases/detail/579/nike-inc-declares-0-41-quarterly-dividend"
     ],
-    "div_judged": null,
+    "div_judged": {
+      "day": "2026-11-19",
+      "amount": 0.41,
+      "old": 0.41,
+      "pct": 0.0,
+      "link": "https://investors.nike.com/news-events/press-releases/detail/579/nike-inc-declares-0-41-quarterly-dividend"
+    },
     "gm_judged": null,
     "seed_note": "2026-10-29 seed: 기존 배당 선언(2026-05-04, 2026-08-06, 둘 다 0.41달러)은 판정 제외. FY27 2분기 실적 보도자료는 아직 없음."
   },

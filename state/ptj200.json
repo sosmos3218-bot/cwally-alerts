@@ -1,10 +1,15 @@
 {
-  "updated_at": "2026-11-19T09:10:12+09:00",
-  "regime": 1,
-  "last_date": "2026-11-18",
-  "last_close": 730.2,
-  "last_sma": 732.5459,
-  "last_switch": null,
+  "updated_at": "2026-11-20T09:09:57+09:00",
+  "regime": -1,
+  "last_date": "2026-11-19",
+  "last_close": 715.87,
+  "last_sma": 732.6943,
+  "last_switch": {
+    "date": "2026-11-19",
+    "from": 1,
+    "to": -1,
+    "sent_at": "2026-11-20T09:09:57+09:00"
+  },
   "last_status_month": "2026-11",
   "fail": {
     "runs": 0,
