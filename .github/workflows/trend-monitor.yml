@@ -137,7 +137,7 @@ jobs:
             exit 1
           fi
           if git diff --staged --quiet; then echo unchanged; exit 0; fi
-          git commit -m "chore: update trend monitor output"
+          git commit -m "chore: update trend monitor output [skip ci]"
           ok=0
           for i in 1 2 3 4; do
             if git pull --rebase origin main; then

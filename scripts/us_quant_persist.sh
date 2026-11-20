@@ -9,6 +9,10 @@
 # - no force-push
 set -u
 msg=${1:?commit message}
+case "$msg" in
+  *"[skip ci]"*|*"[ci skip]"*|*"[skip actions]"*|*"[actions skip]"*) ;;
+  *) msg="$msg [skip ci]" ;;
+esac
 tries=${PERSIST_TRIES:-5}
 read -r -a delays <<<"${PERSIST_DELAYS:-5 15 30 60}"
 remote=${PERSIST_REMOTE:-origin}
@@ -75,8 +79,10 @@ finish_rebase() {
 
 pull_rebase() {
   unshallow
-  git fetch "$remote" "$branch"
-  if git pull --rebase --autostash "$remote" "$branch"; then
+  # fetch + rebase works on a detached HEAD (checkout default). git pull does not,
+  # and a single git push then dies with "fetch first" when alert state lands first.
+  git fetch "$remote" "$branch" || return 1
+  if git rebase --autostash "$remote/$branch"; then
     finish_rebase
     return $?
   fi

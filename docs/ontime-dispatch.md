@@ -94,14 +94,15 @@ Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
   ISO 주 키(`%G-W%V`: portlight/poly `weekly_sent_week`, ghtrend `last_week`, polyinv `weekly_sent`)와 isareb `last_sent_month`로 다시 보내지 않는다.
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
-## TSLA 정규장 30분 가격 (2026-10-29 승인)
+## TSLA 정규장 가격 (2026-10-29 승인, 2026-11-20 1시간으로 축소)
 
 승인 기록: configs/tsla.json `cron_approved` 2026-10-29. 하루 종일 매시 cron 이 아니라, 미국 정규장 창만 본다.
+2026-11-20: 비공개 저장소 무료 분 한도 때문에 30분에서 1시간으로 줄였다. 단계마다 뉴욕 날짜에 한 번만 보내므로, 그 시각에도 가격이 선 아래면 같은 날 잡힌다. 09:30-10:00 사이 잠깐 닿았다가 10:00 전에 회복하면 놓친다. GRAB 도 같은 슬롯이다.
 
-- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)". 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0과 30, 시 9부터 16, 월-금, 만료 없음(`expiresAt` 0, `ends_kst` null).
-  09:00과 16:30 틱은 정규장 밖이라 스크립트가 조용히 끝난다. body 는 `{"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}`.
-- 만든 방법: 머지 후 `cronjob-register.yml` `action=register_tsla`. dry_run 으로 먼저 확인하고, 같은 제목이나 같은 뉴욕 30분 일정이 있으면 skip.
-- GitHub cron `*/30 13-21 * * 1-5` 는 백업이다. UTC 로 넓게 잡아 EDT(13:30-20:00)와 EST(14:30-21:00)를 둘 다 덮고, 스크립트가 뉴욕 09:30-16:00 평일에만 판정한다. 늦게 온 백업이 그 문 밖이면 보내지 않는다.
+- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)" (제목은 그대로). 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0, 시 10부터 16, 월-금, 만료 없음(`expiresAt` 0, `ends_kst` null).
+  10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00. body 는 `{"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}`.
+- 적용: 머지 후 `cronjob-register.yml` `action=register_tsla`. dry_run 으로 먼저 확인한다. 같은 제목이나 예전 30분 일정이 있으면 스케줄만 PATCH 하고, 이미 1시간이면 skip (exit 10). URL, body, 헤더는 바꾸지 않는다. 이 워크플로를 실행하기 전에는 예전 30분 잡이 그대로 돈다.
+- GitHub `*/30` 백업은 없다. 스케줄이 몇 시간 늦게 오면 09:30-16:00 문 밖에서 조용히 끝나고, 그래도 러너는 1분이 청구된다. cron-job.org 가 하루 통째로 죽으면 그 뉴욕 날짜의 가격 알림은 다음 세션으로 넘어간다.
 - 중복: `state/tsla.json` 의 `sent.s310`, `sent.s300` 에 뉴욕 날짜. 단계마다 그날 한 번. 300달러 이하면 310 안내는 같은 실행에서 보내지 않고 그날 보낸 것으로 기록한다.
 - `job=tsla` 수동 dispatch 는 `oneoff_mode=auto` 가 아니면 dry(selftest 와 가격 305, 295 출력, 발송과 state 없음).
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).

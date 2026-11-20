@@ -93,6 +93,16 @@ def sec_docs(cik: str, filed_from: str) -> dict:
     return out
 
 
+def fmt_num(value, spec: str) -> str:
+    """Format a parsed number. None (one of OCF/Capex missing) must not raise."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return "미확인"
+    try:
+        return format(value, spec)
+    except (TypeError, ValueError):
+        return "미확인"
+
+
 def money_b(raw: str, unit: str) -> float:
     v = float(raw.replace(",", ""))
     return v / 1000 if unit.lower().startswith("m") else v
@@ -216,9 +226,25 @@ def lta_news(cfg: dict, now: datetime) -> tuple[list[str], str]:
     return picked, err
 
 
+def selftest() -> int:
+    ocf, capex = 1.5, None
+    line = f"OCF {fmt_num(ocf, '.1f')}B$ / Capex {fmt_num(capex, '.1f')}B$"
+    assert fmt_num(None, ".1f") == "미확인"
+    assert fmt_num(1.25, ".1f") == "1.2"
+    assert "1.5" in line and "미확인" in line
+    bk = 12.0
+    title = f"[CRWVQ3] CRWV 코어위브 3Q 백로그 {fmt_num(bk, ',.0f')}B$"
+    assert "12" in title
+    print("crwvq3 selftest ok")
+    print(line)
+    return 0
+
+
 def main() -> int:
     global DRY
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     DRY = mode == "dry"
     if DRY:
         print("DRY RUN: no ntfy, no state write")
@@ -298,23 +324,35 @@ def main() -> int:
 
     if published:
         bk = pr.get("backlog_b")
-        bk_txt = f"백로그 {bk:,.1f}B$ (2Q {b['q2_backlog_b']:.0f}B$, {bk - b['q2_backlog_b']:+.1f})" if bk else "백로그 숫자 미확인"
+        delta = (bk - b["q2_backlog_b"]) if bk is not None and isinstance(b.get("q2_backlog_b"), (int, float)) else None
+        bk_txt = (
+            f"백로그 {fmt_num(bk, ',.1f')}B$ (2Q {fmt_num(b.get('q2_backlog_b'), '.0f')}B$, {fmt_num(delta, '+.1f')})"
+            if bk else "백로그 숫자 미확인"
+        )
         if rpo:
-            rpo_txt = f"RPO {rpo['rpo_b']:,.1f}B$ (2Q {b['q2_rpo_b']}B$). {rpo['near_months']}개월 내 매출 전환 {rpo['near_pct']:.0f}% (2Q 24개월 {b['q2_rpo_24m_pct']}%)"
+            rpo_txt = (
+                f"RPO {fmt_num(rpo.get('rpo_b'), ',.1f')}B$ (2Q {fmt_num(b.get('q2_rpo_b'), '.1f')}B$). "
+                f"{fmt_num(rpo.get('near_months'), '.0f')}개월 내 매출 전환 {fmt_num(rpo.get('near_pct'), '.0f')}% "
+                f"(2Q 24개월 {fmt_num(b.get('q2_rpo_24m_pct'), '.0f')}%)"
+            )
             if rpo.get("mid_pct") is not None:
-                rpo_txt += f", {rpo['mid_span']}개월 {rpo['mid_pct']:.0f}%"
+                rpo_txt += f", {rpo.get('mid_span') or '미확인'}개월 {fmt_num(rpo.get('mid_pct'), '.0f')}%"
         else:
             rpo_txt = "RPO/전환 일정 미확인 (10-Q 미제출 또는 문구 변경)"
-        rev_txt = f"매출 {pr['revenue_m']:,.0f}M$" if pr.get("revenue_m") else "매출 미확인"
-        ocf_txt = f"OCF {cash.get('ocf_b'):.1f}B$ / Capex {cash.get('capex_b'):.1f}B$" if cash.get("ocf_b") or cash.get("capex_b") else "OCF/캐펙스 미확인"
+        rev_txt = f"매출 {fmt_num(pr.get('revenue_m'), ',.0f')}M$" if pr.get("revenue_m") else "매출 미확인"
+        ocf_txt = (
+            f"OCF {fmt_num(cash.get('ocf_b'), '.1f')}B$ / Capex {fmt_num(cash.get('capex_b'), '.1f')}B$"
+            if cash.get("ocf_b") is not None or cash.get("capex_b") is not None
+            else "OCF/캐펙스 미확인"
+        )
         debt_txt = "; ".join(debtp.get("debt_mentions") or []) or "신규 부채 조건 언급 없음"
-        power_txt = f"가동 전력 약 {debtp.get('power_live_mw'):.0f}MW" if debtp.get("power_live_mw") else "전력 가동률 미확인"
+        power_txt = f"가동 전력 약 {fmt_num(debtp.get('power_live_mw'), '.0f')}MW" if debtp.get("power_live_mw") else "전력 가동률 미확인"
         mat_txt = "; ".join(debtp.get("maturity_notes") or []) or "만기 스케줄 언급 없음"
         near_rpo = (rpo.get("rpo_b") * rpo.get("near_pct") / 100) if rpo and rpo.get("rpo_b") and rpo.get("near_pct") else None
         stress = simple_stress(cash.get("ocf_b"), near_rpo)
         near = rpo.get("near_pct") if rpo else None
         verdict = "전환 빨라짐" if near is not None and near > b["q2_rpo_24m_pct"] + 2 else ("전환 느려짐" if near is not None and near < b["q2_rpo_24m_pct"] - 2 else "전환 속도 비슷/미확인")
-        title = f"[CRWVQ3] CRWV 코어위브 3Q 백로그 {bk:,.0f}B$ | {verdict} | 매매 신호 아님" if bk else f"[CRWVQ3] CRWV 코어위브 3Q 발표 | 백로그 미확인 | 매매 신호 아님"
+        title = f"[CRWVQ3] CRWV 코어위브 3Q 백로그 {fmt_num(bk, ',.0f')}B$ | {verdict} | 매매 신호 아님" if bk else f"[CRWVQ3] CRWV 코어위브 3Q 발표 | 백로그 미확인 | 매매 신호 아님"
         status = f"{docs.get('pr_day')} 공시. {rev_txt}. {bk_txt}. {rpo_txt}. {ocf_txt}. {power_txt}."
         extra = f"부채: {debt_txt}. 만기: {mat_txt}. {stress}"
     else:

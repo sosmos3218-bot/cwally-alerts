@@ -16,7 +16,7 @@
     "fed_upper_txt": "https://fred.stlouisfed.org/data/DFEDTARU.txt",
     "spx_pe": "https://www.multpl.com/s-p-500-pe-ratio/table/by-month"
   },
-  "timeout_sec": 45,
+  "timeout_sec": 12,
   "rules": {
     "hy_level_pct": 5.0,
     "hy_4w_widen_bp": 75,

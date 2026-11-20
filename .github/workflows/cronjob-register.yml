@@ -17,8 +17,8 @@ name: cwally-cronjob-register
 # action=register_tslaspcx (approved in chat 2026-10-24 12:28 KST, configs/tslaspcx.json) creates only
 # "cwally tslaspcx daily (07:30 KST)" (every day 07:30 Asia/Seoul, body job=tslaspcx oneoff_mode=auto); skips if it exists.
 # action=register_tsla (approved 2026-10-29, configs/tsla.json) creates only
-# "cwally tsla US regular 30min (NY)" (America/New_York, minutes 0 and 30, hours 9-16, Mon-Fri,
-# body job=tsla oneoff_mode=auto); skips if it exists. The monitor gates 09:30-16:00.
+# "cwally tsla US regular 30min (NY)" (America/New_York, minute 0, hours 10-16, Mon-Fri,
+# body job=tsla oneoff_mode=auto). An existing half-hour job is patched to this schedule. The monitor gates 09:30-16:00.
 # action=register_trend (2026-11-03, docs/ontime-dispatch.md) creates only
 # "cwally trend-monitor (15:40 KST)": weekdays 15:40 Asia/Seoul, URL trend-monitor.yml,
 # body {"ref":"main","inputs":{}}. Skips if that title or that URL at 15:40 already exists.
@@ -34,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | list_bodies = read-only GET of each port-alerts.yml dispatch body | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create the TSLA US-regular 30min NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | list_bodies = read-only GET of each port-alerts.yml dispatch body | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create or retune the TSLA US-regular hourly NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
         type: choice
         options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
         default: register
@@ -108,7 +108,7 @@ jobs:
   list_bodies:
     if: inputs.action == 'list_bodies'
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: write

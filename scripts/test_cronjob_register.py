@@ -218,10 +218,16 @@ class FakeAPI:
             jid = int(path.rsplit("/", 1)[-1])
             payload = json.loads(req.data.decode())
             self.patches.append((jid, payload))
-            ext = self.jobs[jid].setdefault("extendedData", {})
-            new = payload["job"]["extendedData"]
-            ext["headers"] = copy.deepcopy(new["headers"])
-            ext["body"] = new["body"]
+            job = payload.get("job") or {}
+            if "schedule" in job:
+                self.jobs[jid]["schedule"] = copy.deepcopy(job["schedule"])
+            if "title" in job:
+                self.jobs[jid]["title"] = job["title"]
+            if "extendedData" in job:
+                ext = self.jobs[jid].setdefault("extendedData", {})
+                new = job["extendedData"]
+                ext["headers"] = copy.deepcopy(new["headers"])
+                ext["body"] = new["body"]
             return Resp({})
         if req.method == "DELETE" and path.startswith("/jobs/"):
             jid = int(path.rsplit("/", 1)[-1])
@@ -313,6 +319,31 @@ class CronjobCallTests(unittest.TestCase):
 
     def env(self, **kwargs: str) -> None:
         os.environ.update(kwargs)
+
+    def test_register_tsla_patches_old_half_hour_schedule(self):
+        job = make_job(8746217, reg.TSLA_TITLE, reg.TSLA_BODY)
+        job["schedule"] = copy.deepcopy(reg.TSLA_SCHEDULE_OLD)
+        job["url"] = reg.DISPATCH_URL
+        fake = FakeAPI([job])
+        self.use(fake)
+        self.env(CRONJOB_API_KEY="test-key", CRONJOB_DRY_RUN="0")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = reg.run_register_tsla(NOW)
+        self.assertEqual(rc, 0, buf.getvalue())
+        self.assertEqual([c[0] for c in fake.calls if c[0] != "GET"], ["PATCH"])
+        self.assertEqual(fake.patches[0][0], 8746217)
+        sched = fake.patches[0][1]["job"]["schedule"]
+        self.assertEqual(sched["minutes"], [0])
+        self.assertEqual(sched["hours"], [10, 11, 12, 13, 14, 15, 16])
+        self.assertNotIn("extendedData", fake.patches[0][1]["job"])
+        fake.patches.clear()
+        fake.calls.clear()
+        buf2 = io.StringIO()
+        with redirect_stdout(buf2):
+            rc2 = reg.run_register_tsla(NOW)
+        self.assertEqual(rc2, reg.SKIP, buf2.getvalue())
+        self.assertEqual(fake.patches, [])
 
     def test_morning_template_patch_keeps_url_title_and_job_id(self):
         targets = reg.slot_oneoff_targets()
