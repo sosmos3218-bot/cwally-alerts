@@ -1,0 +1,72 @@
+{
+  "name": "spcxpx",
+  "title_prefix": "[SPCX-PX]",
+  "ticker": "SPCX",
+  "symbol": "SPCX",
+  "display": "Space Exploration Technologies (Nasdaq: SPCX)",
+  "as_of": "2026-11-20",
+  "holding": false,
+  "holding_note": "미보유 관심 종목. 매수 계획(금액, 비중) 아직 없음.",
+  "approval": "사용자 요청 2026-11-20 (pt87u)",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST port-alerts morning 슬롯에 부착. Yahoo SPCX 일봉 중 뉴욕 시간 16:00 이후 끝난 날만(전일 미국 정규장 종가). 수동 job=spcxpx 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "close_hm": "16:00",
+  "lines": [
+    {
+      "key": "dn135",
+      "op": "le",
+      "level": 135.0,
+      "rearm_op": "ge",
+      "rearm": 139.0,
+      "priority": 3,
+      "warn": false,
+      "title": "공모가 관심 구간 점검"
+    },
+    {
+      "key": "dn120",
+      "op": "le",
+      "level": 120.0,
+      "rearm_op": "ge",
+      "rearm": 124.0,
+      "priority": 3,
+      "warn": false,
+      "title": "2차 관심 구간 점검"
+    },
+    {
+      "key": "up165",
+      "op": "ge",
+      "level": 165.0,
+      "rearm_op": "le",
+      "rearm": 160.0,
+      "priority": 3,
+      "warn": false,
+      "title": "추격 보류 구간"
+    }
+  ],
+  "sec": {
+    "cik": "0001181412",
+    "filer_note": "SPACE EXPLORATION TECHNOLOGIES CORP, Nasdaq SPCX. 2026-11-20 확인.",
+    "submissions": "https://data.sec.gov/submissions/CIK0001181412.json",
+    "user_agent": "cwally-alerts spcxpx watch sosmos3218@gmail.com",
+    "doc_limit_bytes": 400000,
+    "lag_days": 1,
+    "forms_8k": ["8-K", "8-K/A"],
+    "forms_offer": ["S-3", "S-3ASR", "424B5"],
+    "anthropic_items_term": ["1.02"],
+    "anthropic_items_update": ["1.01", "8.01"],
+    "capital_items": ["3.02"],
+    "anthropic_keywords": ["anthropic", "customer b", "compute agreement", "termination", "90-day", "90 days", "cancel", "material customer"],
+    "term_keywords": ["termination", "terminate", "terminated", "90-day", "90 days", "cancel", "cancellation", "canceled", "cancelled"],
+    "capital_keywords": ["offering", "underwriting agreement", "at-the-market", "follow-on", "convertible notes", "equity offering", "secondary offering", "common stock", "senior notes", "credit facility", "dilution", "capital raise"],
+    "tesla_names": ["tesla", "tsla"],
+    "tesla_terms": ["merger", "combination", "acquisition", "special committee", "exchange ratio", "definitive agreement"]
+  },
+  "sources": {
+    "price": "https://query1.finance.yahoo.com/v8/finance/chart/SPCX?range=3mo&interval=1d"
+  },
+  "explain": "SPCX(나스닥, SpaceX) 관심 종목(미보유) 알림입니다. 미국 정규장 종가가 공모가 $135 이하, $120 이하, $165 이상 추격 보류 구간에 새로 들어갈 때, 그리고 Anthropic/Customer B 계약, 증자/자금조달, 테슬라 합병 관련 SEC 공시가 나올 때 옵니다. 테슬라 합병만 해당하고 [TSLA-SPCX]가 이미 본 접수번호는 보내지 않습니다. 자동 주문 아님, 투자 권유 아님.",
+  "ends_kst": "2027-05-31 23:59",
+  "ends_note": "Customer B 취소 불가 만료와 90일 통지 창(2027년 1~3월)을 포함, 2027-05-31까지"
+}
