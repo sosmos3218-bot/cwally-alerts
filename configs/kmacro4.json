@@ -1,0 +1,61 @@
+{
+  "name": "kmacro4",
+  "title_prefix": "[US10Y] [USDKRW] [KOSPI]",
+  "display": "거시 4선: 미 10년물 4.80% 하회, 원달러 1,300원 하회, 원달러 1,380원 상회, 코스피 4,900 복귀",
+  "as_of": "2026-11-20",
+  "approval": "사용자 채팅 승인 2026-11-20 (pt77u): 미국 자산은 환노출로 들고 가고 환율이 다시 오르면 환헤지를 검토. 미 10년 4.80% 하회, 원달러 1,300 하회, 원달러 1,380 상회, 코스피 4,900 복귀 알림 등록.",
+  "holding": "미국 자산은 환노출로 운용. 환율이 다시 오르면 환헤지 전환을 그때 검토.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "09:00 / 15:40",
+  "schedule_note": "새 cron 없음. 미 10년물은 기존 평일 09:00 KST morning 묶음(k0085p0 바로 뒤). 원달러와 코스피는 기존 0090b0 15:40 KST 슬롯(k195930 바로 뒤). 수동 job=kmacro4 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "catchup_dates": 10,
+  "lines": {
+    "y10_low": {
+      "level": 4.8,
+      "rearm": 5.0,
+      "priority": 3,
+      "op": "lt",
+      "rearm_op": "ge",
+      "note": "미 10년물 확정 종가 4.80% 미만 1번. 5.00% 이상이면 재무장."
+    },
+    "fx_low": {
+      "level": 1300.0,
+      "rearm": 1320.0,
+      "priority": 3,
+      "op": "lt",
+      "rearm_op": "ge",
+      "note": "원달러 종가 1,300원 미만 1번. 1,320원 이상이면 재무장."
+    },
+    "fx_high": {
+      "level": 1380.0,
+      "rearm": 1360.0,
+      "priority": 3,
+      "op": "gt",
+      "rearm_op": "le",
+      "note": "원달러 종가 1,380원 초과 1번. 1,360원 이하면 재무장."
+    },
+    "kospi_up": {
+      "level": 4900.0,
+      "rearm": 4900.0,
+      "priority": 3,
+      "op": "ge",
+      "rearm_op": "lt",
+      "note": "코스피 종가 4,900 이상 1번. 4,900 미만이면 재무장."
+    }
+  },
+  "y10_nov5_low": 4.84,
+  "y10_nov5_note": "2026-11-05 재무부와 FRED DGS10 모두 4.84%. 본문에 참고로 적음.",
+  "overlap_note": "미 10년 4.50% 3일 연속과 5.30%는 [0085P0] [XLU]가 담당. 원달러 1,300은 [OIL](재무장 1,310), [476760](재무장 1,313), [USTSY] TREND_1300 도 있음. 원달러 1,380 단독선은 없음([MACRO-IR]은 브렌트 130과 동시). 코스피 4,900 복귀선은 [KOSPI] 사다리에 없음(하방 최저 5,000).",
+  "context": "미국 자산은 환노출 유지. 투자 참고용.",
+  "sources": {
+    "y10": "미 재무부 Daily Treasury Par Yield Curve 10 Yr 우선, FRED DGS10 교차 확인(같은 날 0.02%p 초과 차이면 본문에 표시). 조회는 usbond_monitor 재사용.",
+    "fx": "네이버 FX_USDKRW 일별 closePrice(이 저장소에서 서울 외환 종가로 검증해 쓰는 출처) 우선. ECOS 731Y001 매매기준율은 ECOS_API_KEY 가 있을 때만 교차 확인. 샘플 키는 쓰지 않음.",
+    "kospi": "Daum KOSPI 일별 tradePrice(정규 종가). 외국인 유가증권 순매매는 네이버 index trend foreignValue(억원), 없으면 본문에서 생략.",
+    "daum_kospi": "https://finance.daum.net/api/market_index/days?market=KOSPI",
+    "naver_flow": "https://m.stock.naver.com/api/index/KOSPI/trend?bizdate=YYYYMMDD"
+  },
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "평일 09:00 미 10년, 평일 15:40 원달러/코스피, 2027-06-30 23:59 KST 뒤 조용히 종료."
+}
