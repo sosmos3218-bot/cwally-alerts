@@ -4,6 +4,7 @@
 modes: auto (oneshot 기본) | dry (발송/상태 저장 없이 출력) | force (창/중복 무시하고 채점 발송)
        install (설치 확인 1회 발송, 상태 파일을 건드리지 않음)
        fixture <path.txt> (로컬 검증: 텍스트 파일을 보도자료로 보고 채점만 출력, 발송 없음)
+       selftest (네트워크 없이 파서/본문 검사, 발송/상태 저장 없음)
 
 원문: SEC 8-K Item 2.02 보도자료(EX-99.1)와 10-Q. IR 뉴스 페이지는 발표일 공지 확인용(실패해도 계속).
 원문이 없으면 침묵. 실패는 cwally-ops(제목 '조회 실패'), 매매 신호로 쓰지 않는다.
@@ -144,16 +145,55 @@ def pct(cur: float | None, prev: float | None) -> float | None:
     return (cur / prev - 1) * 100
 
 
+def printed_pct(s: str | None) -> float | None:
+    """괄호 또는 선행 마이너스는 음수. '0.2', '(11.4)', '(11.4%)'."""
+    if not s:
+        return None
+    s = s.strip()
+    neg = "(" in s or s.lstrip().startswith("-")
+    s = s.replace("(", "").replace(")", "").replace("%", "").replace(",", "").strip()
+    try:
+        v = float(s)
+    except ValueError:
+        return None
+    return -abs(v) if neg else v
+
+
+def cc_growth_printed(text: str) -> float | None:
+    """회사가 인쇄한 전사 고정환율 매출 성장률(%)을 읽는다.
+
+    달러 두 칸의 비율은 쓰지 않는다. 3Q26 조정표는 $378,631 / $378,041 = 0.156%인데
+    같은 칸과 헤드라인은 0.2%로 적혀 있다. 비율을 저장하면 0.156이 되고, 본문 반올림은
+    +0.2%가 되어 저장된 숫자와 알림이 어긋난다. 가이던스 구간(9.0%-12.0%)과
+    지역/사업부 행(Korea, Japan, Paid Content 등)은 전사 성장률이 아니다.
+    """
+    m = re.search(
+        r"Revenue Growth on a Constant Currency Basis of (\(?-?[\d.]+\)?)\s*%",
+        text,
+        re.I,
+    )
+    if m:
+        return printed_pct(m.group(1))
+    skip = ("korea", "japan", "world", "content", "advertising", "adaptations")
+    row = re.compile(
+        r"Revenue on a Constant Currency Basis\s*\$?\s*[\d,]+\s*\$?\s*[\d,]+\s*(\(?-?[\d.]+\)?)\s*%",
+        re.I,
+    )
+    for m in row.finditer(text):
+        prev = text[max(0, m.start() - 16):m.start()].lower().rstrip()
+        if any(prev.endswith(w) for w in skip):
+            continue
+        return printed_pct(m.group(1))
+    return None
+
+
 def parse_release(text: str, quarter: str = "third", period: str = "September 30, 2026") -> dict:
     is_q = bool(re.search(rf"{quarter} quarter ended {period}", text, re.I))
     rev, rev_prev = pair(r"Total Revenue \$ ?([\d,]+) \$ ?([\d,]+)", text)
     if rev is None:
         m = re.search(r"Total revenue of \$([\d.]+) million", text, re.I)
         rev = float(m.group(1)) * 1000 if m else None
-    cc = re.search(r"Revenue on a Constant Currency Basis \$ ?([\d,]+) \$ ?([\d,]+) \(?(-?[\d.]+)%\)?", text, re.I)
-    cc_growth = None
-    if cc:
-        cc_growth = pct(num(cc.group(1)), num(cc.group(2)))
+    cc_growth = cc_growth_printed(text)
     ebitda, _ = pair(r"Adjusted EBITDA\s*(?:\(\d\))?\s*\$\s*(\(?[\d,]+\)?)\s*\$\s*(\(?[\d,]+\)?)", text)
     margin = None
     m = re.search(r"Adjusted EBITDA Margin\s*(\(?-?[\d.]+\)?)\s*%", text, re.I)
@@ -342,8 +382,83 @@ def score_lines(cfg, now, p, q, j, price_when, links, supplement=False):
     ]
 
 
+# 2026-11-10 채점 때 state 에 남은 스냅샷. cc_growth 만 이 버그의 대상이고 판정 입력은 아니다.
+NOV10_PARSED = {
+    "rev_m": 362.775,
+    "rev_prev_m": 378.041,
+    "ebitda_m": 2.206,
+    "margin": 0.6,
+    "jp_cc_growth": -11.621098565243704,
+    "jp_mpu_growth": -13.09408025582296,
+    "jp_rev_growth": -17.8812707502056,
+    "global_mpu_growth": -3.225039154547682,
+}
+NOV10_TENQ = {"mau_m": 159.6, "mau_growth": 2.7, "mau_is_period": True}
+NOV10_CC_DOLLARS = (378631, 378041)  # 조정표 분기 칸. 비율은 0.156%, 인쇄는 0.2%.
+Q3_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "wbtnq3" / "q3_2026_ex991.txt"
+
+
+def selftest() -> int:
+    fails = []
+
+    def check(name, got, want):
+        if got != want:
+            fails.append(f"{name}: got {got!r} want {want!r}")
+
+    text = Q3_FIXTURE.read_text(encoding="utf-8")
+    check("fixture has printed 0.2", "Basis of 0.2%" in text, True)
+    check("fixture keeps dollar trap", "$ 378,631 $ 378,041 0.2%" in text, True)
+    check("fixture keeps fx 15856", "15,856" in text, True)
+    check("fixture keeps outlook trap", "9.0%-12.0%" in text, True)
+
+    p = parse_release(text)
+    ratio = pct(*NOV10_CC_DOLLARS)
+    check("printed cc is 0.2", p["cc_growth"], 0.2)
+    check("not the dollar ratio", p["cc_growth"] == ratio, False)
+    check("ratio is the old stored 0.156", round(ratio, 6) if ratio is not None else None, round(0.1560677281035705, 6))
+    check("display of printed rate", f1(p["cc_growth"]), "+0.2%")
+    check("old ratio also rounded to +0.2 in the alert", f1(ratio), "+0.2%")
+
+    table_only = text[text.find("Total Revenue"):]
+    check("table path still 0.2", cc_growth_printed(table_only), 0.2)
+    check("table path is not 1.8 or 13.5", cc_growth_printed(table_only) not in (1.8, 13.5, -11.4, 1.0, 30.1), True)
+
+    # 인쇄된 %와 달러 비율이 반올림 뒤에도 다른 경우. 비율을 쓰면 +11.1%가 된다.
+    diverged = "Revenue on a Constant Currency Basis $ 100,000 $ 90,000 (4.5%)"
+    check("printed negative wins over dollar ratio", cc_growth_printed(diverged), -4.5)
+    check("dollar ratio of that row is not -4.5", round(pct(100000, 90000), 1), 11.1)
+
+    cfg = json.loads(CFG.read_text(encoding="utf-8"))
+    fresh = dict(NOV10_PARSED, cc_growth=p["cc_growth"])
+    stale = dict(NOV10_PARSED, cc_growth=ratio)
+    j_new = judge(fresh, NOV10_TENQ, 9.93, cfg)
+    j_old = judge(stale, NOV10_TENQ, 9.93, cfg)
+    check("11/10 verdict stays 보유", j_new["verdict"], "보유")
+    check("verdict ignores cc_growth", j_new["verdict"], j_old["verdict"])
+    check("met stays 0", j_new["met"], 0)
+    check("met unchanged", j_new["met"], j_old["met"])
+
+    now = datetime(2026, 11, 10, 12, 10, tzinfo=KST)
+    blob = "\n".join(score_lines(cfg, now, fresh, NOV10_TENQ, j_new, "11-10 06:01 KST", ["fixture"]))
+    shown = f"고정환율 매출 성장 {f1(fresh['cc_growth'])}"
+    check("body uses parsed cc", shown in blob, True)
+    check("body shows +0.2%", "고정환율 매출 성장 +0.2%" in blob, True)
+    check("body has no 15.6", "+15.6%" not in blob, True)
+    check("body keeps ticker context", "WBTN" in blob, True)
+
+    if fails:
+        print("SELFTEST FAIL")
+        for f in fails:
+            print(" ", f)
+        return 1
+    print("selftest ok")
+    return 0
+
+
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode == "selftest":
+        return selftest()
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
     now = datetime.now(KST)
 
