@@ -34,7 +34,7 @@ ALLOW_STEMS = {"poly", "polyinv", "ghtrend", "sgyn", "gval", "brief", "burry", "
 
 # Index and macro symbols, plus tickers that are not a config "ticker" field.
 EXTRA_SYMBOLS = {
-    "KOSPI", "KOSDAQ", "KOSPI200", "SPY", "USDKRW", "USDJPY", "VGK",
+    "KOSPI", "KOSDAQ", "KOSPI200", "SPY", "USDKRW", "US10Y", "USDJPY", "VGK",
     "IEF", "NEE", "SO", "DUK", "VTR", "SPG", "BTC", "ETH", "XRP", "G",
     "NVDA", "SNDK", "CRWV", "FIG", "NFLX", "IREN", "PLTR", "PCOR", "AMTM",
     "TSLA", "SPCX", "WBTN", "QQQ",
@@ -638,6 +638,7 @@ def audit_self_check() -> None:
     assert classify("[HCE] 주간 체크 | 이탈") .startswith("stock nickname")
     assert classify("[SEMIUS] 005930 000660 META 하향") is None
     assert classify("[ASML] $1,563 이하") is None
+    assert classify("[US10Y] 미 10년물 4.8% 하회") is None  # digits, so the 1-5 letter rule misses it
     assert classify("[FLOW] KOSPI 수급 평온") is None
     assert classify("[OPS] 워크플로 실패") == "excluded ops"
     assert classify("[XBI] 종가 조회 실패 | 판정 못 함") == "excluded ops"
