@@ -64,7 +64,7 @@
       "value": true,
       "asof": "2026-11-10",
       "source": "Samsung 3Q call 2027 HBM sold out; SK hynix DRAM+HBM effectively sold out through 2029 (restated Hankook Ilbo 11/10) https://www.hankookilbo.com/news/article/A2026111015030001446",
-      "max_age_days": 21
+      "max_age_days": 60
     },
     "server_contract": {
       "qoq_pct": 12.5,
