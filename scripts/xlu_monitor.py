@@ -2,7 +2,10 @@
 """[XLU] SPDR 유틸리티 ETF 판단(긍정 / 중립 / 부정). 평일 09:00 KST morning 묶음 (xbi, hwm 옆).
 
 2026-11-02 채팅 승인. 보유 없음, 가격 매수 구간 없음(configs/xlu.json price_bands 는 나중에 채울 자리).
-판단은 미 10년물 전일 종가(Yahoo ^TNX, 실패 시 FRED DGS10)와 FOMC 결과로만 정한다:
+판단은 미 10년물 완료 종가(Yahoo ^TNX, 실패 시 FRED DGS10)와 FOMC 결과로만 정한다.
+  완료 봉: 미국 동부 16:10 이후면 그날 봉을 넣고, 그 전이면 직전 평일까지. 토, 일 봉은 넣지 않는다.
+  휴장일은 봉이 없으므로 그 전 평일이 마지막이다. close 가 비고 regularMarketTime 이 16:00 ET 이후일 때만 regularMarketPrice 로 채운다.
+  2026-11-21 채팅 승인. 이미 저장한 데이터 날짜는 다시 보내지 않는다.
   긍정  10년물 종가 4.50% 미만 3거래일 연속 + 12월 FOMC 동결(인상 없음)
         12월 FOMC 전이면 중립 유지 + "10년물 4.5% 하회, 12월 FOMC 동결 확인 대기" 안내 1번 (p3)
   부정  10년물 종가 5.30% 초과, 또는 FOMC 인상이 새로 확인됨 (12월, 그 뒤 1월)
@@ -13,7 +16,7 @@ FOMC 결과: 성명서 원문 'decided to raise / maintain / lower', 못 읽으�
   1차 41.70~42.00 (2%, FOMC 전, 2026-12-09 까지) / 2차 42.40~43.00 (2%, 12/10부터 12월 동결 또는 인하일 때)
   3차 39.50~40.00 (1%, 12/10부터) / 재검토 종가 39.00 미만 / 추격 금지 종가 45.50 이상
   들어오면 1번, 경계 밖 0.3% 넘게 벗어나면 이탈 1번 (XLU 데이터 날짜로 중복 방지). filled=true 면 그 가격대 끝.
-판단이 바뀔 때만 p4. 안내와 조회 실패는 p3 (실패는 cwally-ops, 하루 1번). 10년물 데이터 날짜로 중복 방지.
+판단이 바뀔 때만 p4. 안내와 조회 실패는 p3 (실패는 cwally-ops, 하루 1번). 10년물과 XLU 데이터 날짜로 중복 방지.
 첫 실행은 오늘 판단을 조용히 저장. 2027-02-26 23:59 KST 이후 침묵.
 상대 매력(rotation, 2026-11-20): XLP / XLU / XLY. 기존 판단, 가격대, ends_kst 는 그대로.
   XLU 상향: XLU/XLP 가 20일선과 60일선 위 + 20거래일 상대 성과 +2%p, 그리고 금리 완화 또는 NEE/CEG 주도.
@@ -77,18 +80,24 @@ def fetch(url: str, timeout: int = 25) -> str:
         return resp.read().decode("utf-8", errors="ignore")
 
 
-def yahoo_series(sym: str, ten: bool = False) -> list[tuple[str, float]]:
+def keep_session(day: str, now: datetime) -> bool:
+    """Completed US session. Today only at or after 16:10 ET. Saturday and Sunday never count."""
+    d = datetime.strptime(day, "%Y-%m-%d").date()
+    if d.weekday() >= 5:
+        return False
+    today = now.astimezone(ET).date()
+    if d < today:
+        return True
+    if d > today:
+        return False
+    et = now.astimezone(ET)
+    return (et.hour, et.minute) >= (16, 10)
+
+
+def yahoo_series(sym: str, now: datetime, ten: bool = False) -> list[tuple[str, float]]:
+    """Yahoo 1mo daily closes, completed-session filter, null-close fill via bars_from_chart."""
     raw = json.loads(fetch(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1mo"))
-    r = raw["chart"]["result"][0]
-    out = {}
-    for ts, c in zip(r.get("timestamp") or [], (r["indicators"]["quote"][0].get("close") or [])):
-        if c is None:
-            continue
-        c = float(c)
-        if ten and c > 20:  # ^TNX x10 on some feeds (same guard as ratesbell_monitor)
-            c /= 10
-        out[datetime.fromtimestamp(int(ts), timezone.utc).astimezone(ET).strftime("%Y-%m-%d")] = c
-    return sorted(out.items())
+    return bars_from_chart(raw, now, ten=ten)
 
 
 def fred_series(sid: str, start: str) -> list[tuple[str, float]]:
@@ -105,17 +114,20 @@ def fred_series(sid: str, start: str) -> list[tuple[str, float]]:
 
 
 def ten_series(now: datetime) -> tuple[list[tuple[str, float]], str, list[str]]:
+    """Completed 10Y closes. Yahoo ^TNX first, else FRED DGS10 with the same session dates.
+
+    ibb_monitor imports this. A date already stored in state is not judged again.
+    """
     errs = []
-    today_et = now.astimezone(ET).strftime("%Y-%m-%d")
     try:
-        s = [x for x in yahoo_series("%5ETNX", ten=True) if x[0] < today_et]  # 미국 전일 종가까지만
+        s = yahoo_series("%5ETNX", now, ten=True)
         if len(s) >= 3:
             return s, "Yahoo ^TNX", errs
         errs.append("Yahoo ^TNX 3일 미만")
     except Exception as exc:  # noqa: BLE001
         errs.append(f"Yahoo ^TNX: {exc}")
     try:
-        s = fred_series("DGS10", (now - timedelta(days=40)).strftime("%Y-%m-%d"))
+        s = [x for x in fred_series("DGS10", (now - timedelta(days=40)).strftime("%Y-%m-%d")) if keep_session(x[0], now)]
         if len(s) >= 3:
             return s, "FRED DGS10", errs
         errs.append("FRED DGS10 3일 미만")
@@ -518,10 +530,7 @@ def bars_from_chart(payload: dict, now: datetime, ten: bool = False) -> list[tup
         filled = _meta_close(meta, last_day, ten)
         if filled is not None:
             out[last_day] = filled
-    today = now.astimezone(ET).strftime("%Y-%m-%d")
-    et = now.astimezone(ET)
-    after = (et.hour, et.minute) >= (16, 10)
-    return [(d, out[d]) for d in sorted(out) if d < today or (d == today and after)]
+    return [(d, out[d]) for d in sorted(out) if keep_session(d, now)]
 
 
 def fetch_completed(sym: str, now: datetime, span: str, ten: bool = False) -> list[tuple[str, float]]:
@@ -1130,9 +1139,7 @@ def run(mode: str, now: datetime | None = None) -> int:
             _finish_rotation_early(st, cfg, series, st.get("zone"), now)
             return 0
     try:
-        xs = yahoo_series("XLU")
-        today_et = now.astimezone(ET).strftime("%Y-%m-%d")
-        xs = [x for x in xs if x[0] < today_et]
+        xs = yahoo_series("XLU", now)
         xlu = (xs[-1][1], xs[-1][0]) if xs else (None, None)
     except Exception as exc:  # noqa: BLE001
         print(f"XLU quote failed: {exc}")
@@ -1189,7 +1196,7 @@ def preview(now: datetime | None = None) -> None:
         return
     dec, src, _ = fomc_decisions(cfg, now)
     try:
-        xs = [x for x in yahoo_series("XLU") if x[0] < now.astimezone(ET).strftime("%Y-%m-%d")]
+        xs = yahoo_series("XLU", now)
         xlu = (xs[-1][1], xs[-1][0])
     except Exception:  # noqa: BLE001
         xlu = (None, None)
@@ -1536,6 +1543,38 @@ def selftest() -> int:
     filled = bar_payload([("2026-11-18", 43.55), ("2026-11-19", 43.01)])
     check("intraday excluded", bars_from_chart(filled, before), [("2026-11-18", 43.55)])
     check("after close kept", bars_from_chart(filled, after)[-1], ("2026-11-19", 43.01))
+    # 10Y and price-band session filter (2026-11-21). 2026-11-19 is Thursday, 11-20 Friday, 11-21 Saturday.
+    thu_before = datetime(2026, 11, 19, 16, 9, tzinfo=ET)
+    thu_at = datetime(2026, 11, 19, 16, 10, tzinfo=ET)
+    check("10y before 16:10", keep_session("2026-11-19", thu_before), False)
+    check("10y at 16:10", keep_session("2026-11-19", thu_at), True)
+    check("10y prior day", keep_session("2026-11-18", thu_before), True)
+    check("chart before 16:10", bars_from_chart(filled, thu_before), [("2026-11-18", 43.55)])
+    check("chart at 16:10", bars_from_chart(filled, thu_at)[-1], ("2026-11-19", 43.01))
+    sat = datetime(2026, 11, 21, 16, 30, tzinfo=ET)
+    sun = datetime(2026, 11, 22, 18, 0, tzinfo=ET)
+    check("saturday bar dropped", keep_session("2026-11-21", sat), False)
+    check("friday kept on saturday", keep_session("2026-11-20", sat), True)
+    check("saturday dropped on sunday", keep_session("2026-11-21", sun), False)
+    mon_am = datetime(2026, 11, 23, 10, 0, tzinfo=ET)
+    holiday = [("2026-11-19", 4.9), ("2026-11-20", 5.0)]
+    check("holiday monday keeps friday", [d for d, _ in holiday if keep_session(d, mon_am)][-1], "2026-11-20")
+    fred_rows = holiday + [("2026-11-21", 5.2), ("2026-11-23", 5.3)]
+    check("fred dating morning", [d for d, _ in fred_rows if keep_session(d, mon_am)], ["2026-11-19", "2026-11-20"])
+    check("fred dating after close", [d for d, _ in fred_rows if keep_session(d, datetime(2026, 11, 23, 16, 10, tzinfo=ET))],
+          ["2026-11-19", "2026-11-20", "2026-11-23"])
+    # already stored date is not sent again; the next session is judged once
+    seen = {"zone": NEU, "last_date": "2026-11-18", "fomc_seen": {}}
+    nxt = [("2026-11-18", 5.06), ("2026-11-19", 5.31)]
+    st_new, ev_new = advance(seen, nxt, pend, r)
+    check("next date once", (st_new["last_date"], ev_new["kind"], ev_new["why"]), ("2026-11-19", "change", "10년물 5.3% 초과"))
+    check("same date silent", advance(st_new, nxt, pend, r)[1], None)
+    check("stored date not resent", advance({"zone": NEU, "last_date": "2026-11-19", "fomc_seen": {}}, nxt, pend, r)[1], None)
+    band_seen = {"date": "2026-11-18", "in": {}}
+    check("band stored date", advance_bands(band_seen, "2026-11-18", 41.80, "2026-11-20", None, cfg)[1], [])
+    band_new, band_ev = advance_bands(band_seen, "2026-11-19", 41.80, "2026-11-20", None, cfg)
+    check("band next date", [e["item"]["key"] for e in band_ev], ["t1"])
+    check("band next date once", advance_bands(band_new, "2026-11-19", 41.80, "2026-11-20", None, cfg)[1], [])
     morning = datetime(2026, 11, 20, 9, 6, tzinfo=KST)
     check("morning expects 11-19", expected_us_day(morning), "2026-11-19")
     # align drops a symbol that has not printed the newest day

@@ -8,7 +8,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry. 상대 매력(XLP, XLU, XLY)은 같은 실행에서 상태가 바뀔 때만. rotation 키가 없으면 시드만.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 완료 일봉(16:10 ET 이후면 그날, 그 전이면 직전 평일, 토일 제외. 2026-11-21 승인) 기준, 10년물과 XLU 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry. 상대 매력(XLP, XLU, XLY)은 같은 실행에서 상태가 바뀔 때만. rotation 키가 없으면 시드만.",
   "holding": false,
   "holding_note": "보유 없음. 목표 비중 총자산 5% (1차 2%, 2차 2%, 3차 1%). 해외 계좌, ISA 아님.",
   "price_bands": [
@@ -131,7 +131,7 @@
   },
   "rotation": {
     "added": "2026-11-20",
-    "note": "XLP, XLU, XLY 상대 매력. 상태가 바뀔 때만 발송. state/xlu.json 에 rotation 이 없으면 첫 auto 는 시드만 하고 알림 없음. dry 는 발송도 저장도 안 함. 가격은 Yahoo chart v8 완료 일봉(미국 동부 16:10 이전의 당일 봉은 제외). 가장 최근 봉의 close 가 비어 있고 regularMarketTime 이 그날 16:00 ET 이후이면 regularMarketPrice 를 그 봉의 종가로 쓴다. fulldayPrice 는 쓰지 않는다. 기준일은 XLU, XLP, XLY 가 모두 가진 마지막 완료일. NEE, CEG, AMZN, TSLA, SPY 중 그날 종가가 없으면 그 조건은 켜지도 끄지도 않고, 조회 실패로 보지 않음. 시세 조회 자체가 실패하면 cwally-ops 하루 1번. 소비는 FRED RRSFS(실질)와 RSAFS(명목). 10년물은 Yahoo ^TNX 1년, 실패하면 이번 실행의 ten_series 가 21점 이상일 때만 사용. fomccut 는 state/fomccut.json 을 읽기만 하고, 파일이 없어도 실패로 보지 않음. 상대 강도는 총수익이 아닌 종가 비율. 베타와 보유 비중은 경보 조건이 아님. 기존 10년물 last_date 필터(미국 달력상 오늘 봉 제외)는 바꾸지 않음. 09:00 KST 는 아직 미국 전날 저녁이라 그 필터는 방금 끝난 세션을 빼서 하루 늦다. rotation 은 16:10 ET 이후의 완료 봉을 넣는다.",
+    "note": "XLP, XLU, XLY 상대 매력. 상태가 바뀔 때만 발송. state/xlu.json 에 rotation 이 없으면 첫 auto 는 시드만 하고 알림 없음. dry 는 발송도 저장도 안 함. 가격은 Yahoo chart v8 완료 일봉(미국 동부 16:10 이전의 당일 봉은 제외). 가장 최근 봉의 close 가 비어 있고 regularMarketTime 이 그날 16:00 ET 이후이면 regularMarketPrice 를 그 봉의 종가로 쓴다. fulldayPrice 는 쓰지 않는다. 기준일은 XLU, XLP, XLY 가 모두 가진 마지막 완료일. NEE, CEG, AMZN, TSLA, SPY 중 그날 종가가 없으면 그 조건은 켜지도 끄지도 않고, 조회 실패로 보지 않음. 시세 조회 자체가 실패하면 cwally-ops 하루 1번. 소비는 FRED RRSFS(실질)와 RSAFS(명목). 10년물은 Yahoo ^TNX 1년, 실패하면 이번 실행의 ten_series 가 21점 이상일 때만 사용. fomccut 는 state/fomccut.json 을 읽기만 하고, 파일이 없어도 실패로 보지 않음. 상대 강도는 총수익이 아닌 종가 비율. 베타와 보유 비중은 경보 조건이 아님. 10년물 판단과 XLU 가격대도 2026-11-21 부터 같은 완료 봉 규칙이다. 16:10 ET 이후면 그날, 그 전이면 직전 평일, 토일과 휴장(봉 없음)은 그 전 평일. 이미 저장한 데이터 날짜는 다시 보내지 않는다.",
     "symbols": ["XLU", "XLP", "XLY", "SPY", "NEE", "CEG", "AMZN", "TSLA"],
     "min_bars": 60,
     "stale_days": 6,
