@@ -8,7 +8,7 @@
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "schedule_kst": "09:00",
-  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 전일 종가(10년물 ^TNX, XLU) 기준, 10년물 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "schedule_note": "새 cron 없음. 기존 평일 09:00 KST morning 묶음(xbi, hwm 옆)에 부착. 미국 완료 일봉(16:10 ET 이후면 그날, 그 전이면 직전 평일, 토일 제외. 2026-11-21 승인) 기준, 10년물과 XLU 데이터 날짜로 중복 방지. 판단이 바뀔 때만 발송(p4), 12월 FOMC 대기 안내 1번과 조회 실패는 p3. 수동 job=xlu 는 oneoff_mode=auto 가 아니면 selftest + dry. 상대 매력(XLP, XLU, XLY)은 같은 실행에서 상태가 바뀔 때만. rotation 키가 없으면 시드만.",
   "holding": false,
   "holding_note": "보유 없음. 목표 비중 총자산 5% (1차 2%, 2차 2%, 3차 1%). 해외 계좌, ISA 아님.",
   "price_bands": [
@@ -127,6 +127,111 @@
       "ma50": 41.75,
       "ma200": 44.3,
       "source": "Yahoo XLU 일봉 1년"
+    }
+  },
+  "rotation": {
+    "added": "2026-11-20",
+    "note": "XLP, XLU, XLY 상대 매력. 상태가 바뀔 때만 발송. state/xlu.json 에 rotation 이 없으면 첫 auto 는 시드만 하고 알림 없음. dry 는 발송도 저장도 안 함. 가격은 Yahoo chart v8 완료 일봉(미국 동부 16:10 이전의 당일 봉은 제외). 가장 최근 봉의 close 가 비어 있고 regularMarketTime 이 그날 16:00 ET 이후이면 regularMarketPrice 를 그 봉의 종가로 쓴다. fulldayPrice 는 쓰지 않는다. 기준일은 XLU, XLP, XLY 가 모두 가진 마지막 완료일. NEE, CEG, AMZN, TSLA, SPY 중 그날 종가가 없으면 그 조건은 켜지도 끄지도 않고, 조회 실패로 보지 않음. 시세 조회 자체가 실패하면 cwally-ops 하루 1번. 소비는 FRED RRSFS(실질)와 RSAFS(명목). 10년물은 Yahoo ^TNX 1년, 실패하면 이번 실행의 ten_series 가 21점 이상일 때만 사용. fomccut 는 state/fomccut.json 을 읽기만 하고, 파일이 없어도 실패로 보지 않음. 상대 강도는 총수익이 아닌 종가 비율. 베타와 보유 비중은 경보 조건이 아님. 10년물 판단과 XLU 가격대도 2026-11-21 부터 같은 완료 봉 규칙이다. 16:10 ET 이후면 그날, 그 전이면 직전 평일, 토일과 휴장(봉 없음)은 그 전 평일. 이미 저장한 데이터 날짜는 다시 보내지 않는다.",
+    "symbols": ["XLU", "XLP", "XLY", "SPY", "NEE", "CEG", "AMZN", "TSLA"],
+    "min_bars": 60,
+    "stale_days": 6,
+    "ma_fast": 20,
+    "ma_slow": 60,
+    "rs_enter_pct": 2.0,
+    "rs_exit_pct": 0.0,
+    "leader_enter_pct": 1.0,
+    "leader_exit_pct": -1.0,
+    "stock_enter_pct": 3.0,
+    "stock_exit_pct": 0.0,
+    "rate_drop_enter": 0.25,
+    "rate_drop_exit": 0.10,
+    "rate_ma": 20,
+    "retail": {
+      "real": "RRSFS",
+      "nominal": "RSAFS",
+      "slow_real_mom_max": -0.20,
+      "rebound_real_mom_min": 0.30,
+      "rebound_nominal_mom_min": 0.20,
+      "note": "둔화: RRSFS 전월비가 -0.20% 이하, 또는 RRSFS 와 RSAFS 전월비가 모두 0% 이하. 반등: RRSFS 전월비 +0.30% 이상이고 RSAFS 전월비 +0.20% 이상. 그 밖은 혼합. 같은 관측월의 XLP 우위 알림은 최대 1번."
+    },
+    "rules_note": "XLU 상향은 XLU/XLP 비율이 20일선과 60일선 위이고 20거래일 성과 차이가 +2%p 이상인 상태에서, 금리 완화 또는 NEE 와 CEG 주도 중 하나 이상. 금리 완화는 10년물이 20일선 이하이고 20거래일 전보다 0.25%p 이상 낮거나, 기존 판단이 긍정이거나, fomccut 인하 사이클. 상대 강도 해제는 비율이 두 이평 아래이고 20거래일 차이가 0%p 이하. 금리 해제는 하락폭이 0.10%p 미만이거나 20일선 위로 돌아왔을 때이며, 긍정과 fomccut 이 꺼진 뒤에만 끈다. NEE, CEG 는 각자 종가가 20일선 위이고 XLU 보다 20거래일 +1%p 이상일 때 켜고, 20일선 아래이거나 XLU 보다 -1%p 이하이면 끈다. XLY 는 XLY/XLP 에 같은 상대 강도, AMZN 과 TSLA 가 각자 20일선 위이고 20거래일 +3% 이상. 금리 완화와 소매 반등이 같이 있으면 매크로 확인, 가격 조건만이면 가격 선행. XLP 우위는 둔화 월이 새로 나왔고 XLP 20거래일 성과가 XLU 와 XLY 보다 높으며 XLP/XLU 와 XLP/XLY 가 각자 20일선 이상일 때.",
+    "sources": {
+      "chart": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2y",
+      "tnx": "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=1y",
+      "rrsfs": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RRSFS",
+      "rsafs": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=RSAFS",
+      "fomccut": "state/fomccut.json",
+      "holdings": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{xlu|xlp|xly}.xlsx"
+    },
+    "claims": {
+      "checked": "2026-11-20",
+      "note": "2026-11-20 붙여 넣은 분석을 원천으로 다시 확인한 값. 경보 조건이 아니고, 확인하지 못한 벤더 베타는 null.",
+      "xlu": {
+        "session": "2026-11-19",
+        "close": 43.01,
+        "prev_close": 43.55,
+        "prev_session": "2026-11-18",
+        "dod_pct": -1.24,
+        "ytd_pct": 0.75,
+        "ytd_base": 42.69,
+        "ytd_base_session": "2025-12-31",
+        "one_year_pct": -3.59,
+        "one_year_base_session": "2025-11-18",
+        "one_year_sessions": 252,
+        "range_52w_intraday": [39.03, 47.8],
+        "feb_high_close": 47.73,
+        "feb_high_session": "2026-02-27",
+        "below_feb_high_pct": -9.89,
+        "trail_div_usd": 1.211,
+        "trail_yield_pct": 2.82,
+        "source": "Yahoo chart v8 1d close 2026-11-19. 52주 39.03~47.80 은 meta fiftyTwoWeekLow/High. 배당은 2025-11-19 이후 2026-11-19 까지 분배 합."
+      },
+      "xlp": {
+        "session": "2026-11-19",
+        "close": 89.86,
+        "ytd_pct": 15.68,
+        "one_year_pct": 16.55,
+        "trail_yield_pct": 2.44,
+        "computed_beta_1y_vs_spy": -0.03,
+        "computed_beta_3y_vs_spy": 0.18,
+        "vendor_beta": null,
+        "note": "붙여 넣은 YTD +17~20, 1년 +18~23, 베타 약 0.4 는 2026-11-19 야후 일봉과 다름. 벤더 베타는 확인 불가라 null. 일간 수익률 회귀는 참고값이고 경보에 쓰지 않음."
+      },
+      "xly": {
+        "session": "2026-11-19",
+        "close": 115.88,
+        "ytd_pct": -2.96,
+        "one_year_pct": 3.23,
+        "trail_yield_pct": 0.81,
+        "computed_beta_1y_vs_spy": 1.09,
+        "computed_beta_3y_vs_spy": 1.13,
+        "vendor_beta": null,
+        "note": "1년 일간 베타 1.09 는 붙여 넣은 약 1.1 과 가깝다. 벤더 베타는 확인 불가라 null. 경보에 쓰지 않음."
+      },
+      "holdings": {
+        "as_of": "2026-11-18",
+        "source": "SSGA holdings-daily-us-en xlsx",
+        "xlu_top10_pct": 58.56,
+        "xlu_weights_pct": {"NEE": 12.94, "SO": 7.94, "DUK": 7.42, "CEG": 6.33},
+        "xlp_includes": ["WMT", "COST"],
+        "xly_includes": ["AMZN", "TSLA"],
+        "xly_weights_pct": {"AMZN": 22.98, "TSLA": 17.47},
+        "note": "상위 10개 58.56% 는 약 59% 와 맞음. NEE 약 13%, SO 약 8%, DUK 약 7% 와 맞음. CEG 6.33% 는 붙여 넣은 약 6.5% 보다 조금 낮음. XLP 에 WMT, COST, XLY 에 AMZN, TSLA 가 있음."
+      },
+      "macro": {
+        "tnx_2026_11_19": 5.052,
+        "dgs10_2026_11_18": 5.07,
+        "cpi_headline_yoy_pct": 4.08,
+        "cpi_month": "2026-10",
+        "core_cpi_yoy_pct": 2.87,
+        "pce_yoy_pct": 3.65,
+        "pce_month": "2026-09",
+        "rrsfs_mom_pct": -0.14,
+        "rsafs_mom_pct": 0.21,
+        "retail_month": "2026-10",
+        "spending_slowdown_confirmed": false,
+        "note": "CPI 와 PCE 는 2% 목표보다 위. 10년물은 5% 근처. 2026-10 실질 소매는 전월비 -0.14%, 명목은 +0.21%, 3개월 실질은 아직 플러스라 소비 둔화 확정으로 보지 않음."
+      }
     }
   }
 }
