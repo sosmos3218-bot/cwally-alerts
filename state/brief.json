@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-20T08:16:24.050596+09:00",
+  "updated_at": "2026-11-23T07:56:57.630121+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -270,6 +270,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-20T08:16:24.050596+09:00"
+    },
+    "20261123-weekly-discovery.json#7ff2f793757aa06d": {
+      "file": "20261123-weekly-discovery.json",
+      "title": "[BRIEF] 주간 종목 발굴 11/23: 034230 파라다이스",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-23T07:56:57.630121+09:00"
     }
   },
   "rejected": {},
