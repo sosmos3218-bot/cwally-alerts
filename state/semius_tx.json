@@ -8,11 +8,20 @@
       "last_action": "11/09/2026 S Filed",
       "sent": [],
       "status": "filed"
+    },
+    "HB1273": {
+      "bill": "HB 1273",
+      "key": "HB1273",
+      "first_seen": "2026-11-23",
+      "caption": "Relating to the siting, construction, permitting, and operation of certain data centers; requiring local option elections; imposing a temporary moratorium; establishing an annual payments to county residents; repealing certain tax exemptions; providing civil penalties.",
+      "last_action": "11/20/2026 H Filed",
+      "sent": [],
+      "status": "filed"
     }
   },
   "eo_seen": [],
   "sent": [],
   "migrated_from": "state/semius.json (2026-11-05, Texas moved to box routine)",
-  "updated_at": "2026-11-16T08:30:53+09:00",
-  "week": "2026-W47"
+  "updated_at": "2026-11-23T08:31:29+09:00",
+  "week": "2026-W48"
 }
