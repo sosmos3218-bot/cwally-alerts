@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+    "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -84,41 +84,42 @@
       }
     },
     "counts": {
-      "excluded": 854,
+      "excluded": 915,
       "excluded_reasons": {
-        "capital_non_positive": 76,
+        "capital_non_positive": 80,
         "cash_missing": 102,
+        "debt_unconfirmed": 267,
         "earnings_yield_above_max": 1,
         "ebit_missing": 113,
-        "ebit_provisional": 97,
-        "enterprise_value_below_min": 11,
-        "enterprise_value_non_positive": 9,
-        "multi_class_shares_unsplit": 296,
-        "net_fixed_assets_missing": 78,
+        "ebit_provisional": 96,
+        "enterprise_value_below_min": 6,
+        "enterprise_value_non_positive": 7,
+        "multi_class_shares_unsplit": 97,
+        "net_fixed_assets_missing": 76,
         "stale_price": 2,
-        "stale_statement": 50,
+        "stale_statement": 49,
         "working_capital_missing": 19
       },
-      "fscore_listed": 99,
-      "fscore_scored": 1031,
+      "fscore_listed": 98,
+      "fscore_scored": 1021,
       "fscore_skip_reasons": {
-        "annual_assets_missing": 73,
+        "annual_assets_missing": 72,
         "annual_gap": 7,
-        "annual_income_missing": 115,
+        "annual_income_missing": 114,
         "equity_issuance_unknown": 282,
         "missing_cfo_t": 43,
-        "missing_gross_profit": 462,
+        "missing_gross_profit": 461,
         "missing_liquidity": 72,
-        "missing_revenue": 104,
-        "revenue_non_positive": 8,
+        "missing_revenue": 102,
+        "revenue_non_positive": 7,
         "stale_annual": 70
       },
-      "insider": 231,
-      "intersection": 6,
-      "magic_input_rows": 1415,
+      "insider": 240,
+      "intersection": 5,
+      "magic_input_rows": 1338,
       "magic_top": 30,
-      "price_failures": 8,
-      "universe": 2267
+      "price_failures": 6,
+      "universe": 2251
     },
     "data_sources": [
       "SEC EDGAR company_tickers_exchange.json",
@@ -130,24 +131,24 @@
       "SEC EDGAR Form 4 submission text",
       "Yahoo Finance chart daily close"
     ],
-    "form4_acceptance_cutoff": "2026-11-19T23:59:59-05:00",
+    "form4_acceptance_cutoff": "2026-11-20T23:59:59-05:00",
     "form4_latest_acceptance": "unknown (master.idx)",
-    "form4_latest_filing_date": "2026-11-19",
+    "form4_latest_filing_date": "2026-11-20",
     "fscore_basis": "annual",
     "fscore_min_score": 8,
-    "insider_filings_through": "2026-11-19",
+    "insider_filings_through": "2026-11-20",
     "insider_lookback_days": 30,
     "magic_top_n": 30,
     "min_market_cap": 100000000,
-    "previous_trade_date": "2026-11-18",
-    "price_as_of": "2026-11-19",
-    "run_date": "2026-11-20",
-    "trade_date": "2026-11-19"
+    "previous_trade_date": "2026-11-19",
+    "price_as_of": "2026-11-20",
+    "run_date": "2026-11-23",
+    "trade_date": "2026-11-20"
   },
   "rows": [
     {
       "cik": "0000320193",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -189,10 +190,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "APPLE INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000320193-26-000026",
       "prior_year_end": "2025-09-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3571,
       "sic_description": null,
       "sources": {
@@ -397,11 +398,11 @@
         }
       },
       "ticker": "AAPL",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001796209",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -443,10 +444,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "API GROUP CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-011620",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7340,
       "sic_description": null,
       "sources": {
@@ -641,11 +642,11 @@
         "shares_t1": null
       },
       "ticker": "APG",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001751008",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -687,10 +688,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "APPLOVIN CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001751008-26-000010",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7370,
       "sic_description": null,
       "sources": {
@@ -897,11 +898,11 @@
         }
       },
       "ticker": "APP",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000007431",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -943,10 +944,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ARMSTRONG WORLD INDUSTRIES INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-065183",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3089,
       "sic_description": null,
       "sources": {
@@ -1151,11 +1152,11 @@
         }
       },
       "ticker": "AWI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001634117",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -1197,10 +1198,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BARNES & NOBLE EDUCATION, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001634117-26-000070",
       "prior_year_end": "2025-05-03",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5940,
       "sic_description": null,
       "sources": {
@@ -1415,11 +1416,11 @@
         }
       },
       "ticker": "BNED",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000017843",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1461,10 +1462,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CARPENTER TECHNOLOGY CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000017843-26-000034",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3312,
       "sic_description": null,
       "sources": {
@@ -1669,11 +1670,11 @@
         }
       },
       "ticker": "CRS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001108109",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1715,10 +1716,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "COMMUNITY HEALTH SYSTEMS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-059509",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8062,
       "sic_description": null,
       "sources": {
@@ -1925,11 +1926,11 @@
         }
       },
       "ticker": "CYH",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000032604",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1971,10 +1972,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "EMERSON ELECTRIC CO",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000032604-26-000054",
       "prior_year_end": "2025-09-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3600,
       "sic_description": null,
       "sources": {
@@ -2179,11 +2180,11 @@
         }
       },
       "ticker": "EMR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000033488",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2225,10 +2226,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ESCALADE INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001437749-26-006094",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3949,
       "sic_description": null,
       "sources": {
@@ -2435,11 +2436,11 @@
         }
       },
       "ticker": "ESCA",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001735707",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2481,10 +2482,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "GARRETT MOTION INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001735707-26-000009",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3714,
       "sic_description": null,
       "sources": {
@@ -2689,11 +2690,11 @@
         }
       },
       "ticker": "GTX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001428336",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2735,10 +2736,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "HEALTHEQUITY, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001428336-26-000010",
       "prior_year_end": "2025-01-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7389,
       "sic_description": null,
       "sources": {
@@ -2943,11 +2944,11 @@
         }
       },
       "ticker": "HQY",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001869198",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -2989,10 +2990,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "LIFE TIME GROUP HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001869198-26-000010",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7997,
       "sic_description": null,
       "sources": {
@@ -3209,11 +3210,11 @@
         }
       },
       "ticker": "LTH",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001001385",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3255,10 +3256,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "NWPX INFRASTRUCTURE, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001437749-26-005861",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3317,
       "sic_description": null,
       "sources": {
@@ -3463,11 +3464,11 @@
         }
       },
       "ticker": "NWPX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000077360",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3509,10 +3510,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "PENTAIR PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000077360-26-000007",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3550,
       "sic_description": null,
       "sources": {
@@ -3717,11 +3718,11 @@
         }
       },
       "ticker": "PNR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0002025410",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3763,10 +3764,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "STANDARDAERO, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-072618",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3724,
       "sic_description": null,
       "sources": {
@@ -3973,11 +3974,11 @@
         }
       },
       "ticker": "SARO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001757898",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4019,10 +4020,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "STERIS PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-039136",
       "prior_year_end": "2025-03-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3842,
       "sic_description": null,
       "sources": {
@@ -4227,11 +4228,11 @@
         }
       },
       "ticker": "STE",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000105770",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4273,10 +4274,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "WEST PHARMACEUTICAL SERVICES INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000105770-26-000010",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3841,
       "sic_description": null,
       "sources": {
@@ -4481,11 +4482,11 @@
         }
       },
       "ticker": "WST",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000006281",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4527,10 +4528,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ANALOG DEVICES INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000006281-25-000153",
       "prior_year_end": "2024-11-02",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3674,
       "sic_description": null,
       "sources": {
@@ -4735,11 +4736,11 @@
         }
       },
       "ticker": "ADI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000008670",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4781,10 +4782,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "AUTOMATIC DATA PROCESSING INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000008670-26-000030",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7374,
       "sic_description": null,
       "sources": {
@@ -4991,11 +4992,11 @@
         }
       },
       "ticker": "ADP",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000880266",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5037,10 +5038,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "AGCO CORP /DE",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000880266-26-000010",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3523,
       "sic_description": null,
       "sources": {
@@ -5245,11 +5246,11 @@
         }
       },
       "ticker": "AGCO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001579241",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5291,10 +5292,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ALLEGION PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001579241-26-000007",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7381,
       "sic_description": null,
       "sources": {
@@ -5501,11 +5502,11 @@
         }
       },
       "ticker": "ALLE",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001034670",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5547,10 +5548,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "AUTOLIV INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-058162",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3714,
       "sic_description": null,
       "sources": {
@@ -5755,11 +5756,11 @@
         }
       },
       "ticker": "ALV",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001037868",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5801,10 +5802,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "AMETEK INC/",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001037868-26-000016",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3823,
       "sic_description": null,
       "sources": {
@@ -6011,11 +6012,11 @@
         }
       },
       "ticker": "AME",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001521332",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6057,10 +6058,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "APTIV PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001521332-26-000009",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3714,
       "sic_description": null,
       "sources": {
@@ -6267,11 +6268,11 @@
         }
       },
       "ticker": "APTV",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001018963",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6313,10 +6314,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ATI INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-010140",
       "prior_year_end": "2024-12-29",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3317,
       "sic_description": null,
       "sources": {
@@ -6521,11 +6522,11 @@
         }
       },
       "ticker": "ATI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000008063",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -6567,10 +6568,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ASTRONICS CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000008063-26-000021",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3728,
       "sic_description": null,
       "sources": {
@@ -6765,11 +6766,11 @@
         "shares_t1": null
       },
       "ticker": "ATRO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000009326",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6811,10 +6812,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BALCHEM CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000009326-26-000007",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2800,
       "sic_description": null,
       "sources": {
@@ -7007,11 +7008,11 @@
         }
       },
       "ticker": "BCPC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001437578",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7053,10 +7054,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BRIGHT HORIZONS FAMILY SOLUTIONS INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001437578-26-000006",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8351,
       "sic_description": null,
       "sources": {
@@ -7261,11 +7262,11 @@
         }
       },
       "ticker": "BFAM",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001531152",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7307,10 +7308,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BJ'S WHOLESALE CLUB HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001531152-26-000007",
       "prior_year_end": "2025-02-01",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5331,
       "sic_description": null,
       "sources": {
@@ -7517,11 +7518,11 @@
         }
       },
       "ticker": "BJ",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001280058",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7563,10 +7564,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BLACKBAUD INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001280058-26-000006",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7372,
       "sic_description": null,
       "sources": {
@@ -7771,11 +7772,11 @@
         }
       },
       "ticker": "BLKB",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001383312",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7817,10 +7818,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BROADRIDGE FINANCIAL SOLUTIONS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-052243",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7389,
       "sic_description": null,
       "sources": {
@@ -8027,11 +8028,11 @@
         }
       },
       "ticker": "BR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001665988",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -8073,10 +8074,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "BIOVENTUS INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001665988-26-000011",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3841,
       "sic_description": null,
       "sources": {
@@ -8271,11 +8272,11 @@
         "shares_t1": null
       },
       "ticker": "BVS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001866633",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -8317,10 +8318,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CONSENSUS CLOUD SOLUTIONS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001866633-26-000004",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7372,
       "sic_description": null,
       "sources": {
@@ -8525,11 +8526,11 @@
         }
       },
       "ticker": "CCSI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000887733",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -8571,10 +8572,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CENTRAL GARDEN & PET CO",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000887733-25-000041",
       "prior_year_end": "2024-09-28",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5190,
       "sic_description": null,
       "sources": {
@@ -8769,11 +8770,11 @@
         "shares_t1": null
       },
       "ticker": "CENTA",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001517175",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -8815,10 +8816,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CHEFS' WAREHOUSE, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001517175-26-000005",
       "prior_year_end": "2024-12-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5141,
       "sic_description": null,
       "sources": {
@@ -9023,11 +9024,11 @@
         }
       },
       "ticker": "CHEF",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001262976",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9069,10 +9070,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CIMPRESS PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001262976-26-000027",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2750,
       "sic_description": null,
       "sources": {
@@ -9279,11 +9280,11 @@
         }
       },
       "ticker": "CMPR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001530721",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -9325,10 +9326,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CAPRI HOLDINGS LTD",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001530721-26-000047",
       "prior_year_end": "2025-03-29",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3100,
       "sic_description": null,
       "sources": {
@@ -9533,11 +9534,11 @@
         }
       },
       "ticker": "CPRI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001576427",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9579,10 +9580,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CRITEO S.A.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001576427-26-000014",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7311,
       "sic_description": null,
       "sources": {
@@ -9775,11 +9776,11 @@
         }
       },
       "ticker": "CRTO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000772406",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9821,10 +9822,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CIRRUS LOGIC, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000772406-26-000018",
       "prior_year_end": "2025-03-29",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3674,
       "sic_description": null,
       "sources": {
@@ -10017,11 +10018,11 @@
         }
       },
       "ticker": "CRUS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000723254",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10063,10 +10064,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CINTAS CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000723254-26-000028",
       "prior_year_end": "2025-05-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2320,
       "sic_description": null,
       "sources": {
@@ -10271,11 +10272,11 @@
         }
       },
       "ticker": "CTAS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001755672",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10317,10 +10318,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CORTEVA, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001755672-26-000004",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 100,
       "sic_description": null,
       "sources": {
@@ -10527,11 +10528,11 @@
         }
       },
       "ticker": "CTVA",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000730464",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10573,10 +10574,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "COVISTA INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001104659-26-092044",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8200,
       "sic_description": null,
       "sources": {
@@ -10783,11 +10784,11 @@
         }
       },
       "ticker": "CVSA",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000026324",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10829,10 +10830,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "CURTISS WRIGHT CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-007587",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3590,
       "sic_description": null,
       "sources": {
@@ -11037,11 +11038,11 @@
         }
       },
       "ticker": "CW",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001047340",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -11083,10 +11084,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "DEL MONTE CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001047340-26-000015",
       "prior_year_end": "2024-12-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 100,
       "sic_description": null,
       "sources": {
@@ -11291,11 +11292,11 @@
         }
       },
       "ticker": "DMC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001582961",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -11337,10 +11338,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "DIGITALOCEAN HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001582961-26-000019",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7370,
       "sic_description": null,
       "sources": {
@@ -11545,11 +11546,11 @@
         }
       },
       "ticker": "DOCN",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000868780",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -11591,10 +11592,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "DORMAN PRODUCTS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000868780-26-000014",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3714,
       "sic_description": null,
       "sources": {
@@ -11799,11 +11800,11 @@
         }
       },
       "ticker": "DORM",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001367644",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -11845,10 +11846,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "EMERGENT BIOSOLUTIONS INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001367644-26-000015",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2834,
       "sic_description": null,
       "sources": {
@@ -12065,11 +12066,11 @@
         }
       },
       "ticker": "EBS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001078271",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12111,10 +12112,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "EXTREME NETWORKS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-352872",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3576,
       "sic_description": null,
       "sources": {
@@ -12319,11 +12320,11 @@
         }
       },
       "ticker": "EXTR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000840489",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12365,10 +12366,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "FIRSTCASH HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000840489-26-000032",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5900,
       "sic_description": null,
       "sources": {
@@ -12573,11 +12574,11 @@
         }
       },
       "ticker": "FCFS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000814547",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12619,10 +12620,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "FAIR ISAAC CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000814547-26-000042",
       "prior_year_end": "2025-09-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7389,
       "sic_description": null,
       "sources": {
@@ -12829,11 +12830,11 @@
         }
       },
       "ticker": "FICO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000866374",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -12875,10 +12876,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "FLEX LTD.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000866374-26-000012",
       "prior_year_end": "2025-03-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3672,
       "sic_description": null,
       "sources": {
@@ -13093,11 +13094,11 @@
         }
       },
       "ticker": "FLEX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000277509",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13139,10 +13140,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "FEDERAL SIGNAL CORP /DE/",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-011576",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3711,
       "sic_description": null,
       "sources": {
@@ -13347,11 +13348,11 @@
         }
       },
       "ticker": "FSS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001398659",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13393,10 +13394,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "GENPACT LTD",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001398659-26-000004",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8742,
       "sic_description": null,
       "sources": {
@@ -13601,11 +13602,11 @@
         }
       },
       "ticker": "G",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001652044",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13647,10 +13648,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ALPHABET INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001652044-26-000018",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7370,
       "sic_description": null,
       "sources": {
@@ -13857,11 +13858,11 @@
         }
       },
       "ticker": "GOOGL",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001834622",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13903,10 +13904,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "HAYWARD HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001834622-26-000008",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3580,
       "sic_description": null,
       "sources": {
@@ -14111,11 +14112,11 @@
         }
       },
       "ticker": "HAYW",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000874716",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14157,10 +14158,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "IDEXX LABORATORIES INC /DE",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000874716-26-000038",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2835,
       "sic_description": null,
       "sources": {
@@ -14365,11 +14366,11 @@
         }
       },
       "ticker": "IDXX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001371489",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14411,10 +14412,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "INFORMATION SERVICES GROUP INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001104659-26-024573",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8742,
       "sic_description": null,
       "sources": {
@@ -14621,11 +14622,11 @@
         }
       },
       "ticker": "III",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001337013",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14667,10 +14668,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "INFUSYSTEM HOLDINGS, INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-012804",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3841,
       "sic_description": null,
       "sources": {
@@ -14875,11 +14876,11 @@
         }
       },
       "ticker": "INFU",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000898293",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14921,10 +14922,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "JABIL INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-067038",
       "prior_year_end": "2025-08-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3672,
       "sic_description": null,
       "sources": {
@@ -15129,11 +15130,11 @@
         }
       },
       "ticker": "JBL",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001606757",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15175,10 +15176,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "KIMBALL ELECTRONICS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001606757-26-000032",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3672,
       "sic_description": null,
       "sources": {
@@ -15383,11 +15384,11 @@
         }
       },
       "ticker": "KE",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000912766",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15429,10 +15430,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "LAUREATE EDUCATION, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-009479",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8200,
       "sic_description": null,
       "sources": {
@@ -15639,11 +15640,11 @@
         }
       },
       "ticker": "LAUR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000763744",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15685,10 +15686,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "LCI INDUSTRIES",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000763744-26-000011",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3714,
       "sic_description": null,
       "sources": {
@@ -15893,11 +15894,11 @@
         }
       },
       "ticker": "LCII",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001336920",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15939,10 +15940,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "LEIDOS HOLDINGS, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001336920-26-000030",
       "prior_year_end": "2025-01-03",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7373,
       "sic_description": null,
       "sources": {
@@ -16149,11 +16150,11 @@
         }
       },
       "ticker": "LDOS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000062996",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16195,10 +16196,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MASCO CORP /DE/",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000062996-26-000005",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3430,
       "sic_description": null,
       "sources": {
@@ -16403,11 +16404,11 @@
         }
       },
       "ticker": "MAS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000907242",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16449,10 +16450,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MONARCH CASINO & RESORT INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001104659-26-018717",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7011,
       "sic_description": null,
       "sources": {
@@ -16645,11 +16646,11 @@
         }
       },
       "ticker": "MCRI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001809987",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -16691,10 +16692,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MIRION TECHNOLOGIES, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-009869",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3829,
       "sic_description": null,
       "sources": {
@@ -16889,11 +16890,11 @@
         "shares_t1": null
       },
       "ticker": "MIR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000724004",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16935,10 +16936,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MESA LABORATORIES INC /CO/",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000724004-26-000047",
       "prior_year_end": "2025-03-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3823,
       "sic_description": null,
       "sources": {
@@ -17143,11 +17144,11 @@
         }
       },
       "ticker": "MLAB",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000856982",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -17189,10 +17190,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MERIT MEDICAL SYSTEMS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000856982-26-000008",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3841,
       "sic_description": null,
       "sources": {
@@ -17407,11 +17408,11 @@
         }
       },
       "ticker": "MMSI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001835632",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -17453,10 +17454,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MARVELL TECHNOLOGY, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001835632-26-000011",
       "prior_year_end": "2025-02-01",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3674,
       "sic_description": null,
       "sources": {
@@ -17661,11 +17662,11 @@
         }
       },
       "ticker": "MRVL",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000723125",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -17707,10 +17708,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MICRON TECHNOLOGY INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000723125-26-000023",
       "prior_year_end": "2025-08-28",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3674,
       "sic_description": null,
       "sources": {
@@ -17915,11 +17916,11 @@
         }
       },
       "ticker": "MU",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000700923",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -17961,10 +17962,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "MYR GROUP INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000700923-26-000007",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 1623,
       "sic_description": null,
       "sources": {
@@ -18169,11 +18170,11 @@
         }
       },
       "ticker": "MYRG",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001625278",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18215,10 +18216,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "NERDWALLET, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001625278-26-000014",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7374,
       "sic_description": null,
       "sources": {
@@ -18413,11 +18414,11 @@
         }
       },
       "ticker": "NRDS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001078075",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18459,10 +18460,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "NETSCOUT SYSTEMS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001078075-26-000050",
       "prior_year_end": "2025-03-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7373,
       "sic_description": null,
       "sources": {
@@ -18661,11 +18662,11 @@
         }
       },
       "ticker": "NTCT",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001479681",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -18707,10 +18708,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "NUTEX HEALTH INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-015168",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7389,
       "sic_description": null,
       "sources": {
@@ -18925,11 +18926,11 @@
         }
       },
       "ticker": "NUTX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001448431",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18971,10 +18972,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "OPTIMIZERX CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001448431-26-000005",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7389,
       "sic_description": null,
       "sources": {
@@ -19179,11 +19180,11 @@
         }
       },
       "ticker": "OPRX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001002638",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -19225,10 +19226,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "OPEN TEXT CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001002638-26-000068",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7373,
       "sic_description": null,
       "sources": {
@@ -19443,11 +19444,11 @@
         }
       },
       "ticker": "OTEX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001401667",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -19489,10 +19490,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "PUMA BIOTECHNOLOGY, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001437749-26-005891",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2834,
       "sic_description": null,
       "sources": {
@@ -19699,11 +19700,11 @@
         }
       },
       "ticker": "PBYI",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001396814",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -19745,10 +19746,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "PACIRA BIOSCIENCES, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-012297",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2834,
       "sic_description": null,
       "sources": {
@@ -19955,11 +19956,11 @@
         }
       },
       "ticker": "PCRX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001568100",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -20001,10 +20002,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "PAGERDUTY, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001568100-26-000012",
       "prior_year_end": "2025-01-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7372,
       "sic_description": null,
       "sources": {
@@ -20209,275 +20210,11 @@
         }
       },
       "ticker": "PD",
-      "trade_date": "2026-11-19"
-    },
-    {
-      "cik": "0000857005",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
-      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
-      "eq_basis": "issuance_proceeds",
-      "f_accrual": 1,
-      "f_cfo": 1,
-      "f_dlever": 1,
-      "f_dliquid": 1,
-      "f_dmargin": 1,
-      "f_droa": 1,
-      "f_dturn": 1,
-      "f_eqoffer": 0,
-      "f_roa": 1,
-      "f_score": 8,
-      "filing_accession": "0001193125-25-291326",
-      "fiscal_year_end": "2025-09-30",
-      "fscore_basis": "annual",
-      "fscore_min_score": 8,
-      "inputs": {
-        "assets_t": 6617172000,
-        "assets_t1": 6383542000,
-        "assets_t2": 6288842000,
-        "ca_t": 1383367000,
-        "ca_t1": 1298705000,
-        "cfo_t": 867696000,
-        "cl_t": 1237404000,
-        "cl_t1": 1667193000,
-        "gp_t": 2294243000,
-        "gp_t1": 1853656000,
-        "issuance_t": 26062000,
-        "ltd_t": 1172434000,
-        "ltd_t1": 1227105000,
-        "ni_t": 733997000,
-        "ni_t1": 376333000,
-        "rev_t": 2739226000,
-        "rev_t1": 2298472000,
-        "shares_t": 119536000,
-        "shares_t1": 120155000
-      },
-      "insider_lookback_days": 30,
-      "magic_top_n": 30,
-      "min_market_cap": 100000000,
-      "name": "PTC INC.",
-      "price_as_of": "2026-11-19",
-      "prior_filing_accession": "0001193125-25-291326",
-      "prior_year_end": "2024-09-30",
-      "run_date": "2026-11-20",
-      "sic": 7372,
-      "sic_description": null,
-      "sources": {
-        "assets_t": {
-          "accn": "0001193125-26-328444",
-          "concept": "Assets",
-          "end": "2025-09-30",
-          "filed": "2026-07-31",
-          "form": "10-Q",
-          "fp": "Q3",
-          "fy": 2026,
-          "start": null,
-          "value": 6617172000
-        },
-        "assets_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "Assets",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": null,
-          "value": 6383542000
-        },
-        "assets_t2": {
-          "accn": "0000950170-24-127231",
-          "concept": "Assets",
-          "end": "2023-09-30",
-          "filed": "2024-11-14",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2024,
-          "start": null,
-          "value": 6288842000
-        },
-        "ca_t": {
-          "accn": "0001193125-26-328444",
-          "concept": "AssetsCurrent",
-          "end": "2025-09-30",
-          "filed": "2026-07-31",
-          "form": "10-Q",
-          "fp": "Q3",
-          "fy": 2026,
-          "start": null,
-          "value": 1383367000
-        },
-        "ca_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "AssetsCurrent",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": null,
-          "value": 1298705000
-        },
-        "cfo_t": {
-          "accn": "0001193125-25-291326",
-          "concept": "NetCashProvidedByUsedInOperatingActivities",
-          "end": "2025-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2024-10-01",
-          "value": 867696000
-        },
-        "cl_t": {
-          "accn": "0001193125-26-328444",
-          "concept": "LiabilitiesCurrent",
-          "end": "2025-09-30",
-          "filed": "2026-07-31",
-          "form": "10-Q",
-          "fp": "Q3",
-          "fy": 2026,
-          "start": null,
-          "value": 1237404000
-        },
-        "cl_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "LiabilitiesCurrent",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": null,
-          "value": 1667193000
-        },
-        "gp_t": {
-          "accn": "0001193125-25-291326",
-          "concept": "GrossProfit",
-          "end": "2025-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2024-10-01",
-          "value": 2294243000
-        },
-        "gp_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "GrossProfit",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2023-10-01",
-          "value": 1853656000
-        },
-        "issuance_t": {
-          "accn": "0001193125-25-291326",
-          "concept": "ProceedsFromIssuanceOfCommonStock",
-          "end": "2025-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2024-10-01",
-          "value": 26062000
-        },
-        "ltd_t": {
-          "accn": "0001193125-26-328444",
-          "concept": "LongTermDebt",
-          "end": "2025-09-30",
-          "filed": "2026-07-31",
-          "form": "10-Q",
-          "fp": "Q3",
-          "fy": 2026,
-          "start": null,
-          "value": 1172434000
-        },
-        "ltd_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "LongTermDebt",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": null,
-          "value": 1227105000
-        },
-        "ni_t": {
-          "accn": "0001193125-25-291326",
-          "concept": "NetIncomeLoss",
-          "end": "2025-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2024-10-01",
-          "value": 733997000
-        },
-        "ni_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "NetIncomeLoss",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2023-10-01",
-          "value": 376333000
-        },
-        "rev_t": {
-          "accn": "0001193125-25-291326",
-          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
-          "end": "2025-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2024-10-01",
-          "value": 2739226000
-        },
-        "rev_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": "2023-10-01",
-          "value": 2298472000
-        },
-        "shares_t": {
-          "accn": "0001193125-26-328444",
-          "concept": "CommonStockSharesOutstanding",
-          "end": "2025-09-30",
-          "filed": "2026-07-31",
-          "form": "10-Q",
-          "fp": "Q3",
-          "fy": 2026,
-          "start": null,
-          "value": 119536000
-        },
-        "shares_t1": {
-          "accn": "0001193125-25-291326",
-          "concept": "CommonStockSharesOutstanding",
-          "end": "2024-09-30",
-          "filed": "2025-11-21",
-          "form": "10-K",
-          "fp": "FY",
-          "fy": 2025,
-          "start": null,
-          "value": 120155000
-        }
-      },
-      "ticker": "PTC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001024478",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -20519,10 +20256,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ROCKWELL AUTOMATION, INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001024478-26-000048",
       "prior_year_end": "2025-09-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3829,
       "sic_description": null,
       "sources": {
@@ -20727,11 +20464,11 @@
         }
       },
       "ticker": "ROK",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000918965",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -20773,10 +20510,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SCANSOURCE, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000918965-26-000044",
       "prior_year_end": "2025-06-30",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5045,
       "sic_description": null,
       "sources": {
@@ -20981,11 +20718,11 @@
         }
       },
       "ticker": "SCSC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000832988",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -21027,10 +20764,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SIGNET JEWELERS LTD",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000832988-26-000055",
       "prior_year_end": "2025-02-01",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5944,
       "sic_description": null,
       "sources": {
@@ -21229,11 +20966,11 @@
         }
       },
       "ticker": "SIG",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000088941",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -21275,10 +21012,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SEMTECH CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000088941-26-000005",
       "prior_year_end": "2025-01-26",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3674,
       "sic_description": null,
       "sources": {
@@ -21493,11 +21230,11 @@
         }
       },
       "ticker": "SMTC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0002023554",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -21539,10 +21276,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SANDISK CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-057406",
       "prior_year_end": "2025-06-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3572,
       "sic_description": null,
       "sources": {
@@ -21747,11 +21484,11 @@
         }
       },
       "ticker": "SNDK",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001314727",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -21793,10 +21530,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SONOS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001314727-26-000113",
       "prior_year_end": "2025-09-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3651,
       "sic_description": null,
       "sources": {
@@ -21989,11 +21726,11 @@
         }
       },
       "ticker": "SONO",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000088205",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -22035,10 +21772,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SPX TECHNOLOGIES, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000088205-26-000008",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3540,
       "sic_description": null,
       "sources": {
@@ -22255,11 +21992,11 @@
         }
       },
       "ticker": "SPXC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000920371",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22301,10 +22038,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SIMPSON MANUFACTURING CO., INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-012920",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3420,
       "sic_description": null,
       "sources": {
@@ -22509,11 +22246,11 @@
         }
       },
       "ticker": "SSD",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001137789",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22555,10 +22292,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "SEAGATE TECHNOLOGY HOLDINGS PLC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001137789-26-000159",
       "prior_year_end": "2025-06-27",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3572,
       "sic_description": null,
       "sources": {
@@ -22765,11 +22502,11 @@
         }
       },
       "ticker": "STX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001833197",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22811,10 +22548,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "LATHAM GROUP, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001833197-26-000017",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3089,
       "sic_description": null,
       "sources": {
@@ -23019,11 +22756,11 @@
         }
       },
       "ticker": "SWIM",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000816761",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23065,10 +22802,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "TERADATA CORP /DE/",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-012671",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 7372,
       "sic_description": null,
       "sources": {
@@ -23273,11 +23010,11 @@
         }
       },
       "ticker": "TDC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000715787",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23319,10 +23056,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "INTERFACE INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000715787-26-000006",
       "prior_year_end": "2024-12-29",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2273,
       "sic_description": null,
       "sources": {
@@ -23527,11 +23264,11 @@
         }
       },
       "ticker": "TILE",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001116132",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23573,10 +23310,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "TAPESTRY, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001116132-26-000018",
       "prior_year_end": "2025-06-28",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3100,
       "sic_description": null,
       "sources": {
@@ -23781,11 +23518,11 @@
         }
       },
       "ticker": "TPR",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000912615",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23827,10 +23564,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "URBAN OUTFITTERS INC",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001193125-26-137916",
       "prior_year_end": "2025-01-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 5651,
       "sic_description": null,
       "sources": {
@@ -24023,11 +23760,11 @@
         }
       },
       "ticker": "URBN",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000314808",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -24069,10 +23806,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "VALARIS LTD",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0000314808-26-000029",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 1381,
       "sic_description": null,
       "sources": {
@@ -24279,11 +24016,11 @@
         }
       },
       "ticker": "VAL",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001396009",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24325,10 +24062,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "VULCAN MATERIALS CO",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-009546",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 1400,
       "sic_description": null,
       "sources": {
@@ -24533,11 +24270,11 @@
         }
       },
       "ticker": "VMC",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001601548",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24579,10 +24316,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "V2X, INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001601548-26-000015",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 8744,
       "sic_description": null,
       "sources": {
@@ -24789,11 +24526,11 @@
         }
       },
       "ticker": "VVX",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001555280",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24835,10 +24572,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ZOETIS INC.",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001555280-26-000011",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 2834,
       "sic_description": null,
       "sources": {
@@ -25045,11 +24782,11 @@
         }
       },
       "ticker": "ZTS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001439288",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -25091,10 +24828,10 @@
       "magic_top_n": 30,
       "min_market_cap": 100000000,
       "name": "ZURN ELKAY WATER SOLUTIONS CORP",
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "prior_filing_accession": "0001628280-26-006372",
       "prior_year_end": "2024-12-31",
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3560,
       "sic_description": null,
       "sources": {
@@ -25299,7 +25036,7 @@
         }
       },
       "ticker": "ZWS",
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     }
   ]
 }

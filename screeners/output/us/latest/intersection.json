@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+    "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -84,41 +84,42 @@
       }
     },
     "counts": {
-      "excluded": 854,
+      "excluded": 915,
       "excluded_reasons": {
-        "capital_non_positive": 76,
+        "capital_non_positive": 80,
         "cash_missing": 102,
+        "debt_unconfirmed": 267,
         "earnings_yield_above_max": 1,
         "ebit_missing": 113,
-        "ebit_provisional": 97,
-        "enterprise_value_below_min": 11,
-        "enterprise_value_non_positive": 9,
-        "multi_class_shares_unsplit": 296,
-        "net_fixed_assets_missing": 78,
+        "ebit_provisional": 96,
+        "enterprise_value_below_min": 6,
+        "enterprise_value_non_positive": 7,
+        "multi_class_shares_unsplit": 97,
+        "net_fixed_assets_missing": 76,
         "stale_price": 2,
-        "stale_statement": 50,
+        "stale_statement": 49,
         "working_capital_missing": 19
       },
-      "fscore_listed": 99,
-      "fscore_scored": 1031,
+      "fscore_listed": 98,
+      "fscore_scored": 1021,
       "fscore_skip_reasons": {
-        "annual_assets_missing": 73,
+        "annual_assets_missing": 72,
         "annual_gap": 7,
-        "annual_income_missing": 115,
+        "annual_income_missing": 114,
         "equity_issuance_unknown": 282,
         "missing_cfo_t": 43,
-        "missing_gross_profit": 462,
+        "missing_gross_profit": 461,
         "missing_liquidity": 72,
-        "missing_revenue": 104,
-        "revenue_non_positive": 8,
+        "missing_revenue": 102,
+        "revenue_non_positive": 7,
         "stale_annual": 70
       },
-      "insider": 231,
-      "intersection": 6,
-      "magic_input_rows": 1415,
+      "insider": 240,
+      "intersection": 5,
+      "magic_input_rows": 1338,
       "magic_top": 30,
-      "price_failures": 8,
-      "universe": 2267
+      "price_failures": 6,
+      "universe": 2251
     },
     "data_sources": [
       "SEC EDGAR company_tickers_exchange.json",
@@ -130,24 +131,24 @@
       "SEC EDGAR Form 4 submission text",
       "Yahoo Finance chart daily close"
     ],
-    "form4_acceptance_cutoff": "2026-11-19T23:59:59-05:00",
+    "form4_acceptance_cutoff": "2026-11-20T23:59:59-05:00",
     "form4_latest_acceptance": "unknown (master.idx)",
-    "form4_latest_filing_date": "2026-11-19",
+    "form4_latest_filing_date": "2026-11-20",
     "fscore_basis": "annual",
     "fscore_min_score": 8,
-    "insider_filings_through": "2026-11-19",
+    "insider_filings_through": "2026-11-20",
     "insider_lookback_days": 30,
     "magic_top_n": 30,
     "min_market_cap": 100000000,
-    "previous_trade_date": "2026-11-18",
-    "price_as_of": "2026-11-19",
-    "run_date": "2026-11-20",
-    "trade_date": "2026-11-19"
+    "previous_trade_date": "2026-11-19",
+    "price_as_of": "2026-11-20",
+    "run_date": "2026-11-23",
+    "trade_date": "2026-11-20"
   },
   "rows": [
     {
       "cik": "0001755672",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 2,
@@ -161,21 +162,21 @@
       "name": "CORTEVA, INC.",
       "on_fscore": true,
       "on_magic": false,
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "roles": [
         "director",
         "officer"
       ],
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 100,
       "ticker": "CTVA",
       "total_value_usd": 485712.3708,
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001980088",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
-      "combined_rank": 177,
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "combined_rank": 184,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
       "f_score": null,
@@ -188,48 +189,21 @@
       "name": "MACH NATURAL RESOURCES LP",
       "on_fscore": false,
       "on_magic": true,
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "roles": [
         "director",
         "officer",
         "ten_percent_owner"
       ],
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 1311,
       "ticker": "MNR",
       "total_value_usd": 1008700,
-      "trade_date": "2026-11-19"
-    },
-    {
-      "cik": "0001084991",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
-      "combined_rank": 211,
-      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
-      "distinct_insiders": 3,
-      "f_score": null,
-      "fscore_basis": "annual",
-      "fscore_min_score": 8,
-      "insider_lookback_days": 30,
-      "latest_trade_date": "2026-11-16",
-      "magic_top_n": 30,
-      "min_market_cap": 100000000,
-      "name": "NATURAL GAS SERVICES GROUP INC",
-      "on_fscore": false,
-      "on_magic": true,
-      "price_as_of": "2026-11-19",
-      "roles": [
-        "director",
-        "officer"
-      ],
-      "run_date": "2026-11-20",
-      "sic": 1389,
-      "ticker": "NGS",
-      "total_value_usd": 192961.79,
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001024478",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -243,20 +217,20 @@
       "name": "ROCKWELL AUTOMATION, INC",
       "on_fscore": true,
       "on_magic": false,
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "roles": [
         "director",
         "officer"
       ],
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3829,
       "ticker": "ROK",
       "total_value_usd": 1545449.5356,
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0001314727",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -270,19 +244,19 @@
       "name": "SONOS INC",
       "on_fscore": true,
       "on_magic": false,
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "roles": [
         "director"
       ],
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3651,
       "ticker": "SONO",
       "total_value_usd": 1871497.4,
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     },
     {
       "cik": "0000088205",
-      "code_version": "cb4c3499f2a35d5cf901da7c973eb1f50345f303",
+      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -296,15 +270,15 @@
       "name": "SPX TECHNOLOGIES, INC.",
       "on_fscore": true,
       "on_magic": false,
-      "price_as_of": "2026-11-19",
+      "price_as_of": "2026-11-20",
       "roles": [
         "director"
       ],
-      "run_date": "2026-11-20",
+      "run_date": "2026-11-23",
       "sic": 3540,
       "ticker": "SPXC",
       "total_value_usd": 633770,
-      "trade_date": "2026-11-19"
+      "trade_date": "2026-11-20"
     }
   ]
 }
