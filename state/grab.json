@@ -8,8 +8,8 @@
       "up415": true,
       "be371": true
     },
-    "last_price": 2.925,
-    "last_at": "2026-11-20 06:00 KST"
+    "last_price": 2.83,
+    "last_at": "2026-11-24 00:00 KST"
   },
   "earn": {},
   "news": {
@@ -47,14 +47,20 @@
       "590c052b642e84d9",
       "https://news.google.com/rss/articles/CBMi1gFBVV95cUxOLW5LT0ptUHhnbEN2Ym1hamFfYmYzVXlJS1JaRkRQdW5FaTVPQ190QWNqaFRBWHdvQzhORk9mdEhnRVdaOGlwZy1sTXZfLW84TmhaeGp4dGdNZVNaNWE0aExxMFlHdWZzTi1xdm5lWXRIU25WUmxEaDlNOXczQV9STzJtcl8wcEZjdnEtZjVnYUpVbEN3QzlBLVUwN1hTYVUxZlFHR3ZhZ0lYM1RROUpOZWFwdUZvQUo4ZVpraFZIR0lZYUtDMlVHX1ZQdlIxN1hTSUxSZkJn0gHIAUFVX3lxTE5HX0E2ZTNfcFF4ZVVmSHRLMUdjdDNJTnBEUkxIOGgxTWVpYldzX0VfSHBESWlYeHZJbHItT2FMZUUzREhLRzNSaGNQYmtrT3l0c2s5Nk4za21wWU9DYnFJbVNxQ2RJckRjQlEyNm1rLXktMl9nMXlELWo2emhPdWdpZVktT3cxbW9QcndLcUxabDMxMlN2VHhpX2NBbmtlSkZ3Y1BQck04RzE1cmd2a2VJckVDWWpKUEFQNnRoaWJTVTJ1cWdUY05k?oc=5",
       "85f596752987e656",
-      "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNNUk0N0xnbmdMMERudl91bURSN2VZYWZMYmRhbks4cjVmQ3k2T0pnZ2IzamVFTDBMYW9JdHcxdFlkbjlKbk5GOURPQUcxdVY2T1FEX3g5Z2JmRjBIdHNtYWI2VjBGRTVacWpPMUdLWnRnV1E5Vmkyc09vM3lfVHRlWUJYdGlYRFlIWGZvX2xJYUE3VTFTdlVzbnhCc2RsbS01ZjBsY2QwdjFQQkNpcGVWTlRxam1vVl9Q?oc=5"
+      "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNNUk0N0xnbmdMMERudl91bURSN2VZYWZMYmRhbks4cjVmQ3k2T0pnZ2IzamVFTDBMYW9JdHcxdFlkbjlKbk5GOURPQUcxdVY2T1FEX3g5Z2JmRjBIdHNtYWI2VjBGRTVacWpPMUdLWnRnV1E5Vmkyc09vM3lfVHRlWUJYdGlYRFlIWGZvX2xJYUE3VTFTdlVzbnhCc2RsbS01ZjBsY2QwdjFQQkNpcGVWTlRxam1vVl9Q?oc=5",
+      "3c37ae9ca7cea9e1",
+      "002df357baf7daf3",
+      "5de876bc070890e6",
+      "https://news.google.com/rss/articles/CBMinAFBVV95cUxNdmNlTjctSXEwbnVHWlJWMFRWWUdTcFpvck5qNlptbnZYd0YzWXhQNTZFSWhIb1ZTZFBpVjVza0RLR1luYVRrelFQSXp6c3U4UG9mSFdUVUdUTW1wMnc2aTlqX1kzaWNGejVDQ1Z6M3htVnlDbV91bmtNN0V2Z0pDNWxjd3lzUWkwamhZOXdlS3I3cVpWTEJFU3BydXQ?oc=5",
+      "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9JVC1DelhyeWZiWXZqT09KRzEySWNmMkRhMlJLVzgyMVQwbjNlOEFIU1doeXZxOE4yS2hDb0o3djYtS1JvRjFIRUliTXU4ZVZrR2MwZ1BSdnRtZ0c4VHRjaVZzamc?oc=5",
+      "https://news.google.com/rss/articles/CBMipAFBVV95cUxPenBjSUdpRXk5NkdXWE5vbjhudDBIMV9SNlpkeV80NzZwQmpwM2V4ajlENkFfSV9ObWtLOXVGcDlvWlMyd0Y0V0VqNUMtNEtzeTBvSE9kTldzX2w2QWJOYzZZVG9DbzRpUTRWSjZBV3NnZlFSTjl3UTBjcENjZ0xLOWYwT1ZEaHF1ZjR6NFNzbm1OYXMyWEdFbnVldlNRb0k0aDJ0MQ?oc=5"
     ],
     "seeded": "2026-11-03 23:30 KST"
   },
-  "events_day": "2026-11-19",
+  "events_day": "2026-11-23",
   "fail_day": null,
   "seed_note": "2026-11-03 21:50 KST 합병 시드(발송 없음): 현재가 2.86(11/2 종가). 이미 구간 안이라 zone 해제, 나머지 무장. 뉴스는 첫 실행에서 기준만 기록.",
-  "updated_at": "2026-11-20T06:00:32+09:00",
+  "updated_at": "2026-11-24T00:01:03+09:00",
   "fy_rule": {
     "checked": []
   },

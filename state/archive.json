@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-23 19:20 KST",
+  "updated_at": "2026-11-24 00:01 KST",
   "items": [
+    {
+      "id": "kQH4QKt7QTWA",
+      "topic": "cwally-port",
+      "title": "[GRAB] 인도네시아 배달 수수료 상한 뉴스 3건 | 규제 범위 확인",
+      "message": "이게 뭐 알림: 인도네시아 8% 수수료 상한(ojol)이 음식, 물품 배달로 넓어지는지(Komdigi, Perpres 후속 규정) 새 기사 알림. GRAB 최악 시나리오의 핵심 위험입니다.\n지금 결과/상태: 조건: 규제 단어와 배달/후속 규정 단어가 함께 있는 새 제목 3건. 현재가 2.83달러. 시각 2026-11-24 00:00 KST.\n- 11/21 04:28 Komdigi Siapkan Aturan Tarif Antar Makanan dan Barang, Biaya Platform Maksimal 8% - Qoo Media https://news.google.com/rss/articles/CBMinAFBVV95cUxNdmNlTjctSXEwbnVHWlJWMFRWWUdTcFpvck5qNlptbnZYd0YzWXhQNTZFSWhIb1ZTZFBpVjVza0RLR1luYVRrelFQSXp6c3U4UG9mSFdUVUdUTW1wMnc2aTlqX1kzaWNGejVDQ1Z6M3htVnlDbV91bmtNN0V2Z0pDNWxjd3lzUWkwamhZOXdlS3I3cVpWTEJFU3BydXQ?oc=5\n- 11/23 23:37 Komdigi Kaji Tarif Kurir Ojol Berdasarkan Berat dan Risiko Barang - Demokratis.co.id https://news.google.com/rss/articles/CBMiZEFVX3lxTE9JVC1DelhyeWZiWXZqT09KRzEySWNmMkRhMlJLVzgyMVQwbjNlOEFIU1doeXZxOE4yS2hDb0o3djYtS1JvRjFIRUliTXU4ZVZrR2MwZ1BSdnRtZ0c4VHRjaVZzamc?oc=5\n- 11/20 12:13 DPR Minta Kementerian Percepat Aturan Turunan Perpres Ojol - BeritaSatu.com https://news.google.com/rss/articles/CBMipAFBVV95cUxPenBjSUdpRXk5NkdXWE5vbjhudDBIMV9SNlpkeV80NzZwQmpwM2V4ajlENkFfSV9ObWtLOXVGcDlvWlMyd0Y0V0VqNUMtNEtzeTBvSE9kTldzX2w2QWJOYzZZVG9DbzRpUTRWSjZBV3NnZlFSTjl3UTBjcENjZ0xLOWYwT1ZEaHF1ZjR6NFNzbm1OYXMyWEdFbnVldlNRb0k0aDJ0MQ?oc=5\n지금 할 일: 기사 원문에서 배달(GrabFood, GoFood, 물품) 포함 여부, 시행 날짜, 확정인지 검토 단계인지 확인.\n나중에: 같은 기사(링크, 제목)는 다시 보내지 않습니다. 미국 거래일마다 첫 정규장 실행에서 한 번 봅니다.\n익절/줄일 때: 배달 확대가 확정되면 적정가 4.15달러 가정을 낮추고 비중 축소 검토.\n하지 말 것: 제목만 보고 주문, 검토/제안 단계 기사를 확정으로 읽기.\n꺼지는 때: 종료일 없음 (수동 삭제 전까지 무기한)",
+      "priority": 4,
+      "tags": [
+        "motor_scooter"
+      ],
+      "time": 1795446037
+    },
     {
       "id": "KnK3Ivj7DXYy",
       "topic": "cwally-port",
@@ -4421,17 +4432,6 @@
         "chart_with_upwards_trend"
       ],
       "time": 1794292845
-    },
-    {
-      "id": "wtDfWhnBtE4G",
-      "topic": "cwally-port",
-      "title": "[SKC] 011790 목표 대비 15% 아래 | 관망",
-      "message": "2026-11-10 15:20 KST | SKC 011790 조건 감시\n이게 뭐 알림: 실적 예고·잠정실적과 판단 변경 조건을 보는 알림입니다.\n지금 상태: 71,900원 | 구간 GAP | 컨센서스 10만 대비 15% 아래. 목표가 상향이 아님. 인증 전 관망.\n지금 할 일: 컨센서스 10만 대비 15% 아래. 목표가 상향이 아님. 인증 전 관망.\n나중에: 고객 인증·공급계약 또는 매출 인식, 동박 손익분기, 영업이익 2분기 연속 흑자면 판단을 다시 엽니다.\n익절/줄일 때: 13만 원 도달 시 비중 점검. 인증 없이 오른 구간은 추격하지 말 것.\n하지 말 것: 추정일을 확정일로 보기. 신용·미수. 잠정실적 접수일을 예정일로 바꾸기.\n\n체크리스트:\n- 매출: 3분기 콘센서스 약 6766억. 2분기 6454억. 미달이면 추격 금지.\n- 영업이익: 2분기 -144억. 적자 축소만으로는 판단 유지. 2분기 연속 흑자라야 상향 조건.\n- 동박 가동률: 손익분기 약 75%. 손익분기 가동률 약 75%는 과거 증권사 추정. 공시에 없으면 확인 불가.\n- 앱솔릭스 고객 인증: 공급계약·납품·매출 인식 문구가 있는지. 출자 공시만으로는 조건 미충족.\n- 순차입: 실적 공시의 순차입·순부채. 10/1 기준 EV가 시총보다 약 3.4조 커서 부채 부담이 남아 있음.\n꺼지는 때: 2026-12-31 15:20 KST (평일 15:20 조건 변화 알림, 이후 자동 종료)",
-      "priority": 3,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794291657
     }
   ]
 }
