@@ -2,7 +2,8 @@ name: workflow-lint
 
 # One job for workflow syntax and the title-ticker rule. A second workflow on the
 # same push bills another minute. Bot state and screen output commits use [skip ci].
-# paths-ignore drops trend output even if a commit also forgets [skip ci].
+# '!trend_monitor/output/**' drops trend output even if a commit also forgets [skip ci].
+# Do not combine paths and paths-ignore on the same event; GitHub rejects the workflow (no job starts).
 
 on:
   push:
@@ -11,27 +12,24 @@ on:
       - ".github/workflows/**"
       - "scripts/**"
       - "trend_monitor/**"
+      - "!trend_monitor/output/**"
       - "outbox/**"
       - "configs/**"
-      - ".github/workflows/workflow-lint.yml"
-    paths-ignore:
-      - "trend_monitor/output/**"
-      - "state/**"
-      - "screeners/output/**"
   pull_request:
     paths:
       - ".github/workflows/**"
       - "scripts/**"
       - "trend_monitor/**"
+      - "!trend_monitor/output/**"
       - "outbox/**"
       - "configs/**"
-    paths-ignore:
-      - "trend_monitor/output/**"
-      - "state/**"
-      - "screeners/output/**"
 
 permissions:
   contents: read
+
+concurrency:
+  group: workflow-lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
