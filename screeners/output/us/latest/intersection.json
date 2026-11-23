@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+    "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -148,7 +148,7 @@
   "rows": [
     {
       "cik": "0001755672",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 2,
@@ -175,7 +175,7 @@
     },
     {
       "cik": "0001980088",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "combined_rank": 184,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -203,7 +203,7 @@
     },
     {
       "cik": "0001024478",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -230,7 +230,7 @@
     },
     {
       "cik": "0001314727",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,
@@ -256,7 +256,7 @@
     },
     {
       "cik": "0000088205",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "combined_rank": null,
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "distinct_insiders": 1,

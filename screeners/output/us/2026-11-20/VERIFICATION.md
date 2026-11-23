@@ -1,7 +1,7 @@
 # US quant screen verification
 
-Trade date `2026-11-20`. Run date `2026-11-23`. Generated at `2026-11-23T11:55:17.684379+09:00`.
-Code `f85ffca761088b297075f6189d34a6bd82c4f630`. Previous trade date for diff `2026-11-19`.
+Trade date `2026-11-20`. Run date `2026-11-23`. Generated at `2026-11-23T13:54:30.111304+09:00`.
+Code `dd5ae15e3dfebb37cfe451644c662d5fa202d7ed`. Previous trade date for diff `2026-11-19`.
 
 This file is rewritten by every screen run. The rows are rule-based screening records.
 

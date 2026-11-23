@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+    "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -148,7 +148,7 @@
   "rows": [
     {
       "cik": "0000320193",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -402,7 +402,7 @@
     },
     {
       "cik": "0001796209",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -646,7 +646,7 @@
     },
     {
       "cik": "0001751008",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -902,7 +902,7 @@
     },
     {
       "cik": "0000007431",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1156,7 +1156,7 @@
     },
     {
       "cik": "0001634117",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -1420,7 +1420,7 @@
     },
     {
       "cik": "0000017843",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1674,7 +1674,7 @@
     },
     {
       "cik": "0001108109",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -1930,7 +1930,7 @@
     },
     {
       "cik": "0000032604",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2184,7 +2184,7 @@
     },
     {
       "cik": "0000033488",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2440,7 +2440,7 @@
     },
     {
       "cik": "0001735707",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2694,7 +2694,7 @@
     },
     {
       "cik": "0001428336",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -2948,7 +2948,7 @@
     },
     {
       "cik": "0001869198",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -3214,7 +3214,7 @@
     },
     {
       "cik": "0001001385",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3468,7 +3468,7 @@
     },
     {
       "cik": "0000077360",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3722,7 +3722,7 @@
     },
     {
       "cik": "0002025410",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -3978,7 +3978,7 @@
     },
     {
       "cik": "0001757898",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4232,7 +4232,7 @@
     },
     {
       "cik": "0000105770",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4486,7 +4486,7 @@
     },
     {
       "cik": "0000006281",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4740,7 +4740,7 @@
     },
     {
       "cik": "0000008670",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -4996,7 +4996,7 @@
     },
     {
       "cik": "0000880266",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5250,7 +5250,7 @@
     },
     {
       "cik": "0001579241",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5506,7 +5506,7 @@
     },
     {
       "cik": "0001034670",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -5760,7 +5760,7 @@
     },
     {
       "cik": "0001037868",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6016,7 +6016,7 @@
     },
     {
       "cik": "0001521332",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6272,7 +6272,7 @@
     },
     {
       "cik": "0001018963",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -6526,7 +6526,7 @@
     },
     {
       "cik": "0000008063",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -6770,7 +6770,7 @@
     },
     {
       "cik": "0000009326",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7012,7 +7012,7 @@
     },
     {
       "cik": "0001437578",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7266,7 +7266,7 @@
     },
     {
       "cik": "0001531152",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7522,7 +7522,7 @@
     },
     {
       "cik": "0001280058",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -7776,7 +7776,7 @@
     },
     {
       "cik": "0001383312",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -8032,7 +8032,7 @@
     },
     {
       "cik": "0001665988",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -8276,7 +8276,7 @@
     },
     {
       "cik": "0001866633",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -8530,7 +8530,7 @@
     },
     {
       "cik": "0000887733",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -8774,7 +8774,7 @@
     },
     {
       "cik": "0001517175",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9028,7 +9028,7 @@
     },
     {
       "cik": "0001262976",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9284,7 +9284,7 @@
     },
     {
       "cik": "0001530721",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -9538,7 +9538,7 @@
     },
     {
       "cik": "0001576427",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -9780,7 +9780,7 @@
     },
     {
       "cik": "0000772406",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10022,7 +10022,7 @@
     },
     {
       "cik": "0000723254",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10276,7 +10276,7 @@
     },
     {
       "cik": "0001755672",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10532,7 +10532,7 @@
     },
     {
       "cik": "0000730464",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -10788,7 +10788,7 @@
     },
     {
       "cik": "0000026324",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -11042,7 +11042,7 @@
     },
     {
       "cik": "0001047340",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -11296,7 +11296,7 @@
     },
     {
       "cik": "0001582961",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -11550,7 +11550,7 @@
     },
     {
       "cik": "0000868780",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -11804,7 +11804,7 @@
     },
     {
       "cik": "0001367644",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -12070,7 +12070,7 @@
     },
     {
       "cik": "0001078271",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12324,7 +12324,7 @@
     },
     {
       "cik": "0000840489",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12578,7 +12578,7 @@
     },
     {
       "cik": "0000814547",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -12834,7 +12834,7 @@
     },
     {
       "cik": "0000866374",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -13098,7 +13098,7 @@
     },
     {
       "cik": "0000277509",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13352,7 +13352,7 @@
     },
     {
       "cik": "0001398659",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13606,7 +13606,7 @@
     },
     {
       "cik": "0001652044",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -13862,7 +13862,7 @@
     },
     {
       "cik": "0001834622",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14116,7 +14116,7 @@
     },
     {
       "cik": "0000874716",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14370,7 +14370,7 @@
     },
     {
       "cik": "0001371489",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14626,7 +14626,7 @@
     },
     {
       "cik": "0001337013",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -14880,7 +14880,7 @@
     },
     {
       "cik": "0000898293",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15134,7 +15134,7 @@
     },
     {
       "cik": "0001606757",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15388,7 +15388,7 @@
     },
     {
       "cik": "0000912766",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15644,7 +15644,7 @@
     },
     {
       "cik": "0000763744",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -15898,7 +15898,7 @@
     },
     {
       "cik": "0001336920",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16154,7 +16154,7 @@
     },
     {
       "cik": "0000062996",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16408,7 +16408,7 @@
     },
     {
       "cik": "0000907242",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -16650,7 +16650,7 @@
     },
     {
       "cik": "0001809987",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -16894,7 +16894,7 @@
     },
     {
       "cik": "0000724004",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -17148,7 +17148,7 @@
     },
     {
       "cik": "0000856982",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -17412,7 +17412,7 @@
     },
     {
       "cik": "0001835632",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -17666,7 +17666,7 @@
     },
     {
       "cik": "0000723125",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -17920,7 +17920,7 @@
     },
     {
       "cik": "0000700923",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18174,7 +18174,7 @@
     },
     {
       "cik": "0001625278",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18418,7 +18418,7 @@
     },
     {
       "cik": "0001078075",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -18666,7 +18666,7 @@
     },
     {
       "cik": "0001479681",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -18930,7 +18930,7 @@
     },
     {
       "cik": "0001448431",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -19184,7 +19184,7 @@
     },
     {
       "cik": "0001002638",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -19448,7 +19448,7 @@
     },
     {
       "cik": "0001401667",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -19704,7 +19704,7 @@
     },
     {
       "cik": "0001396814",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -19960,7 +19960,7 @@
     },
     {
       "cik": "0001568100",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -20214,7 +20214,7 @@
     },
     {
       "cik": "0001024478",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -20468,7 +20468,7 @@
     },
     {
       "cik": "0000918965",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -20722,7 +20722,7 @@
     },
     {
       "cik": "0000832988",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -20970,7 +20970,7 @@
     },
     {
       "cik": "0000088941",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -21234,7 +21234,7 @@
     },
     {
       "cik": "0002023554",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -21488,7 +21488,7 @@
     },
     {
       "cik": "0001314727",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -21730,7 +21730,7 @@
     },
     {
       "cik": "0000088205",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "issuance_proceeds",
       "f_accrual": 1,
@@ -21996,7 +21996,7 @@
     },
     {
       "cik": "0000920371",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22250,7 +22250,7 @@
     },
     {
       "cik": "0001137789",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22506,7 +22506,7 @@
     },
     {
       "cik": "0001833197",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -22760,7 +22760,7 @@
     },
     {
       "cik": "0000816761",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23014,7 +23014,7 @@
     },
     {
       "cik": "0000715787",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23268,7 +23268,7 @@
     },
     {
       "cik": "0001116132",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23522,7 +23522,7 @@
     },
     {
       "cik": "0000912615",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -23764,7 +23764,7 @@
     },
     {
       "cik": "0000314808",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 0,
@@ -24020,7 +24020,7 @@
     },
     {
       "cik": "0001396009",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24274,7 +24274,7 @@
     },
     {
       "cik": "0001601548",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24530,7 +24530,7 @@
     },
     {
       "cik": "0001555280",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,
@@ -24786,7 +24786,7 @@
     },
     {
       "cik": "0001439288",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "eq_basis": "shares_not_increased",
       "f_accrual": 1,

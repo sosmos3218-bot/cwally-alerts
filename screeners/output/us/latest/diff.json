@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+    "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -148,7 +148,7 @@
   "rows": [
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -164,7 +164,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -180,7 +180,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -196,7 +196,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -212,7 +212,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -228,7 +228,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -244,7 +244,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -260,7 +260,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -276,7 +276,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -292,7 +292,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -308,7 +308,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -324,7 +324,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -340,7 +340,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -356,7 +356,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -372,7 +372,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -388,7 +388,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -404,7 +404,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -420,7 +420,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -436,7 +436,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -452,7 +452,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -468,7 +468,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -484,7 +484,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -500,7 +500,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -516,7 +516,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -532,7 +532,7 @@
     },
     {
       "change": "entered",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -548,7 +548,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -564,7 +564,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -580,7 +580,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -596,7 +596,7 @@
     },
     {
       "change": "exited",
-      "code_version": "f85ffca761088b297075f6189d34a6bd82c4f630",
+      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
