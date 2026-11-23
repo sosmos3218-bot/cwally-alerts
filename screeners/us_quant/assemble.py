@@ -13,10 +13,12 @@ from screeners.us_quant.facts import (
     large_share_decline_after_balance_sheet,
     long_term_debt_value,
     revenue_pair,
+    one_time_ebit_flag,
     select_cash,
     select_debt,
     select_net_fixed_assets,
     select_point,
+    select_repurchase_obligation,
     select_shares,
     select_ttm_ebit,
     staleness_days,
@@ -33,12 +35,28 @@ def _annual_end_gap(newer: str, older: str) -> int:
     return (a - b).days
 
 
+def _obligation_already_in_debt(components: list[dict], obligation: float) -> bool:
+    if obligation <= 0:
+        return False
+    for item in components or []:
+        try:
+            value = float(item.get("value") or 0)
+        except (TypeError, ValueError):
+            continue
+        if value <= 0:
+            continue
+        if abs(value - obligation) <= max(1.0, 0.02 * max(value, obligation)):
+            return True
+    return False
+
+
 def build_magic_inputs(
     facts: dict,
     as_of: date,
     price: float,
     limits: dict,
     share_rows: list[dict] | None = None,
+    obligation_rows: list[dict] | None = None,
 ) -> dict:
     """Return ok plus a row of inputs, or a reason the issuer is left out."""
     ebit = select_ttm_ebit(facts, as_of)
@@ -86,8 +104,27 @@ def build_magic_inputs(
         }
 
     market_cap = price * float(shares["value"])
+    obligation = select_repurchase_obligation(facts, as_of, end, obligation_rows)
+    share_decline = large_share_decline_after_balance_sheet(
+        facts, as_of, float(shares["value"]), shares.get("end"), end
+    )
+    cash_value = float(cash["value"])
+    cash_source = cash["source"]
+    repurchase_obligation = 0.0
+    # The cover share count is already after the repurchase. Cash is still the
+    # balance-sheet amount, so the obligation that funded the repurchase is
+    # subtracted once. It is not also added to debt.
+    if (
+        share_decline
+        and obligation > 0
+        and not _obligation_already_in_debt(debt.get("components") or [], obligation)
+    ):
+        cash_value -= obligation
+        repurchase_obligation = obligation
+        cash_source = f"{cash['source']} minus repurchase obligation"
+    quality = one_time_ebit_flag(facts, as_of, ebit)
     try:
-        ey, enterprise = earnings_yield(float(ebit["value"]), market_cap, float(debt["value"]), float(cash["value"]))
+        ey, enterprise = earnings_yield(float(ebit["value"]), market_cap, float(debt["value"]), cash_value)
     except ZeroDivisionError:
         return {"ok": False, "reason": "enterprise_value_non_positive"}
     if enterprise <= 0:
@@ -118,16 +155,18 @@ def build_magic_inputs(
         "total_debt": float(debt["value"]),
         "debt_source": debt["source"],
         "debt_components": debt["components"],
-        "cash": float(cash["value"]),
-        "cash_source": cash["source"],
+        "cash": cash_value,
+        "cash_reported": float(cash["value"]),
+        "cash_source": cash_source,
         "cash_component": cash["component"],
+        "repurchase_obligation": repurchase_obligation,
         "shares": float(shares["value"]),
         "shares_source": shares["source"],
         "shares_kind": shares.get("kind") or "instant",
         "shares_component": shares["component"],
-        "large_buyback_after_bs": large_share_decline_after_balance_sheet(
-            facts, as_of, float(shares["value"]), shares.get("end"), end
-        ),
+        "large_buyback_after_bs": share_decline,
+        "one_time_ebit": quality["one_time_ebit"],
+        "one_time_ebit_reason": quality["one_time_ebit_reason"],
         "current_assets": float(current_assets["value"]),
         "current_assets_component": current_assets,
         "current_liabilities": float(current_liab["value"]),

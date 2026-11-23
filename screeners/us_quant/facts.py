@@ -17,11 +17,29 @@ A reported total wins. Components are summed only when no total is present.
 
 1. DebtCurrent + LongTermDebtNoncurrent when both are present.
 2. Else LongTermDebtNoncurrent plus LongTermDebtCurrent, ShortTermBorrowings,
-   and CommercialPaper.
-3. Else LongTermDebtAndFinanceLeaseObligations or
-   LongTermDebtAndCapitalLeaseObligations (one figure; the larger one if both
-   are present). These totals already include finance leases.
-4. Else LongTermDebt plus ShortTermBorrowings and CommercialPaper.
+   and CommercialPaper. Commercial paper is not added when short-term
+   borrowings are at least that large.
+3. Else the larger of:
+   a. LongTermDebtAndFinanceLeaseObligations or
+      LongTermDebtAndCapitalLeaseObligations (one figure; the larger one if
+      both are present) plus the current portion on that same date.
+      The current portion is the matching Current tag, else
+      LongTermDebtCurrent, else DebtCurrent. ShortTermBorrowings and
+      CommercialPaper are added once. Short-term borrowings already cover
+      commercial paper when the borrowings figure is at least the paper
+      figure. DebtCurrent already covers those short tags when it is at
+      least their sum, unless LongTermDebt shows DebtCurrent is only the
+      current slice of long-term debt.
+   b. LongTermDebt plus ShortTermBorrowings and CommercialPaper, with the
+      same short-tag overlap rule.
+   The lease tag is usually the noncurrent line, so (a) without the current
+   portion understates debt. (b) misses finance leases that sit only in the
+   lease tag. Each side is built without adding a total and its parts, then
+   the larger side is kept. DebtAndCapitalLeaseObligations replaces that
+   result only when it is larger. A smaller one is left alone, because that
+   tag often leaves out commercial paper.
+4. Else LongTermDebt plus ShortTermBorrowings and CommercialPaper, same
+   overlap rule, when step 3 did not apply.
    Notes, loans, and credit lines are not added on top of this total.
 5. Else DebtInstrumentCarryingAmount when it covers the components below.
 6. Else the non-overlapping components on that same date:
@@ -57,6 +75,8 @@ KEEP_FORMS = {"10-K", "10-K/A", "10-Q", "10-Q/A", "20-F", "20-F/A", "40-F", "40-
 
 DURATION_TAGS = {
     "OperatingIncomeLoss",
+    "IncomeLossFromDiscontinuedOperationsNetOfTax",
+    "IncomeLossFromDiscontinuedOperationsNetOfTaxAttributableToReportingEntity",
     "NetIncomeLoss",
     "NetCashProvidedByUsedInOperatingActivities",
     "Revenues",
@@ -84,7 +104,10 @@ DEBT_TAGS = (
     "ShortTermBorrowings",
     "CommercialPaper",
     "LongTermDebtAndCapitalLeaseObligations",
+    "LongTermDebtAndCapitalLeaseObligationsCurrent",
     "LongTermDebtAndFinanceLeaseObligations",
+    "LongTermDebtAndFinanceLeaseObligationsCurrent",
+    "DebtAndCapitalLeaseObligations",
     "DebtInstrumentCarryingAmount",
     "LongTermNotesPayable",
     "NotesPayable",
@@ -149,13 +172,24 @@ INSTANT_TAGS = {
 
 DEI_INSTANT = {"EntityCommonStockSharesOutstanding"}
 
-EXTRACT_VERSION = 3
+EXTRACT_VERSION = 4
 
 # Residual liabilities at or under this band count as no debt.
 _NO_DEBT_RESIDUAL_RATIO = 0.02
 _NO_DEBT_RESIDUAL_FLOOR = 1_000_000
 # Share count after the balance sheet, more than this far below the prior instant.
 SHARE_DECLINE_AFTER_BS = 0.10
+# One quarter inside year-to-date revenue, and discontinued operations next to EBIT.
+_REVENUE_SPIKE_SHARE = 0.80
+_REVENUE_LATEST_SHARE = 0.10
+_REVENUE_SPIKE_FLOOR = 20_000_000
+_DISCONTINUED_SHARE = 0.25
+_DISCONTINUED_FLOOR = 50_000_000
+_OBLIGATION_TAG_RE = re.compile(
+    r"^(ObligationToRepurchaseShares(?:Current|Noncurrent)?"
+    r"|ShareRepurchaseObligation(?:Current|Noncurrent)?"
+    r"|LiabilityForShareRepurchase(?:Current|Noncurrent)?)$"
+)
 
 REVENUE_PRIORITY = [
     "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -578,7 +612,16 @@ def _lease_components(present: dict[str, dict]) -> list[dict]:
 def _short_components(present: dict[str, dict], named_current: bool) -> list[dict]:
     short_tags = ("DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper")
     if not named_current:
-        return [present[tag] for tag in short_tags if tag in present]
+        parts = [present[tag] for tag in short_tags if tag in present]
+        if "DebtCurrent" not in present and "LongTermDebtCurrent" not in present:
+            for tag in (
+                "LongTermDebtAndFinanceLeaseObligationsCurrent",
+                "LongTermDebtAndCapitalLeaseObligationsCurrent",
+            ):
+                if tag in present:
+                    parts.append(present[tag])
+                    break
+        return parts
     if "DebtCurrent" in present:
         return []
     return [present[tag] for tag in ("ShortTermBorrowings", "CommercialPaper") if tag in present]
@@ -665,6 +708,158 @@ def _liabilities_imply_no_debt(facts: dict, as_of: date, end: str) -> tuple[bool
     return False, f"no debt tag on {end}; {detail}"
 
 
+def _values_close(left: float, right: float) -> bool:
+    return abs(left - right) <= max(1.0, 0.02 * max(abs(left), abs(right)))
+
+
+def _short_term_items(present: dict[str, dict]) -> list[dict]:
+    """Short-term borrowings and commercial paper, counted once.
+
+    Borrowings cover commercial paper when the borrowings figure is at least
+    the paper figure. Two different instruments are both kept only when the
+    paper figure is larger.
+    """
+    borrowings = present.get("ShortTermBorrowings")
+    paper = present.get("CommercialPaper")
+    if borrowings is not None and paper is not None:
+        if _values_close(borrowings["value"], paper["value"]) or borrowings["value"] + 1 >= paper["value"] * 0.98:
+            return [borrowings if borrowings["value"] >= paper["value"] else paper]
+        return [borrowings, paper]
+    if borrowings is not None:
+        return [borrowings]
+    if paper is not None:
+        return [paper]
+    return []
+
+
+_LEASE_TOTAL_TAGS = ("LongTermDebtAndFinanceLeaseObligations", "LongTermDebtAndCapitalLeaseObligations")
+_LEASE_CURRENT_TAGS = (
+    "LongTermDebtAndFinanceLeaseObligationsCurrent",
+    "LongTermDebtAndCapitalLeaseObligationsCurrent",
+)
+
+
+def _current_portion_item(present: dict[str, dict], chosen_tag: str) -> dict | None:
+    """One current-portion tag. A lease-current sibling wins over the broader buckets."""
+    sibling = {
+        "LongTermDebtAndFinanceLeaseObligations": "LongTermDebtAndFinanceLeaseObligationsCurrent",
+        "LongTermDebtAndCapitalLeaseObligations": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    }.get(chosen_tag)
+    if sibling and sibling in present:
+        return present[sibling]
+    for tag in _LEASE_CURRENT_TAGS:
+        if tag in present:
+            return present[tag]
+    if "LongTermDebtCurrent" in present:
+        return present["LongTermDebtCurrent"]
+    return present.get("DebtCurrent")
+
+
+def _lease_total_includes_current(chosen: dict, current: dict, present: dict[str, dict]) -> bool:
+    """True when the lease tag is already the current-plus-noncurrent total."""
+    lease = float(chosen["value"])
+    current_value = float(current["value"])
+    if current_value <= 0:
+        return False
+    combined = present.get("DebtAndCapitalLeaseObligations")
+    if combined is not None and _values_close(lease, float(combined["value"])):
+        return True
+    noncurrent = present.get("LongTermDebtNoncurrent")
+    if noncurrent is not None and _values_close(lease, float(noncurrent["value"]) + current_value):
+        return True
+    long_term = present.get("LongTermDebt")
+    if (
+        long_term is not None
+        and noncurrent is not None
+        and _values_close(float(long_term["value"]), float(noncurrent["value"]) + current_value)
+        and _values_close(lease, float(long_term["value"]))
+    ):
+        return True
+    return False
+
+
+def _debt_current_is_only_long_term_slice(present: dict[str, dict], current: dict, lease_value: float) -> bool:
+    """True when LongTermDebt shows DebtCurrent is the current slice, not the short-term rollup."""
+    if current.get("concept") != "DebtCurrent":
+        return False
+    long_term = present.get("LongTermDebt")
+    if long_term is None:
+        return False
+    return _values_close(float(long_term["value"]), lease_value + float(current["value"]))
+
+
+def _lease_plus_current_parts(present: dict[str, dict]) -> tuple[list[dict], str] | None:
+    """Rule 3: noncurrent lease total plus current debt that is not already inside it."""
+    if not any(tag in present for tag in _LEASE_TOTAL_TAGS):
+        return None
+    chosen = max((present[tag] for tag in _LEASE_TOTAL_TAGS if tag in present), key=lambda item: item["value"])
+    guarded = set(_LEASE_TOTAL_TAGS) | set(_LEASE_CURRENT_TAGS) | {
+        "DebtCurrent",
+        "LongTermDebtCurrent",
+        "ShortTermBorrowings",
+        "CommercialPaper",
+    }
+    if chosen["value"] <= 0 and _outside_positive(present, guarded):
+        return None
+    # The all-in tag matches this lease figure, so the lease figure already
+    # includes the current portion. Commercial paper is not added on top.
+    combined = present.get("DebtAndCapitalLeaseObligations")
+    if combined is not None and chosen["value"] > 0 and _values_close(float(chosen["value"]), float(combined["value"])):
+        return [chosen], "debt_and_leases"
+    parts = [chosen]
+    current = _current_portion_item(present, chosen["concept"])
+    if current is not None and _lease_total_includes_current(chosen, current, present):
+        current = None
+    shorts = _short_term_items(present)
+    # DebtCurrent is the broad current bucket and often already includes
+    # borrowings and commercial paper. A lease-current or LongTermDebtCurrent
+    # tag is only the current portion of long-term debt, so the short tags stay.
+    if (
+        current is not None
+        and current.get("concept") == "DebtCurrent"
+        and not _debt_current_is_only_long_term_slice(present, current, float(chosen["value"]))
+    ):
+        short_sum = sum(item["value"] for item in shorts)
+        if shorts and float(current["value"]) + 1 >= short_sum * 0.98:
+            shorts = []
+        elif shorts:
+            shorts = [item for item in shorts if not _values_close(float(current["value"]), item["value"])]
+    if current is not None:
+        parts.append(current)
+    # A current-portion tag and short-term borrowings can be close without
+    # being the same balance (YUM: 2,146 and 2,141). Only DebtCurrent, handled
+    # above, is allowed to swallow the short tags.
+    parts.extend(shorts)
+    source = "lt_and_lease_plus_current" if len(parts) > 1 else "debt_and_leases"
+    return parts, source
+
+
+def _long_term_total_parts(present: dict[str, dict]) -> tuple[list[dict], str] | None:
+    """Rule 4: LongTermDebt plus short-term borrowings and commercial paper."""
+    if "LongTermDebt" not in present:
+        return None
+    guarded = {"LongTermDebt", "ShortTermBorrowings", "CommercialPaper", "LongTermDebtCurrent"}
+    if present["LongTermDebt"]["value"] <= 0 and _outside_positive(present, guarded):
+        return None
+    return [present["LongTermDebt"], *_short_term_items(present)], "long_term_debt_total"
+
+
+def _apply_reported_debt_total(parts: list[dict], source: str, present: dict[str, dict]) -> tuple[list[dict], str]:
+    """Use DebtAndCapitalLeaseObligations when it is larger than the parts.
+
+    A smaller reported total is left alone. That tag often excludes commercial
+    paper, so shrinking the parts to it would drop real short-term debt.
+    """
+    combined = present.get("DebtAndCapitalLeaseObligations")
+    if combined is None:
+        return parts, source
+    built = sum(item["value"] for item in parts)
+    reported = float(combined["value"])
+    if reported > built * 1.02 and reported > built + 1:
+        return [combined], "debt_and_capital_lease_obligations"
+    return parts, source
+
+
 def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
     """Debt on one balance-sheet date.
 
@@ -698,25 +893,31 @@ def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
             {"LongTermDebtNoncurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper", "LongTermDebt"},
         )
     ):
-        add("LongTermDebtNoncurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper")
+        add("LongTermDebtNoncurrent", "LongTermDebtCurrent")
+        components.extend(_short_term_items(present))
         source = "current_plus_noncurrent"
-    elif "LongTermDebtAndFinanceLeaseObligations" in present or "LongTermDebtAndCapitalLeaseObligations" in present:
-        lease_tags = {"LongTermDebtAndFinanceLeaseObligations", "LongTermDebtAndCapitalLeaseObligations"}
-        chosen = max(
-            (present[tag] for tag in lease_tags if tag in present),
-            key=lambda item: item["value"],
-        )
-        if chosen["value"] > 0 or not _outside_positive(present, lease_tags | {"DebtCurrent"}):
-            components.append(chosen)
-            source = "debt_and_leases"
-    if not source and "LongTermDebt" in present and (
-        present["LongTermDebt"]["value"] > 0
-        or not _outside_positive(
-            present, {"LongTermDebt", "ShortTermBorrowings", "CommercialPaper", "LongTermDebtCurrent"}
-        )
-    ):
-        add("LongTermDebt", "ShortTermBorrowings", "CommercialPaper")
-        source = "long_term_debt_total"
+    else:
+        lease_parts = _lease_plus_current_parts(present)
+        long_parts = _long_term_total_parts(present)
+        picked: tuple[list[dict], str] | None = None
+        if lease_parts and long_parts:
+            lease_sum = sum(item["value"] for item in lease_parts[0])
+            long_sum = sum(item["value"] for item in long_parts[0])
+            # The lease construction keeps finance leases. The long-term total
+            # keeps a fuller carrying amount when that figure is larger.
+            picked = lease_parts if lease_sum >= long_sum else long_parts
+        elif lease_parts:
+            picked = lease_parts
+        elif long_parts:
+            picked = long_parts
+        if picked:
+            components, source = _apply_reported_debt_total(picked[0], picked[1], present)
+
+    if not source and "DebtAndCapitalLeaseObligations" in present:
+        reported = present["DebtAndCapitalLeaseObligations"]
+        if reported["value"] > 0 or not _outside_positive(present, {"DebtAndCapitalLeaseObligations"}):
+            components = [reported]
+            source = "debt_and_capital_lease_obligations"
 
     if not source:
         components, source = _component_debt(present)
@@ -758,6 +959,196 @@ def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
         "detail": detail,
         "source": "debt_unconfirmed",
     }
+
+
+def _obligation_bucket(tag: str) -> str:
+    if tag.endswith("Noncurrent"):
+        return "noncurrent"
+    if tag.endswith("Current"):
+        return "current"
+    return "total"
+
+
+def _obligation_value(row: dict) -> float:
+    try:
+        return float(row.get("val", row.get("value")))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def select_repurchase_obligation(
+    facts: dict,
+    as_of: date,
+    end: str,
+    extras: list[dict] | None = None,
+) -> float:
+    """Balance-sheet obligation to repurchase shares, on ``end``.
+
+    Companyfacts drops extension concepts, so ``extras`` carries rows parsed
+    from the filing instance. An undimensioned amount wins. Current and
+    noncurrent parts are added when no total already covers them. A later
+    share count that has already fallen uses this to reduce cash.
+    """
+    plain: dict[str, dict] = {}
+    members: list[dict] = []
+
+    def take(row: dict, tag: str) -> None:
+        if row.get("end") != end or row.get("start"):
+            return
+        filed = str(row.get("filed") or "")
+        if not filed or filed > as_of.isoformat():
+            return
+        if _obligation_value(row) <= 0:
+            return
+        dimension = str(row.get("dimension") or "")
+        member = str(row.get("member") or "")
+        if "SubsequentEvent" in dimension or "SubsequentEvent" in member:
+            return
+        item = dict(row)
+        item["tag"] = tag
+        if member:
+            members.append(item)
+            return
+        current = plain.get(tag)
+        if current is None or filed > str(current.get("filed") or ""):
+            plain[tag] = item
+
+    for key, items in (facts.get("concepts") or {}).items():
+        tag = key.split(":")[-1]
+        if not _OBLIGATION_TAG_RE.match(tag):
+            continue
+        for row in items:
+            take(row, tag)
+    for row in extras or []:
+        tag = str(row.get("tag") or "")
+        if _OBLIGATION_TAG_RE.match(tag):
+            take(row, tag)
+
+    def buckets(rows: list[dict]) -> dict[str, float]:
+        found = {"current": 0.0, "noncurrent": 0.0, "total": 0.0}
+        for row in rows:
+            bucket = _obligation_bucket(str(row.get("tag") or ""))
+            found[bucket] = max(found[bucket], _obligation_value(row))
+        return found
+
+    def from_buckets(found: dict[str, float]) -> float:
+        parts = found["current"] + found["noncurrent"]
+        if found["total"] > 0 and (parts <= 0 or found["total"] + 1 >= parts * 0.98):
+            return found["total"]
+        return parts
+
+    if plain:
+        return from_buckets(buckets(list(plain.values())))
+    if not members:
+        return 0.0
+    by_member: dict[str, dict] = {}
+    for row in members:
+        key = str(row.get("member") or "")
+        current = by_member.get(key)
+        if current is None or str(row.get("filed") or "") > str(current.get("filed") or ""):
+            by_member[key] = row
+    chosen = list(by_member.values())
+    values = [_obligation_value(row) for row in chosen]
+    if len(values) >= 2 and max(values) > 0 and min(values) / max(values) >= 0.98:
+        return max(values)
+    return from_buckets(buckets(chosen))
+
+
+def one_time_ebit_flag(facts: dict, as_of: date, ebit: dict) -> dict:
+    """Flag a trailing EBIT that is likely a one-time spike or a mixed period.
+
+    The name stays in the ranking. ``revenue_spike`` is a quarter that holds
+    almost all of year-to-date revenue while the latest quarter does not.
+    ``discontinued_ops`` is a discontinued-operation amount at least a quarter
+    of the operating income for that same period.
+    """
+    reasons: list[str] = []
+    if _revenue_spike(facts, as_of, ebit):
+        reasons.append("revenue_spike")
+    if _discontinued_mix(facts, as_of, ebit):
+        reasons.append("discontinued_ops")
+    return {"one_time_ebit": bool(reasons), "one_time_ebit_reason": "+".join(reasons)}
+
+
+def _primary_period(ebit: dict) -> dict | None:
+    end = ebit.get("period_end")
+    comps = [row for row in ebit.get("components") or [] if row.get("end") == end and row.get("start")]
+    if not comps:
+        return None
+    return max(comps, key=lambda row: (_days(row) or 0, row.get("filed") or ""))
+
+
+def _revenue_spike(facts: dict, as_of: date, ebit: dict) -> bool:
+    end = ebit.get("period_end")
+    if not end:
+        return False
+    for tag in REVENUE_PRIORITY:
+        rows = [row for row in _as_of_rows(_rows(facts, tag), as_of) if _days(row)]
+        at_end = [row for row in rows if row["end"] == end]
+        if not at_end:
+            continue
+        ytd = max(at_end, key=lambda row: _days(row) or 0)
+        ytd_days = _days(ytd) or 0
+        ytd_value = float(ytd["val"])
+        if ytd_days < 126 or ytd_value <= 0:
+            return False
+        start = _parse_date(ytd.get("start"))
+        end_day = _parse_date(end)
+        by_end: dict[str, dict] = {}
+        for row in rows:
+            if not _is_quarter(row):
+                continue
+            row_start = _parse_date(row.get("start"))
+            row_end = _parse_date(row["end"])
+            if start is None or end_day is None or row_start is None or row_end is None:
+                continue
+            if row_start < start - timedelta(days=5) or row_end > end_day + timedelta(days=5):
+                continue
+            current = by_end.get(row["end"])
+            if current is None or _better(row, current):
+                by_end[row["end"]] = row
+        if len(by_end) < 2:
+            return False
+        spike = max(by_end.values(), key=lambda row: float(row["val"]))
+        latest = by_end[max(by_end)]
+        if latest["end"] == spike["end"]:
+            return False
+        return (
+            float(spike["val"]) >= _REVENUE_SPIKE_SHARE * ytd_value
+            and float(latest["val"]) <= _REVENUE_LATEST_SHARE * ytd_value
+            and float(spike["val"]) >= _REVENUE_SPIKE_FLOOR
+        )
+    return False
+
+
+def _discontinued_mix(facts: dict, as_of: date, ebit: dict) -> bool:
+    primary = _primary_period(ebit)
+    if primary is None:
+        return False
+    primary_days = _days(primary) or 0
+    operating = abs(float(primary.get("value") or 0))
+    if operating <= 0 or primary_days <= 0:
+        return False
+    tags = (
+        "IncomeLossFromDiscontinuedOperationsNetOfTaxAttributableToReportingEntity",
+        "IncomeLossFromDiscontinuedOperationsNetOfTax",
+    )
+    for tag in tags:
+        matches = []
+        for row in _as_of_rows(_rows(facts, tag), as_of):
+            if row["end"] != primary["end"]:
+                continue
+            days = _days(row)
+            if days is None or abs(days - primary_days) > 20:
+                continue
+            matches.append(row)
+        if not matches:
+            continue
+        chosen = max(matches, key=lambda row: (row["filed"], row["accn"]))
+        amount = abs(float(chosen["val"]))
+        if amount >= _DISCONTINUED_FLOOR and amount >= _DISCONTINUED_SHARE * operating:
+            return True
+    return False
 
 
 PPE_TAGS = (

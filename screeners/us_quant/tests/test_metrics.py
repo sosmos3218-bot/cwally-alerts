@@ -7,11 +7,14 @@ from datetime import date
 from pathlib import Path
 
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
-from screeners.us_quant.cover import instance_name, parse_share_document
+from screeners.us_quant.cover import instance_name, parse_repurchase_obligations, parse_share_document, stamp_filing
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
 from screeners.us_quant.facts import (
+    extract_companyfacts,
     large_share_decline_after_balance_sheet,
+    one_time_ebit_flag,
     select_debt,
+    select_repurchase_obligation,
     select_shares,
     select_ttm_ebit,
 )
@@ -141,8 +144,21 @@ def test_debt_does_not_add_a_total_and_its_parts():
         }
     }
     leased = select_debt(lease_total, AS_OF)
-    assert leased["value"] == 4688
-    assert leased["source"] == "debt_and_leases"
+    # 4,688 is the noncurrent lease line. 491 is the current portion (Micron's
+    # DebtCurrent, equal to the current finance lease). They are added once.
+    assert leased["value"] == 5179
+    assert leased["source"] == "lt_and_lease_plus_current"
+    already_total = _debt_facts(
+        end,
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 5179,
+            "DebtCurrent": 491,
+            "DebtAndCapitalLeaseObligations": 5179,
+        },
+    )
+    capped = select_debt(already_total, AS_OF)
+    assert capped["value"] == 5179
+    assert capped["source"] == "debt_and_leases"
 
 
 def _debt_facts(end, values, filed="2026-11-05"):
@@ -240,6 +256,269 @@ def test_missing_debt_tag_is_excluded_unless_the_filing_shows_none():
     assert reported["ok"] is True
     assert reported["value"] == 0
     assert reported["source"] == "explicit_zero"
+
+
+def test_hon_and_man_debt_include_the_current_portion():
+    """SEC companyfacts on the latest balance sheet. Dollars, not millions.
+
+    HON 10-Q 0000773840-26-000143, filed 2026-10-22, instant 2026-09-30:
+    LongTermDebtAndCapitalLeaseObligations 10,386,000,000,
+    LongTermDebtAndCapitalLeaseObligationsCurrent 3,783,000,000,
+    ShortTermBorrowings 2,424,000,000 (commercial paper and short-term borrowings),
+    LongTermDebt 14,169,000,000 which equals 10,386 + 3,783.
+    Total 16,593,000,000.
+
+    MAN 10-Q 0001193125-26-441750, filed 2026-10-30, instant 2026-09-30:
+    LongTermDebtAndCapitalLeaseObligations 562,800,000 (long-term debt),
+    DebtCurrent 540,600,000 (short-term borrowings and current maturities).
+    The capitalization table total is 1,103,400,000.
+    """
+    hon = _debt_facts(
+        "2026-09-30",
+        {
+            "LongTermDebt": 14_169_000_000,
+            "LongTermDebtAndCapitalLeaseObligations": 10_386_000_000,
+            "LongTermDebtAndCapitalLeaseObligationsCurrent": 3_783_000_000,
+            "ShortTermBorrowings": 2_424_000_000,
+        },
+        filed="2026-10-22",
+    )
+    got = select_debt(hon, AS_OF)
+    assert got["ok"] is True
+    assert got["value"] == 16_593_000_000
+    assert got["source"] == "lt_and_lease_plus_current"
+    assert {item["concept"] for item in got["components"]} == {
+        "LongTermDebtAndCapitalLeaseObligations",
+        "LongTermDebtAndCapitalLeaseObligationsCurrent",
+        "ShortTermBorrowings",
+    }
+
+    man = _debt_facts(
+        "2026-09-30",
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 562_800_000,
+            "DebtCurrent": 540_600_000,
+        },
+        filed="2026-10-30",
+    )
+    got = select_debt(man, AS_OF)
+    assert got["value"] == 1_103_400_000
+    assert got["source"] == "lt_and_lease_plus_current"
+
+
+def test_close_current_portion_and_borrowings_are_both_counted():
+    """YUM 10-Q 0001041061-26-000210, instant 2026-09-30.
+
+    LongTermDebtAndCapitalLeaseObligations 9,459,000,000,
+    LongTermDebtCurrent 2,146,000,000, ShortTermBorrowings 2,141,000,000.
+    The two current figures are close and are different lines.
+    """
+    facts = _debt_facts(
+        "2026-09-30",
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 9_459_000_000,
+            "LongTermDebtCurrent": 2_146_000_000,
+            "ShortTermBorrowings": 2_141_000_000,
+        },
+        filed="2026-11-06",
+    )
+    got = select_debt(facts, AS_OF)
+    assert got["value"] == 13_746_000_000
+    assert got["source"] == "lt_and_lease_plus_current"
+
+
+def test_smaller_all_in_tag_does_not_drop_commercial_paper():
+    """NXPI-like. DebtAndCapitalLeaseObligations equals the noncurrent line plus the current portion.
+
+    Commercial paper is outside that tag, so the smaller tag does not replace the sum.
+    """
+    facts = _debt_facts(
+        "2026-09-27",
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 9_979_000_000,
+            "LongTermDebtAndCapitalLeaseObligationsCurrent": 999_000_000,
+            "DebtCurrent": 999_000_000,
+            "CommercialPaper": 2_000_000_000,
+            "DebtAndCapitalLeaseObligations": 10_978_000_000,
+        },
+        filed="2026-10-22",
+    )
+    got = select_debt(facts, AS_OF)
+    assert got["value"] == 12_978_000_000
+    assert "CommercialPaper" in {item["concept"] for item in got["components"]}
+    assert "DebtCurrent" not in {item["concept"] for item in got["components"]}
+
+
+def test_commercial_paper_inside_short_term_borrowings_is_not_added_twice():
+    """PEP-like: short-term debt obligations are 9,223 and commercial paper 4,800 is inside them."""
+    end = "2026-09-05"
+    facts = _debt_facts(
+        end,
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 42_658_000_000,
+            "ShortTermBorrowings": 9_223_000_000,
+            "CommercialPaper": 4_800_000_000,
+        },
+        filed="2026-10-08",
+    )
+    got = select_debt(facts, AS_OF)
+    assert got["value"] == 51_881_000_000
+    assert "CommercialPaper" not in {item["concept"] for item in got["components"]}
+    separate = _debt_facts(
+        end,
+        {
+            "LongTermDebtAndCapitalLeaseObligations": 100,
+            "ShortTermBorrowings": 10,
+            "CommercialPaper": 40,
+        },
+    )
+    both = select_debt(separate, AS_OF)
+    assert both["value"] == 150
+
+
+def test_repurchase_obligation_lines_cash_up_with_the_later_share_count():
+    """ABUS-like. Cover shares are after the repurchase. Cash is the 9/30 balance sheet.
+
+    ObligationToRepurchaseSharesCurrent is 230,000,000 on 2026-09-30.
+    Cash is 264,191,000. Shares on 2026-11-06 are 153,292,826.
+    Shares on 2026-09-30 are 199,275,907. Price 4.02.
+    Enterprise value is about 582,046,161 and the earnings yield about 25.3%.
+    """
+    end = "2026-09-30"
+    concepts = {
+        "us-gaap:OperatingIncomeLoss": [
+            _dur("OperatingIncomeLoss", "2025-10-01", end, 147_160_000, form="10-K", filed="2026-11-10", fp="FY")
+        ],
+        "us-gaap:Assets": [_inst("Assets", end, 339_698_000, filed="2026-11-10")],
+        "us-gaap:AssetsCurrent": [_inst("AssetsCurrent", end, 339_567_000, filed="2026-11-10")],
+        "us-gaap:LiabilitiesCurrent": [_inst("LiabilitiesCurrent", end, 241_933_000, filed="2026-11-10")],
+        "us-gaap:PropertyPlantAndEquipmentNet": [_inst("PropertyPlantAndEquipmentNet", end, 1_000_000, filed="2026-11-10")],
+        "us-gaap:CashAndCashEquivalentsAtCarryingValue": [
+            _inst("CashAndCashEquivalentsAtCarryingValue", end, 264_191_000, filed="2026-11-10")
+        ],
+        "us-gaap:LongTermDebt": [_inst("LongTermDebt", end, 0, filed="2026-11-10")],
+        "abus:ObligationToRepurchaseSharesCurrent": [
+            _inst("ObligationToRepurchaseSharesCurrent", end, 230_000_000, filed="2026-11-10")
+        ],
+        "us-gaap:CommonStockSharesOutstanding": [
+            _inst("CommonStockSharesOutstanding", end, 199_275_907, filed="2026-11-10", unit="shares")
+        ],
+        "dei:EntityCommonStockSharesOutstanding": [
+            _inst("EntityCommonStockSharesOutstanding", "2026-11-06", 153_292_826, filed="2026-11-10", unit="shares")
+        ],
+    }
+    built = build_magic_inputs({"concepts": concepts}, AS_OF, price=4.02, limits=LIMITS)
+    assert built["ok"] is True
+    assert built["shares"] == 153_292_826
+    assert built["large_buyback_after_bs"] is True
+    assert built["repurchase_obligation"] == 230_000_000
+    assert built["total_debt"] == 0
+    assert built["cash"] == 34_191_000
+    assert abs(built["enterprise_value"] - 582_046_160.52) < 1
+    assert abs(built["earnings_yield"] - 0.252831) < 0.0001
+    untouched = build_magic_inputs(
+        {"concepts": {key: value for key, value in concepts.items() if "Obligation" not in key}},
+        AS_OF,
+        price=4.02,
+        limits=LIMITS,
+    )
+    assert untouched["cash"] == 264_191_000
+    assert abs(untouched["enterprise_value"] - 352_046_160.52) < 1
+
+
+def test_repurchase_obligation_parser_keeps_the_undimensioned_amount_once():
+    xml = """<?xml version="1.0"?>
+    <xbrl xmlns:abus="http://example.com/abus" xmlns:us-gaap="http://fasb.org/us-gaap/2025" xmlns:srt="http://fasb.org/srt/2025">
+      <context id="c-bs"><period><instant>2026-09-30</instant></period></context>
+      <context id="c-program">
+        <entity><segment>
+          <explicitMember dimension="srt:ShareRepurchaseProgramAxis">abus:ModifiedDutchAuctionMember</explicitMember>
+        </segment></entity>
+        <period><instant>2026-09-30</instant></period>
+      </context>
+      <context id="c-later">
+        <entity><segment>
+          <explicitMember dimension="us-gaap:SubsequentEventTypeAxis">us-gaap:SubsequentEventMember</explicitMember>
+        </segment></entity>
+        <period><instant>2026-10-01</instant></period>
+      </context>
+      <abus:ObligationToRepurchaseSharesCurrent contextRef="c-bs" unitRef="usd">230000000</abus:ObligationToRepurchaseSharesCurrent>
+      <abus:ObligationToRepurchaseSharesCurrent contextRef="c-program" unitRef="usd">230000000</abus:ObligationToRepurchaseSharesCurrent>
+      <abus:ObligationToRepurchaseSharesCurrent contextRef="c-later" unitRef="usd">230000000</abus:ObligationToRepurchaseSharesCurrent>
+    </xbrl>
+    """
+    rows = stamp_filing(parse_repurchase_obligations(xml), "0001447028-26-000064", "10-Q", "2026-11-10")
+    assert len(rows) == 2
+    plain = [row for row in rows if not row.get("member")]
+    assert len(plain) == 1
+    assert plain[0]["val"] == 230_000_000
+    assert select_repurchase_obligation({"concepts": {}}, AS_OF, "2026-09-30", rows) == 230_000_000
+
+
+def test_one_time_ebit_flags_a_revenue_spike_and_discontinued_operations():
+    end = "2026-09-30"
+    spike = {
+        "concepts": {
+            "us-gaap:Revenues": [
+                _dur("Revenues", "2026-01-01", end, 180_439_000, fp="Q3"),
+                _dur("Revenues", "2026-01-01", "2026-03-31", 179_126_000, fp="Q1"),
+                _dur("Revenues", "2026-04-01", "2026-06-30", 1_014_000, fp="Q2"),
+                _dur("Revenues", "2026-07-01", end, 299_000, fp="Q3"),
+            ]
+        }
+    }
+    ebit = {
+        "period_end": end,
+        "components": [{"concept": "OperatingIncomeLoss", "start": "2026-01-01", "end": end, "value": 152_450_000}],
+    }
+    flagged = one_time_ebit_flag(spike, AS_OF, ebit)
+    assert flagged["one_time_ebit"] is True
+    assert flagged["one_time_ebit_reason"] == "revenue_spike"
+    mixed = {
+        "concepts": {
+            "us-gaap:IncomeLossFromDiscontinuedOperationsNetOfTax": [
+                _dur("IncomeLossFromDiscontinuedOperationsNetOfTax", "2026-01-01", end, 1_061_000_000, fp="Q3")
+            ]
+        }
+    }
+    hon = {
+        "period_end": end,
+        "components": [{"concept": "OperatingIncomeLoss", "start": "2026-01-01", "end": end, "value": 2_991_000_000}],
+    }
+    flagged = one_time_ebit_flag(mixed, AS_OF, hon)
+    assert flagged["one_time_ebit"] is True
+    assert flagged["one_time_ebit_reason"] == "discontinued_ops"
+    steady = one_time_ebit_flag({"concepts": {}}, AS_OF, ebit)
+    assert steady["one_time_ebit"] is False
+
+
+def test_extract_keeps_the_current_lease_debt_tag():
+    payload = {
+        "cik": 773840,
+        "entityName": "HONEYWELL INTERNATIONAL INC",
+        "facts": {
+            "us-gaap": {
+                "LongTermDebtAndCapitalLeaseObligationsCurrent": {
+                    "units": {
+                        "USD": [
+                            {
+                                "end": "2026-09-30",
+                                "val": 3_783_000_000,
+                                "accn": "0000773840-26-000143",
+                                "fy": 2026,
+                                "fp": "Q3",
+                                "form": "10-Q",
+                                "filed": "2026-10-22",
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+    }
+    got = extract_companyfacts(payload)
+    assert got["extract_version"] == 4
+    assert got["concepts"]["us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent"][0]["val"] == 3_783_000_000
 
 
 def test_net_fixed_assets_uses_the_successor_tag_or_drops_the_row():

@@ -229,6 +229,95 @@ def _rows_from_text(text: str, contexts: dict[str, dict]) -> list[dict]:
     return fake_root_facts
 
 
+_OBLIGATION_TAG = re.compile(
+    r"^(ObligationToRepurchaseShares(?:Current|Noncurrent)?"
+    r"|ShareRepurchaseObligation(?:Current|Noncurrent)?"
+    r"|LiabilityForShareRepurchase(?:Current|Noncurrent)?)$"
+)
+
+
+def _obligation_row(tag: str, value: float, ctx: dict, unit: str) -> dict | None:
+    if value <= 0:
+        return None
+    members = ctx.get("members") or []
+    dimension, member = _pick_member(members)
+    blob = " ".join(str(item) for item in (dimension, member))
+    if "SubsequentEvent" in blob:
+        return None
+    end = ctx.get("instant") or (ctx.get("end") if not ctx.get("start") else None)
+    if ctx.get("start") and ctx.get("start") != end:
+        return None
+    if not end:
+        return None
+    taxonomy = "us-gaap"
+    return {
+        "tag": tag,
+        "taxonomy": taxonomy,
+        "source": f"{taxonomy}:{tag}",
+        "kind": "instant",
+        "start": None,
+        "end": end,
+        "val": value,
+        "value": value,
+        "unit": "USD",
+        "member": member,
+        "dimension": dimension,
+        "fp": "",
+        "fy": None,
+    }
+
+
+def _obligation_rows_from_tree(root: ElementTree.Element, contexts: dict[str, dict]) -> list[dict]:
+    rows = []
+    for node in root.iter():
+        tag = _local(node.tag)
+        if not _OBLIGATION_TAG.match(tag):
+            continue
+        unit = (node.attrib.get("unitRef") or "").lower()
+        if unit and "usd" not in unit and unit not in {"usd", "pure"}:
+            continue
+        value = _num("".join(node.itertext()), node.attrib.get("scale"))
+        if value is None:
+            continue
+        ctx = contexts.get(node.attrib.get("contextRef") or "") or {}
+        row = _obligation_row(tag, value, ctx, unit)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _obligation_rows_from_text(text: str, contexts: dict[str, dict]) -> list[dict]:
+    rows = []
+    for attrs, body in _FACT_RE.findall(text):
+        meta = _attrs(attrs)
+        tag = _local(meta.get("name") or "")
+        if not _OBLIGATION_TAG.match(tag):
+            continue
+        value = _num(re.sub(r"<[^>]+>", "", body), meta.get("scale"))
+        if value is None:
+            continue
+        ctx = contexts.get(meta.get("contextRef") or "") or {}
+        row = _obligation_row(tag, value, ctx, meta.get("unitRef") or "")
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def parse_repurchase_obligations(text: str | bytes) -> list[dict]:
+    """Instant repurchase-obligation facts from an instance or an inline document."""
+    if isinstance(text, bytes):
+        text = text.decode("utf-8", errors="replace")
+    if not text or not text.strip():
+        return []
+    try:
+        root = ElementTree.fromstring(text)
+    except ElementTree.ParseError:
+        root = None
+    if root is not None:
+        return _obligation_rows_from_tree(root, _contexts_from_tree(root))
+    return _obligation_rows_from_text(text, _contexts_from_text(text))
+
+
 def parse_share_document(text: str | bytes) -> list[dict]:
     """Share and title rows from an instance or an inline document. Empty on a bad file."""
     if isinstance(text, bytes):
