@@ -1,11 +1,11 @@
 {
-  "day": "20261119",
-  "flow_day": "20261118",
-  "updated_at": "2026-11-19T15:21:41.040890+09:00",
+  "day": "20261123",
+  "flow_day": "20261120",
+  "updated_at": "2026-11-23T15:21:23.951395+09:00",
   "flip": {
     "005930": {
       "armed": true,
-      "last_date": "20261118",
+      "last_date": "20261120",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -30,7 +30,7 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261118",
+      "last_date": "20261120",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -54,87 +54,18 @@
       ]
     }
   },
-  "last_digest_at": "2026-11-13T15:21:36.212537+09:00",
-  "week_rows": [
-    {
-      "flow_day": "20261113",
-      "foreign": -454913309000,
-      "organ": -38831005000,
-      "stocks": {
-        "삼성전자": {
-          "foreign": 8216.0,
-          "organ": -328604.0,
-          "close": 209000.0
-        },
-        "SK하이닉스": {
-          "foreign": -370341.0,
-          "organ": 24207.0,
-          "close": 1233000.0
-        }
-      }
-    },
-    {
-      "flow_day": "20261116",
-      "foreign": -784137133000,
-      "organ": -609782862000,
-      "stocks": {
-        "삼성전자": {
-          "foreign": -3105597.0,
-          "organ": 852610.0,
-          "close": 195000.0
-        },
-        "SK하이닉스": {
-          "foreign": -159701.0,
-          "organ": -694134.0,
-          "close": 1118000.0
-        }
-      }
-    },
-    {
-      "flow_day": "20261117",
-      "foreign": -910791193400,
-      "organ": 309208103200,
-      "stocks": {
-        "삼성전자": {
-          "foreign": -2484383.0,
-          "organ": 875284.0,
-          "close": 189800.0
-        },
-        "SK하이닉스": {
-          "foreign": -399323.0,
-          "organ": 130072.0,
-          "close": 1100000.0
-        }
-      }
-    },
-    {
-      "flow_day": "20261118",
-      "foreign": -220255065600,
-      "organ": 249463113600,
-      "stocks": {
-        "삼성전자": {
-          "foreign": -869394.0,
-          "organ": 1104534.0,
-          "close": 196400.0
-        },
-        "SK하이닉스": {
-          "foreign": -42531.0,
-          "organ": 27949.0,
-          "close": 1164000.0
-        }
-      }
-    }
-  ],
+  "last_digest_at": "2026-11-23T15:21:23.951395+09:00",
+  "week_rows": [],
   "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
   "digest_after": "20261029",
   "twowk": {
     "005930": {
       "armed": true,
-      "last_date": "20261118",
+      "last_date": "20261120",
       "last": {
-        "a": -4192015.0,
-        "b": -2839626.0,
-        "total": -7031641.0,
+        "a": 5855908.0,
+        "b": -9320700.0,
+        "total": -3464792.0,
         "met": false
       },
       "seeded": {
@@ -151,11 +82,11 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261118",
+      "last_date": "20261120",
       "last": {
-        "a": -2624550.0,
-        "b": -1657698.0,
-        "total": -4282248.0,
+        "a": -852398.0,
+        "b": -819350.0,
+        "total": -1671748.0,
         "met": false
       },
       "seeded": {
@@ -167,15 +98,15 @@
   },
   "nix1": {
     "000660": {
-      "last_date": "20261118",
+      "last_date": "20261120",
       "last": {
         "verdict": "진입 보류",
-        "close": 1144000.0,
+        "close": 1113000.0,
         "support": "지지 이탈",
-        "foreign": -42531.0,
-        "foreign_ok": true,
-        "adr_dev_pct": 2.71,
-        "adr_ok": false
+        "foreign": -167982.0,
+        "foreign_ok": false,
+        "adr_dev_pct": 1.33,
+        "adr_ok": true
       },
       "brk_last": "20261105",
       "broke": {

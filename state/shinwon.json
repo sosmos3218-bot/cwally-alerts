@@ -1,23 +1,23 @@
 {
-  "updated_at": "2026-11-23 09:09 KST",
+  "updated_at": "2026-11-23 15:20 KST",
   "zone": "STOP1000",
-  "price": 969.0,
+  "price": 944.0,
   "close": {
     "date": "2026-11-20",
     "close": 969.0,
-    "src": "네이버 통합시세(NXT 포함 가능)"
+    "src": "Daum KRX"
   },
   "coin": {
-    "streak": 0,
-    "streak_start": null,
-    "last_date": "2026-11-19",
-    "last_close": 1012.0,
+    "streak": 1,
+    "streak_start": "2026-11-20",
+    "last_date": "2026-11-20",
+    "last_close": 969.0,
     "max": 5,
     "max_span": [
       "2026-10-21",
       "2026-10-27"
     ],
-    "total": 10,
+    "total": 11,
     "sent": []
   },
   "seen_ids": [

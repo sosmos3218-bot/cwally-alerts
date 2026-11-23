@@ -1,14 +1,14 @@
 {
-  "updated_at": "2026-11-19T15:21:39.828189+09:00",
+  "updated_at": "2026-11-23T15:21:22.821570+09:00",
   "buy1_armed": true,
   "hold": true,
   "buy1_hold_sent": false,
-  "last_price": 26180.0,
-  "last_inav": 26125.69,
-  "last_premium_pct": 0.208,
+  "last_price": 25420.0,
+  "last_inav": 24198.55,
+  "last_premium_pct": 5.048,
   "last_gold": [
-    "20261118",
-    3741.89990234375
+    "20261120",
+    3515.39990234375
   ],
   "fetch_fail_date": null
 }
