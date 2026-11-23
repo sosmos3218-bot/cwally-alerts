@@ -101,7 +101,8 @@ def yahoo_series(sym: str, now: datetime, ten: bool = False) -> list[tuple[str, 
 
 
 def fred_series(sid: str, start: str) -> list[tuple[str, float]]:
-    txt = fetch(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}")
+    from fred_fetch import fetch_fred_csv
+    txt = fetch_fred_csv(sid, start)
     out = []
     for line in txt.splitlines()[1:]:
         parts = line.strip().split(",")

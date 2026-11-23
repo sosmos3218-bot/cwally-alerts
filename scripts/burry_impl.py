@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, re, sys, urllib.request
+import json, re, sys, time, urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,10 +56,17 @@ def parse_fred_txt(text):
     return rows
 
 def fetch_fred(csv_url, txt_url, timeout):
+    from fred_fetch import SERIES_BUDGET, fetch_text as fred_get
     errors = []
+    started = time.monotonic()
+    budget = min(SERIES_BUDGET, max(float(timeout or 12) * 2, 20.0))
     for label, url, parser in (("csv", csv_url, parse_fred), ("txt", txt_url, parse_fred_txt)):
+        remaining = budget - (time.monotonic() - started)
+        if remaining <= 0.05:
+            errors.append(label + " budget exhausted")
+            break
         try:
-            rows = parser(fetch_text(url, timeout))
+            rows = parser(fred_get(url, timeout=min(12.0, float(timeout or 12)), attempts=2, budget=remaining))
             if rows:
                 return rows, label
             errors.append(label + " empty")

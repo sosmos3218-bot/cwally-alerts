@@ -55,7 +55,8 @@ def http(url: str, timeout: int = 25) -> str:
 
 
 def fred(series: str, start: date) -> list[tuple[str, float]]:
-    txt = http(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start.isoformat()}")
+    from fred_fetch import fetch_fred_csv
+    txt = fetch_fred_csv(series, start.isoformat())
     rows = [ln.split(",") for ln in txt.strip().splitlines()]
     if not rows or series not in rows[0][-1]:
         raise RuntimeError("FRED csv 형식 다름")
@@ -76,7 +77,7 @@ def y10_series(today: date) -> list[tuple[str, float]]:
     except Exception as exc:  # noqa: BLE001
         print(f"FRED DGS10 fail, Treasury fallback: {exc}", file=sys.stderr)
         from usbond_monitor import treasury_10y
-        return sorted(treasury_10y(today - timedelta(days=21), today).items())
+        return sorted(treasury_10y(today - timedelta(days=21), today, timeout=12).items())
 
 
 def hedge_cost(today: date, fallback: float) -> tuple[float, str]:

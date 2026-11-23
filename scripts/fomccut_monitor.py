@@ -313,8 +313,8 @@ def fetch_sep(decision: str) -> dict | None:
 
 
 def fred_series(series: str, start: date) -> list[tuple[str, float]]:
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={start.isoformat()}"
-    txt = get(url, 35)
+    from fred_fetch import fetch_fred_csv
+    txt = fetch_fred_csv(series, start.isoformat())
     rows = list(csv.reader(io.StringIO(txt)))
     out = []
     for r in rows[1:]:

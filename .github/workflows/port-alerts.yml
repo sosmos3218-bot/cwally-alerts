@@ -352,6 +352,8 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/vtrspg_monitor.py selftest; fi
           python scripts/vtrspg_monitor.py "$MODE"
       - name: Run steel + alux + hce + lg + iren + yencarry + krwfx + port + portlight + shinwon + protec + 2ub + pltr + addstop + sec
+        # Cap this step so a hang cannot consume the 20-minute job limit; later steps such as KR-HC use if: !cancelled() and still run.
+        timeout-minutes: 15
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'all' || steps.pick.outputs.job == 'steel' || steps.pick.outputs.job == 'alux' || steps.pick.outputs.job == 'hce' || steps.pick.outputs.job == 'lg' || steps.pick.outputs.job == 'iren' || steps.pick.outputs.job == 'yencarry' || steps.pick.outputs.job == 'krwfx' || steps.pick.outputs.job == 'port' || steps.pick.outputs.job == 'portlight' || steps.pick.outputs.job == 'shinwon' || steps.pick.outputs.job == 'protec' || steps.pick.outputs.job == '2ub' || steps.pick.outputs.job == 'pltr' || steps.pick.outputs.job == 'addstop' || steps.pick.outputs.job == 'sec'
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}

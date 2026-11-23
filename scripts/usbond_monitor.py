@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ntfy_util import publish, resolve_server, resolve_topic, route_topic  # noqa: E402
 from kr_calendar import KST, is_trading_day, session_day  # noqa: E402
+from fred_fetch import fetch_text  # noqa: E402
 
 NAME = "usbond"
 CFG_PATH = ROOT / "configs" / f"{NAME}.json"
@@ -71,7 +72,7 @@ def num(v) -> float | None:
 
 # ---------------- 데이터 ----------------
 def fred_dgs10(start: date) -> dict[str, float]:
-    txt = get(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd={start.isoformat()}", 30)
+    txt = fetch_text(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd={start.isoformat()}")
     out: dict[str, float] = {}
     rows = list(csv.reader(io.StringIO(txt)))
     if not rows or "DGS10" not in rows[0][-1]:
@@ -84,12 +85,15 @@ def fred_dgs10(start: date) -> dict[str, float]:
     return out
 
 
-def treasury_10y(start: date, end: date) -> dict[str, float]:
+def treasury_10y(start: date, end: date, timeout: int = 12) -> dict[str, float]:
     out: dict[str, float] = {}
-    for y in sorted({start.year, end.year}):
+    years = sorted({start.year, end.year})
+    # Shared budget so a slow treasury.gov page cannot eat the morning bundle after a FRED miss.
+    budget = 30.0 if len(years) == 1 else 50.0
+    for y in years:
         url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
                f"{y}/all?type=daily_treasury_yield_curve&field_tdr_date_value={y}&page&_format=csv")
-        rows = list(csv.DictReader(io.StringIO(get(url))))
+        rows = list(csv.DictReader(io.StringIO(fetch_text(url, timeout=timeout, attempts=2, budget=budget / len(years)))))
         for r in rows:
             v = num(r.get("10 Yr"))
             try:

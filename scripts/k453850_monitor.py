@@ -122,8 +122,8 @@ def price_rows(cfg: dict) -> list[dict]:
 
 
 def fred_dgs30(start: date) -> tuple[str, float]:
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30&cosd={start.isoformat()}"
-    txt = get(url, 30)
+    from fred_fetch import fetch_fred_csv
+    txt = fetch_fred_csv("DGS30", start.isoformat())
     rows = list(csv.reader(io.StringIO(txt)))
     if not rows or "DGS30" not in (rows[0][-1] if rows[0] else ""):
         raise RuntimeError("FRED csv 형식 다름")

@@ -38,23 +38,14 @@ TK = "LQD 000660 005930"
 
 
 def fetch(url: str, rounds: int = 2, wait: float = 8.0) -> str:
-    """UA 2개 x rounds 번 재시도 (라운드 사이 wait 초). 응답이 CSV 가 아니면 실패로 본다."""
-    err: Exception | None = None
-    for r in range(rounds):
-        for ua in UAS:
-            try:
-                req = urllib.request.Request(url, headers=ua)
-                with urllib.request.urlopen(req, timeout=25) as resp:
-                    txt = resp.read().decode("utf-8", errors="ignore")
-                if "," not in txt.split("\n", 1)[0]:
-                    raise ValueError("not a FRED csv")
-                return txt
-            except Exception as exc:  # noqa: BLE001
-                err = exc
-                print(f"fetch fail round {r + 1} ({ua['User-Agent'][:20]}): {exc}")
-        if r + 1 < rounds:
-            time.sleep(wait)
-    raise RuntimeError(str(err))
+    """Time-boxed FRED GET. rounds/wait are kept for call-site compatibility but
+    no longer sleep 8s between rounds; two UA attempts share a 60s budget."""
+    from fred_fetch import fetch_text
+    del wait  # bounded retries, no long backoff
+    txt = fetch_text(url, timeout=12, attempts=max(2, int(rounds)), budget=60, user_agents=UAS)
+    if "," not in txt.split("\n", 1)[0]:
+        raise ValueError("not a FRED csv")
+    return txt
 
 
 def parse_csv(txt: str) -> list[tuple[str, float]]:

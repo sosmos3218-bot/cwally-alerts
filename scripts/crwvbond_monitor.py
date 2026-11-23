@@ -78,8 +78,9 @@ def tv_quotes(cfg: dict) -> dict:
 
 
 def fred_rows(url: str) -> list[tuple[str, float]]:
+    from fred_fetch import fetch_text as fred_get
     rows = []
-    for line in fetch_text(url).splitlines()[1:]:
+    for line in fred_get(url).splitlines()[1:]:
         parts = line.split(",")
         if len(parts) < 2 or parts[1].strip() in {"", "."}:
             continue

@@ -117,7 +117,8 @@ def usdkrw(today: date) -> tuple[str, float, str]:
     except Exception as exc:  # noqa: BLE001
         errs.append(f"yahoo {exc}")
     try:
-        d, v = parse_fred(http(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXKOUS&cosd={(today - timedelta(days=30)).isoformat()}"), t)
+        from fred_fetch import fetch_fred_csv
+        d, v = parse_fred(fetch_fred_csv("DEXKOUS", (today - timedelta(days=30)).isoformat()), t)
         return d, v, "FRED DEXKOUS"
     except Exception as exc:  # noqa: BLE001
         errs.append(f"fred {exc}")
