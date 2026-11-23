@@ -1,14 +1,58 @@
 {
   "zone": "중립",
-  "last_date": "2026-11-18",
-  "last_ten": 5.065999984741211,
+  "last_date": "2026-11-20",
+  "last_ten": 4.9120001792907715,
   "fomc_seen": {},
   "note_sent": false,
   "seeded_at": "2026-11-02 13:20 KST",
   "seed_note": "install seed, no send (Yahoo ^TNX)",
-  "updated_at": "2026-11-20 09:06 KST",
+  "updated_at": "2026-11-23 09:18 KST",
   "bands": {
-    "date": "2026-11-18",
+    "date": "2026-11-20",
     "in": {}
+  },
+  "rotation": {
+    "asof": "2026-11-20",
+    "xlu_rs": false,
+    "xly_rs": false,
+    "power": false,
+    "rate_ease": false,
+    "stocks": false,
+    "xlu_label": "off",
+    "xly_label": "off",
+    "retail_month": "2026-10",
+    "retail_regime": "mixed",
+    "xlp_slow_month": "2026-10",
+    "px": {
+      "XLU": 42.69,
+      "XLP": 90.46,
+      "XLY": 112.46,
+      "SPY": 689.81,
+      "NEE": 83.45,
+      "CEG": 237.41,
+      "AMZN": 246.82,
+      "TSLA": 345.82
+    },
+    "ret20": {
+      "XLU": 0.31,
+      "XLP": 2.49,
+      "XLY": -0.57,
+      "SPY": -9.23,
+      "NEE": 1.64,
+      "CEG": -6.33,
+      "AMZN": -0.48,
+      "TSLA": -7.09
+    },
+    "xlu_xlp": 0.471921,
+    "xly_xlp": 1.243201,
+    "xlu_excess": -2.1872,
+    "xly_excess": -3.0585,
+    "ten": 4.912,
+    "ten_drop20": 0.076,
+    "real_mom": -0.1374,
+    "nominal_mom": 0.212,
+    "ten_src": "Yahoo ^TNX",
+    "power_fresh": true,
+    "stocks_fresh": true
   }
 }

@@ -4,9 +4,9 @@
   "sndk_post_notified": true,
   "fail_notified": true,
   "last_phase": "switch3",
-  "updated_at": "2026-11-16T09:01:40.751117+09:00",
+  "updated_at": "2026-11-23T09:13:38.690625+09:00",
   "switch3_verdict": "ON",
-  "switch3_week_key": "2026-W47",
+  "switch3_week_key": "2026-W48",
   "switch3_last_result": {
     "verdict": "ON",
     "valid_count": 3,
@@ -19,28 +19,28 @@
         "label": "RDIMM 리드타임",
         "valid": true,
         "pass": true,
-        "detail": "18주 (기준 16주 이상). asof 2026-11-09. 출처: TrendForce Weekly Radar 009 (DRAM lead time 19->18wk, Very Tight; overall DRAM, RDIMM proxy) https://insights.trendforce.com/p/weekly-radar-009"
+        "detail": "18주 (기준 16주 이상). asof 2026-11-16. 출처: TrendForce Weekly Radar 010 (11/16, paid; DRAM lead time 18wk unchanged, Very Tight; overall DRAM, RDIMM proxy) restated by Meritz Tech Telegram 11/16 https://tg.me/meritz_tech/19605 ; https://insights.trendforce.com/p/weekly-radar-010"
       },
       {
         "id": "ddr5_ma4",
         "label": "DDR5 현물 4주 이동평균 +1.0% 이상",
         "valid": true,
         "pass": false,
-        "detail": "주간평균 2026-11-09 $60.209 (전주 $61.056, w/w -1.39%). MA4 60.897 vs 직전창 60.863 (+0.05%, 기준 +1.0% 이상) (미달). 당일 세션평균 $60.267.",
-        "ma4_now": 60.8966,
-        "ma4_prev": 60.8634,
-        "latest_weekly": 60.2089,
-        "latest_label": "2026-11-09",
-        "daily_session_avg": 60.267,
+        "detail": "주간평균 2026-11-16 $60.489 (전주 $60.209, w/w +0.47%). MA4 60.793 vs 직전창 60.897 (+-0.17%, 기준 +1.0% 이상) (미달). 당일 세션평균 $60.667.",
+        "ma4_now": 60.7933,
+        "ma4_prev": 60.8966,
+        "latest_weekly": 60.4889,
+        "latest_label": "2026-11-16",
+        "daily_session_avg": 60.667,
         "ma4_min_rise_pct": 1.0,
-        "ma4_rise_pct": 0.0545
+        "ma4_rise_pct": -0.1697
       },
       {
         "id": "hbm_or_contract",
         "label": "HBM 품절 또는 서버 계약가",
         "valid": true,
         "pass": true,
-        "detail": "HBM 품절 플래그 true (asof 2026-11-10); 서버 계약가 가이던스 +12.5% QoQ (기준 +10%)"
+        "detail": "HBM 품절 플래그 true (asof 2026-11-10); 서버 계약가 입력 오래됨 asof 2026-11-01"
       }
     ]
   },

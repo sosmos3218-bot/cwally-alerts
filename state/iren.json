@@ -1,26 +1,11 @@
 {
-  "updated_at": "2026-11-20 09:00 KST",
-  "price": 14.41,
+  "updated_at": "2026-11-23 09:02 KST",
+  "price": 11.82,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://www.fool.com/investing/2026/10/24/5-of-the-fastest-growing-stocks-in-the-market/?.tsrc=rss",
-    "https://www.tikr.com/blog/iren-stock-fell-8-in-a-day-after-its-spain-campus-rally-heres-what-wall-streets-targets-imply?ref=yahoofinance&.tsrc=rss",
-    "https://www.tikr.com/blog/iren-rises-4-on-300mw-spanish-sovereign-ai-campus-as-neocloud-stocks-rebound?ref=yahoofinance&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-looks-near-191314943.html?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126031055/0001140361-26-031055-index.htm",
-    "https://blockspace.media/insight/spacex-secures-40-billion-financing/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/bc-most-active-stocks-143017076.html?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/26/musk-predicts-guppy-level-death-for-neocloud-companies-as-coreweave-stock-falls-38-in-october/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/coreweave-rout-sends-warning-sign-092443918.html?.tsrc=rss",
-    "https://www.investopedia.com/market-update-neocloud-stocks-slide-after-elon-musk-warns-of-guppy-level-death-spcx-tsla-nvda-crwv-iren-apld-12194203?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/26/coreweave-drops-5-as-musk-warns-of-neocloud-guppy-level-death-iren-slides-3-nebius-slips-2/?.tsrc=rss",
-    "https://247wallst.com/investing/2026/10/26/applied-digital-keeps-cratering-this-analyst-keeps-insisting-its-going-to-jump-by-390/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/news-failure-neocloud-stocks-defy-182700918.html?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/ai-headlines-pile-wall-street-190200236.html?.tsrc=rss",
-    "https://finance.yahoo.com/m/f34285b4-f496-3c4f-b29d-49e2d71f092d/meta%2C-spacex%2C-tesla%2C.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/article/coreweave-ai-landlord-stocks-sink-to-lowest-levels-in-more-than-a-year-as-the-price-of-insuring-coreweaves-debt-doubles-140909005.html?.tsrc=rss",
     "https://finance.yahoo.com/m/377f004b-177c-3c4e-a8ce-913f99021087/ai-stocks-will-rise-or-fall.html?.tsrc=rss",
     "https://www.tikr.com/blog/coreweaves-final-boss-battle-ai-tenants-demand-penalties?ref=yahoofinance&.tsrc=rss",
@@ -205,76 +190,25 @@
     "https://finance.yahoo.com/markets/stocks/articles/coreweave-nebius-iren-stocks-rise-110732326.html?.tsrc=rss",
     "https://www.fool.com/coverage/stock-market-today/2026/11/19/stock-market-today-nov-19-coreweave-falls-as-profit-taking-follows-anthropic-ipo-pricing-above-range/?.tsrc=rss",
     "https://www.trefis.com/stock/crwv/articles/626649/why-coreweave-can-t-pay-down-debt-from-its-cash/2026-11-19?.tsrc=rss",
-    "https://finance.yahoo.com/m/e24ba88f-466f-3477-aa6f-1c767859743f/druckenmiller-retreats-from.html?.tsrc=rss"
+    "https://finance.yahoo.com/m/e24ba88f-466f-3477-aa6f-1c767859743f/druckenmiller-retreats-from.html?.tsrc=rss",
+    "https://blockspace.media/short/neoclouds-like-coreweave-have-two-big-problems/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/bc-most-active-stocks-164606636.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/20/between-iren-and-coreweave-heres-who-has-the-cleaner-path-to-a-sustained-30-rebound/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/20/nebius-drops-7-as-michael-burry-takes-a-victory-lap-on-neocloud-rout-iren-falls-5-oracle-slides-4/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/nasdaq-futures-slide-anthropic-shares-reverse-ipo-gains-lite-iren-sndk-nvda-in-focus/cNbSL5RR9Ks?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-has-lost-70-in-a-year-bernstein-still-sees-55?ref=yahoofinance&tlnk=yf-261120-64g3hhvm&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-iren-nbis-stocks-extend-neocloud-selloff-as-anthropic-ipo-rally-fades-michael-burry-takes-a-victory-lap/cNbSEj6R9KJ?.tsrc=rss",
+    "https://www.tikr.com/blog/texas-county-balks-at-spacexs-24-billion-data-center-tax-break-spacex-says-computing-equipment-rapidly-depreciates?ref=yahoofinance&tlnk=yf-261121-rg3448hx&.tsrc=rss",
+    "https://www.tikr.com/blog/bitcoin-slumps-below-62000-cleansparks-direct-cost-was-82727-a-coin?ref=yahoofinance&tlnk=yf-261121-38j6328w&.tsrc=rss",
+    "https://www.tikr.com/blog/coreweave-borrowed-at-under-6-against-its-gpus-spacex-just-paid-above-8-for-chip-backed-debt?ref=yahoofinance&tlnk=yf-261121-6gvfxhg4&.tsrc=rss",
+    "https://www.tikr.com/blog/riot-platforms-just-gained-18-in-a-month-on-a-28-billion-ai-lease-take-profits-or-buy-more?ref=yahoofinance&tlnk=yf-261121-gmf67xmg&.tsrc=rss",
+    "https://www.tikr.com/blog/cipher-digital-sinks-5-coreweave-down-7-as-anthropics-debut-fails-to-stop-ai-selloff?ref=yahoofinance&tlnk=yf-261120-46j662p9&.tsrc=rss",
+    "https://www.tikr.com/blog/warning-for-coreweave-satya-nadella-says-selling-to-one-or-two-customers-is-not-a-business?ref=yahoofinance&tlnk=yf-261122-jxpj37r5&.tsrc=rss",
+    "https://www.tikr.com/blog/lenders-fear-spacex-could-shoot-the-valuable-chips-into-space-spacex-sinks-after-its-32-billion-debt-sale?ref=yahoofinance&tlnk=yf-261121-mmj2qvg5&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/5-most-overvalued-ai-stocks-145011459.html?.tsrc=rss"
   ],
-  "last_digest_at": "2026-11-16 09:00 KST",
-  "pending_news": [
-    {
-      "title": "CoreWeave, Oracle and Nebius Plunge as Nvidia Fallout Rattles AI Stocks",
-      "url": "https://finance.yahoo.com/technology/ai/articles/coreweave-oracle-nebius-plunge-nvidia-192652785.html?.tsrc=rss",
-      "seen_at": "2026-11-17 09:00 KST"
-    },
-    {
-      "title": "IREN Nearly Tripled AI Cloud Revenue to $200 Million. Can It Be “Delivered, Financed, and Run at a Profit”?",
-      "url": "https://www.tikr.com/blog/iren-nearly-tripled-ai-cloud-revenue-to-200-million-can-it-be-delivered-financed-and-run-at-a-profit?ref=yahoofinance&tlnk=yf-261117-22r3c6fc&.tsrc=rss",
-      "seen_at": "2026-11-18 09:00 KST"
-    },
-    {
-      "title": "JPMorgan slashes IREN price target on Microsoft site delays",
-      "url": "https://blockspace.media/short/jpmorgan-slashes-iren-price-target-on-microsoft-site-delays/?.tsrc=rss",
-      "seen_at": "2026-11-18 09:00 KST"
-    },
-    {
-      "title": "Sam Altman Just Delivered a Warning to Investors Betting on Endless AI Growth",
-      "url": "https://247wallst.com/investing/2026/11/17/sam-altman-just-delivered-a-warning-to-investors-betting-on-endless-ai-growth/?.tsrc=rss",
-      "seen_at": "2026-11-18 09:00 KST"
-    },
-    {
-      "title": "CoreWeave Answered the Biggest Question About AI Stocks. Now Nvidia Has to Confirm It.",
-      "url": "https://www.fool.com/investing/2026/11/17/coreweave-answered-the-biggest-question-about-ai-stocks-now-nvidia-has-to-confirm-it/?.tsrc=rss",
-      "seen_at": "2026-11-18 09:00 KST"
-    },
-    {
-      "title": "Nvidia Shrinks Neocloud Backing to $32 Billion as CoreWeave and Nebius Rallies Fade Fast",
-      "url": "https://www.barchart.com/story/news/8898797/nvidia-shrinks-neocloud-backing-to-32-billion-as-coreweave-and-nebius-rallies-fade-fast?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "TeraWulf Rises 6%, Cipher Digital Gains 5% After NVIDIA’s Record Quarter; IREN Climbs 4%",
-      "url": "https://247wallst.com/investing/2026/11/18/terawulf-rises-6-cipher-digital-gains-5-after-nvidias-record-quarter-iren-climbs-4/?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "Nvidia Signals AI Financing Flywheel Will Continue, But ‘Disciplined’: Analyst Calls Neoclouds Its ‘Biggest Sustained Bet’ As NBIS, IREN, MRVL Rally",
-      "url": "https://stocktwits.com/news-articles/markets/equity/nvidia-signals-ai-financing-flywheel-will-continue-but-disciplined-analyst-calls-neoclouds-its-biggest-sustained-bet-as-nbis-iren-mrvl-rally/cNbXVSvR9hZ?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "Stock Market Today, Nov. 18: CoreWeave Slides as Nvidia's Blowout Earnings Fail to Ease Debt Concerns",
-      "url": "https://www.fool.com/coverage/stock-market-today/2026/11/18/stock-market-today-nov-18-coreweave-slides-as-nvidia-s-blowout-earnings-fail-to-ease-debt-concerns/?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "CoreWeave Sinks 5% After Nvidia Earnings as Kress Vows “A Very Strong Look” at Neocloud Financing",
-      "url": "https://www.tikr.com/blog/coreweave-sinks-5-after-nvidia-earnings-as-kress-vows-a-very-strong-look-at-neocloud-financing?ref=yahoofinance&tlnk=yf-261118-25647mpv&.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "MARA Sinks 13% in a Week as Bitcoin Falls Below $70,000. Its AI Leases Could “Move Into Next Year”",
-      "url": "https://www.tikr.com/blog/mara-sinks-13-in-a-week-as-bitcoin-falls-below-70000-its-ai-leases-could-move-into-next-year?ref=yahoofinance&tlnk=yf-261118-934jmqg2&.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "Nvidia’s Cautious Tone Is a Big Drag on CoreWeave, AI Cloud Stocks",
-      "url": "https://finance.yahoo.com/m/f79c4405-24a9-3c97-a267-ff7c20c2be1c/nvidia%E2%80%99s-cautious-tone-is-a.html?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    },
-    {
-      "title": "Nvidia’s earnings call names two former crypto miners",
-      "url": "https://www.thestreet.com/crypto/investing/nvidias-earnings-call-names-two-former-crypto-miners?.tsrc=rss",
-      "seen_at": "2026-11-19 09:00 KST"
-    }
-  ],
+  "last_digest_at": "2026-11-23 09:02 KST",
+  "pending_news": [],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
   "last_digest_items": 15
 }

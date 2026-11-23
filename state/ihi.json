@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-11-20T09:06:10.626475+09:00",
+  "updated_at": "2026-11-23T09:18:23.231965+09:00",
   "rs": {
     "armed": true,
     "on": false,
-    "last_date": "2026-11-19",
+    "last_date": "2026-11-20",
     "fired": null,
     "fail_day": null,
     "last": {
-      "date": "2026-11-19",
-      "close": 56.03,
-      "sma": 53.353,
-      "ret_ihi": -0.25,
-      "ret_bench": 1.63,
-      "gap_pp": -1.88,
+      "date": "2026-11-20",
+      "close": 55.38,
+      "sma": 53.3402,
+      "ret_ihi": -0.89,
+      "ret_bench": 1.45,
+      "gap_pp": -2.35,
       "cond_rs": false,
       "cond_ma": true
     }

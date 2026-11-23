@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "last_baseline_week": "2026-W47",
+  "last_baseline_week": "2026-W48",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-20 03:58 KST",
+  "updated_at": "2026-11-23 09:13 KST",
   "outlook": {
     "sources": {
       "trendforce": {

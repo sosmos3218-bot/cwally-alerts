@@ -17,10 +17,10 @@
     }
   },
   "last_weekly_iso": "2026-W47",
-  "missing_streak": 0,
+  "missing_streak": 1,
   "last_missing_notice_day": null,
   "last_data_day": "2026-11-13",
   "last_title": "[MEMSWING] 005930/000660 주간 요약 2026-W47 | 상태 점검",
-  "updated_at": "2026-11-16T09:01:00+09:00",
+  "updated_at": "2026-11-23T09:02:10+09:00",
   "note": "초기신호: 삼성 10/19 외인 +1,243,370주 종가 223,500 (ntfy uRtD3iy64xtc). 하이닉스 idle (10/16 -63,914, 10/19 -140,212, 종가 1,304,000)."
 }
