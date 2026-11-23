@@ -53,6 +53,12 @@ MAGIC_COLUMNS = [
     "fiscal_period", "fiscal_period_end", "filing_accession",
     "multi_class", "ebit_components", "debt_components",
 ]
+MAGIC_ALL_COLUMNS = [
+    "ticker", "name", "combined_rank", "ey_rank", "roc_rank",
+    "price", "price_date", "shares", "shares_source", "shares_kind", "shares_end",
+    "market_cap", "total_debt", "debt_source", "cash", "enterprise_value",
+    "ebit", "earnings_yield", "roc", "balance_sheet_end", "fiscal_period_end",
+]
 FSCORE_COLUMNS = [
     "ticker", "cik", "name", "sic", "sic_description",
     "f_score", "f_roa", "f_cfo", "f_droa", "f_accrual", "f_dlever", "f_dliquid",
@@ -684,11 +690,13 @@ def _screen(candidates, facts_map, fact_errors, covers, as_of: date, config: dic
         if fscore.get("ok"):
             fscore_ready.append(_fscore_public(base, fscore))
     ranked = rank_magic(magic_ready, int(config["magic"]["top_n"]))
+    ranked_all = rank_magic(magic_ready, -1)
     high = [row for row in fscore_ready if int(row["f_score"]) >= min_score]
     high.sort(key=lambda row: (-int(row["f_score"]), row["ticker"]))
     excluded.sort(key=lambda row: (row["reason"], row["ticker"]))
     return {
         "magic": ranked,
+        "magic_all": ranked_all,
         "fscore": high,
         "excluded": excluded,
         "universe_ciks": set(universe),
@@ -935,6 +943,8 @@ def _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s, g
     public["counts"]["price_failures"] = len(price_rows)
     write_meta(folder, public)
     write_table(folder, "magic_formula", public, screened["magic"], MAGIC_COLUMNS)
+    all_rows = [{key: row.get(key) for key in MAGIC_ALL_COLUMNS} for row in screened.get("magic_all") or []]
+    write_table(folder, "magic_formula_all", public, all_rows, MAGIC_ALL_COLUMNS)
     write_table(folder, "fscore", public, screened["fscore"], FSCORE_COLUMNS)
     write_table(folder, "insider_buying", public, insider_rows, INSIDER_COLUMNS)
     write_table(folder, "intersection", public, intersection, INTERSECT_COLUMNS)
