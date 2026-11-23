@@ -4,9 +4,9 @@ concurrency:
   group: cwally-flow-main
   cancel-in-progress: false
 
+# On-time 15:40 is cron-job.org (after retune_1540: the 0090b0 port-alerts job).
+# Manual / slot-watch fallback remains workflow_dispatch. No GitHub schedule backup.
 on:
-  schedule:
-    - cron: "40 6 * * 1-5"
   workflow_dispatch:
     inputs:
       gsai_only:

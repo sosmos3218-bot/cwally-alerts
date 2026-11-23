@@ -9,8 +9,10 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 | flow | 15:40 | 21:00 ~ 다음날 00:13 |
 | trend | 15:40 | 2026-11-03 은 큐에 잡히지 않음 (0 runs) |
 
-정시 실행은 외부 cron 서비스가 `workflow_dispatch`를 호출해서 맡고, GitHub cron은 **백업**으로 남긴다.
-새 GitHub cron 시간은 추가하지 않는다. (이 프로젝트에는 별도 서버가 없다.)
+정시 실행은 외부 cron 서비스가 `workflow_dispatch`를 호출해서 맡는다.
+반복 슬롯의 1:1 GitHub `schedule` 백업은 2026-11-23에 걷었다(늦게 와도 1분이 청구됨).
+늦은 안전망은 `slot-watch.yml`이 매일 23:00 KST에 슬롯 표시를 보고, 빠진 슬롯만 같은 저장소 워크플로로 dispatch한다.
+원샷 GitHub cron과 날짜가 박힌 일회성 cron은 그대로 둔다. 새 반복 GitHub cron은 추가하지 않는다.
 
 ## 외부 cron 후보
 
@@ -25,13 +27,11 @@ GitHub `schedule` 이벤트는 몇 시간씩 늦게 도착한다 (2026-09~10 실
 |---|---|---|---|---|
 | morning | 09:00 | 00:00 | `port-alerts.yml` | `{"job":"morning","oneoff_mode":"auto"}` |
 | afternoon | 15:20 | 06:20 | `port-alerts.yml` | `{"job":"afternoon","oneoff_mode":"auto"}` |
-| flow | 15:40 | 06:40 | `flow-alerts.yml` | 없음 |
-| trend | 15:40 | 06:40 | `trend-monitor.yml` | 없음 (반복 잡 "cwally trend-monitor (15:40 KST)", `action=register_trend`. 잡 번호는 머지 후 등록할 때 생김) |
-| 0090b0 | 15:41 | 06:41 | `port-alerts.yml` | `{"job":"0090b0","oneoff_mode":"auto"}` |
+| flow + trend + 0090b0 | 15:40 | 06:40 | `port-alerts.yml` | `{"job":"0090b0","oneoff_mode":"auto"}` (반복 잡 8588895, `action=retune_1540`. 같은 러너에서 flow·trend 동반 실행. 옛 flow 8588899 / trend 8782372 는 끄기만 하고 지우지 않음. 수동·slot-watch 는 각 워크플로 `workflow_dispatch` 유지) |
 | k203780 (장 마감 뒤, k079900 같이) | 19:00 | 10:00 | `port-alerts.yml` | `{"job":"k203780","oneoff_mode":"auto"}` (반복 잡 8698629 "cwally port after-close (19:00 KST)", 2026-10-22 18:07 승인, 18:29 승인으로 19:00 이동) |
 | mktpulse | 거래일 11:00 (~11/05, 2026-10-26부터 하루 1회) | 02:00 | `port-alerts.yml` | `{"job":"oneshot"}` (반복 잡 8705009 "cwally mktpulse 11 KST weekdays", picker가 `configs/mktpulse.json` `oneshot_kst`에서 고름, 2026-10-22 승인, 2026-10-26 승인으로 11시만) |
 | tslaspcx | 매일 07:30 | 22:30 (전날) | `port-alerts.yml` | `{"job":"tslaspcx","oneoff_mode":"auto"}` (반복 잡 8711128 "cwally tslaspcx daily (07:30 KST)", 2026-10-24 12:28 승인) |
-| tsla | 미국 정규장 30분 (09:30-16:00 뉴욕, 평일) | `*/30 13-21 * * 1-5` 백업 (코드가 뉴욕 시각으로 거름) | `port-alerts.yml` | `{"job":"tsla","oneoff_mode":"auto"}` (cron-job.org `action=register_tsla`, 시간대 America/New_York, 분 0과 30, 시 9-16, 월-금. 잡 번호는 머지 후 등록) |
+| tsla | 미국 정규장 1시간 (10:00-16:00 뉴욕, 평일; 코드가 09:30-16:00로 거름) | GitHub 백업 없음 | `port-alerts.yml` | `{"job":"tsla","oneoff_mode":"auto"}` (cron-job.org 잡 8746217 "cwally tsla US regular 1h (NY)", `action=register_tsla`, 시간대 America/New_York, 분 0, 시 10-16, 월-금) |
 | portlight (poly, ghtrend, isareb, polyinv, XRP watch 같이) | 일요일 21:00 | 12:00 | `port-alerts.yml` | `{"job":"portlight"}` (반복 잡 8723329 "cwally port portlight (Sun 21:00 KST)", 2026-10-26 10:48 승인, 11:59 확인, configs/portlight.json `cron_approved`) |
 
 ```
@@ -67,9 +67,9 @@ Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"k203780","oneoff_mode":"auto"}}`.
   `oneoff_mode=auto`가 없으면 기본값 `dry`로 돌아 발송이 안 되므로 꼭 넣는다.
 - 만든 방법: `cronjob-register.yml` `action=register_slot` (이 잡 하나만 만들 수 있음, 같은 제목이나 같은 시각 잡이 있으면 skip).
-- GitHub cron `0 10 * * 1-5`(19:00 KST)는 백업으로 남긴다. 늦게 온 백업은 k203780 state `last_sent_session`(같은 거래일 1번)과
-  k079900 state(`armed`/`fired_day`, `seen_acptno`)로 아무것도 다시 보내지 않는다. 두 실행은 concurrency 그룹으로 순서대로 돌고,
-  뒤 실행은 앞 실행이 push한 state를 checkout한다. 휴장일 평일에도 잡은 돌지만 스크립트가 조용히 끝난다.
+- 반복 GitHub 백업 cron은 없다. 정시 실패 시 `slot-watch.yml`(23:00 KST)이 `state/slots/k203780.json`을 보고 빠진 날만 dispatch한다.
+  같은 거래일 재실행은 k203780 state `last_sent_session`과 k079900 state(`armed`/`fired_day`, `seen_acptno`)가 막는다.
+  휴장일 평일에도 정시 잡은 돌지만 스크립트가 조용히 끝난다.
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
 ## Tesla SpaceX 합병 매일 07:30 반복 잡 (tslaspcx, 2026-10-24 12:28 승인)
@@ -77,8 +77,8 @@ Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
 - cron-job.org 반복 잡 1개 8711128 "cwally tslaspcx daily (07:30 KST)": 시간대 Asia/Seoul, 분 30, 시 7, 매일(주말 포함), 만료 없음.
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"tslaspcx","oneoff_mode":"auto"}}`.
 - 만든 방법: `cronjob-register.yml` `action=register_tslaspcx` (이 잡 하나만, 같은 제목이나 같은 07:30 dispatch 잡이 있으면 skip).
-- GitHub cron `30 22 * * *`(07:30 KST)는 백업. 늦게 온 백업은 `state/tslaspcx.json`의 `seen` 접수번호와 예측시장 무장 상태(`pm.move_armed`, `pm.levels`)로
-  아무것도 다시 보내지 않는다. 두 실행은 concurrency 그룹으로 순서대로 돌고 checkout 은 `ref: main`이라 앞 실행이 push한 state를 본다.
+- 반복 GitHub 백업 cron은 없다. 정시 실패 시 `slot-watch.yml`이 `state/slots/tslaspcx.json`을 보고 빠진 날만 dispatch한다.
+  같은 날 재실행은 `state/tslaspcx.json`의 `seen` 접수번호와 예측시장 무장 상태(`pm.move_armed`, `pm.levels`)가 막는다.
 - `job=tslaspcx` 수동 dispatch 는 `oneoff_mode=auto`가 아니면 dry(selftest + dry, 발송/state 없음).
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
@@ -90,8 +90,8 @@ Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
   URL과 헤더는 템플릿 잡 8588894(morning)와 같고 body만 `{"ref":"main","inputs":{"job":"portlight"}}`.
   portlight 실행 단계는 `oneoff_mode`를 읽지 않고 늘 `auto`로 돌므로 `oneoff_mode`는 넣지 않는다.
 - 만든 방법: `cronjob-register.yml` `action=register_portlight` (이 잡 하나만, 같은 제목이나 같은 일요일 21:00 dispatch 잡이 있으면 skip).
-- GitHub cron `0 12 * * 0`은 백업. 보통 월요일 새벽에 늦게 와서 `not_sunday`로 조용히 끝난다. 일요일 안에 오면
-  ISO 주 키(`%G-W%V`: portlight/poly `weekly_sent_week`, ghtrend `last_week`, polyinv `weekly_sent`)와 isareb `last_sent_month`로 다시 보내지 않는다.
+- 반복 GitHub 백업 cron은 없다. 일요일 정시가 빠지면 `slot-watch.yml`이 그날 23:00 KST에 dispatch한다.
+  같은 주 재실행은 ISO 주 키(`%G-W%V`: portlight/poly `weekly_sent_week`, ghtrend `last_week`, polyinv `weekly_sent`)와 isareb `last_sent_month`가 막는다.
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
 ## TSLA 정규장 가격 (2026-10-29 승인, 2026-11-20 1시간으로 축소)
@@ -99,30 +99,22 @@ Body: {"ref":"main","inputs":{"job":"morning","oneoff_mode":"auto"}}
 승인 기록: configs/tsla.json `cron_approved` 2026-10-29. 하루 종일 매시 cron 이 아니라, 미국 정규장 창만 본다.
 2026-11-20: 비공개 저장소 무료 분 한도 때문에 30분에서 1시간으로 줄였다. 단계마다 뉴욕 날짜에 한 번만 보내므로, 그 시각에도 가격이 선 아래면 같은 날 잡힌다. 09:30-10:00 사이 잠깐 닿았다가 10:00 전에 회복하면 놓친다. GRAB 도 같은 슬롯이다.
 
-- 정시: cron-job.org 반복 잡 1개 "cwally tsla US regular 30min (NY)" (제목은 그대로). 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0, 시 10부터 16, 월-금, 만료 없음(`expiresAt` 0, `ends_kst` null).
+- 정시: cron-job.org 반복 잡 1개 8746217 "cwally tsla US regular 1h (NY)". 시간대 America/New_York (서머타임은 그 시간대가 맞춤), 분 0, 시 10부터 16, 월-금, 만료 없음(`expiresAt` 0, `ends_kst` null).
   10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00. body 는 `{"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}`.
-- 적용: 머지 후 `cronjob-register.yml` `action=register_tsla`. dry_run 으로 먼저 확인한다. 같은 제목이나 예전 30분 일정이 있으면 스케줄만 PATCH 하고, 이미 1시간이면 skip (exit 10). URL, body, 헤더는 바꾸지 않는다. 이 워크플로를 실행하기 전에는 예전 30분 잡이 그대로 돈다.
+- 적용: `cronjob-register.yml` `action=register_tsla`. 같은 제목·옛 제목 "cwally tsla US regular 30min (NY)"·예전 30분 일정이 있으면 스케줄과 제목을 PATCH 한다. 이미 1시간이고 제목도 1h 이면 skip (exit 10). URL, body, 헤더는 바꾸지 않는다.
 - GitHub `*/30` 백업은 없다. 스케줄이 몇 시간 늦게 오면 09:30-16:00 문 밖에서 조용히 끝나고, 그래도 러너는 1분이 청구된다. cron-job.org 가 하루 통째로 죽으면 그 뉴욕 날짜의 가격 알림은 다음 세션으로 넘어간다.
 - 중복: `state/tsla.json` 의 `sent.s310`, `sent.s300` 에 뉴욕 날짜. 단계마다 그날 한 번. 300달러 이하면 310 안내는 같은 실행에서 보내지 않고 그날 보낸 것으로 기록한다.
 - `job=tsla` 수동 dispatch 는 `oneoff_mode=auto` 가 아니면 dry(selftest 와 가격 305, 295 출력, 발송과 state 없음).
 - 끄기: 콘솔에서 직접(삭제 모드는 원샷만 지움).
 
-## 추세 점검 평일 15:40 반복 잡 (trend-monitor, 2026-11-03)
+## 평일 15:40 합침 (0090b0 + flow + trend, 2026-11-23)
 
-2026-11-03 15:40 KST 에 `trend-monitor.yml` 의 GitHub schedule 이 큐에 잡히지 않았다 (runs 0). 같은 시각 port-alerts 는 돌았다. GitHub cron `40 6 * * 1-5` 는 늦은 백업으로 둔다.
+정시 3잡은 각각 1분으로 올림되어 청구된다. 2026-11-23부터 정시는 cron-job.org 잡 8588895 하나만 15:40에 `port-alerts.yml` `job=0090b0`을 호출하고, 그 러너가 flow와 trend를 이어서 돌린다. 슬롯 가드가 이미 표시된 동반 슬롯은 건너뛴다.
 
-- 정시: cron-job.org 반복 잡 1개 "cwally trend-monitor (15:40 KST)". 시간대 Asia/Seoul, 분 40, 시 15, 월~금(wdays 1~5), 만료 없음(`expiresAt` 0).
-  URL 은 `trend-monitor.yml` 의 workflow_dispatch 이다. port-alerts.yml, flow-alerts.yml 과 주소가 다르다.
-  헤더는 템플릿 잡 8588894(morning)에서 복사하고, body 는 `{"ref":"main","inputs":{}}` (date, demo, dry_run, allow_partial, force 는 워크플로 기본값).
-- 만든 방법: 머지 후 Actions 에서 워크플로 `cwally-cronjob-register` 를 고르고 `action=register_trend` 로 실행한다. `dry_run` 을 켜면 만들기 전에 검사만 한다.
-  같은 제목이 이미 있으면(꺼져 있어도) skip 한다. 같은 trend-monitor.yml 주소가 평일 15:40 일정이거나, 다음 평일 15:40 에 울리면 skip 한다 (exit 10, 워크플로는 성공).
-  15:40 flow-alerts 잡과 15:41 port-alerts(0090b0) 잡은 URL 이 달라서 건너뛰지 않고, 고치지도 않는다. 이 액션은 새 잡만 PUT 하고 기존 잡을 덮어쓰지 않는다.
-- 중복: concurrency 그룹 `cwally-trend-monitor` 라서 두 번째 실행은 첫 실행이 끝난 뒤에 시작한다.
-  시작 전에 origin/main 의 `state/slots/trend.json` 을 본다. 같은 KST 날이면 스크립트를 돌리지 않고 끝난다.
-  `trend_monitor/output/YYYY-MM-DD.json` (서울 날짜)이 이미 main 에 있어도 끝난다.
-  실제 실행(스케줄, 또는 date/demo/dry_run 없이 온 dispatch)은 스크립트보다 먼저 슬롯을 표시한다. 실패해도 그 표시를 push 해서 늦은 cron 이 같은 날 요약을 다시 보내지 않는다.
-  demo, dry_run, 날짜를 직접 넣은 실행은 슬롯을 표시하지 않고 소모하지도 않는다. 같은 날 다시 돌리려면 dispatch 입력 `force=true`.
-- 끄기: 콘솔에서 직접. `action=delete` 는 원샷 제목만 지우므로 이 반복 잡은 거절한다.
+- 적용: 코드 머지 후 `cronjob-register.yml` `action=retune_1540`. 잡 8588895 일정만 15:41→15:40으로 PATCH 하고, 8588899(flow-alerts.yml)·8782372(trend-monitor.yml)는 `enabled=false`로만 끈다(삭제 없음, URL/body/헤더 그대로). 주소가 다르면 거부한다.
+- `flow-alerts.yml`과 `trend-monitor.yml`의 GitHub `schedule` 백업도 제거했다. 수동 실행과 slot-watch 재실행은 각 파일의 `workflow_dispatch`로 남긴다. 0090b0가 빠진 날 slot-watch는 0090b0만 다시 돌리고(동반 포함), 0090b0는 표시됐는데 flow/trend만 빠졌으면 해당 워크플로만 dispatch한다.
+- 중복: 슬롯 파일 `state/slots/0090b0.json`, `flow.json`, `trend.json`. trend는 서울 날짜의 `trend_monitor/output/YYYY-MM-DD.json`이 main에 있어도 건너뛴다.
+- 끄기: 콘솔에서 직접. `action=delete`는 원샷만 지우므로 이 반복 잡들은 거절한다.
 
 ## 원샷 (`job=oneshot`)
 
@@ -143,6 +135,10 @@ Body: {"ref":"main","inputs":{"job":"oneshot"}}
 - 등록할 시각 목록: `python scripts/oneshot_pick.py plan --from 2026-10-06 --to 2026-10-31` (`oneshot` 줄만 등록).
 - 기본 인자는 `auto`(oklo `event`, hce `daily`). 다른 인자는 config의 `oneshot_args`에 시각별로 둔다(예: yencarry `boj_press`).
 - 확인용 수동 실행: 원샷이 없는 시각에 `job=oneshot`을 dispatch하면 `due=[]`로 skip되어야 한다.
+
+## 늦은 안전망 (`slot-watch.yml`, 2026-11-23)
+
+cron-job.org 실패 알림(이메일)이 이 저장소의 list 출력만으로는 확인되지 않아, 반복 슬롯의 1:1 GitHub 백업 대신 하루 한 번 점검한다. `0 14 * * *`(23:00 KST). 오늘 표시가 없는 슬롯만 같은 저장소 워크플로로 dispatch한다. TSLA 정규장 시간당 점검은 재실행하지 않는다. 수동 확인은 `dry_run=true`로 표시만 볼 수 있다.
 
 ## 중복 방지 (slot_guard)
 

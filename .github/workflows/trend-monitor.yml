@@ -1,13 +1,11 @@
-# 평일 15:40 KST. 승인 2026-11-02. UTC cron 40 6 * * 1-5 는 늦은 백업.
-# 정시 실행은 cron-job.org 가 workflow_dispatch 로 호출한다 (docs/ontime-dispatch.md, register_trend).
+# 평일 15:40 KST. 승인 2026-11-02.
+# 정시 실행은 0090b0 port-alerts 러너에 합쳐졌다 (retune_1540). 수동/slot-watch 는 workflow_dispatch.
 # 같은 KST 날에 이미 돌았거나 그날 output 이 main 에 있으면 조용히 끝난다.
 # 휴장이면 스크립트가 종료코드 0 으로 끝나고 알림을 보내지 않습니다.
 
 name: trend-monitor
 
 on:
-  schedule:
-    - cron: "40 6 * * 1-5"
   workflow_dispatch:
     inputs:
       date:

@@ -6,10 +6,9 @@ concurrency:
 
 on:
   schedule:
-    - cron: "0 0 * * 1-5"
-    - cron: "20 6 * * 1-5"
-    - cron: "40 6 * * 1-5"
-    - cron: "0 12 * * 0"
+    # Recurring on-time slots (morning/afternoon/15:40/19:00/tslaspcx/portlight)
+    # are cron-job.org only. GitHub 1:1 backups were replaced by slot-watch.yml
+    # (23:00 KST daily). Do not add new GitHub crons for those slots.
     - cron: "15 7 18 12 *"
     - cron: "10 20 8 12 *"
     - cron: "30 22 2 12 *"
@@ -52,13 +51,9 @@ on:
     - cron: "0 4 19 2 *"
     - cron: "10 0 20 2 *"
     - cron: "10 0 21 2 *"
-    # k203780 daily KRX trading days 19:00 KST (after Mirae daily NAV). repeating cron approved 2026-10-22, moved from 0 9 to 0 10 (approved 2026-10-22 18:29 KST). GitHub backup; on-time = cron-job.org job 8698629
-    - cron: "0 10 * * 1-5"
-    # tslaspcx daily 07:30 KST backup (on-time: cron-job.org daily job, job=tslaspcx oneoff_mode=auto); state dedupe
-    - cron: "30 22 * * *"
-    # tsla on-time is cron-job.org only (hourly 10:00-16:00 America/New_York). A GitHub */30 backup
-    # arrives hours late, misses the 09:30-16:00 gate, and still bills a whole minute, so it is not scheduled.
-    # A leftover event from the retired cron is skipped in Decide jobs.
+    # k203780 19:00 KST, tslaspcx 07:30 KST, portlight Sun 21:00, and the weekday
+    # morning/afternoon/15:40 slots: on-time = cron-job.org; late fallback = slot-watch.yml.
+    # tsla on-time is cron-job.org only (hourly 10:00-16:00 America/New_York).
   workflow_dispatch:
     inputs:
       job:
@@ -168,7 +163,7 @@ permissions:
 jobs:
   port:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v6
         with:
@@ -260,7 +255,7 @@ jobs:
             # once per KST day per slot: a late GitHub cron or a duplicate dispatch skips (docs/ontime-dispatch.md).
             # To re-run a slot by hand on the same day, dispatch job=all or the single alert's job id.
             # Dry workflow_dispatch (oneoff_mode!=auto) skips check+mark so tests never burn the daily slot (pt20u).
-            # k203780 and tslaspcx are included so the late GitHub backup does not repeat the whole bundle.
+            # k203780 and tslaspcx are included so a leftover GitHub schedule or a slot-watch replay does not repeat the bundle.
             if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.oneoff_mode || 'dry' }}" != "auto" ]; then
               echo "dry dispatch: skip slot_guard check for $JOB"
             else
@@ -2463,6 +2458,16 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/xmi1810_monitor.py selftest; fi
           python scripts/xmi1810_monitor.py "$MODE"
 
+      - name: Run 15:40 flow + trend (same runner as 0090b0)
+        # Merged so flow-alerts and trend-monitor do not each bill a separate minute.
+        # Slot guards skip a companion that already ran. oneoff_mode!=auto is dry.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: bash scripts/run_1540_companions.sh
       - name: Archive ntfy
         if: always()
         env:
@@ -2482,7 +2487,11 @@ jobs:
         if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.oneoff_mode != 'auto')
         # retry pull --rebase + push 5 times (5/15/30/60 s), state conflicts keep this run's state (pt13u)
         run: |
-          bash scripts/persist_state.sh "chore: update alert state [skip ci]" state
+          paths=(state)
+          if [ "${{ steps.pick.outputs.job }}" = "0090b0" ]; then
+            paths+=(trend_monitor/output)
+          fi
+          bash scripts/persist_state.sh "chore: update alert state [skip ci]" "${paths[@]}"
       - name: Upload state artifact (persist failed)
         if: failure() && steps.persist.outputs.persist_failed == '1'
         uses: actions/upload-artifact@v4

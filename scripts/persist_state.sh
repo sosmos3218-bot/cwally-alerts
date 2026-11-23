@@ -38,11 +38,11 @@ resolve_rebase() {
           git checkout --ours -- "$f"
           "$(command -v python || command -v python3)" scripts/ntfy_archive.py || echo "persist: archive regenerate failed; keep upstream archive"
           git add -- "$f" ;;
-        state/*)
-          echo "persist: conflict $f -> keep this run's state (--theirs)"
+        state/*|trend_monitor/output/*)
+          echo "persist: conflict $f -> keep this run's file (--theirs)"
           if git checkout --theirs -- "$f" 2>/dev/null; then git add -- "$f"; else git rm -q --cached -- "$f" 2>/dev/null || git add -A -- "$f"; fi ;;
         *)
-          echo "persist: conflict outside state/ ($f); abort this round"
+          echo "persist: conflict outside state/ and trend output ($f); abort this round"
           git rebase --abort; return 1 ;;
       esac
     done < <(git diff --name-only --diff-filter=U)

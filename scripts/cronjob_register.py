@@ -85,9 +85,16 @@ TSLA price mode, CRONJOB_ACTION=register_tsla (approved 2026-10-29, configs/tsla
   ONE recurring job TSLA_TITLE. Since 2026-11-20 the schedule is America/New_York, minute 0,
   hours 10-16, Mon-Fri (hourly, inside 09:30-16:00). expiresAt 0. Body
   {"ref":"main","inputs":{"job":"tsla","oneoff_mode":"auto"}}.
-  If that title or the old half-hour NY schedule already exists, PATCH only the schedule
-  (URL, body, headers untouched). Skip (exit 10) when the schedule is already hourly.
+  If that title, the old 30min title, or the old half-hour NY schedule already exists,
+  PATCH schedule and/or title to the hourly 1h title (URL, body, headers untouched).
+  Skip (exit 10) when the schedule is already hourly and the title is already TSLA_TITLE.
   Creates the job only when none exists. Delete mode refuses it. DST follows the NY timezone.
+
+retune_1540 (2026-11-23): merge weekday 15:40 into the 0090b0 port-alerts job.
+  Allowlist only: PATCH job 8588895 schedule to 15:40 Asia/Seoul weekdays (URL/body/headers
+  untouched); set jobs 8588899 (flow-alerts.yml) and 8782372 (trend-monitor.yml) enabled=false.
+  Does not delete those jobs. Refuses if a job's URL/body is not the expected dispatch.
+  Skip (exit 10) when already in that state.
 
 Trend mode, CRONJOB_ACTION=register_trend (2026-11-03, docs/ontime-dispatch.md):
   Creates the ONE recurring job TREND_TITLE: Asia/Seoul, minute 40, hour 15, Mon-Fri, no expiry, body
@@ -147,7 +154,8 @@ TSLASPCX_TITLE = "cwally tslaspcx daily (07:30 KST)"
 TSLASPCX_BODY = {"ref": "main", "inputs": {"job": "tslaspcx", "oneoff_mode": "auto"}}
 TSLASPCX_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [30], "hours": [7],
                      "mdays": [-1], "months": [-1], "wdays": [-1]}
-TSLA_TITLE = "cwally tsla US regular 30min (NY)"
+TSLA_TITLE = "cwally tsla US regular 1h (NY)"
+TSLA_TITLE_OLD = "cwally tsla US regular 30min (NY)"
 TSLA_BODY = {"ref": "main", "inputs": {"job": "tsla", "oneoff_mode": "auto"}}
 # Hourly 10:00-16:00 NY. The old half-hour 09:00-16:30 shape is still recognized so register_tsla patches it.
 TSLA_SCHEDULE = {"timezone": "America/New_York", "expiresAt": 0, "minutes": [0],
@@ -165,6 +173,11 @@ TREND_TITLE = "cwally trend-monitor (15:40 KST)"
 TREND_BODY = {"ref": "main", "inputs": {}}
 TREND_SCHEDULE = {"timezone": "Asia/Seoul", "expiresAt": 0, "minutes": [40], "hours": [15],
                   "mdays": [-1], "months": [-1], "wdays": [1, 2, 3, 4, 5]}
+FLOW_URL = "https://api.github.com/repos/sosmos3218-bot/cwally-alerts/actions/workflows/flow-alerts.yml/dispatches"
+KST1540_0090B0_JOB_ID = 8588895  # was 15:41; retune_1540 moves it to 15:40
+KST1540_FLOW_JOB_ID = 8588899
+KST1540_TREND_JOB_ID = 8782372
+KST1540_SCHEDULE = dict(TREND_SCHEDULE)
 
 SKIP = 10
 BAD_INPUT = 2
@@ -441,8 +454,8 @@ def run_delete() -> int:
             continue
         problems = oneshot_problems(j)
         title_now = (j.get("title") or "").strip()
-        if title_now in (PULSE_TITLE,) + PULSE_OLD_TITLES + (TSLA_TITLE, TSLASPCX_TITLE, PORTLIGHT_TITLE, TREND_TITLE) or jid in (SLOT_JOB_ID, PULSE_JOB_ID):
-            problems.append("recurring job (mktpulse, after-close, tslaspcx, portlight, tsla, or trend-monitor); never deleted here")
+        if title_now in (PULSE_TITLE,) + PULSE_OLD_TITLES + (TSLA_TITLE, TSLA_TITLE_OLD, TSLASPCX_TITLE, PORTLIGHT_TITLE, TREND_TITLE) or jid in (SLOT_JOB_ID, PULSE_JOB_ID, KST1540_0090B0_JOB_ID, KST1540_FLOW_JOB_ID, KST1540_TREND_JOB_ID):
+            problems.append("recurring job (mktpulse, after-close, tslaspcx, portlight, tsla, 15:40, or trend-monitor); never deleted here")
         if problems:
             refused.append(f"{jid} ({(j.get('title') or '').strip()[:80]}): " + "; ".join(problems))
     if refused:
@@ -792,7 +805,7 @@ def run_register_tsla(now: datetime) -> int:
         raise Stop(API_ERROR, "cron-job.org job list is incomplete (someFailed); not risking a duplicate")
     found = None
     for j in res.get("jobs") or []:
-        if (j.get("title") or "").strip() == TSLA_TITLE or is_tsla_like(j):
+        if (j.get("title") or "").strip() in (TSLA_TITLE, TSLA_TITLE_OLD) or is_tsla_like(j):
             found = j
             break
     if found is not None:
@@ -800,15 +813,20 @@ def run_register_tsla(now: datetime) -> int:
         got = call("GET", f"/jobs/{jid}", key).get("jobDetails") or {}
         if (got.get("url") or "").rstrip("/") != DISPATCH_URL or not _tsla_body_ok(got):
             raise Stop(API_ERROR, f"job {jid} is not the tsla auto dispatch; not patching")
-        if _schedule_key(got.get("schedule") or {}) == _schedule_key(TSLA_SCHEDULE):
-            print("skip: tsla price job already on the hourly schedule:")
+        patch: dict = {}
+        if _schedule_key(got.get("schedule") or {}) != _schedule_key(TSLA_SCHEDULE):
+            patch["schedule"] = dict(TSLA_SCHEDULE)
+        if (got.get("title") or "").strip() != TSLA_TITLE:
+            patch["title"] = TSLA_TITLE
+        if not patch:
+            print("skip: tsla price job already hourly with the 1h title:")
             print_job(got)
             return SKIP
         if env("CRONJOB_DRY_RUN") == "1":
-            print(f"dry run ok: would patch job {jid} to hourly 10:00-16:00 America/New_York, minute 0")
+            print(f"dry run ok: would patch job {jid} {patch}")
             return 0
-        call("PATCH", f"/jobs/{jid}", key, {"job": {"schedule": dict(TSLA_SCHEDULE)}})
-        print(f"patched tsla job {jid} to hourly 10:00-16:00 America/New_York")
+        call("PATCH", f"/jobs/{jid}", key, {"job": patch})
+        print(f"patched tsla job {jid}: {', '.join(patch)}")
         print_job(call("GET", f"/jobs/{jid}", key).get("jobDetails") or {})
         return 0
     template = load_template(key)
@@ -1690,6 +1708,65 @@ def run_list_bodies() -> int:
         raise
 
 
+
+def _body_job(got: dict) -> str | None:
+    try:
+        body = json.loads((got.get("extendedData") or {}).get("body") or "null")
+        return ((body or {}).get("inputs") or {}).get("job")
+    except (ValueError, AttributeError, TypeError):
+        return None
+
+
+def _is_disabled(job: dict) -> bool:
+    return job.get("enabled") in (False, 0, "0", "false", "False", None)
+
+
+def run_retune_1540(now: datetime) -> int:
+    """Merge weekday 15:40 into the 0090b0 port-alerts job. Does not delete jobs."""
+    del now
+    key = env("CRONJOB_API_KEY")
+    if not key:
+        raise Stop(BAD_INPUT, "CRONJOB_API_KEY is not set")
+    b0 = call("GET", f"/jobs/{KST1540_0090B0_JOB_ID}", key).get("jobDetails") or {}
+    flow = call("GET", f"/jobs/{KST1540_FLOW_JOB_ID}", key).get("jobDetails") or {}
+    trend = call("GET", f"/jobs/{KST1540_TREND_JOB_ID}", key).get("jobDetails") or {}
+    print("current 0090b0:")
+    print_job(b0)
+    print("current flow:")
+    print_job(flow)
+    print("current trend:")
+    print_job(trend)
+    if (b0.get("url") or "").rstrip("/") != DISPATCH_URL or _body_job(b0) != "0090b0":
+        raise Stop(BAD_INPUT, f"job {KST1540_0090B0_JOB_ID} is not the port-alerts 0090b0 dispatch; not retuning")
+    if (flow.get("url") or "").rstrip("/") != FLOW_URL:
+        raise Stop(BAD_INPUT, f"job {KST1540_FLOW_JOB_ID} is not flow-alerts.yml; not disabling")
+    if (trend.get("url") or "").rstrip("/") != TREND_URL:
+        raise Stop(BAD_INPUT, f"job {KST1540_TREND_JOB_ID} is not trend-monitor.yml; not disabling")
+    want_b0 = _schedule_key(b0.get("schedule") or {}) == _schedule_key(KST1540_SCHEDULE)
+    want_flow = _is_disabled(flow)
+    want_trend = _is_disabled(trend)
+    if want_b0 and want_flow and want_trend:
+        print("skip: 15:40 already merged (0090b0 at 15:40, flow and trend disabled)")
+        return SKIP
+    if env("CRONJOB_DRY_RUN") == "1":
+        print("dry run ok: would set job 8588895 to weekdays 15:40 Asia/Seoul and disable 8588899 and 8782372 (no delete)")
+        return 0
+    if not want_b0:
+        call("PATCH", f"/jobs/{KST1540_0090B0_JOB_ID}", key, {"job": {"schedule": dict(KST1540_SCHEDULE)}})
+        print(f"patched job {KST1540_0090B0_JOB_ID} schedule to 15:40")
+    if not want_flow:
+        call("PATCH", f"/jobs/{KST1540_FLOW_JOB_ID}", key, {"job": {"enabled": False}})
+        print(f"disabled job {KST1540_FLOW_JOB_ID} (flow-alerts 15:40); not deleted")
+    if not want_trend:
+        call("PATCH", f"/jobs/{KST1540_TREND_JOB_ID}", key, {"job": {"enabled": False}})
+        print(f"disabled job {KST1540_TREND_JOB_ID} (trend-monitor 15:40); not deleted")
+    print("after:")
+    print_job(call("GET", f"/jobs/{KST1540_0090B0_JOB_ID}", key).get("jobDetails") or {})
+    print_job(call("GET", f"/jobs/{KST1540_FLOW_JOB_ID}", key).get("jobDetails") or {})
+    print_job(call("GET", f"/jobs/{KST1540_TREND_JOB_ID}", key).get("jobDetails") or {})
+    return 0
+
+
 def main() -> int:
     reset_call_stats()
     now = datetime.now(KST)
@@ -1718,10 +1795,12 @@ def main() -> int:
             return run_register_tsla(now)
         if action == "register_trend":
             return run_register_trend(now)
+        if action == "retune_1540":
+            return run_retune_1540(now)
         if action == "fix_slot_oneoff":
             return run_fix_slot_oneoff(now)
         if action != "register":
-            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, fix_slot_oneoff, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend or delete, got {action!r}")
+            raise Stop(BAD_INPUT, f"action must be register, register_slot, update_slot, fix_slot_oneoff, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend, retune_1540 or delete, got {action!r}")
         title, at, exp = parse_inputs(now)
         names = check_oneshot_kst(at)
         key = env("CRONJOB_API_KEY")

@@ -1,0 +1,46 @@
+# Sparse safety net for recurring on-time slots that cron-job.org already fires.
+# GitHub 1:1 backup crons billed a full minute even when they no-oped hours late.
+# This runs once a day at 23:00 KST and only dispatches a slot that has no mark today.
+name: slot-watch
+
+on:
+  schedule:
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Check slot marks only; do not dispatch missed slots"
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: cwally-slot-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Check slots and dispatch misses
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SLOT_WATCH_DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: python scripts/slot_watch.py
+      - name: Notify ops on failure
+        if: failure()
+        env:
+          NTFY_SERVER: https://ntfy.sh
+        run: python3 scripts/ops_notify.py slot-watch watch

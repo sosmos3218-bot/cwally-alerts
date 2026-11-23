@@ -16,9 +16,10 @@ name: cwally-cronjob-register
 # (weekdays 11:00 Asia/Seoul, expires 2026-11-05 11:59:59); URL, body and auth unchanged.
 # action=register_tslaspcx (approved in chat 2026-10-24 12:28 KST, configs/tslaspcx.json) creates only
 # "cwally tslaspcx daily (07:30 KST)" (every day 07:30 Asia/Seoul, body job=tslaspcx oneoff_mode=auto); skips if it exists.
-# action=register_tsla (approved 2026-10-29, configs/tsla.json) creates only
-# "cwally tsla US regular 30min (NY)" (America/New_York, minute 0, hours 10-16, Mon-Fri,
-# body job=tsla oneoff_mode=auto). An existing half-hour job is patched to this schedule. The monitor gates 09:30-16:00.
+# action=register_tsla (approved 2026-10-29, configs/tsla.json) creates or retunes
+# "cwally tsla US regular 1h (NY)" (America/New_York, minute 0, hours 10-16, Mon-Fri,
+# body job=tsla oneoff_mode=auto). An existing half-hour job or 30min title is patched. The monitor gates 09:30-16:00.
+# action=retune_1540 moves job 8588895 (0090b0) to 15:40 and disables 8588899 and 8782372 (no delete).
 # action=register_trend (2026-11-03, docs/ontime-dispatch.md) creates only
 # "cwally trend-monitor (15:40 KST)": weekdays 15:40 Asia/Seoul, URL trend-monitor.yml,
 # body {"ref":"main","inputs":{}}. Skips if that title or that URL at 15:40 already exists.
@@ -34,9 +35,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | list_bodies = read-only GET of each port-alerts.yml dispatch body | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create or retune the TSLA US-regular hourly NY job | register_trend = create the weekday 15:40 KST trend-monitor job"
+        description: "register (default) = create one oneshot job | register_slot = create the fixed 19:00 KST after-close job | update_slot = move job 8698629 to 19:00 KST | delete = remove the job_ids below | list = read-only job list | list_bodies = read-only GET of each port-alerts.yml dispatch body | register_pulse = create the mktpulse 11 KST weekday job | update_pulse = move job 8705009 to 11 KST only | register_tslaspcx = create the daily 07:30 KST tslaspcx job | register_portlight = create the Sunday 21:00 KST portlight job | register_tsla = create or retune the TSLA US-regular hourly NY job (also renames 30min→1h title) | register_trend = create the weekday 15:40 KST trend-monitor job | retune_1540 = move 0090b0 job 8588895 to 15:40 and disable flow/trend cron-job.org jobs (no delete)"
         type: choice
-        options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend]
+        options: [register, register_slot, update_slot, fix_slot_oneoff, delete, list, list_bodies, register_pulse, update_pulse, register_tslaspcx, register_portlight, register_tsla, register_trend, retune_1540]
         default: register
       job_ids:
         description: "action=delete only: comma-separated cron-job.org job ids (one-shot triggers of this repo only)"
