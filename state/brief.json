@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-23T07:56:57.630121+09:00",
+  "updated_at": "2026-11-24T08:15:46.963015+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -279,6 +279,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-23T07:56:57.630121+09:00"
+    },
+    "20261124-dc-governors.json#d48b3be9aa54b7d2": {
+      "file": "20261124-dc-governors.json",
+      "title": "[BRIEF] SPY 데이터센터 규제 텍사스, 오하이오 | 검토",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-24T08:15:46.963015+09:00"
     }
   },
   "rejected": {},
