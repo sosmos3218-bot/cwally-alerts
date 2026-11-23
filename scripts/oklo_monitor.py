@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""OKLO: 2x zone on morning. Nov 11 classifies, Nov 12-13 cross-check SEC."""
+"""OKLO: 1x/2x net-cash lines on morning. Nov 11 classified, Nov 12-13 cross-checked SEC."""
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -72,6 +73,7 @@ def filing_text(item: dict) -> tuple[str, str]:
     text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", raw)
     text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
     text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
     return re.sub(r"\s+", " ", text)[:200000], url
 
 
@@ -108,7 +110,65 @@ def parse_checklist(text: str) -> dict:
             aurora = "2028 또는 지연 문구 있음"
         else:
             aurora = "언급 있음, 임계 문구 없음"
-    return {"cash_bil": cash, "capex_mil": capex, "atm_shares": atm_shares, "atm_gross_bil": atm_gross, "aurora": aurora}
+    shares = parse_shares(text)
+    debt = parse_debt_bil(text)
+    net = None
+    nps = None
+    if cash is not None:
+        net = round(cash - (debt or 0), 6)
+        if shares:
+            nps = round(net * 1_000_000_000 / shares, 2)
+    return {
+        "cash_bil": cash,
+        "debt_bil": debt,
+        "shares": shares,
+        "net_cash_bil": net,
+        "net_cash_per_share": nps,
+        "capex_mil": capex,
+        "atm_shares": atm_shares,
+        "atm_gross_bil": atm_gross,
+        "aurora": aurora,
+    }
+
+
+def parse_shares(text: str) -> int | None:
+    m = re.search(
+        r"([0-9]{1,3}(?:,[0-9]{3})+)\s+and\s+[0-9,]+\s+shares issued and outstanding as of September 30, 2026",
+        text,
+        re.I,
+    )
+    if not m:
+        m = re.search(
+            r"Balance as of September 30, 2026\s+([0-9]{1,3}(?:,[0-9]{3})+)",
+            text,
+            re.I,
+        )
+    if not m:
+        return None
+    return int(m.group(1).replace(",", ""))
+
+
+def parse_debt_bil(text: str) -> float | None:
+    """Interest-bearing debt only. Asset-side 'debt securities' and leases are ignored."""
+    if not re.search(
+        r"\b(long-term debt|short-term debt|notes payable|convertible (?:senior )?notes|borrowings|credit facility|term loan)\b",
+        text,
+        re.I,
+    ):
+        return 0.0
+    # A label hit can still be a narrative or securities footnote; require it near a $ amount
+    # under the liabilities discussion and not as 'marketable debt securities'.
+    hits = 0
+    for m in re.finditer(
+        r"\b(long-term debt|short-term debt|notes payable|convertible (?:senior )?notes|borrowings|credit facility|term loan)\b.{0,80}\$\s*([0-9]{1,3}(?:,[0-9]{3})+)",
+        text,
+        re.I,
+    ):
+        window = text[max(0, m.start() - 40) : m.end()]
+        if re.search(r"marketable debt securities", window, re.I):
+            continue
+        hits += 1
+    return 0.0 if hits == 0 else None
 
 
 def snippet(text: str, pattern: str) -> str:
@@ -180,6 +240,8 @@ def remember_class(state: dict, today: str, kind: str) -> None:
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").lower()
+    if mode in {"selftest", "self-test"}:
+        return selftest()
     dry = mode == "dry" or os.environ.get("OKLO_DRY") == "1"
     cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
     state = load_json(STATE_PATH, {"zone": "above", "last_filing": cfg["last_known_filing"], "empty_dates": [], "fail_dates": [], "verify_dates": []})
@@ -187,6 +249,9 @@ def main() -> int:
     today = now.date().isoformat()
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     base = cfg["baseline"]
+    two_txt = f"{base['two_x']:.2f}"
+    one_txt = f"{float(base.get('one_x') or base['net_cash_per_share']):.2f}"
+    rearm = float(base.get("one_x_rearm") or round(float(one_txt) * 1.03, 2))
     event = mode == "event"
     verify = event and today in VERIFY_DAYS
     if event and now.year != int(cfg.get("event_year", 2026)) and mode not in {"force", "dry"}:
@@ -210,7 +275,7 @@ def main() -> int:
         alerts.append(
             (
                 "[OKLO] 주가 조회 실패 | 2배 조건 미확인",
-                body(stamp, f"주가 조회 실패. {qerr or '빈 응답'}. 조건 미충족이 아닙니다.", "증권 앱에서 OKLO를 직접 보세요. 32.32달러 이탈로 판정하지 마세요.", "다음 평일 09:00 KST에 재시도합니다.", "이번 알림으로 사지 마세요.", "조회 실패를 2배 진입이나 정상으로 취급."),
+                body(stamp, f"주가 조회 실패. {qerr or '빈 응답'}. 조건 미충족이 아닙니다.", f"증권 앱에서 OKLO를 직접 보세요. {two_txt}달러 이탈로 판정하지 마세요.", "다음 평일 09:00 KST에 재시도합니다.", "이번 알림으로 사지 마세요.", "조회 실패를 2배 진입이나 정상으로 취급."),
                 4,
             )
         )
@@ -219,11 +284,11 @@ def main() -> int:
         prev = state.get("zone") or "above"
         if zone != prev or mode == "force":
             title = "[OKLO] 순현금 2배 이하 | 분할 관심" if zone == "buy" else "[OKLO] 순현금 2배 위 | 관심 해제"
-            action = "32.32달러 이하입니다. 새 돈은 한 번에 넣지 마세요." if zone == "buy" else "가격 조건은 꺼졌습니다. 관망 유지."
+            action = f"{two_txt}달러 이하입니다. 새 돈은 한 번에 넣지 마세요." if zone == "buy" else "가격 조건은 꺼졌습니다. 관망 유지."
             alerts.append(
                 (
                     title,
-                    body(stamp, f"OKLO {price:.2f}달러, 순현금 {base['net_cash_per_share']}달러의 {multiple:.2f}배. 구간 {prev} -> {zone}.", action, "11일 08:20은 판정, 12~13일 08:20은 SEC 대조.", "32.32달러 복귀는 가격 관심 해제. 손절 신호는 아닙니다.", "2배 터치를 확정 매수로 쓰기. 신용, 미수, 추격."),
+                    body(stamp, f"OKLO {price:.2f}달러, 순현금 {base['net_cash_per_share']}달러의 {multiple:.2f}배. 구간 {prev} -> {zone}.", action, "평일 09:00 KST에 1배, 2배 선을 다시 봅니다.", f"{two_txt}달러 복귀는 가격 관심 해제. 손절 신호는 아닙니다.", "2배 터치를 확정 매수로 쓰기. 신용, 미수, 추격."),
                     4 if zone == "buy" else 3,
                 )
             )
@@ -233,6 +298,31 @@ def main() -> int:
             state["zone"] = zone
             state["last_price"] = price
             print("price zone unchanged; silent")
+
+        one_x = float(base.get("one_x") or base["net_cash_per_share"])
+        armed = state.get("one_x_armed")
+        if armed is None:
+            armed = True if price is None else price > one_x
+            state["one_x_armed"] = armed
+        if armed and price <= one_x:
+            alerts.append(
+                (
+                    "[OKLO] 순현금 1배 이하 | 기준선 터치",
+                    body(
+                        stamp,
+                        f"OKLO {price:.2f}달러, 순현금 {base['net_cash_per_share']}달러의 {multiple:.2f}배. 1배 선 {one_txt}달러.",
+                        f"{one_txt}달러 이하입니다. 새 돈은 한 번에 넣지 마세요.",
+                        "가격이 재장전 선 위로 올라가면 1배 알림을 다시 켭니다.",
+                        f"재장전 선은 {rearm:.2f}달러입니다. 손절 신호는 아닙니다.",
+                        "1배 터치를 확정 매수로 쓰기. 신용, 미수, 추격.",
+                    ),
+                    3,
+                )
+            )
+            state["one_x_armed"] = False
+        elif (not armed) and price >= rearm:
+            state["one_x_armed"] = True
+            print(f"one_x re-armed at {price:.2f} >= {rearm:.2f}; silent")
 
     filing = None
     ferr = None
@@ -250,6 +340,30 @@ def main() -> int:
             parsed = parse_checklist(text)
         except Exception as exc:
             ferr = str(exc)
+
+    parsed_cash = (state.get("last_parsed") or {}).get("cash_bil")
+    if not event and parsed_cash is None:
+        retry_url = doc_url or state.get("last_doc_url")
+        if retry_url and not text:
+            try:
+                acc = "retry"
+                raw = fetch(retry_url)
+                text = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", raw)
+                text = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", text)
+                text = re.sub(r"<[^>]+>", " ", text)
+                text = html.unescape(text)
+                text = re.sub(r"\s+", " ", text)[:200000]
+                parsed = parse_checklist(text)
+                if retry_url and not state.get("last_doc_url"):
+                    state["last_doc_url"] = retry_url
+            except Exception as exc:
+                print(f"retry parse failed: {exc}")
+        if parsed.get("cash_bil") is not None:
+            state["last_parsed"] = parsed
+            print(
+                f"backfilled last_parsed cash_bil={parsed['cash_bil']} "
+                f"shares={parsed.get('shares')} net={parsed.get('net_cash_per_share')}"
+            )
 
     if verify and today not in state.get("verify_dates", []):
         prior = state.get("nov11_class") or "11일 판정 없음"
@@ -329,10 +443,58 @@ def main() -> int:
         emit(cfg, title, msg, pri, dry)
     if not alerts:
         print("no alert")
+    if dry:
+        print("DRY RUN: no publish, state not written")
+        return 0
     state["updated_at"] = now.isoformat()
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
+
+
+
+def selftest() -> int:
+    fails = 0
+
+    def check(label, got, want):
+        nonlocal fails
+        ok = got == want
+        fails += not ok
+        print(("PASS " if ok else "FAIL ") + f"{label}: got={got!r} want={want!r}")
+
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    base = cfg["baseline"]
+    check("valid_until", cfg.get("valid_until"), "2027-06-30")
+    check("ends_kst", cfg.get("ends_kst"), "2027-06-30 23:59")
+    check("net_cash_bil", base.get("net_cash_bil"), 3.130785)
+    check("shares", base.get("shares"), 195161750)
+    check("net_cash_per_share", base.get("net_cash_per_share"), 16.04)
+    check("one_x", base.get("one_x"), 16.04)
+    check("one_x_rearm", base.get("one_x_rearm"), 16.52)
+    check("two_x", base.get("two_x"), 32.08)
+    check("debt_bil", base.get("debt_bil"), 0)
+
+    sample = (
+        "As of September 30, 2026, the Company's cash, cash equivalents, and "
+        "marketable debt securities were $ 3,130,785 . In addition, the Company "
+        "has restricted cash of $ 81,900. Class A common stock, $ 0.0001 par value "
+        "500,000,000 shares authorized; 195,161,750 and 160,514,103 shares issued "
+        "and outstanding as of September 30, 2026 and December 31, 2025, respectively."
+    )
+    parsed = parse_checklist(sample)
+    check("parse cash_bil", parsed.get("cash_bil"), 3.130785)
+    check("parse shares", parsed.get("shares"), 195161750)
+    check("parse debt_bil", parsed.get("debt_bil"), 0.0)
+    check("parse net_cash_per_share", parsed.get("net_cash_per_share"), 16.04)
+
+    # 1x re-arm: fire at or below 16.04 when armed; re-arm at 16.52
+    check("1x fire threshold inclusive", 16.04 <= base["one_x"], True)
+    check("1x rearm is ~3 percent", round(base["one_x"] * 1.03, 2), base["one_x_rearm"])
+    text = Path(__file__).read_text(encoding="utf-8")
+    check("no middle dot", "\u00b7" not in text and "\u30fb" not in text, True)
+    check("no em-dash", "\u2014" not in text, True)
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
 
 
 if __name__ == "__main__":

@@ -13,9 +13,13 @@
   "last_price": 20.84,
   "final_notified": true,
   "nov11_class": "원문 없음",
-  "note": "11일 08:20 판정을 nov11_class에 남기고 12~13일 08:20에 SEC 원문과 대조. 2배 선 32.32달러.",
+  "note": "Q3 10-Q(2026-11-17, oklo-20260930.htm) 기준 순현금 31.30785억달러, 발행주식 195,161,750주, 주당 16.04달러, 1배 16.04달러(재장전 16.52), 2배 32.08달러. last_parsed는 원문 재파싱으로 채움.",
   "last_parsed": {
-    "cash_bil": null,
+    "cash_bil": 3.130785,
+    "debt_bil": 0,
+    "shares": 195161750,
+    "net_cash_bil": 3.130785,
+    "net_cash_per_share": 16.04,
     "capex_mil": null,
     "atm_shares": null,
     "atm_gross_bil": null,
@@ -23,5 +27,6 @@
   },
   "nov11_class_date": "2026-11-11",
   "last_verify_class": "체크리스트 채점",
-  "last_doc_url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm"
+  "last_doc_url": "https://www.sec.gov/Archives/edgar/data/1849056/000162828026071319/oklo-20260930.htm",
+  "one_x_armed": true
 }

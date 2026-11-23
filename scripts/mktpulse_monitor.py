@@ -119,7 +119,10 @@ def save_state(state: dict, now: datetime, keep_days: int) -> None:
 # ---------------------------------------------------------------- slot guard
 def current_slot(cfg: dict, now: datetime) -> tuple[str | None, str]:
     """(slot 'YYYY-MM-DD HH:MM' or None, reason)."""
-    if now.year != int(cfg["year_guard"]):
+    years = cfg.get("year_guard") or [now.year]
+    if isinstance(years, int):
+        years = [years]
+    if now.year not in years:
         return None, f"year guard {cfg['year_guard']} (now {now.year})"
     ends = cfg.get("ends_kst")
     if ends and now > datetime.strptime(ends, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
@@ -593,17 +596,20 @@ def self_test() -> int:
     check("slot stale 46 min", current_slot(cfg, t("2026-10-23 11:46"))[0], None)
     check("after close", current_slot(cfg, t("2026-10-23 15:31"))[0], None)
     check("weekend", current_slot(cfg, t("2026-10-24 11:05"))[0], None)
-    check("after ends", current_slot(cfg, t("2026-12-03 11:50"))[0], None)
-    check("year guard", current_slot(cfg, t("2027-10-22 11:05"))[0], None)
+    check("after ends", current_slot(cfg, t("2027-06-30 11:50"))[0], None)
+    check("year guard", current_slot(cfg, t("2028-06-30 11:05"))[0], None)
+    check("2027 still in year_guard before ends", current_slot(cfg, t("2027-06-30 11:05"))[0], "2027-06-30 11:00")
     check("13:00 slot removed", current_slot(cfg, t("2026-10-27 13:05"))[0], None)
     check("10:00 slot removed", current_slot(cfg, t("2026-10-27 10:05"))[0], None)
     check("11/5 11:00 still a slot", current_slot(cfg, t("2026-11-05 11:05"))[0], "2026-11-05 11:00")
     check("11/19 11:00 still a slot", current_slot(cfg, t("2026-11-19 11:05"))[0], "2026-11-19 11:00")
-    check("last slot 12/3 11:00", current_slot(cfg, t("2026-12-03 11:05"))[0], "2026-12-03 11:00")
+    check("12/3 11:00 still a slot", current_slot(cfg, t("2026-12-03 11:05"))[0], "2026-12-03 11:00")
+    check("last slot 2027-06-30 11:00", current_slot(cfg, t("2027-06-30 11:05"))[0], "2027-06-30 11:00")
     check("next after 10/30 is 11/2 11:00", next_slot(cfg, "2026-10-30 11:00", t("2026-10-30 11:05")), "2026-11-02 11:00")
     check("next after 11/5 is 11/6", next_slot(cfg, "2026-11-05 11:00", t("2026-11-05 11:05")), "2026-11-06 11:00")
     check("next after 11/19 is 11/20", next_slot(cfg, "2026-11-19 11:00", t("2026-11-19 11:05")), "2026-11-20 11:00")
-    check("no next after 12/3", next_slot(cfg, "2026-12-03 11:00", t("2026-12-03 11:05")), None)
+    check("next after 12/3 is 12/4", next_slot(cfg, "2026-12-03 11:00", t("2026-12-03 11:05")), "2026-12-04 11:00")
+    check("no next after 2027-06-30", next_slot(cfg, "2027-06-30 11:00", t("2027-06-30 11:05")), None)
     m = cfg["muse"]
     block = re.compile(m["block_re"])
     check("spam blocked", bool(block.search("베트맨 토토 앱 설정 변경 전 확인할 적용 시점")), True)
@@ -689,7 +695,7 @@ def self_test() -> int:
 
 def main() -> int:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "auto").strip().lower()
-    if mode == "self-test":
+    if mode in {"self-test", "selftest"}:
         return self_test()
     if mode not in {"auto", "dry", "force", "install"}:
         print(f"unknown mode {mode!r}; use auto | dry | force | install | self-test")

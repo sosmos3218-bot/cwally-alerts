@@ -1,5 +1,8 @@
 {
-  "result_notified": false,
+  "result_notified": true,
   "empty_notified": false,
-  "last_problem_key": null
+  "last_problem_key": null,
+  "note": "DART 2026-11-13 3분기 보고서 게시 확인. 2026-11-23에 알림은 보내지 않고 result_notified만 켜서 11/30 미게시 오탐을 막음.",
+  "marked_done_at": "2026-11-23",
+  "marked_done_reason": "Q3 report on DART 2026-11-13; suppress empty notice on window_end 2026-11-30"
 }

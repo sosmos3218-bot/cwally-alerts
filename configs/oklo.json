@@ -3,15 +3,15 @@
   "title_prefix": "[OKLO]",
   "ticker": "OKLO",
   "display": "오클로",
-  "as_of": "2026-10-05",
+  "as_of": "2026-11-23",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
   "event_year": 2026,
-  "valid_until": "2026-12-15",
+  "valid_until": "2027-06-30",
   "expire_date": "2026-11-13",
   "window_start_kst": "2026-11-11T08:00:00",
   "schedule_kst": "09:00",
-  "schedule_note": "2배 가격은 기존 평일 09:00 KST. 11일 08:20은 판정, 12~13일 08:20은 그 판정과 SEC 원문 대조. 새 cron 없음.",
+  "schedule_note": "2배와 1배 가격은 기존 평일 09:00 KST. 11일 08:20은 판정, 12~13일 08:20은 그 판정과 SEC 원문 대조(종료). 새 cron 없음. 2026-11-23 사용자 승인(pt90u)으로 2027-06-30까지 연장. Q3 10-Q(2026-11-17) 기준으로 선을 다시 계산하고 1배 선을 추가.",
   "oneshot_kst": [
     "2026-11-11 08:20",
     "2026-11-12 08:20",
@@ -25,25 +25,30 @@
   "baseline": {
     "price_date": "2026-10-02",
     "price": 35.87,
-    "net_cash_bil": 3.0056,
-    "liquidity_bil": 3.0063,
-    "net_cash_per_share": 16.16,
-    "shares": 186017650,
-    "shares_asof": "2026-08-04",
-    "two_x": 32.32,
+    "net_cash_bil": 3.130785,
+    "liquidity_bil": 3.130785,
+    "net_cash_per_share": 16.04,
+    "shares": 195161750,
+    "shares_asof": "2026-09-30",
+    "two_x": 32.08,
     "h1_ocf_mil": 65.5,
     "h1_capex_mil": 126.9,
     "atm_used_gross_bil": 1.0,
     "atm_new_cap_bil": 1.0,
-    "last_10q": "2026-08-07",
-    "last_atm_8k": "2026-09-11"
+    "last_10q": "2026-11-17",
+    "last_atm_8k": "2026-09-11",
+    "one_x": 16.04,
+    "one_x_rearm": 16.52,
+    "debt_bil": 0,
+    "q3_period": "2026-09-30",
+    "source": "Q3 10-Q filed 2026-11-17, accession 0001628280-26-071319, oklo-20260930.htm. Liquidity: cash, cash equivalents, and marketable debt securities $3,130,785 (in thousands), restricted cash excluded. No interest-bearing debt (notes, loans, borrowings) on the September 30, 2026 balance sheet. Class A common stock 195,161,750 shares issued and outstanding as of September 30, 2026. Net cash 3.130785 billion / 195,161,750 = $16.04 per share; 1x $16.04 (re-arm $16.52); 2x $32.08."
   },
   "checklist": [
-    "현금+채무증권이 30.06억달러에서 얼마나 줄었는지",
-    "9월 11일 신규 ATM 10억달러 사용액과 주식 수",
+    "현금+채무증권(제한현금 제외) 31.30785억달러, 이자부 부채 없음(2026-09-30)",
+    "발행주식 195,161,750주(2026-09-30), 주당 순현금 16.04달러",
+    "1배 선 16.04달러(재장전 16.52달러), 2배 선 32.08달러",
     "설비투자가 상반기 1.269억달러 대비 가속인지",
-    "Aurora-INL 임계 또는 2028 목표 변경 문구",
-    "주가/16.16이 2배 이하인지"
+    "Aurora-INL 임계 또는 2028 목표 변경 문구"
   ],
   "sources": {
     "quote": "https://query1.finance.yahoo.com/v8/finance/chart/OKLO?interval=1d&range=5d",
@@ -51,6 +56,6 @@
   },
   "cik": "0001849056",
   "last_known_filing": "2026-09-11",
-  "ends_kst": "2026-12-15 09:00",
-  "ends_note": "평일 09:00 순현금 구간 점검, 실적 알림은 11/13이 마지막"
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "평일 09:00 순현금 1배/2배 구간 점검. 2026-11-23 사용자 승인(pt90u)으로 2027-06-30까지 연장. 실적 대조 일회성은 11/13이 마지막."
 }

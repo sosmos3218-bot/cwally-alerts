@@ -23,7 +23,7 @@
   "dedupe": "seen 키 = <notice_id>|<modifiedDate>|<modifications.count>. 새 공고 id 또는 같은 id 의 수정일/수정횟수 변화가 오면 1번.",
   "rules": {
     "fail_ops_after": 3,
-    "noop_after_date": "2026-12-18"
+    "noop_after_date": "2027-06-30"
   },
   "milestones": {
     "final_rfp_utc": "2026-11-05T18:01:17+00:00",
@@ -31,6 +31,6 @@
     "intent_due": "2026-12-01",
     "proposals_et": "2026-12-17 10:00 ET"
   },
-  "ends_kst": "2026-12-18 23:59",
-  "ends_note": "제안 마감(12/17 ET) 다음날. 그 뒤 스크립트는 조용히 종료"
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "2026-11-23 사용자 승인(pt90u)으로 2027-06-30까지 공고 감시 연장. 제안 마감(12/17 ET) 이후에도 수정 공고를 본다."
 }

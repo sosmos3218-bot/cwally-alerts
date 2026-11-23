@@ -66,7 +66,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, nvdaq3, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, ctq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, spcxpx, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, kmacro4, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, bke, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, nvdaq3, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, ctq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, spcxpx, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, kmacro4, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn, remed]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -919,11 +919,18 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/spcxq3_monitor.py auto
       - name: Run oklo
+        # job=oklo dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        # Morning 09:00 bundle still runs oklo_monitor.py auto. Past Nov 11-13 event oneshots stay ended.
         if: steps.pick.outputs.job == 'oklo'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
-        run: python scripts/oklo_monitor.py event
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/oklo_monitor.py selftest | tail -1; fi
+          python scripts/oklo_monitor.py "$MODE"
       - name: Run pathq3
         if: steps.pick.outputs.job == 'pathq3'
         env:
@@ -1009,6 +1016,27 @@ jobs:
           if [ "$(jq '.watchlist | length' configs/vcp_breakout.json)" = "0" ] && [ "$PENDING" = "0" ]; then echo "vcp_breakout: watchlist empty, no pending follow-up; silent"; exit 0; fi
           pip install -q finance-datareader==0.9.202 pandas==3.1.0 numpy==2.5.4
           python scripts/vcp_breakout_monitor.py auto
+      - name: Run REMED (리메드 302550 신저가 이후 진입 감시; 15:40 0090b0 slot)
+        # 2026-11-23 user approval (pt90u). Same slot, no new cron. Was 15:45 oneshot through 11/30.
+        # year_guard 2026 and 2027, ends 2027-06-30 23:59. Daum KRX close via krx_close (never Naver).
+        # Dedupe state/remed.json last_day + zone + seen_notices. Leftover 11/24-11/30 15:45 oneshots stay; same-day dedupe prevents a second send.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/remed_monitor.py auto
+      - name: Run REMED standalone (manual check)
+        # job=remed dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
+        if: steps.pick.outputs.job == 'remed'
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/remed_monitor.py selftest | tail -1; fi
+          python scripts/remed_monitor.py "$MODE"
       - name: Run KAL standalone (manual check)
         # job=kal dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'kal'
@@ -1152,12 +1180,17 @@ jobs:
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/kzq3_monitor.py "${{ steps.pick.outputs.kzq3_mode }}"
       - name: Run mktpulse
+        # job=mktpulse dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto.
         if: steps.pick.outputs.job == 'mktpulse'
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
-        run: python scripts/mktpulse_monitor.py "${ONEOFF_MODE:-auto}"
+        run: |
+          MODE=dry
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ONEOFF_MODE" = "auto" ]; then MODE=auto; fi
+          if [ "$MODE" = "dry" ]; then python scripts/mktpulse_monitor.py selftest | tail -1; fi
+          python scripts/mktpulse_monitor.py "$MODE"
       - name: Run truen417790
         if: steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'truen417790' || steps.pick.outputs.job == 'all'
         env:
@@ -2357,7 +2390,7 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/spcxpx_monitor.py selftest | tail -1; fi
           python scripts/spcxpx_monitor.py "$MODE"
       - name: Run MDENG (VA MDE-NG 36C10X27R0001 new amendment/notice watch for LDOS; morning 09:00 slot)
-        # 2026-11-06 (pt11u). Attached to morning, no new cron. Dedupe state/mdeng.json seen keys (notice id|modifiedDate|mod count). Seeded final RFP + draft. Ends 2026-12-18.
+        # 2026-11-06 (pt11u). Attached to morning, no new cron. Dedupe state/mdeng.json seen keys (notice id|modifiedDate|mod count). Seeded final RFP + draft. Ends 2027-06-30 (extended 2026-11-23 pt90u).
         # job=mdeng dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto. Uses public SAM sgs search (no SAM_API_KEY in repo secrets).
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'mdeng') }}
         env:

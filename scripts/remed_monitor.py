@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """REMED 리메드(302550) 신저가 이후 진입 감시. 보유 없음, 진입 여부 판단용.
 
-KRX 장 마감 뒤(15:45 KST) 당일 완료 종가로 구간을 판정하고, 구간이 바뀔 때만 cwally-port로 알린다.
+KRX 장 마감 뒤(15:40 KST, 0090b0 슬롯) 당일 완료 종가로 구간을 판정하고, 구간이 바뀔 때만 cwally-port로 알린다.
   구간 0: 종가 < 기준일(2026-10-15) 저가          -> 하락 지속, 진입 보류
   구간 1: 기준일 저가 <= 종가 < 2,270원(10/14 저점) -> 저점권, 관망
   구간 2: 2,270원 <= 종가 (2,600원 미만이거나 거래량 부족) -> 구 저점 회복, 실적 전 소액만
@@ -197,7 +197,7 @@ def main() -> int:
             bz = raw_zone(base["close"], False, low_line, reclaim, trend)
             st = (f"기준일 {base_day} 종가 {base['close']:,.0f}원, 저가 {base['low']:,.0f}원, 거래량 {base['volume']:,.0f}주. "
                   f"기준선: 하락선 {low_line:,.0f}원(기준일 저가), 회복선 2,270원, 추세선 2,600원(거래량 20일 평균 이상). "
-                  f"현재 구간 {ZONE_TXT[bz]}. 평일 15:45 KST 종가로 판정.")
+                  f"현재 구간 {ZONE_TXT[bz]}. 평일 15:40 KST 종가로 판정.")
         else:
             st = f"기준일 {base_day} 종가 조회 실패({err}). 첫 정규 실행에서 다시 읽습니다."
         publish(topic, "[REMED] 302550 설치 확인 | 매매 신호 아님",
@@ -208,7 +208,10 @@ def main() -> int:
         print("install confirmation sent")
         return 0
 
-    if now.year != int(cfg.get("year_guard") or 2026):
+    years = cfg.get("year_guard") or [2026]
+    if isinstance(years, int):
+        years = [years]
+    if now.year not in years:
         print("year guard; silent")
         return 0
     end = cfg.get("ends_kst")
@@ -232,7 +235,7 @@ def main() -> int:
         if state.get("fetch_fail_date") != today:
             alerts.append(("[REMED] 302550 종가 조회 실패 | 조건 미확인",
                            body(stamp, f"당일 종가 조회 실패: {why}. 구간 판정 안 함.", "증권 앱에서 리메드 종가를 직접 보세요.",
-                                "다음 거래일 15:45에 다시 봅니다.", "이번 알림으로 사거나 팔지 마세요.", "조회 실패를 신호로 읽기."), 3))
+                                "다음 거래일 15:40에 다시 봅니다.", "이번 알림으로 사거나 팔지 마세요.", "조회 실패를 신호로 읽기."), 3))
             state["fetch_fail_date"] = today
     else:
         prior = [b for b in bars if b["day"] < today][-20:]
@@ -314,5 +317,31 @@ def main() -> int:
     return 0
 
 
+def selftest() -> int:
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+    fails = 0
+
+    def check(label, got, want):
+        nonlocal fails
+        ok = got == want
+        fails += not ok
+        print(("PASS " if ok else "FAIL ") + f"{label}: got={got!r} want={want!r}")
+
+    years = cfg.get("year_guard")
+    if isinstance(years, int):
+        years = [years]
+    check("year_guard includes 2026 and 2027", years, [2026, 2027])
+    check("ends_kst", cfg.get("ends_kst"), "2027-06-30 23:59")
+    check("CLOSE_READY 15:40", CLOSE_READY, "15:40")
+    text = Path(__file__).read_text(encoding="utf-8").split("def selftest")[0]
+    check("no leftover 15:45 user text", "15:45" not in text, True)
+    check("no middle dot", "\u00b7" not in text and "\u30fb" not in text, True)
+    check("no em-dash", "\u2014" not in text, True)
+    print("selftest", "PASS" if not fails else f"FAIL {fails}")
+    return 1 if fails else 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].lower() in {"selftest", "self-test"}:
+        raise SystemExit(selftest())
     raise SystemExit(main())

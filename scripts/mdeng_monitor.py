@@ -3,7 +3,7 @@
 
 평일 09:00 KST port-alerts morning 슬롯. SAM.gov 공개 검색으로 solnum=36C10X27R0001 공고를 보고
 notice id + modifiedDate + modifications.count 키가 state.seen 에 없으면 1번 알림.
-최종 RFP/DRAFT 는 state 에 시드되어 재알림 없음. 2026-12-18 이후는 no-op.
+최종 RFP/DRAFT 는 state 에 시드되어 재알림 없음. 2027-06-30 이후는 no-op.
 usage: mdeng_monitor.py <auto|dry> | selftest | confirm
 """
 from __future__ import annotations
@@ -227,7 +227,7 @@ def alert_message(cfg: dict, n: dict, kind: str, stamp: str, prev_deadline: str 
             "지금 할 일: SAM 링크를 열고 수정/첨부/Q&A 내용을 확인. Health 마진 가정(4Q high teens)과 "
             "제안 조건이 바뀌었는지 표시해 두기. 입찰 일정(질문 11/16, intent 12/01, 제안 12/17 10:00 ET)도 같이 보기.",
             "나중에: 같은 공고 id 와 수정 키는 다시 안 옴. 다음 수정이 올라오면 다시 알림. "
-            "2026-12-18 이후에는 자동 종료.",
+            "2027-06-30 이후에는 자동 종료.",
             "익절/줄일 때: 미보유, 해당 없음. 포지션이 생기면 그때 기준을 적기.",
             "하지 말 것: 공고만 보고 바로 매매, 마감 전 추측으로 비중 확대, 이 알림을 낙찰 신호로 읽기.",
         ]
@@ -278,8 +278,8 @@ def evaluate(cfg: dict, st: dict, notices: list[dict], stamp: str) -> list[tuple
 
 
 def ended(cfg: dict, now: datetime) -> bool:
-    # hard no-op after 2026-12-18 (calendar date in KST)
-    noop = (cfg.get("rules") or {}).get("noop_after_date") or "2026-12-18"
+    # hard no-op after 2027-06-30 (calendar date in KST)
+    noop = (cfg.get("rules") or {}).get("noop_after_date") or "2027-06-30"
     if now.astimezone(KST).date().isoformat() > noop:
         return True
     ends = cfg.get("ends_kst")
@@ -441,11 +441,11 @@ def selftest(cfg: dict) -> int:
     # ended no-op
     out_e, _ = run(
         "dry",
-        datetime(2026, 12, 19, 9, 0, tzinfo=KST),
+        datetime(2027, 7, 1, 9, 0, tzinfo=KST),
         cfg,
         {"state": default_state(), "notices": [qa]},
     )
-    check("after 2026-12-18 no-op", out_e, [])
+    check("after 2027-06-30 no-op", out_e, [])
 
     # quiet fail then ops on 3rd
     bad = {"state": default_state(), "notices": lambda: (_ for _ in ()).throw(OSError("timeout"))}
@@ -457,7 +457,7 @@ def selftest(cfg: dict) -> int:
     o3, _ = run("dry", datetime(2026, 11, 8, 10, 0, tzinfo=KST), cfg, bad)
     check("ops once per day", o3, [])
 
-    check("ends_kst", cfg["ends_kst"], "2026-12-18 23:59")
+    check("ends_kst", cfg["ends_kst"], "2027-06-30 23:59")
     check("topic port", cfg["ntfy_topic"], "cwally-port")
     check("prefix LDOS", cfg["title_prefix"], "[LDOS]")
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
@@ -472,7 +472,7 @@ def confirm(cfg: dict) -> int:
             "지금 결과/상태: 최종 RFP와 DRAFT 를 seen 에 시드함. 지금은 발송 대상 없음. "
             "새 수정/Q&A/버전만 알림.",
             "지금 할 일: 없음. 평일 09:00 KST morning 슬롯에서 SAM 공개 검색을 본다.",
-            "나중에: 제안 마감 다음 날(2026-12-18) 이후 자동 종료.",
+            "나중에: 2027-06-30 이후 자동 종료.",
             "익절/줄일 때: 미보유, 해당 없음.",
             "하지 말 것: 이 설치 확인을 매매 신호로 읽기.",
         ]

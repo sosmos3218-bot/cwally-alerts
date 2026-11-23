@@ -5,9 +5,12 @@
   "display": "리메드",
   "ntfy_topic": "cwally-port",
   "ntfy_server": "https://ntfy.sh",
-  "schedule_kst": "거래일 15:45 KST 일회성 연속 (정규 슬롯 아님, port-alerts.yml 미연결)",
-  "schedule_note": "장 마감 뒤 당일 종가 판정. 15:40(flow/0090b0)과 겹치지 않게 15:45. on-time = cron-job.org job=oneshot. 사용자 지시로 port-alerts.yml은 수정하지 않아 GitHub 지연 fallback cron 없음.",
-  "year_guard": 2026,
+  "schedule_kst": "거래일 15:40 KST (기존 0090b0 슬롯)",
+  "schedule_note": "장 마감 뒤 당일 종가 판정. 2026-11-23 사용자 승인(pt90u)으로 기존 15:40 0090b0 슬롯에 연결. 새 반복 cron 없음. GitHub 지연 fallback은 기존 0090b0 15:40 cron. 11/30까지 남아 있는 15:45 oneshot은 그대로 두며, 같은 날 15:40에서 이미 처리하면 state(last_day, zone, seen_notices)로 중복 발송을 막는다.",
+  "year_guard": [
+    2026,
+    2027
+  ],
   "baseline_date": "2026-10-15",
   "levels": {
     "low": null,
@@ -69,8 +72,8 @@
     "2026-11-27 15:45",
     "2026-11-30 15:45"
   ],
-  "ends_kst": "2026-11-30 15:45",
-  "ends_note": "11/11부터 재개, 3분기 판정 뒤 11/30까지. 연장은 oneshot_kst와 함께 수정",
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "2026-11-23 사용자 승인(pt90u)으로 2027-06-30 23:59까지 연장. 15:40 0090b0 슬롯에서 실행.",
   "explain": "리메드(302550) 신저가 이후 진입 감시. 보유 없음 기준, 매수 지시 아님.",
   "q3_gate": {
     "period_key": "202609",
