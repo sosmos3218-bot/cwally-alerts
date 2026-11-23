@@ -1,6 +1,6 @@
 {
   "meta": {
-    "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+    "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
     "config": {
       "domestic_forms": [
         "10-K",
@@ -84,7 +84,7 @@
       }
     },
     "counts": {
-      "excluded": 915,
+      "excluded": 914,
       "excluded_reasons": {
         "capital_non_positive": 80,
         "cash_missing": 102,
@@ -96,7 +96,7 @@
         "enterprise_value_non_positive": 7,
         "multi_class_shares_unsplit": 97,
         "net_fixed_assets_missing": 76,
-        "stale_price": 2,
+        "stale_price": 1,
         "stale_statement": 49,
         "working_capital_missing": 19
       },
@@ -114,11 +114,11 @@
         "revenue_non_positive": 7,
         "stale_annual": 70
       },
-      "insider": 240,
+      "insider": 236,
       "intersection": 5,
       "magic_input_rows": 1338,
       "magic_top": 30,
-      "price_failures": 6,
+      "price_failures": 9,
       "universe": 2251
     },
     "data_sources": [
@@ -131,7 +131,7 @@
       "SEC EDGAR Form 4 submission text",
       "Yahoo Finance chart daily close"
     ],
-    "form4_acceptance_cutoff": "2026-11-20T23:59:59-05:00",
+    "form4_acceptance_cutoff": "2026-11-23T23:59:59-05:00",
     "form4_latest_acceptance": "unknown (master.idx)",
     "form4_latest_filing_date": "2026-11-20",
     "fscore_basis": "annual",
@@ -140,15 +140,15 @@
     "insider_lookback_days": 30,
     "magic_top_n": 30,
     "min_market_cap": 100000000,
-    "previous_trade_date": "2026-11-19",
+    "previous_trade_date": "2026-11-20",
     "price_as_of": "2026-11-20",
     "run_date": "2026-11-23",
-    "trade_date": "2026-11-20"
+    "trade_date": "2026-11-23"
   },
   "rows": [
     {
       "cik": "0001937987",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -160,11 +160,27 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "FBYDW",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
+    },
+    {
+      "cik": "0001885408",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "Nexera Technologies Ltd",
+      "price_as_of": "2026-11-20",
+      "reason": "price_unavailable",
+      "run_date": "2026-11-23",
+      "ticker": "NEXRW",
+      "trade_date": "2026-11-23"
     },
     {
       "cik": "0001956648",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -176,11 +192,11 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "NOEMW",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
     },
     {
       "cik": "0001846253",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -192,11 +208,27 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "OABIW",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
+    },
+    {
+      "cik": "0001428439",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "ROKU, INC",
+      "price_as_of": "2026-11-20",
+      "reason": "price_unavailable",
+      "run_date": "2026-11-23",
+      "ticker": "ROKU",
+      "trade_date": "2026-11-23"
     },
     {
       "cik": "0001402328",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -208,11 +240,27 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "SBFMW",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
+    },
+    {
+      "cik": "0002083143",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
+      "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
+      "fscore_basis": "annual",
+      "fscore_min_score": 8,
+      "insider_lookback_days": 30,
+      "magic_top_n": 30,
+      "min_market_cap": 100000000,
+      "name": "Social Commerce Partners Corp",
+      "price_as_of": "2026-11-20",
+      "reason": "price_unavailable",
+      "run_date": "2026-11-23",
+      "ticker": "SCPQW",
+      "trade_date": "2026-11-23"
     },
     {
       "cik": "0001077428",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -224,11 +272,11 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "TCBI",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
     },
     {
       "cik": "0001901203",
-      "code_version": "dd5ae15e3dfebb37cfe451644c662d5fa202d7ed",
+      "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
       "data_sources": "SEC EDGAR company_tickers_exchange.json|SEC EDGAR financial statement data set SUB (SIC and form)|SEC EDGAR XBRL frames (share-count prefilter)|SEC EDGAR companyfacts|SEC EDGAR daily index and quarterly master index|SEC EDGAR current filings Atom feed|SEC EDGAR Form 4 submission text|Yahoo Finance chart daily close",
       "fscore_basis": "annual",
       "fscore_min_score": 8,
@@ -240,7 +288,7 @@
       "reason": "price_unavailable",
       "run_date": "2026-11-23",
       "ticker": "UCFIW",
-      "trade_date": "2026-11-20"
+      "trade_date": "2026-11-23"
     }
   ]
 }
