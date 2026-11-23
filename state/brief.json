@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24T08:15:46.963015+09:00",
+  "updated_at": "2026-11-24T08:32:11.071952+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -288,6 +288,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-24T08:15:46.963015+09:00"
+    },
+    "20261124-amtm-q4fy26.json#d8c1d632d6c86f6d": {
+      "file": "20261124-amtm-q4fy26.json",
+      "title": "[BRIEF] AMTM 4분기 실적 | 비중 확대 가능",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-24T08:32:11.071952+09:00"
     }
   },
   "rejected": {},
