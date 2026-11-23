@@ -3,11 +3,11 @@
   "kos5500_last_day": "2026-11-06",
   "seed_note": "2026-10-26 ladder migration. kos5500 sent '5500 이탈 첫날' at 2026-10-26 15:40 (state/kos5500.json last_report); the same label is not re-sent. kosdown/kosup/kosbrk keep their own fired state.",
   "last_sent": {
-    "at": "2026-11-17 15:41 KST",
-    "title": "[KOSPI] 종가 4,968.48 | 5000 이탈 | 하방 확인",
+    "at": "2026-11-23 15:40 KST",
+    "title": "[KOSPI] 종가 4,708.54 | 5000 이탈 | 하방 확인",
     "parts": [
       "kosdown"
     ]
   },
-  "updated_at": "2026-11-19T15:41:02+09:00"
+  "updated_at": "2026-11-23T15:40:55+09:00"
 }
