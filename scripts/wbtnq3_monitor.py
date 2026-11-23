@@ -187,6 +187,23 @@ def cc_growth_printed(text: str) -> float | None:
     return None
 
 
+def japan_total_cc_disclosed(text: str) -> float | None:
+    """보도자료 조정표의 일본 전체 매출 고정환율 성장률(%). 채점에는 쓰지 않는다.
+
+    scripts/wbtn4q_monitor.py parse_results 의 일본 행과 같은 식이다.
+    달러 두 칸 다음의 첫 퍼센트(분기 칸)만 읽고, 같은 행의 9개월 칸은 버린다.
+    예: '(11.4%)' 뒤에 '(7.3%)'가 있으면 -11.4. 행이 없으면 None.
+    """
+    m = re.search(
+        r"Japan Revenue on a Constant Currency Basis\s*\$?\s*[\d,]+\s*\$?\s*[\d,]+\s*(\(?-?[\d.]+\)?)\s*%",
+        text or "",
+        re.I,
+    )
+    if not m:
+        return None
+    return printed_pct(m.group(1))
+
+
 def parse_release(text: str, quarter: str = "third", period: str = "September 30, 2026") -> dict:
     is_q = bool(re.search(rf"{quarter} quarter ended {period}", text, re.I))
     rev, rev_prev = pair(r"Total Revenue \$ ?([\d,]+) \$ ?([\d,]+)", text)
@@ -233,6 +250,7 @@ def parse_release(text: str, quarter: str = "third", period: str = "September 30
         "ebitda_m": ebitda / 1000 if ebitda is not None else None,
         "margin": margin,
         "jp_cc_growth": jp_cc_g,
+        "jp_total_cc_growth_disclosed": japan_total_cc_disclosed(text),
         "jp_mpu_growth": jp_mpu_g,
         "jp_rev_growth": pct(jp["rev"], jp["rev_prev"]),
         "global_mpu_growth": g_mpu_g,
@@ -370,16 +388,23 @@ def score_lines(cfg, now, p, q, j, price_when, links, supplement=False):
         "보유": "보유 중이면 유지, 없으면 신규 매수 보류.",
         "매도": "보유 중이면 비중 축소 또는 정리. 신규 매수 금지.",
     }[j["verdict"]]
-    return [
+    lines = [
         head(now, "3분기 실적 대조" + (" 보강" if supplement else "")),
         "이게 뭐 알림: " + cfg["explain"],
         f"지금 결과: 결론 {j['verdict']}. {j['why']} 주가 {price_txt}. 고정환율 매출 성장 {f1(p.get('cc_growth'))}, 조정 EBITDA 마진 {pm(p.get('margin'))}. {facts}.",
+    ]
+    # 유료콘텐츠 추정치(jp_cc_growth) 바로 다음. 공시 전체 매출은 표시만 하고 채점하지 않는다.
+    disclosed = p.get("jp_total_cc_growth_disclosed")
+    if disclosed is not None:
+        lines.append(f"일본 전체 매출 고정환율 성장(공시) {f1(disclosed)} (채점 미반영)")
+    lines.extend([
         "지금 할 일: " + act + " 확인불가와 경계는 충족으로 채우지 말 것.",
         "나중에: 실적 콜과 주주서한에서 일본 MPU, 4분기 가이던스, RI Games 투자 집행만 보완. 10-Q가 늦게 나오면 MAU는 다음 실행에서 판단이 바뀔 때만 보강.",
         "익절/줄일 때: 매도 조건이면 축소. 매수 검토로 샀는데 다음 분기 조정 EBITDA 적자 또는 일본 MPU 두 자릿수 감소면 정리.",
         "하지 말 것: 실적 직후 시간외 급등 추격, 일본 수치 확인 전 몰빵, 신용, 미수.",
         "출처: " + (", ".join(links) if links else cfg["sources"]["sec"]),
-    ]
+    ])
+    return lines
 
 
 # 2026-11-10 채점 때 state 에 남은 스냅샷. cc_growth 만 이 버그의 대상이고 판정 입력은 아니다.
@@ -421,7 +446,7 @@ def selftest() -> int:
 
     table_only = text[text.find("Total Revenue"):]
     check("table path still 0.2", cc_growth_printed(table_only), 0.2)
-    check("table path is not 1.8 or 13.5", cc_growth_printed(table_only) not in (1.8, 13.5, -11.4, 1.0, 30.1), True)
+    check("table path is not 1.8 or 13.5", cc_growth_printed(table_only) not in (1.8, 13.5, -11.4, -7.3, 1.0, 30.1), True)
 
     # 인쇄된 %와 달러 비율이 반올림 뒤에도 다른 경우. 비율을 쓰면 +11.1%가 된다.
     diverged = "Revenue on a Constant Currency Basis $ 100,000 $ 90,000 (4.5%)"
@@ -445,6 +470,61 @@ def selftest() -> int:
     check("body shows +0.2%", "고정환율 매출 성장 +0.2%" in blob, True)
     check("body has no 15.6", "+15.6%" not in blob, True)
     check("body keeps ticker context", "WBTN" in blob, True)
+    check("no disclosed line when value absent", "일본 전체 매출 고정환율 성장(공시)" in blob, False)
+
+    # Ex 99.1 일본 전체 매출 고정환율: 분기 (11.4%) 와 9개월 (7.3%). % 는 괄호 안.
+    # 채점은 ARPPU 추정치를 유지하고, 파서는 첫 칸만 읽는다.
+    row_m = re.search(r"Japan Revenue on a Constant Currency Basis.*?(?=Paid Content)", text)
+    row = row_m.group(0) if row_m else ""
+    row_pcts = [printed_pct(x) for x in re.findall(r"\([^)]*%\)", row)]
+    check("fixture quarter then nine-month", row_pcts, [-11.4, -7.3])
+    check("disclosed japan total cc is quarter -11.4", p["jp_total_cc_growth_disclosed"], -11.4)
+    check("disclosed is not nine-month -7.3", p["jp_total_cc_growth_disclosed"] == (row_pcts[-1] if row_pcts else None), False)
+    check("fixture parse does not replace scoring field", p["jp_cc_growth"] == -11.4, False)
+    import wbtn4q_monitor
+    check(
+        "mirrors wbtn4q japan regex",
+        p["jp_total_cc_growth_disclosed"],
+        wbtn4q_monitor.parse_results(text)["jp_cc_growth"],
+    )
+
+    scored = dict(fresh, jp_total_cc_growth_disclosed=p["jp_total_cc_growth_disclosed"])
+    j_scored = judge(scored, NOV10_TENQ, 9.93, cfg)
+    check("verdict unchanged by disclosed", j_scored["verdict"], j_new["verdict"])
+    check("met unchanged by disclosed", j_scored["met"], j_new["met"])
+    check("why unchanged by disclosed", j_scored["why"], j_new["why"])
+    check("items unchanged by disclosed", j_scored["items"], j_new["items"])
+    check("verdict still 보유", j_scored["verdict"], "보유")
+    check("met still 0", j_scored["met"], 0)
+    check("record keeps arppu estimate", scored["jp_cc_growth"], NOV10_PARSED["jp_cc_growth"])
+    check("record stores disclosed", scored["jp_total_cc_growth_disclosed"], -11.4)
+    jp_item = next(it for it in j_scored["items"] if it[0] == "일본 고정환율 성장")
+    check("criterion 3 still estimate", "일본 유료콘텐츠 고정환율 성장 추정 -11.6%" in jp_item[2], True)
+    check("criterion 3 status", jp_item[1], "미충족")
+    check("criterion 3 ignores disclosed percent", "-11.4" not in jp_item[2], True)
+
+    blob2 = "\n".join(score_lines(cfg, now, scored, NOV10_TENQ, j_scored, "11-10 06:01 KST", ["fixture"]))
+    exact = "일본 전체 매출 고정환율 성장(공시) -11.4% (채점 미반영)"
+    lines = blob2.splitlines()
+    check("body disclosed line", exact in lines, True)
+    check("body still has paid content estimate", "일본 유료콘텐츠 고정환율 성장 추정 -11.6%" in blob2, True)
+    est_i = next(i for i, line in enumerate(lines) if "일본 유료콘텐츠 고정환율 성장 추정 -11.6%" in line)
+    check("disclosed line follows estimate line", lines.index(exact), est_i + 1)
+    check("disclosed line has no middle dot", "·" in exact, False)
+    check("disclosed line has no em dash", "—" in exact, False)
+    check("title unchanged", f"[WBTN] {j_scored['verdict']} | 3분기 조건 대조", "[WBTN] 보유 | 3분기 조건 대조")
+
+    withheld = text.replace("Japan Revenue on a Constant Currency Basis", "Japan total CC row withheld")
+    p_miss = parse_release(withheld)
+    check("absent row disclosed is none", p_miss["jp_total_cc_growth_disclosed"], None)
+    miss_rec = dict(fresh, jp_total_cc_growth_disclosed=None)
+    j_miss = judge(miss_rec, NOV10_TENQ, 9.93, cfg)
+    blob_miss = "\n".join(score_lines(cfg, now, miss_rec, NOV10_TENQ, j_miss, "11-10 06:01 KST", ["fixture"]))
+    check("absent omits disclosed line", "일본 전체 매출 고정환율 성장(공시)" in blob_miss, False)
+    check("absent verdict unchanged", j_miss["verdict"], j_new["verdict"])
+    check("absent met unchanged", j_miss["met"], j_new["met"])
+    check("absent items unchanged", j_miss["items"], j_new["items"])
+    check("rules note display only", "채점에 넣지 않는다" in cfg["rules_note"], True)
 
     if fails:
         print("SELFTEST FAIL")
