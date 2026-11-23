@@ -14,10 +14,18 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from screeners.us_quant.assemble import build_fscore_inputs, build_magic_inputs
-from screeners.us_quant.cover import instance_name, parse_share_document, stamp_filing
+from screeners.us_quant.cover import instance_name, parse_repurchase_obligations, parse_share_document, stamp_filing
 from screeners.us_quant.edgar_atom import atom_page_url, dedupe_accessions, parse_atom, within_cutoff
 from screeners.us_quant.edgar_index import dedupe_rows, parse_master, quarter_labels
-from screeners.us_quant.facts import EXTRACT_VERSION, extract_companyfacts, latest_domestic_row, select_shares, staleness_days
+from screeners.us_quant.facts import (
+    EXTRACT_VERSION,
+    balance_sheet_date,
+    extract_companyfacts,
+    large_share_decline_after_balance_sheet,
+    latest_domestic_row,
+    select_shares,
+    staleness_days,
+)
 from screeners.us_quant.http_util import HttpClient
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
 from screeners.us_quant.magic import apply_magic_guards, rank_magic
@@ -44,9 +52,10 @@ MAGIC_COLUMNS = [
     "ticker", "cik", "name", "sic", "sic_description", "exchange",
     "price", "price_date", "price_source", "volume",
     "shares", "shares_source", "shares_kind", "shares_end", "shares_accession",
-    "large_buyback_after_bs",
+    "large_buyback_after_bs", "repurchase_obligation",
     "market_cap", "total_debt", "debt_source", "cash", "cash_source",
     "enterprise_value", "ebit", "ebit_method", "ebit_period_end", "ebit_accession",
+    "one_time_ebit", "one_time_ebit_reason",
     "earnings_yield", "current_assets", "current_liabilities", "net_working_capital",
     "net_fixed_assets", "net_fixed_assets_source", "capital", "roc",
     "ey_rank", "roc_rank", "combined_rank", "balance_sheet_end",
@@ -57,7 +66,8 @@ MAGIC_ALL_COLUMNS = [
     "ticker", "name", "combined_rank", "ey_rank", "roc_rank",
     "price", "price_date", "shares", "shares_source", "shares_kind", "shares_end",
     "market_cap", "total_debt", "debt_source", "cash", "enterprise_value",
-    "ebit", "earnings_yield", "roc", "balance_sheet_end", "fiscal_period_end",
+    "ebit", "earnings_yield", "roc", "one_time_ebit", "repurchase_obligation",
+    "balance_sheet_end", "fiscal_period_end",
 ]
 FSCORE_COLUMNS = [
     "ticker", "cik", "name", "sic", "sic_description",
@@ -139,7 +149,7 @@ def run(as_of: date, run_date: date, config: dict, out_root: Path, cache: Path) 
     index_rows, form4_meta = phase("index", lambda: _index(client, cache, as_of, int(config["insider"]["lookback_days"])))
     facts_map, fact_errors = phase("facts", lambda: _facts(client, cache, candidates, index_rows))
     covers = phase("covers", lambda: _covers(client, cache, candidates, facts_map, as_of, config))
-    screened = _screen(candidates, facts_map, fact_errors, covers, as_of, config)
+    screened = _screen(candidates, facts_map, fact_errors, covers["shares"], as_of, config, covers["obligations"])
     insider_rows = phase(
         "insider",
         lambda: _insiders(
@@ -608,7 +618,7 @@ def _facts(client: HttpClient, cache: Path, candidates: list[dict], index_rows: 
     return out, errors
 
 
-def _screen(candidates, facts_map, fact_errors, covers, as_of: date, config: dict) -> dict:
+def _screen(candidates, facts_map, fact_errors, covers, as_of: date, config: dict, obligations=None) -> dict:
     floor = float(config["min_market_cap"])
     limits = config["staleness"]
     min_score = int(config["fscore"]["min_score"])
@@ -649,7 +659,14 @@ def _screen(candidates, facts_map, fact_errors, covers, as_of: date, config: dic
             magic_reason = "multi_class_shares_unsplit"
             magic_detail = ",".join(item.get("listed_tickers") or [row["ticker"] for row in item["tickers"]])
         else:
-            magic = build_magic_inputs(facts, as_of, price, limits, share_rows=covers.get(cik) or None)
+            magic = build_magic_inputs(
+                facts,
+                as_of,
+                price,
+                limits,
+                share_rows=covers.get(cik) or None,
+                obligation_rows=(obligations or {}).get(cik) or None,
+            )
             magic_reason = "" if magic.get("ok") else magic.get("reason") or "magic_incomplete"
             magic_detail = "" if magic.get("ok") else str(magic.get("detail") or "")
             if magic.get("ok"):
@@ -747,6 +764,7 @@ def _magic_public(base: dict, magic: dict, multi: bool) -> dict:
         "shares_end": shares.get("end"),
         "shares_accession": shares.get("accn"),
         "large_buyback_after_bs": bool(magic.get("large_buyback_after_bs")),
+        "repurchase_obligation": magic.get("repurchase_obligation") or 0,
         "market_cap": magic["market_cap"],
         "total_debt": magic["total_debt"],
         "debt_source": magic["debt_source"],
@@ -757,6 +775,8 @@ def _magic_public(base: dict, magic: dict, multi: bool) -> dict:
         "ebit_method": magic["ebit_method"],
         "ebit_period_end": magic["ebit_period_end"],
         "ebit_accession": magic["ebit_accession"],
+        "one_time_ebit": bool(magic.get("one_time_ebit")),
+        "one_time_ebit_reason": magic.get("one_time_ebit_reason") or "",
         "earnings_yield": magic["earnings_yield"],
         "current_assets": magic["current_assets"],
         "current_liabilities": magic["current_liabilities"],
@@ -1005,8 +1025,13 @@ def listed_multi_class(rows: list[dict]) -> bool:
     return len({row.get("ticker") for row in rows if row.get("ticker")}) > 1
 
 
-def _covers(client: HttpClient, cache: Path, candidates, facts_map, as_of: date, config: dict) -> dict[str, list]:
-    """Filing share rows when the undimensioned cover count is stale or missing."""
+def _covers(client: HttpClient, cache: Path, candidates, facts_map, as_of: date, config: dict) -> dict[str, dict]:
+    """Filing share rows, and repurchase obligations after a large share drop.
+
+    Share rows are read when the undimensioned cover count is stale or missing.
+    Obligation rows are read when the fresh share count is more than 10 percent
+    below the balance-sheet count. Companyfacts does not carry extension concepts.
+    """
     limits = config["staleness"]
     max_age = int(limits["max_share_age_days"]) if "max_share_age_days" in limits else 180
     statement_cap = int(limits["max_statement_age_days"]) + 20
@@ -1018,67 +1043,81 @@ def _covers(client: HttpClient, cache: Path, candidates, facts_map, as_of: date,
         if not facts:
             continue
         preview = select_shares(facts, as_of, max_age_days=max_age)
-        if not preview.get("dei_stale_or_missing"):
+        need_shares = bool(preview.get("dei_stale_or_missing"))
+        need_obligation = False
+        end = balance_sheet_date(facts, as_of)
+        if preview.get("ok") and end:
+            need_obligation = large_share_decline_after_balance_sheet(
+                facts, as_of, float(preview["value"]), preview.get("end"), end
+            )
+        if not need_shares and not need_obligation:
             continue
         latest = latest_domestic_row(facts, as_of)
         if latest is None or not latest.get("accn"):
             continue
         if staleness_days(latest["filed"], as_of) > statement_cap:
             continue
-        jobs.append((item["cik"], latest["accn"], latest["form"], latest["filed"]))
+        jobs.append((item["cik"], latest["accn"], latest["form"], latest["filed"], need_obligation))
     print(f"COVER filings {len(jobs)}", flush=True)
     if not jobs:
-        return {}
+        return {"shares": {}, "obligations": {}}
 
-    def one(job: tuple) -> tuple[str, list]:
-        cik, accn, form, filed = job
+    def one(job: tuple) -> tuple[str, list, list]:
+        cik, accn, form, filed, need_obligation = job
         path = cache / "cover" / f"{accn}.json"
         if path.exists():
             cached = _read_json(path)
-            return cik, list(cached.get("rows") or [])
+            if not need_obligation or "obligations" in cached:
+                return cik, list(cached.get("rows") or []), list(cached.get("obligations") or [])
         try:
-            rows = _download_cover(client, cik, accn, form, filed)
+            rows, obligations = _download_cover(client, cik, accn, form, filed)
         except Exception as exc:  # noqa: BLE001
             print(f"COVER fail {cik} {accn} {type(exc).__name__}", flush=True)
-            return cik, []
-        _write_json(path, {"accn": accn, "rows": rows})
-        return cik, rows
+            return cik, [], []
+        _write_json(path, {"accn": accn, "rows": rows, "obligations": obligations})
+        return cik, rows, obligations
 
-    out: dict[str, list] = {}
+    shares: dict[str, list] = {}
+    obligations: dict[str, list] = {}
     with ThreadPoolExecutor(max_workers=6) as pool:
         futures = [pool.submit(one, job) for job in jobs]
         done = 0
         for future in as_completed(futures):
-            cik, rows = future.result()
+            cik, rows, oblig = future.result()
             if rows:
-                out[cik] = rows
+                shares[cik] = rows
+            if oblig:
+                obligations[cik] = oblig
             done += 1
             if done % 100 == 0:
                 print(f"COVER {done}/{len(jobs)}", flush=True)
-    print(f"COVER parsed {len(out)}", flush=True)
-    return out
+    print(f"COVER parsed shares {len(shares)} obligations {len(obligations)}", flush=True)
+    return {"shares": shares, "obligations": obligations}
 
 
-def _download_cover(client: HttpClient, cik: str, accn: str, form: str, filed: str) -> list[dict]:
+def _download_cover(client: HttpClient, cik: str, accn: str, form: str, filed: str) -> tuple[list[dict], list[dict]]:
     folder = accn.replace("-", "")
     base = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{folder}"
     raw = client.get(f"{base}/index.json", timeout=60, missing_ok=True)
     if not raw:
-        return []
+        return [], []
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
-        return []
+        return [], []
     items = ((payload.get("directory") or {}).get("item")) or []
     if isinstance(items, dict):
         items = [items]
     name = instance_name(items)
     if not name:
-        return []
+        return [], []
     body = client.get(f"{base}/{name}", timeout=120, missing_ok=True)
     if not body:
-        return []
-    return stamp_filing(parse_share_document(body), accn, form, filed)
+        return [], []
+    return (
+        stamp_filing(parse_share_document(body), accn, form, filed),
+        stamp_filing(parse_repurchase_obligations(body), accn, form, filed),
+    )
 
 
 def refresh_diff(out_root: Path) -> str | None:
