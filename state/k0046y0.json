@@ -1,15 +1,15 @@
 {
   "price": {
-    "last_date": "2026-11-19",
-    "last_close": 11695.0,
+    "last_date": "2026-11-24",
+    "last_close": 11640.0,
     "armed": {
       "t1": false,
       "t2": true
     },
     "rec_armed": true,
     "cycle_from": "2026-11-17 1차",
-    "last_ma20": 12047.2,
+    "last_ma20": 11967.0,
     "seed_note": "설치 seed 2026-11-05 15:20 KST: 마지막 KRX 확정 종가 2026-11-04 12,095원(Daum KRX), SMA20 12,139.5원. 두 선 무장, 20일선 회복은 선이 울린 뒤에만 무장."
   },
-  "updated_at": "2026-11-20 03:59 KST"
+  "updated_at": "2026-11-24 19:04 KST"
 }

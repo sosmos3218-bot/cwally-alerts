@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-11-23T19:18:45.262002+09:00",
+  "updated_at": "2026-11-24T19:01:23.364923+09:00",
   "rate_low_armed": true,
-  "y10_last_date": "2026-11-19",
+  "y10_last_date": "2026-11-20",
   "price_low_armed": true,
-  "price_last_date": "2026-11-23",
+  "price_last_date": "2026-11-24",
   "last_dist_date": "2026-10-30",
   "last_dist_amt": 32.0,
-  "last_summary_date": "2026-11-23",
+  "last_summary_date": "2026-11-24",
   "fail": {
     "y10": {
       "days": 0,

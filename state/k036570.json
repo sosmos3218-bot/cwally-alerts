@@ -1,15 +1,15 @@
 {
   "price": {
-    "last_date": "2026-11-19",
-    "last_close": 184100.0,
-    "last_volume": 102361.0,
+    "last_date": "2026-11-24",
+    "last_close": 171400.0,
+    "last_volume": 66239.0,
     "armed": {
-      "buy1": true,
+      "buy1": false,
       "buy2": true,
       "buy3": true
     },
     "pending": null,
     "seed_note": "설치 seed 2026-11-16 11:30 KST: 마지막 정규장 확정 종가 2026-11-13 179,000원, 거래량 158,358주(Daum krx_close). 175,000원 위라 1/2/3차 모두 무장. 이 날짜까지는 판정하지 않음.",
-    "last_judged_at": "2026-11-20 03:58 KST"
+    "last_judged_at": "2026-11-24 19:02 KST"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "last_day": "2026-11-19",
-  "last_close": 28500.0,
-  "last_pbr": 0.1885,
+  "last_day": "2026-11-24",
+  "last_close": 27150.0,
+  "last_pbr": 0.1844,
   "lines": {
     "low": {
       "armed": true,
@@ -13,8 +13,8 @@
     }
   },
   "seed_note": "2026-11-05 시드. 2026-11-04 KRX 종가 29,000원(Yahoo 004020.KS), BPS 151,227원(2026.06) 기준 PBR 0.192, 두 선 모두 무장. 판정은 11/5 종가부터.",
-  "bps_used": 151227,
-  "bps_basis": "2026.06 (WiseReport 최근 분기, 자동 확인)",
-  "updated_at": "2026-11-20T03:58:45.072253+09:00",
+  "bps_used": 147255,
+  "bps_basis": "WiseReport 최근 분기(자동, config 기준일 갱신 필요)",
+  "updated_at": "2026-11-24T19:02:57.337416+09:00",
   "bps_fail_week": "2026-W46"
 }

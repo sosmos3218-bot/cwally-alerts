@@ -10,8 +10,8 @@
     "px350": false
   },
   "px350_seed_note": "2026-11-03 KST px350 추가 시 armed=true 시드(발송 없음). 다음 판정에서 11/3 이후 봉의 종가 또는 저가가 350,000원 이하면 1번 발송.",
-  "last_date": "2026-11-19",
-  "last_close": 302000.0,
+  "last_date": "2026-11-24",
+  "last_close": 314500.0,
   "init_note": "initialized from 2026-10-26 close 374,000, no send",
   "kind_fail_notified": false,
   "seen_acptno": [
@@ -26,6 +26,6 @@
     "20261119000476"
   ],
   "filings_seeded": true,
-  "updated_at": "2026-11-20T03:58:48+09:00",
+  "updated_at": "2026-11-24T19:03:03+09:00",
   "levels_note": "2026-10-26 lgeshold 구간 합침: 10/26 종가 374,000 기준으로 초기화(36만~40만 안이라 add360 은 이미 진입 상태, 오늘 15:20 [LGESH] buy 알림과 같음). 발송 없음."
 }

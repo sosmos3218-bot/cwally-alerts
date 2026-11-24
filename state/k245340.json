@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-16T19:03:00.318880+09:00",
+  "updated_at": "2026-11-24T19:02:07.900603+09:00",
   "seed": "pending",
   "seed_note": "검증된 2주 연속 기준이 없어 대기. 참인 첫 유효 주만 1회차. 거짓이거나 무효인 주는 세지 않음. 소급 발송 없음.",
-  "last_eval_week": "2026-W47",
+  "last_eval_week": "2026-W48",
   "streak": 0,
   "last_true_week": null,
   "latched": false,
@@ -14,19 +14,19 @@
     "notified": false
   },
   "last_check": {
-    "week": "2026-W47",
-    "day": "2026-11-16",
+    "week": "2026-W48",
+    "day": "2026-11-24",
     "valid": true,
     "cond": false,
-    "asof": "2026-11-13",
+    "asof": "2026-11-23",
     "streak": 0,
     "latched": false,
     "flags": {
-      "m3_spy": true,
+      "m3_spy": false,
       "m3_schd": false,
       "m6_spy": true,
       "m6_schd": false,
-      "sma": true
+      "sma": false
     }
   }
 }

@@ -1,14 +1,14 @@
 {
   "price": {
-    "last_date": "2026-11-19",
-    "last_close": 36750.0,
-    "last_volume": 6112.0,
+    "last_date": "2026-11-24",
+    "last_close": 34150.0,
+    "last_volume": 9208.0,
     "buy1_armed": false,
     "warn_armed": false,
     "hold_armed": true,
-    "below_streak": 3,
+    "below_streak": 6,
     "pending": null,
     "seed_note": "설치 seed 2026-11-04 12:05 KST: 마지막 정규장 확정 종가 2026-11-03 43,700원, 거래량 9,647주(Daum). 42,000원 위, 38,000원 위라 두 조건 모두 무장, 이 날짜까지는 판정하지 않음.",
-    "last_judged_at": "2026-11-20 03:59 KST"
+    "last_judged_at": "2026-11-24 19:03 KST"
   }
 }

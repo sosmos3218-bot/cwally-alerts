@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W48",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-23 09:13 KST",
+  "updated_at": "2026-11-24 19:02 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -26,7 +26,7 @@
         ],
         "claims": {},
         "ops_day": "2026-11-19",
-        "last_ok": "2026-11-20"
+        "last_ok": "2026-11-24"
       },
       "samsung": {
         "seeded": true,
@@ -126,11 +126,15 @@
           "u:news.samsung.com/global/samsung-explores-how-trust-security-and-privacy-shape-the-future-of-ai-at-ces-2026",
           "t:samsung explores how trust security and privacy shape the future of ai at ces 2026",
           "u:news.samsung.com/global/samsungs-latest-products-recognized-by-consumer-technology-association-ahead-of-ces-2027",
-          "t:samsung s latest products recognized by consumer technology association ahead of ces 2027"
+          "t:samsung s latest products recognized by consumer technology association ahead of ces 2027",
+          "u:news.samsung.com/global/the-technology-behind-more-precise-finding-with-galaxy-smarttag3-and-smartthings",
+          "t:the technology behind more precise finding with galaxy smarttag3 and smartthings",
+          "u:news.samsung.com/global/samsung-electronics-announces-new-leadership-5",
+          "t:samsung electronics announces new leadership"
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-20"
+        "last_ok": "2026-11-24"
       },
       "skhynix": {
         "seeded": true,
@@ -158,7 +162,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-20"
+        "last_ok": "2026-11-24"
       }
     }
   }

@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-11-20T03:58:00.886156+09:00",
+  "updated_at": "2026-11-24T19:01:55.762340+09:00",
   "breadth_down_armed": true,
   "breadth_up_armed": false,
   "breadth_last": {
-    "date": "2026-11-19",
-    "ratio": 0.2953362293741623
+    "date": "2026-11-23",
+    "ratio": 0.29464621384537887
   },
   "breadth_base": {
-    "date": "2026-10-22",
-    "ratio": 0.2856432207764318
+    "date": "2026-10-26",
+    "ratio": 0.28390189669358945
   },
-  "breadth_chg_pct_last": 3.393397039629753,
+  "breadth_chg_pct_last": 3.7845175664273922,
   "price_low_armed": true,
   "price_high_armed": true,
-  "price_last_date": "2026-11-19",
-  "last_dist_date": "2026-10-29",
+  "price_last_date": "2026-11-24",
+  "last_dist_date": "2026-10-30",
   "last_dist_amt": 43.0,
-  "last_summary_date": "2026-11-19",
+  "last_summary_date": "2026-11-24",
   "fail": {
     "bars": {
       "days": 0,

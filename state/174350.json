@@ -1,17 +1,17 @@
 {
-  "last_day": "2026-11-19",
+  "last_day": "2026-11-24",
   "lines": {
     "buy1": {
       "armed": false,
       "fired_day": "2026-11-05"
     },
     "buy2": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-20"
     },
     "buy3": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-23"
     },
     "stop": {
       "armed": true,
@@ -27,12 +27,12 @@
       "fired_day": null
     }
   },
-  "last_close": 19650.0,
-  "last_kospi": 5137.89,
-  "last_ratio": 3.824527,
-  "last_ratio_avg": 3.674393,
+  "last_close": 19005.0,
+  "last_kospi": 5006.03,
+  "last_ratio": 3.796422,
+  "last_ratio_avg": 3.733646,
   "last_streak": 0,
-  "last_ma200": 6525.31,
+  "last_ma200": 6522.2,
   "seed_note": "2026-11-05 시드. 11/5 KRX 종가 174350 20,610원(1차 구간 안, 사용자가 계획대로 1차 매수 중이라 1차는 발송된 것으로 표시), KOSPI 5,383.80. 2차, 3차, 중단, 축소1, 축소2 무장. 판정은 11/6 종가부터.",
-  "updated_at": "2026-11-20T03:58:46.371845+09:00"
+  "updated_at": "2026-11-24T19:02:58.841942+09:00"
 }
