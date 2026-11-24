@@ -1,5 +1,5 @@
 {
-  "code_version": "54ce8c8d3a4d3abde914dbd638944e972105cd4a",
+  "code_version": "e165bc82590e9b061161982f6e2a0593be687b75",
   "config": {
     "domestic_forms": [
       "10-K",
@@ -83,42 +83,41 @@
     }
   },
   "counts": {
-    "excluded": 914,
+    "excluded": 924,
     "excluded_reasons": {
-      "capital_non_positive": 80,
+      "capital_non_positive": 82,
       "cash_missing": 102,
-      "debt_unconfirmed": 267,
-      "earnings_yield_above_max": 1,
+      "debt_unconfirmed": 271,
       "ebit_missing": 113,
       "ebit_provisional": 96,
-      "enterprise_value_below_min": 6,
-      "enterprise_value_non_positive": 7,
+      "enterprise_value_below_min": 10,
+      "enterprise_value_non_positive": 5,
       "multi_class_shares_unsplit": 97,
-      "net_fixed_assets_missing": 76,
+      "net_fixed_assets_missing": 77,
       "stale_price": 1,
-      "stale_statement": 49,
+      "stale_statement": 51,
       "working_capital_missing": 19
     },
     "fscore_listed": 98,
-    "fscore_scored": 1021,
+    "fscore_scored": 1028,
     "fscore_skip_reasons": {
       "annual_assets_missing": 72,
       "annual_gap": 7,
       "annual_income_missing": 114,
-      "equity_issuance_unknown": 282,
-      "missing_cfo_t": 43,
-      "missing_gross_profit": 461,
+      "equity_issuance_unknown": 281,
+      "missing_cfo_t": 44,
+      "missing_gross_profit": 464,
       "missing_liquidity": 72,
-      "missing_revenue": 102,
-      "revenue_non_positive": 7,
+      "missing_revenue": 104,
+      "revenue_non_positive": 6,
       "stale_annual": 70
     },
-    "insider": 236,
+    "insider": 250,
     "intersection": 5,
-    "magic_input_rows": 1338,
+    "magic_input_rows": 1339,
     "magic_top": 30,
-    "price_failures": 9,
-    "universe": 2251
+    "price_failures": 7,
+    "universe": 2262
   },
   "data_sources": [
     "SEC EDGAR company_tickers_exchange.json",
@@ -130,17 +129,18 @@
     "SEC EDGAR Form 4 submission text",
     "Yahoo Finance chart daily close"
   ],
-  "form4_acceptance_cutoff": "2026-11-23T23:59:59-05:00",
+  "form4_acceptance_cutoff": "2026-11-24T23:59:59-05:00",
   "form4_latest_acceptance": "unknown (master.idx)",
-  "form4_latest_filing_date": "2026-11-20",
+  "form4_latest_filing_date": "2026-11-23",
   "fscore_basis": "annual",
   "fscore_min_score": 8,
-  "insider_filings_through": "2026-11-20",
+  "generated_at": "2026-11-24T18:32:39.857743+09:00",
+  "insider_filings_through": "2026-11-23",
   "insider_lookback_days": 30,
   "magic_top_n": 30,
   "min_market_cap": 100000000,
-  "previous_trade_date": "2026-11-20",
-  "price_as_of": "2026-11-20",
-  "run_date": "2026-11-23",
+  "previous_trade_date": "2026-11-23",
+  "price_as_of": "2026-11-23",
+  "run_date": "2026-11-24",
   "trade_date": "2026-11-23"
 }
