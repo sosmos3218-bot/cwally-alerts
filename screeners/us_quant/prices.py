@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
@@ -74,6 +75,19 @@ def _regular_session_price(meta: dict, as_of: date, volume: int) -> dict | None:
         "volume": volume,
         "price_source": "yahoo_regular_market_price",
     }
+
+
+def common_close_date(price_dates: list[str], fallback: date) -> str:
+    """Most common last-bar date. The later date wins a tie.
+
+    Each fetched symbol contributes one close, the last bar on or before the
+    as-of day. The trade date is that shared session, not the calendar day
+    the screen happened to run.
+    """
+    counts = Counter(day for day in price_dates if day)
+    if not counts:
+        return fallback.isoformat()
+    return max(counts, key=lambda day: (counts[day], day))
 
 
 def fetch_close(symbol: str, as_of: date, getter=yahoo_get) -> dict | None:

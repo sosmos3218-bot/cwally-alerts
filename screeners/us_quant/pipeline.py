@@ -39,7 +39,7 @@ from screeners.us_quant.output_io import (
     write_meta,
     write_table,
 )
-from screeners.us_quant.prices import fetch_close
+from screeners.us_quant.prices import common_close_date, fetch_close
 from screeners.us_quant.universe import foreign_filer, is_common_listing, sic_block_reason
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -164,7 +164,13 @@ def run(as_of: date, run_date: date, config: dict, out_root: Path, cache: Path) 
         ),
     )
     trade_s = as_of.isoformat()
-    meta = _meta(config, run_date, as_of, screened, form4_meta, phases)
+    price_dates = [
+        str(quote.get("price_date"))
+        for quote in prices.values()
+        if isinstance(quote, dict) and quote.get("price_date")
+    ]
+    meta = _meta(config, run_date, as_of, screened, form4_meta, phases, price_dates)
+    meta["generated_at"] = started.isoformat()
     folder = out_root / trade_s
     _emit(folder, meta, screened, insider_rows, price_rows, out_root, trade_s, started.isoformat())
     digest = hash_folder(folder)
@@ -883,17 +889,13 @@ def _insiders(client, cache, index_rows, universe: set[str], as_of: date, lookba
     return rows
 
 
-def _meta(config, run_date, as_of, screened, form4_meta, phases) -> dict:
+def _meta(config, run_date, as_of, screened, form4_meta, phases, price_dates: list[str]) -> dict:
     del phases
-    dates = [row["price_date"] for row in screened["magic"]]
-    price_as_of = as_of.isoformat()
-    if dates:
-        counts = Counter(dates)
-        price_as_of = sorted(counts, key=lambda item: (-counts[item], item))[0]
+    session = common_close_date(price_dates, as_of)
     return {
         "run_date": run_date.isoformat(),
-        "trade_date": as_of.isoformat(),
-        "price_as_of": price_as_of,
+        "trade_date": session,
+        "price_as_of": session,
         "code_version": code_version(),
         "min_market_cap": config["min_market_cap"],
         "magic_top_n": config["magic"]["top_n"],
@@ -1136,7 +1138,9 @@ def refresh_diff(out_root: Path) -> str | None:
         return None
     current = max(folders, key=lambda path: path.name)
     meta = _read_json(current / "metadata.json")
-    trade_s = str(meta.get("trade_date") or current.name)
+    # The folder is the as-of date. trade_date inside the file is the price
+    # session and can be earlier, so the diff baseline follows the folder.
+    trade_s = current.name
     previous = previous_trade_folder(out_root, trade_s)
 
     def load_rows(name: str) -> list[dict]:
