@@ -1,23 +1,23 @@
 {
-  "updated_at": "2026-11-24 10:31 KST",
+  "updated_at": "2026-11-25 08:25 KST",
   "zone": "STOP1000",
-  "price": 949.0,
+  "price": 966.0,
   "close": {
-    "date": "2026-11-23",
-    "close": 939.0,
+    "date": "2026-11-24",
+    "close": 966.0,
     "src": "Daum KRX"
   },
   "coin": {
-    "streak": 2,
+    "streak": 3,
     "streak_start": "2026-11-20",
-    "last_date": "2026-11-23",
-    "last_close": 939.0,
+    "last_date": "2026-11-24",
+    "last_close": 966.0,
     "max": 5,
     "max_span": [
       "2026-10-21",
       "2026-10-27"
     ],
-    "total": 12,
+    "total": 13,
     "sent": []
   },
   "seen_ids": [

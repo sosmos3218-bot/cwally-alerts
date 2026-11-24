@@ -1,14 +1,22 @@
 {
   "initialized": true,
   "armed": {
-    "be2399": true,
-    "ma200": true,
+    "be2399": false,
+    "ma200": false,
     "low20": true,
     "stop1772": true
   },
-  "last_date": "2026-11-23",
-  "last_close": 20.65,
+  "last_date": "2026-11-24",
+  "last_close": 24.8,
   "init_note": "2026-10-28 11:15 KST 설치 때 10/27 미국 종가 21.75달러로 초기화. 이미 구간 안인 선 없음, 모두 무장.",
   "fail_day": null,
-  "updated_at": "2026-11-24T09:18:17+09:00"
+  "updated_at": "2026-11-25T08:28:34+09:00",
+  "last_sent": {
+    "day": "2026-11-24",
+    "fired": [
+      "be2399",
+      "ma200"
+    ],
+    "title": "[AMTM-PX] 종가 24.80달러 본전 회복 | 보유 유지"
+  }
 }

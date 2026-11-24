@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "opinion": "watch",
+  "opinion": "avoid",
   "price_zone": false,
   "liq_ok": false,
   "liq_dry": false,
-  "q3_state": "pending",
+  "q3_state": "shock",
   "div_risk": false,
   "consensus_reference": {
     "q3_op_eok": 1061.0,
@@ -79,17 +79,18 @@
     "2026-W44": "2026-10-23",
     "2026-W45": "2026-11-05",
     "2026-W46": "2026-11-06",
-    "2026-W47": "2026-11-13"
+    "2026-W47": "2026-11-13",
+    "2026-W48": "2026-11-24"
   },
   "ops_daily": {},
   "last_observation": {
-    "session": "2026-11-19",
-    "pref_close": 92700.0,
-    "common_close": 253500.0,
-    "discount_pct": 63.43,
-    "liq_median_value_eok": 4.07,
-    "avg5_volume": 2260,
-    "dps": 3027.0
+    "session": "2026-11-24",
+    "pref_close": 92300.0,
+    "common_close": 250000.0,
+    "discount_pct": 63.08,
+    "liq_median_value_eok": 3.75,
+    "avg5_volume": 2969,
+    "dps": 2974.0
   },
-  "updated_at": "2026-11-20T09:08:04+09:00"
+  "updated_at": "2026-11-25T08:27:23+09:00"
 }

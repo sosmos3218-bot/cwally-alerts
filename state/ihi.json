@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-11-23T09:18:23.231965+09:00",
+  "updated_at": "2026-11-25T08:26:00.200216+09:00",
   "rs": {
     "armed": true,
     "on": false,
-    "last_date": "2026-11-20",
+    "last_date": "2026-11-24",
     "fired": null,
     "fail_day": null,
     "last": {
-      "date": "2026-11-20",
-      "close": 55.38,
-      "sma": 53.3402,
-      "ret_ihi": -0.89,
-      "ret_bench": 1.45,
-      "gap_pp": -2.35,
+      "date": "2026-11-24",
+      "close": 57.48,
+      "sma": 53.3279,
+      "ret_ihi": 3.77,
+      "ret_bench": 6.44,
+      "gap_pp": -2.67,
       "cond_rs": false,
       "cond_ma": true
     }
@@ -24,7 +24,12 @@
     "fail": {},
     "check_sent": null,
     "verdict": null,
-    "mdt_base": null
+    "mdt_base": {
+      "date": "2026-11-24",
+      "acc": "0001628280-26-075604",
+      "sales_growth_mid": 7.5,
+      "eps_mid": 5.97
+    }
   },
   "seed_note": "2026-11-02 설치 시드: 10/30 종가 기준 신호 꺼짐, 무장 상태. 발송 없음."
 }

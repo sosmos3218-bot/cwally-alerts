@@ -1,7 +1,7 @@
 {
-  "disparity": 43.855932203389834,
+  "disparity": 40.93376764386536,
   "zone": "review",
-  "last_session": "2026-11-20",
+  "last_session": "2026-11-24",
   "weekly_sent": {
     "2026-W44": true,
     "2026-W45": true,
@@ -9,5 +9,5 @@
     "2026-W47": true,
     "2026-W48": true
   },
-  "updated_at": "2026-11-23T09:07:03+09:00"
+  "updated_at": "2026-11-25T08:25:16+09:00"
 }

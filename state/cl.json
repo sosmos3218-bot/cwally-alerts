@@ -1,6 +1,6 @@
 {
-  "price": 98.71,
-  "band": "HOLD",
+  "price": 99.24,
+  "band": "STRETCH",
   "buy1_sent": false,
   "buy2_sent": false,
   "stretch_sent": true,
@@ -8,7 +8,7 @@
   "q3_post_sent": true,
   "fail_sent_date": null,
   "last_kind": "STRETCH",
-  "updated_at": "2026-11-23T09:18:22.410369+09:00",
+  "updated_at": "2026-11-25T08:25:58.394611+09:00",
   "last_metrics": {
     "found": false,
     "source": "",

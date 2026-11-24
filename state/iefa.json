@@ -1,16 +1,16 @@
 {
   "initialized": true,
   "band": "BELOW",
-  "last_date": "2026-11-23",
-  "last_close": 91.86,
-  "last_sma200": 96.4301,
+  "last_date": "2026-11-24",
+  "last_close": 92.02,
+  "last_sma200": 96.4051,
   "pe_armed": true,
-  "pe_last_asof": "2026-11-20",
-  "pe_last_value": 18.1164,
+  "pe_last_asof": "2026-11-23",
+  "pe_last_value": 17.7291,
   "fail_day": null,
   "pe_fail_day": null,
   "seed_note": "2026-10-26 사용자 요청: 10/23 종가 95.68 < 200일선 96.21 이라 band=BELOW, PER 18.42(10/23 기준) 라 PER 선 무장. 첫 실행은 실제로 선을 넘을 때만 보냄.",
-  "updated_at": "2026-11-24T09:18:08+09:00",
+  "updated_at": "2026-11-25T08:28:24+09:00",
   "last_sent": {
     "at": "2026-11-17T09:11:07+09:00",
     "title": "[IEFA] 200일선 이탈 | 매수 보류"

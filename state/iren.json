@@ -1,23 +1,11 @@
 {
-  "updated_at": "2026-11-24 09:01 KST",
-  "price": 14.64,
+  "updated_at": "2026-11-25 08:25 KST",
+  "price": 12.95,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://247wallst.com/investing/2026/10/27/iren-limited-fell-by-33-in-2026-but-3-analysts-believe-it-will-nearly-quadruple-in-price-from-here/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/zacks-investment-ideas-feature-highlights-124600030.html?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-2-top-ai-stocks-170802846.html?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000110465926112411/0001104659-26-112411-index.htm",
-    "https://finance.yahoo.com/m/bd4f990c-7105-3233-afd3-4c5c6b889642/coreweave-is-steadying-after.html?.tsrc=rss",
-    "https://finance.yahoo.com/m/6151cb22-1b1a-391b-a195-a7411fe60f0d/neocloud-stocks-like.html?.tsrc=rss",
-    "https://finance.yahoo.com/video/three-billionaires-called-ai-top-110000440.html?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/mu-sndk-neocloud-stocks-extend-gains-on-anthropic-boost-sk-hynix-q3-stunner-jim-cramer-urges-caution/cZU93s9RB61?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-wingspire-equipment-finance-complete-131700873.html?.tsrc=rss",
-    "https://blockspace.media/insight/iren-closes-wingspire-gpu-refinancing/?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/iren-stock-climbs-after-it-borrows-against-its-gpu-fleet-to-fund-ai-expansion/cZU9kcSR9GO?.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/28/elon-musk-says-neoclouds-face-a-guppy-level-death/?.tsrc=rss",
     "https://blockspace.media/short/iren-just-borrowed-363m-against-its-nvidia-gpus-heres-why/?.tsrc=rss",
     "https://blockspace.media/podcast/irens-363m-gpu-raise-morgan-stanleys-bullish-terawulf-price-target-and-sk-hynixs-earnings/?.tsrc=rss",
     "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000535/0000070858-26-000535-index.htm",
@@ -205,7 +193,19 @@
     "https://www.tikr.com/blog/jim-chanos-coreweave-still-needs-4-of-capital-for-every-1-of-revenue-that-undercuts-the-gpu-rental-boom?ref=yahoofinance&tlnk=yf-261123-w46j85pw&.tsrc=rss",
     "https://www.fool.com/coverage/stock-market-today/2026/11/23/stock-market-today-nov-23-coreweave-surges-22-as-nvidia-reinstates-jensen-huang-as-ceo/?.tsrc=rss",
     "https://247wallst.com/videos/nebius-coreweave-jump-21-while-oracle-sees-12-gains-on-monday-following-jensens-return/?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/situational-awareness-stock-portfolio-top-174354247.html?.tsrc=rss"
+    "https://finance.yahoo.com/markets/stocks/articles/situational-awareness-stock-portfolio-top-174354247.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/24/iren-sinks-15-coreweave-tumbles-14-as-neocloud-stocks-backtrack-mondays-rally-nebius-drops-13/?.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/iren-nasdaq-iren-pitches-two-151144118.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/24/iren-fell-42-this-month-even-after-the-market-jump-on-nvidia-news-this-wall-street-pro-maintains-that-440-returns-are-coming-after-q3-earnings-downgrades/?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-nbis-iren-rally-good-day-neoclouds-databricks-co-founder-security-gaps-top-neoclouds/cNbsRgYR9kB?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-ltd-iren-just-exploded-032509936.html?.tsrc=rss",
+    "https://beincrypto.com/ai-stocks-dead-cat-bounce-iren/?.tsrc=rss",
+    "https://www.tikr.com/blog/iren-sinks-11-in-a-week-despite-jensen-huangs-return-its-6-billion-funding-gap-meets-more-selective-capital-markets?ref=yahoofinance&tlnk=yf-261124-cpxx5whf&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/hewlett-packard-steers-clear-of-financing-neocloud-or-high-risk-customers-hpe-stock-dips-despite-q4-beat-and-raise/cNbrU1ER9kT?.tsrc=rss",
+    "https://blockspace.media/short/what-jensen-huangs-return-to-nvidia-means-for-ai-stocks/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/24/applied-digital-is-down-33-in-a-month-what-will-it-take-to-get-apld-stock-back-to-20/?.tsrc=rss",
+    "https://www.tikr.com/blog/databricks-co-founder-says-just-one-neocloud-has-robust-enough-isolation-my-guess-its-probably-not-coreweave?ref=yahoofinance&tlnk=yf-261124-wcppqc25&.tsrc=rss",
+    "https://www.tikr.com/blog/anthropic-backer-dismisses-musk-as-a-glorified-compute-reseller-heres-what-reselling-earns-spacex?ref=yahoofinance&tlnk=yf-261124-4wp2mjrm&.tsrc=rss"
   ],
   "last_digest_at": "2026-11-23 09:02 KST",
   "pending_news": [
@@ -218,6 +218,16 @@
       "title": "Stock Market Today, Nov. 23: CoreWeave Surges 22% as Nvidia Reinstates Jensen Huang as CEO",
       "url": "https://www.fool.com/coverage/stock-market-today/2026/11/23/stock-market-today-nov-23-coreweave-surges-22-as-nvidia-reinstates-jensen-huang-as-ceo/?.tsrc=rss",
       "seen_at": "2026-11-24 09:01 KST"
+    },
+    {
+      "title": "IREN Fell 42% This Month Even After The Market Jump on NVIDIA News: This Wall Street Pro Maintains That 440% Returns Are Coming After Q3 Earnings Downgrades",
+      "url": "https://247wallst.com/investing/2026/11/24/iren-fell-42-this-month-even-after-the-market-jump-on-nvidia-news-this-wall-street-pro-maintains-that-440-returns-are-coming-after-q3-earnings-downgrades/?.tsrc=rss",
+      "seen_at": "2026-11-25 08:25 KST"
+    },
+    {
+      "title": "What Jensen Huang’s return to NVIDIA means for AI stocks",
+      "url": "https://blockspace.media/short/what-jensen-huangs-return-to-nvidia-means-for-ai-stocks/?.tsrc=rss",
+      "seen_at": "2026-11-25 08:25 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
