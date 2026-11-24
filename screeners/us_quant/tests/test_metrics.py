@@ -22,7 +22,7 @@ from screeners.us_quant.fscore import score_f
 from screeners.us_quant.insider import aggregate_purchases, parse_form4
 from screeners.us_quant.magic import apply_magic_guards, earnings_yield, rank_magic, return_on_capital
 from screeners.us_quant.pipeline import form4_acceptance_value, listed_multi_class, refresh_diff
-from screeners.us_quant.prices import parse_chart
+from screeners.us_quant.prices import common_close_date, parse_chart
 from screeners.us_quant.output_io import hash_folder, write_table
 from screeners.us_quant.universe import foreign_filer, is_common_listing, sic_block_reason
 
@@ -306,12 +306,18 @@ def test_hon_and_man_debt_include_the_current_portion():
     assert got["source"] == "lt_and_lease_plus_current"
 
 
-def test_close_current_portion_and_borrowings_are_both_counted():
-    """YUM 10-Q 0001041061-26-000210, instant 2026-09-30.
+def test_yum_current_maturities_match_short_term_borrowings():
+    """YUM 10-Q 0001041061-26-000210, instant 2026-09-30. Dollars.
 
-    LongTermDebtAndCapitalLeaseObligations 9,459,000,000,
-    LongTermDebtCurrent 2,146,000,000, ShortTermBorrowings 2,141,000,000.
-    The two current figures are close and are different lines.
+    Balance sheet: short-term borrowings 2,141,000,000 and long-term debt
+    9,459,000,000. Total debt is 11,600,000,000.
+    Note 12: current maturities of long-term debt 2,146,000,000 less a
+    5,000,000 issuance-cost contra equal short-term borrowings 2,141,000,000.
+    The note subtotal 11,653,000,000 less long-term issuance costs 48,000,000
+    and that current contra is the same 11,600,000,000. Finance lease
+    obligations of 144,000,000 sit inside the long-term debt line.
+    LongTermDebt and LongTermDebtNoncurrent are absent on this date.
+    The old sum 9,459 + 2,146 + 2,141 = 13,746 counted the current line twice.
     """
     facts = _debt_facts(
         "2026-09-30",
@@ -319,12 +325,80 @@ def test_close_current_portion_and_borrowings_are_both_counted():
             "LongTermDebtAndCapitalLeaseObligations": 9_459_000_000,
             "LongTermDebtCurrent": 2_146_000_000,
             "ShortTermBorrowings": 2_141_000_000,
+            "FinanceLeaseLiabilityNoncurrent": 144_000_000,
         },
         filed="2026-11-06",
     )
     got = select_debt(facts, AS_OF)
-    assert got["value"] == 13_746_000_000
+    assert got["value"] == 11_600_000_000
     assert got["source"] == "lt_and_lease_plus_current"
+    assert {item["concept"] for item in got["components"]} == {
+        "LongTermDebtAndCapitalLeaseObligations",
+        "ShortTermBorrowings",
+    }
+    noncurrent_path = _debt_facts(
+        "2026-09-30",
+        {
+            "LongTermDebtNoncurrent": 9_459_000_000,
+            "LongTermDebtCurrent": 2_146_000_000,
+            "ShortTermBorrowings": 2_141_000_000,
+        },
+        filed="2026-11-06",
+    )
+    other = select_debt(noncurrent_path, AS_OF)
+    assert other["value"] == 11_600_000_000
+    assert "LongTermDebtCurrent" not in {item["concept"] for item in other["components"]}
+
+
+def test_lease_tag_equal_to_long_term_debt_can_still_be_the_noncurrent_line():
+    """ITT 10-Q filed 2026-11-05, instant 2026-10-03. Dollars.
+
+    LongTermDebt and LongTermDebtAndCapitalLeaseObligations are both
+    2,806,100,000. That match is the noncurrent line, not a total that
+    already includes current maturities. DebtAndCapitalLeaseObligations is
+    3,513,400,000, equal to 2,806,100,000 plus DebtCurrent 707,300,000.
+    DebtCurrent is commercial paper 702,200,000 plus short-term borrowings
+    2,500,000 plus LongTermDebtCurrent 2,600,000.
+    """
+    facts = _debt_facts(
+        "2026-10-03",
+        {
+            "DebtCurrent": 707_300_000,
+            "LongTermDebtCurrent": 2_600_000,
+            "LongTermDebt": 2_806_100_000,
+            "ShortTermBorrowings": 2_500_000,
+            "CommercialPaper": 702_200_000,
+            "LongTermDebtAndCapitalLeaseObligations": 2_806_100_000,
+            "DebtAndCapitalLeaseObligations": 3_513_400_000,
+        },
+        filed="2026-11-05",
+    )
+    got = select_debt(facts, AS_OF)
+    assert got["value"] == 3_513_400_000
+    assert "LongTermDebtCurrent" in {item["concept"] for item in got["components"]}
+
+
+def test_short_line_matching_current_is_not_added_above_long_term_debt():
+    """LongTermDebt equals noncurrent plus the current slice.
+
+    A short-term borrowings figure that matches the slice is that same
+    balance. The total stays at LongTermDebt.
+    """
+    facts = _debt_facts(
+        "2026-09-30",
+        {
+            "LongTermDebt": 100,
+            "LongTermDebtNoncurrent": 80,
+            "LongTermDebtCurrent": 20,
+            "ShortTermBorrowings": 20,
+        },
+    )
+    got = select_debt(facts, AS_OF)
+    assert got["value"] == 100
+    assert {item["concept"] for item in got["components"]} == {
+        "LongTermDebtNoncurrent",
+        "ShortTermBorrowings",
+    }
 
 
 def test_smaller_all_in_tag_does_not_drop_commercial_paper():
@@ -724,6 +798,13 @@ def test_purchase_total_does_not_depend_on_arrival_order():
     backward = aggregate_purchases(list(reversed(trades)), AS_OF, 30)
     assert forward == backward
     assert forward["0000000001"]["accessions"] == ["a"]
+
+
+def test_trade_date_follows_the_common_close():
+    """A later calendar day with no new bar keeps the session the closes share."""
+    assert common_close_date(["2026-11-20", "2026-11-20", "2026-11-19"], date(2026, 11, 23)) == "2026-11-20"
+    assert common_close_date(["2026-11-20", "2026-11-21", "2026-11-21"], date(2026, 11, 23)) == "2026-11-21"
+    assert common_close_date([], date(2026, 11, 23)) == "2026-11-23"
 
 
 def test_missing_session_close_uses_regular_session_price():
@@ -1156,3 +1237,10 @@ def test_refresh_diff_uses_the_newest_prior_trade_date(tmp_path: Path):
     assert ("exited", "OLD") in changes
     note = (tmp_path / "VERIFICATION.md").read_text(encoding="utf-8")
     assert "Previous trade date for diff `2026-11-12`" in note
+    # A later folder can carry an earlier price-session trade_date. The diff
+    # baseline is the previous folder, not the price session inside the file.
+    dump(tmp_path / "2026-11-23", "2026-11-20", ["LATE"], None)
+    assert refresh_diff(tmp_path) == "2026-11-18"
+    late = json.loads((tmp_path / "2026-11-23" / "metadata.json").read_text(encoding="utf-8"))
+    assert late["trade_date"] == "2026-11-20"
+    assert late["previous_trade_date"] == "2026-11-18"

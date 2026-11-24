@@ -18,7 +18,8 @@ A reported total wins. Components are summed only when no total is present.
 1. DebtCurrent + LongTermDebtNoncurrent when both are present.
 2. Else LongTermDebtNoncurrent plus LongTermDebtCurrent, ShortTermBorrowings,
    and CommercialPaper. Commercial paper is not added when short-term
-   borrowings are at least that large.
+   borrowings are at least that large. A current-maturity tag within 2
+   percent of those short tags is the same balance and is not added again.
 3. Else the larger of:
    a. LongTermDebtAndFinanceLeaseObligations or
       LongTermDebtAndCapitalLeaseObligations (one figure; the larger one if
@@ -29,9 +30,16 @@ A reported total wins. Components are summed only when no total is present.
       commercial paper when the borrowings figure is at least the paper
       figure. DebtCurrent already covers those short tags when it is at
       least their sum, unless LongTermDebt shows DebtCurrent is only the
-      current slice of long-term debt.
+      current slice of long-term debt. A current-maturity tag within 2
+      percent of short-term borrowings or commercial paper is that same
+      balance (issuance costs sit between the two tags). The borrowings
+      carrying amount is kept and the current-maturity tag is not added.
+      When LongTermDebt equals LongTermDebtNoncurrent plus the current
+      slice, a short-term line that matches that slice is not added on top.
    b. LongTermDebt plus ShortTermBorrowings and CommercialPaper, with the
-      same short-tag overlap rule.
+      same short-tag overlap rule. LongTermDebt is not added to
+      LongTermDebtCurrent when LongTermDebt already equals
+      LongTermDebtNoncurrent plus LongTermDebtCurrent.
    The lease tag is usually the noncurrent line, so (a) without the current
    portion understates debt. (b) misses finance leases that sit only in the
    lease tag. Each side is built without adding a total and its parts, then
@@ -648,7 +656,7 @@ def _component_debt(present: dict[str, dict]) -> tuple[list[dict], str]:
     if not any(item["value"] > 0 for item in named):
         other.extend(present[tag] for tag in ("SecuredDebt", "UnsecuredDebt") if tag in present)
     leases = _lease_components(present)
-    short = _short_components(present, named_current)
+    short = _drop_overlapped_current_portion(_short_components(present, named_current))
     components = named + other + leases + short
     positive = [item for item in components if item["value"] > 0]
     if positive:
@@ -768,6 +776,10 @@ def _lease_total_includes_current(chosen: dict, current: dict, present: dict[str
     if noncurrent is not None and _values_close(lease, float(noncurrent["value"]) + current_value):
         return True
     long_term = present.get("LongTermDebt")
+    # LongTermDebt includes the current slice only when it equals the
+    # noncurrent line plus that slice. A lease tag equal to that total
+    # already contains the current portion. Equality of LongTermDebt and the
+    # lease tag alone is not enough: both can be the noncurrent line.
     if (
         long_term is not None
         and noncurrent is not None
@@ -808,9 +820,16 @@ def _lease_plus_current_parts(present: dict[str, dict]) -> tuple[list[dict], str
         return [chosen], "debt_and_leases"
     parts = [chosen]
     current = _current_portion_item(present, chosen["concept"])
-    if current is not None and _lease_total_includes_current(chosen, current, present):
-        current = None
     shorts = _short_term_items(present)
+    if current is not None and _lease_total_includes_current(chosen, current, present):
+        # The current slice is already in the lease total. A short-term line
+        # that matches it is the same balance and stays out too.
+        matched = float(current["value"])
+        if len(shorts) > 1 and _values_close(matched, sum(float(item["value"]) for item in shorts)):
+            shorts = []
+        else:
+            shorts = [item for item in shorts if not _values_close(float(item["value"]), matched)]
+        current = None
     # DebtCurrent is the broad current bucket and often already includes
     # borrowings and commercial paper. A lease-current or LongTermDebtCurrent
     # tag is only the current portion of long-term debt, so the short tags stay.
@@ -826,12 +845,54 @@ def _lease_plus_current_parts(present: dict[str, dict]) -> tuple[list[dict], str
             shorts = [item for item in shorts if not _values_close(float(current["value"]), item["value"])]
     if current is not None:
         parts.append(current)
-    # A current-portion tag and short-term borrowings can be close without
-    # being the same balance (YUM: 2,146 and 2,141). Only DebtCurrent, handled
-    # above, is allowed to swallow the short tags.
     parts.extend(shorts)
+    parts = _drop_overlapped_current_portion(parts)
     source = "lt_and_lease_plus_current" if len(parts) > 1 else "debt_and_leases"
     return parts, source
+
+
+_CURRENT_MATURITY_TAGS = set(_LEASE_CURRENT_TAGS) | {"LongTermDebtCurrent"}
+_SHORT_LINE_TAGS = {"ShortTermBorrowings", "CommercialPaper"}
+
+
+def _drop_overlapped_current_portion(parts: list[dict]) -> list[dict]:
+    """Drop a current-maturity tag that repeats short-term borrowings.
+
+    The borrowings figure is the balance-sheet carrying amount. Debt issuance
+    costs make it a little smaller than the current-maturities tag. YUM's
+    10-Q for 2026-09-30 reports current maturities of 2,146 million and
+    short-term borrowings of 2,141 million after a 5 million issuance-cost
+    contra. Those are one line.
+    """
+    shorts = [item for item in parts if item.get("concept") in _SHORT_LINE_TAGS]
+    if not shorts:
+        return parts
+    short_sum = sum(float(item["value"]) for item in shorts)
+    drop: set[int] = set()
+    for item in parts:
+        if item.get("concept") not in _CURRENT_MATURITY_TAGS:
+            continue
+        value = float(item["value"])
+        same_line = any(_values_close(value, float(short["value"])) for short in shorts)
+        same_as_sum = len(shorts) > 1 and _values_close(value, short_sum)
+        if same_line or same_as_sum:
+            drop.add(id(item))
+    if not drop:
+        return parts
+    return [item for item in parts if id(item) not in drop]
+
+
+def _long_term_includes_current(present: dict[str, dict]) -> bool:
+    """True when LongTermDebt already equals noncurrent plus the current slice."""
+    long_term = present.get("LongTermDebt")
+    current = present.get("LongTermDebtCurrent")
+    noncurrent = present.get("LongTermDebtNoncurrent")
+    if long_term is None or current is None or noncurrent is None:
+        return False
+    return _values_close(
+        float(long_term["value"]),
+        float(noncurrent["value"]) + float(current["value"]),
+    )
 
 
 def _long_term_total_parts(present: dict[str, dict]) -> tuple[list[dict], str] | None:
@@ -841,7 +902,23 @@ def _long_term_total_parts(present: dict[str, dict]) -> tuple[list[dict], str] |
     guarded = {"LongTermDebt", "ShortTermBorrowings", "CommercialPaper", "LongTermDebtCurrent"}
     if present["LongTermDebt"]["value"] <= 0 and _outside_positive(present, guarded):
         return None
-    return [present["LongTermDebt"], *_short_term_items(present)], "long_term_debt_total"
+    shorts = _shorts_outside_inclusive_total(present, _short_term_items(present))
+    return [present["LongTermDebt"], *shorts], "long_term_debt_total"
+
+
+def _shorts_outside_inclusive_total(present: dict[str, dict], shorts: list[dict]) -> list[dict]:
+    """Drop a short-term line already inside LongTermDebt.
+
+    LongTermDebt includes the current slice when it equals the noncurrent
+    line plus that slice. A short-term borrowings figure that matches the
+    slice is the same balance, not a second borrowing.
+    """
+    if not shorts or not _long_term_includes_current(present):
+        return shorts
+    matched = float(present["LongTermDebtCurrent"]["value"])
+    if len(shorts) > 1 and _values_close(matched, sum(float(item["value"]) for item in shorts)):
+        return []
+    return [item for item in shorts if not _values_close(float(item["value"]), matched)]
 
 
 def _apply_reported_debt_total(parts: list[dict], source: str, present: dict[str, dict]) -> tuple[list[dict], str]:
@@ -895,6 +972,7 @@ def select_debt(facts: dict, as_of: date, end: str | None = None) -> dict:
     ):
         add("LongTermDebtNoncurrent", "LongTermDebtCurrent")
         components.extend(_short_term_items(present))
+        components = _drop_overlapped_current_portion(components)
         source = "current_plus_noncurrent"
     else:
         lease_parts = _lease_plus_current_parts(present)
