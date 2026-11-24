@@ -56,8 +56,8 @@
     "rdimm_lead": {
       "weeks": 18,
       "min_weeks": 16,
-      "asof": "2026-11-16",
-      "source": "TrendForce Weekly Radar 010 (11/16, paid; DRAM lead time 18wk unchanged, Very Tight; overall DRAM, RDIMM proxy) restated by Meritz Tech Telegram 11/16 https://tg.me/meritz_tech/19605 ; https://insights.trendforce.com/p/weekly-radar-010",
+      "asof": "2026-11-23",
+      "source": "TrendForce Weekly Radar 011 (11/23, paid; DRAM lead time 18wk unchanged, Very Tight; overall DRAM, RDIMM proxy) restated by Meritz Tech Telegram 11/23 https://tg.me/meritz_tech/19667 ; https://insights.trendforce.com/p/weekly-radar-011",
       "max_age_days": 14
     },
     "hbm_sold_out": {
