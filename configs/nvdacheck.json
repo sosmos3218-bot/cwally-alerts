@@ -1,0 +1,33 @@
+{
+  "name": "nvdacheck",
+  "title_prefix": "[NVDA]",
+  "title_note": "제목: '[NVDA] 12/3 청문 후 판단 조건 점검 | 3개 중 N개 충족 | 관망 전환 검토' 또는 '| 충족 없음 | 판단 유지'. 조회 실패는 '[OPS] [NVDA] ...'.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "job_id": "nvdacheck",
+  "schedule_kst": "09:00",
+  "schedule_note": "새 cron 없음. port-alerts morning 평일 09:00에만 부착. 2026-12-04(금) 09:00이 창 안 첫 실행. 조회 실패는 다음날 09:00에 하루 1회 재시도, 마감 2026-12-10 23:59.",
+  "approval": "사용자 채팅 승인 pt46u, 2026-11-24",
+  "ticker": "NVDA",
+  "display": "NVIDIA",
+  "cik": "0001045810",
+  "year_guard": 2026,
+  "window_start": "2026-12-04",
+  "window_end": "2026-12-10",
+  "ends_kst": "2026-12-10 23:59",
+  "ends_note": "NVIDIA 12/3 상원 청문 후 판단 조건 3가지 1회 점검. 창 2026-12-04 00:00~12-10 23:59 KST.",
+  "filing_start": "2026-11-20",
+  "filing_start_note": "2026-11-20 Reuters SEC 회계 검토 보도 이후 제출분부터 본다. 그 이전 공시는 이번 점검 범위 밖.",
+  "edgar": {
+    "submissions": "https://data.sec.gov/submissions/CIK0001045810.json",
+    "archive_base": "https://www.sec.gov/Archives/edgar/data/1045810",
+    "user_agent": "cwally-alerts sosmos3218@gmail.com"
+  },
+  "guidance_note": "현행 가이던스(참고, 이번 점검이 4Q 실적과 비교하지 않음): 4Q 매출 $130B ±3%, 4Q 매출총이익률 71-72%, FY2028 성장 약 75%, FY2028 마진 72-73%. 4Q 실적 발표는 2027년 2월 예정이라 이번 1회 점검 범위 밖.",
+  "committee_sources": [
+    {"name": "Senate Banking hearings", "url": "https://www.banking.senate.gov/hearings"},
+    {"name": "Senate Banking newsroom", "url": "https://www.banking.senate.gov/newsroom"},
+    {"name": "House Select Committee on the CCP media", "url": "https://selectcommitteeontheccp.house.gov/media"}
+  ]
+}
