@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-24 10:33 KST",
+  "updated_at": "2026-11-25 08:29 KST",
   "fired": {
     "close_break": true,
     "intraday_break": true,
@@ -102,6 +102,10 @@
     {
       "day": "2026-11-24",
       "foreign": 5843.0
+    },
+    {
+      "day": "2026-11-25",
+      "foreign": 0.0
     }
   ],
   "seen_links": [],
@@ -114,9 +118,9 @@
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-23",
-    "close": 4708.54,
-    "low": 4586.8
+    "day": "2026-11-24",
+    "close": 5006.03,
+    "low": 4880.16
   },
   "reversal": {
     "day": "2026-11-23",

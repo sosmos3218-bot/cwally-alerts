@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-11-24 10:33 KST",
+  "updated_at": "2026-11-25 08:29 KST",
   "fired": {
     "5550": true,
     "5450": true,
     "5300": true,
     "5200": true,
-    "5000": true
+    "5000": false
   },
   "last_sent": {
     "at": "2026-11-23 15:40 KST",
@@ -15,7 +15,7 @@
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-23",
-    "close": 4708.54
+    "day": "2026-11-24",
+    "close": 5006.03
   }
 }
