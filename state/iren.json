@@ -1,26 +1,11 @@
 {
-  "updated_at": "2026-11-23 09:02 KST",
-  "price": 11.82,
+  "updated_at": "2026-11-24 09:01 KST",
+  "price": 14.64,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://finance.yahoo.com/markets/article/coreweave-ai-landlord-stocks-sink-to-lowest-levels-in-more-than-a-year-as-the-price-of-insuring-coreweaves-debt-doubles-140909005.html?.tsrc=rss",
-    "https://finance.yahoo.com/m/377f004b-177c-3c4e-a8ce-913f99021087/ai-stocks-will-rise-or-fall.html?.tsrc=rss",
-    "https://www.tikr.com/blog/coreweaves-final-boss-battle-ai-tenants-demand-penalties?ref=yahoofinance&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-radical-ai-pivot-43-151820853.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-could-65-undervalued-160901523.html?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000088698226000449/0000886982-26-000449-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126032638/0001140361-26-032638-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000114036126033473/0001140361-26-033473-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000187884826000051/0001878848-26-000051-index.htm",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000187884826000052/0001878848-26-000052-index.htm",
-    "https://stocktwits.com/news-articles/markets/equity/cls-stock-blowout-q3-retail-very-inexpensive-celestica-ai-supercycle/cZUeR2HRBzv?.tsrc=rss",
-    "https://www.thestreet.com/investing/stocks/nebius-vs-coreweave-neocloud-debt-balance-sheet?.tsrc=rss",
-    "https://www.fool.com/coverage/stock-market-today/2026/10/27/stock-market-today-oct-27-coreweave-surges-on-denmark-data-center-launch/?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/bitcoin-outperforms-grayscale-s-ai-compute-etf-as-ai-cloud-stocks-slide/cZUehy1RBCA?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/why-did-crwv-iren-nio-stocks-slump-to-52-week-lows-today/cZUIuhrRBz0?.tsrc=rss",
     "https://247wallst.com/investing/2026/10/27/iren-limited-fell-by-33-in-2026-but-3-analysts-believe-it-will-nearly-quadruple-in-price-from-here/?.tsrc=rss",
     "https://finance.yahoo.com/markets/stocks/articles/zacks-investment-ideas-feature-highlights-124600030.html?.tsrc=rss",
     "https://finance.yahoo.com/technology/ai/articles/iren-2-top-ai-stocks-170802846.html?.tsrc=rss",
@@ -205,10 +190,36 @@
     "https://www.tikr.com/blog/cipher-digital-sinks-5-coreweave-down-7-as-anthropics-debut-fails-to-stop-ai-selloff?ref=yahoofinance&tlnk=yf-261120-46j662p9&.tsrc=rss",
     "https://www.tikr.com/blog/warning-for-coreweave-satya-nadella-says-selling-to-one-or-two-customers-is-not-a-business?ref=yahoofinance&tlnk=yf-261122-jxpj37r5&.tsrc=rss",
     "https://www.tikr.com/blog/lenders-fear-spacex-could-shoot-the-valuable-chips-into-space-spacex-sinks-after-its-32-billion-debt-sale?ref=yahoofinance&tlnk=yf-261121-mmj2qvg5&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/5-most-overvalued-ai-stocks-145011459.html?.tsrc=rss"
+    "https://finance.yahoo.com/markets/stocks/articles/5-most-overvalued-ai-stocks-145011459.html?.tsrc=rss",
+    "https://www.tikr.com/blog/dell-wants-up-to-45-more-on-signed-ai-deals-iren-has-a-big-problem?ref=yahoofinance&tlnk=yf-261123-6945q259&.tsrc=rss",
+    "https://www.tikr.com/blog/scott-galloway-says-neoclouds-are-going-to-default-coreweaves-interest-bill-is-the-problem?ref=yahoofinance&tlnk=yf-261123-7wg58h48&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-could-83-undervalued-191139206.html?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-soaring-27-173045028.html?.tsrc=rss",
+    "https://www.tikr.com/blog/bad-news-for-coreweave-and-iren-gpu-lenders-now-want-50-to-60-percent-loan-to-value-down-from-80?ref=yahoofinance&tlnk=yf-261123-5g5wvc3x&.tsrc=rss",
+    "https://www.tikr.com/blog/iren-soars-25-nebius-up-22-as-neoclouds-rebound-after-brutal-week?ref=yahoofinance&tlnk=yf-261123-j9rvxjxr&.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/23/nebius-rallies-9-despite-new-u-s-curbs-threatening-neocloud-business-in-southeast-asia-iren-jumps-8-coreweave-climbs-7/?.tsrc=rss",
+    "https://www.tikr.com/blog/gavin-baker-says-consolidation-is-probably-coming-for-neoclouds-that-cant-get-prepayments-heres-who-can?ref=yahoofinance&tlnk=yf-261123-wj6664v4&.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-too-pricey-sales-120731403.html?.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/crwv-iren-nbis-rally-after-sell-off-new-us-curbs-threaten-southeast-asia-neocloud-business/cNbYwjZR9Sn?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/23/applied-digital-soars-26-on-5-4b-hyperscaler-lease-cipher-digital-jumps-19-terawulf-surges-15/?.tsrc=rss",
+    "https://www.tikr.com/blog/jim-chanos-coreweave-still-needs-4-of-capital-for-every-1-of-revenue-that-undercuts-the-gpu-rental-boom?ref=yahoofinance&tlnk=yf-261123-w46j85pw&.tsrc=rss",
+    "https://www.fool.com/coverage/stock-market-today/2026/11/23/stock-market-today-nov-23-coreweave-surges-22-as-nvidia-reinstates-jensen-huang-as-ceo/?.tsrc=rss",
+    "https://247wallst.com/videos/nebius-coreweave-jump-21-while-oracle-sees-12-gains-on-monday-following-jensens-return/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/situational-awareness-stock-portfolio-top-174354247.html?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-23 09:02 KST",
-  "pending_news": [],
+  "pending_news": [
+    {
+      "title": "IREN (IREN) Stock Is Soaring 27.9% Today: Nvidia CEO News Lifts AI Stocks",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-soaring-27-173045028.html?.tsrc=rss",
+      "seen_at": "2026-11-24 09:01 KST"
+    },
+    {
+      "title": "Stock Market Today, Nov. 23: CoreWeave Surges 22% as Nvidia Reinstates Jensen Huang as CEO",
+      "url": "https://www.fool.com/coverage/stock-market-today/2026/11/23/stock-market-today-nov-23-coreweave-surges-22-as-nvidia-reinstates-jensen-huang-as-ceo/?.tsrc=rss",
+      "seen_at": "2026-11-24 09:01 KST"
+    }
+  ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",
   "last_digest_items": 15
 }

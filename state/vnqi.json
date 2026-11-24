@@ -3,12 +3,12 @@
   "armed": {
     "below4150": true
   },
-  "last_date": "2026-11-19",
-  "last_close": 42.35,
+  "last_date": "2026-11-23",
+  "last_close": 42.215,
   "init_note": "initialized from 2026-10-23 close 42.71 (Yahoo), no send. Line armed.",
   "div_last_ex": "2025-12-19",
   "div_last_amount": 2.1561,
   "div_init_note": "seeded with the 2025-12-19 ex-date ($2.1561, Nasdaq). Only a newer ex-date sends.",
   "fail_notified": false,
-  "updated_at": "2026-11-20T09:10:44+09:00"
+  "updated_at": "2026-11-24T09:18:08+09:00"
 }

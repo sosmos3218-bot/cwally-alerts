@@ -2,11 +2,30 @@
   "px": {
     "initialized": true,
     "armed": true,
-    "last_date": "2026-11-19",
-    "last_close": 41.78,
+    "last_date": "2026-11-23",
+    "last_close": 45.38,
     "init_note": "2026-11-03 설치 때 11/2 미국 종가 47.31달러로 초기화(Yahoo chart v8). 40달러 위라 무장, 설치 때 발송 없음."
   },
-  "earn": {},
+  "earn": {
+    "done": "found",
+    "found_accession": "0000885245-26-000041",
+    "found_date": "2026-11-20",
+    "found_at": "2026-11-24 09:18 KST",
+    "found_index": "https://www.sec.gov/Archives/edgar/data/885245/000088524526000041/0000885245-26-000041-index.html",
+    "parsed": true,
+    "figures": {
+      "sales": 329.2,
+      "sales_yoy": 2.6,
+      "comps": 0.6,
+      "gm": 47.8,
+      "eps": 0.94,
+      "inventory": 180.472,
+      "cash_inv": 332.18
+    },
+    "seen": [
+      "0000885245-26-000041"
+    ]
+  },
   "sdiv": {},
-  "updated_at": "2026-11-20T09:10:51+09:00"
+  "updated_at": "2026-11-24T09:18:18+09:00"
 }

@@ -128,6 +128,7 @@
     "0001628280-26-034156",
     "0001628280-26-055294",
     "0001628280-26-055727",
+    "0001628280-26-075523",
     "0001641172-25-009707",
     "0001641172-25-009708",
     "0001641172-25-009710",
@@ -197,8 +198,16 @@
   ],
   "seed_note": "2026-10-28 설치 때 EDGAR recent 접수번호 전체로 시드. 이 중 하나로는 울리지 않음.",
   "reminder_sent": null,
-  "found_accession": null,
+  "found_accession": "0001628280-26-075523",
   "missing_sent": null,
   "fail_day": null,
-  "updated_at": "2026-10-28T11:15:00+09:00"
+  "updated_at": "2026-11-24T09:18:17+09:00",
+  "found_date": "2026-11-23",
+  "found_at": "2026-11-24 09:18 KST",
+  "found_index": "https://www.sec.gov/Archives/edgar/data/2011286/000162828026075523/0001628280-26-075523-index.html",
+  "keywords": {
+    "Savannah River": false,
+    "Sellafield": false,
+    "protest": false
+  }
 }

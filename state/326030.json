@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-23T15:22:02.478497+09:00",
+  "updated_at": "2026-11-24T09:17:39.905965+09:00",
   "seeded": true,
-  "last_day": "2026-11-20",
-  "last_close": 86800.0,
+  "last_day": "2026-11-23",
+  "last_close": 81100.0,
   "last_fail_day": null,
   "lines": {
     "stop": {
@@ -10,7 +10,7 @@
       "fired_day": null
     },
     "hold83": {
-      "armed": false,
+      "armed": true,
       "fired_day": "2026-11-05"
     },
     "deal91": {
