@@ -80,6 +80,9 @@ def http(url: str, referer: str | None = None, data: bytes | None = None, timeou
     if data is not None:
         h["Content-Type"] = "application/x-www-form-urlencoded"
         h["X-Requested-With"] = "XMLHttpRequest"
+    if data is None and "finance.daum.net" in url:
+        import daum_fetch
+        return daum_fetch.fetch_text(url, headers=h)
     err: Exception | None = None
     for _ in range(3):
         try:

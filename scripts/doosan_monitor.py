@@ -65,6 +65,9 @@ def http(url: str, data: bytes | None = None, referer: str | None = None, tries:
         headers["Referer"] = referer
     if data is not None:
         headers["Content-Type"] = "application/x-www-form-urlencoded"
+    if data is None and "finance.daum.net" in url:
+        import daum_fetch
+        return daum_fetch.fetch_text(url, headers=headers)
     err: Exception | None = None
     for i in range(tries):
         try:

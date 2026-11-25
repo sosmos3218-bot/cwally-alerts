@@ -26,6 +26,8 @@ import time
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+import daum_fetch  # noqa: E402
+
 KST = timezone(timedelta(hours=9))
 UA = {"User-Agent": "Mozilla/5.0 (cwally-alerts; +mailto:sosmos3218@gmail.com)"}
 CODE_RE = re.compile(r"^[0-9A-Z]{6}$")
@@ -53,21 +55,21 @@ def _log(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
-def _get(url: str, headers: dict | None = None, timeout: int = 20) -> bytes:
-    last: Exception | None = None
-    for i in range(3):
-        try:
-            h = dict(UA)
-            if headers:
-                h.update(headers)
-            req = urllib.request.Request(url, headers=h)
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read()
-        except Exception as exc:  # noqa: BLE001
-            last = exc
-            if i < 2:
-                time.sleep(0.4 * (i + 1))
-    raise last  # type: ignore[misc]
+def _get(url: str, headers: dict | None = None, timeout: float | None = None,
+         budget: float | None = None) -> bytes:
+    """Bounded GET. Daum URLs share a process budget and fail fast when it is spent.
+
+    Naver fallbacks use the same short per-request timeout but do not consume
+    the Daum process budget, so a spent Daum budget can still try minute bars.
+    """
+    h = dict(UA)
+    if headers:
+        h.update(headers)
+    to = daum_fetch.REQUEST_TIMEOUT if timeout is None else float(timeout)
+    use = daum_fetch.CALL_BUDGET if budget is None else float(budget)
+    if "finance.daum.net" in url:
+        return daum_fetch.fetch_bytes(url, headers=h, timeout=to, attempts=2, budget=use)
+    return daum_fetch.bounded_get(url, headers=h, timeout=to, attempts=2, budget=use)
 
 
 def _check_code(code: str) -> str:
@@ -106,10 +108,16 @@ def _daum_bars(code: str, n: int) -> list[Bar]:
     per = 100
     pages = max(1, (n + per - 1) // per)
     by: dict[str, Bar] = {}
+    deadline = time.monotonic() + daum_fetch.CALL_BUDGET
     for page in range(1, pages + 1):
+        left = min(deadline - time.monotonic(), daum_fetch.remaining_process_budget())
+        if left <= 0.05:
+            if by:
+                break
+            raise daum_fetch.DaumFetchError("Daum ticker budget exhausted")
         url = (f"https://finance.daum.net/api/quote/A{code}/days"
                f"?symbolCode=A{code}&page={page}&perPage={per}&pagination=true")
-        raw = json.loads(_get(url, {"Referer": f"https://finance.daum.net/quotes/A{code}"}).decode("utf-8", "replace"))
+        raw = json.loads(_get(url, {"Referer": f"https://finance.daum.net/quotes/A{code}"}, budget=left).decode("utf-8", "replace"))
         got = bars_from_daum(code, raw)
         if not got:
             break
@@ -279,6 +287,60 @@ def selftest() -> int:
         raise AssertionError("bad code should raise")
     except ValueError:
         pass
+    # Timeout guard: a hanging quote page must stay inside the call budget,
+    # and regular_bars still uses the existing minute 15:30 fallback.
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    hang_stop = threading.Event()
+
+    class HangHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            hang_stop.wait(30)
+
+        def log_message(self, *args):
+            pass
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), HangHandler)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    hang_url = f"http://127.0.0.1:{srv.server_address[1]}/days"
+    daum_fetch.reset_budget()
+    t0 = time.monotonic()
+    raised = None
+    try:
+        _get(hang_url, timeout=1, budget=2)
+    except daum_fetch.DaumFetchError as exc:
+        raised = exc
+    elapsed = time.monotonic() - t0
+    assert raised is not None, "hang should raise"
+    assert elapsed < 3.0, f"hang budget exceeded: {elapsed:.2f}s"
+    hang_stop.set()
+    try:
+        srv.shutdown()
+        srv.server_close()
+    except Exception:
+        pass
+
+    def boom(code, n):
+        raise daum_fetch.DaumFetchError("timed out after 10.0s")
+
+    def short_minute(code, n=8, now=None):
+        return [Bar("2026-11-19", 1, 1, 1, 100, 1, "minute1530"),
+                Bar("2026-11-20", 1, 1, 1, 101, 1, "minute1530")]
+
+    g = globals()
+    saved_daum, saved_minute = g["_daum_bars"], g["minute_bars"]
+    g["_daum_bars"] = boom
+    g["minute_bars"] = short_minute
+    try:
+        bars = regular_bars("005930", 230, compare=False)
+        assert len(bars) == 2 and bars[-1].source == "minute1530"
+        assert bars[-1].close == 101
+    finally:
+        g["_daum_bars"] = saved_daum
+        g["minute_bars"] = saved_minute
+
     print("krx_close selftest ok")
     return 0
 

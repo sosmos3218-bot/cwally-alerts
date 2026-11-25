@@ -65,6 +65,9 @@ def http_json(url: str, referer: str | None = None):
     headers = {"User-Agent": UA}
     if referer:
         headers["Referer"] = referer
+    if "finance.daum.net" in url:
+        import daum_fetch
+        return json.loads(daum_fetch.fetch_text(url, headers=headers))
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as resp:
         return json.loads(resp.read().decode("utf-8", errors="ignore"))

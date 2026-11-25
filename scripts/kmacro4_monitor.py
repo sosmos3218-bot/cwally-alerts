@@ -60,7 +60,11 @@ def num(v) -> float | None:
 
 
 def http_json(url: str, ref: str, timeout: int = 25):
-    req = urllib.request.Request(url, headers={**UA, "Referer": ref})
+    headers = {**UA, "Referer": ref}
+    if "finance.daum.net" in url:
+        import daum_fetch
+        return json.loads(daum_fetch.fetch_text(url, headers=headers, timeout=min(timeout, daum_fetch.REQUEST_TIMEOUT)))
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8", "replace"))
 

@@ -188,6 +188,10 @@ def http(url: str, data: dict | None = None, headers: dict | None = None,
     body = urllib.parse.urlencode(data).encode() if data else None
     if body:
         h.setdefault("Content-Type", "application/x-www-form-urlencoded")
+    if body is None and "finance.daum.net" in url:
+        import daum_fetch
+        raw = daum_fetch.fetch_bytes(url, headers=h)
+        return raw if binary else raw.decode("utf-8", errors="ignore")
     err: Exception | None = None
     ctx = ssl_context_for(url)
     for i in range(tries):

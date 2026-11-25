@@ -131,10 +131,11 @@ DAUM = "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=
 def daum_closes(code: str) -> dict:
     out = {}
     for page in (1, 2):
-        req = urllib.request.Request(DAUM.format(code=code, page=page),
-                                     headers={"User-Agent": "Mozilla/5.0", "Referer": f"https://finance.daum.net/quotes/A{code}"})
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            raw = json.loads(resp.read().decode("utf-8"))
+        import daum_fetch
+        raw = json.loads(daum_fetch.fetch_text(
+            DAUM.format(code=code, page=page),
+            headers={"User-Agent": "Mozilla/5.0", "Referer": f"https://finance.daum.net/quotes/A{code}"},
+        ))
         rows = raw.get("data") or []
         for r in rows:
             if str(r.get("symbolCode")) != "A" + code:

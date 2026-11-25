@@ -34,12 +34,11 @@ DAUM = "https://finance.daum.net/api/quote/A{code}/days?symbolCode=A{code}&page=
 
 
 def daum_rows(code: str) -> list[dict]:
-    req = urllib.request.Request(
+    import daum_fetch
+    raw = json.loads(daum_fetch.fetch_text(
         DAUM.format(code=code),
         headers={"User-Agent": "Mozilla/5.0", "Referer": f"https://finance.daum.net/quotes/A{code}"},
-    )
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        raw = json.loads(resp.read().decode("utf-8"))
+    ))
     out = []
     for r in raw.get("data") or []:
         if str(r.get("symbolCode")) != "A" + code:
