@@ -6,10 +6,10 @@
     "SHORT_HALF"
   ],
   "fail_notified": false,
-  "updated_at": "2026-11-25T08:30:03.178389+09:00",
+  "updated_at": "2026-11-26T08:08:21.873364+09:00",
   "snap": {
-    "close": 1708.5,
-    "close_note": "coinbase UTC 일봉 2026-11-23 종가 1708.50",
+    "close": 1677.59,
+    "close_note": "coinbase UTC 일봉 2026-11-24 종가 1677.59",
     "long_note": "ETH 포지션 없음",
     "short_note": "ETH 포지션 없음",
     "long_entry": null,

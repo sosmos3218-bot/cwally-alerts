@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-25T18:54:06+09:00",
+  "generated_at": "2026-11-26T08:08:30+09:00",
   "trade_date": "2026-11-25",
   "demo": false,
   "params": {
@@ -43,7 +43,7 @@
     "source": "FinanceDataReader 0.9.202 KRX 일봉 (종목코드 기본 경로는 Naver 일봉)",
     "ok": true,
     "warnings": [
-      "시가총액 상위 200종목 중 50일선을 계산한 200종목에서 42종목(21.0%)이 50일선 위입니다. 30% 미만이라 신규 수량을 절반으로 줄입니다."
+      "시가총액 상위 200종목 중 50일선을 계산한 200종목에서 43종목(21.5%)이 50일선 위입니다. 30% 미만이라 신규 수량을 절반으로 줄입니다."
     ],
     "watchlist": []
   },
@@ -53,6 +53,6 @@
     "total_open_risk_pct": 0.0,
     "cash_after": 100000000,
     "exposure_pct": 0.0,
-    "breadth_pct_above_ma50": 21.0
+    "breadth_pct_above_ma50": 21.5
   }
 }
