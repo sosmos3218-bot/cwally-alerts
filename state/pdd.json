@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-25T08:27:06.689349+09:00",
-  "last_price": 87.22,
+  "updated_at": "2026-11-26T08:00:38.409611+09:00",
+  "last_price": 87.42,
   "zone": "buy_split",
   "last_weekly": "2026-11-16",
   "last_filing": "2026-11-24",
@@ -8,6 +8,6 @@
     "2026-11-18"
   ],
   "fetch_fail_date": null,
-  "last_multiple": 6.29,
+  "last_multiple": 6.31,
   "filing_alerted": "2026-11-24"
 }

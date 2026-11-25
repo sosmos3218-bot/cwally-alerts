@@ -89,6 +89,11 @@
           "q": "1Q27"
         }
       ]
+    },
+    "13321": {
+      "date": "2026-11-25",
+      "title": "Cuts to Chinese CSP Demand Weigh on Price Outlook, Slowing Memory Industry Revenue Growth in 2027, Says TrendForce",
+      "figs": []
     }
   },
   "tf_latest": {
@@ -252,7 +257,7 @@
     "news": 0,
     "cxmt": 0
   },
-  "updated_at": "2026-11-25T08:25:42.661427+09:00",
+  "updated_at": "2026-11-26T07:59:16.095078+09:00",
   "last_sent": {
     "at": "2026-11-24 09:13 KST",
     "titles": [
