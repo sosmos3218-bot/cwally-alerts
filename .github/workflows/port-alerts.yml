@@ -980,6 +980,13 @@ jobs:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
         run: python scripts/k055550_monitor.py auto
+      - name: Run 068270 (셀트리온 종가 205,000원 이하 1회, 정상화 PER 30배; 15:40 0090b0 slot)
+        # 2026-11-25 user request (chat). Same slot, no new cron. Daum KRX close only (never Naver/NXT). Fires once, then silent. Dedupe state/k068270.json fired. Ends 2027-03-10.
+        if: ${{ !cancelled() && steps.pick.outputs.job == '0090b0' }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+        run: python scripts/k068270_monitor.py auto
       - name: Run 195930 (195930 vs 458730/475350 weekly corr 0.60; 15:40 0090b0 slot)
         # 2026-11-20 user approval (pt74u). Same slot, no new cron. Daum KRX close + FunETF divs, never Naver.
         # Dedupe state/k195930.json last_week + armed. Complete weeks only (Thu if Friday is a KRX holiday). No expiry.
