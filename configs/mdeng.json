@@ -19,7 +19,7 @@
     "official": "https://api.sam.gov/opportunities/v2/search?solnum=36C10X27R0001 (SAM_API_KEY 필요; 이 저장소 secrets 에 없음, 키가 있으면 환경변수로 사용)",
     "ui": "https://sam.gov/opp/<notice_id>/view"
   },
-  "seed_note": "최종 RFP(edc1c8fc988d4380aab37b53f45ec2b8, 2026-11-05)와 DRAFT RFP(3009ffdae48342949d91e43116301741)를 state.seen 에 시드. 같은 notice id / modification 키는 두 번 알리지 않음.",
+  "seed_note": "최종 RFP(edc1c8fc988d4380aab37b53f45ec2b8, 2026-11-05), DRAFT RFP(3009ffdae48342949d91e43116301741), mod 1(839e89b4397d46a59c6fac10aeb01fd1, 2026-11-10), mod 2(fe3ba6d711554532afd7102a4cac3f9b, 2026-11-17), Amendment 0001(03ea81e39fff4931ab0a5bfcf5505520, 2026-11-24, 마감 2027-01-06 10:00 EST)를 state.seen 에 시드. 같은 notice id / modification 키는 두 번 알리지 않음.",
   "dedupe": "seen 키 = <notice_id>|<modifiedDate>|<modifications.count>. 새 공고 id 또는 같은 id 의 수정일/수정횟수 변화가 오면 1번.",
   "rules": {
     "fail_ops_after": 3,
@@ -29,8 +29,12 @@
     "final_rfp_utc": "2026-11-05T18:01:17+00:00",
     "questions_due": "2026-11-16",
     "intent_due": "2026-12-01",
-    "proposals_et": "2026-12-17 10:00 ET"
+    "proposals_et": "2027-01-06 10:00 EST",
+    "proposals_kst": "2027-01-07 00:00 KST",
+    "amendment_0001": "03ea81e39fff4931ab0a5bfcf5505520 (처리됨, 게시 2026-11-24T22:51:07Z, 마감만 연장)",
+    "qa_amendment_week": "2026-11-30 주간 질의 회신과 후속 수정 공고(예고, 아직 미발행)",
+    "preproposal_conference_week": "2026-12-07 주간 사전제안설명회(예고, 세부 미공지)"
   },
   "ends_kst": "2027-06-30 23:59",
-  "ends_note": "2026-11-23 사용자 승인(pt90u)으로 2027-06-30까지 공고 감시 연장. 제안 마감(12/17 ET) 이후에도 수정 공고를 본다."
+  "ends_note": "2026-11-23 사용자 승인(pt90u)으로 2027-06-30까지 공고 감시 연장. 종료일은 옛 제안 마감(12/17 ET)에 묶여 있지 않음. 제안 마감(2027-01-06 10:00 EST, 서울 2027-01-07 00:00 KST) 이후에도 수정 공고를 본다. Amendment 0001은 2026-11-25 사용자 승인(pt24u)으로 처리(시드)."
 }

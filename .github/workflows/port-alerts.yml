@@ -2400,7 +2400,7 @@ jobs:
           if [ "$MODE" = "dry" ]; then python scripts/spcxpx_monitor.py selftest | tail -1; fi
           python scripts/spcxpx_monitor.py "$MODE"
       - name: Run MDENG (VA MDE-NG 36C10X27R0001 new amendment/notice watch for LDOS; morning 09:00 slot)
-        # 2026-11-06 (pt11u). Attached to morning, no new cron. Dedupe state/mdeng.json seen keys (notice id|modifiedDate|mod count). Seeded final RFP + draft. Ends 2027-06-30 (extended 2026-11-23 pt90u).
+        # 2026-11-06 (pt11u). Attached to morning, no new cron. Dedupe state/mdeng.json seen keys (notice id|modifiedDate|mod count). Seeded final RFP + draft + mods 1-2 + Amendment 0001 (03ea81e39fff4931ab0a5bfcf5505520, deadline 2027-01-06 10:00 EST / 2027-01-07 00:00 KST). Ends 2027-06-30 (extended 2026-11-23 pt90u; not tied to the old 12/17 deadline).
         # job=mdeng dispatch is dry (selftest + dry: no ntfy, no state) unless oneoff_mode=auto. Uses public SAM sgs search (no SAM_API_KEY in repo secrets).
         if: ${{ !cancelled() && (steps.pick.outputs.job == 'morning' || steps.pick.outputs.job == 'mdeng') }}
         env:

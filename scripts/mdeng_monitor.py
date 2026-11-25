@@ -216,6 +216,13 @@ def alert_message(cfg: dict, n: dict, kind: str, stamp: str, prev_deadline: str 
     else:
         dl_note = "응답 마감: 미확인"
 
+    ms = cfg.get("milestones") or {}
+    proposals = ms.get("proposals_et") or "2027-01-06 10:00 EST"
+    proposals_kst = ms.get("proposals_kst") or "2027-01-07 00:00 KST"
+    questions = ms.get("questions_due") or "2026-11-16"
+    intent = ms.get("intent_due") or "2026-12-01"
+    qa_week = ms.get("qa_amendment_week") or "2026-11-30 주간 질의 회신과 후속 수정 공고(예고, 아직 미발행)"
+    conf_week = ms.get("preproposal_conference_week") or "2026-12-07 주간 사전제안설명회(예고, 세부 미공지)"
     body = "\n".join(
         [
             "이게 뭐 알림: VA MDE-NG 입찰(36C10X27R0001)에 새 공고 또는 수정이 올라왔다는 알림. "
@@ -225,7 +232,8 @@ def alert_message(cfg: dict, n: dict, kind: str, stamp: str, prev_deadline: str 
             f"게시(KST): {fmt_kst(n.get('publishDate'))}. 수정(KST): {fmt_kst(n.get('modifiedDate'))}. "
             f"{dl_note}. 링크: {sam_link(n)}",
             "지금 할 일: SAM 링크를 열고 수정/첨부/Q&A 내용을 확인. Health 마진 가정(4Q high teens)과 "
-            "제안 조건이 바뀌었는지 표시해 두기. 입찰 일정(질문 11/16, intent 12/01, 제안 12/17 10:00 ET)도 같이 보기.",
+            f"제안 조건이 바뀌었는지 표시해 두기. 입찰 일정(질문 {questions}, intent {intent}, "
+            f"제안 {proposals}, 서울 {proposals_kst})도 같이 보기. {qa_week}, {conf_week}도 확인.",
             "나중에: 같은 공고 id 와 수정 키는 다시 안 옴. 다음 수정이 올라오면 다시 알림. "
             "2027-06-30 이후에는 자동 종료.",
             "익절/줄일 때: 미보유, 해당 없음. 포지션이 생기면 그때 기준을 적기.",
@@ -399,6 +407,17 @@ def selftest(cfg: dict) -> int:
         x in out[0][1] for x in ("LDOS", "sam.gov/opp/", "KST", "유형:", amended["title"][:20])
     ), True)
     check("deadline change noted", "응답 마감이 바뀜" in out[0][1], True)
+    check("watch wording in body", all(
+        x in out[0][1] for x in (
+            "2027-01-06 10:00 EST",
+            "2027-01-07 00:00 KST",
+            "2026-11-30",
+            "2026-12-07",
+            "질의 회신",
+            "후속 수정 공고",
+            "사전제안설명회",
+        )
+    ), True)
     check("no middle dot / em-dash", any(ch in out[0][0] + out[0][1] for ch in "\u00b7\u2014"), False)
     parts = [ln.split(":")[0] for ln in out[0][1].split("\n")]
     check("six labels", parts[0:1] + parts[2:], ["이게 뭐 알림", "지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
@@ -458,6 +477,7 @@ def selftest(cfg: dict) -> int:
     check("ops once per day", o3, [])
 
     check("ends_kst", cfg["ends_kst"], "2027-06-30 23:59")
+    check("proposals milestone EST", (cfg.get("milestones") or {}).get("proposals_et"), "2027-01-06 10:00 EST")
     check("topic port", cfg["ntfy_topic"], "cwally-port")
     check("prefix LDOS", cfg["title_prefix"], "[LDOS]")
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
@@ -469,9 +489,11 @@ def confirm(cfg: dict) -> int:
         [
             "이게 뭐 알림: LDOS VA MDE-NG(36C10X27R0001) 수정 공고 알림 설치 확인입니다. 매매 신호 아님.",
             f"{datetime.now(KST).strftime('%Y-%m-%d %H:%M KST')} | {TICKER} | Leidos Holdings",
-            "지금 결과/상태: 최종 RFP와 DRAFT 를 seen 에 시드함. 지금은 발송 대상 없음. "
-            "새 수정/Q&A/버전만 알림.",
-            "지금 할 일: 없음. 평일 09:00 KST morning 슬롯에서 SAM 공개 검색을 본다.",
+            "지금 결과/상태: 최종 RFP, DRAFT, mod 1-2, Amendment 0001 를 seen 에 시드함. "
+            "지금은 발송 대상 없음. 새 수정/Q&A/버전만 알림. 제안 마감은 2027-01-06 10:00 EST "
+            "(서울 2027-01-07 00:00 KST).",
+            "지금 할 일: 없음. 평일 09:00 KST morning 슬롯에서 SAM 공개 검색을 본다. "
+            "2026-11-30 주간 질의 회신과 후속 수정 공고, 2026-12-07 주간 사전제안설명회 예고를 본다.",
             "나중에: 2027-06-30 이후 자동 종료.",
             "익절/줄일 때: 미보유, 해당 없음.",
             "하지 말 것: 이 설치 확인을 매매 신호로 읽기.",
