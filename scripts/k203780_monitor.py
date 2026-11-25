@@ -8,7 +8,10 @@ KRX 거래일 장 마감 뒤(평일 19:00 KST, cron-job.org 정시 dispatch + Gi
   2) 하루 등락률 (|등락| >= 3% 강조)
   3) 원/달러 환율과 전일 대비 (|변동| >= 1% 강조)
   4) 상위 5종목 GILD, AMGN, VRTX, MRNA, REGN 최근 완료 일봉 등락 (|등락| >= 5% 강조) + 7일 안 실적 발표일
+     과 설정(calendar.holding_events)에 적힌 PDUFA 등 확정 일정(자동 수집 없음).
   5) 분할 구역 한 줄 (규칙 종가의 60일선, 200일선, 32,000원 거리).
+  6) FOMC 결정일(D)과 다음 날(D+1, 한국시간)에만 매크로 참고 한 줄. 결과는 자동 판정하지 않고,
+     비중 확대는 기존 10년물 규칙을 따른다. XBI 레짐이나 금리 인하 매수 신호는 넣지 않는다.
 강조가 하나라도 걸리면 priority 4(high) + rotating_light 태그, 아니면 3.
 구역 이벤트 (2026-11-12 채팅 승인): 요약과 별개 메시지, 상태가 바뀔 때만, priority 4. 종가와 이동평균은 krx_close 정규장 일봉.
   1차 [203780] 1차 분할 구간: 종가 <= 60일선 + 추정 괴리율 <= +0.3%. 종가가 60일선 위로 돌아오면 재무장.
@@ -250,6 +253,48 @@ def nasdaq_earnings(sym: str) -> tuple[list[date], bool]:
     return [datetime.strptime(m.group(1), "%b %d, %Y").date()], "*" in (d.get("announcement") or "")
 
 
+
+def parse_iso_day(s: str) -> date | None:
+    try:
+        return date.fromisoformat(str(s).strip()[:10])
+    except ValueError:
+        return None
+
+
+def holding_events_for(events: list, sym: str, today: date, days: int, after: int = 1) -> list[dict]:
+    """today-after ~ today+days 안에 있는, 그 종목의 설정 일정만. 네트워크 없음."""
+    out: list[dict] = []
+    for ev in events or []:
+        if (ev.get("symbol") or "").upper() != (sym or "").upper():
+            continue
+        d = parse_iso_day(ev.get("date") or "")
+        if d is None:
+            continue
+        if today - timedelta(days=after) <= d <= today + timedelta(days=days):
+            item = dict(ev)
+            item["day"] = d
+            out.append(item)
+    return out
+
+
+def fomc_line(decisions: list, kst_day: date) -> str | None:
+    """KST 날짜가 결정일 D 또는 D+1이면 참고 한 줄. 인상/인하 결과는 적지 않는다."""
+    for ev in decisions or []:
+        if ev.get("has_decision") is False:
+            continue
+        d = parse_iso_day(ev.get("date") or "")
+        if d is None:
+            continue
+        if kst_day == d:
+            sep = " 점 그림 포함." if ev.get("sep") else ""
+            return (f"6) 매크로 참고: 미국 {d:%m/%d} FOMC 결정 발표는 한국시간 내일 새벽(보통 14:00 ET).{sep} "
+                    "이 알림은 결과를 자동 판정하지 않음. 비중 확대는 기존 10년물 규칙.")
+        if kst_day == d + timedelta(days=1):
+            return (f"6) 매크로 참고: 미국 {d:%m/%d} FOMC 결정이 한국시간 오늘 새벽에 발표됨. "
+                    "결과는 직접 확인. 비중 확대는 기존 10년물 규칙.")
+    return None
+
+
 # ---------- 5) 구역 이벤트 (2026-11-12 채팅 승인): 상태가 바뀔 때만 별도 메시지 ----------
 EV_DEFAULT = {"enabled": True, "prem_max_pct": 0.3, "ust10_below": 4.60, "ust10_days": 3, "cut_close": 32000}
 UST10_URL = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
@@ -477,6 +522,21 @@ def selftest() -> int:
         check(f"body order {e['key']}", pos == sorted(pos) and min(pos) >= 0, True)
     check("ust csv parse", parse_ust10_csv('Date,"1 Mo","10 Yr"\n11/10/2026,4.05,4.98\n11/09/2026,4.04,4.88\n'),
           [("2026-11-10", 4.98), ("2026-11-09", 4.88)])
+    evs = [{"symbol": "VRTX", "type": "PDUFA", "date": "2026-11-30", "label": "povetacicept IgAN"}]
+    check("pdufa in window", [e["day"].isoformat() for e in holding_events_for(evs, "VRTX", date(2026, 11, 25), 7)], ["2026-11-30"])
+    check("pdufa too early", holding_events_for(evs, "VRTX", date(2026, 11, 20), 7), [])
+    check("pdufa day after", bool(holding_events_for(evs, "VRTX", date(2026, 12, 1), 7, 1)), True)
+    check("pdufa two after", holding_events_for(evs, "VRTX", date(2026, 12, 2), 7, 1), [])
+    check("pdufa other sym", holding_events_for(evs, "AMGN", date(2026, 11, 25), 7), [])
+    check("pdufa bad date", holding_events_for([{"symbol": "VRTX", "type": "PDUFA", "date": "bad"}], "VRTX", date(2026, 11, 25), 7), [])
+    foms = [{"date": "2026-12-09", "sep": True}, {"date": "2027-10-27", "has_decision": False}]
+    check("fomc before", fomc_line(foms, date(2026, 12, 8)) is None, True)
+    ln = fomc_line(foms, date(2026, 12, 9))
+    check("fomc day", bool(ln) and "12/09" in (ln or "") and "내일 새벽" in (ln or "") and "자동 판정하지 않음" in (ln or "") and "10년물" in (ln or ""), True)
+    ln2 = fomc_line(foms, date(2026, 12, 10))
+    check("fomc next", bool(ln2) and "오늘 새벽" in (ln2 or "") and "12/09" in (ln2 or ""), True)
+    check("fomc skip strategy", fomc_line(foms, date(2027, 10, 27)) is None, True)
+
     for f in fails:
         print("FAIL", f)
     print("k203780 selftest", "FAIL" if fails else "ok")
@@ -669,6 +729,9 @@ def main() -> int:
         item3 = f"3) 원/달러 {NA}"
 
     # 4) 상위 5종목
+    cal = cfg.get("calendar") or {}
+    cal_events = cal.get("holding_events") or []
+    ev_days = int((cfg.get("thresholds") or {}).get("holding_event_days") or th["earnings_days"])
     syms = cfg["holdings"]["symbols"]
     names = cfg["holdings"]["names"]
     moves: dict[str, tuple[date, float, float] | None] = {}
@@ -718,9 +781,17 @@ def main() -> int:
             if within:
                 dtxt = "~".join(f"{d:%m/%d}" for d in ds) if len(ds) > 1 else f"{ds[0]:%m/%d}"
                 et = f"실적 발표 {dtxt}(미국){' 예상' if est else ''}, 7일 안"
-                soon.append(f"{s} {dtxt}")
+                soon.append(f"{s} 실적 {dtxt}")
             else:
                 et = "7일 안 실적 없음"
+        ev_bits = []
+        for ev in holding_events_for(cal_events, s, today_ny, ev_days):
+            typ = ev.get("type") or "일정"
+            lab = ev.get("label") or typ
+            ev_bits.append(f"{typ} {ev['day']:%m/%d}({lab})")
+            soon.append(f"{s} {typ} {ev['day']:%m/%d}")
+        if ev_bits:
+            et = et + ", " + ", ".join(ev_bits)
         lines.append(f"  {names.get(s, s)} {mv}, {et}")
     item4 = "\n".join(lines)
 
@@ -754,7 +825,10 @@ def main() -> int:
     else:
         action = "확인만 하세요. 할 일 없음."
     if soon:
-        action += f" 7일 안 실적: {', '.join(soon)}."
+        action += f" 7일 안 일정: {', '.join(soon)}."
+    fl = fomc_line(cal.get("fomc_decisions") or [], sess)
+    if fl:
+        items.append(fl)
     msg = body(stamp, items, action)
     priority = 4 if hot else 3
     tags = ["rotating_light", "dna"] if hot else ["dna"]
