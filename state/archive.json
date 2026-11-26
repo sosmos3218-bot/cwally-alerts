@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-26 19:08 KST",
+  "updated_at": "2026-11-27 00:01 KST",
   "items": [
+    {
+      "id": "JDTGzGSI886H",
+      "topic": "cwally-port",
+      "title": "[GRAB] 인도네시아 ojol 후속 규정 뉴스 1건 | 참고",
+      "message": "이게 뭐 알림: 인도네시아 8% 수수료 상한(ojol)이 음식, 물품 배달로 넓어지는지(Komdigi, Perpres 후속 규정) 새 기사 알림. GRAB 최악 시나리오의 핵심 위험입니다.\n지금 결과/상태: 조건: 규제 단어와 배달/후속 규정 단어가 함께 있는 새 제목 1건. 현재가 2.84달러. 시각 2026-11-27 00:00 KST.\n- 11/26 21:20 Susun Formula Tarif Kurir Makanan dan Barang, Wamenkomdigi: Pengemudi Dapat, Platform Sehat - Warta Ekonomi https://news.google.com/rss/articles/CBMixAFBVV95cUxOd2wzdndpaGR5bks3bG9oNzF4NHFITC1oVkczdHoybG1PcFFoNndWWkl2bUIwTVZEaUxnb0puclVpakVlSlhzdEhPWUtzbkl4ejFWbmYxZnN1TldpT2Q4ckFGX0tsaTQyWFp0T0xOc2tPMENtT0hwX2VwTm1WSG5QVzFxOWpfd0pXVlpSUUZCT1RCZWZweDFYLWgwbU53VWQzMWhPdUpiYjUzcm4tZEZZS05ZZW5pVkVyck5Wa2NzT0FRVG8x0gHKAUFVX3lxTE1jeXpsdFIwRFU3Q3hINnI5Y3JWdHpSeXZxS0JwampHOGEzeUtXUUcyb0dNUldYczFzZWU4c256dVhKd1FWUFkxZnF1V3dZRG96M2hyRzJhNmtuSDNYR1Q3Ymd6NFN0eTRLMWRuMnhSaEthdm1veUNxOW9ZSnRCcE5MRjJaNkpzaVhqTHVwVVpweVFVUlJvRkVqdmtLUTZJeXdMaWpfczhNdUlaOFR4Ynk1Z3BuWFAxSUdyTnZpdDZfRkhBN1RTYWZpZWc?oc=5\n지금 할 일: 후속 규정 일정과 배달 포함 여부만 확인. 아직 매매 판단 근거 아님.\n나중에: 같은 기사(링크, 제목)는 다시 보내지 않습니다. 미국 거래일마다 첫 정규장 실행에서 한 번 봅니다.\n익절/줄일 때: 배달 확대가 확정되면 적정가 4.15달러 가정을 낮추고 비중 축소 검토.\n하지 말 것: 제목만 보고 주문, 검토/제안 단계 기사를 확정으로 읽기.\n꺼지는 때: 종료일 없음 (수동 삭제 전까지 무기한)",
+      "priority": 3,
+      "tags": [
+        "motor_scooter"
+      ],
+      "time": 1795705235
+    },
     {
       "id": "jTYeydBw586O",
       "topic": "cwally-ops",
@@ -4410,17 +4421,6 @@
       "title": "[MEMSWING] 005930/000660 하이닉스 손절선 이탈 | 정리 검토",
       "message": "2026-11-16 09:01 KST | 삼성전자, SK하이닉스 스윙 점검\n이게 뭐 알림: 스윙 보유 중 종가가 손절선 아래로 마감해 청산 조건이 충족됨.\n지금 결과/상태: SK하이닉스 signal->idle (손절). KRX 종가 1,216,000원 < 손절 1,238,000원. 보유 2거래일. 당일 외인 -370,363주.\n지금 할 일: 보유분이 있으면 손절 기준으로 정리 검토. 신규 재진입은 조건이 다시 충족될 때까지 보류.\n나중에: 외인 2일 연속 순매수와 기준가 위 종가가 다시 나오면 진입 알림이 다시 온다.\n익절/줄일 때: 손절 구간에서는 물타기하지 말 것.\n하지 말 것: 손절 이탈을 일시 조정으로 보고 비중 확대. 신용, 미수. 투자 권유 아님.\n꺼지는 때: 종료일 없음 (종료일 없음 (수동 해제 전까지))",
       "priority": 5,
-      "tags": [
-        "chart_with_upwards_trend"
-      ],
-      "time": 1794787266
-    },
-    {
-      "id": "C42fFBsoR7iu",
-      "topic": "cwally-port",
-      "title": "[MEMSWING] 005930/000660 주간 요약 2026-W47 | 상태 점검",
-      "message": "2026-11-16 09:01 KST | 삼성전자, SK하이닉스 스윙 점검\n이게 뭐 알림: 삼성전자, SK하이닉스 스윙 주간 요약. 상태 변경이 없어도 주 1회 보낸다.\n지금 결과/상태: \n- 삼성전자: 종가 206,000원, 상태 idle, 손절까지 -0.7%, 기준까지 +1.9%. 외인 최근5: 11/13 +18,151주(+37.9억), 11/12 +3,619,126주(+7,473.5억), 11/11 +2,668,221주(+5,549.9억), 11/10 +55,328주(+109.2억), 11/09 -459,594주(-859.4억).\n- SK하이닉스: 종가 1,216,000원, 상태 idle, 손절까지 +1.8%, 기준까지 +3.6%. 외인 최근5: 11/13 -370,363주(-4,566.6억), 11/12 -686,113주(-8,514.7억), 11/11 +99,884주(+1,289.5억), 11/10 +105,336주(+1,261.9억), 11/09 +1,715주(+19.1억).\n지금 할 일: 상태와 손절/기준 거리만 확인하고, 조건이 바뀐 종목만 대응.\n나중에: 다음 주 첫 거래일에 다시 요약. 진입/손절/만료는 그때그때 따로 온다.\n익절/줄일 때: 목표가 근처면 절반 익절 규칙을 유지.\n하지 말 것: 주간 요약을 신규 매수 신호로 읽기. 투자 권유 아님.\n꺼지는 때: 종료일 없음 (종료일 없음 (수동 해제 전까지))",
-      "priority": 2,
       "tags": [
         "chart_with_upwards_trend"
       ],
