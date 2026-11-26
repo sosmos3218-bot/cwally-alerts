@@ -2,12 +2,6 @@
   "last_zone": "BUY2",
   "last_sent_date": "2026-10-20",
   "last_fail_date": null,
-  "updated_at": "2026-11-26 08:03 KST",
-  "session": "2026-11-26",
-  "price": 5225.0,
-  "premium": 0.06,
-  "volume": 0.0,
-  "volume_avg": 41902,
-  "volume_ratio": null,
-  "last_status": "same_zone"
+  "updated_at": "2026-11-27 07:56 KST",
+  "last_status": "stale_quote"
 }

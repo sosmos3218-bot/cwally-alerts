@@ -1,4 +1,13 @@
 {
   "ops_day": "2026-11-26",
-  "updated_at": "2026-11-26 08:05 KST"
+  "updated_at": "2026-11-27 07:56 KST",
+  "price": {
+    "last_date": "2026-11-26",
+    "last_close": 215500.0,
+    "armed": {
+      "l205000": true
+    },
+    "fired": {},
+    "seed_note": "첫 실행 2026-11-27 07:56 KST: config baseline 2026-11-25 217,000원 으로 시작, 그 뒤 종가부터 판정"
+  }
 }
