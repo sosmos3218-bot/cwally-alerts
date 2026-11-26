@@ -1,7 +1,7 @@
 {
   "price": {
-    "last_date": "2026-11-25",
-    "last_close": 30130.0,
+    "last_date": "2026-11-26",
+    "last_close": 30765.0,
     "armed": {
       "buy1": true,
       "buy2": true,
@@ -11,12 +11,12 @@
   },
   "regime": {
     "zone": "up",
-    "last_spread": 9.79,
-    "last_day": "2026-11-24",
+    "last_spread": 11.38,
+    "last_day": "2026-11-25",
     "seed_note": "설치 seed: Yahoo MOAT-QQQ 63거래일 상대 +9.83%p(2026-11-04). UP 구간으로 시드(이미 보낸 것으로 간주), 중립(+1.0 미만) 복귀 후 재진입 때만 발송."
   },
   "regime_fail_streak": 0,
-  "updated_at": "2026-11-25 19:05 KST",
+  "updated_at": "2026-11-26 19:07 KST",
   "review": {
     "dd": {
       "armed": true,
@@ -31,5 +31,5 @@
       "basis": "tr"
     }
   },
-  "ops_day": "2026-11-25"
+  "ops_day": "2026-11-26"
 }

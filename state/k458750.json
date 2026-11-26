@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-11-25T19:01:48.071978+09:00",
+  "updated_at": "2026-11-26T19:02:02.304898+09:00",
   "fx_low_armed": true,
-  "fx_last": 1344.6,
+  "fx_last": 1344.33,
   "price_high_armed": true,
   "price_low_armed": true,
-  "price_last_date": "2026-11-25",
+  "price_last_date": "2026-11-26",
   "last_dist_date": "2026-11-13",
   "last_dist_amt": 53.0,
-  "last_summary_date": "2026-11-25",
+  "last_summary_date": "2026-11-26",
   "fail": {
     "fx": {
       "days": 0,

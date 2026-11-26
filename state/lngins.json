@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-25T19:02:36.729682+09:00",
+  "updated_at": "2026-11-26T19:04:27.091078+09:00",
   "seeded": true,
   "seen": [
     "naver:017960:1581899",
@@ -48,7 +48,7 @@
   "ds_low_armed": true,
   "ds_high_armed": true,
   "kc_low_armed": true,
-  "rel_up_armed": true,
+  "rel_up_armed": false,
   "rel_down_armed": true,
   "fail": {
     "src": {
@@ -59,8 +59,8 @@
   },
   "seed_note": "2026-11-16 19:04 KST 시드. seen 25건",
   "rel_last": {
-    "date": "2026-11-25",
-    "chg": 8.134799327597753,
-    "ratio": 0.8841166936790924
+    "date": "2026-11-26",
+    "chg": 15.338793745346235,
+    "ratio": 0.9411764705882353
   }
 }
