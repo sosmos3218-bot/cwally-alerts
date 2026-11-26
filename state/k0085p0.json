@@ -12,5 +12,14 @@
   },
   "ops_day": null,
   "err_day": null,
-  "updated_at": "2026-11-26T07:59:38+09:00"
+  "updated_at": "2026-11-26T07:59:38+09:00",
+  "mpc": {
+    "2026-11-26": {
+      "done": true,
+      "result": "sent",
+      "decision": "hike",
+      "rate": 3.25,
+      "at": "2026-11-26 15:22 KST"
+    }
+  }
 }
