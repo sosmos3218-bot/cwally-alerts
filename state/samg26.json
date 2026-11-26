@@ -41,12 +41,12 @@
   "ops_daily": {},
   "install_test_sent": "2026-10-07T15:45:26+09:00",
   "last_observation": {
-    "session": "2026-11-25",
-    "close": 12700.0,
+    "session": "2026-11-26",
+    "close": 12450.0,
     "eps": 1350.0,
     "op": 182.0
   },
-  "updated_at": "2026-11-26T08:00:41+09:00",
+  "updated_at": "2026-11-27T07:53:29+09:00",
   "notices_seeded": true,
   "seen_notice_ids": [
     "191968720",

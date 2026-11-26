@@ -1,14 +1,11 @@
 {
-  "updated_at": "2026-11-26 07:58 KST",
+  "updated_at": "2026-11-27 07:51 KST",
   "price": 12.85,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss",
-    "https://www.tikr.com/blog/b-rileys-64-target-says-irens-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261030-4f8m8346&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-sees-modest-171422114.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/crypto/articles/mstr-q3-earnings-beat-estimates-133900070.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/crypto/articles/iren-nasdaqgs-iren-objects-tokenized-221036130.html?.tsrc=rss",
     "https://www.tikr.com/blog/cipher-digital-falls-5-on-q3-revenue-miss-as-first-hpc-lease-revenue-arrives?ref=yahoofinance&tlnk=yf-261102-vfpc362f&.tsrc=rss",
@@ -205,7 +202,10 @@
     "https://247wallst.com/investing/2026/11/25/coreweave-cratered-40-year-to-date-320-gains-to-come-according-to-this-investment-bank-desk/?.tsrc=rss",
     "https://blockspace.media/short/heres-why-ai-stocks-crashed-today-2/?.tsrc=rss",
     "https://www.tikr.com/blog/freedom-capital-markets-314-target-says-nebiuss-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261125-28wv344f&.tsrc=rss",
-    "https://blockspace.media/podcast/neoclouds-crash-elon-admits-defeat-in-frontier-ai-race-and-why-gpu-export-controls-help-us-ai-stocks/?.tsrc=rss"
+    "https://blockspace.media/podcast/neoclouds-crash-elon-admits-defeat-in-frontier-ai-race-and-why-gpu-export-controls-help-us-ai-stocks/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/26/applied-digital-just-tumbled-33-in-a-month-can-apld-stock-get-back-to-20-in-2027/?.tsrc=rss",
+    "https://www.tikr.com/blog/anthropic-earns-80-a-year-per-watt-of-gpus-says-modals-ceo-thats-good-news-for-spacex?ref=yahoofinance&tlnk=yf-261125-5cgv35mg&.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/5-best-small-cap-ai-144008304.html?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-23 09:02 KST",
   "pending_news": [

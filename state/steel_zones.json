@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-11-26 07:58 KST",
+  "updated_at": "2026-11-27 07:51 KST",
   "zones": {
     "POSCO": "REVIEW",
-    "HYUNDAI": "BUY3",
+    "HYUNDAI": "BETWEEN",
     "POONGSAN": "REVIEW"
   },
   "prices": {
-    "POSCO": 251500.0,
-    "HYUNDAI": 27100.0,
-    "POONGSAN": 45550.0
+    "POSCO": 248500.0,
+    "HYUNDAI": 26200.0,
+    "POONGSAN": 45300.0
   },
   "close_days": {
-    "POSCO": "2026-11-25",
-    "HYUNDAI": "2026-11-25",
-    "POONGSAN": "2026-11-25"
+    "POSCO": "2026-11-26",
+    "HYUNDAI": "2026-11-26",
+    "POONGSAN": "2026-11-26"
   },
   "fail_day": null
 }

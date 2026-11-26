@@ -1,6 +1,6 @@
 {
   "fx": {
-    "last_date": "2026-11-25",
+    "last_date": "2026-11-26",
     "armed": true,
     "seeded": "2026-11-02"
   },
@@ -12,7 +12,7 @@
   },
   "ops_day": null,
   "err_day": null,
-  "updated_at": "2026-11-26T07:59:38+09:00",
+  "updated_at": "2026-11-27T07:52:28+09:00",
   "mpc": {
     "2026-11-26": {
       "done": true,

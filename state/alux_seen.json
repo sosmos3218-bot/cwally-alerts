@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-26 07:58 KST",
-  "price": 5080.0,
+  "updated_at": "2026-11-27 07:51 KST",
+  "price": 5130.0,
   "seen_notices": [
     "131573653",
     "107550667",
@@ -25,6 +25,6 @@
   "q3": {
     "done": false
   },
-  "close_day": "20261125",
+  "close_day": "20261126",
   "weekly_sent_week": "2026-W48"
 }
