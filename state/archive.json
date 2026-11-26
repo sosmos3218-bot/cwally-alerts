@@ -1,6 +1,17 @@
 {
-  "updated_at": "2026-11-26 08:14 KST",
+  "updated_at": "2026-11-26 09:00 KST",
   "items": [
+    {
+      "id": "n8DAHMYMiM8G",
+      "topic": "cwally-port",
+      "title": "[TREND] KOSPI 추세점검 11/25: 후보 0, 시장폭 21.5%",
+      "message": "매도\n보유 없음.\n신규\n신규 후보 없음.\n시장폭 21.5%. 시가총액 상위 종목 중 50일선 위 비율입니다.\n꺼지는 때: 종료일 없음 (평일 15:40 KST. 휴장일은 알림 없음.)",
+      "priority": 3,
+      "tags": [
+        "chart_with_upwards_trend"
+      ],
+      "time": 1795648450
+    },
     {
       "id": "pVN72wZPMo8n",
       "topic": "cwally-port",
@@ -4418,17 +4429,6 @@
         "warning"
       ],
       "time": 1794580246
-    },
-    {
-      "id": "b7ihDOQU4vPN",
-      "topic": "cwally-port",
-      "title": "[GRAB] 인도네시아 ojol 후속 규정 뉴스 1건 | 참고",
-      "message": "이게 뭐 알림: 인도네시아 8% 수수료 상한(ojol)이 음식, 물품 배달로 넓어지는지(Komdigi, Perpres 후속 규정) 새 기사 알림. GRAB 최악 시나리오의 핵심 위험입니다.\n지금 결과/상태: 조건: 규제 단어와 배달/후속 규정 단어가 함께 있는 새 제목 1건. 현재가 3.23달러. 시각 2026-11-13 23:30 KST.\n- 11/10 17:00 Aturan Ojol 2026 Berubah? Komdigi Siapkan Aturan Baru untuk GoFood dan Jasa Antar Barang - radarcirebon.disway.id - Rada https://news.google.com/rss/articles/CBMi1gFBVV95cUxOLW5LT0ptUHhnbEN2Ym1hamFfYmYzVXlJS1JaRkRQdW5FaTVPQ190QWNqaFRBWHdvQzhORk9mdEhnRVdaOGlwZy1sTXZfLW84TmhaeGp4dGdNZVNaNWE0aExxMFlHdWZzTi1xdm5lWXRIU25WUmxEaDlNOXczQV9STzJtcl8wcEZjdnEtZjVnYUpVbEN3QzlBLVUwN1hTYVUxZlFHR3ZhZ0lYM1RROUpOZWFwdUZvQUo4ZVpraFZIR0lZYUtDMlVHX1ZQdlIxN1hTSUxSZkJn0gHIAUFVX3lxTE5HX0E2ZTNfcFF4ZVVmSHRLMUdjdDNJTnBEUkxIOGgxTWVpYldzX0VfSHBESWlYeHZJbHItT2FMZUUzREhLRzNSaGNQYmtrT3l0c2s5Nk4za21wWU9DYnFJbVNxQ2RJckRjQlEyNm1rLXktMl9nMXlELWo2emhPdWdpZVktT3cxbW9QcndLcUxabDMxMlN2VHhpX2NBbmtlSkZ3Y1BQck04RzE1cmd2a2VJckVDWWpKUEFQNnRoaWJTVTJ1cWdUY05k?oc=5\n지금 할 일: 후속 규정 일정과 배달 포함 여부만 확인. 아직 매매 판단 근거 아님.\n나중에: 같은 기사(링크, 제목)는 다시 보내지 않습니다. 미국 거래일마다 첫 정규장 실행에서 한 번 봅니다.\n익절/줄일 때: 배달 확대가 확정되면 적정가 4.15달러 가정을 낮추고 비중 축소 검토.\n하지 말 것: 제목만 보고 주문, 검토/제안 단계 기사를 확정으로 읽기.\n꺼지는 때: 종료일 없음 (수동 삭제 전까지 무기한)",
-      "priority": 3,
-      "tags": [
-        "motor_scooter"
-      ],
-      "time": 1794580225
     }
   ]
 }
