@@ -1725,10 +1725,12 @@ jobs:
         # approved in chat 2026-10-28. attached to the existing k203780 slot, no new cron. Separate from the 15:20 0220wl alert (afternoon).
         # Dedupe: state/0220wl_close.json last_day + armed, ratio.last_day + armed, notice_done, notice_seen.
         # job=k203780 dispatch without oneoff_mode=auto is dry (selftest + dry): no ntfy, no state.
-        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == '0220wl_close') }}
+        # 2026-11-27 chat approval: buy1 line (close <= 2,000, re-arm >= 2,100), notice classes (배당결정 DPS via DART, 유상증자, 무배당), year_guard, ends_kst 2027-06-30; manual job=0220wl runs this step (dry by default).
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == '0220wl_close' || steps.pick.outputs.job == '0220wl') }}
         env:
           NTFY_TOPIC: cwally-port
           NTFY_SERVER: https://ntfy.sh
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
           ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
         run: |
           MODE=auto

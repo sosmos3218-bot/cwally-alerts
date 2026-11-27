@@ -286,11 +286,16 @@ def save_state(cfg: dict, st: dict) -> None:
 
 
 # ---------- logic ----------
+NOTICE_DETAIL = None  # optional hook (cfg, filing, class) -> {"status","tail","class"}; a wrapper may set it (0220wl_close DART DPS)
+
+
 def hit(ln: dict, close: float) -> bool:
     return {"le": close <= ln["level"], "ge": close >= ln["level"], "lt": close < ln["level"]}[ln["op"]]
 
 
 def rearm(ln: dict, close: float, pct: float) -> bool:
+    if ln.get("rearm_at") is not None:  # opt-in absolute re-arm level (0220wl_close buy1, 2026-11-27); other lines keep pct
+        return close >= ln["rearm_at"] if ln["op"] in ("le", "lt") else close <= ln["rearm_at"]
     if pct <= 0:
         return not hit(ln, close)
     f = pct / 100.0
@@ -714,20 +719,31 @@ def build_time_check(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None
 
 def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | None = None) -> tuple[str, str, int]:
     w, f = cfg["notice_watch"], e["filing"]
+    f = dict(f, title=scrub(f["title"]))
+    # opt-in "classes" (0220wl_close, 2026-11-27): first class whose "match" is in the title (and no "exclude") overrides
+    # title/what/todo/later/trim/dont/priority/disclaimer. NOTICE_DETAIL (set by a wrapper) may add a status text, a title
+    # tail, or switch the class by key (e.g. 배당결정 with DPS 0 -> 무배당 warning).
+    cls = next((c for c in w.get("classes") or [] if any(scrub(k) in f["title"] for k in c["match"])
+                and not any(scrub(x) in f["title"] for x in c.get("exclude") or [])), None)
+    detail = {}
+    if cls and cls.get("detail") and NOTICE_DETAIL:
+        detail = NOTICE_DETAIL(cfg, f, cls) or {}
+        cls = next((c for c in w["classes"] if c["key"] == detail["class"]), cls) if detail.get("class") else cls
+    if cls:
+        w = {**w, **{k: v for k, v in cls.items() if k in ("title", "what", "todo", "later", "trim", "dont", "priority", "disclaimer")}}
     pl = pair_last(data)
     px = f" 최근 종가({pl[0]}): 우선주 {fmt(pl[1])}, {cfg['pair']['short']} {fmt(pl[2])}, 괴리율 {pl[3]:.2f}%." if cfg.get("pair") and pl else ""
-    f = dict(f, title=scrub(f["title"]))
     short_title = f["title"]
     for x in w.get("strip", []):
         short_title = short_title.replace(x, "")
     short_title = re.sub(r"\s+", " ", short_title).strip()
-    title = f"{cfg['title_prefix']} {w['title']} | {short_title[:40]}"
+    title = f"{cfg['title_prefix']} {w['title']} | {detail.get('tail') or short_title[:40]}"
     # optional "todo_by": [{"match", "todo"}], first match in the title wins (064400: 결산실적공시 예고 -> set Q4 date)
     todo = next((x["todo"] for x in w.get("todo_by") or [] if scrub(x["match"]) in f["title"]), w["todo"])
     msg = "\n".join([
         head(cfg, stamp),
-        f"이게 뭐 알림: {w['what']} 매수 지시가 아닙니다.",
-        f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px} 공시 목록: {cfg['sources']['notice_page'].format(code=f['code'])}",
+        f"이게 뭐 알림: {w['what']} {w.get('disclaimer', '매수 지시가 아닙니다.')}",
+        f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px}{(' ' + detail['status']) if detail.get('status') else ''} 공시 목록: {cfg['sources']['notice_page'].format(code=f['code'])}",
         f"지금 할 일: {todo}",
         f"나중에: {w['later']}",
         "익절/줄일 때: " + w.get("trim", "공시 제목만으로 줄이지 마세요."),
@@ -1230,6 +1246,12 @@ def run(name: str, argv: list[str]) -> int:
     if not is_trading_day(day) and mode not in {"force", "dry", "seed"}:
         print(f"{day} KRX holiday; silent")
         return 0
+
+    if cfg.get("year_guard") is not None and not dry and mode != "force":  # opt-in (0220wl_close, 2026-11-27): year and ends_kst guard
+        ends = str(cfg.get("ends_kst") or "")
+        if now.year not in cfg["year_guard"] or (ends and stamp[:len(ends)] > ends):
+            print(f"{name}: outside year_guard {cfg['year_guard']} or past ends_kst {ends or '-'}; silent")
+            return 0
 
     data, fails = collect(cfg, now)
     print(f"data src={data.get('src')} rows={(data.get('rows') or [])[-3:]} us10y={data.get('us10y')} fails={fails}")
