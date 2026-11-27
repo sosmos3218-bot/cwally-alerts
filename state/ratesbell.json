@@ -1,15 +1,15 @@
 {
-  "dgs10": 4.904,
-  "dgs10_date": "2026-11-24",
-  "mortgage": 7.28,
-  "mortgage_date": "2026-11-19",
+  "dgs10": 4.848,
+  "dgs10_date": "2026-11-25",
+  "mortgage": 7.21,
+  "mortgage_date": "2026-11-25",
   "status": "RELIEF",
   "mtg_streak": 0,
-  "last_kind": "CHANGE",
+  "last_kind": "BREAK",
   "fail_sent_date": null,
   "weekly_sent_date": "2026-11-23",
-  "ten_band": "INSIDE",
-  "ten_band_date": "2026-11-24",
-  "ten_band_close": 4.904,
-  "updated_at": "2026-11-25T08:25:49.058277+09:00"
+  "ten_band": "BELOW",
+  "ten_band_date": "2026-11-25",
+  "ten_band_close": 4.848,
+  "updated_at": "2026-11-27T07:52:16.201896+09:00"
 }

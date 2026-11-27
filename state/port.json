@@ -1,30 +1,16 @@
 {
-  "updated_at": "2026-11-25 08:25 KST",
-  "zone": "BASE",
-  "last_alert_key": "BASE",
-  "last_sent_key": "BASE",
-  "last_sent_date": "2026-11-23",
-  "last_sent_sig": "BASE",
+  "updated_at": "2026-11-27 07:51 KST",
+  "zone": "EVENT:BASE",
+  "last_alert_key": "EVENT:BASE",
+  "last_sent_key": "EVENT:BASE",
+  "last_sent_date": "2026-11-26",
+  "last_sent_sig": "EVENT:BASE|bok_nov",
   "last_skip_reason": "same_as_last_sent",
-  "fx": 1341.4,
-  "wti": 81.58,
-  "ktb3": 3.64,
-  "ktb10": 3.819,
+  "fx": 1343.21,
+  "wti": 84.91,
+  "ktb3": 3.622,
+  "ktb10": 3.79,
   "history": [
-    {
-      "date": "2026-11-16",
-      "fx": 1336.1,
-      "wti": 88.51,
-      "ktb3": 3.759,
-      "ktb10": 4.001
-    },
-    {
-      "date": "2026-11-17",
-      "fx": 1335.98,
-      "wti": 85.28,
-      "ktb3": 3.743,
-      "ktb10": 3.981
-    },
     {
       "date": "2026-11-18",
       "fx": 1335.25,
@@ -66,6 +52,20 @@
       "wti": 81.58,
       "ktb3": 3.64,
       "ktb10": 3.819
+    },
+    {
+      "date": "2026-11-26",
+      "fx": 1343.13,
+      "wti": 84.15,
+      "ktb3": 3.583,
+      "ktb10": 3.761
+    },
+    {
+      "date": "2026-11-27",
+      "fx": 1343.21,
+      "wti": 84.91,
+      "ktb3": 3.622,
+      "ktb10": 3.79
     }
   ]
 }

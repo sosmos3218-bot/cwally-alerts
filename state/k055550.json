@@ -1,12 +1,13 @@
 {
   "price": {
-    "last_date": "2026-11-24",
-    "last_close": 86600.0,
+    "last_date": "2026-11-26",
+    "last_close": 84700.0,
     "armed": {
       "l83000": true,
       "l79000": true
     },
     "seed_note": "install seed 2026-11-09 16:45 KST: Daum KRX 확정 종가 2026-11-09 85,800원 (두 선 모두 무장)"
   },
-  "updated_at": "2026-11-25 08:29 KST"
+  "updated_at": "2026-11-27 07:56 KST",
+  "ops_day": "2026-11-26"
 }

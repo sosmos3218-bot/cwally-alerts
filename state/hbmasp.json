@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W48",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-24 19:02 KST",
+  "updated_at": "2026-11-26 19:05 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -22,11 +22,13 @@
           "u:www.trendforce.com/presscenter/news/20261111-13303.html",
           "t:mounting finished goods inventories prompt some pc oems to adjust memory procurement plans for 2027 says trendforce",
           "u:www.trendforce.com/presscenter/news/20261119-13314.html",
-          "t:nand flash prices set to decline in 2027 as chinese csp order cuts outweigh north american demand growth says trendforce"
+          "t:nand flash prices set to decline in 2027 as chinese csp order cuts outweigh north american demand growth says trendforce",
+          "u:www.trendforce.com/presscenter/news/20261125-13321.html",
+          "t:cuts to chinese csp demand weigh on price outlook slowing memory industry revenue growth in 2027 says trendforce"
         ],
         "claims": {},
         "ops_day": "2026-11-19",
-        "last_ok": "2026-11-24"
+        "last_ok": "2026-11-26"
       },
       "samsung": {
         "seeded": true,
@@ -130,11 +132,13 @@
           "u:news.samsung.com/global/the-technology-behind-more-precise-finding-with-galaxy-smarttag3-and-smartthings",
           "t:the technology behind more precise finding with galaxy smarttag3 and smartthings",
           "u:news.samsung.com/global/samsung-electronics-announces-new-leadership-5",
-          "t:samsung electronics announces new leadership"
+          "t:samsung electronics announces new leadership",
+          "u:news.samsung.com/global/a-day-in-the-life-of-a-dog-with-galaxy-smarttag3-and-smartthings",
+          "t:a day in the life of a dog with galaxy smarttag3 and smartthings"
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-24"
+        "last_ok": "2026-11-26"
       },
       "skhynix": {
         "seeded": true,
@@ -162,7 +166,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-24"
+        "last_ok": "2026-11-26"
       }
     }
   }

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """[KAL] 대한항공 003490 관심 종목 알림 (2026-11-03 설치, 같은 날 11:45 사용자 분석으로 갱신).
 
-평일 15:40 KST (0090b0 슬롯에 부착). 모두 상태가 바뀔 때만 1번, 같은 실행에서 걸린 것은 한 건으로 묶음.
+평일 15:40 KST (0090b0 슬롯에 부착)는 기존 종가 선, 우선주, WTI, 제트유, 공시 감시.
+평일 19:00 KST (k203780 슬롯에 부착, 2026-11-25): 정규장 종가 28,000원 이하 첫 진입 1번,
+          2026 사업보고서 연결 순부채 1번. 새 cron 없음.
   price : 정규장 확정 종가. 26,500 이하 '1차 지정가 검토 구간'(매수 검토, 조건 1 점검표와 규모),
           24,000 비관 시나리오 p4, 32,500 기본 시나리오 구간 진입 p3, 40,000 낙관 시나리오 p3. 선마다 rearm.
   pref  : 우선주 003495 할인율 = 1 - 우선주/보통주(같은 날 확정 종가). 28% 이상 p3, 25% 아래 재무장.
@@ -14,11 +16,12 @@
           12/15 '내일 합병기일 12/16, 합병등기 12/17' 안내 1번. 전용 규칙에 안 걸린 공시도 events.filings 규칙으로
           1번(실적, 사채/증자 p4, 합병, 공급계약 p3; 같은 날 같은 규칙은 DART/네이버 중복 1번).
 첫 실행(또는 새 항목)은 조용히 시드. 데이터 조회 실패는 하루 1번 cwally-ops.
-usage: kal_monitor.py <auto|dry> | selftest | confirm
+usage: kal_monitor.py <auto|dry> [core|evening|all] | selftest | confirm
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -103,6 +106,281 @@ def dart_list(cik: str, now: datetime, days: int = 30) -> list[dict]:
     if "rcpNo=" not in raw and "조회 결과가 없습니다" not in raw and "검색된 자료가 없습니다" not in raw:
         raise ValueError("DART 목록 형식 확인 불가")
     return out
+
+
+def is_fy2026_report(n: dict) -> bool:
+    """대한항공 2026 사업보고서(연간, 2026.12) 제목인지. 감사보고서만 있는 제목은 제외."""
+    t = re.sub(r"\s+", "", str(n.get("title") or ""))
+    if "사업보고서" not in t:
+        return False
+    if "감사보고서" in t and "사업보고서" not in t:
+        return False
+    return bool(re.search(r"\(2026\.12\)", t))
+
+
+def dart_list_range(cik: str, start: datetime, end: datetime) -> list[dict]:
+    """DART 목록을 기간으로 조회. dart_list 와 같은 행 형식."""
+    import html as _html
+    import urllib.parse
+    data = urllib.parse.urlencode({"textCrpNm": "대한항공", "textCrpCik": cik, "startDate": start.strftime("%Y%m%d"),
+                                   "endDate": end.strftime("%Y%m%d"), "maxResults": 100, "currentPage": 1, "sort": "date",
+                                   "series": "desc"}).encode()
+    req = urllib.request.Request("https://dart.fss.or.kr/dsab007/detailSearch.ax", data=data, headers=UA)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        raw = resp.read().decode("utf-8", "ignore")
+    out = []
+    for row in re.findall(r"<tr>.*?</tr>", raw, re.S):
+        m = re.search(r'rcpNo=(\d+)"[^>]*>(.*?)</a>', row, re.S)
+        if not m:
+            continue
+        title = _html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(2)))).strip()
+        filer = re.search(r'class="tL ellipsis" title="([^"]*)"', row)
+        day = re.search(r"<td>(\d{4})\.(\d{2})\.(\d{2})</td>", row)
+        if filer and "대한항공" not in filer.group(1):
+            continue
+        out.append({"src": "dart", "id": m.group(1), "title": title, "text": "",
+                    "datetime": f"{day.group(1)}-{day.group(2)}-{day.group(3)}" if day else m.group(1)[:8]})
+    if "rcpNo=" not in raw and "조회 결과가 없습니다" not in raw and "검색된 자료가 없습니다" not in raw:
+        raise ValueError("DART 목록 형식 확인 불가")
+    return out
+
+
+def _norm_acct(name: str) -> str:
+    s = re.sub(r"\s+", "", str(name or ""))
+    s = s.replace("ㆍ", "").replace("·", "")
+    s = re.sub(r"\(주석.*?\)", "", s)
+    s = re.sub(r"\(주\s*\d+\)", "", s)
+    return s
+
+
+def _num_won(v) -> float | None:
+    if v is None or v == "":
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = str(v).strip().replace(",", "").replace(" ", "")
+    if not s or s in {".", "-"}:
+        return None
+    neg = s.startswith("(") and s.endswith(")")
+    s = s.strip("()")
+    if s.endswith("△") or s.startswith("△"):
+        neg = True
+        s = s.replace("△", "")
+    try:
+        n = float(s)
+    except ValueError:
+        return None
+    return -n if neg else n
+
+
+def _first_amount(rows: list[dict], names: tuple[str, ...]) -> float | None:
+    want = {_norm_acct(n) for n in names}
+    for r in rows:
+        if _norm_acct(r.get("name") or r.get("account_nm") or "") in want:
+            v = _num_won(r.get("amount") if "amount" in r else r.get("thstrm_amount"))
+            if v is not None:
+                return v
+    return None
+
+
+def _sum_unique(rows: list[dict], names: tuple[str, ...]) -> tuple[float, list[str]]:
+    """이름으로 금액을 더하되, 같은 정규화 이름은 한 번만. 부모 합계가 있으면 구성 항목은 건너뜀."""
+    found: list[tuple[str, float]] = []
+    seen = set()
+    for r in rows:
+        nm = _norm_acct(r.get("name") or r.get("account_nm") or "")
+        if nm in seen:
+            continue
+        if nm not in {_norm_acct(n) for n in names}:
+            continue
+        v = _num_won(r.get("amount") if "amount" in r else r.get("thstrm_amount"))
+        if v is None:
+            continue
+        seen.add(nm)
+        found.append((nm, v))
+    if not found:
+        return 0.0, []
+    # drop a component if a parent name exists and component is a longer extension
+    keep = []
+    names_only = [n for n, _ in found]
+    for n, v in found:
+        parent = any(n != p and n.startswith(p) and abs(v) <= abs(dict(found)[p]) + 1 for p in names_only)
+        if parent:
+            continue
+        keep.append((n, v))
+    if not keep:
+        keep = found
+    return sum(v for _, v in keep), [n for n, _ in keep]
+
+
+# 연결 순부채 = 차입금 + 사채 + 리스부채 - 현금및현금성자산 - 단기금융자산(상품)
+BORROW_NAMES = ("단기차입금", "유동성장기차입금", "유동성장기부채", "장기차입금", "차입금")
+BOND_NAMES = ("사채", "유동성사채", "유동성장기사채", "전환사채", "신주인수권부사채", "교환사채")
+LEASE_NAMES = ("리스부채", "유동리스부채", "유동성리스부채", "비유동리스부채", "장기리스부채")
+CASH_NAMES = ("현금및현금성자산",)
+SHORT_FIN_NAMES = ("단기금융자산", "단기금융상품", "단기계정증권", "유동금융자산")
+
+
+def net_debt_from_accounts(rows: list[dict]) -> dict:
+    """연결 재무상태표 계정에서 순부채(원)를 계산. 리스 항목이 없으면 lease_included=False 와 근거를 남김."""
+    borrowings, b_used = _sum_unique(rows, BORROW_NAMES)
+    # '유동성장기부채' is broader than borrowings; only count if no more specific 유동성장기차입금
+    if "유동성장기부채" in b_used and "유동성장기차입금" in b_used:
+        borrowings, b_used = _sum_unique(rows, tuple(n for n in BORROW_NAMES if n != "유동성장기부채"))
+    bonds, bd_used = _sum_unique(rows, BOND_NAMES)
+    leases, l_used = _sum_unique(rows, LEASE_NAMES)
+    cash, c_used = _sum_unique(rows, CASH_NAMES)
+    # prefer 단기금융자산 over 단기금융상품 when both exist (parent vs child)
+    short, s_used = _sum_unique(rows, SHORT_FIN_NAMES)
+    if "단기금융자산" in s_used and "단기금융상품" in s_used:
+        short, s_used = _sum_unique(rows, ("단기금융자산",))
+    lease_included = bool(l_used)
+    net = borrowings + bonds + leases - cash - short
+    if lease_included:
+        basis = "연결 재무상태표, 차입금+사채+리스부채-현금및현금성자산-단기금융자산"
+    else:
+        basis = "리스부채 항목을 확인하지 못해 차입금+사채-현금및현금성자산-단기금융자산으로 계산(리스 미포함)"
+    return {
+        "borrowings": borrowings, "bonds": bonds, "leases": leases, "cash": cash, "short_fin": short,
+        "net_debt": net, "lease_included": lease_included, "basis": basis,
+        "used": {"borrowings": b_used, "bonds": bd_used, "leases": l_used, "cash": c_used, "short_fin": s_used},
+    }
+
+
+def debt_verdict(net_won: float, cfg: dict) -> tuple[str, int]:
+    low = float(cfg["fy2026_debt"]["low_jo"]) * 1e12
+    high = float(cfg["fy2026_debt"]["high_jo"]) * 1e12
+    if net_won <= low:
+        return (cfg["fy2026_debt"]["low_note"], 3)
+    if net_won >= high:
+        return (cfg["fy2026_debt"]["high_note"], 4)
+    return ("16.5조 초과 18조 미만, 상향이나 중단 문구 없음", 3)
+
+
+def jo_txt(won_v: float) -> str:
+    j = won_v / 1e12
+    if abs(j) >= 10:
+        return f"{j:.1f}조"
+    return f"{j:.2f}조"
+
+
+def pct_vs_ref(close: float, ref: float) -> str:
+    pct = (close - ref) / ref * 100
+    sign = "+" if pct > 0 else ""
+    return f"{sign}{pct:.1f}%"
+
+
+def judge_close28000(cfg: dict, st: dict, close: tuple[str, float]) -> dict | None:
+    """정규장 종가(시간외/장중 저가 아님) 28,000원 이하 첫 진입. 한 번만."""
+    slot = st.setdefault("close28000", {})
+    if slot.get("done"):
+        return None
+    level = float(cfg["close28000"]["level"])
+    if close[1] > level:
+        return None
+    return {"day": close[0], "close": close[1], "level": level}
+
+
+def mark_close28000(st: dict, hit: dict, stamp: str) -> None:
+    st["close28000"] = {"done": True, "at": stamp, "day": hit["day"], "close": hit["close"]}
+
+
+def pick_fy2026_report(notices: list[dict]) -> dict | None:
+    hits = [n for n in notices if is_fy2026_report(n)]
+    if not hits:
+        return None
+    # prefer an original filing over a later 정정 when both exist; otherwise first seen (newest list is fine if once)
+    orig = [n for n in hits if "정정" not in re.sub(r"\s+", "", n.get("title") or "")]
+    return (orig or hits)[0]
+
+
+def accounts_from_opendart(corp: str, year: str) -> list[dict] | None:
+    key = (os.environ.get("OPENDART_API_KEY") or "").strip()
+    if not key:
+        return None
+    import urllib.parse
+    q = urllib.parse.urlencode({"crtfc_key": key, "corp_code": corp, "bsns_year": year,
+                                "reprt_code": "11011", "fs_div": "CFS"})
+    url = f"https://opendart.fss.or.kr/api/fnlttSinglAcntAll.json?{q}"
+    raw = json.loads(get(url).decode("utf-8", "ignore"))
+    if raw.get("status") != "000" or not raw.get("list"):
+        return None
+    out = []
+    for r in raw["list"]:
+        if (r.get("sj_div") or "") != "BS":
+            continue
+        out.append({"name": r.get("account_nm") or "", "amount": r.get("thstrm_amount")})
+    return out or None
+
+
+def _flat_html(h: str) -> str:
+    import html as _html
+    h = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", h)
+    t = _html.unescape(re.sub(r"<[^>]+>", " | ", h)).replace("\xa0", " ")
+    t = re.sub(r"\s+", " ", t)
+    return re.sub(r"(\s*\|\s*)+", " | ", t)
+
+
+def accounts_from_viewer(text: str) -> list[dict]:
+    """연결 재무상태표 flat 텍스트에서 계정명과 당기 금액(첫 숫자)을 뽑음."""
+    rows = []
+    seen = set()
+    tokens = [x.strip() for x in text.split("|")]
+    for i, tok in enumerate(tokens):
+        nm = _norm_acct(tok)
+        if not nm or len(nm) < 3:
+            continue
+        if not any(_norm_acct(n) == nm or nm.startswith(_norm_acct(n)) for n in
+                   BORROW_NAMES + BOND_NAMES + LEASE_NAMES + CASH_NAMES + SHORT_FIN_NAMES):
+            continue
+        # next numeric token is usually current-period
+        amt = None
+        for nxt in tokens[i + 1:i + 6]:
+            v = _num_won(nxt)
+            if v is None:
+                continue
+            # skip bare years like 2026
+            if re.fullmatch(r"20\d{2}", nxt.strip().replace(",", "")):
+                continue
+            amt = v
+            break
+        if amt is None or nm in seen:
+            continue
+        seen.add(nm)
+        rows.append({"name": tok.strip(), "amount": amt})
+    return rows
+
+
+def fetch_bs_accounts(rcp: str, corp: str, year: str) -> tuple[list[dict], str]:
+    """(accounts, source). OpenDART 연결 재무상태표 우선, 없으면 DART 뷰어 연결 재무상태표."""
+    api = accounts_from_opendart(corp, year)
+    if api:
+        return api, "OpenDART fnlttSinglAcntAll 연결 재무상태표"
+    import time
+    import html as _html
+    main = get(f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcp}").decode("utf-8", "ignore")
+    toc = []
+    for m in re.finditer(r"node\d\['text'\] = \"([^\"]*)\";.*?node\d\['dcmNo'\] = \"(\d+)\";\s*node\d\['eleId'\] = \"(\d+)\";\s*"
+                         r"node\d\['offset'\] = \"(\d+)\";\s*node\d\['length'\] = \"(\d+)\";\s*node\d\['dtd'\] = \"([^\"]*)\"", main, re.S):
+        toc.append(dict(zip(("text", "dcm", "ele", "offset", "length", "dtd"), m.groups())))
+    if not toc:
+        raise ValueError("DART 목차 없음")
+    picked = [n for n in toc if "재무상태표" in n["text"] and "연결" in n["text"] and "별도" not in n["text"]]
+    if not picked:
+        picked = [n for n in toc if "재무상태표" in n["text"] and "별도" not in n["text"]]
+    if not picked:
+        raise ValueError("연결 재무상태표 절 없음")
+    texts = []
+    for n in picked[:2]:
+        time.sleep(0.4)
+        u = (f"https://dart.fss.or.kr/report/viewer.do?rcpNo={rcp}&dcmNo={n['dcm']}&eleId={n['ele']}"
+             f"&offset={n['offset']}&length={n['length']}&dtd={n['dtd']}")
+        texts.append(_flat_html(get(u).decode("utf-8", "ignore")))
+    rows = accounts_from_viewer(" | ".join(texts))
+    if not rows:
+        raise ValueError("연결 재무상태표 계정을 읽지 못함")
+    return rows, "DART 뷰어 연결 재무상태표"
+
 
 
 def wti_settle(symbol: str) -> float:
@@ -337,6 +615,22 @@ def item_text(kind: str, obj, cfg: dict, ctx: dict) -> tuple[str, str, int]:
     """(title tail, 지금 할 일 문장, priority)"""
     ev = cfg["events"]
     p = ctx.get("close", (None, None))[1]
+    if kind == "close28000":
+        cfgc = cfg["close28000"]
+        ref = float(cfgc["ref_close"])
+        pct = pct_vs_ref(obj["close"], ref)
+        tail = f"종가 {won(obj['close'])}원 28,000원 이하 첫 진입"
+        action = cfgc["note"]
+        return (tail, f"{action}. {obj['day']} 정규장 종가 {won(obj['close'])}원, 11/25 종가 {won(ref)}원 대비 {pct}. 시간외 시세는 쓰지 않았습니다.", 3)
+    if kind == "fy2026_debt":
+        nd = obj["net_debt"]
+        note, pri = debt_verdict(nd, cfg)
+        lease = "리스부채 포함" if obj.get("lease_included") else "리스부채 미포함"
+        tail = f"2026 사업보고서 연결 순부채 {jo_txt(nd)} | {note}"
+        action = (f"연결 순부채 {jo_txt(nd)}원 상당({lease}). 구성: 차입금 {jo_txt(obj['borrowings'])}, 사채 {jo_txt(obj['bonds'])}, "
+                  f"리스부채 {jo_txt(obj['leases'])}, 현금및현금성자산 {jo_txt(obj['cash'])}, 단기금융자산 {jo_txt(obj['short_fin'])}. "
+                  f"근거: {obj['basis']}. 원문 https://dart.fss.or.kr/dsaf001/main.do?rcpNo={obj['rcp']}. {note}.")
+        return (tail, action, pri)
     if kind == "price":
         k = obj["key"]
         hl = ctx.get("hl")
@@ -425,7 +719,15 @@ WARN_KINDS = {"d24000", "wti", "fuel_up", "rights", "merger_change", "merger_rem
 
 
 def item_key(kind: str, obj) -> str:
-    return obj["key"] if kind == "price" else (f"fuel_{obj}" if kind == "fuel" else kind)
+    if kind == "price":
+        return obj["key"]
+    if kind == "fuel":
+        return f"fuel_{obj}"
+    if kind == "close28000":
+        return "close28000"
+    if kind == "fy2026_debt":
+        return "fy2026_debt"
+    return kind
 
 
 def message(cfg: dict, items: list[tuple[str, object]], stamp: str, ctx: dict) -> tuple[str, str, int]:
@@ -433,6 +735,21 @@ def message(cfg: dict, items: list[tuple[str, object]], stamp: str, ctx: dict) -
     order = sorted(range(len(texts)), key=lambda i: -texts[i][2])
     top = texts[order[0]]
     title = f"{TAG} {top[0]}" + (f" 외 {len(texts) - 1}건" if len(texts) > 1 else "")
+    kinds = [k for k, _ in items]
+    if kinds and all(k in ("close28000", "fy2026_debt") for k in kinds):
+        st_bits = []
+        if ctx.get("close"):
+            st_bits.append(f"{ctx['close'][0]} 정규장 종가 {won(ctx['close'][1])}원")
+        body = "\n".join([
+            "이게 뭐 알림: 대한항공(003490) 정규장 종가 28,000원 이하 첫 진입과 2026 사업보고서 연결 순부채를 각각 1번 알려 주는 알림. 시간외 시세는 쓰지 않습니다. 매매 신호 아님.",
+            f"{stamp} | 003490 | 대한항공",
+            "지금 결과/상태: " + (", ".join(st_bits) + ". " if st_bits else "") + "걸린 것: " + "; ".join(texts[i][0] for i in order) + ".",
+            "지금 할 일: " + " ".join(texts[i][1] for i in order),
+            "나중에: 종가 28,000원 알림과 2026 사업보고서 순부채 알림은 각각 한 번만 옵니다. 기존 15:40 감시(26,500 선 등)는 따로 계속됩니다.",
+            "익절/줄일 때: 미보유라 해당 없음. 이 알림만으로 주문하지 마세요.",
+            "하지 말 것: 시간외 시세를 종가로 보기, 추격 매수, 신용, 미수, 이 알림만 보고 주문.",
+        ])
+        return title, body, max(t[2] for t in texts)
     st = []
     if ctx.get("close"):
         st.append(f"{ctx['close'][0]} 확정 종가 {won(ctx['close'][1])}원")
@@ -475,7 +792,7 @@ def ops(stamp: str, what: str, err: str) -> tuple[str, str, int]:
     return f"{TAG} {what} 조회 실패 | 판정 보류", body, 3
 
 
-def run(mode: str, now: datetime, cfg: dict) -> int:
+def run(mode: str, now: datetime, cfg: dict, scope: str = "core") -> int:
     dry = mode == "dry"
     stamp = now.strftime("%Y-%m-%d %H:%M KST")
     today = now.strftime("%Y-%m-%d")
@@ -487,6 +804,8 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
     fails: list[tuple[str, str]] = []
     ctx: dict = {}
     new_day = False
+    evening = scope in ("evening", "all")
+    core = scope in ("core", "all")
     try:
         rows = confirmed(price_rows(cfg["code"]), now)
         if not rows:
@@ -498,55 +817,57 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
         st["last_close"], st["ma200"] = list(close), round(ctx["ma"], 1) if ctx["ma"] else None
     except Exception as exc:  # noqa: BLE001
         fails.append(("종가", str(exc)))
-    try:
-        if ctx.get("close"):
-            pr = dict(confirmed(price_rows(cfg["preferred"]["code"]), now))
-            if ctx["close"][0] in pr:
-                pp = pr[ctx["close"][0]]
-                ctx["pref"] = (ctx["close"][0], pp, (1 - pp / ctx["close"][1]) * 100)
-                st["pref_last"] = [ctx["close"][0], pp, round(ctx["pref"][2], 2)]
-    except Exception as exc:  # noqa: BLE001
-        fails.append(("우선주", str(exc)))
-    try:
-        ws = st.setdefault("wti", {})
-        add_settle(ws, today, wti_settle(cfg["wti"]["symbol"]))
-        ctx["wti_hist"] = ws["hist"]
-        ctx["wti_last"] = ws["hist"][-1][1]
-        if judge_wti(cfg["wti"], ws):
-            items.append(("wti", None))
-        ctx["wti_110"] = not ws.get("armed", True)
-    except Exception as exc:  # noqa: BLE001
-        fails.append(("WTI", str(exc)))
-    try:
-        fp = fuel_price(cfg["fuel"]["symbol"])
-        fs = st.setdefault("fuel", {})
-        seeded = not (cfg["fuel"].get("baseline") or fs.get("baseline"))
-        f, pct = judge_fuel(cfg["fuel"], fs, fp)
-        if seeded:
-            fs["baseline_at"] = stamp
-        ctx["fuel"], ctx["fuel_base"] = (fp, pct), cfg["fuel"].get("baseline") or fs.get("baseline")
-        fs["last"] = [stamp, fp, round(pct, 2)]
-        if f:
-            items.append(("fuel", f))
-    except Exception as exc:  # noqa: BLE001
-        fails.append(("HO=F", str(exc)))
     notices, srcs = [], []
-    for src, fn in (("naver", lambda: load_notices(cfg["code"])), ("dart", lambda: dart_list("00113526", now))):
+    ctx.setdefault("merger", "")
+    if core:
         try:
-            notices += fn()
-            srcs.append(src)
+            if ctx.get("close"):
+                pr = dict(confirmed(price_rows(cfg["preferred"]["code"]), now))
+                if ctx["close"][0] in pr:
+                    pp = pr[ctx["close"][0]]
+                    ctx["pref"] = (ctx["close"][0], pp, (1 - pp / ctx["close"][1]) * 100)
+                    st["pref_last"] = [ctx["close"][0], pp, round(ctx["pref"][2], 2)]
         except Exception as exc:  # noqa: BLE001
-            fails.append(("DART 공시" if src == "dart" else "네이버 공시", str(exc)))
-    es = st.setdefault("events", {})
-    items += judge_events(cfg["events"], es, notices, today, tuple(srcs))
-    ctx["merger"], ctx["rights"] = merger_status(es), bool(es.get("rights_found"))
-    if ctx.get("close") and new_day:  # price-based lines judged after events so the 26,500 checklist sees today's DART state
+            fails.append(("우선주", str(exc)))
+        try:
+            ws = st.setdefault("wti", {})
+            add_settle(ws, today, wti_settle(cfg["wti"]["symbol"]))
+            ctx["wti_hist"] = ws["hist"]
+            ctx["wti_last"] = ws["hist"][-1][1]
+            if judge_wti(cfg["wti"], ws):
+                items.append(("wti", None))
+            ctx["wti_110"] = not ws.get("armed", True)
+        except Exception as exc:  # noqa: BLE001
+            fails.append(("WTI", str(exc)))
+        try:
+            fp = fuel_price(cfg["fuel"]["symbol"])
+            fs = st.setdefault("fuel", {})
+            seeded = not (cfg["fuel"].get("baseline") or fs.get("baseline"))
+            f, pct = judge_fuel(cfg["fuel"], fs, fp)
+            if seeded:
+                fs["baseline_at"] = stamp
+            ctx["fuel"], ctx["fuel_base"] = (fp, pct), cfg["fuel"].get("baseline") or fs.get("baseline")
+            fs["last"] = [stamp, fp, round(pct, 2)]
+            if f:
+                items.append(("fuel", f))
+        except Exception as exc:  # noqa: BLE001
+            fails.append(("HO=F", str(exc)))
+        for src, fn in (("naver", lambda: load_notices(cfg["code"])), ("dart", lambda: dart_list("00113526", now))):
+            try:
+                notices += fn()
+                srcs.append(src)
+            except Exception as exc:  # noqa: BLE001
+                fails.append(("DART 공시" if src == "dart" else "네이버 공시", str(exc)))
+        es = st.setdefault("events", {})
+        items += judge_events(cfg["events"], es, notices, today, tuple(srcs))
+        ctx["merger"], ctx["rights"] = merger_status(es), bool(es.get("rights_found"))
+    if core and ctx.get("close") and new_day:  # price-based lines judged after events so the 26,500 checklist sees today's DART state
         ctx["hl"] = HL.get(ctx["close"][0])
         items = [("price", ln) for ln in judge_price(cfg["price_lines"], st.setdefault("armed", {}), ctx["close"][1], ctx["hl"])] + items
         if ctx.get("pref") and judge_pref(cfg["preferred"], st.setdefault("pref", {}), ctx["pref"][2]):
             items.append(("pref", None))
         st["last_date"] = ctx["close"][0]
-    elif ctx.get("close"):  # same bar: only seed lines or the pref line that are new in config (no judging, no send)
+    elif core and ctx.get("close"):  # same bar: only seed lines or the pref line that are new in config (no judging, no send)
         armed = st.setdefault("armed", {})
         keys = {ln["key"] for ln in cfg["price_lines"]}
         for k in [k for k in armed if k not in keys]:
@@ -555,6 +876,50 @@ def run(mode: str, now: datetime, cfg: dict) -> int:
             armed.setdefault(ln["key"], not p_hit(ln, ctx["close"][1], HL.get(ctx["close"][0])))
         if ctx.get("pref") and "armed" not in st.setdefault("pref", {}):
             judge_pref(cfg["preferred"], st["pref"], ctx["pref"][2])
+    if evening and ctx.get("close"):
+        hit = judge_close28000(cfg, st, ctx["close"])
+        if hit:
+            items.append(("close28000", hit))
+            if not dry:
+                mark_close28000(st, hit, stamp)
+        else:
+            print(f"close28000 silent close={ctx['close']} done={bool((st.get('close28000') or {}).get('done'))}")
+    if evening:
+        debt_st = st.setdefault("fy2026_debt", {})
+        if debt_st.get("done"):
+            print(f"fy2026_debt already done rcp={debt_st.get('rcp')}")
+        else:
+            try:
+                watch_start = datetime(2026, 12, 1, tzinfo=KST)
+                if now < watch_start:
+                    print("fy2026_debt: before 2026-12-01 watch window; silent")
+                    rec = None
+                    extra = []
+                else:
+                    extra = dart_list_range("00113526", watch_start, now)
+                have = {n.get("id") for n in notices if n.get("src") == "dart"}
+                for n in extra:
+                    if n.get("id") not in have:
+                        notices.append(n)
+                rec = pick_fy2026_report(notices) if extra or notices else None
+                if now < watch_start:
+                    pass
+                elif not rec:
+                    print("fy2026_debt: 사업보고서 (2026.12) 없음; silent")
+                else:
+                    rows, src = fetch_bs_accounts(rec["id"], "00113526", "2026")
+                    calc = net_debt_from_accounts(rows)
+                    calc["rcp"] = rec["id"]
+                    calc["title"] = rec.get("title")
+                    calc["source"] = src
+                    items.append(("fy2026_debt", calc))
+                    if not dry:
+                        st["fy2026_debt"] = {"done": True, "at": stamp, "rcp": rec["id"], "title": rec.get("title"),
+                                             "net_debt": calc["net_debt"], "lease_included": calc["lease_included"],
+                                             "basis": calc["basis"], "figures": {k: calc[k] for k in
+                                                 ("borrowings", "bonds", "leases", "cash", "short_fin")}}
+            except Exception as exc:  # noqa: BLE001
+                fails.append(("2026 사업보고서 순부채", str(exc)))
     print(f"close={ctx.get('close')} ma200={round(ctx['ma']) if ctx.get('ma') else None} pref={ctx.get('pref')} wti={ctx.get('wti_last')} "
           f"fuel={ctx.get('fuel')} armed={st.get('armed')} pref_armed={(st.get('pref') or {}).get('armed')} wti_armed={(st.get('wti') or {}).get('armed')} "
           f"merger={ctx['merger']} sources={srcs}")
@@ -731,6 +1096,55 @@ def selftest(cfg: dict) -> int:
     check("six parts", [x.split(":")[0] for x in b1.split("\n")[2:]], ["지금 결과/상태", "지금 할 일", "나중에", "익절/줄일 때", "하지 말 것"])
     check("no dot/dash", any(ch in "".join(titles + bodies) for ch in "\u00b7\u2014"), False)
     check("confirmed close before 15:31", confirmed([("2026-11-02", 1.0), ("2026-11-03", 2.0)], datetime(2026, 11, 3, 11, 0, tzinfo=KST))[-1][0], "2026-11-02")
+    # --- 28,000 first close + FY2026 net debt (2026-11-25) ---
+    st80 = {}
+    check("28000 above silent", judge_close28000(cfg, st80, ("2026-11-25", 31100.0)), None)
+    check("28000 at level fires", judge_close28000(cfg, st80, ("2026-11-26", 28000.0)),
+          {"day": "2026-11-26", "close": 28000.0, "level": 28000.0})
+    hit = judge_close28000(cfg, st80, ("2026-11-26", 27850.0))
+    mark_close28000(st80, hit, "2026-11-26 19:00 KST")
+    check("28000 done never repeats", judge_close28000(cfg, st80, ("2026-11-27", 27000.0)), None)
+    t80, b80, p80 = message(cfg, [("close28000", hit)], "2026-11-26 19:00 KST", {"close": ("2026-11-26", 27850.0)})
+    check("28000 title", t80, "[KAL] 003490 대한항공 종가 27,850원 28,000원 이하 첫 진입")
+    check("28000 p3", p80, 3)
+    check("28000 note", "분할매수 1차 구간 진입 점검" in b80, True)
+    check("28000 pct vs 31100", "11/25 종가 31,100원 대비 -10.5%" in b80, True)
+    check("28000 regular close wording", "시간외" in b80 and "정규장 종가 27,850원" in b80, True)
+    check("28000 ticker", t80.startswith("[KAL] 003490 대한항공 "), True)
+    check("28000 no dot/dash", any(ch in t80 + b80 for ch in "\u00b7\u2014"), False)
+    check("fy report title match", is_fy2026_report({"title": "사업보고서 (2026.12)"}), True)
+    check("fy report 정정 match", is_fy2026_report({"title": "[기재정정]사업보고서 (2026.12)"}), True)
+    check("fy report reject 반기", is_fy2026_report({"title": "반기보고서 (2026.06)"}), False)
+    check("fy report reject 2025", is_fy2026_report({"title": "사업보고서 (2025.12)"}), False)
+    check("fy pick prefers original", pick_fy2026_report([
+        {"id": "2", "title": "[기재정정]사업보고서 (2026.12)"},
+        {"id": "1", "title": "사업보고서 (2026.12)"},
+    ])["id"], "1")
+    rows = [
+        {"name": "현금및현금성자산", "amount": 3_000_000_000_000},
+        {"name": "단기금융자산", "amount": 1_000_000_000_000},
+        {"name": "단기금융상품", "amount": 400_000_000_000},
+        {"name": "단기차입금", "amount": 2_000_000_000_000},
+        {"name": "장기차입금", "amount": 8_000_000_000_000},
+        {"name": "사채", "amount": 5_000_000_000_000},
+        {"name": "유동성사채", "amount": 1_000_000_000_000},
+        {"name": "유동리스부채", "amount": 1_500_000_000_000},
+        {"name": "비유동리스부채", "amount": 2_000_000_000_000},
+    ]
+    d = net_debt_from_accounts(rows)
+    check("net debt with lease 15.5조", (round(d["net_debt"] / 1e12, 2), d["lease_included"]), (15.5, True))
+    check("short fin no double count", d["short_fin"] / 1e12, 1.0)
+    rows2 = [r for r in rows if "리스" not in r["name"]]
+    d2 = net_debt_from_accounts(rows2)
+    check("net debt without lease states basis", d2["lease_included"] is False and "리스부채 항목을 확인하지 못해" in d2["basis"], True)
+    check("verdict <=16.5조", debt_verdict(15.5e12, cfg), ("매수 상단 29,000원 상향 검토", 3))
+    check("verdict mid", debt_verdict(17.0e12, cfg)[0], "16.5조 초과 18조 미만, 상향이나 중단 문구 없음")
+    check("verdict >=18조", debt_verdict(18e12, cfg), ("신규 매수 중단", 4))
+    calc = {**d, "rcp": "20270331000001", "title": "사업보고서 (2026.12)"}
+    td_, bd_, pd_ = message(cfg, [("fy2026_debt", calc)], "2027-03-31 19:00 KST", {"close": ("2027-03-31", 30000.0)})
+    check("debt title has ticker and 조", td_.startswith("[KAL] 003490 대한항공 2026 사업보고서 연결 순부채 15.5조") and "매수 상단 29,000원 상향 검토" in td_, True)
+    check("debt body basis and dart", "연결 재무상태표" in bd_ and "rcpNo=20270331000001" in bd_, True)
+    check("debt no dot/dash", any(ch in td_ + bd_ for ch in "\u00b7\u2014"), False)
     print("selftest", "PASS" if not fails else f"FAIL {fails}")
     return 1 if fails else 0
 
@@ -769,12 +1183,16 @@ def main() -> int:
     if mode not in {"auto", "dry"}:
         print(__doc__)
         return 2
+    scope = args[1] if len(args) > 1 else "core"
+    if scope not in {"core", "evening", "all"}:
+        print(__doc__)
+        return 2
     now = datetime.now(KST)
     ends = cfg.get("ends_kst")
     if ends and now > datetime.strptime(ends, "%Y-%m-%d %H:%M").replace(tzinfo=KST):
         print(f"kal ended {ends} KST; silent")
         return 0
-    return run(mode, now, cfg)
+    return run(mode, now, cfg, scope)
 
 
 if __name__ == "__main__":

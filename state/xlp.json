@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-11-25T08:27:43.394278+09:00",
+  "updated_at": "2026-11-27T07:53:58.288352+09:00",
   "buy1_armed": true,
   "buy2_armed": true,
-  "last_bar_date": "2026-11-24",
-  "last_close": 91.87999725341797,
-  "last_spy_drawdown_pct": 7.74,
+  "last_bar_date": "2026-11-25",
+  "last_close": 92.30000305175781,
+  "last_spy_drawdown_pct": 8.01,
   "fetch_fail_date": null
 }

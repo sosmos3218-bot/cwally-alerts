@@ -1,28 +1,28 @@
 {
   "y10": {
-    "last_date": "2026-11-23",
+    "last_date": "2026-11-24",
     "armed": true,
-    "last": 4.92,
+    "last": 4.91,
     "src": "FRED",
     "seeded": "2026-11-19"
   },
   "fx": {
-    "last_date": "2026-11-24",
+    "last_date": "2026-11-26",
     "low_armed": true,
     "high_armed": true,
-    "last": 1346.6,
+    "last": 1343.9,
     "src": "ECOS 매매기준율",
     "seeded": "2026-11-20"
   },
   "kospi": {
-    "last_date": "2026-11-24",
-    "armed": false,
-    "last": 5006.03,
+    "last_date": "2026-11-26",
+    "armed": true,
+    "last": 4711.21,
     "src": "Daum KOSPI",
-    "foreign_eok": 8130.0,
+    "foreign_eok": -880.0,
     "seeded": "2026-11-20"
   },
   "ops_day": null,
-  "updated_at": "2026-11-25 08:29 KST",
+  "updated_at": "2026-11-27 07:56 KST",
   "seed_note": "install seed 2026-11-20 17:42 KST: 미 10년물 2026-11-19 5.04%(재무부, 11/5 저점 4.84%, 무장), 원달러 2026-11-20 1,335.8원(네이버 FX_USDKRW 종가, 1,300/1,380 둘 다 무장), 코스피 2026-11-20 4,869.96(Daum, 외국인 유가증권 순매매 -11,258억원, 4,900 미만이라 무장). 시드 시점 충족 선 없음, 발송 없음."
 }

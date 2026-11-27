@@ -6,10 +6,10 @@
     "w25400": true,
     "w26414": true
   },
-  "last_date": "2026-11-24",
+  "last_date": "2026-11-26",
   "last_close": [
-    "2026-11-24",
-    31350.0
+    "2026-11-26",
+    31200.0
   ],
   "src": "Daum KRX",
   "disc_seen": [
@@ -17,7 +17,8 @@
     "20261023000658"
   ],
   "disc_seeded": "2026-11-05 17:02 KST",
-  "kind_fail": 1,
-  "updated_at": "2026-11-25 08:29 KST",
-  "woori_pending": []
+  "kind_fail": 3,
+  "updated_at": "2026-11-27 07:56 KST",
+  "woori_pending": [],
+  "kind_fail_day": "2026-11-27"
 }

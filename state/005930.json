@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-24T19:02:37.001202+09:00",
+  "updated_at": "2026-11-26T19:04:59.338560+09:00",
   "seeded": true,
-  "last_day": "2026-11-24",
-  "last_close": 189400.0,
+  "last_day": "2026-11-26",
+  "last_close": 171300.0,
   "last_fail_day": null,
   "lines": {
     "buy1": {
@@ -14,8 +14,8 @@
       "fired_day": "2026-11-16"
     },
     "buy3": {
-      "armed": true,
-      "fired_day": "2026-11-20"
+      "armed": false,
+      "fired_day": "2026-11-25"
     },
     "trim1": {
       "armed": true,
@@ -26,8 +26,8 @@
       "fired_day": null
     },
     "stop": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-25"
     }
   },
   "earn_done": {
@@ -36,7 +36,7 @@
   "us10y": {
     "armed": true,
     "fired_day": null,
-    "last": 4.918
+    "last": 4.848
   },
   "extra": {
     "up220k": {

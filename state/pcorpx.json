@@ -4,9 +4,9 @@
     "buy3": true,
     "break46": true
   },
-  "last_date": "2026-11-24",
-  "last_close": 73.97,
+  "last_date": "2026-11-25",
+  "last_close": 74.56,
   "init_note": "initialized from 2026-10-23 close 63.00 (Yahoo), no send. Both lines armed.",
   "fail_notified": false,
-  "updated_at": "2026-11-25T08:28:24+09:00"
+  "updated_at": "2026-11-26T08:02:05+09:00"
 }

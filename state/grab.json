@@ -1,15 +1,15 @@
 {
   "price": {
     "armed": {
-      "zone": true,
+      "zone": false,
       "bear": true,
       "low52": true,
       "rec320": true,
       "up415": true,
       "be371": true
     },
-    "last_price": 2.77,
-    "last_at": "2026-11-25 06:00 KST"
+    "last_price": 2.84,
+    "last_at": "2026-11-27 06:00 KST"
   },
   "earn": {},
   "news": {
@@ -53,14 +53,18 @@
       "5de876bc070890e6",
       "https://news.google.com/rss/articles/CBMinAFBVV95cUxNdmNlTjctSXEwbnVHWlJWMFRWWUdTcFpvck5qNlptbnZYd0YzWXhQNTZFSWhIb1ZTZFBpVjVza0RLR1luYVRrelFQSXp6c3U4UG9mSFdUVUdUTW1wMnc2aTlqX1kzaWNGejVDQ1Z6M3htVnlDbV91bmtNN0V2Z0pDNWxjd3lzUWkwamhZOXdlS3I3cVpWTEJFU3BydXQ?oc=5",
       "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9JVC1DelhyeWZiWXZqT09KRzEySWNmMkRhMlJLVzgyMVQwbjNlOEFIU1doeXZxOE4yS2hDb0o3djYtS1JvRjFIRUliTXU4ZVZrR2MwZ1BSdnRtZ0c4VHRjaVZzamc?oc=5",
-      "https://news.google.com/rss/articles/CBMipAFBVV95cUxPenBjSUdpRXk5NkdXWE5vbjhudDBIMV9SNlpkeV80NzZwQmpwM2V4ajlENkFfSV9ObWtLOXVGcDlvWlMyd0Y0V0VqNUMtNEtzeTBvSE9kTldzX2w2QWJOYzZZVG9DbzRpUTRWSjZBV3NnZlFSTjl3UTBjcENjZ0xLOWYwT1ZEaHF1ZjR6NFNzbm1OYXMyWEdFbnVldlNRb0k0aDJ0MQ?oc=5"
+      "https://news.google.com/rss/articles/CBMipAFBVV95cUxPenBjSUdpRXk5NkdXWE5vbjhudDBIMV9SNlpkeV80NzZwQmpwM2V4ajlENkFfSV9ObWtLOXVGcDlvWlMyd0Y0V0VqNUMtNEtzeTBvSE9kTldzX2w2QWJOYzZZVG9DbzRpUTRWSjZBV3NnZlFSTjl3UTBjcENjZ0xLOWYwT1ZEaHF1ZjR6NFNzbm1OYXMyWEdFbnVldlNRb0k0aDJ0MQ?oc=5",
+      "cc64432b1db440db",
+      "https://news.google.com/rss/articles/CBMirAFBVV95cUxNRDVFSWRQdkZzOEdUZWZQcGhwVXZNZzRFSnEtU0xkdFQxMmtaV1dsbjNwQ3IzZ0RtOUdyRXl4QjZrSVd6Q1N3c2NKbXVteThZd0lyam9taktZUlRaSG5qMXBWZ0tybkxuVVBXdVpxZWRucDdfem5INkZxQl9SLVZxRjdlXzNiY21JV3RaZlcxcVFwMHpaVUgxbVF1NnlaT21fNXJPQ1NXbUlzcEFl0gGsAUFVX3lxTE1ENUVJZFB2RnM4R1RlZlBwaHBVdk1nNEVKcS1TTGR0VDEya1pXV2xuM3BDcjNnRG05R3JFeXhCNmtJV3pDU3dzY0ptdW15OFl3SXJqb21qS1lSVFpIbmoxcFZnS3JuTG5VUFd1WnFlZG5wN196bkg2RnFCX1ItVnFGN2VfM2JjbUlXdFpmVzFxUXAwelpVSDFtUXU2eVpPbV81ck9DU1dtSXNwQWU?oc=5",
+      "27b37cf946d61925",
+      "https://news.google.com/rss/articles/CBMixAFBVV95cUxOd2wzdndpaGR5bks3bG9oNzF4NHFITC1oVkczdHoybG1PcFFoNndWWkl2bUIwTVZEaUxnb0puclVpakVlSlhzdEhPWUtzbkl4ejFWbmYxZnN1TldpT2Q4ckFGX0tsaTQyWFp0T0xOc2tPMENtT0hwX2VwTm1WSG5QVzFxOWpfd0pXVlpSUUZCT1RCZWZweDFYLWgwbU53VWQzMWhPdUpiYjUzcm4tZEZZS05ZZW5pVkVyck5Wa2NzT0FRVG8x0gHKAUFVX3lxTE1jeXpsdFIwRFU3Q3hINnI5Y3JWdHpSeXZxS0JwampHOGEzeUtXUUcyb0dNUldYczFzZWU4c256dVhKd1FWUFkxZnF1V3dZRG96M2hyRzJhNmtuSDNYR1Q3Ymd6NFN0eTRLMWRuMnhSaEthdm1veUNxOW9ZSnRCcE5MRjJaNkpzaVhqTHVwVVpweVFVUlJvRkVqdmtLUTZJeXdMaWpfczhNdUlaOFR4Ynk1Z3BuWFAxSUdyTnZpdDZfRkhBN1RTYWZpZWc?oc=5"
     ],
     "seeded": "2026-11-03 23:30 KST"
   },
-  "events_day": "2026-11-24",
+  "events_day": "2026-11-26",
   "fail_day": null,
   "seed_note": "2026-11-03 21:50 KST 합병 시드(발송 없음): 현재가 2.86(11/2 종가). 이미 구간 안이라 zone 해제, 나머지 무장. 뉴스는 첫 실행에서 기준만 기록.",
-  "updated_at": "2026-11-25T06:00:28+09:00",
+  "updated_at": "2026-11-27T06:00:26+09:00",
   "fy_rule": {
     "checked": []
   },

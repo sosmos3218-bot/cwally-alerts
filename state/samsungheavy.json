@@ -1,14 +1,14 @@
 {
   "price": {
-    "last_date": "2026-11-24",
-    "last_close": 14970.0,
-    "last_volume": 2963739.0,
+    "last_date": "2026-11-26",
+    "last_close": 13900.0,
+    "last_volume": 2617625.0,
     "z2_armed": false,
-    "stop_armed": true,
-    "below_streak": 0,
+    "stop_armed": false,
+    "below_streak": 2,
     "trend_sent": null,
     "pending": null,
     "seed_note": "설치 seed 2026-11-03 KST: 마지막 확정 종가 2026-11-03 17,280원, 거래량 3,829,123주(정규장, Daum). 직전 20거래일 평균 거래량 3,519,795주(1.09배). 세 조건 모두 무장, 이 날짜까지는 판정하지 않음.",
-    "last_judged_at": "2026-11-24 19:03 KST"
+    "last_judged_at": "2026-11-26 19:06 KST"
   }
 }

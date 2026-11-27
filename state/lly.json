@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-11-25T08:25:59.748979+09:00",
+  "updated_at": "2026-11-27T07:52:24.016402+09:00",
   "price": {
     "armed": true,
     "fired": null,
-    "last_close": 1407.59,
-    "last_date": "2026-11-24",
+    "last_close": 1392.22,
+    "last_date": "2026-11-25",
     "fail_day": null
   },
   "sec_fail_day": null,

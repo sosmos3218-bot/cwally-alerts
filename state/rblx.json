@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-11-25T08:26:59.493184+09:00",
-  "last_price": 53.49,
-  "zone": "hold",
+  "updated_at": "2026-11-27T07:53:21.227919+09:00",
+  "last_price": 55.63,
+  "zone": "above_55",
   "last_weekly": "2026-11-23",
   "last_filing": "2026-10-29",
   "earnings_fingerprint": "{\"accession\": \"0001628280-26-068235\", \"bookings_m\": 1697.0}",

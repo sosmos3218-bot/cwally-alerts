@@ -1,26 +1,11 @@
 {
-  "updated_at": "2026-11-25 08:25 KST",
-  "price": 12.95,
+  "updated_at": "2026-11-27 07:51 KST",
+  "price": 12.85,
   "tag": "REVIEW",
   "last_event_ids": [
     "h24"
   ],
   "seen_ids": [
-    "https://blockspace.media/short/iren-just-borrowed-363m-against-its-nvidia-gpus-heres-why/?.tsrc=rss",
-    "https://blockspace.media/podcast/irens-363m-gpu-raise-morgan-stanleys-bullish-terawulf-price-target-and-sk-hynixs-earnings/?.tsrc=rss",
-    "https://www.sec.gov/Archives/edgar/data/1878848/000007085826000535/0000070858-26-000535-index.htm",
-    "https://finance.yahoo.com/real-estate/articles/mike-alfred-joins-opendoor-board-103000753.html?.tsrc=rss",
-    "https://finance.yahoo.com/news/alphabet-9bn-cash-burn-drags-104457828.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/cipher-digital-gears-report-q3-150400080.html?.tsrc=rss",
-    "https://www.tikr.com/blog/alphabet-sinks-12-on-search-miss-and-9-billion-cash-burn-is-this-the-quarter-we-feared?ref=yahoofinance&.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/29/3-ai-stocks-to-buy-and-hold-through-2030/?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/iren-iren-secures-363-million-011520078.html?.tsrc=rss",
-    "https://stocktwits.com/news-articles/markets/equity/crwv-nbis-iren-apld-stocks-drop-after-microsoft-capex-falls-short-on-delayed-third-party-capacity/cZUQeHWR9bT?.tsrc=rss",
-    "https://finance.yahoo.com/technology/ai/articles/nebius-vs-iren-ai-infrastructure-130000823.html?.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-limited-iren-expected-beat-130030024.html?.tsrc=rss",
-    "https://www.fool.com/investing/2026/10/29/neocloud-stocks-have-sunk-by-more-than-30-this-mon/?.tsrc=rss",
-    "https://www.tikr.com/blog/b-rileys-64-target-says-irens-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261030-4f8m8346&.tsrc=rss",
-    "https://finance.yahoo.com/markets/stocks/articles/iren-iren-stock-sees-modest-171422114.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/crypto/articles/mstr-q3-earnings-beat-estimates-133900070.html?.tsrc=rss",
     "https://finance.yahoo.com/markets/crypto/articles/iren-nasdaqgs-iren-objects-tokenized-221036130.html?.tsrc=rss",
     "https://www.tikr.com/blog/cipher-digital-falls-5-on-q3-revenue-miss-as-first-hpc-lease-revenue-arrives?ref=yahoofinance&tlnk=yf-261102-vfpc362f&.tsrc=rss",
@@ -205,7 +190,22 @@
     "https://blockspace.media/short/what-jensen-huangs-return-to-nvidia-means-for-ai-stocks/?.tsrc=rss",
     "https://247wallst.com/investing/2026/11/24/applied-digital-is-down-33-in-a-month-what-will-it-take-to-get-apld-stock-back-to-20/?.tsrc=rss",
     "https://www.tikr.com/blog/databricks-co-founder-says-just-one-neocloud-has-robust-enough-isolation-my-guess-its-probably-not-coreweave?ref=yahoofinance&tlnk=yf-261124-wcppqc25&.tsrc=rss",
-    "https://www.tikr.com/blog/anthropic-backer-dismisses-musk-as-a-glorified-compute-reseller-heres-what-reselling-earns-spacex?ref=yahoofinance&tlnk=yf-261124-4wp2mjrm&.tsrc=rss"
+    "https://www.tikr.com/blog/anthropic-backer-dismisses-musk-as-a-glorified-compute-reseller-heres-what-reselling-earns-spacex?ref=yahoofinance&tlnk=yf-261124-4wp2mjrm&.tsrc=rss",
+    "https://blockspace.media/short/iren-stock-price-is-down-80-over-six-months-heres-why/?.tsrc=rss",
+    "https://finance.yahoo.com/markets/stocks/articles/funding-gap-change-iren-stock-181042884.html?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/25/prediction-irens-microsoft-deal-could-be-just-the-beginning-of-its-next-growth-phase-massive-upside-ahead/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/25/anthropic-sinks-8-falls-further-below-ipo-price-despite-cathie-wood-buying-the-dip-iren-tumbles-11-coreweave-retreats-10/?.tsrc=rss",
+    "https://www.tikr.com/blog/nebius-sinks-43-in-a-month-on-delays-and-soaring-capex-its-cfo-calls-2027s-timing-very-very-conservative?ref=yahoofinance&tlnk=yf-261125-m3ww43x2&.tsrc=rss",
+    "https://stocktwits.com/news-articles/markets/equity/iren-selloff-draws-attention-grant-cardone-retail-bulls-asking-where-the-bottom-is/cNbHJRhR9lq?.tsrc=rss",
+    "https://www.tikr.com/blog/cleanspark-sinks-17-in-a-week-iren-down-18-as-bitcoin-slides-below-60000-into-earnings?ref=yahoofinance&tlnk=yf-261125-x5wfr65q&.tsrc=rss",
+    "https://blockspace.media/podcast/spacex-slashes-gpu-pricing-plus-irens-selloff-and-coreweaves-distressed-bonds/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/25/coreweave-cratered-40-year-to-date-320-gains-to-come-according-to-this-investment-bank-desk/?.tsrc=rss",
+    "https://blockspace.media/short/heres-why-ai-stocks-crashed-today-2/?.tsrc=rss",
+    "https://www.tikr.com/blog/freedom-capital-markets-314-target-says-nebiuss-selloff-went-too-far?ref=yahoofinance&tlnk=yf-261125-28wv344f&.tsrc=rss",
+    "https://blockspace.media/podcast/neoclouds-crash-elon-admits-defeat-in-frontier-ai-race-and-why-gpu-export-controls-help-us-ai-stocks/?.tsrc=rss",
+    "https://247wallst.com/investing/2026/11/26/applied-digital-just-tumbled-33-in-a-month-can-apld-stock-get-back-to-20-in-2027/?.tsrc=rss",
+    "https://www.tikr.com/blog/anthropic-earns-80-a-year-per-watt-of-gpus-says-modals-ceo-thats-good-news-for-spacex?ref=yahoofinance&tlnk=yf-261125-5cgv35mg&.tsrc=rss",
+    "https://finance.yahoo.com/technology/ai/articles/5-best-small-cap-ai-144008304.html?.tsrc=rss"
   ],
   "last_digest_at": "2026-11-23 09:02 KST",
   "pending_news": [
@@ -228,6 +228,26 @@
       "title": "What Jensen Huang’s return to NVIDIA means for AI stocks",
       "url": "https://blockspace.media/short/what-jensen-huangs-return-to-nvidia-means-for-ai-stocks/?.tsrc=rss",
       "seen_at": "2026-11-25 08:25 KST"
+    },
+    {
+      "title": "Will Funding Gap Change IREN Stock Narrative",
+      "url": "https://finance.yahoo.com/markets/stocks/articles/funding-gap-change-iren-stock-181042884.html?.tsrc=rss",
+      "seen_at": "2026-11-26 07:58 KST"
+    },
+    {
+      "title": "Prediction: IREN’s Microsoft Deal Could Be Just the Beginning of Its Next Growth Phase",
+      "url": "https://247wallst.com/investing/2026/11/25/prediction-irens-microsoft-deal-could-be-just-the-beginning-of-its-next-growth-phase-massive-upside-ahead/?.tsrc=rss",
+      "seen_at": "2026-11-26 07:58 KST"
+    },
+    {
+      "title": "Nebius Sinks 43% in a Month on Delays and Soaring Capex. Its CFO Calls 2027’s Timing “Very, Very Conservative”",
+      "url": "https://www.tikr.com/blog/nebius-sinks-43-in-a-month-on-delays-and-soaring-capex-its-cfo-calls-2027s-timing-very-very-conservative?ref=yahoofinance&tlnk=yf-261125-m3ww43x2&.tsrc=rss",
+      "seen_at": "2026-11-26 07:58 KST"
+    },
+    {
+      "title": "CleanSpark Sinks 17% in a Week, IREN Down 18%, as Bitcoin Slides Below $60,000 Into Earnings",
+      "url": "https://www.tikr.com/blog/cleanspark-sinks-17-in-a-week-iren-down-18-as-bitcoin-slides-below-60000-into-earnings?ref=yahoofinance&tlnk=yf-261125-x5wfr65q&.tsrc=rss",
+      "seen_at": "2026-11-26 07:58 KST"
     }
   ],
   "digest_seed_note": "2026-10-30 weekly digest install: all headlines seen by the 10/30 09:00 run stay seen, nothing queued; first digest Mon 2026-11-02 09:00 KST if new keyword headlines arrive",

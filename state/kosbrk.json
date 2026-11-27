@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-25 08:29 KST",
+  "updated_at": "2026-11-27 07:57 KST",
   "fired": {
     "close_break": true,
     "intraday_break": true,
@@ -106,6 +106,10 @@
     {
       "day": "2026-11-25",
       "foreign": 0.0
+    },
+    {
+      "day": "2026-11-26",
+      "foreign": -880.0
     }
   ],
   "seen_links": [],
@@ -118,16 +122,16 @@
   },
   "last_fail_day": null,
   "last_bar": {
-    "day": "2026-11-24",
-    "close": 5006.03,
-    "low": 4880.16
+    "day": "2026-11-26",
+    "close": 4711.21,
+    "low": 4704.65
   },
   "reversal": {
-    "day": "2026-11-23",
+    "day": "2026-11-26",
     "streak": 0,
     "streak_sum": 0.0,
     "streak_start": null,
-    "close": 4708.54,
+    "close": 4711.21,
     "hold": false,
     "fired": false
   }
