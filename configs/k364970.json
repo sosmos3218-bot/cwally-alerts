@@ -1,0 +1,66 @@
+{
+  "name": "k364970",
+  "title_prefix": "[364970]",
+  "code": "364970",
+  "ticker": "364970",
+  "name_kr": "TIGER 바이오TOP10",
+  "isin": "KR7364970004",
+  "as_of": "2026-11-27",
+  "approval": "사용자 요청 2026-11-27: 추격 매수 보류. 소액 분할 구간과 6,075원 이탈, 상위 3종목 공시만. 새 cron 없음.",
+  "holding": "추격 매수 보류. 보유 수량과 평균가는 미입력.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "15:40",
+  "schedule_note": "새 cron 없음. 기존 0090b0 평일 15:40 KST 슬롯(k068270 바로 뒤). 정규장 종가는 scripts/krx_close.py 라 15:40에 판정한다. 수동 job=k364970 은 oneoff_mode=auto 가 아니면 selftest + dry.",
+  "window_start": "2026-11-27",
+  "window_end": "2027-06-30",
+  "zone": {
+    "low": 6400,
+    "high": 6500,
+    "rearm_above": 6600,
+    "rearm_below": 6208,
+    "premium_max": 0.002,
+    "priority": 3,
+    "note": "종가가 6,400원 이상 6,500원 이하면 p3 한 번. 다시 켜지는 종가는 6,600원 초과, 또는 6,400원의 3%(6,208원) 미만. 6,208 = 6400*97/100. 공식 NAV 대비 괴리가 +0.20%보다 크면 본문에 주문 보류."
+  },
+  "break": {
+    "level": 6075,
+    "rearm": 6257,
+    "wait_trading_days": 2,
+    "priority": 4,
+    "note": "종가 6,075원 미만 p4. 그 종가일은 세지 않고 그 뒤 2거래일째 종가도 6,075원 미만이면 p4 추가매수 금지. 그 안에 6,075원 이상으로 회복하면 추가 알림 없음. 재무장은 6,075*103/100 = 6,257원 이상. 6,075원 당일은 이탈이 아님."
+  },
+  "premium_note": "NAV는 네이버 etfKeyIndicator. 날짜는 k203780 과 같이 괴리율로 역산한 종가가 그 거래일 종가와 맞을 때만 당일 NAV. 전일 NAV면 오늘 괴리 판단은 보류.",
+  "companies": [
+    {"code": "068270", "name": "셀트리온", "dart_cik": "00413046"},
+    {"code": "207940", "name": "삼성바이오로직스", "dart_cik": "00877059"},
+    {"code": "196170", "name": "알테오젠", "dart_cik": "00989619"}
+  ],
+  "celltrion_op_eok": 6000,
+  "upgrade_rule": "투자매력 상향은 3개 중 2개. 셀트리온 4Q 영업이익 6,000억 이상과 순이익 회복, 삼성바이오로직스 신주상장 후 수급 안정과 인수 종결 또는 주요 수주, 알테오젠 입금과 키트루다 SC 판매 성장.",
+  "samsung_listing": {
+    "day": "2026-11-30",
+    "shares": 2270000,
+    "price": 1174000,
+    "note": "2026-11-25 추가상장 안내. 보통주 2,270,000주, 발행가 1,174,000원, 상장일 2026-11-30. 조달액 2,664,980,000,000원(2조 6,649.8억원). 수급 안정은 자동 판정하지 않음."
+  },
+  "verified_2026_11_27": {
+    "close_2026_11_23": 6075,
+    "close_2026_11_26": 6405,
+    "avg20_through_2026_11_26": 6505.75,
+    "nav_2026_11_26": 6427.6,
+    "nav_deviation": "-0.35%는 11/26 종가 6,405원과 맞음",
+    "holdings_top3": "표시 비중 32.25+25.79+16.64=74.68. FunETF 구성금액(현금 포함) 비율은 74.685.",
+    "celltrion_q4": "국문 공지 4954, 영문 공지 4957, 2026-10-19, 4분기 영업이익 6,000억 원 이상.",
+    "samsung_tender": "2026-11-06 정정 양수결정, 공개매수 응모 97.98%(32,350,302주). 양수예정일 2026-12-31. 종결 전.",
+    "alteogen_rcp": "20261126900206 2026-11-26, MSD USD 40,000,000 청구, 30일 이내 수령 예정. 입금 전."
+  },
+  "sources": {
+    "close": "scripts/krx_close.py (Daum 일별 tradePrice, 실패 시 네이버 15:30 분봉). 네이버 일봉은 쓰지 않음.",
+    "nav": "https://m.stock.naver.com/api/stock/364970/integration etfKeyIndicator",
+    "filings": "DART detailSearch.ax textCrpCik. 본문은 네이버 공시 contents. OPENDART_API_KEY 가 있으면 list.json 을 같은 접수번호로 합침."
+  },
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "평일 15:40 확정 종가와 상위 3종목 공시. 2027-06-30 까지"
+}
