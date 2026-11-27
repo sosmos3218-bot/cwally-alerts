@@ -460,7 +460,7 @@ def eval_notices(cfg: dict, st: dict, today: str, fails: list[str], rows_fn=None
             try:
                 rows = (rows_fn or notice_rows)(cfg, code)
             except Exception as exc:
-                fails.append(f"{code} 공시 목록 (네이버 {str(exc)[:60]}; 다음 실행에서 다시 확인)")
+                fails.append(f"{code} 공시 목록 ({w.get('source_label') or '네이버'} {str(exc)[:60]}; 다음 실행에서 다시 확인)")
                 continue
             for r in sorted(rows, key=lambda x: x["datetime"]):
                 if (r["no"] and r["no"] not in seen and r["datetime"][:10] >= w["since"] and any(k in r["title"] for k in kws)
@@ -558,7 +558,7 @@ def build_lines(cfg: dict, events: list[dict], data: dict, stamp: str, ref: str 
     ln = top["line"]
     sign = {"le": "이하", "ge": "이상", "lt": "미만"}[ln["op"]]
     title = f"{cfg['title_prefix']} 종가 {fmt(ln['level'])} {sign} | {ln['title']}"
-    pri = 5 if top["key"] == "stop" else 4
+    pri = 5 if top["key"] == "stop" else int(ln.get("priority", 4))  # optional per-line priority (143860 adj10: p3, 2026-11-27)
     hits = [f"{e['line']['label']}: 종가 {fmt(e['close'])}({e['day']}), 기준 {fmt(e['line']['level'])}, 기준 대비 {dist(e['close'], e['line']['level']):+.2f}%."
             for e in events]
     last_close = (data.get("rows") or [{}])[-1].get("close") if data.get("rows") else events[-1]["close"]
@@ -724,6 +724,7 @@ def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | No
     # title/what/todo/later/trim/dont/priority/disclaimer. NOTICE_DETAIL (set by a wrapper) may add a status text, a title
     # tail, or switch the class by key (e.g. 배당결정 with DPS 0 -> 무배당 warning).
     cls = next((c for c in w.get("classes") or [] if any(scrub(k) in f["title"] for k in c["match"])
+                and (not c.get("codes") or f.get("code") in c["codes"])  # optional per-code class (143860, 2026-11-27)
                 and not any(scrub(x) in f["title"] for x in c.get("exclude") or [])), None)
     detail = {}
     if cls and cls.get("detail") and NOTICE_DETAIL:
@@ -743,7 +744,7 @@ def build_notice_watch(cfg: dict, e: dict, data: dict, stamp: str, ref: str | No
     msg = "\n".join([
         head(cfg, stamp),
         f"이게 뭐 알림: {w['what']} {w.get('disclaimer', '매수 지시가 아닙니다.')}",
-        f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px}{(' ' + detail['status']) if detail.get('status') else ''} 공시 목록: {cfg['sources']['notice_page'].format(code=f['code'])}",
+        f"지금 결과/상태: 새 공시({f['code']}): {f['title']} ({f['datetime']}).{px}{(' ' + detail['status']) if detail.get('status') else ''} 공시 목록: {f.get('url') or cfg['sources']['notice_page'].format(code=f['code'])}",
         f"지금 할 일: {todo}",
         f"나중에: {w['later']}",
         "익절/줄일 때: " + w.get("trim", "공시 제목만으로 줄이지 마세요."),

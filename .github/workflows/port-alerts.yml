@@ -61,7 +61,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, nvdaq3, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, ctq4, nvdacheck, vtq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, spcxpx, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, kmacro4, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn, remed, sap, sjm, k203780r]
+        options: [all, morning, afternoon, sdiq3, samnix, lly, lrcx, frde, shi, shiplev, xbi, ibb, hwm, grab, credit, xlu, k0085p0, pltr25, rfm0219b0, k0163y0, k000810, secpref, 005935, sdipx, brkdip, 326030, k079960, k453850, fomccut, k0046y0, k402340, k309230, sdiess, bok, aptrt, nixeps, nvdaq3, 0090b0, oneshot, steel, alux, square, hce, silicon2, cover0198, lg, 0220wl, 0220wl_close, 143860, '004020', '174350', iren, ustsy, sgyn, yencarry, krwfx, port, portlight, kship, shinwon, protec, 2ub, pltr, addstop, sec, k091160, skc011790, oklo, pffd, ceg, kzq3, truen417790, kos5500, kica, asml, lgchem, crwvq3, mktpulse, optq3, k203780, k079900, xrpwatch, krhc, krrate, usdiv, brief, usbond, lgesfor, tslaspcx, pcorq3, pcorpx, figpx, vnqi, vtrspg, lgeswatch, iefa, secdiv, macroir, lgesq4, ctq4, nvdacheck, vtq4, amtm, tsla, mkif, irenpx, secearn, memwatch, kosup, steelre, capex, k227540, kal, k453810, lotterental, memexit, k487240, samsungheavy, sntholdings, ldos, spcxpx, mdeng, semius, woori, soq4, k475380, k417790, truentrust, k036570, lngins, k316140, k055550, k195930, kmacro4, k458750, k570100, k488500, xmi1810, k245340, hdship, wbtn4q, aptscn, remed, sap, sjm, k203780r]
       sdiq3_mode:
         description: "job=sdiq3 only: dry=no ntfy/state; scheduled runs stay auto"
         default: dry
@@ -1768,6 +1768,23 @@ jobs:
           rc=0
           if [ "$MODE" = "dry" ]; then python scripts/0220wl_close_monitor.py selftest >/dev/null || rc=1; fi
           python scripts/0220wl_close_monitor.py "$MODE" || rc=1
+          exit "$rc"
+      - name: Run 143860 (TIGER Health Care close <= 11/27 close -10% p3; Celltrion 4Q provisional p4, Samsung Biologics supply contract and Alteogen milestone filings p3 via DART; same engine as 005930, k203780 19:00 slot)
+        # approved in chat 2026-11-27 (t94u). attached to the existing k203780 slot, no new cron. Dedupe: state/143860.json last_day + armed, notice_seen (DART rcept no).
+        # year_guard 2026 2027, ends_kst 2027-06-30 23:59. job=k203780 dispatch without oneoff_mode=auto is dry; manual job=143860 is always dry (JOB_PICK).
+        if: ${{ !cancelled() && (steps.pick.outputs.job == 'k203780' || steps.pick.outputs.job == '143860') }}
+        env:
+          NTFY_TOPIC: cwally-port
+          NTFY_SERVER: https://ntfy.sh
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          ONEOFF_MODE: ${{ github.event.inputs.oneoff_mode }}
+          JOB_PICK: ${{ steps.pick.outputs.job }}
+        run: |
+          MODE=auto
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && { [ "$ONEOFF_MODE" != "auto" ] || [ "$JOB_PICK" = "143860" ]; }; then MODE=dry; fi
+          rc=0
+          if [ "$MODE" = "dry" ]; then python scripts/143860_monitor.py selftest >/dev/null || rc=1; fi
+          python scripts/143860_monitor.py "$MODE" || rc=1
           exit "$rc"
       - name: Run 004020 (Hyundai Steel PBR <= 0.15x / >= 0.25x on KRX close, BPS from WiseReport with config fallback; k203780 19:00 slot)
         # approved in chat 2026-11-05. attached to the existing k203780 slot, no new cron. Dedupe: state/004020.json last_day + armed per line.
