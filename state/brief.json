@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-27T08:22:41.122909+09:00",
+  "updated_at": "2026-11-28T08:02:16.561635+09:00",
   "sent": {
     "20261028-lgesfor-timing.json#2fff7673b6ce8427": {
       "file": "20261028-lgesfor-timing.json",
@@ -315,6 +315,15 @@
       "parts_done": 1,
       "done": true,
       "at": "2026-11-27T08:22:41.122909+09:00"
+    },
+    "20261128-frde-event.json#de7d8adab2a9a8ae": {
+      "file": "20261128-frde-event.json",
+      "title": "[FR-DE] VGK CMP 결과와 S&P 등급 | 경계 상향",
+      "topic": "cwally-port",
+      "parts": 1,
+      "parts_done": 1,
+      "done": true,
+      "at": "2026-11-28T08:02:16.561635+09:00"
     }
   },
   "rejected": {},
