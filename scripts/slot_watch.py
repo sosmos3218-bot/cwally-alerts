@@ -30,6 +30,33 @@ FLOW = ".github/workflows/flow-alerts.yml"
 TREND = ".github/workflows/trend-monitor.yml"
 PORT_AUTO = {"job": "", "oneoff_mode": "auto"}
 
+# On-time KST slot times (cron-job.org). A slot is only "missed" once its time has
+# passed on the session day. GitHub can start the 23:00 schedule many hours late
+# (2026-11-24 10:30, 2026-11-25 08:24 KST); past the 06:00 rollover that late run
+# would otherwise see today's unmarked slots and fire 15:40 0090b0/flow/trend early,
+# burning the real 15:40 run via slot_guard.
+SLOT_TIME = {
+    "tslaspcx": (7, 30),
+    "morning": (9, 0),
+    "afternoon": (15, 20),
+    "0090b0": (15, 40),
+    "flow": (15, 40),
+    "trend": (15, 40),
+    "k203780": (19, 0),
+    "portlight": (21, 0),
+}
+GRACE_MIN = 20
+
+
+def slot_due(slot: str, now: datetime, session: str) -> bool:
+    """True once the slot's on-time KST time (+grace) has passed for `session`."""
+    hm = SLOT_TIME.get(slot)
+    if hm is None:
+        return True
+    d = datetime.strptime(session, "%Y-%m-%d").replace(tzinfo=KST)
+    due_at = d.replace(hour=hm[0], minute=hm[1]) + timedelta(minutes=GRACE_MIN)
+    return now >= due_at
+
 
 def slot_marked(slot: str, today: str) -> bool:
     path = SLOT_DIR / f"{slot}.json"
@@ -82,6 +109,9 @@ def main() -> int:
 
     missed: list[tuple[str, str, dict[str, str]]] = []
     for slot, wf, fields in due:
+        if not slot_due(slot, now, today):
+            print(f"not due yet: {slot} ({SLOT_TIME[slot][0]:02d}:{SLOT_TIME[slot][1]:02d} KST {today}); skip")
+            continue
         sync_from_origin(slot)
         if slot_marked(slot, today):
             print(f"ok: {slot} marked {today}")
