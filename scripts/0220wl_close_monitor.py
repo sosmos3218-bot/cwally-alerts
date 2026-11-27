@@ -19,7 +19,8 @@ Added 2026-11-27 (chat approval, 0220WL 관망 analysis check; no new cron):
                        suppresses review and yield5 so one message goes out
   notice_watch classes first matching class sets title/priority/text: 자회사 (p3), 유상증자 (p4 warning), 무배당 (p4 warning),
                        배당결정 (p4, 3우B DPS read from DART document.xml by dart_dividend_detail below), 소각/자기주식 (p3)
-  year_guard, ends_kst [2026, 2027], 2027-06-30 23:59 (engine checks both only for configs that carry year_guard)
+  year_guard, ends_kst [2026, 2027], 2027-07-13 23:59 (engine checks both only for configs that carry year_guard;
+                       2027-07-10 12개월 점검은 토요일이라 실제 발송은 07-12 또는 07-13 catch-up, 만료를 그날까지 연장)
 Modes: auto | force | dry | selftest (own offline checks, below) | install (one install-confirmation send, no state)
 """
 from __future__ import annotations
@@ -74,11 +75,12 @@ def dividend_detail_from_text(text: str) -> dict:
     if dps == 0:
         return {"class": "nodiv", "tail": "3우B 배당금 0원", "status": f"3우B 1주당 배당금 0원({meta})."}
     if dps >= DPS_FULL:
-        verdict = f"연 최저 {DPS_FULL}원 이상이라 매수 상향의 배당 조건(102원 이상)은 충족입니다. 가격 조건(종가 2,000원 이하)은 따로 봅니다."
-        tag = "연 102원 이상"
+        verdict = "연 102원 이상 확인, 매수 상향 조건 충족. 가격 조건(종가 2,000원 이하)은 따로 봅니다."
+        tag = "연 102원 이상 확인, 매수 상향 조건 충족"
     elif dps >= int(DPS_PRORATA):
-        verdict = (f"연 {DPS_FULL}원에는 못 미쳐 배당 조건(102원 이상)은 미충족입니다. 다만 2026년은 8/1 기산 일할 약 {DPS_PRORATA}원 수준이라 일할로 보면 정상입니다.")
-        tag = "일할 수준"
+        verdict = (f"2026 일할 배당 정상 이행, 2027년 연 102원 지급 확인 전까지 2,000원 이하 소량 분할만. "
+                   f"2026년은 8/1 기산 일할 약 {DPS_PRORATA}원 수준입니다.")
+        tag = "2026 일할 배당 정상 이행, 2027년 연 102원 지급 확인 전까지 2,000원 이하 소량 분할만"
     else:
         verdict = f"2026년 일할 약 {DPS_PRORATA}원에도 못 미칩니다. 누적적이라 부족분이 이월되는지 원문에서 확인하세요."
         tag = "일할 미달"
@@ -138,7 +140,7 @@ def install_msg(cfg: dict, st: dict, data: dict, fails: list[str], stamp: str) -
         + (" 조회 실패: " + ", ".join(fails) + "." if fails else ""),
         "지금 할 일: 없음. 선: 1) 종가 2,040원 이하 = 최저 배당수익률 5% 돌파, 공격안 검토(최저 배당 연 102원, 액면 1,000원의 10.2%, 누적적 비참가적, 수익률 = 102 / 종가). "
         "2) 종가 2,000원 미만 = 재점검 신호(추가 매수 중단선, 손절 지시 아님). 선마다 1회, 종가가 1% 넘게 반대로 돌아와야 재무장. "
-        "3) 종가 2,000원 이하 = 매수 상향 조건 1(가격 조건, 배당 102원 기준 수익률 5.10% 이상, 매수 확정 아님). 2,000원 이하가 되면 이 선 하나만 오고, 종가 2,100원 이상으로 올라가야 재무장. "
+        "3) 종가 2,000원 이하 = 매수 상향 조건 1(가격 조건, 배당 102원 기준 수익률 5.10% 이상). 2027년 연 102원 지급 확인 전까지 소량 분할만, 투자 논리 재점검. 2,000원 이하가 되면 이 선 하나만 오고, 종가 2,100원 이상으로 올라가야 재무장. "
         "공시: 결산배당 결정(3우B 주당 배당금 보고), 유상증자 또는 무배당(경고), 소각 또는 자기주식(참고).",
         "나중에: 괴리율 = (보통주 종가 - 우선주 종가) / 보통주 종가, 같은 날 KRX 종가 둘 다 있을 때만 계산. 60.0% 이하 할인 해소, 75.0% 이상 괴리 확대(11/2 공개매수 종료 뒤 보통주 하락 감시), 1%p 넘게 반대로 와야 재무장. "
         "이벤트: 10/29 한화비전 3분기 잠정실적(비전 실적이 NAV 최대 자산 6,600억대에 주는 영향, 주가 반응, 괴리율 변화), 11/2~11/4 공개매수 결과(응모율과 안분 비율, 보통주 가격 반응, 괴리율, 11/4 결제. 결과보고서는 개인 공개매수자가 DART에 내는 서류라 회사 공시 목록에 안 뜨면 11/4에 공시 확인 필요로 옴), "
@@ -250,7 +252,7 @@ def selftest() -> int:
     check("gap: title is buy1 (매수 상향 조건 1)", title, f"{pfx} 종가 2,000원 이하 | 매수 상향 조건 1 충족, 배당 확정 전")
     check("gap pri 4", pri, 4)
     todo = next(x for x in msg.split("\n") if x.startswith("지금 할 일:"))
-    check("gap: 할 일 is buy1 only (no 공격안, no 재점검 text)", ("공격안" in todo, "재점검 신호입니다" in todo, "매수 확정이 아닙니다" in todo), (False, False, True))
+    check("gap: 할 일 is buy1 only (no 공격안, no 재점검 신호, 소량 분할 문구)", ("공격안" in todo, "재점검 신호입니다" in todo, "소량 분할만" in todo and "투자 논리 재점검" in todo), (False, False, True))
     check("gap: yield wording 5.10% on 102원", "최저 배당수익률 5.05%(연 102원 / 종가 2,020원" in msg or "최저 배당수익률 5.13%(연 102원 / 종가 1,990원" in msg, True)
     st = copy.deepcopy(seed)
     ev = engine.eval_lines(cfg, st, rows(("2026-10-28", 2000)), "2026-10-28", at("2026-10-28"))
@@ -425,8 +427,8 @@ def selftest() -> int:
         feed_map["0220WL"] = [new2]
         docs["8002"] = DIV_DOC.format(dps="102", kind="결산배당")
         s = sends(st, base, at("2026-11-11"), notice_fn=nf)
-        check("watch: 배당결정 DPS 102 -> p4, DPS in title, 조건 충족", ([x[0] for x in s], s[0][2], "배당 조건(102원 이상)은 충족" in s[0][1]),
-              ([f"{pfx} 결산배당 결정 공시 | 3우B 102원 (연 102원 이상)"], 4, True))
+        check("watch: 배당결정 DPS 102 -> p4, 연 102원 이상 확인 문구", ([x[0] for x in s], s[0][2], "연 102원 이상 확인, 매수 상향 조건 충족" in s[0][0] and "연 102원 이상 확인, 매수 상향 조건 충족" in s[0][1]),
+              ([f"{pfx} 결산배당 결정 공시 | 3우B 102원 (연 102원 이상 확인, 매수 상향 조건 충족)"], 4, True))
         check("watch: seen ids", st["notice_seen"], ["8001", "8002"])
 
         def one(no, title, doc=None, code="0220WL"):
@@ -435,7 +437,9 @@ def selftest() -> int:
                 docs[no] = doc
             return engine.build_notice_watch(cfg, {"filing": f}, base, "2026-11-12 19:00 KST")
         t, m, p = one("9001", "현금ㆍ현물배당결정", DIV_DOC.format(dps="43", kind="결산배당"))
-        check("watch: DPS 43 = 일할 수준, 102원 미충족 문구", (t, p, "미충족" in m and "42.76원" in m), (f"{pfx} 결산배당 결정 공시 | 3우B 43원 (일할 수준)", 4, True))
+        PRORATA_PHRASE = "2026 일할 배당 정상 이행, 2027년 연 102원 지급 확인 전까지 2,000원 이하 소량 분할만"
+        check("watch: DPS 43 = 일할 정상 이행 문구 in title and body", (t, p, PRORATA_PHRASE in t and PRORATA_PHRASE in m and "42.76원" in m),
+              (f"{pfx} 결산배당 결정 공시 | 3우B 43원 ({PRORATA_PHRASE})", 4, True))
         t, m, p = one("9002", "현금ㆍ현물배당결정", DIV_DOC.format(dps="20", kind="결산배당"))
         check("watch: DPS 20 = 일할 미달", (t, "이월되는지" in m), (f"{pfx} 결산배당 결정 공시 | 3우B 20원 (일할 미달)", True))
         t, m, p = one("9003", "현금ㆍ현물배당결정", DIV_DOC.format(dps="-", kind="결산배당"))
@@ -465,7 +469,7 @@ def selftest() -> int:
     check("dart pick: 배당결정 only, not 주주명부폐쇄", (pick_dividend_filing(lst) or {}).get("rcept_no"), "20260225801273")
     check("dart pick: 기재정정 is later and wins", pick_dividend_filing(lst + [{"rcept_no": "20260227800001", "report_nm": "[기재정정]현금ㆍ현물배당결정"}])["rcept_no"], "20260227800001")
     check("dart pick: none", pick_dividend_filing(lst[:1]), None)
-    check("config: year_guard, ends_kst, notice priority", (cfg["year_guard"], cfg["ends_kst"], cfg["notice_watch"]["priority"]), ([2026, 2027], "2027-06-30 23:59", 3))
+    check("config: year_guard, ends_kst, notice priority", (cfg["year_guard"], cfg["ends_kst"], cfg["notice_watch"]["priority"]), ([2026, 2027], "2027-07-13 23:59", 3))
     check("config: buy1 line", {k: next(l for l in cfg["lines"] if l["key"] == "buy1")[k] for k in ("op", "level", "rearm_at")}, {"op": "le", "level": 2000, "rearm_at": 2100})
 
     # ---- time checks (dated reminders, no filing lookup), footer note
@@ -489,6 +493,22 @@ def selftest() -> int:
     check("time: 12m fires on end day 07-10", tc_titles(s), [f"{pfx} 12개월 인컴 유지 점검 | 날짜 점검"])
     check("time: 12m checklist", all(k in s[0][1] for k in ("누적 우선배당 102원이 실제로 지급됐는지", "보통주 대비 크게 밀리지 않았는지", "아니면 43주 매도 검토")), True)
     check("time: 12m once", tc_titles(sends(st, base, at("2027-07-12"))), [])
+    # 2027-07-10 is Saturday: auto 19:00 slot and is_trading_day guard stay silent that day.
+    # catch_up 3 days -> first weekday send is Mon 07-12 (or Tue 07-13). ends_kst 2027-07-13 23:59 covers that.
+    st = copy.deepcopy(seed)
+    st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
+    check("time: 12m end day Sat, first weekday Mon 07-12 catches up", tc_titles(sends(st, base, at("2027-07-12"))), [f"{pfx} 12개월 인컴 유지 점검 | 날짜 점검"])
+    from ntfy_util import ends_skip_reason
+    twelve_title = f"{pfx} 12개월 인컴 유지 점검 | 날짜 점검"
+    def engine_open(when):
+        stamp = when.strftime("%Y-%m-%d %H:%M KST")
+        ends = cfg["ends_kst"]
+        return when.year in cfg["year_guard"] and not (ends and stamp[:len(ends)] > ends)
+    for d, want in (("2027-07-10", True), ("2027-07-12", True), ("2027-07-13", True), ("2027-07-14", False)):
+        now = at(d)
+        skip = ends_skip_reason("cwally-port", twelve_title, config_name="0220wl_close", config=cfg, now=now)
+        check(f"12m ends: engine year_guard/ends open at {d} 19:00", engine_open(now), want)
+        check(f"12m ends: ntfy ends_skip_reason is None at {d} 19:00", skip is None, want)
     st = copy.deepcopy(seed)
     st["notice_done"] = {"vision3q-2026": "x", "tender-result-2026-11": "x"}
     check("time: end day Sat, first run Mon 01-11 catches up", tc_titles(sends(st, base, at("2027-01-11"))), [f"{pfx} 6개월 상대성과 점검 | 날짜 점검"])
