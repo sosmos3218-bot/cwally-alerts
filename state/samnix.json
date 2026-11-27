@@ -1,11 +1,11 @@
 {
-  "day": "20261126",
-  "flow_day": "20261125",
-  "updated_at": "2026-11-26T15:21:57.171256+09:00",
+  "day": "20261127",
+  "flow_day": "20261126",
+  "updated_at": "2026-11-27T15:21:32.030942+09:00",
   "flip": {
     "005930": {
       "armed": true,
-      "last_date": "20261125",
+      "last_date": "20261126",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -30,7 +30,7 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261125",
+      "last_date": "20261126",
       "seeded": {
         "at": "2026-10-24T16:56:12.878264+09:00",
         "upto": "20261023",
@@ -54,70 +54,18 @@
       ]
     }
   },
-  "last_digest_at": "2026-11-23T15:21:23.951395+09:00",
-  "week_rows": [
-    {
-      "flow_day": "20261123",
-      "foreign": -193325507400,
-      "organ": 89342919600,
-      "stocks": {
-        "삼성전자": {
-          "foreign": -45179.0,
-          "organ": 661271.0,
-          "close": 180600.0
-        },
-        "SK하이닉스": {
-          "foreign": -168180.0,
-          "organ": -27323.0,
-          "close": 1101000.0
-        }
-      }
-    },
-    {
-      "flow_day": "20261124",
-      "foreign": 297026498800,
-      "organ": 214241380600,
-      "stocks": {
-        "삼성전자": {
-          "foreign": 2348072.0,
-          "organ": 1176494.0,
-          "close": 182900.0
-        },
-        "SK하이닉스": {
-          "foreign": -118990.0,
-          "organ": -844.0,
-          "close": 1113000.0
-        }
-      }
-    },
-    {
-      "flow_day": "20261125",
-      "foreign": -1465256824700,
-      "organ": -171799853300,
-      "stocks": {
-        "삼성전자": {
-          "foreign": -5763083.0,
-          "organ": -948317.0,
-          "close": 166900.0
-        },
-        "SK하이닉스": {
-          "foreign": -496448.0,
-          "organ": -13339.0,
-          "close": 1014000.0
-        }
-      }
-    }
-  ],
+  "last_digest_at": "2026-11-27T15:21:32.030942+09:00",
+  "week_rows": [],
   "digest_note": "2026-10-30 weekly digest install: 10/29 flow already sent as the last daily message; first digest Fri 2026-11-06 15:20 KST",
   "digest_after": "20261029",
   "twowk": {
     "005930": {
       "armed": true,
-      "last_date": "20261125",
+      "last_date": "20261126",
       "last": {
-        "a": -2839626.0,
-        "b": -6321516.0,
-        "total": -9161142.0,
+        "a": -7012490.0,
+        "b": -6297985.0,
+        "total": -13310475.0,
         "met": false
       },
       "seeded": {
@@ -134,11 +82,11 @@
     },
     "000660": {
       "armed": true,
-      "last_date": "20261125",
+      "last_date": "20261126",
       "last": {
-        "a": -1657698.0,
-        "b": -1001413.0,
-        "total": -2659111.0,
+        "a": -1021709.0,
+        "b": -655245.0,
+        "total": -1676954.0,
         "met": false
       },
       "seeded": {
@@ -150,15 +98,15 @@
   },
   "nix1": {
     "000660": {
-      "last_date": "20261125",
+      "last_date": "20261126",
       "last": {
         "verdict": "진입 보류",
-        "close": 1030000.0,
+        "close": 1053000.0,
         "support": "지지 이탈",
-        "foreign": -496448.0,
-        "foreign_ok": false,
-        "adr_dev_pct": -0.76,
-        "adr_ok": true
+        "foreign": 296355.0,
+        "foreign_ok": true,
+        "adr_dev_pct": 2.66,
+        "adr_ok": false
       },
       "brk_last": "20261105",
       "broke": {
