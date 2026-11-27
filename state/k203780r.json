@@ -1,1 +1,13 @@
-{}
+{
+  "price": {
+    "last_date": "2026-11-27",
+    "last_close": 36245.0,
+    "last_volume": 19932.0,
+    "armed": {
+      "review34700": true
+    },
+    "pending": null,
+    "seed_note": "첫 실행 2026-11-27 19:05 KST: 마지막 확정 종가 2026-11-27 36,245원, 거래량 19,932주",
+    "last_judged_at": "2026-11-27 19:05 KST"
+  }
+}

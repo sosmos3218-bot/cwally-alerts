@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-26T19:05:10.095379+09:00",
+  "updated_at": "2026-11-27T19:05:30.703065+09:00",
   "seeded": true,
-  "last_day": "2026-11-26",
-  "last_close": 352000.0,
+  "last_day": "2026-11-27",
+  "last_close": 361500.0,
   "last_fail_day": null,
   "lines": {
     "l340": {
@@ -20,8 +20,8 @@
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-11-26",
-    "last": 31.384,
+    "last_day": "2026-11-27",
+    "last": 31.0115,
     "lines": {
       "resolve": {
         "armed": true,
@@ -36,9 +36,9 @@
   "notice_done": {},
   "notice_seen": [],
   "sec": {
-    "last_day": "2026-11-26",
-    "last_close": 171300.0,
-    "armed": false,
+    "last_day": "2026-11-27",
+    "last_close": 179100.0,
+    "armed": true,
     "fired_day": "2026-11-25"
   },
   "seed_note": "config seed 2026-11-02: 우선주 391,500원, 보통주 651,000원(괴리율 39.86%), 삼성전자 229,000원"

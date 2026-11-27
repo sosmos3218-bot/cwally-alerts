@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-11-27T15:22:11.577888+09:00",
+  "updated_at": "2026-11-27T19:05:25.849450+09:00",
   "seeded": true,
-  "last_day": "2026-11-26",
-  "last_close": 90500.0,
+  "last_day": "2026-11-27",
+  "last_close": 97500.0,
   "last_fail_day": null,
   "lines": {
     "stop": {
@@ -14,8 +14,8 @@
       "fired_day": "2026-11-24"
     },
     "deal91": {
-      "armed": true,
-      "fired_day": null
+      "armed": false,
+      "fired_day": "2026-11-27"
     },
     "avg106": {
       "armed": true,

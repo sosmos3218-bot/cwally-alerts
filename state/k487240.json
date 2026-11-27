@@ -2,22 +2,22 @@
   "armed": {
     "l25000": false,
     "l22000": false,
-    "l20700": false,
+    "l20700": true,
     "ma20": true
   },
-  "last_date": "2026-11-26",
+  "last_date": "2026-11-27",
   "last_close": [
-    "2026-11-26",
-    20225.0
+    "2026-11-27",
+    21805.0
   ],
-  "last_volume": 1634854.0,
-  "ma20": 22362.25,
-  "ma200": 35913.0,
+  "last_volume": 2126448.0,
+  "ma20": 22225.5,
+  "ma200": 35893.22,
   "support_armed": false,
-  "above_streak": 17,
+  "above_streak": 18,
   "low_armed": true,
   "recovery_sent": "2026-11-11",
-  "updated_at": "2026-11-26 19:06 KST",
+  "updated_at": "2026-11-27 19:06 KST",
   "reminders_sent": {
     "customs_oct_2026": "2026-11-16 19:06 KST"
   },

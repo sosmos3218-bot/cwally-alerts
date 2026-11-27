@@ -1,17 +1,17 @@
 {
- "updated_at": "2026-11-27T15:50:52.873309+09:00",
- "seeded": true,
- "last_day": "2026-11-27",
- "last_close": 35050.0,
- "last_fail_day": null,
- "lines": {
-  "adj10": {
-   "armed": true,
-   "fired_day": null
-  }
- },
- "earn_done": {},
- "notice_done": {},
- "notice_seen": [],
- "seed_note": "2026-11-27 시드. KRX 정규장 종가 35,050원(Daum과 Yahoo 일치), 조정선 31,545원 재무장 32,596원. 공시는 2026-11-27 접수분부터."
+  "updated_at": "2026-11-27T19:05:36.000433+09:00",
+  "seeded": true,
+  "last_day": "2026-11-27",
+  "last_close": 35050.0,
+  "last_fail_day": null,
+  "lines": {
+    "adj10": {
+      "armed": true,
+      "fired_day": null
+    }
+  },
+  "earn_done": {},
+  "notice_done": {},
+  "notice_seen": [],
+  "seed_note": "2026-11-27 시드. KRX 정규장 종가 35,050원(Daum과 Yahoo 일치), 조정선 31,545원 재무장 32,596원. 공시는 2026-11-27 접수분부터."
 }

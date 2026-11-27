@@ -3,7 +3,7 @@
   "last_baseline_week": "2026-W48",
   "notice_versions": [],
   "ops_daily": {},
-  "updated_at": "2026-11-26 19:05 KST",
+  "updated_at": "2026-11-27 19:05 KST",
   "outlook": {
     "sources": {
       "trendforce": {
@@ -24,11 +24,13 @@
           "u:www.trendforce.com/presscenter/news/20261119-13314.html",
           "t:nand flash prices set to decline in 2027 as chinese csp order cuts outweigh north american demand growth says trendforce",
           "u:www.trendforce.com/presscenter/news/20261125-13321.html",
-          "t:cuts to chinese csp demand weigh on price outlook slowing memory industry revenue growth in 2027 says trendforce"
+          "t:cuts to chinese csp demand weigh on price outlook slowing memory industry revenue growth in 2027 says trendforce",
+          "u:www.trendforce.com/presscenter/news/20261127-13327.html",
+          "t:limited demand visibility and growing supply chain caution heighten risk of dram contract price declines in 2028 says trendforce"
         ],
         "claims": {},
         "ops_day": "2026-11-19",
-        "last_ok": "2026-11-26"
+        "last_ok": "2026-11-27"
       },
       "samsung": {
         "seeded": true,
@@ -137,7 +139,7 @@
           "t:a day in the life of a dog with galaxy smarttag3 and smartthings"
         ],
         "claims": {},
-        "ops_day": null,
+        "ops_day": "2026-11-27",
         "last_ok": "2026-11-26"
       },
       "skhynix": {
@@ -166,7 +168,7 @@
         ],
         "claims": {},
         "ops_day": null,
-        "last_ok": "2026-11-26"
+        "last_ok": "2026-11-27"
       }
     }
   }

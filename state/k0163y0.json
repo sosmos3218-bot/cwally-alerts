@@ -1,11 +1,11 @@
 {
   "price": {
-    "last_date": "2026-11-26",
-    "last_close": 7080.0,
+    "last_date": "2026-11-27",
+    "last_close": 7680.0,
     "break_armed": true,
-    "ma_armed": true,
-    "above_sma": false,
-    "last_sma20": 7615.25,
+    "ma_armed": false,
+    "above_sma": true,
+    "last_sma20": 7571.75,
     "seed_note": "설치 seed 2026-10-28 14:47 KST: 마지막 확정 종가 2026-10-27 8,655원, SMA20 9,793.0원"
   }
 }

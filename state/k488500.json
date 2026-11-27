@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-26T19:02:20.017046+09:00",
+  "updated_at": "2026-11-27T19:03:14.254890+09:00",
   "breadth_down_armed": true,
   "breadth_up_armed": false,
   "breadth_last": {
@@ -13,10 +13,10 @@
   "breadth_chg_pct_last": 6.921607425900689,
   "price_low_armed": true,
   "price_high_armed": true,
-  "price_last_date": "2026-11-26",
+  "price_last_date": "2026-11-27",
   "last_dist_date": "2026-10-30",
   "last_dist_amt": 43.0,
-  "last_summary_date": "2026-11-26",
+  "last_summary_date": "2026-11-27",
   "fail": {
     "bars": {
       "days": 0,

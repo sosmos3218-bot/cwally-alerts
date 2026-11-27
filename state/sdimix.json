@@ -1,8 +1,8 @@
 {
-  "last_date": "2026-11-26",
-  "common_close": "418000.0",
-  "preferred_close": "174300.0",
-  "discount_pct": "58.30143540669856459330143541",
+  "last_date": "2026-11-27",
+  "common_close": "452500.0",
+  "preferred_close": "184700.0",
+  "discount_pct": "59.18232044198895027624309392",
   "band": "Z_MID",
   "verdict": "보유",
   "seeded_from": "2026-11-04 sdipref (61.7431%, [SDI-PREF] 61.5% 이상 진입 이미 발송 ntfy h3tvU9pdmf84) + sdichg (보유, 11/4 16:22). 오늘은 발송 없음.",
@@ -18,8 +18,8 @@
       "2026-11-04"
     ]
   },
-  "updated_at": "2026-11-26T19:00:44+09:00",
+  "updated_at": "2026-11-27T19:00:50+09:00",
   "verdict_why": "변경 조건 미충족 또는 숫자 미확인",
-  "last_price": 418000.0,
+  "last_price": 452500.0,
   "ops_day": "2026-11-23"
 }

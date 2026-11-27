@@ -1,10 +1,14 @@
 {
-  "updated_at": "2026-11-26T19:05:13.817042+09:00",
+  "updated_at": "2026-11-27T19:05:34.341803+09:00",
   "seeded": true,
-  "last_day": "2026-11-26",
-  "last_close": 2275.0,
+  "last_day": "2026-11-27",
+  "last_close": 2380.0,
   "last_fail_day": null,
   "lines": {
+    "buy1": {
+      "armed": true,
+      "fired_day": null
+    },
     "review": {
       "armed": true,
       "fired_day": null
@@ -16,8 +20,8 @@
   },
   "earn_done": {},
   "ratio": {
-    "last_day": "2026-11-26",
-    "last": 71.4196,
+    "last_day": "2026-11-27",
+    "last": 67.7507,
     "lines": {
       "resolve": {
         "armed": true,
