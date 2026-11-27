@@ -270,8 +270,26 @@ def pct_vs_ref(close: float, ref: float) -> str:
     return f"{sign}{pct:.1f}%"
 
 
+def pick_close28000(day: str, daum: float | None, naver_by_day: dict | None) -> tuple[float | None, str]:
+    """같은 날 Daum/네이버 종가 중 낮은 값을 고른다. 한쪽만 있으면 그 값, 날짜가 다르면 해당 날짜 값만 쓴다."""
+    nvmap = dict(naver_by_day or {})
+    nv = nvmap.get(day)
+    other = sorted(d for d in nvmap if d != day)
+    mismatch = f" naver_dates={','.join(other)} (no {day})" if nv is None and other else ""
+    def fmt(v):
+        return f"{v:g}" if v is not None else "missing"
+    if daum is not None and nv is not None:
+        chosen = min(daum, nv)
+        return chosen, f"close28000 sources day={day} daum={fmt(daum)} naver={fmt(nv)} chosen=min {fmt(chosen)}"
+    if daum is not None:
+        return daum, f"close28000 sources day={day} daum={fmt(daum)} naver=missing chosen=daum {fmt(daum)}{mismatch}"
+    if nv is not None:
+        return nv, f"close28000 sources day={day} daum=missing naver={fmt(nv)} chosen=naver {fmt(nv)}"
+    return None, f"close28000 sources day={day} daum=missing naver=missing chosen=none{mismatch}"
+
+
 def judge_close28000(cfg: dict, st: dict, close: tuple[str, float]) -> dict | None:
-    """정규장 종가(시간외/장중 저가 아님) 28,000원 이하 첫 진입. 한 번만."""
+    """종가 28,000원 이하 첫 진입. 한 번만. close는 pick_close28000 이 고른 값(같은 날 Daum/네이버 중 낮은 값)."""
     slot = st.setdefault("close28000", {})
     if slot.get("done"):
         return None
@@ -621,7 +639,7 @@ def item_text(kind: str, obj, cfg: dict, ctx: dict) -> tuple[str, str, int]:
         pct = pct_vs_ref(obj["close"], ref)
         tail = f"종가 {won(obj['close'])}원 28,000원 이하 첫 진입"
         action = cfgc["note"]
-        return (tail, f"{action}. {obj['day']} 정규장 종가 {won(obj['close'])}원, 11/25 종가 {won(ref)}원 대비 {pct}. 시간외 시세는 쓰지 않았습니다.", 3)
+        return (tail, f"{action}. {obj['day']} 종가 {won(obj['close'])}원(같은 날 Daum 정규장과 네이버 일봉 중 낮은 값), 11/25 정규장 종가 {won(ref)}원 대비 {pct}.", 3)
     if kind == "fy2026_debt":
         nd = obj["net_debt"]
         note, pri = debt_verdict(nd, cfg)
@@ -741,13 +759,13 @@ def message(cfg: dict, items: list[tuple[str, object]], stamp: str, ctx: dict) -
         if ctx.get("close"):
             st_bits.append(f"{ctx['close'][0]} 정규장 종가 {won(ctx['close'][1])}원")
         body = "\n".join([
-            "이게 뭐 알림: 대한항공(003490) 정규장 종가 28,000원 이하 첫 진입과 2026 사업보고서 연결 순부채를 각각 1번 알려 주는 알림. 시간외 시세는 쓰지 않습니다. 매매 신호 아님.",
+            "이게 뭐 알림: 대한항공(003490) 종가 28,000원 이하 첫 진입과 2026 사업보고서 연결 순부채를 각각 1번 알려 주는 알림. 종가는 같은 날 Daum 정규장과 네이버 일봉 중 낮은 값을 씁니다. 매매 신호 아님.",
             f"{stamp} | 003490 | 대한항공",
             "지금 결과/상태: " + (", ".join(st_bits) + ". " if st_bits else "") + "걸린 것: " + "; ".join(texts[i][0] for i in order) + ".",
             "지금 할 일: " + " ".join(texts[i][1] for i in order),
             "나중에: 종가 28,000원 알림과 2026 사업보고서 순부채 알림은 각각 한 번만 옵니다. 기존 15:40 감시(26,500 선 등)는 따로 계속됩니다.",
             "익절/줄일 때: 미보유라 해당 없음. 이 알림만으로 주문하지 마세요.",
-            "하지 말 것: 시간외 시세를 종가로 보기, 추격 매수, 신용, 미수, 이 알림만 보고 주문.",
+            "하지 말 것: 추격 매수, 신용, 미수, 이 알림만 보고 주문.",
         ])
         return title, body, max(t[2] for t in texts)
     st = []
@@ -877,13 +895,26 @@ def run(mode: str, now: datetime, cfg: dict, scope: str = "core") -> int:
         if ctx.get("pref") and "armed" not in st.setdefault("pref", {}):
             judge_pref(cfg["preferred"], st["pref"], ctx["pref"][2])
     if evening and ctx.get("close"):
-        hit = judge_close28000(cfg, st, ctx["close"])
-        if hit:
-            items.append(("close28000", hit))
-            if not dry:
-                mark_close28000(st, hit, stamp)
+        day, daum_c = ctx["close"]
+        nvmap: dict = {}
+        try:
+            import krx_close
+            nvmap = krx_close.naver_daily_closes(cfg["code"], 8)
+        except Exception as exc:  # noqa: BLE001
+            print(f"close28000 naver fetch failed ({type(exc).__name__}: {exc})")
+        chosen, clog = pick_close28000(day, daum_c, nvmap)
+        print(clog)
+        if chosen is None:
+            fails.append(("종가 28,000 판정", "Daum/네이버 종가 없음"))
         else:
-            print(f"close28000 silent close={ctx['close']} done={bool((st.get('close28000') or {}).get('done'))}")
+            ctx["close28000_pick"] = {"day": day, "daum": daum_c, "naver": nvmap.get(day), "chosen": chosen}
+            hit = judge_close28000(cfg, st, (day, chosen))
+            if hit:
+                items.append(("close28000", hit))
+                if not dry:
+                    mark_close28000(st, hit, stamp)
+            else:
+                print(f"close28000 silent chosen={chosen:g} daum={daum_c:g} naver={nvmap.get(day)} done={bool((st.get('close28000') or {}).get('done'))}")
     if evening:
         debt_st = st.setdefault("fy2026_debt", {})
         if debt_st.get("done"):
@@ -1098,6 +1129,14 @@ def selftest(cfg: dict) -> int:
     check("confirmed close before 15:31", confirmed([("2026-11-02", 1.0), ("2026-11-03", 2.0)], datetime(2026, 11, 3, 11, 0, tzinfo=KST))[-1][0], "2026-11-02")
     # --- 28,000 first close + FY2026 net debt (2026-11-25) ---
     st80 = {}
+    c_gap, log_gap = pick_close28000("2026-11-25", 31650.0, {"2026-11-25": 31100.0})
+    check("pick both with gap uses min", (c_gap, "daum=31650" in log_gap and "naver=31100" in log_gap and "chosen=min 31100" in log_gap), (31100.0, True))
+    c_d, log_d = pick_close28000("2026-11-25", 31650.0, {})
+    check("pick naver missing uses daum", (c_d, "naver=missing" in log_d and "chosen=daum 31650" in log_d), (31650.0, True))
+    c_n, log_n = pick_close28000("2026-11-25", None, {"2026-11-25": 31100.0})
+    check("pick daum missing uses naver", (c_n, "daum=missing" in log_n and "chosen=naver 31100" in log_n), (31100.0, True))
+    c_m, log_m = pick_close28000("2026-11-25", 31650.0, {"2026-11-26": 29750.0})
+    check("pick date mismatch uses matching-date daum", (c_m, "chosen=daum 31650" in log_m and "no 2026-11-25" in log_m and "2026-11-26" in log_m), (31650.0, True))
     check("28000 above silent", judge_close28000(cfg, st80, ("2026-11-25", 31100.0)), None)
     check("28000 at level fires", judge_close28000(cfg, st80, ("2026-11-26", 28000.0)),
           {"day": "2026-11-26", "close": 28000.0, "level": 28000.0})
@@ -1108,8 +1147,8 @@ def selftest(cfg: dict) -> int:
     check("28000 title", t80, "[KAL] 003490 대한항공 종가 27,850원 28,000원 이하 첫 진입")
     check("28000 p3", p80, 3)
     check("28000 note", "분할매수 1차 구간 진입 점검" in b80, True)
-    check("28000 pct vs 31100", "11/25 종가 31,100원 대비 -10.5%" in b80, True)
-    check("28000 regular close wording", "시간외" in b80 and "정규장 종가 27,850원" in b80, True)
+    check("28000 pct vs 31650", "11/25 정규장 종가 31,650원 대비 -12.0%" in b80, True)
+    check("28000 body sources and close", "종가 27,850원(같은 날 Daum 정규장과 네이버 일봉 중 낮은 값)" in b80, True)
     check("28000 ticker", t80.startswith("[KAL] 003490 대한항공 "), True)
     check("28000 no dot/dash", any(ch in t80 + b80 for ch in "\u00b7\u2014"), False)
     check("fy report title match", is_fy2026_report({"title": "사업보고서 (2026.12)"}), True)
