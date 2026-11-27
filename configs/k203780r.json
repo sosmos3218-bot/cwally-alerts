@@ -1,0 +1,31 @@
+{
+  "name": "k203780r",
+  "title_prefix": "[203780]",
+  "code": "203780",
+  "display": "TIGER 미국나스닥바이오 (KRX 203780) 종가 34,700원 1차 검토선",
+  "short": "TIGER 미국나스닥바이오",
+  "approval": "사용자 채팅 승인 2026-11-27 (pt51u): 34,700원 KRX 정규장 종가 1차 검토선. 올려서 추격하지 않음. iNAV, 괴리, 호가 조건은 쓰지 않음. 기존 19:00 k203780 슬롯에 부착, 새 cron 없음.",
+  "holding": "대기. 지금 신규 매수 아님. 자동 주문 아님.",
+  "ntfy_topic": "cwally-port",
+  "ntfy_ops_topic": "cwally-ops",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "19:00",
+  "schedule_note": "새 cron 없음. 기존 19:00 k203780 체인에 부착(sjm 바로 뒤). 정규장 확정 종가 scripts/krx_close.py. 수동 job=k203780r 는 oneoff_mode=auto 가 아니면 dry(selftest + dry, 발송 없음, state 안 씀).",
+  "daily_window": {"start": "2026-11-27", "end": "2027-06-30"},
+  "price_source": "정규장 종가 scripts/krx_close.py (Daum A203780 days, 실패 시 네이버 15:30 분봉). 네이버 일봉은 시간외 포함이라 안 씀. iNAV, 괴리, 호가는 쓰지 않음.",
+  "lines": [
+    {
+      "key": "review34700",
+      "op": "le",
+      "level": 34700,
+      "rearm_op": "gt",
+      "rearm": 36000,
+      "priority": 4,
+      "title": "34,700원 1차 검토선 도달"
+    }
+  ],
+  "stale_trading_days": 2,
+  "context": "2026-11-27 분석: 지금은 대기. 1차 검토선 34,700원을 올려서 추격하지 않음. 11/26 정규장 종가 36,915원. 참고 리스크(조건 아님): 환헤지 없음(원화 강세), NBI가 11/20 종가 대비 9%대 반등.",
+  "ends_kst": "2027-06-30 23:59",
+  "ends_note": "KRX 거래일 19:00, 2027-06-30까지. 뒤에는 조용히 끝남."
+}
