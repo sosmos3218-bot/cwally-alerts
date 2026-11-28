@@ -1,0 +1,60 @@
+{
+  "name": "eggmodel",
+  "title_prefix": "[KOSPI]",
+  "index_ticker": "KOSPI",
+  "display": "[KOSPI] 달걀모형 판정 변경",
+  "ntfy_topic": "cwally-port",
+  "ntfy_server": "https://ntfy.sh",
+  "schedule_kst": "목 19:00",
+  "schedule_note": "기존 k203780 슬롯. 목요일 19:00에 한 번(부동산원 주간 보도 뒤). 그 주 성공 기록이 없으면 금요일 09:00 morning 과 금요일 19:00 k203780 이 따라잡음. 한 주 성공은 한 번. 새 cron 없음. [KOSPI] 아파트 시나리오(aptscn)와 제목 문장이 달라 같은 알림이 아님.",
+  "priority": {
+    "4단계 유지": 3,
+    "4단계 내 조정 재평가": 3,
+    "1단계 쪽 이동": 4,
+    "2단계와 3단계 재논의": 4
+  },
+  "rules": {
+    "slow_below": 0.20,
+    "slow_min_districts": 3,
+    "slow_weeks": 2,
+    "exit_weeks": 3,
+    "exit_min_districts": 3,
+    "kospi_low": 4697.51,
+    "kospi_low_date": "2026-11-25",
+    "rebound_pct": 10.0,
+    "strong_pct": 20.0,
+    "ma_days": 20,
+    "ma_streak": 3,
+    "ktb3_fade": 3.25,
+    "ktb3_fade_weeks": 2,
+    "ktb3_top": 3.75,
+    "final_on": "2027-01-14",
+    "note": "4단계 유지가 기본. KOSPI 추세 반등(20일선 위 3거래일 또는 저점 4697.51 대비 +10%)이고 주택 둔화가 아니면 4단계 내 조정 재평가. 주택 하락 확인(4곳 중 3곳 이상 마이너스 3주)이고 KOSPI 종가가 4697.51 아래면 1단계 쪽 이동(국고 3년 3.75% 이상은 보강, 조건은 아님). 국고 3년 3.25% 미만이 주간 2번이고 주택 둔화면 2단계와 3단계 재논의. 신호가 겹치거나 숫자가 없으면 직전 판정 유지. 경고(한 곳이라도 마이너스)는 본문만. 서울 전체와 서울 하락 구 수는 본문만."
+  },
+  "districts": {
+    "yeongtong": {"names": ["영통"], "parent": "수원", "label": "영통"},
+    "suji": {"names": ["수지"], "parent": "용인", "label": "수지"},
+    "giheung": {"names": ["기흥"], "parent": "용인", "label": "기흥"},
+    "dongtan": {"names": ["동탄", "화성"], "parent": "화성", "label": "동탄"}
+  },
+  "seoul_districts": ["종로", "중", "용산", "성동", "광진", "동대문", "중랑", "성북", "강북", "도봉", "노원", "은평", "서대문", "마포", "양천", "강서", "구로", "금천", "영등포", "동작", "관악", "서초", "강남", "송파", "강동"],
+  "seoul_skip": ["강북권역", "도심권", "동북권", "서북권", "강남권역", "서남권", "동남권"],
+  "sources": {
+    "reb_list": "https://www.reb.or.kr/r-one/portal/bbs/rpt/searchBulletin.do",
+    "reb_detail": "https://www.reb.or.kr/r-one/portal/bbs/rpt/selectBulletin.do",
+    "reb_file": "https://www.reb.or.kr/r-one/portal/bbs/rpt/downloadAttachFile.do",
+    "reb_bbs": "RPT",
+    "reb_list_sub": "RPT01",
+    "reb_title_key": "주간아파트가격동향조사 시계열",
+    "reb_press_list": "https://www.reb.or.kr/reb/na/ntt/selectNttList.do?bbsId=1154&mi=9565",
+    "sale_sheet": "매매변동률",
+    "kospi_url": "https://m.stock.naver.com/api/index/KOSPI/price?pageSize=40&page=1",
+    "kospi_page_size": 40,
+    "kospi_pages": 2,
+    "ktb3_code": "IRR_GOVT03Y",
+    "ktb10_code": "IRR_GOVT10Y"
+  },
+  "expiry": "2027-01-14",
+  "ends_kst": "2027-01-15 19:30",
+  "ends_note": "2027-01-14 금통위. 그날 목요일 19:00 최종 요약 1번, 숫자가 늦으면 금요일 09:00 또는 19:00까지. 그 뒤 발송 없음"
+}
