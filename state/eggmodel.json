@@ -1,0 +1,42 @@
+{
+  "judgment": "4단계 유지",
+  "confidence": 0.7,
+  "confidence_note": "설치 기준 약 70%. 판정 규칙에 쓰지 않는다.",
+  "seeded_at": "2026-11-28",
+  "note": "2026-11-28 사용자 기준 판정. 판정이 같으면 발송하지 않는다. 2027-01-14 금통위 실행에서 최종 요약 1번 후 종료.",
+  "last_ok_iso": null,
+  "last_fetch_day": null,
+  "ops_day": null,
+  "final_sent": false,
+  "updated_at": null,
+  "weeks": [
+    {
+      "date": "2026-11-23",
+      "yeongtong": 0.42,
+      "suji": 0.35,
+      "giheung": 0.52,
+      "dongtan": 0.5,
+      "dongtan_name": "동탄",
+      "seoul": 0.01,
+      "seoul_down": 9,
+      "source": "seed"
+    }
+  ],
+  "ktb_checks": [
+    {
+      "week": "2026-W48",
+      "date": "2026-11-27",
+      "ktb3": 3.685,
+      "ktb10": 3.832,
+      "source": "seed"
+    }
+  ],
+  "kospi": {
+    "date": "2026-11-27",
+    "close": 4915.68,
+    "low_date": "2026-11-25",
+    "low_close": 4697.51,
+    "source": "seed"
+  },
+  "last_rules": {}
+}
